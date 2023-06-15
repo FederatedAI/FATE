@@ -1,10 +1,11 @@
 from torch import nn
 import importlib
 from federatedml.nn.backend.torch.base import FateTorchLayer, FateTorchLoss
-from federatedml.nn.backend.utils.common import ML_PATH
+from federatedml.nn.backend.utils.common import ML_PATH, LLM_PATH
 import difflib
 
 
+LLM_MODEL_PATH = '{}.model_zoo'.format(LLM_PATH)
 MODEL_PATH = '{}.model_zoo'.format(ML_PATH)
 LOSS_PATH = '{}.loss'.format(ML_PATH)
 
@@ -25,7 +26,6 @@ def get_class(module_name, class_name, param, base_path):
             if isinstance(v, type):
                 if issubclass(v, nn.Module) and v is not nn.Module:
                     if v.__name__ == class_name:
-                        print(param)
                         return v(**param)
                     else:
                         name_simi_list += ([(str_simi(class_name, v.__name__), v)])
@@ -71,11 +71,18 @@ class CustModel(FateTorchLayer, nn.Module):
     def get_pytorch_model(self, module_path=None):
 
         if module_path is None:
-            return get_class(
-                self.param_dict['module_name'],
-                self.param_dict['class_name'],
-                self.param_dict['param'],
-                MODEL_PATH)
+            try:
+                return get_class(
+                    self.param_dict['module_name'],
+                    self.param_dict['class_name'],
+                    self.param_dict['param'],
+                    MODEL_PATH)
+            except BaseException:
+                return get_class(
+                    self.param_dict['module_name'],
+                    self.param_dict['class_name'],
+                    self.param_dict['param'],
+                    LLM_MODEL_PATH)
         else:
             return get_class(
                 self.param_dict['module_name'],

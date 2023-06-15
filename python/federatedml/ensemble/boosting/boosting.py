@@ -333,23 +333,23 @@ class Boosting(ModelBase, ABC):
         else:
             return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
-    def compute_loss(self, y_hat, y):
+    def compute_loss(self, y_hat, y, sample_weights=None):
         """
         compute loss given predicted y and real y
         """
-        LOGGER.info("compute loss")
+
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
             y_predict = y_hat.mapValues(lambda val: loss_method.predict(val))
-            loss = loss_method.compute_loss(y, y_predict)
+            loss = loss_method.compute_loss(y, y_predict, sample_weights)
         elif self.task_type == consts.REGRESSION:
             if self.objective_param.objective in ["lse", "lae", "logcosh", "log_cosh", "huber"]:
                 loss_method = self.loss
-                loss = loss_method.compute_loss(y, y_hat)
+                loss = loss_method.compute_loss(y, y_hat, sample_weights)
             elif self.objective_param.objective in ['tweedie']:
                 loss_method = self.loss
                 y_predict = y_hat.mapValues(lambda val: loss_method.predict(val))
-                loss = loss_method.compute_loss(y, y_predict)
+                loss = loss_method.compute_loss(y, y_predict, sample_weights)
 
         return float(loss)
 

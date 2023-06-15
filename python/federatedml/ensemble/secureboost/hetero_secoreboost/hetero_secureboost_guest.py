@@ -35,7 +35,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.grad_and_hess = None
         self.feature_importances_ = {}
         self.model_param = HeteroSecureBoostParam()
-        self.complete_secure = False
+        self.complete_secure = 0
         self.data_alignment_map = {}
         self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
@@ -85,6 +85,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
+        if self.boosting_strategy == consts.LAYERED_TREE:
+            param.tree_param.max_depth = param.guest_depth + param.host_depth
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -162,7 +164,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         """
         receive feature importance from host to update global feature importance
         """
-        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
+        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(
+            idx=-1, suffix=suffix)
         # remove host importance, make sure host importance is latest when host anonymous features are updated
         pop_key = []
         for key in self.feature_importances_:
@@ -209,7 +212,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             self.booster_dim = 1
 
     def postprocess(self):
-        self.align_feature_importance_guest(suffix='postprocess')
+        pass
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -221,7 +224,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        complete_secure = True if (epoch_idx == 0 and self.complete_secure) else False
+        complete_secure = True if (epoch_idx < self.complete_secure) else False
 
         tree_type, target_host_id = None, None
         fast_sbt = (self.boosting_strategy == consts.MIX_TREE or self.boosting_strategy == consts.LAYERED_TREE)
@@ -248,7 +251,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-
+        self.align_feature_importance_guest(suffix=(epoch_idx, booster_dim))
         return tree
 
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):

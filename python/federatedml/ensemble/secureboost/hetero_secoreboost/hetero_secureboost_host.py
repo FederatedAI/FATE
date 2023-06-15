@@ -28,7 +28,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.grad_and_hess = None
         self.tree_param = DecisionTreeParam()  # decision tree param
         self.model_param = HeteroSecureBoostParam()
-        self.complete_secure = False
+        self.complete_secure = 0
         self.model_name = 'HeteroSecureBoost'
         self.enable_goss = False
         self.cipher_compressing = False
@@ -67,7 +67,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.sparse_opt_para = param.sparse_optimization
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
-
         self.tree_num_per_party = param.tree_num_per_party
         self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
@@ -127,20 +126,19 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         send feature importance to guest to update global feature importance
         """
         new_feat_importance = self.get_anonymous_importance()
-        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
+        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance, suffix=suffix)
 
     def preprocess(self):
         if self.multi_mode == consts.MULTI_OUTPUT:
             self.booster_dim = 1
 
     def postprocess(self):
-        # generate anonymous
-        self.align_feature_importance_host(suffix='postprocess')
+        pass
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        complete_secure = True if (epoch_idx == 0 and self.complete_secure) else False
+        complete_secure = True if (epoch_idx < self.complete_secure) else False
         fast_sbt = (self.boosting_strategy == consts.MIX_TREE or self.boosting_strategy == consts.LAYERED_TREE)
 
         tree_type, target_host_id = None, None
@@ -161,6 +159,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            )
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
+        self.align_feature_importance_host(suffix=(epoch_idx, booster_dim))
         return tree
 
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):

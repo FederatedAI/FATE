@@ -76,22 +76,8 @@ class DhIntersect(Intersect):
             return 3
         return 1
 
-    """
-    def _generate_commutative_cipher(self):
-        self.commutative_cipher = [
-            CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length)) for _ in self.host_party_id_list
-        ]
-    """
-
     def _generate_commutative_cipher(self):
         self.commutative_cipher = CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length))
-
-    def _sync_commutative_cipher_public_knowledge(self):
-        """
-        guest -> host public knowledge
-        :return:
-        """
-        pass
 
     def _exchange_id(self, id_cipher, replace_val=True):
         """

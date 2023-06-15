@@ -27,6 +27,8 @@ MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 CLUSTERING = 'clustering'
+CAUSAL_LM = "causal_ml"
+SEQ_2_SEQ_LM = "seq_2_seq_lm"
 ONE_VS_REST = 'one_vs_rest'
 PAILLIER = 'Paillier'
 PAILLIER_IPCL = 'IPCL'
@@ -351,6 +353,10 @@ keras_backend = 'keras'
 CURVE25519 = 'curve25519'
 # HOMO NN Framework
 FEDAVG_TRAINER = 'fedavg_trainer'
+
+# DEEPSPEED
+DEEPSPEED_MODEL_DIR = "EGGROLL_CONTAINER_MODELS_DIR"
+FLOW_MODEL_SYNC_PATH = "MODEL_PATH"
 
 # positive unlabeled
 PROBABILITY = "probability"

@@ -8,6 +8,12 @@ def not_working_save_to_fate(*args, **kwargs):
         'and if ipython.get_ipython() is working')
 
 
+def not_working_save_to_fate_llm(*args, **kwargs):
+    raise ValueError(
+        'save to fate_llm not working, please check if your ipython is installed, '
+        'and if ipython.get_ipython() is working')
+
+
 try:
     import IPython as ipy
     from IPython.core.magic import register_cell_magic
@@ -65,6 +71,51 @@ if register_cell_magic is not None:
         save_to_fate = not_working_save_to_fate
 else:
     save_to_fate = not_working_save_to_fate
+
+
+# check
+if register_cell_magic is not None:
+    if ipy.get_ipython():
+        @register_cell_magic
+        def save_to_fate_llm(line, cell):
+
+            # search for federatedml path
+            base_path = None
+            for p in sys.path:
+                if p.endswith('/fate/python'):
+                    base_path = p
+                    break
+
+            if base_path is None:
+                raise ValueError(
+                    'cannot find fate/python in system path, please check your configuration')
+
+            base_path = base_path + '/fate_llm/'
+
+            model_pth = 'model_zoo/'
+            dataset_pth = 'dataset/'
+
+            mode_map = {
+                'model': model_pth,
+                'dataset': dataset_pth,
+            }
+
+            args = line.split()
+            assert len(
+                args) == 2, "input args len is not 2, got {} \n expect format: %%save_to_fate SAVE_MODE FILENAME \n SAVE_MODE in ['model', 'dataset', 'trainer', 'loss', 'aggregator']   FILE_NAME xxx.py".format(args)
+            modes_avail = ['model', 'dataset']
+            save_mode = args[0]
+            file_name = args[1]
+            assert save_mode in modes_avail, 'avail modes are {}, got {}'.format(
+                modes_avail, save_mode)
+            assert file_name.endswith('.py'), 'save file should be a .py'
+            with open(base_path + mode_map[save_mode] + file_name, 'w') as f:
+                f.write(cell)
+            ipy.get_ipython().run_cell(cell)
+    else:
+        save_to_fate_llm = not_working_save_to_fate_llm
+else:
+    save_to_fate_llm = not_working_save_to_fate_llm
 
 
 class TrainerParam(BaseParam):

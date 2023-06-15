@@ -48,6 +48,7 @@ FATE 支持多种部署模式，用户可以根据自身情况进行选择。[�
 - [EggRoll](https://github.com/WeBankFinTech/eggroll)
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder)
+- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md)
 
 ## 文档
 

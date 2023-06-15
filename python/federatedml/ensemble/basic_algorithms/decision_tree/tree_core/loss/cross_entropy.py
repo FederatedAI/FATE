@@ -16,6 +16,7 @@
 
 import numpy as np
 from federatedml.optim import activation
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.loss import Loss
 
 
 class SigmoidBinaryCrossEntropyLoss(object):
@@ -57,7 +58,7 @@ class SigmoidBinaryCrossEntropyLoss(object):
         return activation.sigmoid(value)
 
     @staticmethod
-    def compute_loss(y, y_prob):
+    def compute_loss(y, y_prob, sample_weights=None):
         """
         The cross-entropy loss class for binary classification
             Formula : -(sum(y * log(y_prob) + (1 - y) * log(1 - y_prob)) / N)
@@ -76,8 +77,8 @@ class SigmoidBinaryCrossEntropyLoss(object):
 
         """
         logloss = y.join(y_prob, lambda y, yp: (-np.nan_to_num(y * np.log(yp) + (1 - y) * np.log(1 - yp)), 1))
-        logloss_sum, sample_num = logloss.reduce(lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return logloss_sum / sample_num
+        avg_loss = Loss.reduce(logloss, sample_weights=sample_weights)
+        return avg_loss
 
     @staticmethod
     def compute_grad(y, y_pred):
@@ -119,7 +120,7 @@ class SigmoidBinaryCrossEntropyLoss(object):
         return y_pred * (1 - y_pred)
 
 
-class SoftmaxCrossEntropyLoss(object):
+class SoftmaxCrossEntropyLoss(Loss):
     @staticmethod
     def initialize(y, dims=1):
         """
@@ -161,7 +162,7 @@ class SoftmaxCrossEntropyLoss(object):
         return activation.softmax(values)
 
     @staticmethod
-    def compute_loss(y, y_prob):
+    def compute_loss(y, y_prob, sample_weights=None):
         """
         The cross-entropy loss class for binary classification
             Formula : -sum(log(prob(category_i))) / N
@@ -181,8 +182,8 @@ class SoftmaxCrossEntropyLoss(object):
         """
         # np.sum(np.nan_to_num(y_i * np.log(y_pred)), axis=1)
         loss = y.join(y_prob, lambda y, yp_array: (-np.nan_to_num(np.log(yp_array[y])), 1))
-        loss_sum, sample_num = loss.reduce(lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return loss_sum / sample_num
+        avg_loss = Loss.reduce(loss, sample_weights=sample_weights)
+        return avg_loss
 
     @staticmethod
     def compute_grad(y, y_pred):
@@ -220,4 +221,4 @@ class SoftmaxCrossEntropyLoss(object):
         hessian : ndarray, the hessian of softmax cross entropy loss
 
         """
-        return y_pred * (1 - y_pred)
+        return 2 * y_pred * (1 - y_pred)

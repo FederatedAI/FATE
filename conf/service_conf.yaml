@@ -4,6 +4,7 @@ dependent_distribution: false
 encrypt_password: false
 encrypt_module: fate_arch.common.encrypt_utils#pwdecrypt
 private_key:
+private_key_file:
 party_id:
 hook_module:
   client_authentication: fate_flow.hook.flow.client_authentication

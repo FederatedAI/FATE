@@ -470,8 +470,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
     use_first_metric_only: bool
         use only the first metric for early stopping
 
-    complete_secure: bool
-        if use complete_secure, when use complete secure, build first tree using only guest features
+    complete_secure: int, defualt: 0
+        if use complete_secure, when use complete secure, build first 'complete secure' tree using only guest features
 
     sparse_optimization:
         this parameter is abandoned in FATE-1.7.1
@@ -548,7 +548,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
+                 cipher_compress_error=None, cipher_compress=0, new_ver=True, boosting_strategy=consts.STD_TREE,
                  work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
                  multi_mode=consts.SINGLE_OUTPUT, EINI_inference=False, EINI_random_mask=False,
                  EINI_complexity_check=False):
@@ -591,7 +591,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError('use missing should be bool type')
         if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
-        self.check_boolean(self.complete_secure, 'complete_secure')
         self.check_boolean(self.run_goss, 'run goss')
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
@@ -602,6 +601,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.EINI_inference, 'eini inference')
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
         self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
+
+        assert isinstance(self.complete_secure,
+                          int) and self.complete_secure >= 0, "complete secure should be an int >= 0"
 
         if self.work_mode is not None:
             self.boosting_strategy = self.work_mode

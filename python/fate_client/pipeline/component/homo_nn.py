@@ -14,27 +14,44 @@
 #  limitations under the License.
 #
 import copy
-import torch as t
-from torch.optim import Adam
-from pipeline.component.component_base import FateComponent
-from pipeline.component.nn.backend.torch.base import Sequential
-from pipeline.component.nn.backend.torch import base
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
-from pipeline.component.nn.interface import TrainerParam, DatasetParam
-from pipeline.component.nn.backend.torch.cust import CustModel
 from pipeline.utils.logger import LOGGER
+from pipeline.component.component_base import FateComponent
+from pipeline.component.nn.interface import TrainerParam, DatasetParam
 
-# default parameter dict
-DEFAULT_PARAM_DICT = {
-    'trainer': TrainerParam(trainer_name='fedavg_trainer'),
-    'dataset': DatasetParam(dataset_name='table'),
-    'torch_seed': 100,
-    'loss': None,
-    'optimizer': None,
-    'nn_define': None
-}
+DEFAULT_PARAM_DICT = {}
+
+
+try:
+    import torch as t
+    OptimizerType = t.optim.Optimizer
+except ImportError:
+    OptimizerType = 't.optim.Optimizer'
+
+
+try:
+    import torch as t
+    from pipeline.component.nn.backend.torch.base import Sequential
+    from pipeline.component.nn.backend.torch import base
+    from pipeline.component.nn.backend.torch.cust import CustModel
+    # default parameter dict
+    DEFAULT_PARAM_DICT = {
+        'trainer': TrainerParam(trainer_name='fedavg_trainer'),
+        'dataset': DatasetParam(dataset_name='table'),
+        'torch_seed': 100,
+        'loss': None,
+        'optimizer': None,
+        'nn_define': None,
+        'ds_config': None
+    }
+except Exception as e:
+    print(e)
+    print('Import NN components in HomoNN module failed,\
+this may casue by the situation that torch are not installed,\
+please install torch to use this module')
+    Sequential = None
 
 
 class HomoNN(FateComponent):
@@ -63,7 +80,8 @@ class HomoNN(FateComponent):
                  dataset: DatasetParam = DatasetParam(dataset_name='table'),
                  torch_seed: int = 100,
                  loss=None,
-                 optimizer: t.optim.Optimizer = None,
+                 optimizer: OptimizerType = None,
+                 ds_config: dict = None,
                  model: Sequential = None, **kwargs):
 
         explicit_parameters = copy.deepcopy(DEFAULT_PARAM_DICT)

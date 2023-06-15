@@ -63,6 +63,7 @@ provide:
 | [Hetero SSHE Linear Regression](linear_regression.md)                                    | HeteroSSHELinR            | Build hetero linear regression model without arbiter                                                                     | Table, values are Instances                               | Table, values are Instances                                                           |                                                      | SSHE LinR Model                                                    |
 | [Positive Unlabeled Learning](positive_unlabeled.md) | PositiveUnlabeled | Build positive unlabeled learning model                                        | Table, values are Instances                               | Table, values are Instances                                                           |                                                      |     |
 
+
 ## Secure Protocol
 
   - [Encrypt](secureprotol.md#encrypt)
