@@ -80,6 +80,8 @@ class DenseFeatureTransformer(object):
         else:
             self.exclusive_data_type = None
 
+        self.col_missing_fill_method = data_transform_param.col_missing_fill_method
+
     def _update_param(self, schema):
         meta = schema["meta"]
         self.delimitor = meta.get("delimiter", ",")
@@ -229,7 +231,8 @@ class DenseFeatureTransformer(object):
             if mode == "fit":
                 input_data_features, self.default_value = imputer_processor.fit(input_data_features,
                                                                                 replace_method=self.missing_fill_method,
-                                                                                replace_value=self.default_value)
+                                                                                replace_value=self.default_value,
+                                                                                col_replace_method=self.col_missing_fill_method)
                 if self.missing_impute is None:
                     self.missing_impute = imputer_processor.get_missing_value_list()
             else:
@@ -693,6 +696,7 @@ class SparseTagTransformer(object):
         self.missing_impute = None
         self.anonymous_generator = None
         self.anonymous_header = None
+        self.col_missing_fill_method = data_transform_param.col_missing_fill_method
 
     def _update_param(self, schema):
         meta = schema["meta"]
@@ -806,7 +810,8 @@ class SparseTagTransformer(object):
         if mode == "fit":
             data, self.default_value = imputer_processor.fit(input_data,
                                                              replace_method=self.missing_fill_method,
-                                                             replace_value=self.default_value)
+                                                             replace_value=self.default_value,
+                                                             col_replace_method=self.col_missing_fill_method)
             LOGGER.debug("self.default_value is {}".format(self.default_value))
         else:
             data = imputer_processor.transform(input_data,
