@@ -36,6 +36,12 @@ class ArtifactType:
             yield cls._load(spec.get_uri(i), {})
             i += 1
 
+    def __str__(self):
+        return f"{self.__class__.__name__}:{self.type}"
+
+    def __repr__(self):
+        return str(self)
+
 
 AT = TypeVar("AT")
 
@@ -105,11 +111,14 @@ class ArtifactDescribe(Generic[AT]):
         if apply_config is not None:
             try:
                 if self.multi:
-                    return [
-                        self._load_as_component_execute_arg(ctx, self._get_type().load_input(c)) for c in apply_config
-                    ]
+                    artifacts = [self._get_type().load_input(c) for c in apply_config]
+                    metas = [c.dict() for c in artifacts]
+                    args = [self._load_as_component_execute_arg(ctx, artifact) for artifact in artifacts]
+                    return metas, args
                 else:
-                    return self._load_as_component_execute_arg(ctx, self._get_type().load_input(apply_config))
+                    artifact = self._get_type().load_input(apply_config)
+                    meta = artifact.dict()
+                    return meta, self._load_as_component_execute_arg(ctx, artifact)
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as input artifact({self}) error: {e}") from e
         if not self.optional:
@@ -122,15 +131,29 @@ class ArtifactDescribe(Generic[AT]):
             output_iter = self._get_type().load_output(apply_config)
             try:
                 if self.multi:
-                    return (self._load_as_component_execute_arg_writer(ctx, output) for output in output_iter)
+                    return _generator_recorder(
+                        self._load_as_component_execute_arg_writer(ctx, artifact) for artifact in output_iter
+                    )
                 else:
-                    return self._load_as_component_execute_arg_writer(ctx, next(output_iter))
+                    artifact = next(output_iter)
+                    return artifact.dict(), self._load_as_component_execute_arg_writer(ctx, artifact)
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:
             raise ComponentArtifactApplyError(
                 f"load as output artifact({self}) slot error: apply_config is None but not optional"
             )
+
+
+def _generator_recorder(generator):
+    recorder = []
+
+    def _generator():
+        for item in generator:
+            recorder.append(item.artifact.dict())
+            yield item
+
+    return recorder, _generator()
 
 
 class ComponentArtifactDescribes:

@@ -27,6 +27,13 @@ class JsonModelArtifactType(ModelArtifactType):
     def _load(cls, uri: URI, metadata):
         return cls(uri.path, metadata)
 
+    def dict(self):
+        return {
+            "type": self.type,
+            "path": self.path,
+            "metadata": self.metadata,
+        }
+
 
 class ModelDirectoryArtifactType(ModelArtifactType):
     type = "model_directory"
@@ -38,6 +45,13 @@ class ModelDirectoryArtifactType(ModelArtifactType):
     @classmethod
     def _load(cls, uri: URI, metadata):
         return cls(uri.path, metadata)
+
+    def dict(self):
+        return {
+            "type": self.type,
+            "path": self.path,
+            "metadata": self.metadata,
+        }
 
 
 class JsonModelWriter:

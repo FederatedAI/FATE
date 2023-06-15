@@ -1,6 +1,6 @@
 import json
 import typing
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pydantic
 from fate.arch import Context
@@ -92,23 +92,23 @@ class ComponentExecutionIO:
     def get_kwargs(self):
         kwargs = {}
         kwargs.update({k: v[1] for k, v in self.parameters.items()})
-        kwargs.update({k: v[1] for k, v in self.input_data.items()})
-        kwargs.update({k: v[1] for k, v in self.input_model.items()})
-        kwargs.update({k: v[1] for k, v in self.output_data_slots.items()})
-        kwargs.update({k: v[1] for k, v in self.output_model_slots.items()})
-        kwargs.update({k: v[1] for k, v in self.output_metric_slots.items()})
+        kwargs.update({k: v[1][1] for k, v in self.input_data.items()})
+        kwargs.update({k: v[1][1] for k, v in self.input_model.items()})
+        kwargs.update({k: v[1][1] for k, v in self.output_data_slots.items()})
+        kwargs.update({k: v[1][1] for k, v in self.output_model_slots.items()})
+        kwargs.update({k: v[1][1] for k, v in self.output_metric_slots.items()})
         return kwargs
 
     def dump_io_meta(self) -> dict:
         io_meta = IOMeta(
             inputs=IOMeta.InputMeta(
-                data={k: str(v) for k, (arti, v) in self.input_data.items()},
-                model={k: str(v) for k, (arti, v) in self.input_model.items()},
+                data={k: v[0] for k, (arti, v) in self.input_data.items()},
+                model={k: v[0] for k, (arti, v) in self.input_model.items()},
             ),
             outputs=IOMeta.OutputMeta(
-                data={k: str(v) for k, (arti, v) in self.output_data_slots.items()},
-                model={k: str(v) for k, (arti, v) in self.output_model_slots.items()},
-                metric={k: str(v) for k, (arti, v) in self.output_metric_slots.items()},
+                data={k: v[0] for k, (arti, v) in self.output_data_slots.items()},
+                model={k: v[0] for k, (arti, v) in self.output_model_slots.items()},
+                metric={k: v[0] for k, (arti, v) in self.output_metric_slots.items()},
             ),
         )
         return io_meta.dict()
@@ -116,13 +116,13 @@ class ComponentExecutionIO:
 
 class IOMeta(pydantic.BaseModel):
     class InputMeta(pydantic.BaseModel):
-        data: typing.Dict[str, str]
-        model: typing.Dict[str, str]
+        data: typing.Dict[str, Union[List[Dict], Dict]]
+        model: typing.Dict[str, Union[List[Dict], Dict]]
 
     class OutputMeta(pydantic.BaseModel):
-        data: typing.Dict[str, str]
-        model: typing.Dict[str, str]
-        metric: typing.Dict[str, str]
+        data: typing.Dict[str, Union[List[Dict], Dict]]
+        model: typing.Dict[str, Union[List[Dict], Dict]]
+        metric: typing.Dict[str, Union[List[Dict], Dict]]
 
     inputs: InputMeta
     outputs: OutputMeta

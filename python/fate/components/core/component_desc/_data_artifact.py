@@ -62,6 +62,13 @@ class _DistributedArtifactType(DataArtifactType):
         address = cls.get_address(schema, uri.path)
         return cls(schema, metadata, address)
 
+    def dict(self):
+        return {
+            "schema": self.schema,
+            "metadata": self.metadata,
+            "address": self.address.to_uri_str(),
+        }
+
 
 class DataframeArtifactType(_DistributedArtifactType):
     type = "dataframe"
@@ -82,30 +89,55 @@ class DataDirectoryArtifactType(DataArtifactType):
     def _load(cls, uri: URI, metadata):
         return DataDirectoryArtifactType(uri.path, metadata)
 
+    def dict(self):
+        return {
+            "path": self.path,
+            "metadata": self.metadata,
+        }
+
 
 class DataframeWriter:
     def __init__(self, artifact: DataframeArtifactType) -> None:
-        self._artifact = artifact
+        self.artifact = artifact
 
     def write(self, slot):
         ...
+
+    def __str__(self):
+        return f"DataframeWriter({self.artifact})"
+
+    def __repr__(self):
+        return str(self)
 
 
 class TableWriter:
     def __init__(self, artifact: TableArtifactType) -> None:
-        self._artifact = artifact
+        self.artifact = artifact
 
     def write(self, slot):
         ...
 
+    def __str__(self):
+        return f"TableWriter({self.artifact})"
+
+    def __repr__(self):
+        return str(self)
+
 
 class DataDirectoryWriter:
     def __init__(self, artifact: DataDirectoryArtifactType) -> None:
-        self._artifact = artifact
+        self.artifact = artifact
 
     def get_directory(self) -> Path:
-        self._artifact.path.mkdir(parents=True, exist_ok=True)
-        return self._artifact.path
+        path = Path(self.artifact.path)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def __str__(self):
+        return f"DataDirectoryWriter({self.artifact})"
+
+    def __repr__(self):
+        return str(self)
 
 
 class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType]):
