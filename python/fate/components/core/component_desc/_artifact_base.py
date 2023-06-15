@@ -86,6 +86,7 @@ class ArtifactDescribe(Generic[AT]):
             roles=roles,
             stages=self.stages,
             description=self.desc,
+            is_multi=self.multi,
         )
 
     def _get_type(self) -> AT:

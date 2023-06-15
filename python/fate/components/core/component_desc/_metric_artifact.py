@@ -1,5 +1,6 @@
 import inspect
 import json
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from .._role import Role
@@ -32,8 +33,9 @@ class JsonMetricWriter:
         self._artifact = artifact
 
     def write(self, data):
-        self._artifact.path.mkdir(parents=True, exist_ok=True)
-        with self._artifact.path.open("w") as fw:
+        path = Path(self._artifact.path)
+        path.mkdir(parents=True, exist_ok=True)
+        with path.open("w") as fw:
             json.dump(data, fw)
 
 

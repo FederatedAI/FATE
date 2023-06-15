@@ -1,5 +1,6 @@
 import inspect
 import json
+from pathlib import Path
 from typing import List, Optional
 
 from .._role import Role
@@ -44,8 +45,9 @@ class JsonModelWriter:
         self._artifact = artifact
 
     def write(self, data):
-        self._artifact.path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self._artifact.path, "w") as fw:
+        path = Path(self._artifact.path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w") as fw:
             json.dump(data, fw)
 
 
@@ -54,7 +56,8 @@ class ModelDirectoryWriter:
         self._artifact = artifact
 
     def write(self, data):
-        self._artifact.path.mkdir(parents=True, exist_ok=True)
+        path = Path(self._artifact.path)
+        path.mkdir(parents=True, exist_ok=True)
         return self._artifact.path
 
 

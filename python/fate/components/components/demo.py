@@ -30,4 +30,4 @@ def run(
     json_model_input,
     json_model_output,
 ):
-    pass
+    json_model_output.write({"aaa": 1})
