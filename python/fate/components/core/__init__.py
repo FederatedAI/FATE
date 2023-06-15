@@ -4,7 +4,7 @@ from ._label import T_LABEL
 from ._load_computing import load_computing
 from ._load_device import load_device
 from ._load_federation import load_federation
-from ._role import ARBITER, GUEST, HOST, T_ROLE, Role, load_role
+from ._role import ARBITER, GUEST, HOST, LOCAL, T_ROLE, Role, load_role
 from ._stage import T_STAGE, Stage, load_stage
 from .component_desc._component import Component
 from .component_desc._component_io import ComponentExecutionIO
