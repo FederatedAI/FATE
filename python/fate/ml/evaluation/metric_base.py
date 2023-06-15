@@ -54,7 +54,7 @@ class EvalResult(object):
 
 class Metric(object):
 
-    metric_name = 'None'
+    metric_name = None
 
     def __init__(self, *args, **kwargs):
         pass

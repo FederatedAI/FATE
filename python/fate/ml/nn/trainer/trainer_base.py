@@ -71,7 +71,7 @@ class FedArguments(object):
                 d[k] = f"<{k.upper()}>"
         return d
 
-    
+
 @dataclass
 class TrainingArguments(hf_TrainingArguments):
     
@@ -80,6 +80,20 @@ class TrainingArguments(hf_TrainingArguments):
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
     evaluation_strategy: str = field(default="no")
+
+    def __post_init__(self):
+        super().__post_init__()
+        
+        # Always use default values for hub-related attributes
+        self.push_to_hub = False
+        self.hub_model_id = None
+        self.hub_strategy = 'every_save'
+        self.hub_token = None
+        self.hub_private_repo = False
+        self.push_to_hub_model_id = None
+        self.push_to_hub_organization = None
+        self.push_to_hub_token = None
+
 
 
 """

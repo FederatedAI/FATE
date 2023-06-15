@@ -32,7 +32,7 @@ from fate.components.components.nn.nn_runner import NNRunner, NNInput, NNOutput
 from fate.components.components.nn.loader import Loader
 from fate.arch.dataframe._dataframe import DataFrame
 from fate.arch.dataframe import PandasReader
-from fate.components import common
+from fate.components.components.utils import consts
 import logging
 
 
@@ -120,7 +120,7 @@ def model_output(runner_module,
         'model_output_path': model_output_path
     }
 
-def add_dataset_type(result_df: pd.DataFrame, dataset_type=common.TRAIN_SET):
+def add_dataset_type(result_df: pd.DataFrame, dataset_type=consts.TRAIN_SET):
 
     if isinstance(result_df, pd.DataFrame):
         result_df['type'] = dataset_type
@@ -141,7 +141,7 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
         logger.warning('runner output is None in stage:{}, skip processing'.format(stage))
 
     elif isinstance(nn_output, NNOutput):
-        if stage == common.TRAIN:
+        if stage == consts.TRAIN:
             
             if nn_output.train_result is None and nn_output.validate_result is None:
                 raise ValueError('train result and validate result are both None in the NNOutput: {}'.format(nn_output))
@@ -149,10 +149,10 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
             df_train, df_val = None, None
 
             if nn_output.train_result is not None:
-                df_train = add_dataset_type(nn_output.train_result, common.TRAIN_SET)
+                df_train = add_dataset_type(nn_output.train_result, consts.TRAIN_SET)
 
             if nn_output.validate_result is not None:
-                df_val = add_dataset_type(nn_output.validate_result, common.VALIDATE_SET)
+                df_val = add_dataset_type(nn_output.validate_result, consts.VALIDATE_SET)
 
             # concatenate train and validate dataframes vertically if both exist, otherwise use the one that exists
             if df_train is not None and df_val is not None:
@@ -164,9 +164,9 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
             elif df_val is not None:
                 write_output_df(ctx, df_val, output_class)
             
-        if stage == common.PREDICT:
+        if stage == consts.PREDICT:
             if nn_output.test_result is not None:
-                write_output_df(ctx, add_dataset_type(nn_output.test_result, common.TEST_SET), output_class)
+                write_output_df(ctx, add_dataset_type(nn_output.test_result, consts.TEST_SET), output_class)
             else:
                 raise ValueError('test result not found in the NNOutput: {}'.format(nn_output))
     else:
@@ -204,14 +204,14 @@ def train(
 ):
    
     runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
-    sub_ctx = prepare_context_and_role(runner, ctx, role, common.TRAIN)
+    sub_ctx = prepare_context_and_role(runner, ctx, role, consts.TRAIN)
 
     if role.is_guest or role.is_host:  # is client
 
-        input_data = get_input_data(sub_ctx, common.TRAIN, [train_data, validate_data])
+        input_data = get_input_data(sub_ctx, consts.TRAIN, [train_data, validate_data])
         input_data.fate_save_path = FATE_TEST_PATH
         ret: NNOutput = runner.train(input_data=input_data)
-        handle_nn_output(sub_ctx, ret, train_output_data, common.TRAIN)
+        handle_nn_output(sub_ctx, ret, train_output_data, consts.TRAIN)
 
         output_conf = model_output(runner_module,
                                    runner_class,
@@ -252,10 +252,10 @@ def predict(
         source = model_conf['source']
 
         runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
-        sub_ctx = prepare_context_and_role(runner, ctx, role, common.PREDICT)
-        input_data = get_input_data(sub_ctx, common.PREDICT, test_data)
+        sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
+        input_data = get_input_data(sub_ctx, consts.PREDICT, test_data)
         pred_rs = runner.predict(input_data)
-        handle_nn_output(sub_ctx, pred_rs, test_output_data, common.PREDICT)
+        handle_nn_output(sub_ctx, pred_rs, test_output_data, consts.PREDICT)
 
     elif role.is_arbiter:  # is server
         logger.info('arbiter skip predict')
