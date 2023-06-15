@@ -27,6 +27,9 @@ class JsonMetricArtifactType(MetricArtifactType):
     def _load(cls, uri: URI, metadata):
         return cls(uri.path, metadata)
 
+    def dict(self):
+        return {"metadata": self.metadata, "uri": f"file://{self.path}"}
+
 
 class JsonMetricWriter:
     def __init__(self, artifact: JsonMetricArtifactType) -> None:

@@ -27,7 +27,7 @@ class ArtifactType:
 
     @classmethod
     def load_input(cls, spec: ArtifactInputApplySpec) -> "ArtifactType":
-        return cls._load(spec.get_uri(), spec.metadata)
+        return cls._load(spec.get_uri(), spec.metadata.metadata)
 
     @classmethod
     def load_output(cls, spec: ArtifactOutputApplySpec):

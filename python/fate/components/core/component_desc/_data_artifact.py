@@ -64,9 +64,8 @@ class _DistributedArtifactType(DataArtifactType):
 
     def dict(self):
         return {
-            "schema": self.schema,
             "metadata": self.metadata,
-            "address": self.address.to_uri_str(),
+            "uri": self.address.to_uri_str(),
         }
 
 
@@ -91,8 +90,8 @@ class DataDirectoryArtifactType(DataArtifactType):
 
     def dict(self):
         return {
-            "path": self.path,
             "metadata": self.metadata,
+            "uri": f"file://{self.path}",
         }
 
 
@@ -100,8 +99,13 @@ class DataframeWriter:
     def __init__(self, artifact: DataframeArtifactType) -> None:
         self.artifact = artifact
 
-    def write(self, slot):
-        ...
+    def write(self, ctx, dataframe, metadata=None, system_metadata=None):
+        if system_metadata is not None:
+            self.artifact.metadata.update(system_metadata)
+        self.artifact.metadata.update(dict(metadata=dataframe.schema))
+        if metadata is not None:
+            self.artifact.metadata["metadata"].update(metadata)
+        ctx.writer().write(dataframe)
 
     def __str__(self):
         return f"DataframeWriter({self.artifact})"
@@ -132,6 +136,9 @@ class DataDirectoryWriter:
         path = Path(self.artifact.path)
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    def write_metadata(self, metadata):
+        self.artifact.metadata.update(metadata)
 
     def __str__(self):
         return f"DataDirectoryWriter({self.artifact})"
