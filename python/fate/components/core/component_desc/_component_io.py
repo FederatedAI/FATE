@@ -111,7 +111,7 @@ class ComponentExecutionIO:
                 metric={k: v[0] for k, (arti, v) in self.output_metric_slots.items()},
             ),
         )
-        return io_meta.dict()
+        return io_meta.dict(exclude_none=True)
 
 
 class IOMeta(pydantic.BaseModel):

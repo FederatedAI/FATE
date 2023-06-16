@@ -8,6 +8,7 @@ from ._artifact_base import (
     ArtifactDescribe,
     ArtifactType,
     ComponentArtifactDescribes,
+    Metadata,
 )
 
 
@@ -38,7 +39,7 @@ class _DistributedArtifactType(DataArtifactType):
         def to_uri_str(self):
             return f"file://{self.path}"
 
-    def __init__(self, schema, metadata, address):
+    def __init__(self, schema, metadata: Metadata, address):
         self.schema = schema
         self.metadata = metadata
         self.address = address
@@ -57,7 +58,7 @@ class _DistributedArtifactType(DataArtifactType):
         return address
 
     @classmethod
-    def _load(cls, uri: URI, metadata):
+    def _load(cls, uri: URI, metadata: Metadata):
         schema = uri.schema
         address = cls.get_address(schema, uri.path)
         return cls(schema, metadata, address)
@@ -80,12 +81,12 @@ class TableArtifactType(_DistributedArtifactType):
 class DataDirectoryArtifactType(DataArtifactType):
     type = "data_directory"
 
-    def __init__(self, path, metadata) -> None:
+    def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
         self.metadata = metadata
 
     @classmethod
-    def _load(cls, uri: URI, metadata):
+    def _load(cls, uri: URI, metadata: Metadata):
         return DataDirectoryArtifactType(uri.path, metadata)
 
     def dict(self):
@@ -99,12 +100,12 @@ class DataframeWriter:
     def __init__(self, artifact: DataframeArtifactType) -> None:
         self.artifact = artifact
 
-    def write(self, ctx, dataframe, metadata=None, system_metadata=None):
-        if system_metadata is not None:
-            self.artifact.metadata.update(system_metadata)
-        self.artifact.metadata.update(dict(metadata=dataframe.schema))
-        if metadata is not None:
-            self.artifact.metadata["metadata"].update(metadata)
+    def write(self, ctx, dataframe, name=None, namespace=None):
+        self.artifact.metadata.metadata.update(dict(metadata=dataframe.schema))
+        if name is not None:
+            self.artifact.metadata.name = name
+        if namespace is not None:
+            self.artifact.metadata.namespace = namespace
         ctx.writer().write(dataframe)
 
     def __str__(self):
@@ -137,8 +138,12 @@ class DataDirectoryWriter:
         path.mkdir(parents=True, exist_ok=True)
         return path
 
-    def write_metadata(self, metadata):
-        self.artifact.metadata.update(metadata)
+    def write_metadata(self, metadata: dict, name=None, namespace=None):
+        self.artifact.metadata.metadata.update(metadata)
+        if name is not None:
+            self.artifact.metadata.name = name
+        if namespace is not None:
+            self.artifact.metadata.namespace = namespace
 
     def __str__(self):
         return f"DataDirectoryWriter({self.artifact})"

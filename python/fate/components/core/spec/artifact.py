@@ -27,14 +27,17 @@ _uri_regex = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*
 
 
 class Metadata(pydantic.BaseModel):
-    __name__: Optional[str] = None
-    __namespace__: Optional[str] = None
-    metadata: dict = pydantic.Field(default_factory=dict)
+    metadata: dict = {}
+    name: Optional[str] = None
+    namespace: Optional[str] = None
+
+    class Config:
+        extra = "forbid"
 
 
 class ArtifactInputApplySpec(pydantic.BaseModel):
     uri: str
-    metadata: Optional[Metadata] = pydantic.Field(default_factory=Metadata)
+    metadata: Metadata
 
     def get_uri(self) -> "URI":
         return URI.from_string(self.uri)

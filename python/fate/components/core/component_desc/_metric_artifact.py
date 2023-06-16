@@ -9,6 +9,7 @@ from ._artifact_base import (
     ArtifactDescribe,
     ArtifactType,
     ComponentArtifactDescribes,
+    Metadata,
 )
 
 
@@ -19,12 +20,12 @@ class MetricArtifactType(ArtifactType):
 class JsonMetricArtifactType(MetricArtifactType):
     type = "metrics_json"
 
-    def __init__(self, path, metadata: Optional[Dict] = None) -> None:
+    def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
         self.metadata = metadata
 
     @classmethod
-    def _load(cls, uri: URI, metadata):
+    def _load(cls, uri: URI, metadata: Metadata):
         return cls(uri.path, metadata)
 
     def dict(self):
@@ -35,7 +36,16 @@ class JsonMetricWriter:
     def __init__(self, artifact: JsonMetricArtifactType) -> None:
         self._artifact = artifact
 
-    def write(self, data):
+    def write(
+        self, data, metadata: Optional[Dict] = None, namespace: Optional[str] = None, name: Optional[str] = None
+    ):
+        if metadata is not None:
+            self._artifact.metadata.metadata.update(metadata)
+        if namespace is not None:
+            self._artifact.metadata.namespace = namespace
+        if name is not None:
+            self._artifact.metadata.name = name
+
         path = Path(self._artifact.path)
         path.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:

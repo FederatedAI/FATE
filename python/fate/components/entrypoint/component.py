@@ -16,9 +16,7 @@ import json
 import logging
 import os.path
 import traceback
-import typing
 
-import pydantic
 from fate.arch import Context
 from fate.components.core import (
     ComponentExecutionIO,
@@ -49,8 +47,7 @@ def cleanup_component_execution(config: TaskCleanupConfigSpec):
 
 
 def execute_component_from_config(config: TaskConfigSpec):
-    status_file_name = "task_final_status.json"
-    meta_file_name = "task_execution_meta.json"
+    status_file_name = "task_finalize.json"
     cwd = os.path.abspath(os.path.curdir)
     logger.debug(f"component execution in path `{cwd}`")
     logger.debug(f"logging final status to  `{os.path.join(cwd, status_file_name)}`")
@@ -87,17 +84,16 @@ def execute_component_from_config(config: TaskConfigSpec):
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
 
-        # finalize
-        with open("task_execution_meta.json", "w") as fw:
-            json.dump(execution_io.dump_io_meta(), fw)
+        # final execution io meta
+        execution_io_meta = execution_io.dump_io_meta()
 
     except Exception as e:
         logger.error(e, exc_info=True)
         with open(status_file_name, "w") as fw:
-            json.dump(dict(final_status="exception", exceptions=traceback.format_exc()), fw)
+            json.dump(dict(status=dict(final_status="exception", exceptions=traceback.format_exc())), fw)
         raise e
     else:
         logger.debug("done without error, waiting signal to terminate")
         with open(status_file_name, "w") as fw:
-            json.dump(dict(final_status="finish"), fw)
+            json.dump(dict(status=dict(final_status="finish"), io_meta=execution_io_meta), fw)
         logger.debug("terminating, bye~")

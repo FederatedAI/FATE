@@ -3,7 +3,7 @@ from typing import Dict, Generic, List, TypeVar, Union
 
 from .._role import T_ROLE, Role
 from .._stage import T_STAGE, Stage
-from ..spec.artifact import URI
+from ..spec.artifact import URI, Metadata
 from ..spec.component import ArtifactSpec
 from ..spec.task import ArtifactInputApplySpec, ArtifactOutputApplySpec
 
@@ -22,12 +22,12 @@ class ArtifactType:
     type: str
 
     @classmethod
-    def _load(cls, uri: URI, metadata: dict) -> "ArtifactType":
+    def _load(cls, uri: URI, metadata: Metadata) -> "ArtifactType":
         raise NotImplementedError(f"load artifact from spec `{cls}`")
 
     @classmethod
     def load_input(cls, spec: ArtifactInputApplySpec) -> "ArtifactType":
-        return cls._load(spec.get_uri(), spec.metadata.metadata)
+        return cls._load(spec.get_uri(), spec.metadata)
 
     @classmethod
     def load_output(cls, spec: ArtifactOutputApplySpec):

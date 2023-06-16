@@ -9,6 +9,7 @@ from ._artifact_base import (
     ArtifactDescribe,
     ArtifactType,
     ComponentArtifactDescribes,
+    Metadata,
 )
 
 
@@ -19,12 +20,12 @@ class ModelArtifactType(ArtifactType):
 class JsonModelArtifactType(ModelArtifactType):
     type = "model_json"
 
-    def __init__(self, path, metadata) -> None:
+    def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
         self.metadata = metadata
 
     @classmethod
-    def _load(cls, uri: URI, metadata):
+    def _load(cls, uri: URI, metadata: Metadata):
         return cls(uri.path, metadata)
 
     def dict(self):
@@ -34,12 +35,12 @@ class JsonModelArtifactType(ModelArtifactType):
 class ModelDirectoryArtifactType(ModelArtifactType):
     type = "model_directory"
 
-    def __init__(self, path, metadata) -> None:
+    def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
         self.metadata = metadata
 
     @classmethod
-    def _load(cls, uri: URI, metadata):
+    def _load(cls, uri: URI, metadata: Metadata):
         return cls(uri.path, metadata)
 
     def dict(self):
