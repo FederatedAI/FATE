@@ -24,7 +24,7 @@ from ..manager import DataManager
 FLOATING_POINT_ZERO = 1e-14
 
 
-def min(df: "DataFrame"):
+def min(df: "DataFrame") -> "pd.Series":
     data_manager = df.data_manager
     operable_blocks = data_manager.infer_operable_blocks()
 
@@ -57,7 +57,7 @@ def min(df: "DataFrame"):
     return _post_process(reduce_ret, operable_blocks, data_manager)
 
 
-def max(df: "DataFrame"):
+def max(df: "DataFrame") -> "pd.Series":
     data_manager = df.data_manager
     operable_blocks = data_manager.infer_operable_blocks()
 
@@ -129,8 +129,8 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
             if isinstance(block, torch.Tensor):
                 ret.append(
                     (
-                        torch.sum(torch.square(block), axis=0, keepdim=True),
-                        torch.sum(block, axis=0, keepdim=True),
+                        torch.sum(torch.square(block), dim=0, keepdim=True),
+                        torch.sum(block, dim=0, keepdim=True),
                     )
                 )
             else:
@@ -171,8 +171,8 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
     return _post_process(ret_blocks, operable_blocks, data_manager)
 
 
-def std(df: "DataFrame", ddof=1):
-    return var(df, ddof) ** 0.5
+def std(df: "DataFrame", ddof=1) -> "pd.Series":
+    return var(df, ddof=ddof) ** 0.5
 
 
 def skew(df: "DataFrame", unbiased=False):
@@ -225,13 +225,31 @@ def kurt(df: "DataFrame", unbiased=False):
         return m4 / m2 ** 4 - 3
 
 
+def variation(df: "DataFrame", ddof=1):
+    return std(df, ddof=ddof) / mean(df)
+
+
+def describe(df: "DataFrame", ddof=1, unbiased=False):
+    stat_metrics = dict()
+    stat_metrics["sum"] = sum(df)
+    stat_metrics["min"] = min(df)
+    stat_metrics["max"] = max(df)
+    stat_metrics["mean"] = mean(df)
+    stat_metrics["std"] = std(df, ddof=ddof)
+    stat_metrics["var"] = var(df, ddof=ddof)
+    stat_metrics["variation"] = variation(df, ddof=ddof)
+    stat_metrics["skew"] = skew(df, unbiased=unbiased)
+    stat_metrics["kurt"] = kurt(df, unbiased=unbiased)
+    stat_metrics["na_count"] = df.isna().sum()
+
+    return pd.DataFrame(stat_metrics)
+
+
 def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "pd.Series":
     field_names = data_manager.infer_operable_field_names()
     field_indexes = [data_manager.get_field_offset(name) for name in field_names]
     field_indexes_loc = dict(zip(field_indexes, range(len(field_indexes))))
     ret = [[] for i in range(len(field_indexes))]
-
-    block_type = None
 
     reduce_ret = [r.reshape(-1).tolist() for r in reduce_ret]
     for idx, bid in enumerate(operable_blocks):
@@ -240,9 +258,5 @@ def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "
             loc = field_indexes_loc[field_index]
             ret[loc] = reduce_ret[idx][offset]
 
-        if block_type is None:
-            block_type = data_manager.blocks[bid].block_type
-        elif block_type < data_manager.blocks[bid].block_type:
-            block_type = data_manager.blocks[bid].block_type
+    return pd.Series(ret, index=field_names)
 
-    return pd.Series(ret, index=field_names, dtype=block_type.value)

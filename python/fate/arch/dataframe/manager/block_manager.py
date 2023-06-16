@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 import torch
 from enum import Enum
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 from .schema_manager import SchemaManager
 
 
@@ -124,6 +124,11 @@ class Block(object):
 
     def get_field_offset(self, idx):
         return self._field_index_mapping[idx]
+
+    def reset_field_indexes(self, dst_field_indexes):
+        field_indexes = [dst_field_indexes[src_field_index] for src_field_index in self._field_indexes]
+        self._field_index_mapping = dict(zip(field_indexes, range(len(field_indexes))))
+        self._field_indexes = field_indexes
 
     def derive_block(self, field_indexes) -> Tuple["Block", bool, list]:
         """
@@ -245,7 +250,7 @@ class Float64Block(Block):
 
     @staticmethod
     def convert_block(block):
-        return  torch.tensor(block, dtype=torch.float64)
+        return torch.tensor(block, dtype=torch.float64)
 
 
 class BoolBlock(Block):
@@ -345,6 +350,17 @@ class BlockManager(object):
 
         return block_ids
 
+    def pop_blocks(self, block_indexes: List[int]):
+        block_index_set = set(block_indexes)
+        blocks = []
+        field_block_mapping = dict()
+
+        for bid, block in enumerate(self._blocks):
+            if bid not in block_index_set:
+                blocks.append(block)
+
+        self._blocks = blocks
+
     def split_fields(self, field_indexes, block_types):
         field_sets = set(field_indexes)
         block_field_maps = dict()
@@ -428,6 +444,15 @@ class BlockManager(object):
 
     @field_block_mapping.setter
     def field_block_mapping(self, field_block_mapping):
+        self._field_block_mapping = field_block_mapping
+
+    def reset_block_field_indexes(self, field_index_changes: Dict[int, int]):
+        field_block_mapping = dict()
+        for bid in range(len(self._blocks)):
+            self._blocks[bid].reset_field_indexes(field_index_changes)
+            for offset, field_index in enumerate(self._blocks[bid].field_indexes):
+                field_block_mapping[field_index] = (bid, offset)
+
         self._field_block_mapping = field_block_mapping
 
     def duplicate(self):
