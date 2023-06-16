@@ -147,8 +147,8 @@ class Component:
                 labels=[],
                 roles=self.roles,
                 parameters=self.parameters.get_parameters_spec(),
-                input_definitions=self.artifacts.get_inputs_spec(self.roles),
-                output_definitions=self.artifacts.get_outputs_spec(self.roles),
+                input_artifacts=self.artifacts.get_inputs_spec(self.roles),
+                output_artifacts=self.artifacts.get_outputs_spec(self.roles),
             )
         )
 
@@ -157,6 +157,18 @@ class Component:
 
         import ruamel.yaml
 
+        spec = self.dict()
+        inefficient = False
+        if stream is None:
+            inefficient = True
+            stream = StringIO()
+        yaml = ruamel.yaml.YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.dump(spec.dict(), stream=stream)
+        if inefficient:
+            return stream.getvalue()
+
+    def dump_simplified_yaml(self, stream=None):
         spec = self.dict()
         inefficient = False
         if stream is None:
@@ -253,10 +265,9 @@ def component(
         version = __version__
     if provider is None:
         provider = __provider__
-    component_roles = [r.name for r in roles]
     return _component(
         name=name,
-        roles=component_roles,
+        roles=roles,
         provider=provider,
         version=version,
         description=description,

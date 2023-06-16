@@ -7,35 +7,35 @@ from ._directory import ModelDirectoryArtifactDescribe
 from ._json import JsonModelArtifactDescribe
 
 
-def json_model_input(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def json_model_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def json_model_inputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def json_model_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def model_directory_input(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def model_directory_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def model_directory_inputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def model_directory_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def json_model_output(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def json_model_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def json_model_outputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def json_model_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def model_directory_output(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def model_directory_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def model_directory_outputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def model_directory_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=True))
 
 

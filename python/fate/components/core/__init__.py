@@ -4,7 +4,7 @@ from ._load_computing import load_computing
 from ._load_device import load_device
 from ._load_federation import load_federation
 from .component_desc import Component, ComponentExecutionIO
-from .essential import ARBITER, GUEST, HOST, LABELS, LOCAL, Role, Stage
+from .essential import ARBITER, GUEST, HOST, LOCAL, Label, Role, Stage
 
 __all__ = [
     "Component",
@@ -21,4 +21,5 @@ __all__ = [
     "GUEST",
     "HOST",
     "LOCAL",
+    "Label",
 ]

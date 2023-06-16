@@ -14,5 +14,9 @@
 #  limitations under the License.
 
 
-class LABELS:
-    TRAINABLE = "trainable"
+class Label:
+    def __init__(self, name):
+        self.name = name
+
+
+TRAINABLE = Label("trainable")

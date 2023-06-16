@@ -13,10 +13,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from typing import Any, Dict, Union
 
-class Role:
+import pydantic
+
+
+class Role(str):
     def __init__(self, name) -> None:
         self.name = name
+
+    @classmethod
+    def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
+        field_schema.update(type="string", format="role")
+
+    @classmethod
+    def __get_validators__(cls) -> "CallableGenerator":
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Union[str]) -> str:
+        return value
 
     @property
     def is_guest(self) -> bool:

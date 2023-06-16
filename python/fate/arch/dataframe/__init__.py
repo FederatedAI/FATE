@@ -16,7 +16,7 @@ from ._frame_reader import (
     CSVReader,
     ImageReader,
     PandasReader,
-    RawTableReader,
+    TableReader,
     TorchDataSetReader,
 )
 from .io import build_schema, deserialize, parse_schema, serialize
@@ -25,7 +25,7 @@ from .utils import DataLoader
 __all__ = [
     "PandasReader",
     "CSVReader",
-    "RawTableReader",
+    "TableReader",
     "ImageReader",
     "TorchDataSetReader",
     "parse_schema",

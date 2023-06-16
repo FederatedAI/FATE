@@ -1,5 +1,4 @@
 import inspect
-import typing
 from typing import List, Optional
 
 from fate.components.core.essential import Role
@@ -9,43 +8,43 @@ from ._directory import DataDirectoryArtifactDescribe
 from ._table import TableArtifactDescribe
 
 
-def dataframe_input(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def dataframe_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_dataframe_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def dataframe_inputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def dataframe_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_dataframe_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def table_input(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def table_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_table_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def table_inputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def table_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_table_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def data_directory_input(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def data_directory_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_data_directory_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def data_directory_inputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def data_directory_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_data_directory_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def dataframe_output(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def dataframe_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_data_artifact(_create_dataframe_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def dataframe_outputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def dataframe_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_data_artifact(_create_dataframe_artifact_describe(name, roles, desc, optional, multi=True))
 
 
-def data_directory_output(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def data_directory_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_data_artifact(_create_data_directory_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def data_directory_outputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def data_directory_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_data_artifact(_create_data_directory_artifact_describe(name, roles, desc, optional, multi=True))
 
 

@@ -6,11 +6,11 @@ from fate.components.core.essential import Role
 from ._json import JsonMetricArtifactDescribe
 
 
-def json_metric_output(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def json_metric_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_metric_artifact(_create_json_metric_artifact_describe(name, roles, desc, optional, multi=False))
 
 
-def json_metric_outputs(name: str, roles: Optional[List["Role"]] = None, desc="", optional=False):
+def json_metric_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _output_metric_artifact(_create_json_metric_artifact_describe(name, roles, desc, optional, multi=True))
 
 
