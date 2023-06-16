@@ -20,12 +20,12 @@ import traceback
 from fate.arch import Context
 from fate.components.core import (
     ComponentExecutionIO,
+    Role,
+    Stage,
     load_component,
     load_computing,
     load_device,
     load_federation,
-    load_role,
-    load_stage,
 )
 from fate.components.core.spec.task import TaskCleanupConfigSpec, TaskConfigSpec
 
@@ -63,8 +63,8 @@ def execute_component_from_config(config: TaskConfigSpec):
             federation=federation,
             # metrics_handler=metrics_handler,
         )
-        role = load_role(config.role)
-        stage = load_stage(config.stage)
+        role = Role.from_str(config.role)
+        stage = Stage.from_str(config.stage)
         logger.debug(f"component={config.component}, context={ctx}")
         logger.debug("running...")
 
@@ -86,14 +86,19 @@ def execute_component_from_config(config: TaskConfigSpec):
 
         # final execution io meta
         execution_io_meta = execution_io.dump_io_meta()
+        try:
+            with open(status_file_name, "w") as fw:
+                json.dump(dict(status=dict(final_status="finish"), io_meta=execution_io_meta), fw)
+        except Exception as e:
+            raise RuntimeError(
+                f"failed to dump execution io meta to `{os.path.join(cwd, status_file_name)}`: meta={execution_io_meta}"
+            ) from e
+
+        logger.debug("done without error, waiting signal to terminate")
+        logger.debug("terminating, bye~")
 
     except Exception as e:
         logger.error(e, exc_info=True)
         with open(status_file_name, "w") as fw:
             json.dump(dict(status=dict(final_status="exception", exceptions=traceback.format_exc())), fw)
         raise e
-    else:
-        logger.debug("done without error, waiting signal to terminate")
-        with open(status_file_name, "w") as fw:
-            json.dump(dict(status=dict(final_status="finish"), io_meta=execution_io_meta), fw)
-        logger.debug("terminating, bye~")

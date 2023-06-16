@@ -12,14 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Literal
-
-T_ROLE = Literal["guest", "host", "arbiter", "local"]
 
 
 class Role:
-    def __init__(self, name: T_ROLE) -> None:
-        self.name: T_ROLE = name
+    def __init__(self, name) -> None:
+        self.name = name
 
     @property
     def is_guest(self) -> bool:
@@ -37,21 +34,21 @@ class Role:
     def local(self) -> bool:
         return self.name == "local"
 
+    @classmethod
+    def from_str(cls, role: str):
+        if role == "local":
+            return LOCAL
+        if role == "guest":
+            return GUEST
+        elif role == "host":
+            return HOST
+        elif role == "arbiter":
+            return ARBITER
+        else:
+            raise ValueError(f"role {role} is not supported")
+
 
 GUEST = Role("guest")
 HOST = Role("host")
 ARBITER = Role("arbiter")
 LOCAL = Role("local")
-
-
-def load_role(role: str):
-    if role == "local":
-        return LOCAL
-    if role == "guest":
-        return GUEST
-    elif role == "host":
-        return HOST
-    elif role == "arbiter":
-        return ARBITER
-    else:
-        raise ValueError(f"role {role} is not supported")

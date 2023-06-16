@@ -1,26 +1,39 @@
-import json
 import typing
 from typing import Any, Dict, List, Tuple, Union
 
 import pydantic
-from fate.arch import Context
+from fate.components.core.essential import Role, Stage
 
 from ._component import Component
-from ._data_artifact import DataDirectoryArtifactDescribe, DataframeArtifactDescribe
-from ._metric_artifact import JsonMetricArtifactDescribe
-from ._model_artifact import JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe
 from ._parameter import ParameterDescribe
+
+if typing.TYPE_CHECKING:
+    from fate.arch import Context
+
+    from .artifacts.data import DataDirectoryArtifactDescribe, DataframeArtifactDescribe
+    from .artifacts.metric import JsonMetricArtifactDescribe
+    from .artifacts.model import (
+        JsonModelArtifactDescribe,
+        ModelDirectoryArtifactDescribe,
+    )
+
+T_Parameter = Dict[str, Tuple[ParameterDescribe, typing.Any]]
+T_InputData = Dict[str, Tuple[Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"], Any]]
+T_InputModel = Dict[str, Tuple[Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"], Any]]
+T_OutputData = Dict[str, Tuple[Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"], Any]]
+T_OutputModel = Dict[str, Tuple[Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"], Any]]
+T_OutputMetric = Dict[str, Tuple[Union["JsonMetricArtifactDescribe"], Any]]
 
 
 class ComponentExecutionIO:
     def __init__(
         self,
-        parameters: Dict[str, Tuple[ParameterDescribe, typing.Any]],
-        input_data: Dict[str, Tuple[Union[DataframeArtifactDescribe, DataDirectoryArtifactDescribe], Any]],
-        input_model: Dict[str, Tuple[Union[JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe], Any]],
-        output_data_slots: Dict[str, Tuple[Union[DataframeArtifactDescribe, DataDirectoryArtifactDescribe], Any]],
-        output_model_slots: Dict[str, Tuple[Union[JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe], Any]],
-        output_metric_slots: Dict[str, Tuple[Union[JsonMetricArtifactDescribe], Any]],
+        parameters: T_Parameter,
+        input_data: T_InputData,
+        input_model: T_InputModel,
+        output_data_slots: T_OutputData,
+        output_model_slots: T_OutputModel,
+        output_metric_slots: T_OutputMetric,
     ):
         self.parameters = parameters
         self.input_data = input_data
@@ -30,19 +43,13 @@ class ComponentExecutionIO:
         self.output_metric_slots = output_metric_slots
 
     @classmethod
-    def load(cls, ctx: Context, component: Component, role, stage, config):
-        execute_parameters: Dict[str, Tuple[ParameterDescribe, typing.Any]] = {}
-        execute_input_data: Dict[str, Tuple[Union[DataframeArtifactDescribe, DataDirectoryArtifactDescribe], Any]] = {}
-        execute_input_model: Dict[
-            str, Tuple[Union[JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe], Any]
-        ] = {}
-        execute_output_data_slots: Dict[
-            str, Tuple[Union[DataframeArtifactDescribe, DataDirectoryArtifactDescribe], Any]
-        ] = {}
-        execute_output_model_slots: Dict[
-            str, Tuple[Union[JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe], Any]
-        ] = {}
-        execute_output_metric_slots: Dict[str, Tuple[Union[JsonMetricArtifactDescribe], Any]] = {}
+    def load(cls, ctx: "Context", component: Component, role: Role, stage: Stage, config):
+        execute_parameters: T_Parameter = {}
+        execute_input_data: T_InputData = {}
+        execute_input_model: T_InputModel = {}
+        execute_output_data_slots: T_OutputData = {}
+        execute_output_model_slots: T_OutputModel = {}
+        execute_output_metric_slots: T_OutputMetric = {}
         for arg in component.func_args[2:]:
             # parse and validate parameters
             if parameter := component.parameters.mapping.get(arg):

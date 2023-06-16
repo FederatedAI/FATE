@@ -16,33 +16,6 @@
 from fate.interface import Address
 
 
-class StandaloneAddress(Address):
-    def __init__(
-        self,
-        home=None,
-        name=None,
-        namespace=None,
-        storage_type=None,
-    ):
-        self.home = home
-        self.name = name
-        self.namespace = namespace
-        self.storage_type = storage_type
-
-    def __hash__(self):
-        return (self.home, self.name, self.namespace, self.storage_type).__hash__()
-
-    def __str__(self):
-        return f"StandaloneAddress(name={self.name}, namespace={self.namespace})"
-
-    def __repr__(self):
-        return self.__str__()
-
-    @property
-    def connector(self):
-        return {"home": self.home}
-
-
 class EggRollAddress(Address):
     def __init__(self, home=None, name=None, namespace=None):
         self.name = name
@@ -58,10 +31,6 @@ class EggRollAddress(Address):
     def __repr__(self):
         return self.__str__()
 
-    @property
-    def connector(self):
-        return {"home": self.home}
-
 
 class HDFSAddress(Address):
     def __init__(self, name_node=None, path=None):
@@ -76,78 +45,6 @@ class HDFSAddress(Address):
 
     def __repr__(self):
         return self.__str__()
-
-    @property
-    def connector(self):
-        return {"name_node": self.name_node}
-
-
-class PathAddress(Address):
-    def __init__(self, path):
-        self.path = path
-
-    def __hash__(self):
-        return self.path.__hash__()
-
-    def __str__(self):
-        return f"PathAddress(path={self.path})"
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class ApiAddress(Address):
-    def __init__(self, method="POST", url=None, header=None, body=None):
-        self.method = method
-        self.url = url
-        self.header = header if header else {}
-        self.body = body if body else {}
-
-    def __hash__(self):
-        return (self.method, self.url).__hash__()
-
-    def __str__(self):
-        return f"ApiAddress(url={self.url})"
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class MysqlAddress(Address):
-    def __init__(
-        self,
-        user=None,
-        passwd=None,
-        host=None,
-        port=None,
-        db=None,
-        name=None,
-    ):
-        self.user = user
-        self.passwd = passwd
-        self.host = host
-        self.port = port
-        self.db = db
-        self.name = name
-
-    def __hash__(self):
-        return (self.host, self.port, self.db, self.name).__hash__()
-
-    def __str__(self):
-        return f"MysqlAddress(db={self.db}, name={self.name})"
-
-    def __repr__(self):
-        return self.__str__()
-
-    @property
-    def connector(self):
-        return {
-            "user": self.user,
-            "passwd": self.passwd,
-            "host": self.host,
-            "port": self.port,
-            "db": self.db,
-        }
 
 
 class HiveAddress(Address):
@@ -177,17 +74,6 @@ class HiveAddress(Address):
 
     def __repr__(self):
         return self.__str__()
-
-    @property
-    def connector(self):
-        return {
-            "host": self.host,
-            "port": self.port,
-            "username": self.username,
-            "password": self.password,
-            "auth_mechanism": self.auth_mechanism,
-            "database": self.database,
-        }
 
 
 class LinkisHiveAddress(Address):

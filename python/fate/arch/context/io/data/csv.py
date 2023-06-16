@@ -12,14 +12,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ....unify import URI
-from .df import Dataframe
 
 
 class CSVReader:
-    def __init__(self, ctx, uri: URI, metadata: dict) -> None:
+    def __init__(self, ctx, path, metadata: dict) -> None:
         self.ctx = ctx
-        self.uri = uri
+        self.path = path
         self.metadata = metadata
 
     def read_dataframe(self):
@@ -34,17 +32,13 @@ class CSVReader:
             if k in parameter_keys:
                 kwargs[k] = v
 
-        dataframe_reader = dataframe.CSVReader(**kwargs).to_frame(self.ctx, self.uri.path)
-        # s_df = dataframe.serialize(self.ctx, dataframe_reader)
-        # dataframe_reader = dataframe.deserialize(self.ctx, s_df)
-        return Dataframe(dataframe_reader, dataframe_reader.shape[1], dataframe_reader.shape[0])
+        return dataframe.CSVReader(**kwargs).to_frame(self.ctx, self.path)
 
 
 class CSVWriter:
-    def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
-        self.name = name
+    def __init__(self, ctx, path, metadata: dict) -> None:
         self.ctx = ctx
-        self.uri = uri
+        self.path = path
         self.metadata = metadata
 
     def write_dataframe(self, df):

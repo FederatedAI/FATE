@@ -12,13 +12,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel
-
-from .._label import T_LABEL
-from .._role import T_ROLE
-from .._stage import T_STAGE
 
 
 class ParameterSpec(BaseModel):
@@ -32,8 +28,8 @@ class ParameterSpec(BaseModel):
 class ArtifactSpec(BaseModel):
     type: str
     optional: bool
-    stages: Optional[List[T_STAGE]]
-    roles: List[T_ROLE]
+    stages: Optional[Literal["train", "predict", "default", "cross_validation"]]
+    roles: Literal["guest", "host", "arbiter", "local"]
     description: str = ""
     is_multi: bool
 
@@ -54,11 +50,11 @@ class ComponentSpec(BaseModel):
     description: str
     provider: str
     version: str
-    labels: List[T_LABEL]
-    roles: List[T_ROLE]
+    labels: List[Literal["trainable"]]
+    roles: Literal["guest", "host", "arbiter", "local"]
     parameters: Dict[str, ParameterSpec]
-    input_definitions: InputDefinitionsSpec
-    output_definitions: OutputDefinitionsSpec
+    input_artifacts: InputDefinitionsSpec
+    output_artifacts: OutputDefinitionsSpec
 
 
 class ComponentSpecV1(BaseModel):

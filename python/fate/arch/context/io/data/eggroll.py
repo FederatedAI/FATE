@@ -13,57 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from ....unify import EggrollURI
-
-
-class EggrollDataFrameWriter:
-    def __init__(self, ctx, uri: EggrollURI, metadata: dict) -> None:
-        self.ctx = ctx
-        self.uri = EggrollMetaURI(uri)
-        self.metadata = metadata
-
-    def write_dataframe(self, df):
-        from fate.arch import dataframe
-        from fate.arch.computing._address import EggRollAddress
-
-        table = dataframe.serialize(self.ctx, df)
-        schema = {}
-        table.save(
-            address=EggRollAddress(name=self.uri.get_data_name(), namespace=self.uri.get_data_namespace()),
-            partitions=int(self.metadata.get("num_partitions", table.partitions)),
-            schema=schema,
-            **self.metadata,
-        )
-        # save meta
-        meta_table = self.ctx.computing.parallelize([("schema", schema)], partition=1, include_key=True)
-        meta_table.save(
-            address=EggRollAddress(name=self.uri.get_meta_name(), namespace=self.uri.get_meta_namespace()),
-            partitions=1,
-            schema={},
-            **self.metadata,
-        )
-
-
-class EggrollDataFrameReader:
-    def __init__(self, ctx, uri: EggrollURI, metadata: dict) -> None:
-        self.ctx = ctx
-        self.uri = EggrollMetaURI(uri)
-        self.metadata = metadata
-
-    def read_dataframe(self):
-        from fate.arch import dataframe
-
-        from .df import Dataframe
-
-        table = load_table(self.ctx, self.uri, self.metadata)
-        df = dataframe.deserialize(self.ctx, table)
-        return Dataframe(df, df.shape[1], df.shape[0])
-
 
 class EggrollRawTableReader:
-    def __init__(self, ctx, uri: EggrollURI, metadata: dict) -> None:
+    def __init__(self, ctx, namespace, name, metadata: dict) -> None:
         self.ctx = ctx
-        self.uri = EggrollMetaURI(uri)
+        self.name = name
+        self.namespace = namespace
         self.metadata = metadata
 
     def read_dataframe(self):
@@ -71,9 +26,7 @@ class EggrollRawTableReader:
 
         from fate.arch import dataframe
 
-        from .df import Dataframe
-
-        table = load_table(self.ctx, self.uri, self.metadata)
+        table = load_table(self.ctx, self.namespace, self.name, self.metadata)
 
         kwargs = {}
         p = inspect.signature(dataframe.RawTableReader.__init__).parameters
@@ -82,33 +35,16 @@ class EggrollRawTableReader:
             if k in parameter_keys:
                 kwargs[k] = v
 
-        dataframe_reader = dataframe.RawTableReader(**kwargs).to_frame(self.ctx, table)
-        return Dataframe(dataframe_reader, dataframe_reader.shape[1], dataframe_reader.shape[0])
+        return dataframe.RawTableReader(**kwargs).to_frame(self.ctx, table)
 
 
-class EggrollMetaURI:
-    def __init__(self, uri: EggrollURI) -> None:
-        self.uri = uri
-
-    def get_data_namespace(self):
-        return self.uri.namespace
-
-    def get_data_name(self):
-        return self.uri.name
-
-    def get_meta_namespace(self):
-        return self.uri.namespace
-
-    def get_meta_name(self):
-        return f"{self.uri.name}.meta"
-
-
-def load_table(ctx, uri: EggrollMetaURI, metadata: dict):
+def load_table(ctx, namespace, name, metadata: dict):
     from fate.arch.computing._address import EggRollAddress
 
+    meta_name = f"{name}.meta"
     meta_key, meta = list(
         ctx.computing.load(
-            address=EggRollAddress(name=uri.get_meta_name(), namespace=uri.get_meta_namespace()),
+            address=EggRollAddress(name=meta_name, namespace=namespace),
             partitions=1,
             schema={},
             **metadata,
@@ -116,11 +52,5 @@ def load_table(ctx, uri: EggrollMetaURI, metadata: dict):
     )[0]
     assert meta_key == "schema"
     num_partitions = metadata.get("num_partitions")
-    table = ctx.computing.load(
-        address=EggRollAddress(name=uri.get_data_name(), namespace=uri.get_data_namespace()),
-        partitions=num_partitions,
-        schema=meta,
-        **metadata,
-    )
 
     return table

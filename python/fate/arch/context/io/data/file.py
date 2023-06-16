@@ -13,14 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from ....unify import FileURI
-from .df import Dataframe
 
 
 class FileDataFrameWriter:
-    def __init__(self, ctx, name: str, uri: FileURI, metadata: dict) -> None:
-        self.name = name
+    def __init__(self, ctx, path, metadata: dict) -> None:
         self.ctx = ctx
-        self.uri = FileMetaURI(uri)
+        self.path = path
         self.metadata = metadata
 
     def write_dataframe(self, df):
@@ -29,10 +27,9 @@ class FileDataFrameWriter:
         from fate.arch import dataframe
 
         table = dataframe.serialize(self.ctx, df)
-        with open(self.uri.get_data_path(), "w") as f:
+        with open(self.path, "w") as f:
             json.dump(list(table.collect()), f)
-        with open(self.uri.get_meta_path(), "w") as f:
-            json.dump(table.schema, f)
+        self.metadata = table.schema.serialize()
 
 
 class FileDataFrameReader:
@@ -53,9 +50,7 @@ class FileDataFrameReader:
 
         table = self.ctx.computing.parallelize(data, include_key=True, partition=1)
         table.schema = schema
-        df = dataframe.deserialize(self.ctx, table)
-
-        return Dataframe(df, df.shape[1], df.shape[0])
+        return dataframe.deserialize(self.ctx, table)
 
 
 class FileMetaURI:

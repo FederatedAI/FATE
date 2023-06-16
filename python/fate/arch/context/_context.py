@@ -25,7 +25,6 @@ from ..unify import device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
 from ._namespace import NS, default_ns
-from .io.kit import IOKit
 from .metric import MetricsWrap
 
 logger = logging.getLogger(__name__)
@@ -60,7 +59,6 @@ class Context(ContextInterface):
 
         self.metrics = MetricsWrap(metrics_handler)
         self.cipher: CipherKit = CipherKit(device)
-        self._io_kit: IOKit = IOKit()
         self._role_to_parties = None
         self._gc = GC()
         self._is_destroyed = False
