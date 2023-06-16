@@ -24,7 +24,7 @@ from ..manager import DataManager
 FLOATING_POINT_ZERO = 1e-14
 
 
-def min(df: "DataFrame"):
+def min(df: "DataFrame") -> "pd.Series":
     data_manager = df.data_manager
     operable_blocks = data_manager.infer_operable_blocks()
 
@@ -57,7 +57,7 @@ def min(df: "DataFrame"):
     return _post_process(reduce_ret, operable_blocks, data_manager)
 
 
-def max(df: "DataFrame"):
+def max(df: "DataFrame") -> "pd.Series":
     data_manager = df.data_manager
     operable_blocks = data_manager.infer_operable_blocks()
 
@@ -129,8 +129,8 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
             if isinstance(block, torch.Tensor):
                 ret.append(
                     (
-                        torch.sum(torch.square(block), axis=0, keepdim=True),
-                        torch.sum(block, axis=0, keepdim=True),
+                        torch.sum(torch.square(block), dim=0, keepdim=True),
+                        torch.sum(block, dim=0, keepdim=True),
                     )
                 )
             else:
@@ -171,8 +171,8 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
     return _post_process(ret_blocks, operable_blocks, data_manager)
 
 
-def std(df: "DataFrame", ddof=1):
-    return var(df, ddof) ** 0.5
+def std(df: "DataFrame", ddof=1) -> "pd.Series":
+    return var(df, ddof=ddof) ** 0.5
 
 
 def skew(df: "DataFrame", unbiased=False):
@@ -226,20 +226,20 @@ def kurt(df: "DataFrame", unbiased=False):
 
 
 def variation(df: "DataFrame", ddof=1):
-    return std(df, ddof==ddof) / mean(df)
+    return std(df, ddof=ddof) / mean(df)
 
 
-def describe(df: "DataFrame", metric_kwargs):
+def describe(df: "DataFrame", ddof=1, unbiased=False):
     stat_metrics = dict()
     stat_metrics["sum"] = sum(df)
     stat_metrics["min"] = min(df)
     stat_metrics["max"] = max(df)
     stat_metrics["mean"] = mean(df)
-    stat_metrics["std"] = std(df) if "std" not in metric_kwargs else std(df, ddof=metric_kwargs["std"])
-    stat_metrics["var"] = var(df) if "var" not in metric_kwargs else var(df, ddof=metric_kwargs["var"])
-    stat_metrics["variation"] = variation(df) if "variation" not in metric_kwargs else variation(df, ddof=metric_kwargs["variation"])
-    stat_metrics["skew"] = skew(df) if "skew" not in metric_kwargs else skew(df, unbiased=metric_kwargs["unbiased"])
-    stat_metrics["kurt"] = kurt(df) if "kurt" not in metric_kwargs else kurt(df, unbiased=metric_kwargs["unbiased"])
+    stat_metrics["std"] = std(df, ddof=ddof)
+    stat_metrics["var"] = var(df, ddof=ddof)
+    stat_metrics["variation"] = variation(df, ddof=ddof)
+    stat_metrics["skew"] = skew(df, unbiased=unbiased)
+    stat_metrics["kurt"] = kurt(df, unbiased=unbiased)
     stat_metrics["na_count"] = df.isna().sum()
 
     return pd.DataFrame(stat_metrics)

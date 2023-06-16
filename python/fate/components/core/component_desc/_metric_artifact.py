@@ -5,70 +5,66 @@ from typing import Dict, List, Optional
 
 from .._role import Role
 from ._artifact_base import (
+    URI,
     ArtifactDescribe,
     ArtifactType,
     ComponentArtifactDescribes,
-    Slot,
-    Slots,
+    Metadata,
 )
 
 
 class MetricArtifactType(ArtifactType):
-    type = "metric"
+    ...
 
 
 class JsonMetricArtifactType(MetricArtifactType):
     type = "metrics_json"
 
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        uri: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-    ) -> None:
-        super().__init__(uri=uri, name=name, metadata=metadata)
+    def __init__(self, path, metadata: Metadata) -> None:
+        self.path = path
+        self.metadata = metadata
+
+    @classmethod
+    def _load(cls, uri: URI, metadata: Metadata):
+        return cls(uri.path, metadata)
+
+    def dict(self):
+        return {"metadata": self.metadata, "uri": f"file://{self.path}"}
 
 
 class JsonMetricWriter:
-    def __init__(self, path: Path) -> None:
-        self._path = path
+    def __init__(self, artifact: JsonMetricArtifactType) -> None:
+        self._artifact = artifact
 
-    def write(self, data):
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        with self._path.open("w") as fw:
+    def write(
+        self, data, metadata: Optional[Dict] = None, namespace: Optional[str] = None, name: Optional[str] = None
+    ):
+        if metadata is not None:
+            self._artifact.metadata.metadata.update(metadata)
+        if namespace is not None:
+            self._artifact.metadata.namespace = namespace
+        if name is not None:
+            self._artifact.metadata.name = name
+
+        path = Path(self._artifact.path)
+        path.mkdir(parents=True, exist_ok=True)
+        with path.open("w") as fw:
             json.dump(data, fw)
 
 
-class JsonMetricWriterGenerator:
-    def __init__(self, path: Path) -> None:
-        self._path = path
-
-    def get_writer(self, index) -> JsonMetricWriter:
-        ...
-
-
-class JsonMetricArtifactDescribe(ArtifactDescribe):
+class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType]):
     def _get_type(self):
-        return JsonMetricArtifactType.type
+        return JsonMetricArtifactType
 
-    def _load_as_input(self, ctx, apply_config):
-        def _load_json_model(name, path, metadata):
-            try:
-                with open(path, "r") as fr:
-                    return json.load(fr)
-            except Exception as e:
-                raise RuntimeError(f"load json model named {name} failed: {e}")
+    def _load_as_component_execute_arg(self, ctx, artifact: JsonMetricArtifactType):
+        try:
+            with open(artifact.path, "r") as fr:
+                return json.load(fr)
+        except Exception as e:
+            raise RuntimeError(f"load json model named from {artifact} failed: {e}")
 
-        if self.multi:
-            return [_load_json_model(c.name, c.uri, c.metadata) for c in apply_config]
-        else:
-            return _load_json_model(apply_config.name, apply_config.uri, apply_config.metadata)
-
-    def _load_as_output_slot(self, ctx, apply_config):
-        if self.multi:
-            return Slots(JsonMetricWriterGenerator(apply_config))
-        else:
-            return Slot(JsonMetricWriter(apply_config))
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: JsonMetricArtifactType):
+        return JsonMetricWriter(artifact)
 
 
 def json_metric_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):

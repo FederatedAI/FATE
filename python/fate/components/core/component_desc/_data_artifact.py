@@ -1,101 +1,193 @@
 import inspect
+import typing
 from pathlib import Path
 from typing import List, Optional
 
 from .._role import Role
 from ._artifact_base import (
+    URI,
     ArtifactDescribe,
     ArtifactType,
     ComponentArtifactDescribes,
-    Slot,
-    Slots,
+    Metadata,
 )
+
+if typing.TYPE_CHECKING:
+    from fate.arch.dataframe._dataframe import DataFrame
 
 
 class DataArtifactType(ArtifactType):
     ...
 
 
-class DataframeArtifactType(DataArtifactType):
+class _DistributedArtifactType(DataArtifactType):
+    class EggrollAddress:
+        def __init__(self, name, namespace):
+            self.name = name
+            self.namespace = namespace
+
+        def to_uri_str(self):
+            return f"eggroll://{self.namespace}/{self.name}"
+
+    class HdfsAddress:
+        def __init__(self, path):
+            self.path = path
+
+        def to_uri_str(self):
+            return f"hdfs://{self.path}"
+
+    class FileAddress:
+        def __init__(self, path):
+            self.path = path
+
+        def to_uri_str(self):
+            return f"file://{self.path}"
+
+    def __init__(self, schema, metadata: Metadata, address):
+        self.schema = schema
+        self.metadata = metadata
+        self.address = address
+
+    @classmethod
+    def get_address(cls, schema, path):
+        if schema == "file":
+            address = cls.FileAddress(path)
+        elif schema == "hdfs":
+            address = cls.HdfsAddress(path)
+        elif schema == "eggroll":
+            _, namespace, name = path.split("/")
+            address = cls.EggrollAddress(name, namespace)
+        else:
+            raise ValueError(f"unsupported schema {schema}")
+        return address
+
+    @classmethod
+    def _load(cls, uri: URI, metadata: Metadata):
+        schema = uri.schema
+        address = cls.get_address(schema, uri.path)
+        return cls(schema, metadata, address)
+
+    def dict(self):
+        return {
+            "metadata": self.metadata,
+            "uri": self.address.to_uri_str(),
+        }
+
+
+class DataframeArtifactType(_DistributedArtifactType):
     type = "dataframe"
+
+
+class TableArtifactType(_DistributedArtifactType):
+    type = "table"
 
 
 class DataDirectoryArtifactType(DataArtifactType):
     type = "data_directory"
 
-    def __init__(self, name, path, metadata) -> None:
-        self.name = name
+    def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
         self.metadata = metadata
 
+    @classmethod
+    def _load(cls, uri: URI, metadata: Metadata):
+        return DataDirectoryArtifactType(uri.path, metadata)
+
+    def dict(self):
+        return {
+            "metadata": self.metadata,
+            "uri": f"file://{self.path}",
+        }
+
 
 class DataframeWriter:
-    def __init__(self, address) -> None:
-        self._address = address
+    def __init__(self, artifact: DataframeArtifactType) -> None:
+        self.artifact = artifact
+
+    def write(self, ctx, dataframe: "DataFrame", name=None, namespace=None):
+        # self.artifact.metadata.metadata.update({"metadata": dataframe.schema})
+        if name is not None:
+            self.artifact.metadata.name = name
+        if namespace is not None:
+            self.artifact.metadata.namespace = namespace
+        ctx.writer(self.artifact.address.to_uri_str()).write(dataframe)
+
+    def __str__(self):
+        return f"DataframeWriter({self.artifact})"
+
+    def __repr__(self):
+        return str(self)
+
+
+class TableWriter:
+    def __init__(self, artifact: TableArtifactType) -> None:
+        self.artifact = artifact
 
     def write(self, slot):
         ...
 
+    def __str__(self):
+        return f"TableWriter({self.artifact})"
 
-class DataframeWriterGenerator:
-    def __init__(self, address) -> None:
-        self._address = address
-
-    def get_writer(self, index) -> DataframeWriter:
-        ...
+    def __repr__(self):
+        return str(self)
 
 
 class DataDirectoryWriter:
-    def __init__(self, directory: Path) -> None:
-        self._directory = directory
+    def __init__(self, artifact: DataDirectoryArtifactType) -> None:
+        self.artifact = artifact
 
     def get_directory(self) -> Path:
-        self._directory.mkdir(parents=True, exist_ok=True)
-        return self._directory
+        path = Path(self.artifact.path)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def write_metadata(self, metadata: dict, name=None, namespace=None):
+        self.artifact.metadata.metadata.update(metadata)
+        if name is not None:
+            self.artifact.metadata.name = name
+        if namespace is not None:
+            self.artifact.metadata.namespace = namespace
+
+    def __str__(self):
+        return f"DataDirectoryWriter({self.artifact})"
+
+    def __repr__(self):
+        return str(self)
 
 
-class DataDirectoryWriterGenerator:
-    def __init__(self, address) -> None:
-        self._address = address
-
-    def get_writer(self, index) -> DataDirectoryWriter:
-        ...
-
-
-class DataframeArtifactDescribe(ArtifactDescribe):
+class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType]):
     def _get_type(self):
-        return DataframeArtifactType.type
+        return DataframeArtifactType
 
-    def _load_as_input(self, ctx, apply_config):
-        if self.multi:
-            return [ctx.reader(c.name, c.uri, c.metadata).read_dataframe() for c in apply_config]
-        else:
-            return ctx.reader(apply_config.name, apply_config.uri, apply_config.metadata).read_dataframe()
+    def _load_as_component_execute_arg(self, ctx, artifact: DataframeArtifactType):
+        return ctx.reader(artifact.address.to_uri_str(), artifact.metadata.metadata).read_dataframe()
 
-    def _load_as_output_slot(self, ctx, apply_config):
-        if self.multi:
-            return Slots(DataframeWriterGenerator(apply_config))
-        else:
-            return Slot(DataframeWriter(apply_config))
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: DataframeArtifactType):
+        return DataframeWriter(artifact)
+
+
+class TableArtifactDescribe(ArtifactDescribe):
+    def _get_type(self):
+        return DataframeArtifactType
+
+    def _load_as_component_execute_arg(self, ctx, artifact: TableArtifactType):
+        pass
+        # return ctx.reader(apply_config.name, apply_config.uri, apply_config.metadata).read_dataframe()
+
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: TableArtifactType):
+        return TableWriter(artifact)
 
 
 class DataDirectoryArtifactDescribe(ArtifactDescribe):
     def _get_type(self):
-        return DataDirectoryArtifactType.type
+        return DataDirectoryArtifactType
 
-    def _load_as_input(self, ctx, apply_config):
-        if self.multi:
-            return [DataDirectoryArtifactType(name=c.name, path=c.uri, metadata=c.metadata) for c in apply_config]
-        else:
-            return DataDirectoryArtifactType(
-                name=apply_config.name, path=apply_config.uri, metadata=apply_config.metadata
-            )
+    def _load_as_component_execute_arg(self, ctx, artifact: DataDirectoryArtifactType):
+        return artifact
 
-    def _load_as_output_slot(self, ctx, apply_config):
-        if self.multi:
-            return Slots(DataDirectoryWriterGenerator(apply_config))
-        else:
-            return Slot(DataDirectoryWriter(apply_config))
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: DataDirectoryArtifactType):
+        return DataDirectoryWriter(artifact)
 
 
 def dataframe_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
@@ -104,6 +196,14 @@ def dataframe_input(name: str, roles: Optional[List[Role]] = None, desc="", opti
 
 def dataframe_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_data_artifact(_create_dataframe_artifact_describe(name, roles, desc, optional, multi=True))
+
+
+def table_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
+    return _input_data_artifact(_create_table_artifact_describe(name, roles, desc, optional, multi=False))
+
+
+def table_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
+    return _input_data_artifact(_create_table_artifact_describe(name, roles, desc, optional, multi=True))
 
 
 def data_directory_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
@@ -165,6 +265,11 @@ def _prepare(roles, desc):
 def _create_dataframe_artifact_describe(name, roles, desc, optional, multi):
     roles, desc = _prepare(roles, desc)
     return DataframeArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=multi)
+
+
+def _create_table_artifact_describe(name, roles, desc, optional, multi):
+    roles, desc = _prepare(roles, desc)
+    return TableArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=multi)
 
 
 def _create_data_directory_artifact_describe(name, roles, desc, optional, multi):

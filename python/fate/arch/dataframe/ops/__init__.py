@@ -14,13 +14,11 @@
 #  limitations under the License.
 from ._indexer import (
     aggregate_indexer,
-    transform_to_table,
     get_partition_order_mappings
 )
 
 
 __all__ = [
-           "transform_to_table",
            "aggregate_indexer",
            "get_partition_order_mappings"
            ]

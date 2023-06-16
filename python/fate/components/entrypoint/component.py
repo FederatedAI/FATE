@@ -19,7 +19,7 @@ import traceback
 
 from fate.arch import Context
 from fate.components.core import (
-    Component,
+    ComponentExecutionIO,
     load_component,
     load_computing,
     load_device,
@@ -47,8 +47,7 @@ def cleanup_component_execution(config: TaskCleanupConfigSpec):
 
 
 def execute_component_from_config(config: TaskConfigSpec):
-    status_file_name = "task_final_status.json"
-    meta_file_name = "task_execution_meta.json"
+    status_file_name = "task_finalize.json"
     cwd = os.path.abspath(os.path.curdir)
     logger.debug(f"component execution in path `{cwd}`")
     logger.debug(f"logging final status to  `{os.path.join(cwd, status_file_name)}`")
@@ -80,96 +79,21 @@ def execute_component_from_config(config: TaskConfigSpec):
                 raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
 
         # prepare
-        execution_io = _ComponentExecutionIO.load(ctx, component, role, stage, config)
+        execution_io = ComponentExecutionIO.load(ctx, component, role, stage, config)
 
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
 
-        # finalize
-        execution_io.dump_io_meta()
+        # final execution io meta
+        execution_io_meta = execution_io.dump_io_meta()
 
     except Exception as e:
         logger.error(e, exc_info=True)
         with open(status_file_name, "w") as fw:
-            json.dump(dict(final_status="exception", exceptions=traceback.format_exc()), fw)
+            json.dump(dict(status=dict(final_status="exception", exceptions=traceback.format_exc())), fw)
         raise e
     else:
         logger.debug("done without error, waiting signal to terminate")
         with open(status_file_name, "w") as fw:
-            json.dump(dict(final_status="finish"), fw)
+            json.dump(dict(status=dict(final_status="finish"), io_meta=execution_io_meta), fw)
         logger.debug("terminating, bye~")
-
-
-class _ComponentExecutionIO:
-    def __init__(
-        self,
-        parameters=None,
-        input_data=None,
-        input_model=None,
-        output_data_slots=None,
-        output_model_slots=None,
-        output_metric_slots=None,
-    ):
-        self.parameters = parameters or {}
-        self.input_data = input_data or {}
-        self.input_model = input_model or {}
-        self.output_data_slots = output_data_slots or {}
-        self.output_model_slots = output_model_slots or {}
-        self.output_metric_slots = output_metric_slots or {}
-
-    @classmethod
-    def load(cls, ctx: Context, component: Component, role, stage, config):
-        execute_parameters = {}
-        execute_input_data = {}
-        execute_input_model = {}
-        execute_output_data_slots = {}
-        execute_output_model_slots = {}
-        execute_output_metric_slots = {}
-        for arg in component.func_args[2:]:
-            # parse and validate parameters
-            if parameter := component.parameters.mapping.get(arg):
-                execute_parameters[parameter.name] = parameter.apply(config.parameters.get(arg))
-
-            # parse and validate data
-            elif arti := component.artifacts.data_inputs.get(arg):
-                if arti.is_active_for(stage, role):
-                    execute_input_data[arg] = arti.load_as_input(ctx, config.input_artifacts.get(arg))
-            # parse and validate models
-            elif arti := component.artifacts.model_inputs.get(arg):
-                if arti.is_active_for(stage, role):
-                    execute_input_model[arg] = arti.load_as_input(ctx, config.input_artifacts.get(arg))
-
-            elif arti := component.artifacts.data_outputs.get(arg):
-                if arti.is_active_for(stage, role):
-                    execute_output_data_slots[arg] = arti.load_as_output_slot(ctx, config.output_artifacts.get(arg))
-
-            elif arti := component.artifacts.model_outputs.get(arg):
-                if arti.is_active_for(stage, role):
-                    execute_output_model_slots[arg] = arti.load_as_output_slot(ctx, config.output_artifacts.get(arg))
-
-            elif arti := component.artifacts.metric_outputs.get(arg):
-                if arti.is_active_for(stage, role):
-                    execute_output_metric_slots[arg] = arti.load_as_output_slot(ctx, config.output_artifacts.get(arg))
-            else:
-                raise ValueError(f"args `{arg}` not provided")
-        return _ComponentExecutionIO(
-            parameters=execute_parameters,
-            input_data=execute_input_data,
-            input_model=execute_input_model,
-            output_data_slots=execute_output_data_slots,
-            output_model_slots=execute_output_model_slots,
-            output_metric_slots=execute_output_metric_slots,
-        )
-
-    def get_kwargs(self):
-        kwargs = {}
-        kwargs.update(self.parameters)
-        kwargs.update(self.input_data)
-        kwargs.update(self.input_model)
-        kwargs.update(self.output_data_slots)
-        kwargs.update(self.output_model_slots)
-        kwargs.update(self.output_metric_slots)
-        return kwargs
-
-    def dump_io_meta(self):
-        ...

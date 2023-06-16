@@ -5,11 +5,11 @@ from typing import List, Optional
 
 from .._role import Role
 from ._artifact_base import (
+    URI,
     ArtifactDescribe,
     ArtifactType,
     ComponentArtifactDescribes,
-    Slot,
-    Slots,
+    Metadata,
 )
 
 
@@ -20,92 +20,78 @@ class ModelArtifactType(ArtifactType):
 class JsonModelArtifactType(ModelArtifactType):
     type = "model_json"
 
+    def __init__(self, path, metadata: Metadata) -> None:
+        self.path = path
+        self.metadata = metadata
+
+    @classmethod
+    def _load(cls, uri: URI, metadata: Metadata):
+        return cls(uri.path, metadata)
+
+    def dict(self):
+        return {"metadata": self.metadata, "uri": f"file://{self.path}"}
+
 
 class ModelDirectoryArtifactType(ModelArtifactType):
     type = "model_directory"
 
+    def __init__(self, path, metadata: Metadata) -> None:
+        self.path = path
+        self.metadata = metadata
+
+    @classmethod
+    def _load(cls, uri: URI, metadata: Metadata):
+        return cls(uri.path, metadata)
+
+    def dict(self):
+        return {"metadata": self.metadata, "uri": f"file://{self.path}"}
+
 
 class JsonModelWriter:
-    def __init__(self, path: Path) -> None:
-        self._path = path
+    def __init__(self, artifact: JsonModelArtifactType) -> None:
+        self._artifact = artifact
 
     def write(self, data):
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        with self._path.open("w") as fw:
+        path = Path(self._artifact.path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w") as fw:
             json.dump(data, fw)
-
-
-class ModelDirectoryWriterGenerator:
-    def __init__(self, path: Path) -> None:
-        self._path = path
-
-    def get_writer(self, index) -> JsonModelWriter:
-        ...
 
 
 class ModelDirectoryWriter:
-    def __init__(self, path: Path) -> None:
-        self._path = path
+    def __init__(self, artifact: ModelDirectoryArtifactType) -> None:
+        self._artifact = artifact
 
     def write(self, data):
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        with self._path.open("w") as fw:
-            json.dump(data, fw)
+        path = Path(self._artifact.path)
+        path.mkdir(parents=True, exist_ok=True)
+        return self._artifact.path
 
 
-class JsonModelWriterGenerator:
-    def __init__(self, path: Path) -> None:
-        self._path = path
-
-    def get_writer(self, index) -> JsonModelWriter:
-        ...
-
-
-class JsonModelArtifactDescribe(ArtifactDescribe):
+class JsonModelArtifactDescribe(ArtifactDescribe[JsonModelArtifactType]):
     def _get_type(self):
-        return JsonModelArtifactType.type
+        return JsonModelArtifactType
 
-    def _load_as_input(self, ctx, apply_config):
-        def _load_json_model(name, path, metadata):
-            try:
-                with open(path, "r") as fr:
-                    return json.load(fr)
-            except Exception as e:
-                raise RuntimeError(f"load json model named {name} failed: {e}")
+    def _load_as_component_execute_arg(self, ctx, artifact: JsonModelArtifactType):
+        try:
+            with open(artifact.path, "r") as fr:
+                return json.load(fr)
+        except Exception as e:
+            raise RuntimeError(f"load json model from {artifact} failed: {e}")
 
-        if self.multi:
-            return [_load_json_model(c.name, c.uri, c.metadata) for c in apply_config]
-        else:
-            return _load_json_model(apply_config.name, apply_config.uri, apply_config.metadata)
-
-    def _load_as_output_slot(self, ctx, apply_config):
-        if self.multi:
-            return Slots(JsonModelWriterGenerator(apply_config))
-        else:
-            return Slot(JsonModelWriter(apply_config))
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: JsonModelArtifactType):
+        return JsonModelWriter(artifact)
 
 
-class ModelDirectoryArtifactDescribe(ArtifactDescribe):
+class ModelDirectoryArtifactDescribe(ArtifactDescribe[ModelDirectoryArtifactType]):
     def _get_type(self):
-        return ModelDirectoryArtifactType.type
+        return ModelDirectoryArtifactType
 
-    def _load_as_input(self, ctx, apply_config):
-        def _load_model_directory(name, path, metadata):
-            try:
-                return path
-            except Exception as e:
-                raise RuntimeError(f"load model directory named {name} failed: {e}")
+    def _load_as_component_execute_arg(self, ctx, artifact: ModelDirectoryArtifactType):
+        return artifact
 
-        if self.multi:
-            return [_load_model_directory(c.name, c.uri, c.metadata) for c in apply_config]
-        else:
-            return _load_model_directory(apply_config.name, apply_config.uri, apply_config.metadata)
-
-    def _load_as_output_slot(self, ctx, apply_config):
-        if self.multi:
-            return Slots(ModelDirectoryWriterGenerator(apply_config))
-        else:
-            return Slot(ModelDirectoryWriter(apply_config))
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: ModelDirectoryArtifactType):
+        return ModelDirectoryWriter(artifact)
 
 
 def json_model_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):

@@ -61,8 +61,7 @@ class EggrollDataFrameReader:
 
 
 class EggrollRawTableReader:
-    def __init__(self, ctx, name: str, uri: EggrollURI, metadata: dict) -> None:
-        self.name = name
+    def __init__(self, ctx, uri: EggrollURI, metadata: dict) -> None:
         self.ctx = ctx
         self.uri = EggrollMetaURI(uri)
         self.metadata = metadata

@@ -14,7 +14,7 @@
 #  limitations under the License.
 from typing import Literal
 
-T_ROLE = Literal["guest", "host", "arbiter"]
+T_ROLE = Literal["guest", "host", "arbiter", "local"]
 
 
 class Role:
@@ -33,13 +33,20 @@ class Role:
     def is_arbiter(self) -> bool:
         return self.name == "arbiter"
 
+    @property
+    def local(self) -> bool:
+        return self.name == "local"
+
 
 GUEST = Role("guest")
 HOST = Role("host")
 ARBITER = Role("arbiter")
+LOCAL = Role("local")
 
 
 def load_role(role: str):
+    if role == "local":
+        return LOCAL
     if role == "guest":
         return GUEST
     elif role == "host":

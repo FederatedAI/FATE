@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Union
 
 import pydantic
 
-from .artifact import ArtifactSpec
+from .artifact import ArtifactInputApplySpec, ArtifactOutputApplySpec
 from .computing import EggrollComputingSpec, SparkComputingSpec, StandaloneComputingSpec
 from .device import CPUSpec, GPUSpec
 from .federation import (
@@ -27,7 +27,6 @@ from .federation import (
     StandaloneFederationSpec,
 )
 from .logger import CustomLogger, FlowLogger, PipelineLogger
-from .mlmd import CustomMLMDSpec, FlowMLMDSpec, NoopMLMDSpec, PipelineMLMDSpec
 
 
 class TaskConfigSpec(pydantic.BaseModel):
@@ -42,7 +41,6 @@ class TaskConfigSpec(pydantic.BaseModel):
             OSXFederationSpec,
         ]
         logger: Union[PipelineLogger, FlowLogger, CustomLogger]
-        mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, NoopMLMDSpec, CustomMLMDSpec]
 
     task_id: str
     party_task_id: str
@@ -51,8 +49,8 @@ class TaskConfigSpec(pydantic.BaseModel):
     party_id: str
     stage: str = "default"
     parameters: Dict[str, Any] = {}
-    input_artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
-    output_artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
+    input_artifacts: Dict[str, Union[List[ArtifactInputApplySpec], ArtifactInputApplySpec]] = {}
+    output_artifacts: Dict[str, ArtifactOutputApplySpec] = {}
     conf: TaskConfSpec
 
 
