@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,12 +12,5 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from .evaluation import evaluation
-from .feature_scale import feature_scale
-from .hetero_feature_selection import hetero_feature_selection
-from .hetero_lr import hetero_lr
-from .intersection import intersection
-from .reader import reader
-from .statistics import statistics
 
-BUILDIN_COMPONENTS = [hetero_lr, reader, feature_scale, intersection, evaluation, statistics, hetero_feature_selection]
+from .hetero_feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
