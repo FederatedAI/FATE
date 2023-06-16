@@ -17,14 +17,11 @@ import numpy as np
 import operator
 import pandas as pd
 
-from typing import Any, List, Union, Dict
+from typing import List, Union
 
 from .ops import (
     aggregate_indexer,
-    transform_to_tensor,
-    transform_to_table,
-    get_partition_order_mappings,
-    select_column_value
+    get_partition_order_mappings
 )
 from .manager import DataManager, Schema
 
@@ -78,8 +75,8 @@ class DataFrame(object):
             return None
 
         return self.__extract_fields(
-            with_sample_id=False,
-            with_match_id=False,
+            with_sample_id=True,
+            with_match_id=True,
             with_label=False,
             with_weight=False,
             columns=self.columns.tolist()
@@ -141,6 +138,10 @@ class DataFrame(object):
     def block_table(self):
         return self._block_table
 
+    @block_table.setter
+    def block_table(self, block_table):
+        self._block_table = block_table
+
     @property
     def partition_order_mappings(self):
         return self._partition_order_mappings
@@ -149,35 +150,18 @@ class DataFrame(object):
     def data_manager(self) -> "DataManager":
         return self._data_manager
 
+    @data_manager.setter
+    def data_manager(self, data_manager):
+        self._data_manager = data_manager
+
     def as_tensor(self, dtype=None):
         """
         df.weight.as_tensor()
         df.label.as_tensor()
         df.values.as_tensor()
         """
-        attr_status = 0
-        if self.schema.label_name:
-            attr_status |= 1
-
-        if self.schema.weight_name:
-            attr_status |= 2
-
-        if len(self.schema.columns):
-            attr_status |= 4
-
-        if attr_status == 0:
-            raise ValueError(f"label/weight/values attributes are None")
-
-        if attr_status & -attr_status != attr_status:
-            raise ValueError(f"Use df.label.as_tensor() or df.weight.as_tensor() or df.values.as_tensor(), "
-                             f"don't mixed please")
-
-        if attr_status == 1:
-            return self.__convert_to_tensor(self.schema.label_name, dtype=dtype)
-        elif attr_status == 1:
-            return self.__convert_to_tensor(self.schema.weight_name, dtype=dtype)
-        else:
-            return self.__convert_to_tensor(self.schema.columns.tolist(), dtype=dtype)
+        from .ops._transformer import transform_to_tensor
+        return transform_to_tensor(self._block_table, self._data_manager, dtype)
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
@@ -186,45 +170,108 @@ class DataFrame(object):
             self._data_manager
         )
 
+    def apply_row(self, func, columns=None, with_label=False,
+                  with_weight=False, enable_type_align_checking=True):
+        from .ops._apply_row import apply_row
+        return apply_row(
+            self,
+            func,
+            columns=columns,
+            with_label=with_label,
+            with_weight=with_weight,
+            enable_type_align_checking=enable_type_align_checking
+        )
+
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
         return self.__extract_fields(with_sample_id=True,
-                                      with_match_id=True,
-                                      with_label=with_label,
-                                      with_weight=with_weight,
-                                      columns=columns)
+                                     with_match_id=True,
+                                     with_label=with_label,
+                                     with_weight=with_weight,
+                                     columns=columns)
 
+    def drop(self, index) -> "DataFrame":
+        from .ops._dimension_scaling import drop
+        return drop(self, index)
 
-    def max(self, *args, **kwargs) -> "DataFrame":
-        ...
+    def fillna(self, value):
+        from .ops._fillna import fillna
+        return fillna(self, value)
 
-    def min(self, *args, **kwargs) -> "DataFrame":
-        ...
+    def get_dummies(self, dtype="int32"):
+        from .ops._encoder import get_dummies
+        return get_dummies(self, dtype=dtype)
 
-    def mean(self, *args, **kwargs) -> "DataFrame":
-        ...
+    def isna(self):
+        from .ops._missing import isna
+        return isna(self)
 
-    def sum(self, *args, **kwargs) -> "DataFrame":
-        ...
+    def isin(self, values):
+        from .ops._isin import isin
+        return isin(self, values)
 
-    def std(self, *args, **kwargs) -> "DataFrame":
-        ...
+    def na_count(self):
+        return self.isna().sum()
+
+    def max(self) -> "pd.Series":
+        from .ops._stat import max
+        return max(self)
+
+    def min(self, *args, **kwargs) -> "pd.Series":
+        from .ops._stat import min
+        return min(self)
+
+    def mean(self, *args, **kwargs) -> "pd.Series":
+        from .ops._stat import mean
+        return mean(self)
+
+    def sum(self, *args, **kwargs) -> "pd.Series":
+        from .ops._stat import sum
+        return sum(self)
+
+    def std(self, ddof=1, **kwargs) -> "pd.Series":
+        from .ops._stat import std
+        return std(self, ddof=ddof)
+
+    def var(self, ddof=1, **kwargs):
+        from .ops._stat import var
+        return var(self, ddof=ddof)
+
+    def variation(self, ddof=1):
+        from .ops._stat import variation
+        return variation(self, ddof=ddof)
+
+    def skew(self, unbiased=False):
+        from .ops._stat import skew
+        return skew(self, unbiased=unbiased)
+
+    def kurt(self, unbiased=False):
+        from .ops._stat import kurt
+        return kurt(self, unbiased=unbiased)
+
+    def sigmoid(self) -> "DataFrame":
+        from .ops._activation import sigmoid
+        return sigmoid(self)
 
     def count(self) -> "int":
         return self.shape[0]
 
+    def describe(self, ddof=1, unbiased=False):
+        from .ops._stat import describe
+        return describe(self, ddof=ddof, unbiased=unbiased)
+
     def quantile(self, q, axis=0, method="quantile", ):
         ...
 
-    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame"]) -> "DataFrame":
+    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
-    def __radd__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __radd__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self + other
 
-    def __sub__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __sub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.sub, other)
 
-    def __rsub__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __rsub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self * (-1) + other
 
     def __mul__(self, other) -> "DataFrame":
@@ -236,17 +283,24 @@ class DataFrame(object):
     def __truediv__(self, other) -> "DataFrame":
         return self.__arithmetic_operate(operator.truediv, other)
 
+    def __pow__(self, power) -> "DataFrame":
+        return self.__arithmetic_operate(operator.pow, power)
+
     def __lt__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.lt, other)
 
     def __le__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.le, other)
 
     def __gt__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.gt, other)
 
     def __ge__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.ge, other)
+
+    def __invert__(self):
+        from .ops._unary_operator import invert
+        return invert(self)
 
     def __arithmetic_operate(self, op, other) -> "DataFrame":
         """
@@ -261,16 +315,45 @@ class DataFrame(object):
         return arith_operate(self, other, op)
 
     def __cmp_operate(self, op, other) -> "DataFrame":
-        ...
+        from .ops._cmp import cmp_operate
+        return cmp_operate(self, other, op)
 
     def __getattr__(self, attr):
         if attr not in self._data_manager.schema.columns:
             raise ValueError(f"DataFrame does not has attribute {attr}")
 
-        assert 1 == 2
+        return self.__getitem__(attr)
+
+    def __setattr__(self, key, value):
+        property_attr_mapping = dict(block_table="_block_table",
+                                     data_manager="_data_manager")
+        if key not in ["label", "weight"] and key not in property_attr_mapping:
+            self.__dict__[key] = value
+            return
+
+        if key in property_attr_mapping:
+            self.__dict__[property_attr_mapping[key]] = value
+            return
+
+        if key == "label":
+            if self._label is not None:
+                self.__dict__["_label"] = None
+            from .ops._set_item import set_label_or_weight
+            set_label_or_weight(self, value, key_type=key)
+        else:
+            if self._weight is not None:
+                self.__dict__["_weight"] = None
+            from .ops._set_item import set_label_or_weight
+            set_label_or_weight(self, value, key_type=key)
 
     def __getitem__(self, items) -> "DataFrame":
-        if not isinstance(items, list):
+        if isinstance(items, DataFrame):
+            from .ops._where import where
+            return where(self, items)
+
+        if isinstance(items, pd.Index):
+            items = items.tolist()
+        elif not isinstance(items, list):
             items = [items]
 
         for item in items:
@@ -279,9 +362,11 @@ class DataFrame(object):
 
         return self.__extract_fields(with_sample_id=True, with_match_id=True, columns=items)
 
-    def __setitem__(self, keys, items) -> "DataFrame":
+    def __setitem__(self, keys, items):
         if isinstance(keys, str):
             keys = [keys]
+        elif isinstance(keys, pd.Series):
+            keys = keys.tolist()
 
         state = 0
         column_set = set(self._data_manager.schema.columns)
@@ -296,7 +381,7 @@ class DataFrame(object):
 
         from .ops._set_item import set_item
 
-        self._block_table = set_item(self, keys, items, state)
+        set_item(self, keys, items, state)
 
     def __len__(self):
         return self.count()
@@ -418,10 +503,16 @@ class DataFrame(object):
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
-        ...
+        from .ops._dimension_scaling import hstack
+        return hstack(stacks)
+
+    @classmethod
+    def vstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
+        from .ops._dimension_scaling import vstack
+        return vstack(stacks)
 
     def __extract_fields(self, with_sample_id=True, with_match_id=True,
-                         with_label=True, with_weight=True, columns: Union[str, list] = None) -> "DataFrame":
+                         with_label=True, with_weight=True, columns: Union[str, list]=None) -> "DataFrame":
         from .ops._field_extract import field_extract
         return field_extract(
             self,
@@ -432,72 +523,9 @@ class DataFrame(object):
             columns=columns
         )
 
-    def __convert_to_tensor(self, columns: Union[str, list], dtype: str = None):
-        if isinstance(columns, str):
-            columns = [columns]
-
-        column_index_offsets = [self._schema_manager.get_column_offset(column) for column in columns]
-        block_indexes = [self._block_manager.get_block_id(column) for column in column_index_offsets]
-        _, block_retrieval_indexes = self._block_manager.derive_new_block_manager(column_index_offsets)
-
-        return transform_to_tensor(
-            self._ctx,
-            self._block_table,
-            block_indexes,
-            block_retrieval_indexes,
-            dtype=dtype)
-
     def __convert_to_table(self, target_name):
         block_loc = self._data_manager.loc_block(target_name)
         assert block_loc[1] == 0, "support only one indexer in current version"
 
+        from .ops._indexer import transform_to_table
         return transform_to_table(self._block_table, block_loc[0], self._partition_order_mappings)
-
-    def to_secure_boost_frame(self):
-        return SecureBoostFrame(
-            self._ctx,
-            self._block_table,
-            self._partition_order_mappings,
-            self._data_manager
-        )
-
-
-class SecureBoostFrame(DataFrame):
-    def apply_node_map(self, node_map_dict: Dict[Any, Any]) -> "DataFrame":
-        """
-        值替换，比如(0, True)->1，(0, False)->2表示分裂到下一层怎么走
-        """
-        ...
-
-    def apply_select(self, target: Union["DataFrame", "SecureBoostFrame"]):
-        """
-        根据DataFrame的列取出对应特征列的值，该算子不放到storage层实现，涉及到每行可能特征会不一样
-        """
-        if len(target.schema.columns) != 1:
-            raise ValueError("To use apply_select, target's should has only one column")
-
-        other_column_name = target.schema.columns[0]
-        target_block_id = target.data_manager.loc_block(other_column_name)
-        offset = target.schema_manager.get_column_offset(other_column_name)
-        target_block_id = target.block_manager.get_block_id(offset)
-
-        non_operable_column_offsets = self._schema_manager.infer_non_operable_column_offsets()
-        non_operable_blocks = [
-            self._block_manager.get_block_id(column_offset)[0] for column_offset in non_operable_column_offsets
-        ]
-
-        select_column_value(
-            self._block_table,
-            target.block_table,
-            target_block_id,
-            non_operable_blocks,
-            self._schema_manager,
-            self._block_manager
-        )
-
-        return SecureBoostFrame(
-            self._ctx,
-            target_block_id,
-            self._partition_order_mappings,
-            ...,
-        )

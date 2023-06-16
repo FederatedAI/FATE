@@ -27,7 +27,7 @@ _uri_regex = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*
 
 
 class Metadata(pydantic.BaseModel):
-    metadata: dict = {}
+    metadata: dict = pydantic.Field(default_factory=dict)
     name: Optional[str] = None
     namespace: Optional[str] = None
 

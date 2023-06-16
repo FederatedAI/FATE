@@ -1,4 +1,5 @@
 import inspect
+import typing
 from pathlib import Path
 from typing import List, Optional
 
@@ -10,6 +11,9 @@ from ._artifact_base import (
     ComponentArtifactDescribes,
     Metadata,
 )
+
+if typing.TYPE_CHECKING:
+    from fate.arch.dataframe._dataframe import DataFrame
 
 
 class DataArtifactType(ArtifactType):
@@ -100,13 +104,13 @@ class DataframeWriter:
     def __init__(self, artifact: DataframeArtifactType) -> None:
         self.artifact = artifact
 
-    def write(self, ctx, dataframe, name=None, namespace=None):
-        self.artifact.metadata.metadata.update(dict(metadata=dataframe.schema))
+    def write(self, ctx, dataframe: "DataFrame", name=None, namespace=None):
+        # self.artifact.metadata.metadata.update({"metadata": dataframe.schema})
         if name is not None:
             self.artifact.metadata.name = name
         if namespace is not None:
             self.artifact.metadata.namespace = namespace
-        ctx.writer().write(dataframe)
+        ctx.writer(self.artifact.address.to_uri_str()).write(dataframe)
 
     def __str__(self):
         return f"DataframeWriter({self.artifact})"
@@ -157,8 +161,7 @@ class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType]):
         return DataframeArtifactType
 
     def _load_as_component_execute_arg(self, ctx, artifact: DataframeArtifactType):
-        pass
-        # return ctx.reader(apply_config.address.to_uri_str(), apply_config.metadata).read_dataframe()
+        return ctx.reader(artifact.address.to_uri_str(), artifact.metadata.metadata).read_dataframe()
 
     def _load_as_component_execute_arg_writer(self, ctx, artifact: DataframeArtifactType):
         return DataframeWriter(artifact)

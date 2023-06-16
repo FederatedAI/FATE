@@ -14,7 +14,7 @@ from ._artifact_base import (
 
 
 class MetricArtifactType(ArtifactType):
-    type = "metric"
+    ...
 
 
 class JsonMetricArtifactType(MetricArtifactType):

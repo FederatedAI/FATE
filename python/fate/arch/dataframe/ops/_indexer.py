@@ -51,8 +51,7 @@ def transform_to_table(block_table, block_index, partition_order_mappings):
         return order_indexes
 
     return block_table.mapPartitions(_convert_to_order_index,
-                                     use_previous_behavior=False
-                                     )
+                                     use_previous_behavior=False)
 
 
 def get_partition_order_mappings(block_table):
@@ -62,5 +61,30 @@ def get_partition_order_mappings(block_table):
     for block_id, (block_key, block_size) in block_info:
         block_order_mappings[block_key] = dict(
             start_index=start_index, end_index=start_index + block_size - 1, block_id=block_id)
+
+    return block_order_mappings
+
+
+def get_partition_order_by_raw_table(table):
+    def _get_block_summary(kvs):
+        try:
+            key = next(kvs)[0]
+            block_size = 1 + sum(1 for kv in kvs)
+        except StopIteration:
+            key, block_size = 0, 0
+
+        return {key: block_size}
+
+    block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
+
+    start_index, block_id = 0, 0
+    block_order_mappings = dict()
+    for blk_key, blk_size in block_summary.items():
+        block_order_mappings[blk_key] = dict(
+            start_index=start_index, end_index=start_index + blk_size - 1, block_id=block_id
+        )
+
+        start_index += blk_size
+        block_id += 1
 
     return block_order_mappings

@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
 from .schema_manager import SchemaManager
 from .block_manager import BlockManager
 from .block_manager import BlockType
@@ -37,11 +38,25 @@ class DataManager(object):
     def schema(self):
         return self._schema_manager.schema
 
+    def add_label_or_weight(self, key_type, name, block_type):
+        field_index, field_index_changes = self._schema_manager.add_label_or_weight(key_type, name, block_type)
+        self._block_manager.reset_block_field_indexes(field_index_changes)
+        self._block_manager.append_fields([field_index], block_type, should_compress=False)
+
     def append_columns(self, columns: List[str], block_types: Union["BlockType", List["BlockType"]]) -> List[int]:
         field_indexes = self._schema_manager.append_columns(columns, block_types)
         block_indexes = self._block_manager.append_fields(field_indexes, block_types)
 
         return block_indexes
+
+    def pop_blocks(self, block_indexes: List[int]):
+        field_indexes = []
+        for block_index in block_indexes:
+            field_indexes.extend(self._block_manager.blocks[block_index].field_indexes)
+
+        field_index_changes = self._schema_manager.pop_fields(field_indexes)
+        self._block_manager.pop_blocks(block_indexes)
+        self._block_manager.reset_block_field_indexes(field_index_changes)
 
     def split_columns(self, columns: List[str], block_types: Union["BlockType", List["BlockType"]]):
         field_indexes = self._schema_manager.split_columns(columns, block_types)
@@ -86,7 +101,7 @@ class DataManager(object):
                                                                       label_name,
                                                                       weight_name)
         schema_manager.init_field_types(label_type, weight_type, dtype,
-                                         default_type=default_type)
+                                        default_type=default_type)
         block_manager = BlockManager()
         block_manager.initialize_blocks(schema_manager)
 
@@ -102,7 +117,8 @@ class DataManager(object):
 
         return converted_blocks
 
-    def derive_new_data_manager(self, with_sample_id, with_match_id, with_label, with_weight, columns):
+    def derive_new_data_manager(self, with_sample_id, with_match_id, with_label, with_weight, columns) \
+            -> Tuple["DataManager", List[Tuple[int, int, bool, List]]]:
         schema_manager, derive_indexes = self._schema_manager.derive_new_schema_manager(with_sample_id=with_sample_id,
                                                                                         with_match_id=with_match_id,
                                                                                         with_label=with_label,
@@ -127,19 +143,49 @@ class DataManager(object):
 
             return loc_ret
 
-    def get_fields_loc(self):
+    def get_fields_loc(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
         field_block_mapping = self._block_manager.field_block_mapping
         fields_loc = [[]] * len(field_block_mapping)
         for col_id, _block_id_tuple in field_block_mapping.items():
             fields_loc[col_id] = _block_id_tuple
 
-        return fields_loc
+        exclude_indexes = set()
+        if not with_sample_id and self.schema.sample_id_name:
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.sample_id_name))
+
+        if not with_match_id and self.schema.match_id_name:
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.match_id_name))
+
+        if not with_label and self.schema.label_name:
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.label_name))
+
+        if not with_weight and self.schema.weight_name:
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.weight_name))
+
+        if not exclude_indexes:
+            return fields_loc
+
+        ret_fields_loc = []
+        for field_index, field_loc in enumerate(fields_loc):
+            if field_index not in exclude_indexes:
+                ret_fields_loc.append(field_loc)
+
+        return ret_fields_loc
 
     def get_field_name(self, field_index):
         return self._schema_manager.get_field_name(field_index)
 
+    def get_field_name_list(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
+        return self._schema_manager.get_field_name_list(with_sample_id=with_sample_id,
+                                                        with_match_id=with_match_id,
+                                                        with_label=with_label,
+                                                        with_weight=with_weight)
+
     def get_field_type_by_name(self, name):
         return self._schema_manager.get_field_types(name)
+
+    def get_field_offset(self, name):
+        return self._schema_manager.get_field_offset(name)
 
     def get_block(self, block_id):
         return self._block_manager.blocks[block_id]
@@ -154,14 +200,14 @@ class DataManager(object):
 
     def infer_non_operable_blocks(self):
         non_operable_field_offsets = self._schema_manager.infer_non_operable_field_offsets()
-        block_index_set = set(self._block_manager.loc_block(offset) for offset in non_operable_field_offsets)
+        block_index_set = set(self._block_manager.loc_block(offset, with_offset=False) for offset in non_operable_field_offsets)
         return sorted(list(block_index_set))
 
     def try_to_promote_types(self,
                              block_indexes: List[int],
-                             block_type: Union[list, int, float, BlockType]) -> List[Tuple[int, BlockType]]:
+                             block_type: Union[bool, list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
         promote_types = []
-        if isinstance(block_type, (int, float)):
+        if isinstance(block_type, (bool, int, float, np.dtype)):
             block_type = BlockType.get_block_type(block_type)
 
         if isinstance(block_type, BlockType):
@@ -171,7 +217,7 @@ class DataManager(object):
                         (bid, block_type)
                     )
         else:
-            for idx, (bid, r_type) in enumerate(zip(block_indexes, list)):
+            for idx, (bid, r_type) in enumerate(zip(block_indexes, block_type)):
                 block_type = BlockType.get_block_type(r_type)
                 if self.get_block(bid).block_type < block_type:
                     promote_types.append(
@@ -184,7 +230,7 @@ class DataManager(object):
         for bid, block_type in to_promote_blocks:
             self._block_manager.blocks[bid] = self._block_manager.blocks[bid].convert_block_type(block_type)
             for field_index in self._block_manager.blocks[bid].field_indexes:
-                self._schema_manager.set_field_type_by_offset(field_index, block_type.value())
+                self._schema_manager.set_field_type_by_offset(field_index, block_type.value)
 
     def compress_blocks(self):
         new_blocks, to_compress_block_loc, non_compress_block_changes = self._block_manager.compress()

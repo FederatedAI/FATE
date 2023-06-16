@@ -99,18 +99,7 @@ class IOKit:
 
         raise NotImplementedError(f"{artifact}")
 
-    def writer(self, ctx, artifact, **kwargs) -> "Writer":
-        name = artifact.name
-        metadata = artifact.metadata
-        if "metadata" in kwargs:
-            metadata = kwargs["metadata"]
-        for k, v in kwargs.items():
-            if k not in ["name", "metadata"]:
-                metadata[k] = v
-        writer_format = metadata.get("format")
-        if "name" in kwargs:
-            name = kwargs["name"]
-
+    def writer(self, ctx, path, metadata) -> "Writer":
         if isinstance(artifact, MetricArtifact):
             uri = URI.from_string(artifact.uri)
             if uri.schema == "file":

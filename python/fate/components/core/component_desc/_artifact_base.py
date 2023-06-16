@@ -33,7 +33,7 @@ class ArtifactType:
     def load_output(cls, spec: ArtifactOutputApplySpec):
         i = 0
         while True:
-            yield cls._load(spec.get_uri(i), {})
+            yield cls._load(spec.get_uri(i), Metadata())
             i += 1
 
     def __str__(self):

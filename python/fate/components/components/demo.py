@@ -51,6 +51,7 @@ def run(
     print("    dataset_outputs_1", dataset_outputs_1)
 
     print("dataframe_output", dataframe_output)
+    dataframe_output.write(ctx, dataframe_input, name="myname", namespace="mynamespace")
     print("dataset_output", dataset_output)
 
     json_model_output.write({"aaa": 1})

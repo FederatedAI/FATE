@@ -14,19 +14,11 @@
 #  limitations under the License.
 from ._indexer import (
     aggregate_indexer,
-    transform_to_table,
     get_partition_order_mappings
 )
-from ._transformer import (
-    transform_to_tensor,
-)
-from ._secure_boost_ops import (
-    select_column_value
-)
 
 
-__all__ = ["transform_to_tensor",
-           "transform_to_table",
+__all__ = [
            "aggregate_indexer",
-           "get_partition_order_mappings",
-           "select_column_value"]
+           "get_partition_order_mappings"
+           ]
