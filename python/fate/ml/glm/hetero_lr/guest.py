@@ -64,23 +64,24 @@ class HeteroLrModuleGuest(HeteroModule):
         self.labels = []
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        """y_vals = train_data.label.as_tensor().unique()
-        label_count = len(y_vals)
+        train_data_binarized_label = train_data.label.get_dummies()
+        label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
-        self.labels = y_vals
-        with_weight = train_data.weight is not None"""
+        self.labels = [label_name.split('_')[1] for label_name in label_count.columns]
+        with_weight = train_data.weight is not None
+        """
         # temp code start
         label_count = 2
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
         with_weight = False
         # temp code end
-
+        """
         if label_count > 2:
             self.ovr = True
             self.estimator = {}
-            train_data_binarized_label = train_data.label.one_hot()
+            # train_data_binarized_label = train_data.label.one_hot()
             for i, class_ctx in ctx.range(range(label_count)):
                 optimizer = copy.deepcopy(self.optimizer)
                 single_estimator = HeteroLrEstimatorGuest(max_iter=self.max_iter,
