@@ -16,7 +16,8 @@
 import logging
 from typing import Iterable
 
-from .._computing import Address, CSessionABC
+from fate.interface import Address, CSessionABC
+
 from ._table import from_hdfs, from_hive, from_localfs, from_rdd
 
 LOGGER = logging.getLogger(__name__)

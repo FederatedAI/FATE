@@ -29,3 +29,4 @@ def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
     )
 
     return block_table, data_manager
+

@@ -36,7 +36,7 @@ def transform_to_tensor(block_table,
                 indexes = [fields[i][1]]
                 j = i + 1
                 while j < len(fields) and bid == fields[j][0] and indexes[-1] + 1 == fields[j][1]:
-                    indexes.append(fields[1])
+                    indexes.append(fields[j][1])
                     j += 1
 
                 tensors.append(src_blocks[bid][:, indexes])
@@ -75,6 +75,9 @@ def transform_block_to_list(block_table, data_manager):
     fields_loc = data_manager.get_fields_loc()
 
     def _to_list(src_blocks):
+        if src_blocks[0].shape[0] == 0:
+            return []
+
         i = 0
         dst_list = None
         lines = 0

@@ -43,6 +43,7 @@ def _serialize(ctx, data):
     # import pandas as pd
     # print((data[["x0", "x1"]] * pd.Series([1,2])).as_pd_df())
     # print((data[["x0", "x1"]] + pd.Series([1,2])).as_pd_df())
+    # print((data[["x0", "x1"]] + pd.Series([1.0,2.0], index=["x1", "x0"])).as_pd_df())
     # print(DataFrame.hstack([data, empty_df]).as_pd_df())
     # print(DataFrame.vstack([data, data * 3]).as_pd_df())
     # print(data.values.as_tensor())

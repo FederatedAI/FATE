@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-import asyncio
 import hashlib
 import itertools
 import logging
@@ -485,7 +484,6 @@ class Federation(object):
         self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         self._other_status_tables = {}
         self._other_object_tables = {}
-        self._even_loop = None
         self._federation_status_table_cache = None
         self._federation_object_table_cache = None
 
@@ -493,12 +491,6 @@ class Federation(object):
 
     def destroy(self):
         self._session.cleanup(namespace=self._session_id, name="*")
-
-    @property
-    def _loop(self):
-        if self._even_loop is None:
-            self._even_loop = asyncio.get_event_loop()
-        return self._even_loop
 
     # noinspection PyUnusedLocal
     def remote(self, v, name: str, tag: str, parties: List[Tuple[str, str]]):
@@ -554,12 +546,11 @@ class Federation(object):
     def get(self, name: str, tag: str, parties: List[PartyMeta]) -> List:
         log_str = f"federation.standalone.get.{name}.{tag}"
         LOGGER.debug(f"[{log_str}]")
-        tasks = []
+        results = []
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, party, self._party)
-            tasks.append(self._meta.awiat_status_set(_tagged_key))
-        results = self._loop.run_until_complete(asyncio.gather(*tasks))
+            results.append(self._meta.wait_status_set(_tagged_key))
 
         rtn = []
         for r in results:
@@ -1070,10 +1061,10 @@ class _FederationMetaManager:
         self.party = party
         self._env = {}
 
-    async def awiat_status_set(self, key):
+    def wait_status_set(self, key):
         value = self.get_status(key)
         while value is None:
-            await asyncio.sleep(0.1)
+            time.sleep(0.1)
             value = self.get_status(key)
         LOGGER.debug("[GET] Got {} type {}".format(key, "Table" if isinstance(value, tuple) else "Object"))
         return value

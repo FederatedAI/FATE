@@ -136,6 +136,7 @@ class CSVReader(object):
             label_name=self._label_name,
             label_type=self._label_type,
             weight_name=self._weight_name,
+            dtype=self._dtype,
             partition=self._partition,
         ).to_frame(ctx, df)
 
@@ -170,7 +171,7 @@ class PandasReader(object):
         match_id_list: Union[None, list] = None,
         match_id_name: Union[None, str] = None,
         label_name: str = None,
-        label_type: str = "int",
+        label_type: str = "int32",
         weight_name: Union[None, str] = None,
         weight_type: str = "float32",
         dtype: str = "float32",
@@ -212,13 +213,13 @@ class PandasReader(object):
         partition_order_mappings = get_partition_order_by_raw_table(table)
         # partition_order_mappings = _get_partition_order(table)
         to_block_func = functools.partial(_to_blocks,
-                          data_manager=data_manager,
-                          retrieval_index_dict=retrieval_index_dict,
-                          partition_order_mappings=partition_order_mappings)
+                                          data_manager=data_manager,
+                                          retrieval_index_dict=retrieval_index_dict,
+                                          partition_order_mappings=partition_order_mappings)
 
         block_table = table.mapPartitions(
             to_block_func,
-            use_previous_behavior = False
+            use_previous_behavior=False
         )
 
         return DataFrame(ctx=ctx,
