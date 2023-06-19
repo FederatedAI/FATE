@@ -1,97 +1,10 @@
 import inspect
-import json
-from pathlib import Path
 from typing import List, Optional
 
-from .._role import Role
-from ._artifact_base import (
-    URI,
-    ArtifactDescribe,
-    ArtifactType,
-    ComponentArtifactDescribes,
-    Metadata,
-)
+from fate.components.core.essential import Role
 
-
-class ModelArtifactType(ArtifactType):
-    type = "model"
-
-
-class JsonModelArtifactType(ModelArtifactType):
-    type = "model_json"
-
-    def __init__(self, path, metadata: Metadata) -> None:
-        self.path = path
-        self.metadata = metadata
-
-    @classmethod
-    def _load(cls, uri: URI, metadata: Metadata):
-        return cls(uri.path, metadata)
-
-    def dict(self):
-        return {"metadata": self.metadata, "uri": f"file://{self.path}"}
-
-
-class ModelDirectoryArtifactType(ModelArtifactType):
-    type = "model_directory"
-
-    def __init__(self, path, metadata: Metadata) -> None:
-        self.path = path
-        self.metadata = metadata
-
-    @classmethod
-    def _load(cls, uri: URI, metadata: Metadata):
-        return cls(uri.path, metadata)
-
-    def dict(self):
-        return {"metadata": self.metadata, "uri": f"file://{self.path}"}
-
-
-class JsonModelWriter:
-    def __init__(self, artifact: JsonModelArtifactType) -> None:
-        self._artifact = artifact
-
-    def write(self, data):
-        path = Path(self._artifact.path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w") as fw:
-            json.dump(data, fw)
-
-
-class ModelDirectoryWriter:
-    def __init__(self, artifact: ModelDirectoryArtifactType) -> None:
-        self._artifact = artifact
-
-    def write(self, data):
-        path = Path(self._artifact.path)
-        path.mkdir(parents=True, exist_ok=True)
-        return self._artifact.path
-
-
-class JsonModelArtifactDescribe(ArtifactDescribe[JsonModelArtifactType]):
-    def _get_type(self):
-        return JsonModelArtifactType
-
-    def _load_as_component_execute_arg(self, ctx, artifact: JsonModelArtifactType):
-        try:
-            with open(artifact.path, "r") as fr:
-                return json.load(fr)
-        except Exception as e:
-            raise RuntimeError(f"load json model from {artifact} failed: {e}")
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: JsonModelArtifactType):
-        return JsonModelWriter(artifact)
-
-
-class ModelDirectoryArtifactDescribe(ArtifactDescribe[ModelDirectoryArtifactType]):
-    def _get_type(self):
-        return ModelDirectoryArtifactType
-
-    def _load_as_component_execute_arg(self, ctx, artifact: ModelDirectoryArtifactType):
-        return artifact
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: ModelDirectoryArtifactType):
-        return ModelDirectoryWriter(artifact)
+from ._directory import ModelDirectoryArtifactDescribe
+from ._json import JsonModelArtifactDescribe
 
 
 def json_model_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
@@ -129,6 +42,8 @@ def model_directory_outputs(name: str, roles: Optional[List[Role]] = None, desc=
 def _input_model_artifact(desc):
     def decorator(f):
         if not hasattr(f, "__component_artifacts__"):
+            from ..._component_artifact import ComponentArtifactDescribes
+
             f.__component_artifacts__ = ComponentArtifactDescribes()
 
         f.__component_artifacts__.add_model_input(desc)
@@ -140,6 +55,8 @@ def _input_model_artifact(desc):
 def _output_model_artifact(desc):
     def decorator(f):
         if not hasattr(f, "__component_artifacts__"):
+            from ..._component_artifact import ComponentArtifactDescribes
+
             f.__component_artifacts__ = ComponentArtifactDescribes()
 
         f.__component_artifacts__.add_model_output(desc)
@@ -151,8 +68,6 @@ def _output_model_artifact(desc):
 def _prepare(roles, desc):
     if roles is None:
         roles = []
-    else:
-        roles = [r.name for r in roles]
     if desc:
         desc = inspect.cleandoc(desc)
     return roles, desc

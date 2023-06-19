@@ -14,11 +14,8 @@
 #  limitations under the License.
 from typing import Any, Dict, List, Optional
 
+from fate.components.core.essential import Label, Role, Stage
 from pydantic import BaseModel
-
-from .._label import T_LABEL
-from .._role import T_ROLE
-from .._stage import T_STAGE
 
 
 class ParameterSpec(BaseModel):
@@ -32,10 +29,19 @@ class ParameterSpec(BaseModel):
 class ArtifactSpec(BaseModel):
     type: str
     optional: bool
-    stages: Optional[List[T_STAGE]]
-    roles: List[T_ROLE]
+    stages: Optional[List[Stage]]
+    roles: List[Role]
     description: str = ""
     is_multi: bool
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def dict(self, *args, **kwargs):
+        object_dict = super().dict(*args, **kwargs)
+        object_dict["roles"] = [r.name for r in self.roles]
+        object_dict["stages"] = [s.name for s in self.stages]
+        return object_dict
 
 
 class InputDefinitionsSpec(BaseModel):
@@ -50,15 +56,24 @@ class OutputDefinitionsSpec(BaseModel):
 
 
 class ComponentSpec(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     name: str
     description: str
     provider: str
     version: str
-    labels: List[T_LABEL]
-    roles: List[T_ROLE]
+    labels: List[Label]
+    roles: List[Role]
     parameters: Dict[str, ParameterSpec]
-    input_definitions: InputDefinitionsSpec
-    output_definitions: OutputDefinitionsSpec
+    input_artifacts: InputDefinitionsSpec
+    output_artifacts: OutputDefinitionsSpec
+
+    def dict(self, *args, **kwargs):
+        object_dict = super().dict(*args, **kwargs)
+        object_dict["roles"] = [r.name for r in self.roles]
+        object_dict["labels"] = [l.name for l in self.labels]
+        return object_dict
 
 
 class ComponentSpecV1(BaseModel):

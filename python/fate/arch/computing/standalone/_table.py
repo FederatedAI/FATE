@@ -48,9 +48,9 @@ class Table(CTableABC):
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
-        from .._address import StandaloneAddress
+        from .._address import EggRollAddress
 
-        if isinstance(address, StandaloneAddress):
+        if isinstance(address, EggRollAddress):
             self._table.save_as(
                 name=address.name,
                 namespace=address.namespace,

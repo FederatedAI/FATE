@@ -14,8 +14,8 @@
 #  limitations under the License.
 
 # re-export
-from .component_desc._component import component
-from .component_desc._data_artifact import (
+from .component_desc import (
+    component,
     data_directory_input,
     data_directory_inputs,
     data_directory_output,
@@ -24,11 +24,8 @@ from .component_desc._data_artifact import (
     dataframe_inputs,
     dataframe_output,
     dataframe_outputs,
-    table_input,
-    table_inputs,
-)
-from .component_desc._metric_artifact import json_metric_output, json_metric_outputs
-from .component_desc._model_artifact import (
+    json_metric_output,
+    json_metric_outputs,
     json_model_input,
     json_model_inputs,
     json_model_output,
@@ -37,8 +34,10 @@ from .component_desc._model_artifact import (
     model_directory_inputs,
     model_directory_output,
     model_directory_outputs,
+    parameter,
+    table_input,
+    table_inputs,
 )
-from .component_desc._parameter import parameter
 
 __all__ = [
     "component",

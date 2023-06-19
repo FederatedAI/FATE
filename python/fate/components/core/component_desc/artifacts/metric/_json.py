@@ -1,23 +1,11 @@
-import inspect
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-from .._role import Role
-from ._artifact_base import (
-    URI,
-    ArtifactDescribe,
-    ArtifactType,
-    ComponentArtifactDescribes,
-    Metadata,
-)
+from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
 
 
-class MetricArtifactType(ArtifactType):
-    ...
-
-
-class JsonMetricArtifactType(MetricArtifactType):
+class JsonMetricArtifactType(ArtifactType):
     type = "metrics_json"
 
     def __init__(self, path, metadata: Metadata) -> None:
@@ -65,37 +53,3 @@ class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType]):
 
     def _load_as_component_execute_arg_writer(self, ctx, artifact: JsonMetricArtifactType):
         return JsonMetricWriter(artifact)
-
-
-def json_metric_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _output_metric_artifact(_create_json_metric_artifact_describe(name, roles, desc, optional, multi=False))
-
-
-def json_metric_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _output_metric_artifact(_create_json_metric_artifact_describe(name, roles, desc, optional, multi=True))
-
-
-def _output_metric_artifact(desc):
-    def decorator(f):
-        if not hasattr(f, "__component_artifacts__"):
-            f.__component_artifacts__ = ComponentArtifactDescribes()
-
-        f.__component_artifacts__.add_metric_output(desc)
-        return f
-
-    return decorator
-
-
-def _prepare(roles, desc):
-    if roles is None:
-        roles = []
-    else:
-        roles = [r.name for r in roles]
-    if desc:
-        desc = inspect.cleandoc(desc)
-    return roles, desc
-
-
-def _create_json_metric_artifact_describe(name, roles, desc, optional, multi):
-    roles, desc = _prepare(roles, desc)
-    return JsonMetricArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=multi)

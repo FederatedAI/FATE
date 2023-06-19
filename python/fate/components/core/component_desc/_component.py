@@ -53,9 +53,16 @@ import inspect
 import logging
 from typing import List, Optional
 
-from .._role import T_ROLE, Role
-from .._stage import CROSS_VALIDATION, DEFAULT, PREDICT, TRAIN
-from ._artifact_base import ComponentArtifactDescribes
+from fate.components.core.essential import (
+    CROSS_VALIDATION,
+    DEFAULT,
+    PREDICT,
+    TRAIN,
+    Role,
+    Stage,
+)
+
+from ._component_artifact import ComponentArtifactDescribes
 from ._parameter import ComponentParameterDescribes
 
 logger = logging.getLogger(__name__)
@@ -65,7 +72,7 @@ class Component:
     def __init__(
         self,
         name: str,
-        roles: List[T_ROLE],
+        roles: List[Role],
         provider,
         version,
         description,
@@ -140,8 +147,8 @@ class Component:
                 labels=[],
                 roles=self.roles,
                 parameters=self.parameters.get_parameters_spec(),
-                input_definitions=self.artifacts.get_inputs_spec(self.roles),
-                output_definitions=self.artifacts.get_outputs_spec(self.roles),
+                input_artifacts=self.artifacts.get_inputs_spec(self.roles),
+                output_artifacts=self.artifacts.get_outputs_spec(self.roles),
             )
         )
 
@@ -150,6 +157,18 @@ class Component:
 
         import ruamel.yaml
 
+        spec = self.dict()
+        inefficient = False
+        if stream is None:
+            inefficient = True
+            stream = StringIO()
+        yaml = ruamel.yaml.YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.dump(spec.dict(), stream=stream)
+        if inefficient:
+            return stream.getvalue()
+
+    def dump_simplified_yaml(self, stream=None):
         spec = self.dict()
         inefficient = False
         if stream is None:
@@ -246,10 +265,9 @@ def component(
         version = __version__
     if provider is None:
         provider = __provider__
-    component_roles = [r.name for r in roles]
     return _component(
         name=name,
-        roles=component_roles,
+        roles=roles,
         provider=provider,
         version=version,
         description=description,
@@ -274,9 +292,9 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             artifacts = ComponentArtifactDescribes()
 
         if is_subcomponent:
-            artifacts.set_stages([cpn_name])
+            artifacts.set_stages([Stage.from_str(cpn_name)])
         else:
-            artifacts.set_stages([DEFAULT.name])
+            artifacts.set_stages([DEFAULT])
         desc = description
         if desc is None:
             desc = inspect.getdoc(f)

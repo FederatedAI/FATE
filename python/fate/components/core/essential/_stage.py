@@ -12,9 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Literal
-
-T_STAGE = Literal["train", "predict", "default"]
 
 
 class Stage:
@@ -37,21 +34,21 @@ class Stage:
     def is_default(self):
         return self.name == DEFAULT.name
 
+    @classmethod
+    def from_str(cls, stage: str):
+        if stage == "train":
+            return TRAIN
+        elif stage == "predict":
+            return PREDICT
+        elif stage == "cross_validation":
+            return CROSS_VALIDATION
+        elif stage == "default":
+            return DEFAULT
+        else:
+            raise ValueError(f"stage {stage} is not supported")
+
 
 TRAIN = Stage("train")
 PREDICT = Stage("predict")
 CROSS_VALIDATION = Stage("cross_validation")
 DEFAULT = Stage("default")
-
-
-def load_stage(stage: str):
-    if stage == "train":
-        return TRAIN
-    elif stage == "predict":
-        return PREDICT
-    elif stage == "cross_validation":
-        return CROSS_VALIDATION
-    elif stage == "default":
-        return DEFAULT
-    else:
-        raise ValueError(f"stage {stage} is not supported")
