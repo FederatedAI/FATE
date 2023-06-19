@@ -25,14 +25,18 @@ configpath=$(cd $basepath/conf;pwd)
 libpath=$(cd $basepath/lib;pwd)
 #module=transfer
 #main_class=com.firework.transfer.Bootstrap
-#module_version=1.0.0
-
+module_version=1.0.0-alpha
+project_name=osx
 
 
 
 case "$1" in
     start)
         start $2
+        status $2
+        ;;
+    debug)
+        debug $2
         status $2
         ;;
     stop)
@@ -45,6 +49,12 @@ case "$1" in
         stop $2
         sleep 0.5
         start  $2
+        status $2
+        ;;
+    rebudeg)
+        stop $2
+        sleep 0.5
+        debug  $2
         status $2
         ;;
     *)
