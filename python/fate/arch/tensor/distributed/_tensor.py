@@ -47,6 +47,36 @@ class DTensor:
     def __init__(self, shardings: "Shardings") -> None:
         self.shardings = shardings
 
+    def __add__(self, other):
+        return torch.add(self, other)
+
+    def __radd__(self, other):
+        return torch.add(other, self)
+
+    def __sub__(self, other):
+        return torch.sub(self, other)
+
+    def __rsub__(self, other):
+        return torch.rsub(self, other)
+
+    def __mul__(self, other):
+        return torch.mul(self, other)
+
+    def __rmul__(self, other):
+        return torch.mul(other, self)
+
+    def __truediv__(self, other):
+        return torch.div(self, other)
+
+    def __rtruediv__(self, other):
+        return torch.div(other, self)
+
+    def __matmul__(self, other):
+        return torch.matmul(self, other)
+
+    def __rmatmul__(self, other):
+        return torch.matmul(other, self)
+
     @property
     def shape(self):
         return self.shardings.shape
