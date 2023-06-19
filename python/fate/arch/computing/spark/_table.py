@@ -31,7 +31,6 @@ from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
 
-
 _HDFS_DELIMITER = "\t"
 
 
@@ -216,7 +215,10 @@ def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
 
     sc = SparkContext.getOrCreate()
     fun = hdfs_deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
-    rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
+    rdd = sc.textFile(paths, partitions).map(fun)
+    if partitions is not None:
+        rdd = rdd.repartition(partitions)
+    rdd = materialize(rdd)
     return Table(rdd=rdd)
 
 

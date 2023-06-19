@@ -5,7 +5,7 @@ from fate.components.core.essential import DataDirectoryArtifactType
 from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class _DataDirectoryArtifactType(_ArtifactType):
+class _DataDirectoryArtifactType(_ArtifactType["DataDirectoryWriter"]):
     type = DataDirectoryArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
@@ -21,6 +21,9 @@ class _DataDirectoryArtifactType(_ArtifactType):
             "metadata": self.metadata,
             "uri": f"file://{self.path}",
         }
+
+    def get_writer(self) -> "DataDirectoryWriter":
+        return DataDirectoryWriter(self)
 
 
 class DataDirectoryWriter:
@@ -43,7 +46,7 @@ class DataDirectoryWriter:
         return f"DataDirectoryWriter({self.artifact})"
 
     def __repr__(self):
-        return str(self)
+        return self.__str__()
 
 
 class DataDirectoryArtifactDescribe(ArtifactDescribe):
@@ -52,6 +55,3 @@ class DataDirectoryArtifactDescribe(ArtifactDescribe):
 
     def _load_as_component_execute_arg(self, ctx, artifact: _DataDirectoryArtifactType):
         return artifact
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: _DataDirectoryArtifactType):
-        return DataDirectoryWriter(artifact)

@@ -5,7 +5,7 @@ from fate.components.core.essential import ModelDirectoryArtifactType
 from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class _ModelDirectoryArtifactType(_ArtifactType):
+class _ModelDirectoryArtifactType(_ArtifactType["ModelDirectoryWriter"]):
     type = ModelDirectoryArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
@@ -19,6 +19,9 @@ class _ModelDirectoryArtifactType(_ArtifactType):
     def dict(self):
         return {"metadata": self.metadata, "uri": f"file://{self.path}"}
 
+    def get_writer(self) -> "ModelDirectoryWriter":
+        return ModelDirectoryWriter(self)
+
 
 class ModelDirectoryWriter:
     def __init__(self, artifact: _ModelDirectoryArtifactType) -> None:
@@ -29,6 +32,9 @@ class ModelDirectoryWriter:
         path.mkdir(parents=True, exist_ok=True)
         return self._artifact.path
 
+    def __str__(self):
+        return f"ModelDirectoryWriter({self._artifact})"
+
 
 class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ModelDirectoryArtifactType]):
     def get_type(self):
@@ -36,6 +42,3 @@ class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ModelDirectoryArtifactTyp
 
     def _load_as_component_execute_arg(self, ctx, artifact: _ModelDirectoryArtifactType):
         return artifact
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: _ModelDirectoryArtifactType):
-        return ModelDirectoryWriter(artifact)

@@ -7,7 +7,7 @@ from fate.components.core.essential import JsonMetricArtifactType
 from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class _JsonMetricArtifactType(_ArtifactType):
+class _JsonMetricArtifactType(_ArtifactType["JsonMetricWriter"]):
     type = JsonMetricArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
@@ -20,6 +20,9 @@ class _JsonMetricArtifactType(_ArtifactType):
 
     def dict(self):
         return {"metadata": self.metadata, "uri": f"file://{self.path}"}
+
+    def get_writer(self) -> "JsonMetricWriter":
+        return JsonMetricWriter(self)
 
 
 class JsonMetricWriter:
@@ -41,6 +44,9 @@ class JsonMetricWriter:
         with path.open("w") as fw:
             json.dump(data, fw)
 
+    def __str__(self):
+        return f"JsonMetricWriter({self._artifact})"
+
 
 class JsonMetricArtifactDescribe(ArtifactDescribe[_JsonMetricArtifactType]):
     def get_type(self):
@@ -52,6 +58,3 @@ class JsonMetricArtifactDescribe(ArtifactDescribe[_JsonMetricArtifactType]):
                 return json.load(fr)
         except Exception as e:
             raise RuntimeError(f"load json model named from {artifact} failed: {e}")
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: _JsonMetricArtifactType):
-        return JsonMetricWriter(artifact)

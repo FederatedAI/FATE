@@ -42,20 +42,18 @@ class CSession(CSessionABC):
     def session_id(self):
         return self._session.session_id
 
-    def load(self, address: Address, partitions: int, schema: dict, **kwargs):
-        from .._address import StandaloneAddress
-        from ._type import StandaloneStoreType
+    def load(self, address: Address, schema: dict, **kwargs):
+        from .._address import EggRollAddress
 
-        if isinstance(address, StandaloneAddress):
+        if isinstance(address, EggRollAddress):
             raw_table = self._session.load(address.name, address.namespace)
-            if address.storage_type != StandaloneStoreType.ROLLPAIR_IN_MEMORY:
-                partitions = raw_table.partitions if partitions is None else partitions
-                raw_table = raw_table.save_as(
-                    name=f"{address.name}_{uuid()}",
-                    namespace=address.namespace,
-                    partition=partitions,
-                    need_cleanup=True,
-                )
+            partitions = raw_table.partitions
+            raw_table = raw_table.save_as(
+                name=f"{address.name}_{uuid()}",
+                namespace=address.namespace,
+                partition=partitions,
+                need_cleanup=True,
+            )
             table = Table(raw_table)
             table.schema = schema
             return table

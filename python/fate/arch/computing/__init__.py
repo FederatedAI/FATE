@@ -15,6 +15,7 @@
 
 from fate.interface import CTableABC
 
+from ._address import EggRollAddress, HDFSAddress, HiveAddress
 from ._type import ComputingEngine
 
 
@@ -22,4 +23,4 @@ def is_table(v):
     return isinstance(v, CTableABC)
 
 
-__all__ = ["is_table", "ComputingEngine"]
+__all__ = ["is_table", "ComputingEngine", "EggRollAddress", "HDFSAddress", "HiveAddress"]

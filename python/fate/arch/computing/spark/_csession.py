@@ -31,7 +31,8 @@ class CSession(CSessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
 
-    def load(self, address: Address, partitions, schema, **kwargs):
+    def load(self, address: Address, schema, **kwargs):
+        partitions = kwargs.get("partitions", None)
         from .._address import HDFSAddress
 
         if isinstance(address, HDFSAddress):

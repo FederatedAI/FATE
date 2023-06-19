@@ -1,9 +1,11 @@
+from typing import Union
+
 from fate.components.core.essential import TableArtifactType
 
 from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class _TableArtifactType(_ArtifactType):
+class _TableArtifactType(_ArtifactType["TableWriter"]):
     type = TableArtifactType
 
     class EggrollAddress:
@@ -16,20 +18,18 @@ class _TableArtifactType(_ArtifactType):
             return f"eggroll://{self.namespace}/{self.name}"
 
         def read(self, ctx):
-            from fate.arch import dataframe
-            from fate.arch.computing._address import EggRollAddress
+            from fate.arch.computing import EggRollAddress
 
             table = ctx.computing.load(
                 address=EggRollAddress(name=self.name, namespace=self.namespace),
+                schema=self.metadata,
             )
             table.schema = self.metadata
-            return dataframe.deserialize(ctx, table)
+            return table
 
-        def write(self, ctx, df):
-            from fate.arch import dataframe
-            from fate.arch.computing._address import EggRollAddress
+        def write(self, ctx, table):
+            from fate.arch.computing import EggRollAddress
 
-            table = dataframe.serialize(ctx, df)
             table.save(
                 address=EggRollAddress(name=self.name, namespace=self.namespace),
                 schema=self.metadata,
@@ -45,41 +45,31 @@ class _TableArtifactType(_ArtifactType):
             return f"hdfs://{self.path}"
 
         def read(self, ctx):
-            raise NotImplementedError()
+            from fate.arch.computing import HDFSAddress
 
-    class FileAddress:
-        def __init__(self, path: str, metadata: dict):
-            self.path = path
-            self.metadata = metadata
+            table = ctx.computing.load(
+                address=HDFSAddress(path=self.path),
+            )
+            table.schema = self.metadata
+            return table
 
-        def to_uri_str(self):
-            return f"file://{self.path}"
+        def write(self, ctx, table):
+            from fate.arch.computing import HDFSAddress
 
-        def read(self, ctx):
-            from fate.arch.context.io.data.csv import CSVReader
+            table.save(
+                address=HDFSAddress(path=self.path),
+                schema=self.metadata,
+                partitions=table.partitions,
+            )
 
-            return CSVReader(ctx, self.path, self.metadata).read_dataframe()
-
-        def write(self, ctx, dataframe):
-            # from fate.arch.context.io.data.csv import CSVWriter
-            #
-            # return CSVWriter(ctx, self.path, self.metadata).write_dataframe(dataframe)
-            from fate.arch.context.io.data.file import FileDataFrameWriter
-
-            writer = FileDataFrameWriter(ctx, self.path, self.metadata)
-            writer.write_dataframe(dataframe)
-            self.metadata = writer.metadata
-
-    def __init__(self, metadata: Metadata, address):
+    def __init__(self, metadata: Metadata, address: Union[EggrollAddress, HdfsAddress]):
         self.metadata = metadata
         self.address = address
 
     @classmethod
     def _load(cls, uri: URI, metadata: Metadata):
         schema = uri.schema
-        if schema == "file":
-            address = cls.FileAddress(uri.path, metadata.metadata)
-        elif schema == "hdfs":
+        if schema == "hdfs":
             address = cls.HdfsAddress(uri.path, metadata.metadata)
         elif schema == "eggroll":
             _, namespace, name = uri.path.split("/")
@@ -94,6 +84,9 @@ class _TableArtifactType(_ArtifactType):
             "uri": self.address.to_uri_str(),
         }
 
+    def get_writer(self) -> "TableWriter":
+        return TableWriter(self)
+
 
 class TableWriter:
     def __init__(self, artifact: _TableArtifactType) -> None:
@@ -106,7 +99,7 @@ class TableWriter:
         return f"TableWriter({self.artifact})"
 
     def __repr__(self):
-        return str(self)
+        return self.__str__()
 
 
 class TableArtifactDescribe(ArtifactDescribe):
@@ -114,8 +107,4 @@ class TableArtifactDescribe(ArtifactDescribe):
         return _TableArtifactType
 
     def _load_as_component_execute_arg(self, ctx, artifact: _TableArtifactType):
-        pass
-        # return ctx.reader(apply_config.name, apply_config.uri, apply_config.metadata).read_dataframe()
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: _TableArtifactType):
-        return TableWriter(artifact)
+        return artifact.address.read(ctx)

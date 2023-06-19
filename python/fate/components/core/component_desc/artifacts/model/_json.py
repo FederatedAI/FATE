@@ -6,7 +6,7 @@ from fate.components.core.essential import JsonModelArtifactType
 from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class _JsonModelArtifactType(_ArtifactType):
+class _JsonModelArtifactType(_ArtifactType["JsonModelWriter"]):
     type = JsonModelArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
@@ -20,6 +20,9 @@ class _JsonModelArtifactType(_ArtifactType):
     def dict(self):
         return {"metadata": self.metadata, "uri": f"file://{self.path}"}
 
+    def get_writer(self) -> "JsonModelWriter":
+        return JsonModelWriter(self)
+
 
 class JsonModelWriter:
     def __init__(self, artifact: _JsonModelArtifactType) -> None:
@@ -30,6 +33,9 @@ class JsonModelWriter:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:
             json.dump(data, fw)
+
+    def __str__(self):
+        return f"JsonModelWriter({self._artifact})"
 
 
 class JsonModelArtifactDescribe(ArtifactDescribe[_JsonModelArtifactType]):
@@ -42,6 +48,3 @@ class JsonModelArtifactDescribe(ArtifactDescribe[_JsonModelArtifactType]):
                 return json.load(fr)
         except Exception as e:
             raise RuntimeError(f"load json model from {artifact} failed: {e}")
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: _JsonModelArtifactType):
-        return JsonModelWriter(artifact)

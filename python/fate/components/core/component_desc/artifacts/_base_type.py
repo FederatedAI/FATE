@@ -8,8 +8,10 @@ from fate.components.core.spec.task import (
     ArtifactOutputApplySpec,
 )
 
+W = TypeVar("W")
 
-class _ArtifactType:
+
+class _ArtifactType(Generic[W]):
     type: ArtifactType
 
     @classmethod
@@ -27,8 +29,11 @@ class _ArtifactType:
             yield cls._load(spec.get_uri(i), Metadata())
             i += 1
 
+    def get_writer(self) -> W:
+        raise NotImplementedError(f"get writer from artifact `{self}`")
+
     def __str__(self):
-        return f"{self.__class__.__name__}:{self.type}"
+        return f"{self.__class__.__name__}({self.dict()})"
 
     def __repr__(self):
         return str(self)
@@ -91,9 +96,6 @@ class ArtifactDescribe(Generic[AT]):
         """
         raise NotImplementedError(f"load as component execute arg artifact({self}) error")
 
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: AT):
-        raise NotImplementedError(f"load as component execute arg slot artifact({self}) error")
-
     def load_as_input(self, ctx, apply_config):
         if apply_config is not None:
             try:
@@ -118,12 +120,10 @@ class ArtifactDescribe(Generic[AT]):
             output_iter = self.get_type().load_output(apply_config)
             try:
                 if self.multi:
-                    return _generator_recorder(
-                        self._load_as_component_execute_arg_writer(ctx, artifact) for artifact in output_iter
-                    )
+                    return _generator_recorder(artifact.get_writer() for artifact in output_iter)
                 else:
                     artifact = next(output_iter)
-                    return artifact.dict(), self._load_as_component_execute_arg_writer(ctx, artifact)
+                    return artifact.dict(), artifact.get_writer()
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:
