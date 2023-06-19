@@ -2,11 +2,13 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import JsonMetricArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class JsonMetricArtifactType(ArtifactType):
-    type = "metrics_json"
+class _JsonMetricArtifactType(_ArtifactType):
+    type = JsonMetricArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
@@ -21,7 +23,7 @@ class JsonMetricArtifactType(ArtifactType):
 
 
 class JsonMetricWriter:
-    def __init__(self, artifact: JsonMetricArtifactType) -> None:
+    def __init__(self, artifact: _JsonMetricArtifactType) -> None:
         self._artifact = artifact
 
     def write(
@@ -40,16 +42,16 @@ class JsonMetricWriter:
             json.dump(data, fw)
 
 
-class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType]):
-    def _get_type(self):
-        return JsonMetricArtifactType
+class JsonMetricArtifactDescribe(ArtifactDescribe[_JsonMetricArtifactType]):
+    def get_type(self):
+        return _JsonMetricArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: JsonMetricArtifactType):
+    def _load_as_component_execute_arg(self, ctx, artifact: _JsonMetricArtifactType):
         try:
             with open(artifact.path, "r") as fr:
                 return json.load(fr)
         except Exception as e:
             raise RuntimeError(f"load json model named from {artifact} failed: {e}")
 
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: JsonMetricArtifactType):
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: _JsonMetricArtifactType):
         return JsonMetricWriter(artifact)

@@ -1,10 +1,12 @@
 from pathlib import Path
 
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import ModelDirectoryArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class ModelDirectoryArtifactType(ArtifactType):
-    type = "model_directory"
+class _ModelDirectoryArtifactType(_ArtifactType):
+    type = ModelDirectoryArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
@@ -19,7 +21,7 @@ class ModelDirectoryArtifactType(ArtifactType):
 
 
 class ModelDirectoryWriter:
-    def __init__(self, artifact: ModelDirectoryArtifactType) -> None:
+    def __init__(self, artifact: _ModelDirectoryArtifactType) -> None:
         self._artifact = artifact
 
     def write(self, data):
@@ -28,12 +30,12 @@ class ModelDirectoryWriter:
         return self._artifact.path
 
 
-class ModelDirectoryArtifactDescribe(ArtifactDescribe[ModelDirectoryArtifactType]):
-    def _get_type(self):
-        return ModelDirectoryArtifactType
+class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ModelDirectoryArtifactType]):
+    def get_type(self):
+        return _ModelDirectoryArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: ModelDirectoryArtifactType):
+    def _load_as_component_execute_arg(self, ctx, artifact: _ModelDirectoryArtifactType):
         return artifact
 
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: ModelDirectoryArtifactType):
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: _ModelDirectoryArtifactType):
         return ModelDirectoryWriter(artifact)

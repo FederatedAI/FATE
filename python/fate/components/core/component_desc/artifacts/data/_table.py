@@ -1,8 +1,10 @@
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import TableArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class TableArtifactType(ArtifactType):
-    type = "table"
+class _TableArtifactType(_ArtifactType):
+    type = TableArtifactType
 
     class EggrollAddress:
         def __init__(self, name: str, namespace: str, metadata: dict):
@@ -94,7 +96,7 @@ class TableArtifactType(ArtifactType):
 
 
 class TableWriter:
-    def __init__(self, artifact: TableArtifactType) -> None:
+    def __init__(self, artifact: _TableArtifactType) -> None:
         self.artifact = artifact
 
     def write(self, slot):
@@ -108,12 +110,12 @@ class TableWriter:
 
 
 class TableArtifactDescribe(ArtifactDescribe):
-    def _get_type(self):
-        return TableArtifactType
+    def get_type(self):
+        return _TableArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: TableArtifactType):
+    def _load_as_component_execute_arg(self, ctx, artifact: _TableArtifactType):
         pass
         # return ctx.reader(apply_config.name, apply_config.uri, apply_config.metadata).read_dataframe()
 
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: TableArtifactType):
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: _TableArtifactType):
         return TableWriter(artifact)

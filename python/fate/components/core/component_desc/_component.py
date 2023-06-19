@@ -152,23 +152,54 @@ class Component:
             )
         )
 
-    def dump_yaml(self, stream=None):
+    def _io_dict(self):
+        from fate.components.core.spec.component import (
+            ComponentIOArtifactsTypeSpec,
+            ComponentIOArtifactTypeSpec,
+            ComponentIOInputsArtifactsTypeSpec,
+            ComponentIOOutputsArtifactsTypeSpec,
+        )
+
+        def _get_io_artifact_type_spec(v):
+            return ComponentIOArtifactTypeSpec(
+                type_name=v.get_type().type.type_name,
+                path_type=v.get_type().type.path_type,
+                uri_types=v.get_type().type.uri_types,
+                is_multi=v.multi,
+            )
+
+        return ComponentIOArtifactsTypeSpec(
+            inputs=ComponentIOInputsArtifactsTypeSpec(
+                data=[_get_io_artifact_type_spec(v) for v in self.artifacts.data_inputs.values()],
+                model=[_get_io_artifact_type_spec(v) for v in self.artifacts.model_inputs.values()],
+            ),
+            outputs=ComponentIOOutputsArtifactsTypeSpec(
+                data=[_get_io_artifact_type_spec(v) for v in self.artifacts.data_outputs.values()],
+                model=[_get_io_artifact_type_spec(v) for v in self.artifacts.model_outputs.values()],
+                metric=[_get_io_artifact_type_spec(v) for v in self.artifacts.metric_outputs.values()],
+            ),
+        )
+
+    def dump_io_yaml(self, stream=None):
         from io import StringIO
 
         import ruamel.yaml
 
-        spec = self.dict()
         inefficient = False
         if stream is None:
             inefficient = True
             stream = StringIO()
         yaml = ruamel.yaml.YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
-        yaml.dump(spec.dict(), stream=stream)
+        yaml.dump(self._flatten_stages()._io_dict().dict(), stream=stream)
         if inefficient:
             return stream.getvalue()
 
-    def dump_simplified_yaml(self, stream=None):
+    def dump_yaml(self, stream=None):
+        from io import StringIO
+
+        import ruamel.yaml
+
         spec = self.dict()
         inefficient = False
         if stream is None:

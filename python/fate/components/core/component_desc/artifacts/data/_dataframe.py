@@ -1,13 +1,15 @@
 import typing
 
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import DataframeArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 if typing.TYPE_CHECKING:
     from fate.arch.dataframe._dataframe import DataFrame
 
 
-class DataframeArtifactType(ArtifactType):
-    type = "dataframe"
+class _DataframeArtifactType(_ArtifactType):
+    type = DataframeArtifactType
 
     class EggrollAddress:
         def __init__(self, name: str, namespace: str, metadata: dict):
@@ -99,7 +101,7 @@ class DataframeArtifactType(ArtifactType):
 
 
 class DataframeWriter:
-    def __init__(self, artifact: DataframeArtifactType) -> None:
+    def __init__(self, artifact: _DataframeArtifactType) -> None:
         self.artifact = artifact
 
     def write(self, ctx, dataframe: "DataFrame", name=None, namespace=None):
@@ -116,12 +118,12 @@ class DataframeWriter:
         return str(self)
 
 
-class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType]):
-    def _get_type(self):
-        return DataframeArtifactType
+class DataframeArtifactDescribe(ArtifactDescribe[_DataframeArtifactType]):
+    def get_type(self):
+        return _DataframeArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: DataframeArtifactType):
+    def _load_as_component_execute_arg(self, ctx, artifact: _DataframeArtifactType):
         return artifact.address.read(ctx)
 
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: DataframeArtifactType):
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: _DataframeArtifactType):
         return DataframeWriter(artifact)
