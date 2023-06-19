@@ -52,15 +52,23 @@ class Context(ContextInterface):
         self._computing = computing
         self._federation = federation
         self._metrics_handler = metrics_handler
+        if self._metrics_handler is None:
+            from .metric._handler import NoopMetricsHandler
+
+            self._metrics_handler = NoopMetricsHandler()
+
         if namespace is None:
             namespace = default_ns
         self.namespace = namespace
 
-        self.metrics = MetricsWrap(metrics_handler)
         self.cipher: CipherKit = CipherKit(device)
         self._role_to_parties = None
         self._gc = GC()
         self._is_destroyed = False
+
+    @property
+    def metrics(self):
+        return MetricsWrap(self._metrics_handler, self.namespace)
 
     def with_namespace(self, namespace: NS):
         context = copy(self)

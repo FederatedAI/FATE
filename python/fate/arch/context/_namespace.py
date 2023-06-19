@@ -13,19 +13,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from contextlib import contextmanager
-from typing import Generator, List, Literal, Optional, Set, overload
+from typing import Optional, Set
+
+import pydantic
 
 logger = logging.getLogger(__name__)
 
 _NS_FEDERATION_SPLIT = "."
 
 
+class MetricsKey(pydantic.BaseModel):
+    name: str
+    special_tags: Optional[Set] = None
+
+
 class NS:
-    def __init__(self, name, deep, special_tags: Optional[Set] = None, parent: Optional["NS"] = None) -> None:
+    def __init__(self, name, deep, is_special=False, parent: Optional["NS"] = None) -> None:
         self.name = name
         self.deep = deep
-        self.special_tags = special_tags
+        self.is_special = is_special
 
         self.parent = parent
         self._federation_tag_cache = None
@@ -42,45 +48,39 @@ class NS:
         return self._federation_tag_cache
 
     def get_metrics_keys(self):
-        if self._metrics_keys_cache is None:
-            current_keys = dict(name=self.name, special_tags=self.special_tags)
-            if self.parent is None:
-                self._metrics_keys_cache = [current_keys]
-            else:
-                self._metrics_keys_cache = [*self.parent.get_metrics_keys(), current_keys]
+        pre_groups, pre_names = self.parent.get_metrics_keys() if self.parent is not None else ((), ())
+        if self.is_special:
+            self._metrics_keys_cache = ((*pre_groups, self.name), pre_names)
+        else:
+            self._metrics_keys_cache = (pre_groups, (*pre_names, self.name))
         return self._metrics_keys_cache
 
     def get_name(self):
         return self.name
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.name}, deep={self.deep}, special_tags={self.special_tags})"
+        return f"{self.__class__.__name__}(name={self.name}, deep={self.deep}, special_tags={self.is_special})"
 
     def indexed_ns(self, index: int):
-        return IndexedNS(
-            index=index, name=self.name, deep=self.deep, special_tags=self.special_tags, parent=self.parent
-        )
+        return IndexedNS(index=index, name=self.name, deep=self.deep, is_special=self.is_special, parent=self.parent)
 
     def sub_ns(self, name: str):
-        return NS(name=name, deep=self.deep + 1, parent=self)
+        return NS(name=name, deep=self.deep + 1, parent=self, is_special=False)
 
 
 class IndexedNS(NS):
-    def __init__(
-        self, index, name: str, deep: int, special_tags: Optional[Set] = None, parent: Optional["NS"] = None
-    ) -> None:
+    def __init__(self, index, name: str, deep: int, is_special: bool = False, parent: Optional["NS"] = None) -> None:
         self.index = index
-        super().__init__(name=name, deep=deep, special_tags=special_tags, parent=parent)
+        super().__init__(name=name, deep=deep, is_special=is_special, parent=parent)
 
     def get_name(self):
         return f"{self.name}-{self.index}"
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(index={self.index}, name={self.name}, deep={self.deep}, special_tags={self.special_tags})"
+        return f"{self.__class__.__name__}(index={self.index}, name={self.name}, deep={self.deep}, is_special={self.is_special})"
 
 
-default_ns = NS(name="default", deep=0, special_tags={"Default"})
-
+default_ns = NS(name="default", deep=0)
 
 # class Namespace:
 #     """

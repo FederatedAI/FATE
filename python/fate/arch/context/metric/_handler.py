@@ -26,13 +26,15 @@ class NoopMetricsHandler(MetricsHandler):
     def log_metrics(self, metrics: Union[Metrics, InCompleteMetrics]):
         if isinstance(metrics, Metrics):
             if metrics.name in self._metrics:
-                raise ValueError(f"duplicated metircs: `{metrics.name}` already exists")
+                raise ValueError(f"duplicated metrics: `{metrics.name}` already exists")
             else:
                 self._metrics[metrics.name] = metrics
         elif isinstance(metrics, InCompleteMetrics):
-            if metrics.name not in self._metrics:
-                self._metrics[metrics.name] = metrics
+            if (metrics.name, metrics.namespace) not in self._metrics:
+                self._metrics[(metrics.name, metrics.namespace)] = metrics
             else:
-                self._metrics[metrics.name].merge(metrics)
+                self._metrics[(metrics.name, metrics.namespace)] = self._metrics[
+                    (metrics.name, metrics.namespace)
+                ].merge(metrics)
         else:
             raise ValueError(f"metrics `{metrics}` not allowed")
