@@ -3,32 +3,25 @@ from pathlib import Path
 
 from fate.components.core.essential import ModelDirectoryArtifactType
 
-from .._base_type import ArtifactDescribe, _ArtifactType
+from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+
+if typing.TYPE_CHECKING:
+    from fate.arch import URI
 
 
-class _ModelDirectoryArtifactType(_ArtifactType["ModelDirectoryWriter"]):
-    type = ModelDirectoryArtifactType
-
-    def get_writer(self) -> "ModelDirectoryWriter":
-        return ModelDirectoryWriter(self)
-
-
-class ModelDirectoryWriter:
-    def __init__(self, artifact: _ModelDirectoryArtifactType) -> None:
-        self._artifact = artifact
-
+class ModelDirectoryWriter(_ArtifactTypeWriter):
     def write(self, data):
-        path = Path(self._artifact.uri.path)
+        path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
-        return self._artifact.uri.path
-
-    def __str__(self):
-        return f"ModelDirectoryWriter({self._artifact})"
+        return self.artifact.uri.path
 
 
-class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ModelDirectoryArtifactType]):
+class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
-        return _ModelDirectoryArtifactType
+        return ModelDirectoryArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _ModelDirectoryArtifactType):
+    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
+        return ModelDirectoryWriter(_ArtifactType(uri, metadata))
+
+    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
         return artifact

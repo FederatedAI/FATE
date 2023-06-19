@@ -1,22 +1,14 @@
 import typing
-from typing import Union
 
 from fate.components.core.essential import TableArtifactType
 
-from .._base_type import ArtifactDescribe, _ArtifactType
+from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+
+if typing.TYPE_CHECKING:
+    from fate.arch import URI
 
 
-class _TableArtifactType(_ArtifactType["TableWriter"]):
-    type = TableArtifactType
-
-    def get_writer(self) -> "TableWriter":
-        return TableWriter(self)
-
-
-class TableWriter:
-    def __init__(self, artifact: _TableArtifactType) -> None:
-        self.artifact = artifact
-
+class TableWriter(_ArtifactTypeWriter):
     def write(self, table):
         if "schema" not in self.artifact.metadata.metadata:
             self.artifact.metadata.metadata["schema"] = {}
@@ -26,18 +18,15 @@ class TableWriter:
             options=self.artifact.metadata.metadata.get("options", None),
         )
 
-    def __str__(self):
-        return f"TableWriter({self.artifact})"
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class TableArtifactDescribe(ArtifactDescribe):
     def get_type(self):
-        return _TableArtifactType
+        return TableArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _TableArtifactType):
+    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
+        return TableWriter(_ArtifactType(uri, metadata))
+
+    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
         return ctx.computing.load(
             uri=artifact.uri,
             schema=artifact.metadata.metadata.get("schema", {}),

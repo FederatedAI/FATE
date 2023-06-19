@@ -2,17 +2,14 @@ import typing
 
 from fate.components.core.essential import DataframeArtifactType
 
-from .._base_type import ArtifactDescribe, _ArtifactType
+from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
 
 if typing.TYPE_CHECKING:
-    from fate.arch import Context
+    from fate.arch import URI, Context
     from fate.arch.dataframe import DataFrame
 
 
-class DataframeWriter:
-    def __init__(self, artifact: "_DataframeArtifactType") -> None:
-        self.artifact = artifact
-
+class DataframeWriter(_ArtifactTypeWriter["_DataframeArtifactType"]):
     def write(self, ctx, df: "DataFrame", name=None, namespace=None):
         from fate.arch import dataframe
 
@@ -30,25 +27,15 @@ class DataframeWriter:
             options=self.artifact.metadata.metadata.get("options", None),
         )
 
-    def __str__(self):
-        return f"DataframeWriter({self.artifact})"
 
-    def __repr__(self):
-        return self.__str__()
-
-
-class _DataframeArtifactType(_ArtifactType[DataframeWriter]):
-    type = DataframeArtifactType
-
-    def get_writer(self) -> DataframeWriter:
-        return DataframeWriter(self)
-
-
-class DataframeArtifactDescribe(ArtifactDescribe[_DataframeArtifactType]):
+class DataframeArtifactDescribe(ArtifactDescribe):
     def get_type(self):
-        return _DataframeArtifactType
+        return DataframeArtifactType
 
-    def _load_as_component_execute_arg(self, ctx: "Context", artifact: _DataframeArtifactType):
+    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
+        return DataframeWriter(_ArtifactType(uri, metadata))
+
+    def _load_as_component_execute_arg(self, ctx: "Context", artifact: _ArtifactType):
         from fate.arch import dataframe
 
         if artifact.uri.schema == "file":

@@ -162,9 +162,9 @@ class Component:
 
         def _get_io_artifact_type_spec(v):
             return ComponentIOArtifactTypeSpec(
-                type_name=v.get_type().type.type_name,
-                path_type=v.get_type().type.path_type,
-                uri_types=v.get_type().type.uri_types,
+                type_name=v.get_type().type_name,
+                path_type=v.get_type().path_type,
+                uri_types=v.get_type().uri_types,
                 is_multi=v.multi,
             )
 

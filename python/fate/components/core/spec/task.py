@@ -12,7 +12,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Any, Dict, List, Union
+import os
+from typing import Any, Dict, List, Optional, Union
 
 import pydantic
 
@@ -41,6 +42,7 @@ class TaskConfigSpec(pydantic.BaseModel):
             OSXFederationSpec,
         ]
         logger: Union[PipelineLogger, FlowLogger, CustomLogger]
+        task_final_meta_path: pydantic.FilePath = pydantic.Field(default_factory=lambda: os.path.abspath(os.getcwd()))
 
     task_id: str
     party_task_id: str
