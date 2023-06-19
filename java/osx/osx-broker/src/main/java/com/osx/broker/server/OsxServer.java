@@ -69,22 +69,29 @@ public class OsxServer {
     PcpGrpcService pcpGrpcService;
 
     private synchronized void init() {
-        proxyGrpcService = new ProxyGrpcService();
-        pcpGrpcService = new PcpGrpcService();
-        server = buildServer();
-        if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
-            httpServer = buildHttpServer();
-            if (httpServer == null) {
-                System.exit(0);
-            }
-            if (MetaInfo.PROPERTY_HTTP_USE_TLS) {
-                httpsServer = buildHttpsServer();
-                if (httpsServer == null) {
+        try {
+            proxyGrpcService = new ProxyGrpcService();
+            pcpGrpcService = new PcpGrpcService();
+            server = buildServer();
+            if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
+                logger.info("prepare to create http server");
+                httpServer = buildHttpServer();
+                if (httpServer == null) {
                     System.exit(0);
                 }
+                if (MetaInfo.PROPERTY_HTTP_USE_TLS) {
+                    logger.info("prepare to create http server with TLS");
+                    httpsServer = buildHttpsServer();
+                    if (httpsServer == null) {
+                        System.exit(0);
+                    }
+                }
             }
+            tlsServer = buildTlsServer();
+        }catch(Exception e){
+            logger.error("server init error ",e);
+            e.printStackTrace();
         }
-        tlsServer = buildTlsServer();
     }
 
     public Server buildHttpServer() {

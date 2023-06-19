@@ -132,9 +132,15 @@ public class ServiceContainer {
 
 
     public static TechProviderRegister createTechProviderRegister() {
-        TechProviderRegister techProviderRegister = new TechProviderRegister();
-        techProviderRegister.start();
-        return techProviderRegister;
+        try {
+            TechProviderRegister techProviderRegister = new TechProviderRegister();
+            techProviderRegister.start();
+            return techProviderRegister;
+        }catch(Exception e){
+            logger.error("tech provider create error",e);
+        }
+        return null;
+
     }
 
     public static PcpGrpcService createPcpGrpcService() {
