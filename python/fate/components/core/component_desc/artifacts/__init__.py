@@ -1,4 +1,4 @@
-from ._base_type import ArtifactDescribe, ArtifactType
+from ._base_type import ArtifactDescribe, _ArtifactType
 from .data import (
     data_directory_input,
     data_directory_inputs,
@@ -24,7 +24,7 @@ from .model import (
 )
 
 __all__ = [
-    "ArtifactType",
+    "_ArtifactType",
     "ArtifactDescribe",
     "json_model_input",
     "json_model_inputs",

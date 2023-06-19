@@ -1,10 +1,12 @@
 from pathlib import Path
 
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import DataDirectoryArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class DataDirectoryArtifactType(ArtifactType):
-    type = "data_directory"
+class _DataDirectoryArtifactType(_ArtifactType["DataDirectoryWriter"]):
+    type = DataDirectoryArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
@@ -12,7 +14,7 @@ class DataDirectoryArtifactType(ArtifactType):
 
     @classmethod
     def _load(cls, uri: URI, metadata: Metadata):
-        return DataDirectoryArtifactType(uri.path, metadata)
+        return _DataDirectoryArtifactType(uri.path, metadata)
 
     def dict(self):
         return {
@@ -20,9 +22,12 @@ class DataDirectoryArtifactType(ArtifactType):
             "uri": f"file://{self.path}",
         }
 
+    def get_writer(self) -> "DataDirectoryWriter":
+        return DataDirectoryWriter(self)
+
 
 class DataDirectoryWriter:
-    def __init__(self, artifact: DataDirectoryArtifactType) -> None:
+    def __init__(self, artifact: _DataDirectoryArtifactType) -> None:
         self.artifact = artifact
 
     def get_directory(self) -> Path:
@@ -41,15 +46,12 @@ class DataDirectoryWriter:
         return f"DataDirectoryWriter({self.artifact})"
 
     def __repr__(self):
-        return str(self)
+        return self.__str__()
 
 
 class DataDirectoryArtifactDescribe(ArtifactDescribe):
-    def _get_type(self):
-        return DataDirectoryArtifactType
+    def get_type(self):
+        return _DataDirectoryArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: DataDirectoryArtifactType):
+    def _load_as_component_execute_arg(self, ctx, artifact: _DataDirectoryArtifactType):
         return artifact
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: DataDirectoryArtifactType):
-        return DataDirectoryWriter(artifact)

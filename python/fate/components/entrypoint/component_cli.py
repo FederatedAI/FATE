@@ -71,16 +71,6 @@ def cleanup(process_tag, config):
     cleanup_component_execution(TaskCleanupConfigSpec.parse_obj(config))
 
 
-@component.command()
-@click.option("--name", required=True, help="component name")
-@click.option("--output-path", type=click.File("w"), help="output path")
-def component_artifacts_type(name, output_path):
-    from fate.components.core import load_component
-
-    cpn = load_component(name)
-    cpn.dump_yaml(save)
-
-
 def load_properties(properties) -> dict:
     properties_dict = {}
     for property_item in properties:
@@ -179,6 +169,20 @@ def desc(name, save):
         cpn.dump_yaml(save)
     else:
         print(cpn.dump_yaml())
+
+
+@component.command()
+@click.option("--name", required=True, help="component name")
+@click.option("--output-path", type=click.File("w", lazy=True), help="output path")
+def artifact_type(name, output_path):
+    from fate.components.core import load_component
+
+    cpn = load_component(name)
+
+    if output_path:
+        cpn.dump_io_yaml(output_path)
+    else:
+        print(cpn.dump_io_yaml(output_path))
 
 
 @component.command()

@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fate.components.core.essential import Label, Role, Stage
 from pydantic import BaseModel
@@ -79,3 +79,26 @@ class ComponentSpec(BaseModel):
 class ComponentSpecV1(BaseModel):
     component: ComponentSpec
     schema_version: str = "v1"
+
+
+class ComponentIOArtifactTypeSpec(BaseModel):
+    type_name: str
+    uri_types: List[str]
+    path_type: Literal["file", "directory", "distributed"]
+    is_multi: bool
+
+
+class ComponentIOInputsArtifactsTypeSpec(BaseModel):
+    data: List[ComponentIOArtifactTypeSpec]
+    model: List[ComponentIOArtifactTypeSpec]
+
+
+class ComponentIOOutputsArtifactsTypeSpec(BaseModel):
+    data: List[ComponentIOArtifactTypeSpec]
+    model: List[ComponentIOArtifactTypeSpec]
+    metric: List[ComponentIOArtifactTypeSpec]
+
+
+class ComponentIOArtifactsTypeSpec(BaseModel):
+    inputs: ComponentIOInputsArtifactsTypeSpec
+    outputs: ComponentIOOutputsArtifactsTypeSpec

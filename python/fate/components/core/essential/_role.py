@@ -63,6 +63,12 @@ class Role(str):
         else:
             raise ValueError(f"role {role} is not supported")
 
+    def __str__(self):
+        return f"Role<{self.name}>"
+
+    def __repr__(self):
+        return f"Role<{self.name}>"
+
 
 GUEST = Role("guest")
 HOST = Role("host")

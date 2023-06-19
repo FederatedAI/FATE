@@ -2,11 +2,13 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import JsonMetricArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 
-class JsonMetricArtifactType(ArtifactType):
-    type = "metrics_json"
+class _JsonMetricArtifactType(_ArtifactType["JsonMetricWriter"]):
+    type = JsonMetricArtifactType
 
     def __init__(self, path, metadata: Metadata) -> None:
         self.path = path
@@ -19,9 +21,12 @@ class JsonMetricArtifactType(ArtifactType):
     def dict(self):
         return {"metadata": self.metadata, "uri": f"file://{self.path}"}
 
+    def get_writer(self) -> "JsonMetricWriter":
+        return JsonMetricWriter(self)
+
 
 class JsonMetricWriter:
-    def __init__(self, artifact: JsonMetricArtifactType) -> None:
+    def __init__(self, artifact: _JsonMetricArtifactType) -> None:
         self._artifact = artifact
 
     def write(
@@ -39,17 +44,17 @@ class JsonMetricWriter:
         with path.open("w") as fw:
             json.dump(data, fw)
 
+    def __str__(self):
+        return f"JsonMetricWriter({self._artifact})"
 
-class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType]):
-    def _get_type(self):
-        return JsonMetricArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: JsonMetricArtifactType):
+class JsonMetricArtifactDescribe(ArtifactDescribe[_JsonMetricArtifactType]):
+    def get_type(self):
+        return _JsonMetricArtifactType
+
+    def _load_as_component_execute_arg(self, ctx, artifact: _JsonMetricArtifactType):
         try:
             with open(artifact.path, "r") as fr:
                 return json.load(fr)
         except Exception as e:
             raise RuntimeError(f"load json model named from {artifact} failed: {e}")
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: JsonMetricArtifactType):
-        return JsonMetricWriter(artifact)

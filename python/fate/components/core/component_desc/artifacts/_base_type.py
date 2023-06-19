@@ -1,6 +1,6 @@
 from typing import Dict, Generic, List, TypeVar, Union
 
-from fate.components.core.essential import Role, Stage
+from fate.components.core.essential import ArtifactType, Role, Stage
 from fate.components.core.spec.artifact import URI, Metadata
 from fate.components.core.spec.component import ArtifactSpec
 from fate.components.core.spec.task import (
@@ -8,16 +8,18 @@ from fate.components.core.spec.task import (
     ArtifactOutputApplySpec,
 )
 
+W = TypeVar("W")
 
-class ArtifactType:
-    type: str
+
+class _ArtifactType(Generic[W]):
+    type: ArtifactType
 
     @classmethod
-    def _load(cls, uri: URI, metadata: Metadata) -> "ArtifactType":
+    def _load(cls, uri: URI, metadata: Metadata) -> "_ArtifactType":
         raise NotImplementedError(f"load artifact from spec `{cls}`")
 
     @classmethod
-    def load_input(cls, spec: ArtifactInputApplySpec) -> "ArtifactType":
+    def load_input(cls, spec: ArtifactInputApplySpec) -> "_ArtifactType":
         return cls._load(spec.get_uri(), spec.metadata)
 
     @classmethod
@@ -27,8 +29,11 @@ class ArtifactType:
             yield cls._load(spec.get_uri(i), Metadata())
             i += 1
 
+    def get_writer(self) -> W:
+        raise NotImplementedError(f"get writer from artifact `{self}`")
+
     def __str__(self):
-        return f"{self.__class__.__name__}:{self.type}"
+        return f"{self.__class__.__name__}({self.dict()})"
 
     def __repr__(self):
         return str(self)
@@ -50,12 +55,12 @@ class ArtifactDescribe(Generic[AT]):
         return stage in self.stages and role in self.roles
 
     def __str__(self) -> str:
-        return f"ArtifactDeclare<name={self.name}, type={self._get_type()}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
+        return f"ArtifactDeclare<name={self.name}, type={self.get_type()}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
 
     def merge(self, a: "ArtifactDescribe"):
         if self.__class__ != a.__class__ or self.multi != a.multi:
             raise ValueError(
-                f"artifact {self.name} declare multiple times with different optional: `{self._get_type()}` vs `{a._get_type()}`"
+                f"artifact {self.name} declare multiple times with different optional: `{self.get_type()}` vs `{a.get_type()}`"
             )
         if set(self.roles) != set(a.roles):
             raise ValueError(
@@ -74,7 +79,7 @@ class ArtifactDescribe(Generic[AT]):
 
     def dict(self, roles):
         return ArtifactSpec(
-            type=self._get_type().type,
+            type=self.get_type().type.type_name,
             optional=self.optional,
             roles=roles,
             stages=self.stages,
@@ -82,7 +87,7 @@ class ArtifactDescribe(Generic[AT]):
             is_multi=self.multi,
         )
 
-    def _get_type(self) -> AT:
+    def get_type(self) -> AT:
         raise NotImplementedError()
 
     def _load_as_component_execute_arg(self, ctx, artifact: AT):
@@ -91,19 +96,16 @@ class ArtifactDescribe(Generic[AT]):
         """
         raise NotImplementedError(f"load as component execute arg artifact({self}) error")
 
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: AT):
-        raise NotImplementedError(f"load as component execute arg slot artifact({self}) error")
-
     def load_as_input(self, ctx, apply_config):
         if apply_config is not None:
             try:
                 if self.multi:
-                    artifacts = [self._get_type().load_input(c) for c in apply_config]
+                    artifacts = [self.get_type().load_input(c) for c in apply_config]
                     metas = [c.dict() for c in artifacts]
                     args = [self._load_as_component_execute_arg(ctx, artifact) for artifact in artifacts]
                     return metas, args
                 else:
-                    artifact = self._get_type().load_input(apply_config)
+                    artifact = self.get_type().load_input(apply_config)
                     meta = artifact.dict()
                     return meta, self._load_as_component_execute_arg(ctx, artifact)
             except Exception as e:
@@ -115,15 +117,13 @@ class ArtifactDescribe(Generic[AT]):
 
     def load_as_output_slot(self, ctx, apply_config):
         if apply_config is not None:
-            output_iter = self._get_type().load_output(apply_config)
+            output_iter = self.get_type().load_output(apply_config)
             try:
                 if self.multi:
-                    return _generator_recorder(
-                        self._load_as_component_execute_arg_writer(ctx, artifact) for artifact in output_iter
-                    )
+                    return _generator_recorder(artifact.get_writer() for artifact in output_iter)
                 else:
                     artifact = next(output_iter)
-                    return artifact.dict(), self._load_as_component_execute_arg_writer(ctx, artifact)
+                    return artifact.dict(), artifact.get_writer()
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:

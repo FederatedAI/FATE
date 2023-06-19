@@ -1,13 +1,33 @@
 import typing
 
-from .._base_type import URI, ArtifactDescribe, ArtifactType, Metadata
+from fate.components.core.essential import DataframeArtifactType
+
+from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
 
 if typing.TYPE_CHECKING:
     from fate.arch.dataframe._dataframe import DataFrame
 
 
-class DataframeArtifactType(ArtifactType):
-    type = "dataframe"
+class DataframeWriter:
+    def __init__(self, artifact: "_DataframeArtifactType") -> None:
+        self.artifact = artifact
+
+    def write(self, ctx, dataframe: "DataFrame", name=None, namespace=None):
+        if name is not None:
+            self.artifact.metadata.name = name
+        if namespace is not None:
+            self.artifact.metadata.namespace = namespace
+        self.artifact.address.write(ctx, dataframe)
+
+    def __str__(self):
+        return f"DataframeWriter({self.artifact})"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class _DataframeArtifactType(_ArtifactType[DataframeWriter]):
+    type = DataframeArtifactType
 
     class EggrollAddress:
         def __init__(self, name: str, namespace: str, metadata: dict):
@@ -24,8 +44,8 @@ class DataframeArtifactType(ArtifactType):
 
             table = ctx.computing.load(
                 address=EggRollAddress(name=self.name, namespace=self.namespace),
+                schema=self.metadata,
             )
-            table.schema = self.metadata
             return dataframe.deserialize(ctx, table)
 
         def write(self, ctx, df):
@@ -91,6 +111,9 @@ class DataframeArtifactType(ArtifactType):
             raise ValueError(f"unsupported schema {schema}")
         return cls(metadata, address)
 
+    def get_writer(self) -> DataframeWriter:
+        return DataframeWriter(self)
+
     def dict(self):
         return {
             "metadata": self.metadata,
@@ -98,30 +121,9 @@ class DataframeArtifactType(ArtifactType):
         }
 
 
-class DataframeWriter:
-    def __init__(self, artifact: DataframeArtifactType) -> None:
-        self.artifact = artifact
+class DataframeArtifactDescribe(ArtifactDescribe[_DataframeArtifactType]):
+    def get_type(self):
+        return _DataframeArtifactType
 
-    def write(self, ctx, dataframe: "DataFrame", name=None, namespace=None):
-        if name is not None:
-            self.artifact.metadata.name = name
-        if namespace is not None:
-            self.artifact.metadata.namespace = namespace
-        self.artifact.address.write(ctx, dataframe)
-
-    def __str__(self):
-        return f"DataframeWriter({self.artifact})"
-
-    def __repr__(self):
-        return str(self)
-
-
-class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType]):
-    def _get_type(self):
-        return DataframeArtifactType
-
-    def _load_as_component_execute_arg(self, ctx, artifact: DataframeArtifactType):
+    def _load_as_component_execute_arg(self, ctx, artifact: _DataframeArtifactType):
         return artifact.address.read(ctx)
-
-    def _load_as_component_execute_arg_writer(self, ctx, artifact: DataframeArtifactType):
-        return DataframeWriter(artifact)

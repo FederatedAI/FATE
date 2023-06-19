@@ -47,6 +47,12 @@ class Stage:
         else:
             raise ValueError(f"stage {stage} is not supported")
 
+    def __str__(self):
+        return f"Stage<{self.name}>"
+
+    def __repr__(self):
+        return f"Stage<{self.name}>"
+
 
 TRAIN = Stage("train")
 PREDICT = Stage("predict")

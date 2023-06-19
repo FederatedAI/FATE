@@ -52,15 +52,13 @@ class CSession(CSessionABC):
         return self._session_id
 
     @computing_profile
-    def load(self, address, partitions: Optional[int], schema: dict, **kwargs):
+    def load(self, address, schema: dict, **kwargs):
 
         from .._address import EggRollAddress
         from ._type import EggRollStoreType
 
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
-            if partitions is not None:
-                options["total_partitions"] = partitions
             options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
             options["create_if_missing"] = False
             rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
@@ -71,7 +69,7 @@ class CSession(CSessionABC):
                 rp = rp.save_as(
                     name=f"{address.name}_{uuid()}",
                     namespace=self.session_id,
-                    partition=partitions,
+                    partition=rp.get_partitions(),
                     options={"store_type": EggRollStoreType.ROLLPAIR_IN_MEMORY},
                 )
 
