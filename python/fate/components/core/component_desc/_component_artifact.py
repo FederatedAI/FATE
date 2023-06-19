@@ -71,10 +71,12 @@ class ComponentArtifactDescribes:
         self._add_artifact(artifact)
         self.metric_outputs[artifact.name] = artifact
 
-    def set_stages(self, stages):
+    def update_roles_and_stages(self, stages, roles):
         def _set_all(artifacts: Dict[str, "ArtifactDescribe"]):
             for _, artifact in artifacts.items():
                 artifact.stages = stages
+                if not artifact.roles:
+                    artifact.roles = roles
 
         _set_all(self.data_inputs)
         _set_all(self.model_inputs)
@@ -101,21 +103,21 @@ class ComponentArtifactDescribes:
             metric_outputs=_merge(self.metric_outputs, stage_artifacts.metric_outputs),
         )
 
-    def get_inputs_spec(self, roles):
+    def get_inputs_spec(self):
         from fate.components.core.spec.component import InputDefinitionsSpec
 
         return InputDefinitionsSpec(
-            data={k: v.dict(roles) for k, v in self.data_inputs.items()},
-            model={k: v.dict(roles) for k, v in self.model_inputs.items()},
+            data={k: v.dict() for k, v in self.data_inputs.items()},
+            model={k: v.dict() for k, v in self.model_inputs.items()},
         )
 
-    def get_outputs_spec(self, roles):
+    def get_outputs_spec(self):
         from fate.components.core.spec.component import OutputDefinitionsSpec
 
         return OutputDefinitionsSpec(
-            data={k: v.dict(roles) for k, v in self.data_outputs.items()},
-            model={k: v.dict(roles) for k, v in self.model_outputs.items()},
-            metric={k: v.dict(roles) for k, v in self.metric_outputs.items()},
+            data={k: v.dict() for k, v in self.data_outputs.items()},
+            model={k: v.dict() for k, v in self.model_outputs.items()},
+            metric={k: v.dict() for k, v in self.metric_outputs.items()},
         )
 
 

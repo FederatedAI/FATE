@@ -12,7 +12,7 @@ from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 @cpn.dataframe_output("dataframe_output", roles=[GUEST, HOST])
 @cpn.data_directory_outputs("dataset_outputs", roles=[GUEST, HOST])
 @cpn.data_directory_output("dataset_output", roles=[GUEST, HOST])
-@cpn.json_model_input("json_model_input", roles=[GUEST, HOST])
+@cpn.json_model_input("json_model_input")
 @cpn.json_model_output("json_model_output", roles=[GUEST, HOST])
 def run(
     ctx,

@@ -91,11 +91,11 @@ class ArtifactDescribe(Generic[AT]):
             name=self.name, roles=self.roles, stages=stages, desc=self.desc, optional=self.optional, multi=self.multi
         )
 
-    def dict(self, roles):
+    def dict(self):
         return ArtifactSpec(
             type=self.get_type().type_name,
             optional=self.optional,
-            roles=roles,
+            roles=self.roles,
             stages=self.stages,
             description=self.desc,
             is_multi=self.multi,
