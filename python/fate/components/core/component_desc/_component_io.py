@@ -107,15 +107,25 @@ class ComponentExecutionIO:
         return kwargs
 
     def dump_io_meta(self) -> dict:
+        def _get_meta(d):
+            result = {}
+            for k, (arti, (arti_type, _)) in d.items():
+                if arti_type is not None:
+                    if isinstance(arti_type, list):
+                        result[k] = [a.dict() for a in arti_type]
+                    else:
+                        result[k] = arti_type.dict()
+            return result
+
         io_meta = IOMeta(
             inputs=IOMeta.InputMeta(
-                data={k: v[0] for k, (arti, v) in self.input_data.items()},
-                model={k: v[0] for k, (arti, v) in self.input_model.items()},
+                data=_get_meta(self.input_data),
+                model=_get_meta(self.input_model),
             ),
             outputs=IOMeta.OutputMeta(
-                data={k: v[0] for k, (arti, v) in self.output_data_slots.items()},
-                model={k: v[0] for k, (arti, v) in self.output_model_slots.items()},
-                metric={k: v[0] for k, (arti, v) in self.output_metric_slots.items()},
+                data=_get_meta(self.output_data_slots),
+                model=_get_meta(self.output_model_slots),
+                metric=_get_meta(self.output_metric_slots),
             ),
         )
         return io_meta.dict(exclude_none=True)
