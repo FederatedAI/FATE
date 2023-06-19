@@ -1,12 +1,16 @@
-from typing import Dict, Generic, List, TypeVar, Union
+import typing
+from typing import Generic, List, TypeVar
 
 from fate.components.core.essential import ArtifactType, Role, Stage
-from fate.components.core.spec.artifact import URI, Metadata
+from fate.components.core.spec.artifact import Metadata
 from fate.components.core.spec.component import ArtifactSpec
 from fate.components.core.spec.task import (
     ArtifactInputApplySpec,
     ArtifactOutputApplySpec,
 )
+
+if typing.TYPE_CHECKING:
+    from fate.arch import URI
 
 W = TypeVar("W")
 
@@ -14,29 +18,49 @@ W = TypeVar("W")
 class _ArtifactType(Generic[W]):
     type: ArtifactType
 
+    def __init__(self, uri: "URI", metadata: Metadata) -> None:
+        self.uri = uri
+        self.metadata = metadata
+
     @classmethod
-    def _load(cls, uri: URI, metadata: Metadata) -> "_ArtifactType":
-        raise NotImplementedError(f"load artifact from spec `{cls}`")
+    def _load(cls, uri: "URI", metadata: Metadata) -> "_ArtifactType":
+        return cls(uri, metadata)
 
     @classmethod
     def load_input(cls, spec: ArtifactInputApplySpec) -> "_ArtifactType":
-        return cls._load(spec.get_uri(), spec.metadata)
+        from fate.arch import URI
+
+        return cls._load(URI.from_string(spec.uri), spec.metadata)
 
     @classmethod
     def load_output(cls, spec: ArtifactOutputApplySpec):
+        from fate.arch import URI
+
         i = 0
         while True:
-            yield cls._load(spec.get_uri(i), Metadata())
+            if spec.is_template():
+                uri = URI.from_string(spec.uri.format(index=i))
+            else:
+                if i != 0:
+                    raise ValueError(f"index should be 0, but got {i}")
+                uri = URI.from_string(spec.uri)
+            yield cls._load(uri, Metadata())
             i += 1
 
     def get_writer(self) -> W:
         raise NotImplementedError(f"get writer from artifact `{self}`")
 
     def __str__(self):
-        return f"{self.__class__.__name__}({self.dict()})"
+        return f"{self.__class__.__name__}(uri={self.uri}, metadata={self.metadata})"
 
     def __repr__(self):
-        return str(self)
+        return self.__str__()
+
+    def dict(self):
+        return {
+            "metadata": self.metadata,
+            "uri": self.uri.to_string(),
+        }
 
 
 AT = TypeVar("AT")

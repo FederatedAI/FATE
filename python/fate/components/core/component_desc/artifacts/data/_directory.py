@@ -1,26 +1,13 @@
+import typing
 from pathlib import Path
 
 from fate.components.core.essential import DataDirectoryArtifactType
 
-from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
+from .._base_type import ArtifactDescribe, _ArtifactType
 
 
 class _DataDirectoryArtifactType(_ArtifactType["DataDirectoryWriter"]):
     type = DataDirectoryArtifactType
-
-    def __init__(self, path, metadata: Metadata) -> None:
-        self.path = path
-        self.metadata = metadata
-
-    @classmethod
-    def _load(cls, uri: URI, metadata: Metadata):
-        return _DataDirectoryArtifactType(uri.path, metadata)
-
-    def dict(self):
-        return {
-            "metadata": self.metadata,
-            "uri": f"file://{self.path}",
-        }
 
     def get_writer(self) -> "DataDirectoryWriter":
         return DataDirectoryWriter(self)
@@ -31,7 +18,7 @@ class DataDirectoryWriter:
         self.artifact = artifact
 
     def get_directory(self) -> Path:
-        path = Path(self.artifact.path)
+        path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
         return path
 

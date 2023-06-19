@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from ._dataframe import DataFrame
 from ._frame_reader import (
     CSVReader,
     ImageReader,
@@ -32,4 +33,5 @@ __all__ = [
     "build_schema",
     "serialize",
     "deserialize",
+    "DataFrame",
 ]

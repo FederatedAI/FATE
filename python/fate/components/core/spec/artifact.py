@@ -13,7 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import re
+import typing
 from typing import Optional
+
+if typing.TYPE_CHECKING:
+    from fate.arch import URI
 
 import pydantic
 
@@ -39,21 +43,10 @@ class ArtifactInputApplySpec(pydantic.BaseModel):
     uri: str
     metadata: Metadata
 
-    def get_uri(self) -> "URI":
-        return URI.from_string(self.uri)
-
 
 class ArtifactOutputApplySpec(pydantic.BaseModel):
     uri: str
     _is_template: Optional[bool] = None
-
-    def get_uri(self, index) -> "URI":
-        if self.is_template():
-            return URI.from_string(self.uri.format(index=index))
-        else:
-            if index != 0:
-                raise ValueError(f"index should be 0, but got {index}")
-            return URI.from_string(self.uri)
 
     def is_template(self) -> bool:
         return "{index}" in self.uri
@@ -66,27 +59,3 @@ class ArtifactOutputApplySpec(pydantic.BaseModel):
         if not _uri_regex.match(v):
             raise pydantic.ValidationError(f"`{v}` is not valid uri")
         return v
-
-
-class URI:
-    def __init__(
-        self,
-        schema: str,
-        path: str,
-        query: Optional[str] = None,
-        fragment: Optional[str] = None,
-        authority: Optional[str] = None,
-    ):
-        self.schema = schema
-        self.path = path
-        self.query = query
-        self.fragment = fragment
-        self.authority = authority
-
-    @classmethod
-    def from_string(cls, uri: str) -> "URI":
-        match = _uri_regex.fullmatch(uri)
-        if match is None:
-            raise ValueError(f"`{uri}` is not valid uri")
-        _, schema, _, authority, path, _, query, _, fragment = match.groups()
-        return URI(schema=schema, path=path, query=query, fragment=fragment, authority=authority)
