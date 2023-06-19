@@ -1,42 +1,56 @@
-from typing import Dict, Generic, List, TypeVar, Union
+import typing
+from typing import Generic, List, TypeVar
 
-from fate.components.core.essential import ArtifactType, Role, Stage
-from fate.components.core.spec.artifact import URI, Metadata
+from fate.components.core.essential import Role, Stage
+from fate.components.core.spec.artifact import Metadata
 from fate.components.core.spec.component import ArtifactSpec
 from fate.components.core.spec.task import (
     ArtifactInputApplySpec,
     ArtifactOutputApplySpec,
 )
 
+if typing.TYPE_CHECKING:
+    from fate.arch import URI
+
 W = TypeVar("W")
 
 
-class _ArtifactType(Generic[W]):
-    type: ArtifactType
-
-    @classmethod
-    def _load(cls, uri: URI, metadata: Metadata) -> "_ArtifactType":
-        raise NotImplementedError(f"load artifact from spec `{cls}`")
-
-    @classmethod
-    def load_input(cls, spec: ArtifactInputApplySpec) -> "_ArtifactType":
-        return cls._load(spec.get_uri(), spec.metadata)
-
-    @classmethod
-    def load_output(cls, spec: ArtifactOutputApplySpec):
-        i = 0
-        while True:
-            yield cls._load(spec.get_uri(i), Metadata())
-            i += 1
-
-    def get_writer(self) -> W:
-        raise NotImplementedError(f"get writer from artifact `{self}`")
+class _ArtifactTypeWriter(Generic[W]):
+    def __init__(self, artifact: W) -> None:
+        self.artifact = artifact
 
     def __str__(self):
-        return f"{self.__class__.__name__}({self.dict()})"
+        return f"{self.__class__.__name__}({self.artifact})"
 
     def __repr__(self):
-        return str(self)
+        return self.__str__()
+
+    def dict(self):
+        return self.artifact.dict()
+
+
+class _ArtifactType:
+    def __init__(self, uri: "URI", metadata: Metadata) -> None:
+        self.uri = uri
+        self.metadata = metadata
+
+    @classmethod
+    def load(cls, spec: ArtifactInputApplySpec) -> "_ArtifactType":
+        from fate.arch import URI
+
+        return _ArtifactType(URI.from_string(spec.uri), spec.metadata)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(uri={self.uri}, metadata={self.metadata})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def dict(self):
+        return {
+            "metadata": self.metadata,
+            "uri": self.uri.to_string(),
+        }
 
 
 AT = TypeVar("AT")
@@ -77,17 +91,20 @@ class ArtifactDescribe(Generic[AT]):
             name=self.name, roles=self.roles, stages=stages, desc=self.desc, optional=self.optional, multi=self.multi
         )
 
-    def dict(self, roles):
+    def dict(self):
         return ArtifactSpec(
-            type=self.get_type().type.type_name,
+            type=self.get_type().type_name,
             optional=self.optional,
-            roles=roles,
+            roles=self.roles,
             stages=self.stages,
             description=self.desc,
             is_multi=self.multi,
         )
 
     def get_type(self) -> AT:
+        raise NotImplementedError()
+
+    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
         raise NotImplementedError()
 
     def _load_as_component_execute_arg(self, ctx, artifact: AT):
@@ -100,12 +117,12 @@ class ArtifactDescribe(Generic[AT]):
         if apply_config is not None:
             try:
                 if self.multi:
-                    artifacts = [self.get_type().load_input(c) for c in apply_config]
+                    artifacts = [_ArtifactType.load(c) for c in apply_config]
                     metas = [c.dict() for c in artifacts]
                     args = [self._load_as_component_execute_arg(ctx, artifact) for artifact in artifacts]
                     return metas, args
                 else:
-                    artifact = self.get_type().load_input(apply_config)
+                    artifact = _ArtifactType.load(apply_config)
                     meta = artifact.dict()
                     return meta, self._load_as_component_execute_arg(ctx, artifact)
             except Exception as e:
@@ -117,19 +134,33 @@ class ArtifactDescribe(Generic[AT]):
 
     def load_as_output_slot(self, ctx, apply_config):
         if apply_config is not None:
-            output_iter = self.get_type().load_output(apply_config)
+            output_iter = self.load_output(apply_config)
             try:
                 if self.multi:
-                    return _generator_recorder(artifact.get_writer() for artifact in output_iter)
+                    return _generator_recorder(output_iter)
                 else:
                     artifact = next(output_iter)
-                    return artifact.dict(), artifact.get_writer()
+                    return artifact.dict(), artifact
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:
             raise ComponentArtifactApplyError(
                 f"load as output artifact({self}) slot error: apply_config is None but not optional"
             )
+
+    def load_output(self, spec: ArtifactOutputApplySpec):
+        from fate.arch import URI
+
+        i = 0
+        while True:
+            if spec.is_template():
+                uri = URI.from_string(spec.uri.format(index=i))
+            else:
+                if i != 0:
+                    raise ValueError(f"index should be 0, but got {i}")
+                uri = URI.from_string(spec.uri)
+            yield self.get_writer(uri, Metadata())
+            i += 1
 
 
 def _generator_recorder(generator):

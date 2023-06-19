@@ -147,12 +147,12 @@ class Component:
                 labels=[],
                 roles=self.roles,
                 parameters=self.parameters.get_parameters_spec(),
-                input_artifacts=self.artifacts.get_inputs_spec(self.roles),
-                output_artifacts=self.artifacts.get_outputs_spec(self.roles),
+                input_artifacts=self.artifacts.get_inputs_spec(),
+                output_artifacts=self.artifacts.get_outputs_spec(),
             )
         )
 
-    def _io_dict(self):
+    def _runtime_io_dict(self, runtime_role: Role, runtime_stage: Stage):
         from fate.components.core.spec.component import (
             ComponentIOArtifactsTypeSpec,
             ComponentIOArtifactTypeSpec,
@@ -162,25 +162,45 @@ class Component:
 
         def _get_io_artifact_type_spec(v):
             return ComponentIOArtifactTypeSpec(
-                type_name=v.get_type().type.type_name,
-                path_type=v.get_type().type.path_type,
-                uri_types=v.get_type().type.uri_types,
+                type_name=v.get_type().type_name,
+                path_type=v.get_type().path_type,
+                uri_types=v.get_type().uri_types,
                 is_multi=v.multi,
             )
 
         return ComponentIOArtifactsTypeSpec(
             inputs=ComponentIOInputsArtifactsTypeSpec(
-                data=[_get_io_artifact_type_spec(v) for v in self.artifacts.data_inputs.values()],
-                model=[_get_io_artifact_type_spec(v) for v in self.artifacts.model_inputs.values()],
+                data=[
+                    _get_io_artifact_type_spec(v)
+                    for v in self.artifacts.data_inputs.values()
+                    if v.is_active_for(runtime_stage, runtime_role)
+                ],
+                model=[
+                    _get_io_artifact_type_spec(v)
+                    for v in self.artifacts.model_inputs.values()
+                    if v.is_active_for(runtime_stage, runtime_role)
+                ],
             ),
             outputs=ComponentIOOutputsArtifactsTypeSpec(
-                data=[_get_io_artifact_type_spec(v) for v in self.artifacts.data_outputs.values()],
-                model=[_get_io_artifact_type_spec(v) for v in self.artifacts.model_outputs.values()],
-                metric=[_get_io_artifact_type_spec(v) for v in self.artifacts.metric_outputs.values()],
+                data=[
+                    _get_io_artifact_type_spec(v)
+                    for v in self.artifacts.data_outputs.values()
+                    if v.is_active_for(runtime_stage, runtime_role)
+                ],
+                model=[
+                    _get_io_artifact_type_spec(v)
+                    for v in self.artifacts.model_outputs.values()
+                    if v.is_active_for(runtime_stage, runtime_role)
+                ],
+                metric=[
+                    _get_io_artifact_type_spec(v)
+                    for v in self.artifacts.metric_outputs.values()
+                    if v.is_active_for(runtime_stage, runtime_role)
+                ],
             ),
         )
 
-    def dump_io_yaml(self, stream=None):
+    def dump_runtime_io_yaml(self, role: Role, stage: Stage, stream=None):
         from io import StringIO
 
         import ruamel.yaml
@@ -191,7 +211,9 @@ class Component:
             stream = StringIO()
         yaml = ruamel.yaml.YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
-        yaml.dump(self._flatten_stages()._io_dict().dict(), stream=stream)
+        yaml.dump(
+            self._flatten_stages()._runtime_io_dict(runtime_role=role, runtime_stage=stage).dict(), stream=stream
+        )
         if inefficient:
             return stream.getvalue()
 
@@ -323,9 +345,9 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             artifacts = ComponentArtifactDescribes()
 
         if is_subcomponent:
-            artifacts.set_stages([Stage.from_str(cpn_name)])
+            artifacts.update_roles_and_stages(stages=[Stage.from_str(cpn_name)], roles=roles)
         else:
-            artifacts.set_stages([DEFAULT])
+            artifacts.update_roles_and_stages(stages=[DEFAULT], roles=roles)
         desc = description
         if desc is None:
             desc = inspect.getdoc(f)

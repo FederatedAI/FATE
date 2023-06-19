@@ -79,33 +79,35 @@ class Table(CTableABC):
         return Table(_map_value(self._rdd, lambda x: x))
 
     @computing_profile
-    def save(self, address, partitions, schema, **kwargs):
-        from .._address import HDFSAddress
-
-        if isinstance(address, HDFSAddress):
-            self._rdd.map(lambda x: hdfs_serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
-                f"{address.name_node}/{address.path}"
-            )
+    def save(self, uri, schema: dict, options: dict = None):
+        if options is None:
+            options = {}
+        partitions = options.get("partitions")
+        if uri.schema == "hdfs":
+            table = self._rdd.map(lambda x: hdfs_serialize(x[0], x[1]))
+            if partitions:
+                table = table.repartition(partitions)
+            table.saveAsTextFile(uri.original_uri)
             schema.update(self.schema)
             return
 
-        from .._address import HiveAddress, LinkisHiveAddress
-
-        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
-            LOGGER.debug(f"partitions: {partitions}")
-            _repartition = self._rdd.map(lambda x: hive_to_row(x[0], x[1])).repartition(partitions)
-            _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
+        if uri.schema == "hive":
+            table = self._rdd.map(lambda x: hive_to_row(x[0], x[1]))
+            if partitions:
+                table = table.repartition(partitions)
+            table.toDF().write.saveAsTable(uri.original_uri)
             schema.update(self.schema)
             return
 
-        from .._address import LocalFSAddress
-
-        if isinstance(address, LocalFSAddress):
-            self._rdd.map(lambda x: hdfs_serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(address.path)
+        if uri.schema == "file":
+            table = self._rdd.map(lambda x: hdfs_serialize(x[0], x[1]))
+            if partitions:
+                table = table.repartition(partitions)
+            table.saveAsTextFile(uri.path)
             schema.update(self.schema)
             return
 
-        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
+        raise NotImplementedError(f"uri type {uri} not supported with spark backend")
 
     @property
     def partitions(self):

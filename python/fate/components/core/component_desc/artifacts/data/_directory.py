@@ -1,37 +1,17 @@
+import typing
 from pathlib import Path
 
 from fate.components.core.essential import DataDirectoryArtifactType
 
-from .._base_type import URI, ArtifactDescribe, Metadata, _ArtifactType
+from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+
+if typing.TYPE_CHECKING:
+    from fate.arch import URI
 
 
-class _DataDirectoryArtifactType(_ArtifactType["DataDirectoryWriter"]):
-    type = DataDirectoryArtifactType
-
-    def __init__(self, path, metadata: Metadata) -> None:
-        self.path = path
-        self.metadata = metadata
-
-    @classmethod
-    def _load(cls, uri: URI, metadata: Metadata):
-        return _DataDirectoryArtifactType(uri.path, metadata)
-
-    def dict(self):
-        return {
-            "metadata": self.metadata,
-            "uri": f"file://{self.path}",
-        }
-
-    def get_writer(self) -> "DataDirectoryWriter":
-        return DataDirectoryWriter(self)
-
-
-class DataDirectoryWriter:
-    def __init__(self, artifact: _DataDirectoryArtifactType) -> None:
-        self.artifact = artifact
-
+class DataDirectoryWriter(_ArtifactTypeWriter):
     def get_directory(self) -> Path:
-        path = Path(self.artifact.path)
+        path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -42,16 +22,13 @@ class DataDirectoryWriter:
         if namespace is not None:
             self.artifact.metadata.namespace = namespace
 
-    def __str__(self):
-        return f"DataDirectoryWriter({self.artifact})"
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class DataDirectoryArtifactDescribe(ArtifactDescribe):
     def get_type(self):
-        return _DataDirectoryArtifactType
+        return DataDirectoryArtifactType
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _DataDirectoryArtifactType):
+    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
+        return DataDirectoryWriter(_ArtifactType(uri, metadata))
+
+    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
         return artifact
