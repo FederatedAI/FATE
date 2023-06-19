@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from contextlib import contextmanager
 from copy import copy
 from typing import Iterable, Iterator, List, Optional, Tuple, TypeVar
 
@@ -46,22 +45,30 @@ class Context(ContextInterface):
         device: device = device.CPU,
         computing: Optional[ComputingEngine] = None,
         federation: Optional[FederationEngine] = None,
-        metrics_handler: Optional[MetricsHandler] = None,
         namespace: Optional[NS] = None,
+        metrics_handler: Optional[MetricsHandler] = None,
     ) -> None:
         self._device = device
         self._computing = computing
         self._federation = federation
         self._metrics_handler = metrics_handler
+        if self._metrics_handler is None:
+            from .metric._handler import NoopMetricsHandler
+
+            self._metrics_handler = NoopMetricsHandler()
+
         if namespace is None:
             namespace = default_ns
         self.namespace = namespace
 
-        self.metrics = MetricsWrap(metrics_handler)
         self.cipher: CipherKit = CipherKit(device)
         self._role_to_parties = None
         self._gc = GC()
         self._is_destroyed = False
+
+    @property
+    def metrics(self):
+        return MetricsWrap(self._metrics_handler, self.namespace)
 
     def with_namespace(self, namespace: NS):
         context = copy(self)
@@ -185,12 +192,6 @@ class Context(ContextInterface):
         if self._computing is None:
             raise RuntimeError(f"computing not set")
         return self._computing
-
-    def reader(self, *args, **kwargs):
-        return self._io_kit.reader(self, *args, **kwargs)
-
-    def writer(self, uri, **kwargs):
-        return self._io_kit.writer(self, uri, **kwargs)
 
     def destroy(self):
         if not self._is_destroyed:

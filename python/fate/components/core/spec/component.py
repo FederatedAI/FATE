@@ -82,6 +82,7 @@ class ComponentSpecV1(BaseModel):
 
 
 class ComponentIOArtifactTypeSpec(BaseModel):
+    name: str
     type_name: str
     uri_types: List[str]
     path_type: Literal["file", "directory", "distributed"]

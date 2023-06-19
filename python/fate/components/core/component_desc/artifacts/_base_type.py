@@ -25,9 +25,6 @@ class _ArtifactTypeWriter(Generic[W]):
     def __repr__(self):
         return self.__str__()
 
-    def dict(self):
-        return self.artifact.dict()
-
 
 class _ArtifactType:
     def __init__(self, uri: "URI", metadata: Metadata) -> None:
@@ -118,19 +115,18 @@ class ArtifactDescribe(Generic[AT]):
             try:
                 if self.multi:
                     artifacts = [_ArtifactType.load(c) for c in apply_config]
-                    metas = [c.dict() for c in artifacts]
                     args = [self._load_as_component_execute_arg(ctx, artifact) for artifact in artifacts]
-                    return metas, args
+                    return artifacts, args
                 else:
                     artifact = _ArtifactType.load(apply_config)
-                    meta = artifact.dict()
-                    return meta, self._load_as_component_execute_arg(ctx, artifact)
+                    return artifact, self._load_as_component_execute_arg(ctx, artifact)
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as input artifact({self}) error: {e}") from e
         if not self.optional:
             raise ComponentArtifactApplyError(
                 f"load as input artifact({self}) error: apply_config is None but not optional"
             )
+        return None, None
 
     def load_as_output_slot(self, ctx, apply_config):
         if apply_config is not None:
@@ -140,13 +136,14 @@ class ArtifactDescribe(Generic[AT]):
                     return _generator_recorder(output_iter)
                 else:
                     artifact = next(output_iter)
-                    return artifact.dict(), artifact
+                    return artifact.artifact, artifact
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:
             raise ComponentArtifactApplyError(
                 f"load as output artifact({self}) slot error: apply_config is None but not optional"
             )
+        return None, None
 
     def load_output(self, spec: ArtifactOutputApplySpec):
         from fate.arch import URI
@@ -168,7 +165,7 @@ def _generator_recorder(generator):
 
     def _generator():
         for item in generator:
-            recorder.append(item.artifact.dict())
+            recorder.append(item.artifact.artifact)
             yield item
 
     return recorder, _generator()

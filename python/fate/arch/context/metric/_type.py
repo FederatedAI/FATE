@@ -38,7 +38,7 @@ class Metrics(metaclass=abc.ABCMeta):
 class InCompleteMetrics(metaclass=abc.ABCMeta):
     name: str
     type: str
-    nemaspace: Optional[str] = None
+    namespace: Optional[str] = None
     groups: Dict[str, str] = {}
 
     @abc.abstractmethod

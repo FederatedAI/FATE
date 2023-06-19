@@ -12,12 +12,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import time
 from typing import List, Optional, Tuple, Union
 
 from fate.interface import MetricsHandler
 from fate.interface import MetricsWrap as MetricsWrapProtocol
 
-from ._handler import NoopMetricsHandler
+from .._namespace import NS, IndexedNS
 from ._incomplte_metrics import StepMetrics
 from ._metric import AccuracyMetric, AUCMetric, LossMetric, ScalarMetric
 from ._metrics import ROCMetrics
@@ -25,53 +26,29 @@ from ._type import InCompleteMetrics, Metric, Metrics
 
 
 class MetricsWrap(MetricsWrapProtocol):
-    def __init__(self, handler: Optional[MetricsHandler], groups=None) -> None:
-        if handler is None:
-            self.handler = NoopMetricsHandler()
-        else:
-            self.handler = handler
-        if groups is None:
-            self.groups = {}
-        else:
-            self.groups = groups
-
-    def into_group(self, group_name: str, group_id: str) -> "MetricsWrap":
-        if group_name in self.groups:
-            raise ValueError(
-                f"can't into group named `{group_name}` since `{group_name}` already in groups `{self.groups}`"
-            )
-        groups = {**self.groups}
-        groups.update({group_name: group_id})
-        return MetricsWrap(self.handler, groups)
+    def __init__(self, handler: MetricsHandler, namespace: NS) -> None:
+        self.namespace = namespace
+        self.handler = handler
 
     def log_metrics(self, metrics: Union[Metrics, InCompleteMetrics]):
-        if self.groups:
-            for group_name, group_id in self.groups.items():
-                if group_name in metrics.groups:
-                    if (to_add_group_id := metrics.groups[group_name]) != group_id:
-                        raise ValueError(
-                            f"try to add group named `{group_name}`, but group id `{group_id}` not equals `{to_add_group_id}`"
-                        )
-                else:
-                    metrics.groups[group_name] = group_id
         return self.handler.log_metrics(metrics)
 
     def log_meta(self, meta):
         return self.log_metrics(meta)
 
-    def log_metric(
-        self, name: str, metric: Metric, step=None, timestamp=None, namespace=None, groups=None, metadata=None
-    ):
-        if groups is None:
-            groups = {}
+    def log_metric(self, name: str, metric: Metric, step=None, timestamp=None, metadata=None):
         if metadata is None:
             metadata = {}
+        if step is not None:
+            if isinstance(self.namespace, IndexedNS):
+                step = self.namespace.index
+        if timestamp is None:
+            timestamp = time.time()
         return self.log_metrics(
             StepMetrics(
                 name=name,
+                namespace=self.namespace.get_metrics_keys(),
                 type=metric.type,
-                namespace=namespace,
-                groups=groups,
                 data=[dict(metric=metric.dict(), step=step, timestamp=timestamp)],
                 metadata=metadata,
             )
