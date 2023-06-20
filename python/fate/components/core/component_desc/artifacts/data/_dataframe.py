@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class DataframeWriter(_ArtifactTypeWriter["_DataframeArtifactType"]):
+class DataframeWriter(_ArtifactTypeWriter):
     def write(self, ctx, df: "DataFrame", name=None, namespace=None):
         logger.debug(f"start writing dataframe to artifact: {self.artifact}, name={name}, namespace={namespace}")
         from fate.arch import dataframe
@@ -30,6 +30,9 @@ class DataframeWriter(_ArtifactTypeWriter["_DataframeArtifactType"]):
             schema=self.artifact.metadata.metadata["schema"],
             options=self.artifact.metadata.metadata.get("options", None),
         )
+        # save data overview
+        self.artifact.metadata.data_overview = df.data_overview()
+
         logger.debug(f"write dataframe to artifact: {self.artifact}")
 
 

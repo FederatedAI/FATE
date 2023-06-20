@@ -14,7 +14,7 @@
 #  limitations under the License.
 import re
 import typing
-from typing import Optional
+from typing import List, Optional
 
 if typing.TYPE_CHECKING:
     from fate.arch import URI
@@ -34,6 +34,7 @@ class Metadata(pydantic.BaseModel):
     metadata: dict = pydantic.Field(default_factory=dict)
     name: Optional[str] = None
     namespace: Optional[str] = None
+    data_overview: Optional[List] = None
 
     class Config:
         extra = "forbid"
