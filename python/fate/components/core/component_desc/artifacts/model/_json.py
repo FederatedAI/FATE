@@ -11,11 +11,13 @@ if typing.TYPE_CHECKING:
 
 
 class JsonModelWriter(_ArtifactTypeWriter):
-    def write(self, data):
+    def write(self, data, metadata: dict = None):
         path = Path(self.artifact.uri.path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:
             json.dump(data, fw)
+        if metadata is not None:
+            self.artifact.metadata.metadata = metadata
 
 
 class JsonModelArtifactDescribe(ArtifactDescribe[_ArtifactType]):
