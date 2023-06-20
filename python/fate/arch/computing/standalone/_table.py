@@ -52,7 +52,7 @@ class Table(CTableABC):
         if options is None:
             options = {}
 
-        if uri.schema != "eggroll":
+        if uri.schema != "standalone":
             raise ValueError(f"uri scheme `{uri.schema}` not supported with standalone backend")
         try:
             *database, namespace, name = uri.path_splits()
