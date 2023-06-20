@@ -74,3 +74,5 @@ def run(
     #     sub_ctx.metrics.log_accuracy("sub", 1.0, 0)
     # print(ctx.metrics.handler._metrics)
     # print("dataframe_inputs", dataframe_inputs)
+
+    json_metric_output.write({"metricsdemo": {"data": [1, 2, 3]}}, metadata={"bbb": 2})
