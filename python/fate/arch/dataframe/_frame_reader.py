@@ -86,12 +86,12 @@ class TableReader(object):
         from .ops._indexer import get_partition_order_by_raw_table
         partition_order_mappings = get_partition_order_by_raw_table(table)
         # partition_order_mappings = _get_partition_order(table)
-        functools.partial(_to_blocks,
-                          data_manager=data_manager,
-                          retrieval_index_dict=retrieval_index_dict,
-                          partition_order_mappings=partition_order_mappings)
+        to_block_func = functools.partial(_to_blocks,
+                                          data_manager=data_manager,
+                                          retrieval_index_dict=retrieval_index_dict,
+                                          partition_order_mappings=partition_order_mappings)
         block_table = table.mapPartitions(
-            _to_blocks,
+            to_block_func,
             use_previous_behavior=False
         )
 
