@@ -13,12 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
+import typing
 from copy import copy
-from typing import Iterable, Iterator, List, Optional, Tuple, TypeVar
+from typing import Iterable, List, Optional, Tuple, TypeVar
 
-from fate.interface import T_ROLE, ComputingEngine
-from fate.interface import Context as ContextInterface
-from fate.interface import FederationEngine, MetricsHandler, PartyMeta
+from fate.interface import T_ROLE, MetricsHandler, PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
@@ -26,12 +25,15 @@ from ._federation import GC, Parties, Party
 from ._namespace import NS, default_ns
 from .metric import MetricsWrap
 
+if typing.TYPE_CHECKING:
+    from fate.interface import CSessionABC, FederationEngine
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
 
-class Context(ContextInterface):
+class Context:
     """
     implement fate.interface.ContextInterface
 
@@ -43,8 +45,8 @@ class Context(ContextInterface):
     def __init__(
         self,
         device: device = device.CPU,
-        computing: Optional[ComputingEngine] = None,
-        federation: Optional[FederationEngine] = None,
+        computing: Optional["CSessionABC"] = None,
+        federation: Optional["FederationEngine"] = None,
         namespace: Optional[NS] = None,
         metrics_handler: Optional[MetricsHandler] = None,
     ) -> None:
@@ -80,7 +82,7 @@ class Context(ContextInterface):
         return self._get_computing()
 
     @property
-    def federation(self) -> FederationEngine:
+    def federation(self) -> "FederationEngine":
         return self._get_federation()
 
     def sub_ctx(self, name: str) -> "Context":
@@ -88,15 +90,15 @@ class Context(ContextInterface):
 
     @property
     def on_iterations(self) -> "Context":
-        ...
+        return self.sub_ctx("iterations")
 
     @property
     def on_batches(self) -> "Context":
-        ...
+        return self.sub_ctx("iterations")
 
     @property
     def on_cross_validations(self) -> "Context":
-        ...
+        return self.sub_ctx("cross_validations")
 
     def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:
         """
@@ -112,7 +114,7 @@ class Context(ContextInterface):
         for i, it in enumerate(iterable):
             yield self.with_namespace(self.namespace.indexed_ns(index=i)), it
 
-    def set_federation(self, federation: FederationEngine):
+    def set_federation(self, federation: "FederationEngine"):
         self._federation = federation
 
     @property

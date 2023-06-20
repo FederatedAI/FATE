@@ -10,6 +10,7 @@ from ._parameter import ParameterDescribe
 if typing.TYPE_CHECKING:
     from fate.arch import Context
 
+    from .artifacts._base_type import _ArtifactType
     from .artifacts.data import DataDirectoryArtifactDescribe, DataframeArtifactDescribe
     from .artifacts.metric import JsonMetricArtifactDescribe
     from .artifacts.model import (
@@ -17,23 +18,31 @@ if typing.TYPE_CHECKING:
         ModelDirectoryArtifactDescribe,
     )
 
-T_Parameter = Dict[str, Tuple[ParameterDescribe, typing.Any]]
-T_InputData = Dict[str, Tuple[Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"], Any]]
-T_InputModel = Dict[str, Tuple[Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"], Any]]
-T_OutputData = Dict[str, Tuple[Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"], Any]]
-T_OutputModel = Dict[str, Tuple[Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"], Any]]
-T_OutputMetric = Dict[str, Tuple[Union["JsonMetricArtifactDescribe"], Any]]
+    T_Parameter = Dict[str, Tuple[ParameterDescribe, typing.Any]]
+    T_InputData = Dict[
+        str, Tuple[Union[DataframeArtifactDescribe, DataDirectoryArtifactDescribe], Tuple[_ArtifactType, Any]]
+    ]
+    T_InputModel = Dict[
+        str, Tuple[Union[JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe], Tuple[_ArtifactType, Any]]
+    ]
+    T_OutputData = Dict[
+        str, Tuple[Union[DataframeArtifactDescribe, DataDirectoryArtifactDescribe], Tuple[_ArtifactType, Any]]
+    ]
+    T_OutputModel = Dict[
+        str, Tuple[Union[JsonModelArtifactDescribe, ModelDirectoryArtifactDescribe], Tuple[_ArtifactType, Any]]
+    ]
+    T_OutputMetric = Dict[str, Tuple[Union[JsonMetricArtifactDescribe], Tuple[_ArtifactType, Any]]]
 
 
 class ComponentExecutionIO:
     def __init__(
         self,
-        parameters: T_Parameter,
-        input_data: T_InputData,
-        input_model: T_InputModel,
-        output_data_slots: T_OutputData,
-        output_model_slots: T_OutputModel,
-        output_metric_slots: T_OutputMetric,
+        parameters: "T_Parameter",
+        input_data: "T_InputData",
+        input_model: "T_InputModel",
+        output_data_slots: "T_OutputData",
+        output_model_slots: "T_OutputModel",
+        output_metric_slots: "T_OutputMetric",
     ):
         self.parameters = parameters
         self.input_data = input_data
@@ -44,12 +53,12 @@ class ComponentExecutionIO:
 
     @classmethod
     def load(cls, ctx: "Context", component: Component, role: Role, stage: Stage, config):
-        execute_parameters: T_Parameter = {}
-        execute_input_data: T_InputData = {}
-        execute_input_model: T_InputModel = {}
-        execute_output_data_slots: T_OutputData = {}
-        execute_output_model_slots: T_OutputModel = {}
-        execute_output_metric_slots: T_OutputMetric = {}
+        execute_parameters: "T_Parameter" = {}
+        execute_input_data: "T_InputData" = {}
+        execute_input_model: "T_InputModel" = {}
+        execute_output_data_slots: "T_OutputData" = {}
+        execute_output_model_slots: "T_OutputModel" = {}
+        execute_output_metric_slots: "T_OutputMetric" = {}
         for arg in component.func_args[2:]:
             # parse and validate parameters
             if parameter := component.parameters.mapping.get(arg):
