@@ -30,11 +30,16 @@ import pydantic
 _uri_regex = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?")
 
 
+class DataOverview(pydantic.BaseModel):
+    count: Optional[int] = None
+    samples: Optional[List] = None
+
+
 class Metadata(pydantic.BaseModel):
     metadata: dict = pydantic.Field(default_factory=dict)
     name: Optional[str] = None
     namespace: Optional[str] = None
-    data_overview: Optional[List] = None
+    overview: Optional[DataOverview] = None
 
     class Config:
         extra = "forbid"

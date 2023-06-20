@@ -31,7 +31,11 @@ class DataframeWriter(_ArtifactTypeWriter):
             options=self.artifact.metadata.metadata.get("options", None),
         )
         # save data overview
-        self.artifact.metadata.data_overview = df.data_overview()
+        count = df.count()
+        samples = df.data_overview()
+        from fate.components.core.spec.artifact import DataOverview
+
+        self.artifact.metadata.data_overview = DataOverview(count=count, samples=samples)
 
         logger.debug(f"write dataframe to artifact: {self.artifact}")
 
