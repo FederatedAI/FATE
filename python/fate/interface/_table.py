@@ -70,7 +70,7 @@ class CTableABC(typing.Generic[K, V], metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def save(self, address: Address, partitions: int, schema: dict, **kwargs):
+    def save(self, address: Address, schema: dict, options: dict = None):
         """
         save table
 
@@ -78,10 +78,10 @@ class CTableABC(typing.Generic[K, V], metaclass=ABCMeta):
         ----------
         address: AddressABC
            address to save table to
-        partitions: int
-           number of partitions to save as
         schema: dict
            table schema
+        options: dict
+           options for saving
         """
         ...
 
@@ -554,7 +554,7 @@ class CSessionABC(metaclass=ABCMeta):
     """
 
     @abc.abstractmethod
-    def load(self, address: Address, partitions, schema: dict, **kwargs) -> CTableABC:
+    def load(self, uri, schema: dict, options: dict = None) -> CTableABC:
         """
         load a table from given address
 
@@ -562,15 +562,16 @@ class CSessionABC(metaclass=ABCMeta):
         ----------
         address: AddressABC
            address to load table from
-        partitions: int
-           number of partitions of loaded table
         schema: dict
            schema associate with this table
+        options: dict
+           options associate with this table load
 
         Returns
         -------
         CTableABC
            a table in memory
+
         """
         ...
 

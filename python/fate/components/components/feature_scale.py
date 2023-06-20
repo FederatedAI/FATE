@@ -12,20 +12,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import List, Union
 
-from typing import Union, List
-
-from fate.components import (
-    GUEST,
-    HOST,
-    DatasetArtifact,
-    Input,
-    ModelArtifact,
-    Output,
-    Role,
-    cpn,
-    params
-)
+from fate.components.core import GUEST, HOST, Role, cpn, params
 
 
 @cpn.component(roles=[GUEST, HOST])
@@ -34,59 +23,98 @@ def feature_scale(ctx, role):
 
 
 @feature_scale.train()
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
+@cpn.dataframe_input("train_data", roles=[GUEST, HOST])
 @cpn.parameter("method", type=params.string_choice(["standard", "min_max"]), default="standard", optional=False)
-@cpn.parameter("feature_range", type=Union[list, dict], default=[0, 1], optional=True,
-               desc="Result feature value range for `min_max` method, "
-                    "take either dict in format: {col_name: [min, max]} for specific columns "
-                    "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]")
-@cpn.parameter("scale_col", type=List[str], default=None,
-               desc="list of column names to be scaled, if None, all columns will be scaled; "
-                    "only one of {scale_col, scale_idx} should be specified")
-@cpn.parameter("scale_idx", type=List[params.conint(ge=0)], default=None,
-               desc="list of column index to be scaled, if None, all columns will be scaled; "
-                    "only one of {scale_col, scale_idx} should be specified")
-@cpn.parameter("strict_range", type=bool, default=True,
-               desc="whether transformed value to be strictly restricted within given range; "
-                    "effective for 'min_max' scale method only")
-@cpn.parameter("use_anonymous", type=bool, default=False,
-               desc="bool, whether interpret `scale_col` as anonymous column names")
-@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
+@cpn.parameter(
+    "feature_range",
+    type=Union[list, dict],
+    default=[0, 1],
+    optional=True,
+    desc="Result feature value range for `min_max` method, "
+    "take either dict in format: {col_name: [min, max]} for specific columns "
+    "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]",
+)
+@cpn.parameter(
+    "scale_col",
+    type=List[str],
+    default=None,
+    desc="list of column names to be scaled, if None, all columns will be scaled; "
+    "only one of {scale_col, scale_idx} should be specified",
+)
+@cpn.parameter(
+    "scale_idx",
+    type=List[params.conint(ge=0)],
+    default=None,
+    desc="list of column index to be scaled, if None, all columns will be scaled; "
+    "only one of {scale_col, scale_idx} should be specified",
+)
+@cpn.parameter(
+    "strict_range",
+    type=bool,
+    default=True,
+    desc="whether transformed value to be strictly restricted within given range; "
+    "effective for 'min_max' scale method only",
+)
+@cpn.parameter(
+    "use_anonymous", type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
+)
+@cpn.dataframe_output("train_output_data", roles=[GUEST, HOST])
+@cpn.dataframe_output("output_model", roles=[GUEST, HOST])
 def feature_scale_train(
+    ctx,
+    role: Role,
+    train_data,
+    method,
+    feature_range,
+    scale_col,
+    scale_idx,
+    strict_range,
+    use_anonymous,
+    train_output_data,
+    output_model,
+):
+    train(
         ctx,
-        role: Role,
         train_data,
+        train_output_data,
+        output_model,
         method,
         feature_range,
         scale_col,
         scale_idx,
         strict_range,
         use_anonymous,
-        train_output_data,
-        output_model,
-):
-    train(ctx, train_data, train_output_data, output_model, method, feature_range, scale_col, scale_idx,
-          strict_range, use_anonymous)
+    )
 
 
 @feature_scale.predict()
-@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
-@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
+@cpn.json_model_input("input_model", roles=[GUEST, HOST])
+@cpn.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
+@cpn.dataframe_output("test_output_data", roles=[GUEST, HOST])
 def feature_scale_predict(
-        ctx,
-        role: Role,
-        test_data,
-        input_model,
-        test_output_data,
+    ctx,
+    role: Role,
+    test_data,
+    input_model,
+    test_output_data,
 ):
     predict(ctx, input_model, test_data, test_output_data)
 
 
-def train(ctx, train_data, train_output_data, output_model, method, feature_range, scale_col, scale_idx,
-          strict_range, use_anonymous):
+def train(
+    ctx,
+    train_data,
+    train_output_data,
+    output_model,
+    method,
+    feature_range,
+    scale_col,
+    scale_idx,
+    strict_range,
+    use_anonymous,
+):
     from fate.ml.preprocessing import FeatureScale
+
     train_data = ctx.reader(train_data).read_dataframe().data
 
     with ctx.sub_ctx("train") as sub_ctx:
