@@ -43,12 +43,12 @@ class CSession(CSessionABC):
         return self._session.session_id
 
     def load(self, uri: URI, schema: dict, options: dict = None):
-        if uri.schema != "eggroll":
+        if uri.schema != "standalone":
             raise ValueError(f"uri scheme `{uri.schema}` not supported with standalone backend")
         try:
             _, namespace, name = uri.path_splits()
         except Exception as e:
-            raise ValueError(f"uri `{uri}` not valid, demo format: eggroll:///namespace/name") from e
+            raise ValueError(f"uri `{uri}` not valid, demo format: standalone:///namespace/name") from e
 
         raw_table = self._session.load(name=name, namespace=namespace)
         partitions = raw_table.partitions
