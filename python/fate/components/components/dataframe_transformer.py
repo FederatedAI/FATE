@@ -14,14 +14,13 @@
 #  limitations under the License.
 #
 from fate.components.core import LOCAL, Role, cpn
-from typing import Union, List, Dict
 
 
 @cpn.component(roles=[LOCAL])
 @cpn.table_input("table", roles=[LOCAL])
 @cpn.dataframe_output("dataframe_output", roles=[LOCAL])
-@cpn.parameter("namespace", type=str, default=",", optional=True)
-@cpn.parameter("name", type=str, default="dense", optional=True)
+@cpn.parameter("namespace", type=str, default=None, optional=True)
+@cpn.parameter("name", type=str, default=None, optional=True)
 @cpn.parameter("anonymous_role", type=str, default=None, optional=True)
 @cpn.parameter("anonymous_party_id", type=str, default=None, optional=True)
 def dataframe_transformer(
@@ -36,7 +35,7 @@ def dataframe_transformer(
 ):
     from fate.arch.dataframe import TableReader
 
-    metadata = table.schema["meta"]
+    metadata = table.schema
     table_reader = TableReader(
         sample_id_name=metadata.get("sample_id_name", None),
         match_id_name=metadata.get("match_id_name", None),
@@ -58,4 +57,4 @@ def dataframe_transformer(
     )
 
     df = table_reader.to_frame(ctx, table)
-    ctx.writer(dataframe_output).write(df, namespace=namespace, name=name)
+    dataframe_output.write(ctx, df, name=name, namespace=namespace)
