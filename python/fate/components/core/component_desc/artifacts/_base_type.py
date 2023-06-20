@@ -12,11 +12,9 @@ from fate.components.core.spec.task import (
 if typing.TYPE_CHECKING:
     from fate.arch import URI
 
-W = TypeVar("W")
 
-
-class _ArtifactTypeWriter(Generic[W]):
-    def __init__(self, artifact: W) -> None:
+class _ArtifactTypeWriter:
+    def __init__(self, artifact: "_ArtifactType") -> None:
         self.artifact = artifact
 
     def __str__(self):
