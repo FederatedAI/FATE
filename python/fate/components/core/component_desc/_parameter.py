@@ -56,7 +56,7 @@ class ParameterDescribe:
 
         if parameter_config is not None:
             try:
-                value = params.parse(self.type, parameter_config)
+                return params.parse(self.type, parameter_config)
             except Exception as e:
                 raise ComponentParameterApplyError(
                     f"apply value `{parameter_config}` to parameter `{self.name}` failed: {e}"
