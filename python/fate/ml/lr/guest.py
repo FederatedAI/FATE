@@ -14,8 +14,7 @@
 #  limitations under the License.
 import logging
 
-from fate.arch import dataframe, tensor
-from fate.interface import Context
+from fate.arch import Context, dataframe, tensor
 
 from ..abc.module import HeteroModule
 
