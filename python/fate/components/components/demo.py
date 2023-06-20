@@ -19,6 +19,7 @@ if typing.TYPE_CHECKING:
 @cpn.data_directory_output("dataset_output", roles=[GUEST, HOST])
 @cpn.json_model_input("json_model_input")
 @cpn.json_model_output("json_model_output", roles=[GUEST, HOST])
+@cpn.model_directory_output("model_directory_output", roles=[GUEST, HOST])
 @cpn.json_metric_output("json_metric_output", roles=[GUEST, HOST], optional=True)
 def run(
     ctx: "Context",
@@ -35,14 +36,10 @@ def run(
     dataset_outputs,
     dataset_output,
     json_model_output,
+    model_directory_output,
     json_metric_output,
 ):
-    ctx.metrics.log_accuracy("s", 1.0, 0)
-    for i, sub_ctx in ctx.ctxs_range(10):
-        sub_ctx.metrics.log_accuracy("sub", 1.0, 0)
-    print(ctx.metrics.handler._metrics)
-    # print("dataframe_inputs", dataframe_inputs)
-    # print("dataframe_input", dataframe_input)
+    print("dataframe_input", dataframe_input)
     # print("dataset_inputs", dataset_inputs)
     # print("dataset_input", dataset_input)
     # print("table_input", table_input)
@@ -62,7 +59,20 @@ def run(
     # print("    dataset_outputs_1", dataset_outputs_1)
     #
     # print("dataframe_output", dataframe_output)
-    # dataframe_output.write(ctx, dataframe_input, name="myname", namespace="mynamespace")
+    dataframe_output.write(ctx, dataframe_input, name="myname", namespace="mynamespace")
     # print("dataset_output", dataset_output)
     #
-    # json_model_output.write({"aaa": 1})
+    json_model_output.write({"aaa": 1}, metadata={"bbb": 2})
+
+    output_path = model_directory_output.get_directory()
+    with open(output_path + "/a.txt", "w") as fw:
+        fw.write("a")
+    model_directory_output.write_metadata({"model_directory_output_metadata": 1})
+
+    # ctx.metrics.log_accuracy("s", 1.0, 0)
+    # for i, sub_ctx in ctx.ctxs_range(10):
+    #     sub_ctx.metrics.log_accuracy("sub", 1.0, 0)
+    # print(ctx.metrics.handler._metrics)
+    # print("dataframe_inputs", dataframe_inputs)
+
+    json_metric_output.write({"metricsdemo": {"data": [1, 2, 3]}}, metadata={"bbb": 2})

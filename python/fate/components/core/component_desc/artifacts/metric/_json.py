@@ -12,20 +12,14 @@ if typing.TYPE_CHECKING:
 
 
 class JsonMetricWriter(_ArtifactTypeWriter):
-    def write(
-        self, data, metadata: Optional[Dict] = None, namespace: Optional[str] = None, name: Optional[str] = None
-    ):
-        if metadata is not None:
-            self.artifact.metadata.metadata.update(metadata)
-        if namespace is not None:
-            self.artifact.metadata.namespace = namespace
-        if name is not None:
-            self.artifact.metadata.name = name
-
+    def write(self, data, metadata: Optional[Dict] = None):
         path = Path(self.artifact.uri.path)
-        path.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:
             json.dump(data, fw)
+
+        if metadata is not None:
+            self.artifact.metadata.metadata = metadata
 
 
 class JsonMetricArtifactDescribe(ArtifactDescribe[_ArtifactType]):

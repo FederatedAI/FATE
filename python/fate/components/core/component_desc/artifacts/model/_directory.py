@@ -10,10 +10,13 @@ if typing.TYPE_CHECKING:
 
 
 class ModelDirectoryWriter(_ArtifactTypeWriter):
-    def write(self, data):
+    def get_directory(self):
         path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
         return self.artifact.uri.path
+
+    def write_metadata(self, metadata: dict):
+        self.artifact.metadata.metadata = metadata
 
 
 class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ArtifactType]):
