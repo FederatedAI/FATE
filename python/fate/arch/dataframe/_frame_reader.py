@@ -76,7 +76,7 @@ class TableReader(object):
     def _dense_format_to_frame(self, ctx, table):
         data_manager = DataManager()
         columns = self._header.split(self._delimiter, -1)
-        columns = columns.remove(self._sample_id_name)
+        columns.remove(self._sample_id_name)
         retrieval_index_dict = data_manager.init_from_local_file(
             sample_id_name=self._sample_id_name, columns=columns, match_id_list=self._match_id_list,
             match_id_name=self._match_id_name, label_name=self._label_name, weight_name=self._weight_name,
@@ -88,9 +88,8 @@ class TableReader(object):
         # partition_order_mappings = _get_partition_order(table)
         functools.partial(_to_blocks,
                           data_manager=data_manager,
-                          index_dict=retrieval_index_dict,
-                          partition_order_mappings=partition_order_mappings,
-                          na_values=self._na_values)
+                          retrieval_index_dict=retrieval_index_dict,
+                          partition_order_mappings=partition_order_mappings)
         block_table = table.mapPartitions(
             _to_blocks,
             use_previous_behavior=False

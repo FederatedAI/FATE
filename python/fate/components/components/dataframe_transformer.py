@@ -35,8 +35,7 @@ def dataframe_transformer(
     anonymous_party_id,
 ):
     from fate.arch.dataframe import TableReader
-
-    metadata = table.schema["meta"]
+    metadata = table.schema
     table_reader = TableReader(
         sample_id_name=metadata.get("sample_id_name", None),
         match_id_name=metadata.get("match_id_name", None),
