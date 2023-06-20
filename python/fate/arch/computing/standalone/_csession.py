@@ -46,9 +46,9 @@ class CSession(CSessionABC):
         if uri.schema != "standalone":
             raise ValueError(f"uri scheme `{uri.schema}` not supported with standalone backend")
         try:
-            _, namespace, name = uri.path_splits()
+            *database, namespace, name = uri.path_splits()
         except Exception as e:
-            raise ValueError(f"uri `{uri}` not valid, demo format: standalone:///namespace/name") from e
+            raise ValueError(f"uri `{uri}` not valid, demo format: standalone://database_path/namespace/name") from e
 
         raw_table = self._session.load(name=name, namespace=namespace)
         partitions = raw_table.partitions

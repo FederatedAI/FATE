@@ -55,7 +55,7 @@ class Table(CTableABC):
         if uri.schema != "eggroll":
             raise ValueError(f"uri scheme `{uri.schema}` not supported with standalone backend")
         try:
-            _, namespace, name = uri.path_splits()
+            *database, namespace, name = uri.path_splits()
         except Exception as e:
             raise ValueError(f"uri `{uri}` not supported with standalone backend") from e
         self._table.save_as(
