@@ -12,25 +12,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+from fate.components.core import LOCAL, Role, cpn
 
-from .dataframe_transformer import dataframe_transformer
-from .demo import run
-from .evaluation import evaluation
-from .feature_scale import feature_scale
-from .hetero_lr import hetero_lr
-from .intersection import intersection
-from .reader import reader
-from .statistics import statistics
-from .dataframe_io_test import dataframe_io_test
 
-BUILDIN_COMPONENTS = [
-    hetero_lr,
-    reader,
-    feature_scale,
-    intersection,
-    evaluation,
-    run,
-    dataframe_transformer,
-    statistics,
-    dataframe_io_test
-]
+@cpn.component(roles=[LOCAL])
+@cpn.dataframe_input("dataframe_input", roles=[LOCAL])
+@cpn.dataframe_output("dataframe_output", roles=[LOCAL])
+def dataframe_io_test(
+    ctx,
+    role: Role,
+    dataframe_input,
+    dataframe_output,
+):
+    dataframe_input = dataframe_input + 1
+    dataframe_output.write(ctx, dataframe_input)
