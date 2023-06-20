@@ -24,13 +24,14 @@ def component():
 
 
 @component.command()
-@click.option("--process-tag", required=True, help="unique id to identify this execution process")
+@click.option("--process-tag", required=False, help="unique id to identify this execution process")
 @click.option("--config", required=False, type=click.File(), help="config path")
 @click.option("--config-entrypoint", required=False, help="enctypoint to get config")
 @click.option("--properties", "-p", multiple=True, help="properties config")
 @click.option("--env-prefix", "-e", type=str, default="runtime.component_desc.", help="prefix for env config")
 @click.option("--env-name", required=False, type=str, help="env name for config")
-def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_name):
+@click.option("--output-path", type=str, help="output path")
+def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_name, output_path=None):
     "execute component_desc"
     import logging
 
@@ -58,7 +59,7 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_
 
     from fate.components.entrypoint.component import execute_component_from_config
 
-    execute_component_from_config(task_config)
+    execute_component_from_config(task_config, output_path)
 
 
 @component.command()
