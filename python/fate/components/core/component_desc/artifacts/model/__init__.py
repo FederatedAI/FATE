@@ -19,6 +19,13 @@ def model_directory_input(name: str, roles: Optional[List[Role]] = None, desc=""
     return _input_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=False))
 
 
+def model_input(name: str, type, roles: Optional[List[Role]] = None, desc="", optional=False):
+    roles, desc = _prepare(roles, desc)
+    a = ModelDirectoryArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=False)
+    b = JsonModelArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=False)
+    return _input_model_artifact()
+
+
 def model_directory_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
     return _input_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=True))
 

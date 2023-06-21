@@ -10,11 +10,24 @@ from fate.components.core.spec.task import (
 )
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI
+    from fate.arch import URI, Context
 
 
 class _ArtifactTypeWriter:
-    def __init__(self, artifact: "_ArtifactType") -> None:
+    def __init__(self, ctx: "Context", artifact: "_ArtifactType") -> None:
+        self.ctx = ctx
+        self.artifact = artifact
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.artifact})"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class _ArtifactTypeReader:
+    def __init__(self, ctx: "Context", artifact: "_ArtifactType") -> None:
+        self.ctx = ctx
         self.artifact = artifact
 
     def __str__(self):
@@ -99,25 +112,22 @@ class ArtifactDescribe(Generic[AT]):
     def get_type(self) -> AT:
         raise NotImplementedError()
 
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
+    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> _ArtifactTypeWriter:
         raise NotImplementedError()
 
-    def _load_as_component_execute_arg(self, ctx, artifact: AT):
-        """
-        load artifact as concreate arg passing to component execute
-        """
-        raise NotImplementedError(f"load as component execute arg artifact({self}) error")
+    def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> _ArtifactTypeReader:
+        raise NotImplementedError()
 
-    def load_as_input(self, ctx, apply_config):
+    def load_as_input(self, ctx: "Context", apply_config):
         if apply_config is not None:
             try:
                 if self.multi:
                     artifacts = [_ArtifactType.load(c) for c in apply_config]
-                    args = [self._load_as_component_execute_arg(ctx, artifact) for artifact in artifacts]
+                    args = [self.get_reader(ctx, artifact) for artifact in artifacts]
                     return artifacts, args
                 else:
                     artifact = _ArtifactType.load(apply_config)
-                    return artifact, self._load_as_component_execute_arg(ctx, artifact)
+                    return artifact, self.get_reader(ctx, artifact)
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as input artifact({self}) error: {e}") from e
         if not self.optional:
@@ -126,15 +136,15 @@ class ArtifactDescribe(Generic[AT]):
             )
         return None, None
 
-    def load_as_output_slot(self, ctx, apply_config):
+    def load_as_output_slot(self, ctx: "Context", apply_config):
         if apply_config is not None:
-            output_iter = self.load_output(apply_config)
+            output_artifact_iter = self.load_output(apply_config)
             try:
                 if self.multi:
-                    return _generator_recorder(output_iter)
+                    return self._generator_recorder(ctx, output_artifact_iter)
                 else:
-                    artifact = next(output_iter)
-                    return artifact.artifact, artifact
+                    artifact = next(output_artifact_iter)
+                    return artifact, self.get_writer(ctx, artifact)
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:
@@ -154,19 +164,18 @@ class ArtifactDescribe(Generic[AT]):
                 if i != 0:
                     raise ValueError(f"index should be 0, but got {i}")
                 uri = URI.from_string(spec.uri)
-            yield self.get_writer(uri, Metadata())
+            yield _ArtifactType(uri, Metadata())
             i += 1
 
+    def _generator_recorder(self, ctx: "Context", generator: typing.Generator[_ArtifactType, None, None]):
+        recorder = []
 
-def _generator_recorder(generator):
-    recorder = []
+        def _generator():
+            for item in generator:
+                recorder.append(item)
+                yield self.get_writer(ctx, item)
 
-    def _generator():
-        for item in generator:
-            recorder.append(item.artifact)
-            yield item
-
-    return recorder, _generator()
+        return recorder, _generator()
 
 
 class ComponentArtifactApplyError(RuntimeError):

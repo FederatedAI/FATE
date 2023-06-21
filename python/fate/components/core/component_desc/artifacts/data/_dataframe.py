@@ -3,17 +3,21 @@ import typing
 
 from fate.components.core.essential import DataframeArtifactType
 
-from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+from .._base_type import (
+    ArtifactDescribe,
+    _ArtifactType,
+    _ArtifactTypeReader,
+    _ArtifactTypeWriter,
+)
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI, Context
     from fate.arch.dataframe import DataFrame
 
 logger = logging.getLogger(__name__)
 
 
 class DataframeWriter(_ArtifactTypeWriter):
-    def write(self, ctx, df: "DataFrame", name=None, namespace=None):
+    def write(self, df: "DataFrame", name=None, namespace=None):
         logger.debug(f"start writing dataframe to artifact: {self.artifact}, name={name}, namespace={namespace}")
         from fate.arch import dataframe
 
@@ -22,7 +26,7 @@ class DataframeWriter(_ArtifactTypeWriter):
         if namespace is not None:
             self.artifact.metadata.namespace = namespace
 
-        table = dataframe.serialize(ctx, df)
+        table = dataframe.serialize(self.ctx, df)
         if "schema" not in self.artifact.metadata.metadata:
             self.artifact.metadata.metadata["schema"] = {}
         table.save(
@@ -40,17 +44,10 @@ class DataframeWriter(_ArtifactTypeWriter):
         logger.debug(f"write dataframe to artifact: {self.artifact}")
 
 
-class DataframeArtifactDescribe(ArtifactDescribe):
-    def get_type(self):
-        return DataframeArtifactType
-
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
-        return DataframeWriter(_ArtifactType(uri, metadata))
-
-    def _load_as_component_execute_arg(self, ctx: "Context", artifact: _ArtifactType):
-        from fate.arch import dataframe
-
-        if artifact.uri.schema == "file":
+class DataframeReader(_ArtifactTypeReader):
+    def read(self) -> "DataFrame":
+        logger.debug(f"start reading dataframe from artifact: {self.artifact}")
+        if self.artifact.uri.schema == "file":
             import inspect
 
             from fate.arch import dataframe
@@ -58,15 +55,30 @@ class DataframeArtifactDescribe(ArtifactDescribe):
             kwargs = {}
             p = inspect.signature(dataframe.CSVReader.__init__).parameters
             parameter_keys = p.keys()
-            for k, v in artifact.metadata.metadata.items():
+            for k, v in self.artifact.metadata.metadata.items():
                 if k in parameter_keys:
                     kwargs[k] = v
 
-            return dataframe.CSVReader(**kwargs).to_frame(ctx, artifact.uri.path)
+            return dataframe.CSVReader(**kwargs).to_frame(self.ctx, self.artifact.uri.path)
 
-        table = ctx.computing.load(
-            uri=artifact.uri,
-            schema=artifact.metadata.metadata.get("schema", None),
-            options=artifact.metadata.metadata.get("options", None),
+        from fate.arch import dataframe
+
+        table = self.ctx.computing.load(
+            uri=self.artifact.uri,
+            schema=self.artifact.metadata.metadata.get("schema", None),
+            options=self.artifact.metadata.metadata.get("options", None),
         )
-        return dataframe.deserialize(ctx, table)
+        df = dataframe.deserialize(self.ctx, table)
+        logger.debug(f"read dataframe from artifact: {self.artifact}")
+        return df
+
+
+class DataframeArtifactDescribe(ArtifactDescribe):
+    def get_type(self):
+        return DataframeArtifactType
+
+    def get_writer(self, ctx, artifact_type: _ArtifactType) -> _ArtifactTypeWriter:
+        return DataframeWriter(ctx, artifact_type)
+
+    def get_reader(self, ctx, artifact_type: _ArtifactType) -> _ArtifactTypeReader:
+        return DataframeReader(ctx, artifact_type)

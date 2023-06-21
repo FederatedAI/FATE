@@ -1,5 +1,5 @@
 import typing
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 if typing.TYPE_CHECKING:
     from .artifacts import ArtifactDescribe
@@ -9,6 +9,13 @@ if typing.TYPE_CHECKING:
         JsonModelArtifactDescribe,
         ModelDirectoryArtifactDescribe,
     )
+
+T = typing.TypeVar("T")
+
+
+class AllowArtifactDescribes(typing.Generic[T]):
+    def __init__(self, artifact_describes: List["ArtifactDescribe"] = None):
+        self.artifact_describes = artifact_describes
 
 
 class ComponentArtifactDescribes:

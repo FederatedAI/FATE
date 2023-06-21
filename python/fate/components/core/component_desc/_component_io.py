@@ -10,6 +10,7 @@ from ._parameter import ParameterDescribe
 if typing.TYPE_CHECKING:
     from fate.arch import Context
 
+    from ..spec.artifact import ArtifactSource
     from .artifacts._base_type import _ArtifactType
     from .artifacts.data import DataDirectoryArtifactDescribe, DataframeArtifactDescribe
     from .artifacts.metric import JsonMetricArtifactDescribe
@@ -115,14 +116,24 @@ class ComponentExecutionIO:
         kwargs.update({k: v[1][1] for k, v in self.output_metric_slots.items()})
         return kwargs
 
-    def dump_io_meta(self) -> dict:
-        def _get_meta(d):
+    def dump_io_meta(self, source: "ArtifactSource") -> dict:
+        def _get_meta(d, with_source=False):
             result = {}
             for k, (arti, (arti_type, _)) in d.items():
                 if arti_type is not None:
                     if isinstance(arti_type, list):
+                        result[k] = []
+                        for i, a in enumerate(arti_type):
+                            if with_source:
+                                a.metadata.source = source.copy()
+                                a.metadata.source.output_artifact_key = k
+                                a.metadata.source.output_index = i
+                            result[k].append(a.dict())
                         result[k] = [a.dict() for a in arti_type]
                     else:
+                        if with_source:
+                            arti_type.metadata.source = source.copy()
+                            arti_type.metadata.source.output_artifact_key = k
                         result[k] = arti_type.dict()
             return result
 
@@ -132,9 +143,9 @@ class ComponentExecutionIO:
                 model=_get_meta(self.input_model),
             ),
             outputs=IOMeta.OutputMeta(
-                data=_get_meta(self.output_data_slots),
-                model=_get_meta(self.output_model_slots),
-                metric=_get_meta(self.output_metric_slots),
+                data=_get_meta(self.output_data_slots, with_source=True),
+                model=_get_meta(self.output_model_slots, with_source=True),
+                metric=_get_meta(self.output_metric_slots, with_source=True),
             ),
         )
         return io_meta.dict(exclude_none=True)

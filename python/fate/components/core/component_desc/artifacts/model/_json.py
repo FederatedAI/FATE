@@ -4,10 +4,15 @@ from pathlib import Path
 
 from fate.components.core.essential import JsonModelArtifactType
 
-from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+from .._base_type import (
+    ArtifactDescribe,
+    _ArtifactType,
+    _ArtifactTypeReader,
+    _ArtifactTypeWriter,
+)
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI
+    from fate.arch import Context
 
 
 class JsonModelWriter(_ArtifactTypeWriter):
@@ -20,16 +25,21 @@ class JsonModelWriter(_ArtifactTypeWriter):
             self.artifact.metadata.metadata = metadata
 
 
+class JsonModelReader(_ArtifactTypeReader):
+    def read(self):
+        try:
+            with open(self.artifact.uri.path, "r") as fr:
+                return json.load(fr)
+        except Exception as e:
+            raise RuntimeError(f"load json model named from {self.artifact} failed: {e}")
+
+
 class JsonModelArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
         return JsonModelArtifactType
 
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
-        return JsonModelWriter(_ArtifactType(uri, metadata))
+    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonModelWriter:
+        return JsonModelWriter(ctx, artifact_type)
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
-        try:
-            with open(artifact.uri.path, "r") as fr:
-                return json.load(fr)
-        except Exception as e:
-            raise RuntimeError(f"load json model from {artifact} failed: {e}")
+    def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonModelReader:
+        return JsonModelReader(ctx, artifact_type)

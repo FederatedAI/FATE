@@ -46,11 +46,11 @@ def run(
     # print("table_inputs", table_inputs)
     # print("json_model_input", json_model_input)
     #
-    # print("dataframe_outputs", dataframe_outputs)
-    # dataframe_outputs_0 = next(dataframe_outputs)
-    # dataframe_outputs_1 = next(dataframe_outputs)
-    # print("    dataframe_outputs_0", dataframe_outputs_0)
-    # print("    dataframe_outputs_1", dataframe_outputs_1)
+    print("dataframe_outputs", dataframe_outputs)
+    dataframe_outputs_0 = next(dataframe_outputs)
+    dataframe_outputs_1 = next(dataframe_outputs)
+    print("    dataframe_outputs_0", dataframe_outputs_0)
+    print("    dataframe_outputs_1", dataframe_outputs_1)
     #
     # print("dataset_outputs", dataset_outputs)
     # dataset_outputs_0 = next(dataset_outputs)
@@ -59,7 +59,7 @@ def run(
     # print("    dataset_outputs_1", dataset_outputs_1)
     #
     # print("dataframe_output", dataframe_output)
-    dataframe_output.write(ctx, dataframe_input, name="myname", namespace="mynamespace")
+    dataframe_output.write(dataframe_input.read(), name="myname", namespace="mynamespace")
     # print("dataset_output", dataset_output)
     #
     json_model_output.write({"aaa": 1}, metadata={"bbb": 2})

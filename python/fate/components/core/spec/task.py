@@ -46,6 +46,7 @@ class TaskConfigSpec(pydantic.BaseModel):
 
     task_id: str
     party_task_id: str
+    task_name: str
     component: str
     role: str
     party_id: str

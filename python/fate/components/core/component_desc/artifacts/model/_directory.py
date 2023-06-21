@@ -3,10 +3,15 @@ from pathlib import Path
 
 from fate.components.core.essential import ModelDirectoryArtifactType
 
-from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+from .._base_type import (
+    ArtifactDescribe,
+    _ArtifactType,
+    _ArtifactTypeReader,
+    _ArtifactTypeWriter,
+)
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI
+    from fate.arch import Context
 
 
 class ModelDirectoryWriter(_ArtifactTypeWriter):
@@ -19,12 +24,21 @@ class ModelDirectoryWriter(_ArtifactTypeWriter):
         self.artifact.metadata.metadata = metadata
 
 
+class ModelDirectoryReader(_ArtifactTypeReader):
+    def get_directory(self):
+        path = Path(self.artifact.uri.path)
+        return path
+
+    def get_metadata(self):
+        return self.artifact.metadata.metadata
+
+
 class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
         return ModelDirectoryArtifactType
 
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
-        return ModelDirectoryWriter(_ArtifactType(uri, metadata))
+    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> ModelDirectoryWriter:
+        return ModelDirectoryWriter(ctx, artifact_type)
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
-        return artifact
+    def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> ModelDirectoryReader:
+        return ModelDirectoryReader(ctx, artifact_type)

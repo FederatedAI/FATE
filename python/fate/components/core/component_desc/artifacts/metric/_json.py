@@ -5,10 +5,15 @@ from typing import Dict, Optional
 
 from fate.components.core.essential import JsonMetricArtifactType
 
-from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+from .._base_type import (
+    ArtifactDescribe,
+    _ArtifactType,
+    _ArtifactTypeReader,
+    _ArtifactTypeWriter,
+)
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI
+    from fate.arch import Context
 
 
 class JsonMetricWriter(_ArtifactTypeWriter):
@@ -22,16 +27,21 @@ class JsonMetricWriter(_ArtifactTypeWriter):
             self.artifact.metadata.metadata = metadata
 
 
+class JsonMetricReader(_ArtifactTypeReader):
+    def read(self):
+        try:
+            with open(self.artifact.uri.path, "r") as fr:
+                return json.load(fr)
+        except Exception as e:
+            raise RuntimeError(f"load json model named from {self.artifact} failed: {e}")
+
+
 class JsonMetricArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
         return JsonMetricArtifactType
 
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
-        return JsonMetricWriter(_ArtifactType(uri, metadata))
+    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonMetricWriter:
+        return JsonMetricWriter(ctx, artifact_type)
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
-        try:
-            with open(artifact.uri.path, "r") as fr:
-                return json.load(fr)
-        except Exception as e:
-            raise RuntimeError(f"load json model named from {artifact} failed: {e}")
+    def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonMetricReader:
+        return JsonMetricReader(ctx, artifact_type)
