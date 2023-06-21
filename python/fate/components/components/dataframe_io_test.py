@@ -22,6 +22,7 @@ from fate.components.core import LOCAL, Role, cpn
 @cpn.dataframe_output("dataframe_output", roles=[LOCAL])
 @cpn.dataframe_outputs("dataframe_outputs", roles=[LOCAL])
 @cpn.json_model_output("json_model_output", roles=[LOCAL])
+@cpn.json_model_outputs("json_model_outputs", roles=[LOCAL])
 def dataframe_io_test(
     ctx,
     role: Role,
@@ -30,6 +31,7 @@ def dataframe_io_test(
     dataframe_inputs,
     dataframe_outputs,
     json_model_output,
+    json_model_outputs,
 ):
     dataframe_input = dataframe_input + 1
 
@@ -41,3 +43,6 @@ def dataframe_io_test(
         output.write(ctx, dataframe_inputs[i % 4])
 
     json_model_output.write({"aaa": 1}, metadata={"bbb": 2})
+    for i in range(8):
+        model_output = next(json_model_outputs)
+        model_output.write({"io_model_out": i}, metadata={"i-th output": i})
