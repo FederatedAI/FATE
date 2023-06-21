@@ -35,6 +35,7 @@ def dataframe_transformer(
 ):
     from fate.arch.dataframe import TableReader
 
+    table = table.read()
     metadata = table.schema
     table_reader = TableReader(
         sample_id_name=metadata.get("sample_id_name", None),
@@ -57,4 +58,4 @@ def dataframe_transformer(
     )
 
     df = table_reader.to_frame(ctx, table)
-    dataframe_output.write(ctx, df, name=name, namespace=namespace)
+    dataframe_output.write(df, name=name, namespace=namespace)
