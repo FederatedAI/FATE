@@ -22,6 +22,7 @@ from .intersection import intersection
 from .reader import reader
 from .statistics import statistics
 from .dataframe_io_test import dataframe_io_test
+from .multi_model_test import multi_model_test
 
 BUILDIN_COMPONENTS = [
     hetero_lr,
@@ -32,5 +33,6 @@ BUILDIN_COMPONENTS = [
     run,
     dataframe_transformer,
     statistics,
-    dataframe_io_test
+    dataframe_io_test,
+    multi_model_test
 ]
