@@ -163,7 +163,7 @@ def _generator_recorder(generator):
 
     def _generator():
         for item in generator:
-            recorder.append(item.artifact.artifact)
+            recorder.append(item.artifact)
             yield item
 
     return recorder, _generator()
