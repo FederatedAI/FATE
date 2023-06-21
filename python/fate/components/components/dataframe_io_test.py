@@ -18,12 +18,23 @@ from fate.components.core import LOCAL, Role, cpn
 
 @cpn.component(roles=[LOCAL])
 @cpn.dataframe_input("dataframe_input", roles=[LOCAL])
+@cpn.dataframe_inputs("dataframe_inputs", roles=[LOCAL])
 @cpn.dataframe_output("dataframe_output", roles=[LOCAL])
+@cpn.dataframe_outputs("dataframe_outputs", roles=[LOCAL])
 def dataframe_io_test(
     ctx,
     role: Role,
     dataframe_input,
     dataframe_output,
+    dataframe_inputs,
+    dataframe_outputs,
 ):
     dataframe_input = dataframe_input + 1
+
     dataframe_output.write(ctx, dataframe_input)
+
+    assert len(dataframe_inputs) == 4
+    for i in range(10):
+        output = next(dataframe_output)
+        output.write(ctx, dataframe_inputs[i % 4])
+
