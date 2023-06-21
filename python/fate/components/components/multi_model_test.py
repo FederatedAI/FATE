@@ -25,6 +25,8 @@ from fate.components.core import LOCAL, Role, cpn
 @cpn.json_model_outputs("json_model_outputs", roles=[LOCAL])
 @cpn.model_directory_output("model_directory_output", roles=[LOCAL])
 @cpn.model_directory_outputs("model_directory_outputs", roles=[LOCAL])
+@cpn.json_metric_output("json_metric_output", roles=[LOCAL])
+@cpn.json_metric_outputs("json_metric_outputs", roles=[LOCAL])
 def multi_model_test(
     ctx,
     role: Role,
@@ -36,6 +38,8 @@ def multi_model_test(
     json_model_outputs,
     model_directory_output,
     model_directory_outputs,
+    json_metric_output,
+    json_metric_outputs,
 ):
     dataframe_input = dataframe_input + 1
 
@@ -61,3 +65,8 @@ def multi_model_test(
             fw.write("test for model directory output\n")
 
         directory_output.write_metadata({f"model_directory_output_{i}_metadata": f"test_directory_{i}"})
+
+    json_metric_output.write({"metric_single": {"data": [1, 2, 3]}}, metadata={"bbb": 2})
+    for i in range(4):
+        metric_output = next(json_metric_outputs)
+        metric_output.write({f"metric_multi_{i}": {"data": [0] for _ in range(i * 10)}}, metadata={"bbb": 2})
