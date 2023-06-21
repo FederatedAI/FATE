@@ -8,6 +8,7 @@ from fate.components.core.essential import JsonMetricArtifactType
 from .._base_type import (
     URI,
     ArtifactDescribe,
+    Metadata,
     MetricOutputMetadata,
     _ArtifactType,
     _ArtifactTypeReader,
@@ -18,7 +19,7 @@ if typing.TYPE_CHECKING:
     from fate.arch import Context
 
 
-class JsonMetricWriter(_ArtifactTypeWriter):
+class JsonMetricWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
     def write(self, data, metadata: Optional[Dict] = None):
         path = Path(self.artifact.uri.path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -38,12 +39,12 @@ class JsonMetricReader(_ArtifactTypeReader):
             raise RuntimeError(f"load json model named from {self.artifact} failed: {e}")
 
 
-class JsonMetricArtifactDescribe(ArtifactDescribe[_ArtifactType]):
+class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType, MetricOutputMetadata]):
     def get_type(self):
         return JsonMetricArtifactType
 
     def get_writer(self, ctx: "Context", uri: URI) -> JsonMetricWriter:
         return JsonMetricWriter(ctx, _ArtifactType(uri=uri, metadata=MetricOutputMetadata()))
 
-    def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonMetricReader:
-        return JsonMetricReader(ctx, artifact_type)
+    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata) -> JsonMetricReader:
+        return JsonMetricReader(ctx, _ArtifactType(uri=uri, metadata=metadata))

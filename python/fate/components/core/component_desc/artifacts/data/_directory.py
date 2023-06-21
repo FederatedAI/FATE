@@ -6,13 +6,14 @@ from .._base_type import (
     URI,
     ArtifactDescribe,
     DataOutputMetadata,
+    Metadata,
     _ArtifactType,
     _ArtifactTypeReader,
     _ArtifactTypeWriter,
 )
 
 
-class DataDirectoryWriter(_ArtifactTypeWriter):
+class DataDirectoryWriter(_ArtifactTypeWriter[DataDirectoryArtifactType]):
     def get_directory(self) -> Path:
         path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
@@ -35,12 +36,12 @@ class DataDirectoryReader(_ArtifactTypeReader):
         return self.artifact.metadata.metadata
 
 
-class DataDirectoryArtifactDescribe(ArtifactDescribe):
+class DataDirectoryArtifactDescribe(ArtifactDescribe[DataDirectoryArtifactType, DataOutputMetadata]):
     def get_type(self):
         return DataDirectoryArtifactType
 
     def get_writer(self, ctx, uri: URI) -> DataDirectoryWriter:
         return DataDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata()))
 
-    def get_reader(self, ctx, artifact_type: _ArtifactType) -> DataDirectoryReader:
-        return DataDirectoryReader(ctx, artifact_type)
+    def get_reader(self, ctx, uri: "URI", metadata: "Metadata") -> DataDirectoryReader:
+        return DataDirectoryReader(ctx, _ArtifactType(uri=uri, metadata=metadata))

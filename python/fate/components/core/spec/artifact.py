@@ -14,7 +14,7 @@
 #  limitations under the License.
 import datetime
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import pydantic
 
@@ -125,3 +125,17 @@ class ArtifactOutputApplySpec(pydantic.BaseModel):
         if not _uri_regex.match(v):
             raise pydantic.ValidationError(f"`{v}` is not valid uri")
         return v
+
+
+class IOArtifactMeta(pydantic.BaseModel):
+    class InputMeta(pydantic.BaseModel):
+        data: Dict[str, Union[List[Dict], Dict]]
+        model: Dict[str, Union[List[Dict], Dict]]
+
+    class OutputMeta(pydantic.BaseModel):
+        data: Dict[str, Union[List[Dict], Dict]]
+        model: Dict[str, Union[List[Dict], Dict]]
+        metric: Dict[str, Union[List[Dict], Dict]]
+
+    inputs: InputMeta
+    outputs: OutputMeta

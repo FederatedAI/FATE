@@ -7,6 +7,7 @@ from fate.components.core.essential import JsonModelArtifactType
 from .._base_type import (
     URI,
     ArtifactDescribe,
+    Metadata,
     ModelOutputMetadata,
     _ArtifactType,
     _ArtifactTypeReader,
@@ -17,7 +18,7 @@ if typing.TYPE_CHECKING:
     from fate.arch import Context
 
 
-class JsonModelWriter(_ArtifactTypeWriter):
+class JsonModelWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
     def write(self, data, metadata: dict = None):
         path = Path(self.artifact.uri.path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -36,12 +37,12 @@ class JsonModelReader(_ArtifactTypeReader):
             raise RuntimeError(f"load json model named from {self.artifact} failed: {e}")
 
 
-class JsonModelArtifactDescribe(ArtifactDescribe[_ArtifactType]):
+class JsonModelArtifactDescribe(ArtifactDescribe[JsonModelArtifactType, ModelOutputMetadata]):
     def get_type(self):
         return JsonModelArtifactType
 
     def get_writer(self, ctx: "Context", uri: URI) -> JsonModelWriter:
         return JsonModelWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata()))
 
-    def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonModelReader:
-        return JsonModelReader(ctx, artifact_type)
+    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata) -> JsonModelReader:
+        return JsonModelReader(ctx, _ArtifactType(uri=uri, metadata=metadata))
