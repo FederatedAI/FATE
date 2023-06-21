@@ -35,6 +35,6 @@ def dataframe_io_test(
 
     assert len(dataframe_inputs) == 4
     for i in range(10):
-        output = next(dataframe_output)
+        output = next(dataframe_outputs)
         output.write(ctx, dataframe_inputs[i % 4])
 
