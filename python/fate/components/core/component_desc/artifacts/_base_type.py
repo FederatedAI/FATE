@@ -1,8 +1,14 @@
 import typing
-from typing import Generic, List, TypeVar
+from typing import Generic, List, TypeVar, Union
 
+from fate.arch import URI
 from fate.components.core.essential import Role, Stage
-from fate.components.core.spec.artifact import Metadata
+from fate.components.core.spec.artifact import (
+    DataOutputMetadata,
+    Metadata,
+    MetricOutputMetadata,
+    ModelOutputMetadata,
+)
 from fate.components.core.spec.component import ArtifactSpec
 from fate.components.core.spec.task import (
     ArtifactInputApplySpec,
@@ -10,7 +16,7 @@ from fate.components.core.spec.task import (
 )
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI, Context
+    from fate.arch import Context
 
 
 class _ArtifactTypeWriter:
@@ -38,7 +44,9 @@ class _ArtifactTypeReader:
 
 
 class _ArtifactType:
-    def __init__(self, uri: "URI", metadata: Metadata) -> None:
+    def __init__(
+        self, uri: "URI", metadata: Union[Metadata, DataOutputMetadata, ModelOutputMetadata, MetricOutputMetadata]
+    ) -> None:
         self.uri = uri
         self.metadata = metadata
 
@@ -112,7 +120,7 @@ class ArtifactDescribe(Generic[AT]):
     def get_type(self) -> AT:
         raise NotImplementedError()
 
-    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> _ArtifactTypeWriter:
+    def get_writer(self, ctx: "Context", uri: "URI") -> _ArtifactTypeWriter:
         raise NotImplementedError()
 
     def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> _ArtifactTypeReader:
@@ -143,8 +151,9 @@ class ArtifactDescribe(Generic[AT]):
                 if self.multi:
                     return self._generator_recorder(ctx, output_artifact_iter)
                 else:
-                    artifact = next(output_artifact_iter)
-                    return artifact, self.get_writer(ctx, artifact)
+                    uri = next(output_artifact_iter)
+                    writer = self.get_writer(ctx, uri)
+                    return writer.artifact, writer
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:
@@ -164,16 +173,20 @@ class ArtifactDescribe(Generic[AT]):
                 if i != 0:
                     raise ValueError(f"index should be 0, but got {i}")
                 uri = URI.from_string(spec.uri)
-            yield _ArtifactType(uri, Metadata())
+            yield uri
             i += 1
 
-    def _generator_recorder(self, ctx: "Context", generator: typing.Generator[_ArtifactType, None, None]):
+    def create_metadata(self) -> Metadata:
+        raise NotImplementedError()
+
+    def _generator_recorder(self, ctx: "Context", generator: typing.Generator["URI", None, None]):
         recorder = []
 
         def _generator():
             for item in generator:
-                recorder.append(item)
-                yield self.get_writer(ctx, item)
+                writer = self.get_writer(ctx, item)
+                recorder.append(writer.artifact)
+                yield writer
 
         return recorder, _generator()
 

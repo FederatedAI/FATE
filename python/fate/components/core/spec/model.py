@@ -40,7 +40,7 @@ class MLModelFederatedSpec(pydantic.BaseModel):
 
 class MLModelModelSpec(pydantic.BaseModel):
     name: str
-    created_time: datetime
+    created_time: str
     file_format: str
     metadata: dict
 

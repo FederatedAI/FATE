@@ -4,7 +4,9 @@ from pathlib import Path
 from fate.components.core.essential import ModelDirectoryArtifactType
 
 from .._base_type import (
+    URI,
     ArtifactDescribe,
+    ModelOutputMetadata,
     _ArtifactType,
     _ArtifactTypeReader,
     _ArtifactTypeWriter,
@@ -37,8 +39,8 @@ class ModelDirectoryArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
         return ModelDirectoryArtifactType
 
-    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> ModelDirectoryWriter:
-        return ModelDirectoryWriter(ctx, artifact_type)
+    def get_writer(self, ctx: "Context", uri: URI) -> ModelDirectoryWriter:
+        return ModelDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata()))
 
     def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> ModelDirectoryReader:
         return ModelDirectoryReader(ctx, artifact_type)

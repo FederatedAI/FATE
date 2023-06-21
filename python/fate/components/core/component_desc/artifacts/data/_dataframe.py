@@ -11,6 +11,7 @@ from .._base_type import (
 )
 
 if typing.TYPE_CHECKING:
+    from fate.arch import URI
     from fate.arch.dataframe import DataFrame
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class DataframeWriter(_ArtifactTypeWriter):
         samples = df.data_overview()
         from fate.components.core.spec.artifact import DataOverview
 
-        self.artifact.metadata.overview = DataOverview(count=count, samples=samples)
+        self.artifact.metadata.data_overview = DataOverview(count=count, samples=samples)
 
         logger.debug(f"write dataframe to artifact: {self.artifact}")
 
@@ -77,8 +78,10 @@ class DataframeArtifactDescribe(ArtifactDescribe):
     def get_type(self):
         return DataframeArtifactType
 
-    def get_writer(self, ctx, artifact_type: _ArtifactType) -> _ArtifactTypeWriter:
-        return DataframeWriter(ctx, artifact_type)
+    def get_writer(self, ctx, uri: "URI") -> _ArtifactTypeWriter:
+        from fate.components.core.spec.artifact import DataOutputMetadata
+
+        return DataframeWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata()))
 
     def get_reader(self, ctx, artifact_type: _ArtifactType) -> _ArtifactTypeReader:
         return DataframeReader(ctx, artifact_type)

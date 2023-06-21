@@ -3,7 +3,9 @@ import typing
 from fate.components.core.essential import TableArtifactType
 
 from .._base_type import (
+    URI,
     ArtifactDescribe,
+    DataOutputMetadata,
     _ArtifactType,
     _ArtifactTypeReader,
     _ArtifactTypeWriter,
@@ -37,8 +39,8 @@ class TableArtifactDescribe(ArtifactDescribe):
     def get_type(self):
         return TableArtifactType
 
-    def get_writer(self, ctx, artifact_type: _ArtifactType) -> TableWriter:
-        return TableWriter(ctx, artifact_type)
+    def get_writer(self, ctx, uri: URI) -> TableWriter:
+        return TableWriter(ctx, _ArtifactType(uri, DataOutputMetadata()))
 
     def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> TableReader:
         return TableReader(ctx, artifact_type)

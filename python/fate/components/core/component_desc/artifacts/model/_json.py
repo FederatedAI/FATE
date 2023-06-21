@@ -5,7 +5,9 @@ from pathlib import Path
 from fate.components.core.essential import JsonModelArtifactType
 
 from .._base_type import (
+    URI,
     ArtifactDescribe,
+    ModelOutputMetadata,
     _ArtifactType,
     _ArtifactTypeReader,
     _ArtifactTypeWriter,
@@ -38,8 +40,8 @@ class JsonModelArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
         return JsonModelArtifactType
 
-    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonModelWriter:
-        return JsonModelWriter(ctx, artifact_type)
+    def get_writer(self, ctx: "Context", uri: URI) -> JsonModelWriter:
+        return JsonModelWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata()))
 
     def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonModelReader:
         return JsonModelReader(ctx, artifact_type)

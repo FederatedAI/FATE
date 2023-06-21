@@ -12,14 +12,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import datetime
 import re
-import typing
 from typing import List, Optional
 
-if typing.TYPE_CHECKING:
-    from fate.arch import URI
-
 import pydantic
+
+from .model import (
+    MLModelComponentSpec,
+    MLModelFederatedSpec,
+    MLModelModelSpec,
+    MLModelPartiesSpec,
+    MLModelPartySpec,
+    MLModelSpec,
+)
 
 # see https://www.rfc-editor.org/rfc/rfc3986#appendix-B
 # scheme    = $2
@@ -48,7 +54,51 @@ class Metadata(pydantic.BaseModel):
     metadata: dict = pydantic.Field(default_factory=dict)
     name: Optional[str] = None
     namespace: Optional[str] = None
-    overview: Optional[DataOverview] = None
+    source: Optional[ArtifactSource] = None
+
+
+class ModelOutputMetadata(pydantic.BaseModel):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    name: Optional[str] = None
+    namespace: Optional[str] = None
+    source: Optional[ArtifactSource] = None
+    model_overview: MLModelSpec = MLModelSpec(
+        federated=MLModelFederatedSpec(
+            task_id="",
+            parties=MLModelPartiesSpec(guest=[], host=[], arbiter=[]),
+            component=MLModelComponentSpec(name="", provider="", version="", metadata={}),
+        ),
+        party=MLModelPartySpec(
+            party_task_id="",
+            role="",
+            partyid="",
+            models=[
+                MLModelModelSpec(
+                    name="", created_time=datetime.datetime.now().isoformat(), file_format="", metadata={}
+                )
+            ],
+        ),
+    )
+
+    class Config:
+        extra = "forbid"
+
+
+class DataOutputMetadata(pydantic.BaseModel):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    name: Optional[str] = None
+    namespace: Optional[str] = None
+    source: Optional[ArtifactSource] = None
+    data_overview: Optional[DataOverview] = None
+
+    class Config:
+        extra = "forbid"
+
+
+class MetricOutputMetadata(pydantic.BaseModel):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    name: Optional[str] = None
+    namespace: Optional[str] = None
     source: Optional[ArtifactSource] = None
 
     class Config:

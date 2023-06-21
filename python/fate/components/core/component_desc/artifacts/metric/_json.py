@@ -6,7 +6,9 @@ from typing import Dict, Optional
 from fate.components.core.essential import JsonMetricArtifactType
 
 from .._base_type import (
+    URI,
     ArtifactDescribe,
+    MetricOutputMetadata,
     _ArtifactType,
     _ArtifactTypeReader,
     _ArtifactTypeWriter,
@@ -40,8 +42,8 @@ class JsonMetricArtifactDescribe(ArtifactDescribe[_ArtifactType]):
     def get_type(self):
         return JsonMetricArtifactType
 
-    def get_writer(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonMetricWriter:
-        return JsonMetricWriter(ctx, artifact_type)
+    def get_writer(self, ctx: "Context", uri: URI) -> JsonMetricWriter:
+        return JsonMetricWriter(ctx, _ArtifactType(uri=uri, metadata=MetricOutputMetadata()))
 
     def get_reader(self, ctx: "Context", artifact_type: _ArtifactType) -> JsonMetricReader:
         return JsonMetricReader(ctx, artifact_type)
