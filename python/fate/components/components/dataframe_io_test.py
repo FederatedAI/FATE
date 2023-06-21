@@ -23,6 +23,8 @@ from fate.components.core import LOCAL, Role, cpn
 @cpn.dataframe_outputs("dataframe_outputs", roles=[LOCAL])
 @cpn.json_model_output("json_model_output", roles=[LOCAL])
 @cpn.json_model_outputs("json_model_outputs", roles=[LOCAL])
+@cpn.model_directory_output("model_directory_output", roles=[LOCAL])
+@cpn.model_directory_outputs("model_directory_outputs", roles=[LOCAL])
 def dataframe_io_test(
     ctx,
     role: Role,
@@ -32,17 +34,31 @@ def dataframe_io_test(
     dataframe_outputs,
     json_model_output,
     json_model_outputs,
+    model_directory_output,
+    model_directory_outputs,
 ):
-    dataframe_input = dataframe_input + 1
+    df = dataframe_input.read()
+    df = df + 1
 
-    dataframe_output.write(ctx, dataframe_input)
+    df_list = [_input.read() for _input in dataframe_inputs]
+    dataframe_output.write(df)
 
-    assert len(dataframe_inputs) == 4
+    assert len(df_list) == 4
     for i in range(10):
         output = next(dataframe_outputs)
-        output.write(ctx, dataframe_inputs[i % 4])
+        output.write(df_list[i % 4])
 
     json_model_output.write({"aaa": 1}, metadata={"bbb": 2})
     for i in range(8):
         model_output = next(json_model_outputs)
         model_output.write({"io_model_out": i}, metadata={"i-th output": i})
+
+    model_directory_output.write_metadata({"model_directory_output_metadata": "test_directory"})
+
+    for i in range(5):
+        directory_output = next(model_directory_outputs)
+        path = directory_output.get_directory()
+        with open(path + f"/output_{i}.txt", "w") as fw:
+            fw.write("test for model directory output\n")
+
+        directory_output.write_metadata({f"model_directory_output_{i}_metadata": f"test_directory_{i}"})

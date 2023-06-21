@@ -41,9 +41,12 @@ def multi_model_test(
     json_metric_output,
     json_metric_outputs,
 ):
-    dataframe_input = dataframe_input + 1
+    df = dataframe_input.read()
+    df = df + 1
 
-    dataframe_output.write(ctx, dataframe_input)
+    dataframe_output.write(df)
+    json_model_input = json_model_input.read()
+    json_model_inputs = [model_input.read() for model_input in json_model_inputs]
 
     assert json_model_input == {"aaa": 1}
     assert len(json_model_inputs) == 3
