@@ -23,55 +23,42 @@ def feature_scale(ctx, role):
 
 
 @feature_scale.train()
-@cpn.dataframe_input("train_data", roles=[GUEST, HOST])
-@cpn.parameter("method", type=params.string_choice(["standard", "min_max"]), default="standard", optional=False)
-@cpn.parameter(
-    "feature_range",
-    type=Union[list, dict],
-    default=[0, 1],
-    optional=True,
-    desc="Result feature value range for `min_max` method, "
-    "take either dict in format: {col_name: [min, max]} for specific columns "
-    "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]",
-)
-@cpn.parameter(
-    "scale_col",
-    type=List[str],
-    default=None,
-    desc="list of column names to be scaled, if None, all columns will be scaled; "
-    "only one of {scale_col, scale_idx} should be specified",
-)
-@cpn.parameter(
-    "scale_idx",
-    type=List[params.conint(ge=0)],
-    default=None,
-    desc="list of column index to be scaled, if None, all columns will be scaled; "
-    "only one of {scale_col, scale_idx} should be specified",
-)
-@cpn.parameter(
-    "strict_range",
-    type=bool,
-    default=True,
-    desc="whether transformed value to be strictly restricted within given range; "
-    "effective for 'min_max' scale method only",
-)
-@cpn.parameter(
-    "use_anonymous", type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
-)
-@cpn.dataframe_output("train_output_data", roles=[GUEST, HOST])
-@cpn.dataframe_output("output_model", roles=[GUEST, HOST])
 def feature_scale_train(
     ctx,
     role: Role,
-    train_data,
-    method,
-    feature_range,
-    scale_col,
-    scale_idx,
-    strict_range,
-    use_anonymous,
-    train_output_data,
-    output_model,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    method: cpn.parameter(type=params.string_choice(["standard", "min_max"]), default="standard", optional=False),
+    feature_range: cpn.parameter(
+        type=Union[list, dict],
+        default=[0, 1],
+        optional=True,
+        desc="Result feature value range for `min_max` method, "
+        "take either dict in format: {col_name: [min, max]} for specific columns "
+        "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]",
+    ),
+    scale_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        desc="list of column names to be scaled, if None, all columns will be scaled; "
+        "only one of {scale_col, scale_idx} should be specified",
+    ),
+    scale_idx: cpn.parameter(
+        type=List[params.conint(ge=0)],
+        default=None,
+        desc="list of column index to be scaled, if None, all columns will be scaled; "
+        "only one of {scale_col, scale_idx} should be specified",
+    ),
+    strict_range: cpn.parameter(
+        type=bool,
+        default=True,
+        desc="whether transformed value to be strictly restricted within given range; "
+        "effective for 'min_max' scale method only",
+    ),
+    use_anonymous: cpn.parameter(
+        type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
+    ),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    output_model: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     train(
         ctx,
@@ -88,15 +75,12 @@ def feature_scale_train(
 
 
 @feature_scale.predict()
-@cpn.json_model_input("input_model", roles=[GUEST, HOST])
-@cpn.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
-@cpn.dataframe_output("test_output_data", roles=[GUEST, HOST])
 def feature_scale_predict(
     ctx,
     role: Role,
-    test_data,
-    input_model,
-    test_output_data,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     predict(ctx, input_model, test_data, test_output_data)
 

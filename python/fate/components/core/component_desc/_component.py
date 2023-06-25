@@ -63,7 +63,7 @@ from fate.components.core.essential import (
 )
 
 from ._component_artifact import ArtifactDescribeAnnotation, ComponentArtifactDescribes
-from ._parameter import ComponentParameterDescribes
+from ._parameter import ComponentParameterDescribes, ParameterDescribeAnnotation
 
 logger = logging.getLogger(__name__)
 
@@ -341,16 +341,19 @@ def _component(name, roles, provider, version, description, is_subcomponent):
         cpn_name = name or f.__name__.lower()
         if isinstance(f, Component):
             raise TypeError("Attempted to convert a callback into a component_desc twice.")
-        try:
-            parameters = f.__component_parameters__
-            del f.__component_parameters__
-        except AttributeError:
-            parameters = ComponentParameterDescribes()
-
+        parameters = ComponentParameterDescribes()
         artifacts = ComponentArtifactDescribes()
         for k, v in inspect.signature(f).parameters.items():
             if isinstance(annotation := v.annotation, ArtifactDescribeAnnotation):
                 artifacts.add(annotation, k)
+            elif isinstance(annotation, ParameterDescribeAnnotation):
+                parameters.add_parameter(
+                    name=k,
+                    type=annotation.type,
+                    default=annotation.default,
+                    desc=annotation.desc,
+                    optional=annotation.optional,
+                )
 
         if is_subcomponent:
             artifacts.update_roles_and_stages(stages=[Stage.from_str(cpn_name)], roles=roles)

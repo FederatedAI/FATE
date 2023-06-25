@@ -23,47 +23,34 @@ def statistics(ctx, role):
     ...
 
 
-@statistics.train()
-@cpn.dataframe_input("train_data", roles=[GUEST, HOST])
-@cpn.parameter(
-    "metrics",
-    type=Union[List[params.statistic_metrics_param()], params.statistic_metrics_param()],
-    default=["mean", "std", "min", "max"],
-    desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']",
-)
-@cpn.parameter("ddof", type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1")
-@cpn.parameter(
-    "bias",
-    type=bool,
-    default=True,
-    desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.",
-)
-@cpn.parameter(
-    "skip_col",
-    type=List[str],
-    default=None,
-    optional=True,
-    desc="columns to be skipped, default None; if None, statistics will be computed over all columns",
-)
-@cpn.parameter(
-    "use_anonymous", type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
-)
-@cpn.json_model_output("output_model", roles=[GUEST, HOST])
 def statistics_train(
     ctx,
     role: Role,
-    train_data,
-    metrics,
-    ddof,
-    bias,
-    skip_col,
-    use_anonymous,
-    output_model,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    metrics: cpn.parameter(
+        type=Union[List[params.statistic_metrics_param()], params.statistic_metrics_param()],
+        default=["mean", "std", "min", "max"],
+        desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']",
+    ),
+    ddof: cpn.parameter(
+        type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1"
+    ),
+    bias: cpn.parameter(
+        type=bool,
+        default=True,
+        desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.",
+    ),
+    skip_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        optional=True,
+        desc="columns to be skipped, default None; if None, statistics will be computed over all columns",
+    ),
+    use_anonymous: cpn.parameter(
+        type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
+    ),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
-    train(ctx, train_data, output_model, metrics, ddof, bias, skip_col, use_anonymous)
-
-
-def train(ctx, train_data, output_model, metrics, ddof, bias, skip_col, use_anonymous):
     from fate.ml.statistics.statistics import FeatureStatistics
 
     with ctx.sub_ctx("train") as sub_ctx:
