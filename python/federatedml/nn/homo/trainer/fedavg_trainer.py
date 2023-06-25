@@ -214,15 +214,6 @@ class FedAVGTrainer(TrainerBase):
                 batch_data, batch_label = _batch_iter
             else:
                 batch_data = _batch_iter
-            """
-            if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
-                batch_data = _batch_iter
-            else:
-                batch_data, batch_label = _batch_iter
-
-            batch_data = self._decode(batch_data)
-            batch_label = self._decode(batch_label)
-            """
 
             if self.cuda is not None or self._enable_deepspeed:
                 device = self.cuda_main_device if self.cuda_main_device is not None else self.model.device
@@ -309,7 +300,7 @@ class FedAVGTrainer(TrainerBase):
         need_stop = False
         evaluation_summary = {}
 
-        self._get_train_data_loader(train_set)
+        self.data_loader = self._get_train_data_loader(train_set)
         # training process
         for i in range(self.epochs):
 
