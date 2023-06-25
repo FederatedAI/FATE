@@ -102,7 +102,7 @@ class Component:
         if self.func_args[1] != "role":
             raise ComponentDeclareError("bad component_desc definition, second argument should be `role`")
 
-        if set(self.func_args[2:]) != {*self.parameters.mapping.keys(), *self.artifacts.keys()}:
+        if set(self.func_args[2:]) != set(self.parameters.mapping.keys()).union(self.artifacts.keys()):
             raise ComponentDeclareError(
                 f"bad component_desc definition, function arguments `{self.func_args[2:]}` should be same as {self.parameters.mapping.keys()} and {self.artifacts.keys()}"
             )
