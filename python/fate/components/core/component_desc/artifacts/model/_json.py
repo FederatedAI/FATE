@@ -38,7 +38,8 @@ class JsonModelReader(_ArtifactTypeReader):
 
 
 class JsonModelArtifactDescribe(ArtifactDescribe[JsonModelArtifactType, ModelOutputMetadata]):
-    def get_type(self):
+    @classmethod
+    def get_type(cls):
         return JsonModelArtifactType
 
     def get_writer(self, ctx: "Context", uri: URI) -> JsonModelWriter:

@@ -37,7 +37,8 @@ class DataDirectoryReader(_ArtifactTypeReader):
 
 
 class DataDirectoryArtifactDescribe(ArtifactDescribe[DataDirectoryArtifactType, DataOutputMetadata]):
-    def get_type(self):
+    @classmethod
+    def get_type(cls):
         return DataDirectoryArtifactType
 
     def get_writer(self, ctx, uri: URI) -> DataDirectoryWriter:

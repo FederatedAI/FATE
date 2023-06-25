@@ -1,5 +1,6 @@
 import logging
 import typing
+from typing import List, Union
 
 from fate.components.core.essential import Role, Stage
 
@@ -68,8 +69,11 @@ class ComponentExecutionIO:
         ).items():
             if arti := artifacts.get(arg):
                 if arti.is_active_for(stage, role):
-                    apply_spec: ArtifactInputApplySpec = config.input_artifacts.get(arg)
+                    apply_spec: Union[
+                        ArtifactInputApplySpec, List[ArtifactInputApplySpec]
+                    ] = config.input_artifacts.get(arg)
                     if apply_spec is not None:
+                        arti = arti.get_correct_arti(apply_spec)
                         try:
                             if arti.multi:
                                 readers = []
@@ -112,6 +116,7 @@ class ComponentExecutionIO:
                 if arti.is_active_for(stage, role):
                     apply_spec: ArtifactOutputApplySpec = config.output_artifacts.get(arg)
                     if apply_spec is not None:
+                        arti = arti.get_correct_arti(apply_spec)
                         try:
                             if arti.multi:
                                 if not apply_spec.is_template():

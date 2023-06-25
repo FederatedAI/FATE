@@ -40,7 +40,8 @@ class JsonMetricReader(_ArtifactTypeReader):
 
 
 class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType, MetricOutputMetadata]):
-    def get_type(self):
+    @classmethod
+    def get_type(cls):
         return JsonMetricArtifactType
 
     def get_writer(self, ctx: "Context", uri: URI) -> JsonMetricWriter:

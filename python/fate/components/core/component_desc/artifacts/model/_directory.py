@@ -37,7 +37,8 @@ class ModelDirectoryReader(_ArtifactTypeReader):
 
 
 class ModelDirectoryArtifactDescribe(ArtifactDescribe[ModelDirectoryArtifactType, ModelOutputMetadata]):
-    def get_type(self):
+    @classmethod
+    def get_type(cls):
         return ModelDirectoryArtifactType
 
     def get_writer(self, ctx: "Context", uri: URI) -> ModelDirectoryWriter:

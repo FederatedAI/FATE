@@ -1,5 +1,6 @@
+import inspect
 import typing
-from typing import Generic, List, TypeVar, Union
+from typing import Generic, List, Optional, Type, TypeVar, Union
 
 from fate.arch import URI
 from fate.components.core.essential import Role, Stage
@@ -105,6 +106,11 @@ AT = TypeVar("AT")
 
 class ArtifactDescribe(Generic[AT, M]):
     def __init__(self, name: str, roles: List[Role], stages: List[Stage], desc: str, optional: bool, multi: bool):
+        if roles is None:
+            roles = []
+        if desc:
+            desc = inspect.cleandoc(desc)
+
         self.name = name
         self.roles = roles
         self.stages = stages
@@ -112,35 +118,12 @@ class ArtifactDescribe(Generic[AT, M]):
         self.optional = optional
         self.multi = multi
 
-    def is_active_for(self, stage: Stage, role: Role):
-        return stage in self.stages and role in self.roles
-
     def __str__(self) -> str:
         return f"ArtifactDeclare<name={self.name}, type={self.get_type()}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
 
-    def merge(self, a: "ArtifactDescribe"):
-        if self.__class__ != a.__class__ or self.multi != a.multi:
-            raise ValueError(
-                f"artifact {self.name} declare multiple times with different optional: `{self.get_type()}` vs `{a.get_type()}`"
-            )
-        if set(self.roles) != set(a.roles):
-            raise ValueError(
-                f"artifact {self.name} declare multiple times with different roles: `{self.roles}` vs `{a.roles}`"
-            )
-        if self.optional != a.optional:
-            raise ValueError(
-                f"artifact {self.name} declare multiple times with different optional: `{self.optional}` vs `{a.optional}`"
-            )
-        stages = set(self.stages)
-        stages.update(a.stages)
-        stages = list(stages)
-        return self.__class__(
-            name=self.name, roles=self.roles, stages=stages, desc=self.desc, optional=self.optional, multi=self.multi
-        )
-
     def dict(self):
         return ArtifactSpec(
-            type=self.get_type().type_name,
+            types=self.get_type().type_name,
             optional=self.optional,
             roles=self.roles,
             stages=self.stages,
@@ -148,14 +131,51 @@ class ArtifactDescribe(Generic[AT, M]):
             is_multi=self.multi,
         )
 
-    def get_type(self) -> AT:
+    @classmethod
+    def get_type(cls) -> AT:
         raise NotImplementedError()
+
+    @classmethod
+    def is_correct_arti(cls, uri: URI):
+        return True
 
     def get_writer(self, ctx: "Context", uri: "URI") -> _ArtifactTypeWriter[M]:
         raise NotImplementedError()
 
     def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata) -> _ArtifactTypeReader:
         raise NotImplementedError()
+
+
+class DataArtifactDescribe(ArtifactDescribe[AT, M]):
+    ...
+
+
+class ModelArtifactDescribe(ArtifactDescribe[AT, M]):
+    ...
+
+
+class MetricArtifactDescribe(ArtifactDescribe[AT, M]):
+    ...
+
+
+def _create_artifact_annotation(
+    is_input: bool, is_multi: bool, describe_type: Type[ArtifactDescribe], describe_type_kind: str
+):
+    def f(roles: Optional[List[Role]] = None, desc="", optional=False):
+        from .._component_artifact import ArtifactDescribeAnnotation
+
+        return ArtifactDescribeAnnotation(
+            describe_type=describe_type,
+            describe_type_kind=describe_type_kind,
+            is_input=is_input,
+            roles=roles,
+            stages=[],
+            desc=desc,
+            optional=optional,
+            multi=is_multi,
+        )
+
+    return f
 
 
 class ComponentArtifactApplyError(RuntimeError):

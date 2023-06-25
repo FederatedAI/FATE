@@ -17,25 +17,17 @@ from fate.components.core import LOCAL, Role, cpn
 
 
 @cpn.component(roles=[LOCAL])
-@cpn.dataframe_input("dataframe_input", roles=[LOCAL])
-@cpn.dataframe_inputs("dataframe_inputs", roles=[LOCAL])
-@cpn.dataframe_output("dataframe_output", roles=[LOCAL])
-@cpn.dataframe_outputs("dataframe_outputs", roles=[LOCAL])
-@cpn.json_model_output("json_model_output", roles=[LOCAL])
-@cpn.json_model_outputs("json_model_outputs", roles=[LOCAL])
-@cpn.model_directory_output("model_directory_output", roles=[LOCAL])
-@cpn.model_directory_outputs("model_directory_outputs", roles=[LOCAL])
 def dataframe_io_test(
     ctx,
     role: Role,
-    dataframe_input,
-    dataframe_output,
-    dataframe_inputs,
-    dataframe_outputs,
-    json_model_output,
-    json_model_outputs,
-    model_directory_output,
-    model_directory_outputs,
+    dataframe_input: cpn.dataframe_input(roles=[LOCAL]),
+    dataframe_output: cpn.dataframe_output(roles=[LOCAL]),
+    dataframe_inputs: cpn.dataframe_inputs(roles=[LOCAL]),
+    dataframe_outputs: cpn.dataframe_outputs(roles=[LOCAL]),
+    json_model_output: cpn.json_model_output(roles=[LOCAL]),
+    json_model_outputs: cpn.json_model_outputs(roles=[LOCAL]),
+    model_directory_output: cpn.model_directory_output(roles=[LOCAL]),
+    model_directory_outputs: cpn.model_directory_outputs(roles=[LOCAL]),
 ):
     df = dataframe_input.read()
     df = df + 1

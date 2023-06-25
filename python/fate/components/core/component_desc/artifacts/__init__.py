@@ -1,4 +1,10 @@
-from ._base_type import ArtifactDescribe, _ArtifactType
+from ._base_type import (
+    ArtifactDescribe,
+    DataArtifactDescribe,
+    MetricArtifactDescribe,
+    ModelArtifactDescribe,
+    _ArtifactType,
+)
 from .data import (
     data_directory_input,
     data_directory_inputs,

@@ -17,8 +17,6 @@ from fate.components.core import LOCAL, Role, cpn
 
 
 @cpn.component(roles=[LOCAL])
-@cpn.table_input("table", roles=[LOCAL])
-@cpn.dataframe_output("dataframe_output", roles=[LOCAL])
 @cpn.parameter("namespace", type=str, default=None, optional=True)
 @cpn.parameter("name", type=str, default=None, optional=True)
 @cpn.parameter("anonymous_role", type=str, default=None, optional=True)
@@ -26,8 +24,8 @@ from fate.components.core import LOCAL, Role, cpn
 def dataframe_transformer(
     ctx,
     role: Role,
-    table,
-    dataframe_output,
+    table: cpn.table_input(roles=[LOCAL]),
+    dataframe_output: cpn.dataframe_output(roles=[LOCAL]),
     namespace,
     name,
     anonymous_role,
@@ -54,7 +52,7 @@ def dataframe_transformer(
         delimiter=metadata.get("delimiter", ","),
         input_format=metadata.get("input_format", "dense"),
         tag_with_value=metadata.get("tag_with_value", False),
-        tag_value_delimiter=metadata.get("tag_value_delimiter", ":")
+        tag_value_delimiter=metadata.get("tag_value_delimiter", ":"),
     )
 
     df = table_reader.to_frame(ctx, table)

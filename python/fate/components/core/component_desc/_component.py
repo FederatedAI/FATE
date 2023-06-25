@@ -62,7 +62,7 @@ from fate.components.core.essential import (
     Stage,
 )
 
-from ._component_artifact import ComponentArtifactDescribes
+from ._component_artifact import ArtifactDescribeAnnotation, ComponentArtifactDescribes
 from ._parameter import ComponentParameterDescribes
 
 logger = logging.getLogger(__name__)
@@ -154,6 +154,7 @@ class Component:
 
     def _runtime_io_dict(self, runtime_role: Role, runtime_stage: Stage):
         from fate.components.core.spec.component import (
+            ArtifactTypeSpec,
             ComponentIOArtifactsTypeSpec,
             ComponentIOArtifactTypeSpec,
             ComponentIOInputsArtifactsTypeSpec,
@@ -163,10 +164,15 @@ class Component:
         def _get_io_artifact_type_spec(v):
             return ComponentIOArtifactTypeSpec(
                 name=v.name,
-                type_name=v.get_type().type_name,
-                path_type=v.get_type().path_type,
-                uri_types=v.get_type().uri_types,
-                is_multi=v.multi,
+                is_multi=v.is_multi,
+                types=[
+                    ArtifactTypeSpec(
+                        type_name=v.get_type().type_name,
+                        path_type=v.get_type().path_type,
+                        uri_types=v.get_type().uri_types,
+                    )
+                    for v in v.types
+                ],
             )
 
         return ComponentIOArtifactsTypeSpec(
@@ -331,6 +337,7 @@ def component(
 
 def _component(name, roles, provider, version, description, is_subcomponent):
     def decorator(f):
+
         cpn_name = name or f.__name__.lower()
         if isinstance(f, Component):
             raise TypeError("Attempted to convert a callback into a component_desc twice.")
@@ -339,11 +346,11 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             del f.__component_parameters__
         except AttributeError:
             parameters = ComponentParameterDescribes()
-        try:
-            artifacts = f.__component_artifacts__
-            del f.__component_artifacts__
-        except AttributeError:
-            artifacts = ComponentArtifactDescribes()
+
+        artifacts = ComponentArtifactDescribes()
+        for k, v in inspect.signature(f).parameters.items():
+            if isinstance(annotation := v.annotation, ArtifactDescribeAnnotation):
+                artifacts.add(annotation, k)
 
         if is_subcomponent:
             artifacts.update_roles_and_stages(stages=[Stage.from_str(cpn_name)], roles=roles)

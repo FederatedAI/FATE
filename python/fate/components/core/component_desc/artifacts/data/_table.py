@@ -37,7 +37,8 @@ class TableReader(_ArtifactTypeReader):
 
 
 class TableArtifactDescribe(ArtifactDescribe[TableArtifactType, DataOutputMetadata]):
-    def get_type(self):
+    @classmethod
+    def get_type(cls):
         return TableArtifactType
 
     def get_writer(self, ctx: "Context", uri: URI) -> TableWriter:

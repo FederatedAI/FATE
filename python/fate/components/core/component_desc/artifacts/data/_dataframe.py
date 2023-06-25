@@ -77,7 +77,8 @@ class DataframeReader(_ArtifactTypeReader):
 
 
 class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType, DataOutputMetadata]):
-    def get_type(self):
+    @classmethod
+    def get_type(cls):
         return DataframeArtifactType
 
     def get_writer(self, ctx, uri: "URI") -> DataframeWriter:
