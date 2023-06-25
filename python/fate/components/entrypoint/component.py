@@ -76,22 +76,13 @@ def execute_component_from_config(config: TaskConfigSpec, output_path):
                 raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
 
         # prepare
-        execution_io = ComponentExecutionIO.load(ctx, component, role, stage, config)
+        execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
 
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
 
         # final execution io meta
-        from fate.components.core.spec.artifact import ArtifactSource
-
-        artifact_source = ArtifactSource(
-            task_id=config.task_id,
-            party_task_id=config.party_task_id,
-            task_name=config.task_name,
-            component=config.component,
-            output_artifact_key="",
-        )
-        execution_io_meta = execution_io.dump_io_meta(artifact_source)
+        execution_io_meta = execution_io.dump_io_meta(config)
         try:
             with open(output_path, "w") as fw:
                 json.dump(dict(status=dict(code=0), io_meta=execution_io_meta), fw, indent=4)
