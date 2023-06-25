@@ -119,7 +119,7 @@ class ArtifactDescribe(Generic[AT, M]):
         self.multi = multi
 
     def __str__(self) -> str:
-        return f"ArtifactDeclare<name={self.name}, type={self.get_type()}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
+        return f"{self.__class__.__name__}(name={self.name}, type={self.get_type()}, roles={self.roles}, stages={self.stages}, optional={self.optional})"
 
     def dict(self):
         return ArtifactSpec(
@@ -134,10 +134,6 @@ class ArtifactDescribe(Generic[AT, M]):
     @classmethod
     def get_type(cls) -> AT:
         raise NotImplementedError()
-
-    @classmethod
-    def is_correct_arti(cls, uri: URI):
-        return True
 
     def get_writer(self, ctx: "Context", uri: "URI") -> _ArtifactTypeWriter[M]:
         raise NotImplementedError()

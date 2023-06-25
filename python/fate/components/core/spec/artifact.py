@@ -108,11 +108,13 @@ class MetricOutputMetadata(pydantic.BaseModel):
 class ArtifactInputApplySpec(pydantic.BaseModel):
     uri: str
     metadata: Metadata
+    type_name: Optional[str] = None
 
 
 class ArtifactOutputApplySpec(pydantic.BaseModel):
     uri: str
     _is_template: Optional[bool] = None
+    type_name: Optional[str] = None
 
     def is_template(self) -> bool:
         return "{index}" in self.uri

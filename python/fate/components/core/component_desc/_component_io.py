@@ -11,24 +11,9 @@ if typing.TYPE_CHECKING:
 
     from ..spec.artifact import ArtifactInputApplySpec, ArtifactOutputApplySpec
     from ..spec.task import TaskConfigSpec
-    from .artifacts._base_type import (
-        AT,
-        ArtifactDescribe,
-        M,
-        _ArtifactType,
-        _ArtifactTypeReader,
-    )
+    from .artifacts._base_type import AT, ArtifactDescribe, M
 
 logger = logging.getLogger(__name__)
-
-
-class ComponentInputDataApplied:
-    def __init__(
-        self, artifact_desc: "ArtifactDescribe", artifact_type: "_ArtifactType", reader: "_ArtifactTypeReader"
-    ):
-        self.artifact_desc = artifact_desc
-        self.artifact_type = artifact_type
-        self.reader = reader
 
 
 class ComponentExecutionIO:
@@ -67,41 +52,46 @@ class ComponentExecutionIO:
             data=component.artifacts.data_inputs,
             model=component.artifacts.model_inputs,
         ).items():
-            if arti := artifacts.get(arg):
-                if arti.is_active_for(stage, role):
+            if allow_artifacts := artifacts.get(arg):
+                if allow_artifacts.is_active_for(stage, role):
                     apply_spec: Union[
                         ArtifactInputApplySpec, List[ArtifactInputApplySpec]
                     ] = config.input_artifacts.get(arg)
                     if apply_spec is not None:
-                        arti = arti.get_correct_arti(apply_spec)
                         try:
-                            if arti.multi:
+                            if allow_artifacts.is_multi:
                                 readers = []
                                 for c in apply_spec:
                                     uri = URI.from_string(c.uri)
+                                    arti = allow_artifacts.get_correct_arti(c)
                                     readers.append(arti.get_reader(ctx, uri, c.metadata))
                                 self.input_artifacts[input_type][arg] = _ArtifactsType([r.artifact for r in readers])
                                 self.input_artifacts_reader[input_type][arg] = readers
                             else:
                                 uri = URI.from_string(apply_spec.uri)
+                                arti = allow_artifacts.get_correct_arti(apply_spec)
                                 reader = arti.get_reader(ctx, uri, apply_spec.metadata)
                                 self.input_artifacts[input_type][arg] = reader.artifact
                                 self.input_artifacts_reader[input_type][arg] = reader
                         except Exception as e:
-                            raise ComponentArtifactApplyError(f"load as input artifact({arti}) error: {e}") from e
-                    elif arti.optional:
+                            raise ComponentArtifactApplyError(
+                                f"load as input artifact({allow_artifacts}) error: {e}"
+                            ) from e
+                    elif allow_artifacts.optional:
                         self.input_artifacts_reader[input_type][arg] = None
                         self.input_artifacts[input_type][arg] = None
                     else:
                         raise ComponentArtifactApplyError(
-                            f"load as input artifact({arti}) error: apply_config is None but not optional"
+                            f"load as input artifact({allow_artifacts}) error: `{arg}` is not optional but None got"
                         )
-                    logging.debug(
-                        f"apply {input_type} artifact `{arti.name}`: {apply_spec} -> {self.input_artifacts_reader[input_type][arg]}"
+                    logger.debug(
+                        f"apply {input_type} artifact `{allow_artifacts.name}`: {apply_spec} -> {self.input_artifacts_reader[input_type][arg]}"
                     )
                     return True
                 else:
-                    logging.debug(f"skip {input_type} artifact `{arti.name}` for stage `{stage}` and role `{role}`")
+                    logger.debug(
+                        f"skip {input_type} artifact `{allow_artifacts.name}` for stage `{stage}` and role `{role}`"
+                    )
         return False
 
     def _handle_output(self, ctx, component, arg, stage, role, config):
@@ -112,17 +102,17 @@ class ComponentExecutionIO:
             model=component.artifacts.model_outputs,
             metric=component.artifacts.metric_outputs,
         ).items():
-            if arti := artifacts.get(arg):
-                if arti.is_active_for(stage, role):
+            if allowed_artifacts := artifacts.get(arg):
+                if allowed_artifacts.is_active_for(stage, role):
                     apply_spec: ArtifactOutputApplySpec = config.output_artifacts.get(arg)
                     if apply_spec is not None:
-                        arti = arti.get_correct_arti(apply_spec)
                         try:
-                            if arti.multi:
+                            if allowed_artifacts.is_multi:
                                 if not apply_spec.is_template():
                                     raise ComponentArtifactApplyError(
                                         "template uri required for multiple output artifact"
                                     )
+                                arti = allowed_artifacts.get_correct_arti(apply_spec)
                                 writers = WriterGenerator(ctx, arti, apply_spec)
                                 self.output_artifacts[output_type][arg] = writers.recorder
                                 self.output_artifacts_writer[output_type][arg] = writers
@@ -132,24 +122,29 @@ class ComponentExecutionIO:
                                     raise ComponentArtifactApplyError(
                                         "template uri is not supported for non-multiple output artifact"
                                     )
+                                arti = allowed_artifacts.get_correct_arti(apply_spec)
                                 writer = arti.get_writer(ctx, URI.from_string(apply_spec.uri))
                                 self.output_artifacts[output_type][arg] = writer.artifact
                                 self.output_artifacts_writer[output_type][arg] = writer
                         except Exception as e:
-                            raise ComponentArtifactApplyError(f"load as output artifact({arti}) error: {e}") from e
-                    elif arti.optional:
+                            raise ComponentArtifactApplyError(
+                                f"load as output artifact({allowed_artifacts}) error: {e}"
+                            ) from e
+                    elif allowed_artifacts.optional:
                         self.output_artifacts_writer[output_type][arg] = None
                         self.output_artifacts[output_type][arg] = None
                     else:
                         raise ComponentArtifactApplyError(
-                            f"load as output artifact({arti}) error: apply_config is None but not optional"
+                            f"load as output artifact({allowed_artifacts}) error: apply_config is None but not optional"
                         )
-                    logging.debug(
-                        f"apply {output_type} artifact `{arti.name}`: {apply_spec} -> {self.output_artifacts_writer[output_type][arg]}"
+                    logger.debug(
+                        f"apply {output_type} artifact `{allowed_artifacts.name}`: {apply_spec} -> {self.output_artifacts_writer[output_type][arg]}"
                     )
                     return True
                 else:
-                    logging.debug(f"skip {output_type} artifact `{arti.name}` for stage `{stage}` and role `{role}`")
+                    logger.debug(
+                        f"skip {output_type} artifact `{allowed_artifacts.name}` for stage `{stage}` and role `{role}`"
+                    )
         return False
 
     def get_kwargs(self):
@@ -215,6 +210,12 @@ class WriterGenerator:
         self.recorder.artifacts.append(writer.artifact)
         self.current += 1
         return writer
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.artifact_describe}, index={self.current}>"
+
+    def __repr__(self):
+        return str(self)
 
 
 class ComponentArtifactApplyError(RuntimeError):

@@ -10,6 +10,8 @@ if typing.TYPE_CHECKING:
 def run(
     ctx: "Context",
     role: Role,
+    parameter: cpn.parameter(type=str, default="default", desc="parameter"),
+    mix_input: cpn.dataframe_input(roles=[GUEST, HOST]) | cpn.data_directory_input(),
     dataframe_inputs: cpn.dataframe_inputs(roles=[GUEST, HOST]),
     dataframe_input: cpn.dataframe_input(roles=[GUEST, HOST]),
     dataset_inputs: cpn.data_directory_inputs(roles=[GUEST, HOST]),

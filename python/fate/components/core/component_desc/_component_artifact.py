@@ -37,7 +37,7 @@ class AllowArtifactDescribes(typing.Generic[T]):
 
     def get_correct_arti(self, apply_spec) -> T:
         for t in self.types:
-            if t.is_correct_arti(apply_spec):
+            if apply_spec.type_name is None or t.get_type().type_name == apply_spec.type_name:
                 return t(
                     name=self.name,
                     roles=self.roles,
@@ -85,6 +85,9 @@ class AllowArtifactDescribes(typing.Generic[T]):
             optional=self.optional,
             is_multi=self.is_multi,
         )
+
+    def __str__(self):
+        return f"AllowArtifactDescribes(name={self.name}, types={self.types}, roles={self.roles}, stages={self.stages}, desc={self.desc}, optional={self.optional}, is_multi={self.is_multi})"
 
 
 class ArtifactDescribeAnnotation:
