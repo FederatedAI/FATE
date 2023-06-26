@@ -64,13 +64,13 @@ class ComponentExecutionIO:
                                 for c in apply_spec:
                                     uri = URI.from_string(c.uri)
                                     arti = allow_artifacts.get_correct_arti(c)
-                                    readers.append(arti.get_reader(ctx, uri, c.metadata))
+                                    readers.append(arti.get_reader(ctx, uri, c.metadata, arti.get_type().type_name))
                                 self.input_artifacts[input_type][arg] = _ArtifactsType([r.artifact for r in readers])
                                 self.input_artifacts_reader[input_type][arg] = readers
                             else:
                                 uri = URI.from_string(apply_spec.uri)
                                 arti = allow_artifacts.get_correct_arti(apply_spec)
-                                reader = arti.get_reader(ctx, uri, apply_spec.metadata)
+                                reader = arti.get_reader(ctx, uri, apply_spec.metadata, arti.get_type().type_name)
                                 self.input_artifacts[input_type][arg] = reader.artifact
                                 self.input_artifacts_reader[input_type][arg] = reader
                         except Exception as e:
@@ -123,7 +123,9 @@ class ComponentExecutionIO:
                                         "template uri is not supported for non-multiple output artifact"
                                     )
                                 arti = allowed_artifacts.get_correct_arti(apply_spec)
-                                writer = arti.get_writer(ctx, URI.from_string(apply_spec.uri))
+                                writer = arti.get_writer(
+                                    ctx, URI.from_string(apply_spec.uri), arti.get_type().type_name
+                                )
                                 self.output_artifacts[output_type][arg] = writer.artifact
                                 self.output_artifacts_writer[output_type][arg] = writer
                         except Exception as e:
@@ -206,7 +208,7 @@ class WriterGenerator:
         from fate.arch import URI
 
         uri = URI.from_string(self.apply_config.uri.format(index=self.current))
-        writer = self.artifact_describe.get_writer(self.ctx, uri)
+        writer = self.artifact_describe.get_writer(self.ctx, uri, self.artifact_describe.get_type().type_name)
         self.recorder.artifacts.append(writer.artifact)
         self.current += 1
         return writer

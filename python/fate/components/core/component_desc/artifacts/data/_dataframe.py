@@ -81,10 +81,10 @@ class DataframeArtifactDescribe(ArtifactDescribe[DataframeArtifactType, DataOutp
     def get_type(cls):
         return DataframeArtifactType
 
-    def get_writer(self, ctx, uri: "URI") -> DataframeWriter:
+    def get_writer(self, ctx, uri: "URI", type_name: str) -> DataframeWriter:
         from fate.components.core.spec.artifact import DataOutputMetadata
 
-        return DataframeWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata()))
+        return DataframeWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata(), type_name=type_name))
 
-    def get_reader(self, ctx, uri: "URI", metadata: "Metadata") -> DataframeReader:
-        return DataframeReader(ctx, _ArtifactType(uri, metadata=metadata))
+    def get_reader(self, ctx, uri: "URI", metadata: "Metadata", type_name: str) -> DataframeReader:
+        return DataframeReader(ctx, _ArtifactType(uri, metadata=metadata, type_name=type_name))

@@ -14,14 +14,13 @@
 #  limitations under the License.
 import logging
 import typing
-from copy import copy
 from typing import Iterable, List, Literal, Optional, Tuple, TypeVar
 
 from fate.interface import PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
-from ._federation import GC, Parties, Party
+from ._federation import Parties, Party
 from ._metrics import MetricsWrap, NoopMetricsHandler
 from ._namespace import NS, default_ns
 
@@ -47,20 +46,25 @@ class Context:
         device: device = device.CPU,
         computing: Optional["CSessionABC"] = None,
         federation: Optional["FederationEngine"] = None,
+        metrics_handler: Optional = None,
         namespace: Optional[NS] = None,
+        cipher: Optional[CipherKit] = None,
     ) -> None:
         self._device = device
         self._computing = computing
         self._federation = federation
-        self._metrics_handler = NoopMetricsHandler()
-
-        if namespace is None:
-            namespace = default_ns
+        self._metrics_handler = metrics_handler
         self.namespace = namespace
+        self.cipher = cipher
 
-        self.cipher: CipherKit = CipherKit(device)
+        if self._metrics_handler is None:
+            self._metrics_handler = NoopMetricsHandler()
+        if self.namespace is None:
+            self.namespace = default_ns
+        if self.cipher is None:
+            self.cipher: CipherKit = CipherKit(device)
+
         self._role_to_parties = None
-        self._gc = GC()
         self._is_destroyed = False
 
     @property
@@ -68,9 +72,14 @@ class Context:
         return MetricsWrap(self._metrics_handler, self.namespace)
 
     def with_namespace(self, namespace: NS):
-        context = copy(self)
-        context.namespace = namespace
-        return context
+        return Context(
+            device=self._device,
+            computing=self._computing,
+            federation=self._federation,
+            metrics_handler=self._metrics_handler,
+            namespace=namespace,
+            cipher=self.cipher,
+        )
 
     @property
     def computing(self):
@@ -150,7 +159,7 @@ class Context:
         return self.local[0] == "host"
 
     @property
-    def is_on_artbiter(self):
+    def is_on_arbiter(self):
         return self.local[0] == "arbiter"
 
     @property
