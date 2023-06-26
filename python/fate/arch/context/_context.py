@@ -15,15 +15,15 @@
 import logging
 import typing
 from copy import copy
-from typing import Iterable, List, Optional, Tuple, TypeVar
+from typing import Iterable, List, Literal, Optional, Tuple, TypeVar
 
-from fate.interface import T_ROLE, MetricsHandler, PartyMeta
+from fate.interface import PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
+from ._metrics import MetricsWrap, NoopMetricsHandler
 from ._namespace import NS, default_ns
-from .metric import MetricsWrap
 
 if typing.TYPE_CHECKING:
     from fate.interface import CSessionABC, FederationEngine
@@ -48,16 +48,11 @@ class Context:
         computing: Optional["CSessionABC"] = None,
         federation: Optional["FederationEngine"] = None,
         namespace: Optional[NS] = None,
-        metrics_handler: Optional[MetricsHandler] = None,
     ) -> None:
         self._device = device
         self._computing = computing
         self._federation = federation
-        self._metrics_handler = metrics_handler
-        if self._metrics_handler is None:
-            from .metric._handler import NoopMetricsHandler
-
-            self._metrics_handler = NoopMetricsHandler()
+        self._metrics_handler = NoopMetricsHandler()
 
         if namespace is None:
             namespace = default_ns
@@ -167,7 +162,7 @@ class Context:
             self.namespace,
         )
 
-    def _get_parties(self, role: Optional[T_ROLE] = None) -> List[PartyMeta]:
+    def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter"]] = None) -> List[PartyMeta]:
         # update role to parties mapping
         if self._role_to_parties is None:
             self._role_to_parties = {}

@@ -48,11 +48,11 @@ class NS:
         return self._federation_tag_cache
 
     def get_metrics_keys(self):
-        pre_groups, pre_names = self.parent.get_metrics_keys() if self.parent is not None else ((), ())
+        pre_groups, pre_names = self.parent.get_metrics_keys() if self.parent is not None else (), ()
         if self.is_special:
-            self._metrics_keys_cache = ((*pre_groups, self.name), pre_names)
+            self._metrics_keys_cache = (*pre_groups, self.name), pre_names
         else:
-            self._metrics_keys_cache = (pre_groups, (*pre_names, self.name))
+            self._metrics_keys_cache = pre_groups, (*pre_names, self.name)
         return self._metrics_keys_cache
 
     def get_name(self):
