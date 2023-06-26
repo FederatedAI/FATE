@@ -195,6 +195,10 @@ public class TransferUtil {
         if (rollSiteHeader != null) {
             sessionId = String.join("_", rollSiteHeader.getRollSiteSessionId(), desRole, dstPartyId);
         }
+        if(metadata.getDst()!=null){
+            transferMeta.setTopic(metadata.getDst().getName());
+        }
+
         transferMeta.setDesPartyId(dstPartyId);
         transferMeta.setSrcPartyId(srcPartyId);
         transferMeta.setDesRole(desRole);
@@ -248,6 +252,7 @@ public class TransferUtil {
         context.setSrcComponent(transferMeta.getSrcRole());
         context.setDesComponent(transferMeta.getDesRole());
         context.setSessionId(transferMeta.getSessionId());
+        context.setTopic(transferMeta.getTopic());
         context.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         if (MetaInfo.PROPERTY_SELF_PARTY.contains(context.getDesPartyId())) {
             context.setSelfPartyId(context.getDesPartyId());

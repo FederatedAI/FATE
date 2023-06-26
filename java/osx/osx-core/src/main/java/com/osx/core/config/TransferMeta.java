@@ -10,6 +10,7 @@ public class TransferMeta {
     String srcRole;
     String desRole;
     String sessionId;
+    String topic;
 
 
 
