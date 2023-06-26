@@ -11,18 +11,13 @@ SINGLE_VALUE = 'single_value'
 TABLE_VALUE = 'table_value'
 
 
-def np_torch_float_convert(val):
-    if isinstance(val, (np.float16, np.float32, np.float64, torch.float16, torch.float32, torch.float64)):
-        return float(val)
-    else:
-        raise TypeError("Value must be a numpy or PyTorch float")
-
-
 class EvalResult(object):
 
-    def __init__(self, result: Union[int, float, pd.DataFrame]):
+    def __init__(self, metric_name: str, result: Union[int, float, pd.DataFrame]):
+        self.metric_name = metric_name
+        assert isinstance(self.metric_name, str), "metric_name must be a string."
         if isinstance(result, (int, float)):
-            self.result = np_torch_float_convert(result)
+            self.result = float(result)
             self.result_type = SINGLE_VALUE
         elif isinstance(result, pd.DataFrame):
             if len(result.shape) == 2:
@@ -38,8 +33,9 @@ class EvalResult(object):
 
     def to_dict(self):
         return {
-            "result_type": self.result_type,
-            "result": self.result.to_dict() if self.result_type == TABLE_VALUE else self.result
+            "metric": self.metric_name,
+            # "result_type": self.result_type,
+            "val": self.result.to_dict(orient='list') if self.result_type == TABLE_VALUE else self.result
         }
 
     def to_json(self):
@@ -50,6 +46,9 @@ class EvalResult(object):
         
     def get_raw_data(self):
         return self.result
+
+    def __dict__(self):
+        return self.to_dict()
     
 
 class Metric(object):
@@ -73,9 +72,10 @@ class Metric(object):
 
 class MetricEnsemble(object):
 
-    def __init__(self) -> None:
+    def __init__(self, to_dict=True) -> None:
         self._metrics = []
         self._metric_suffix = set()
+        self._to_dict = to_dict
 
     def add_metric(self, metric: Metric):
         self._metrics.append(metric)
@@ -92,7 +92,6 @@ class MetricEnsemble(object):
             # conventional format
             predict, label = eval_rs
             input_ = None
-
         else:
             raise ValueError('Unknown eval_rs format: {}. Expected input formats are either '
                              'an instance of EvalPrediction or a 2-tuple (predict, label).'.format(type(eval_rs)))
@@ -107,7 +106,15 @@ class MetricEnsemble(object):
             predict, label, input_ = self._parse_input(eval_rs)
 
         for metric in self._metrics:
-            metric_result[metric.metric_name] = metric(predict, label)
+            rs = metric(predict, label)
+            if isinstance(rs, tuple):
+                new_rs = [r.to_dict() for r in rs]
+                rs = new_rs
+            elif isinstance(rs, EvalResult):
+                rs = rs.to_dict()
+            else:
+                raise ValueError('cannot parse metric result: {}'.format(rs))
+            metric_result[metric.metric_name] = rs
         return metric_result
 
     def fit(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:

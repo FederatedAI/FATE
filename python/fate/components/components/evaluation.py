@@ -16,82 +16,19 @@ from fate.components import (
     ARBITER,
     GUEST,
     HOST,
-    ClassificationMetrics,
-    DatasetArtifact,
-    Input,
-    Output,
     Role,
     cpn,
 )
+from fate.components.core import cpn
 import numpy as np
 import pandas as pd
-from fate.ml.evaluation import classification as classi
-from fate.ml.evaluation import regression as reg
-from fate.ml.evaluation.metric_base import Metric, MetricEnsemble
 from fate.components.params import string_choice
 from typing import Dict
-import inspect
 import logging
+from fate.ml.evaluation.tool import get_binary_metrics, get_multi_metrics, get_regression_metrics, get_specified_metrics
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_metric_names(modules):
-    result = {}
-
-    for module in modules:
-        for name, obj in inspect.getmembers(module):
-            if inspect.isclass(obj):
-                if hasattr(obj, 'metric_name'):
-                    metric_name = getattr(obj, 'metric_name')
-                    if metric_name is not None:
-                        result[metric_name] = obj
-
-    return result
-
-
-def get_binary_metrics():
-
-    binary_ensembles = MetricEnsemble()
-    binary_ensembles.add_metric(classi.AUC()).add_metric(classi.KS()).add_metric(classi.ConfusionMatrix())
-    binary_ensembles.add_metric(classi.Gain()).add_metric(classi.Lift())
-    binary_ensembles.add_metric(classi.BiClassPrecisionTable()).add_metric(classi.BiClassRecallTable())
-    binary_ensembles.add_metric(classi.BiClassAccuracyTable()).add_metric(classi.FScoreTable())
-    return binary_ensembles
-
-
-def get_multi_metrics():
-    
-    multi_ensembles = MetricEnsemble()
-    multi_ensembles.add_metric(classi.MultiAccuracy()).add_metric(classi.MultiPrecision).add_metric(classi.MultiRecall())
-    
-    return multi_ensembles
-
-
-def get_regression_metrics():
-    
-    regression_ensembles = MetricEnsemble()
-    regression_ensembles.add(reg.RMSE()).add(reg.MAE()).add(reg.MSE()).add(reg.R2Score())
-    return regression_ensembles
-
-
-def get_special_metrics():
-    # metrics that need special input format like PSI
-    ensembles = MetricEnsemble()
-    ensembles.add_metric(classi.PSI())
-    return ensembles
-
-
-def get_specified_metrics(metric_names: list):
-    ensembles = MetricEnsemble()
-    available_metrics = get_metric_names([classi, reg])
-    for metric_name in metric_names:
-        if metric_name in available_metrics:
-            ensembles.add_metric(get_metric_names([classi, reg])[metric_name]())
-        else:
-            raise ValueError(f"metric {metric_name} is not supported yet, supported metrics are \n {list(available_metrics.keys())}")
-    return ensembles
 
 
 def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -103,11 +40,14 @@ def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-@cpn.artifact("input_data", type=Input[DatasetArtifact], roles=[GUEST, HOST, ARBITER])
-@cpn.parameter("default_eval_metrics", type=string_choice(choice=['binary', 'multi', 'regression']), default="binary", optional=True)
-@cpn.parameter("metrics", type=list, default=None, optional=True)
-@cpn.artifact("output_metric", type=Output[ClassificationMetrics], roles=[GUEST, HOST, ARBITER])
-def evaluation(ctx, role: Role, input_data, default_eval_metrics, metrics, output_metric):
+def evaluation(ctx, 
+               role: Role, 
+               input_data: cpn.dataframe_inputs(roles=[GUEST, HOST, ARBITER]), 
+               default_eval_metrics: cpn.parameter("default_eval_metrics", type=string_choice(choice=['binary', 'multi', 'regression']), default="binary", optional=True), 
+               metrics: cpn.parameter("metrics", type=list, default=None, optional=True), 
+               json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST])
+            ):
+
 
     if role.is_arbiter:
         return
@@ -122,14 +62,20 @@ def evaluation(ctx, role: Role, input_data, default_eval_metrics, metrics, outpu
             elif default_eval_metrics == "regression":
                 metrics_ensemble = get_regression_metrics()
 
-        rs_dict = evaluate(ctx, input_data, metrics_ensemble, output_metric)
+        df_list = [_input.read() for _input in input_data]
+        component_name = [_input.antifact.metadata.source.component for _input in input_data]
+        component_rs = {}
+        for name, df in zip(component_name, df_list):
+            rs_dict = evaluate(df, metrics_ensemble)
+            component_rs[name] = rs_dict
 
+    json_metric_output.write(rs_dict)
     logger.info('eval result: {}'.format(rs_dict))
 
 
-def evaluate(ctx, input_data, metrics, output_metric):
+def evaluate(input_data, metrics):
 
-    data = ctx.reader(input_data).read_dataframe().data.as_pd_df()
+    data = input_data.data.as_pd_df()
     split_dict = split_dataframe_by_type(data)
     rs_dict = {}
 
@@ -141,7 +87,3 @@ def evaluate(ctx, input_data, metrics, output_metric):
         rs_dict[name] = rs
 
     return rs_dict
-
-
-if __name__ == '__main__':
-    rs = get_metric_names([classi, reg])

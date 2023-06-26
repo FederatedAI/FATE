@@ -13,7 +13,7 @@ class RMSE(Metric):
         predict = self.to_numpy(predict)
         label = self.to_numpy(label)
         rmse = np.sqrt(mean_squared_error(label, predict))
-        return {'rmse': EvalResult(rmse)}
+        return EvalResult(self.metric_name, rmse)
 
 
 class MSE(Metric):
@@ -24,7 +24,7 @@ class MSE(Metric):
         predict = self.to_numpy(predict)
         label = self.to_numpy(label)
         mse = mean_squared_error(label, predict)
-        return {'mse': EvalResult(mse)}
+        return EvalResult(self.metric_name, mse)
 
 
 class MAE(Metric):
@@ -35,7 +35,7 @@ class MAE(Metric):
         predict = self.to_numpy(predict)
         label = self.to_numpy(label)
         mae = mean_absolute_error(label, predict)
-        return {'mae': EvalResult(mae)}
+        return EvalResult(self.metric_name, mae)
 
 
 class R2Score(Metric):
@@ -46,4 +46,4 @@ class R2Score(Metric):
         predict = self.to_numpy(predict)
         label = self.to_numpy(label)
         r2 = r2_score(label, predict)
-        return {'r2': EvalResult(r2)}
+        return EvalResult(self.metric_name, r2)

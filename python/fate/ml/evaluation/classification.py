@@ -35,8 +35,7 @@ class AUC(Metric):
         predict = self.to_numpy(predict)
         label = self.to_numpy(label)
         auc_score = roc_auc_score(label, predict)
-        ret = {self.metric_name: EvalResult(auc_score)}
-        return ret
+        return EvalResult(self.metric_name, auc_score)
 
 
 class BinaryMetricWithThreshold(Metric):
@@ -56,7 +55,7 @@ class MultiAccuracy(Metric):
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         acc = accuracy_score(label, predict)
-        return {self.metric_name: EvalResult(acc)}
+        return EvalResult(self.metric_name, acc)
 
 
 class MultiRecall(Metric):
@@ -69,7 +68,7 @@ class MultiRecall(Metric):
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         recall = recall_score(label, predict, average='micro')
-        return {self.metric_name: EvalResult(recall)}
+        return EvalResult(self.metric_name, recall)
 
 
 class MultiPrecision(Metric):
@@ -82,7 +81,7 @@ class MultiPrecision(Metric):
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         precision = precision_score(label, predict, average='micro')
-        return {self.metric_name: EvalResult(precision)}
+        return EvalResult(self.metric_name, precision)
 
 
 class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
@@ -94,7 +93,7 @@ class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
         predict = (predict > self.threshold).astype(int)
         label = self.to_numpy(label)
         acc = accuracy_score(label, predict)
-        return {self.metric_name: EvalResult(acc)}
+        return EvalResult(self.metric_name, acc)
 
 
 class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
@@ -106,7 +105,7 @@ class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
         predict = (predict > self.threshold).astype(int)
         label = self.to_numpy(label)
         recall = recall_score(label, predict)
-        return {self.metric_name: EvalResult(recall)}
+        return EvalResult(self.metric_name, recall)
 
 
 class BinaryPrecision(MultiPrecision, BinaryMetricWithThreshold):
@@ -118,7 +117,7 @@ class BinaryPrecision(MultiPrecision, BinaryMetricWithThreshold):
         predict = (predict > self.threshold).astype(int)
         label = self.to_numpy(label)
         precision = precision_score(label, predict)       
-        return {self.metric_name: EvalResult(precision)}
+        return EvalResult(self.metric_name, precision)
 
 
 class MultiF1Score(Metric):
@@ -135,7 +134,7 @@ class MultiF1Score(Metric):
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         f1 = f1_score(label, predict, average=self.average)  
-        return {self.metric_name: EvalResult(f1)}
+        return EvalResult(self.metric_name, f1)
 
 
 class BinaryF1Score(MultiF1Score, BinaryMetricWithThreshold):
@@ -151,7 +150,7 @@ class BinaryF1Score(MultiF1Score, BinaryMetricWithThreshold):
         predict = (predict > self.threshold).astype(int)
         label = self.to_numpy(label)
         f1 = f1_score(label, predict, average=self.average)
-        return {self.metric_name: EvalResult(f1)}
+        return EvalResult(self.metric_name, f1)
 
 
 """
@@ -337,18 +336,8 @@ class KS(Metric):
         ks_curve = tpr[:-1] - fpr[:-1]
         ks_val = np.max(ks_curve)
 
-        ret = {self.metric_name: EvalResult(ks_val),
-                self.metric_name + '_table': EvalResult(
-                    pd.DataFrame(
-                        {
-                            'tpr': tpr,
-                            'fpr': fpr,
-                            'threshold': threshold,
-                            'cuts': cuts
-                        }
-                    )
-                )}
-        return ret
+        return EvalResult(self.metric_name, ks_val), \
+            EvalResult(self.metric_name + '_table', pd.DataFrame({'tpr': tpr, 'fpr': fpr, 'threshold': threshold, 'cuts': cuts}))
     
 
 class ConfusionMatrix(Metric):
@@ -369,7 +358,7 @@ class ConfusionMatrix(Metric):
                                                 pos_label=1)
         confusion_mat['cuts'] = cuts
         confusion_mat['threshold'] = threshold
-        return {self.metric_name: EvalResult(pd.DataFrame(confusion_mat))}
+        return EvalResult(self.metric_name, pd.DataFrame(confusion_mat))
 
 
 class Lift(Metric, BiClassMetric):
@@ -434,13 +423,13 @@ class Lift(Metric, BiClassMetric):
 
         lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(label), )
 
-        return {self.metric_name: EvalResult(
+        return EvalResult(self.metric_name,
             pd.DataFrame({
                 'liftx': lifts_x,
                 'lifty': lifts_y,
                 'threshold': list(score_threshold)
             })
-        )}
+        )
 
 
 class Gain(Metric, BiClassMetric):
@@ -499,13 +488,13 @@ class Gain(Metric, BiClassMetric):
 
         gain_y, gain_x = self.compute_metric_from_confusion_mat(confusion_mat, len(label))
 
-        return {self.metric_name: EvalResult(
+        return EvalResult(self.metric_name,
             pd.DataFrame({
                 'gainx': gain_x,
                 'gainy': gain_y,
                 'threshold': list(score_threshold)
             })
-        )}
+        )
     
 
 
@@ -531,7 +520,7 @@ class BiClassPrecisionTable(Metric, BiClassMetric):
     
     def __call__(self, predict, label, **kwargs) -> Dict:
         p, threshold, cuts = self.compute(label, predict)
-        return EvalResult(pd.DataFrame({
+        return EvalResult(self.metric_name, pd.DataFrame({
             'p': p,
             'threshold': threshold,
             'cuts': cuts
@@ -555,7 +544,7 @@ class BiClassRecallTable(Metric, BiClassMetric):
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         r, threshold, cuts = self.compute(label, predict)
-        return EvalResult(pd.DataFrame({
+        return EvalResult(self.metric_name, pd.DataFrame({
             'r': r,
             'threshold': threshold,
             'cuts': cuts
@@ -585,7 +574,7 @@ class BiClassAccuracyTable(Metric, BiClassMetric):
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         accuracy, threshold, cuts = self.compute(label, predict)
-        return EvalResult(pd.DataFrame({
+        return EvalResult(self.metric_name, pd.DataFrame({
             'accuracy': accuracy,
             'threshold': threshold,
             'cuts': cuts
@@ -620,7 +609,7 @@ class FScoreTable(Metric):
         numerator = (1 + beta_2) * (p_score * r_score)
         f_score = numerator / denominator
 
-        return EvalResult(pd.DataFrame({
+        return EvalResult(self.metric_name, pd.DataFrame({
             'f_score': f_score,
             'threshold': fixed_interval_threshold,
             'cuts': cuts
@@ -650,7 +639,7 @@ class PSI(Metric):
         train_scores = predict.get('train_scores')
         validate_scores = predict.get('validate_scores')
 
-        if None in [train_scores, validate_scores]:
+        if train_scores is None or validate_scores is None:
             raise ValueError(
                 "Input 'predict' should contain the following keys: 'train_scores', 'validate_scores'. "
                 "Please make sure both keys are present."
@@ -699,10 +688,10 @@ class PSI(Metric):
         intervals = train_count['interval'] if not str_intervals else PSI.intervals_to_str(train_count['interval'],
                                                                                            round_num=round_num)
 
-        total_psi = EvalResult(total_psi)
+        total_psi = EvalResult('total_psi', total_psi)
 
         if train_labels is None and validate_labels is None:
-            psi_table = EvalResult(pd.DataFrame({
+            psi_table = EvalResult('psi_table', pd.DataFrame({
                 'psi_scores': psi_scores,
                 'expected_interval': expected_interval,
                 'actual_interval': actual_interval,
@@ -711,7 +700,7 @@ class PSI(Metric):
                 'interval': intervals
             }))
         else:
-            psi_table = EvalResult(pd.DataFrame({
+            psi_table = EvalResult('psi_table', pd.DataFrame({
                 'psi_scores': psi_scores,
                 'expected_interval': expected_interval,
                 'actual_interval': actual_interval,
@@ -722,7 +711,7 @@ class PSI(Metric):
                 'interval': intervals
             }))
 
-        return {'psi_table': psi_table, 'total_psi': total_psi}
+        return psi_table, total_psi
 
     @staticmethod
     def quantile_binning_and_count(scores, quantile_points):
