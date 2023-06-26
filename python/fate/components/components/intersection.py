@@ -16,15 +16,12 @@ from fate.components.core import GUEST, HOST, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
-@cpn.dataframe_input("input_data", roles=[GUEST, HOST])
-@cpn.parameter("method", type=str, default="raw", optional=True)
-@cpn.dataframe_output("output_data", roles=[GUEST, HOST])
 def intersection(
     ctx,
     role: Role,
-    input_data,
-    method,
-    output_data,
+    input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    method: cpn.parameter(type=str, default="raw", optional=True),
+    output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
         if method == "raw":

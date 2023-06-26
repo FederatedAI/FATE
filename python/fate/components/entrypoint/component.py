@@ -46,14 +46,7 @@ def cleanup_component_execution(config: TaskCleanupConfigSpec):
         raise e
 
 
-def execute_component_from_config(config: TaskConfigSpec, output_path=None):
-    if not output_path:
-        cwd = os.path.abspath(os.path.curdir)
-        output_path = os.path.join(cwd, "task_finalize.json")
-        logger.debug(f"component execution in path `{cwd}`")
-
-    else:
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+def execute_component_from_config(config: TaskConfigSpec, output_path):
     logger.debug(f"logging final status to  `{output_path}`")
     try:
         party_task_id = config.party_task_id
@@ -83,20 +76,18 @@ def execute_component_from_config(config: TaskConfigSpec, output_path=None):
                 raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
 
         # prepare
-        execution_io = ComponentExecutionIO.load(ctx, component, role, stage, config)
+        execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
 
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
 
         # final execution io meta
-        execution_io_meta = execution_io.dump_io_meta()
+        execution_io_meta = execution_io.dump_io_meta(config)
         try:
             with open(output_path, "w") as fw:
                 json.dump(dict(status=dict(code=0), io_meta=execution_io_meta), fw, indent=4)
         except Exception as e:
-            raise RuntimeError(
-                f"failed to dump execution io meta to `{output_path}`: meta={execution_io_meta}"
-            ) from e
+            raise RuntimeError(f"failed to dump execution io meta to `{output_path}`: meta={execution_io_meta}") from e
 
         logger.debug("done without error, waiting signal to terminate")
         logger.debug("terminating, bye~")

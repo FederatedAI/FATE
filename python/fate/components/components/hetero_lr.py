@@ -23,27 +23,17 @@ def hetero_lr(ctx, role):
 
 
 @hetero_lr.train()
-@cpn.dataframe_input("train_data", roles=[GUEST, HOST], desc="training data")
-@cpn.dataframe_input("validate_data", optional=True, roles=[GUEST, HOST], desc="validation data")
-@cpn.parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
-@cpn.parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
-@cpn.parameter(
-    "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
-)
-@cpn.dataframe_output("train_output_data", roles=[GUEST, HOST])
-@cpn.json_metric_output("train_output_metric", roles=[ARBITER])
-@cpn.json_model_output("output_model", roles=[GUEST, HOST])
 def train(
     ctx,
     role: Role,
-    train_data,
-    validate_data,
-    learning_rate,
-    max_iter,
-    batch_size,
-    train_output_data,
-    train_output_metric,
-    output_model,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    validate_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    learning_rate: cpn.parameter(type=params.learning_rate_param(), default=0.1),
+    max_iter: cpn.parameter(type=params.conint(gt=0), default=100),
+    batch_size: cpn.parameter(type=params.conint(gt=0), default=100),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    train_output_metric: cpn.json_metric_output(roles=[ARBITER]),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
         train_guest(
@@ -58,15 +48,12 @@ def train(
 
 
 @hetero_lr.predict()
-@cpn.json_model_input("input_model", roles=[GUEST, HOST])
-@cpn.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
-@cpn.dataframe_output("test_output_data", roles=[GUEST, HOST])
 def predict(
     ctx,
     role: Role,
-    test_data,
-    input_model,
-    test_output_data,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
         predict_guest(ctx, input_model, test_data, test_output_data)
@@ -75,21 +62,16 @@ def predict(
 
 
 @hetero_lr.cross_validation()
-@cpn.dataframe_input("data", optional=False, roles=[GUEST, HOST])
-@cpn.parameter("num_fold", type=params.conint(ge=2), desc="num cross validation fold")
-@cpn.parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
-@cpn.parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
-@cpn.parameter(
-    "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
-)
 def cross_validation(
     ctx: Context,
     role: Role,
-    data,
-    num_fold,
-    learning_rate,
-    max_iter,
-    batch_size,
+    data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    num_fold: cpn.parameter(type=params.conint(ge=2), desc="num cross validation fold"),
+    learning_rate: cpn.parameter(type=params.learning_rate_param(), default=0.1, desc="learning rate"),
+    max_iter: cpn.parameter(type=params.conint(gt=0), default=100, desc="max iteration num"),
+    batch_size: cpn.parameter(
+        type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
+    ),
 ):
     cv_ctx = ctx.on_cross_validations
     data = ctx.reader(data).read_dataframe()

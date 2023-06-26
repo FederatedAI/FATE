@@ -62,8 +62,8 @@ from fate.components.core.essential import (
     Stage,
 )
 
-from ._component_artifact import ComponentArtifactDescribes
-from ._parameter import ComponentParameterDescribes
+from ._component_artifact import ArtifactDescribeAnnotation, ComponentArtifactDescribes
+from ._parameter import ComponentParameterDescribes, ParameterDescribeAnnotation
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class Component:
         if self.func_args[1] != "role":
             raise ComponentDeclareError("bad component_desc definition, second argument should be `role`")
 
-        if set(self.func_args[2:]) != {*self.parameters.mapping.keys(), *self.artifacts.keys()}:
+        if set(self.func_args[2:]) != set(self.parameters.mapping.keys()).union(self.artifacts.keys()):
             raise ComponentDeclareError(
                 f"bad component_desc definition, function arguments `{self.func_args[2:]}` should be same as {self.parameters.mapping.keys()} and {self.artifacts.keys()}"
             )
@@ -154,6 +154,7 @@ class Component:
 
     def _runtime_io_dict(self, runtime_role: Role, runtime_stage: Stage):
         from fate.components.core.spec.component import (
+            ArtifactTypeSpec,
             ComponentIOArtifactsTypeSpec,
             ComponentIOArtifactTypeSpec,
             ComponentIOInputsArtifactsTypeSpec,
@@ -163,10 +164,15 @@ class Component:
         def _get_io_artifact_type_spec(v):
             return ComponentIOArtifactTypeSpec(
                 name=v.name,
-                type_name=v.get_type().type_name,
-                path_type=v.get_type().path_type,
-                uri_types=v.get_type().uri_types,
-                is_multi=v.multi,
+                is_multi=v.is_multi,
+                types=[
+                    ArtifactTypeSpec(
+                        type_name=v.get_type().type_name,
+                        path_type=v.get_type().path_type,
+                        uri_types=v.get_type().uri_types,
+                    )
+                    for v in v.types
+                ],
             )
 
         return ComponentIOArtifactsTypeSpec(
@@ -331,19 +337,23 @@ def component(
 
 def _component(name, roles, provider, version, description, is_subcomponent):
     def decorator(f):
+
         cpn_name = name or f.__name__.lower()
         if isinstance(f, Component):
             raise TypeError("Attempted to convert a callback into a component_desc twice.")
-        try:
-            parameters = f.__component_parameters__
-            del f.__component_parameters__
-        except AttributeError:
-            parameters = ComponentParameterDescribes()
-        try:
-            artifacts = f.__component_artifacts__
-            del f.__component_artifacts__
-        except AttributeError:
-            artifacts = ComponentArtifactDescribes()
+        parameters = ComponentParameterDescribes()
+        artifacts = ComponentArtifactDescribes()
+        for k, v in inspect.signature(f).parameters.items():
+            if isinstance(annotation := v.annotation, ArtifactDescribeAnnotation):
+                artifacts.add(annotation, k)
+            elif isinstance(annotation, ParameterDescribeAnnotation):
+                parameters.add_parameter(
+                    name=k,
+                    type=annotation.type,
+                    default=annotation.default,
+                    desc=annotation.desc,
+                    optional=annotation.optional,
+                )
 
         if is_subcomponent:
             artifacts.update_roles_and_stages(stages=[Stage.from_str(cpn_name)], roles=roles)

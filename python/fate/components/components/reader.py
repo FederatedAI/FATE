@@ -16,32 +16,19 @@ from fate.components.core import GUEST, HOST, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST])
-@cpn.parameter("path", type=str, default=None, optional=False)
-@cpn.parameter("format", type=str, default="csv", optional=False)
-@cpn.parameter("sample_id_name", type=str, default=None, optional=True)
-@cpn.parameter("match_id_name", type=str, default=None, optional=True)
-@cpn.parameter("delimiter", type=str, default=",", optional=True)
-@cpn.parameter("label_name", type=str, default=None, optional=True)
-@cpn.parameter("label_type", type=str, default="float32", optional=True)
-@cpn.parameter("dtype", type=str, default="float32", optional=True)
-@cpn.dataframe_output("output_data", roles=[GUEST, HOST])
 def reader(
     ctx,
     role: Role,
-    path,
-    format,
-    sample_id_name,
-    match_id_name,
-    delimiter,
-    label_name,
-    label_type,
-    dtype,
-    output_data,
+    path: cpn.parameter(type=str, default=None, optional=False),
+    format: cpn.parameter(type=str, default="csv", optional=False),
+    sample_id_name: cpn.parameter(type=str, default=None, optional=True),
+    match_id_name: cpn.parameter(type=str, default=None, optional=True),
+    delimiter: cpn.parameter(type=str, default=",", optional=True),
+    label_name: cpn.parameter(type=str, default=None, optional=True),
+    label_type: cpn.parameter(type=str, default="float32", optional=True),
+    dtype: cpn.parameter(type=str, default="float32", optional=True),
+    output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
-    read_data(ctx, path, format, sample_id_name, match_id_name, delimiter, label_name, label_type, dtype, output_data)
-
-
-def read_data(ctx, path, format, sample_id_name, match_id_name, delimiter, label_name, label_type, dtype, output_data):
     if format == "csv":
         data_meta = DataframeArtifact(
             uri=path,

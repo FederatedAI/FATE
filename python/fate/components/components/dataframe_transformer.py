@@ -14,27 +14,22 @@
 #  limitations under the License.
 #
 from fate.components.core import LOCAL, Role, cpn
-from typing import Union, List, Dict
 
 
 @cpn.component(roles=[LOCAL])
-@cpn.table_input("table", roles=[LOCAL])
-@cpn.dataframe_output("dataframe_output", roles=[LOCAL])
-@cpn.parameter("namespace", type=str, default=",", optional=True)
-@cpn.parameter("name", type=str, default="dense", optional=True)
-@cpn.parameter("anonymous_role", type=str, default=None, optional=True)
-@cpn.parameter("anonymous_party_id", type=str, default=None, optional=True)
 def dataframe_transformer(
     ctx,
     role: Role,
-    table,
-    dataframe_output,
-    namespace,
-    name,
-    anonymous_role,
-    anonymous_party_id,
+    table: cpn.table_input(roles=[LOCAL]),
+    dataframe_output: cpn.dataframe_output(roles=[LOCAL]),
+    namespace: cpn.parameter(type=str, default=None, optional=True),
+    name: cpn.parameter(type=str, default=None, optional=True),
+    anonymous_role: cpn.parameter(type=str, default=None, optional=True),
+    anonymous_party_id: cpn.parameter(type=str, default=None, optional=True),
 ):
     from fate.arch.dataframe import TableReader
+
+    table = table.read()
     metadata = table.schema
     table_reader = TableReader(
         sample_id_name=metadata.get("sample_id_name", None),
@@ -53,8 +48,8 @@ def dataframe_transformer(
         delimiter=metadata.get("delimiter", ","),
         input_format=metadata.get("input_format", "dense"),
         tag_with_value=metadata.get("tag_with_value", False),
-        tag_value_delimiter=metadata.get("tag_value_delimiter", ":")
+        tag_value_delimiter=metadata.get("tag_value_delimiter", ":"),
     )
 
     df = table_reader.to_frame(ctx, table)
-    ctx.writer(dataframe_output).write(df, namespace=namespace, name=name)
+    dataframe_output.write(df, name=name, namespace=namespace)

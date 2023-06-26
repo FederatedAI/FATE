@@ -12,14 +12,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import datetime
 import re
-import typing
-from typing import Optional
-
-if typing.TYPE_CHECKING:
-    from fate.arch import URI
+from typing import Dict, List, Optional, Union
 
 import pydantic
+
+from .model import (
+    MLModelComponentSpec,
+    MLModelFederatedSpec,
+    MLModelModelSpec,
+    MLModelPartiesSpec,
+    MLModelPartySpec,
+    MLModelSpec,
+)
 
 # see https://www.rfc-editor.org/rfc/rfc3986#appendix-B
 # scheme    = $2
@@ -30,10 +36,70 @@ import pydantic
 _uri_regex = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?")
 
 
+class DataOverview(pydantic.BaseModel):
+    count: Optional[int] = None
+    samples: Optional[List] = None
+
+
+class ArtifactSource(pydantic.BaseModel):
+    task_id: str
+    party_task_id: str
+    task_name: str
+    component: str
+    output_artifact_key: str
+    output_index: Optional[int] = None
+
+
 class Metadata(pydantic.BaseModel):
     metadata: dict = pydantic.Field(default_factory=dict)
     name: Optional[str] = None
     namespace: Optional[str] = None
+    source: Optional[ArtifactSource] = None
+
+
+class ModelOutputMetadata(pydantic.BaseModel):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    name: Optional[str] = None
+    namespace: Optional[str] = None
+    source: Optional[ArtifactSource] = None
+    model_overview: MLModelSpec = MLModelSpec(
+        federated=MLModelFederatedSpec(
+            task_id="",
+            parties=MLModelPartiesSpec(guest=[], host=[], arbiter=[]),
+            component=MLModelComponentSpec(name="", provider="", version="", metadata={}),
+        ),
+        party=MLModelPartySpec(
+            party_task_id="",
+            role="",
+            partyid="",
+            models=[
+                MLModelModelSpec(
+                    name="", created_time=datetime.datetime.now().isoformat(), file_format="", metadata={}
+                )
+            ],
+        ),
+    )
+
+    class Config:
+        extra = "forbid"
+
+
+class DataOutputMetadata(pydantic.BaseModel):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    name: Optional[str] = None
+    namespace: Optional[str] = None
+    source: Optional[ArtifactSource] = None
+    data_overview: Optional[DataOverview] = None
+
+    class Config:
+        extra = "forbid"
+
+
+class MetricOutputMetadata(pydantic.BaseModel):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    name: Optional[str] = None
+    namespace: Optional[str] = None
+    source: Optional[ArtifactSource] = None
 
     class Config:
         extra = "forbid"
@@ -42,11 +108,13 @@ class Metadata(pydantic.BaseModel):
 class ArtifactInputApplySpec(pydantic.BaseModel):
     uri: str
     metadata: Metadata
+    type_name: Optional[str] = None
 
 
 class ArtifactOutputApplySpec(pydantic.BaseModel):
     uri: str
     _is_template: Optional[bool] = None
+    type_name: Optional[str] = None
 
     def is_template(self) -> bool:
         return "{index}" in self.uri
@@ -59,3 +127,17 @@ class ArtifactOutputApplySpec(pydantic.BaseModel):
         if not _uri_regex.match(v):
             raise pydantic.ValidationError(f"`{v}` is not valid uri")
         return v
+
+
+class IOArtifactMeta(pydantic.BaseModel):
+    class InputMeta(pydantic.BaseModel):
+        data: Dict[str, Union[List[Dict], Dict]]
+        model: Dict[str, Union[List[Dict], Dict]]
+
+    class OutputMeta(pydantic.BaseModel):
+        data: Dict[str, Union[List[Dict], Dict]]
+        model: Dict[str, Union[List[Dict], Dict]]
+        metric: Dict[str, Union[List[Dict], Dict]]
+
+    inputs: InputMeta
+    outputs: OutputMeta

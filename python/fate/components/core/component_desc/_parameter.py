@@ -1,5 +1,4 @@
-import inspect
-from typing import Dict
+from typing import Dict, TypeVar
 
 import pydantic
 
@@ -56,7 +55,7 @@ class ParameterDescribe:
 
         if parameter_config is not None:
             try:
-                value = params.parse(self.type, parameter_config)
+                return params.parse(self.type, parameter_config)
             except Exception as e:
                 raise ComponentParameterApplyError(
                     f"apply value `{parameter_config}` to parameter `{self.name}` failed: {e}"
@@ -90,19 +89,19 @@ class ComponentParameterDescribes:
         return {name: p.get_parameter_spec() for name, p in self.mapping.items()}
 
 
-def parameter(name, type, default=None, optional=True, desc=""):
-    """attaches a parameter to the component_desc."""
+class ParameterDescribeAnnotation:
+    def __init__(self, type, default, optional, desc) -> None:
+        self.type = type
+        self.default = default
+        self.optional = optional
+        self.desc = desc
 
-    def decorator(f):
-        description = desc
-        if description is not None:
-            description = inspect.cleandoc(description)
-        if not hasattr(f, "__component_parameters__"):
-            f.__component_parameters__ = ComponentParameterDescribes()
-        f.__component_parameters__.add_parameter(name, type, default, optional, description)
-        return f
 
-    return decorator
+T = TypeVar("T")
+
+
+def parameter(type: T, default=None, optional=True, desc="") -> T:
+    return ParameterDescribeAnnotation(type, default, optional, desc)
 
 
 class ComponentParameterApplyError(RuntimeError):

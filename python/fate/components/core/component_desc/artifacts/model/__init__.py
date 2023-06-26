@@ -1,83 +1,45 @@
-import inspect
-from typing import List, Optional
+from typing import List, Optional, Type
 
-from fate.components.core.essential import Role
-
+from .._base_type import Role, _create_artifact_annotation
 from ._directory import ModelDirectoryArtifactDescribe
-from ._json import JsonModelArtifactDescribe
+from ._json import JsonModelArtifactDescribe, JsonModelReader, JsonModelWriter
 
 
-def json_model_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _input_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=False))
+def json_model_input(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[JsonModelReader]:
+    return _create_artifact_annotation(True, False, JsonModelArtifactDescribe, "model")(roles, desc, optional)
 
 
-def json_model_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _input_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=True))
+def json_model_inputs(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[List[JsonModelReader]]:
+    return _create_artifact_annotation(True, True, JsonModelArtifactDescribe, "model")(roles, desc, optional)
 
 
-def model_directory_input(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _input_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=False))
+def json_model_output(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[JsonModelWriter]:
+    return _create_artifact_annotation(False, False, JsonModelArtifactDescribe, "model")(roles, desc, optional)
 
 
-def model_directory_inputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _input_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=True))
+def json_model_outputs(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[List[JsonModelWriter]]:
+    return _create_artifact_annotation(False, True, JsonModelArtifactDescribe, "model")(roles, desc, optional)
 
 
-def json_model_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _output_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=False))
+def model_directory_input(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[ModelDirectoryArtifactDescribe]:
+    return _create_artifact_annotation(True, False, ModelDirectoryArtifactDescribe, "model")(roles, desc, optional)
 
 
-def json_model_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _output_model_artifact(_create_json_model_artifact_describe(name, roles, desc, optional, multi=True))
+def model_directory_inputs(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[List[ModelDirectoryArtifactDescribe]]:
+    return _create_artifact_annotation(True, True, ModelDirectoryArtifactDescribe, "model")(roles, desc, optional)
 
 
-def model_directory_output(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _output_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=False))
+def model_directory_output(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[ModelDirectoryArtifactDescribe]:
+    return _create_artifact_annotation(False, False, ModelDirectoryArtifactDescribe, "model")(roles, desc, optional)
 
 
-def model_directory_outputs(name: str, roles: Optional[List[Role]] = None, desc="", optional=False):
-    return _output_model_artifact(_create_model_directory_artifact_describe(name, roles, desc, optional, multi=True))
-
-
-def _input_model_artifact(desc):
-    def decorator(f):
-        if not hasattr(f, "__component_artifacts__"):
-            from ..._component_artifact import ComponentArtifactDescribes
-
-            f.__component_artifacts__ = ComponentArtifactDescribes()
-
-        f.__component_artifacts__.add_model_input(desc)
-        return f
-
-    return decorator
-
-
-def _output_model_artifact(desc):
-    def decorator(f):
-        if not hasattr(f, "__component_artifacts__"):
-            from ..._component_artifact import ComponentArtifactDescribes
-
-            f.__component_artifacts__ = ComponentArtifactDescribes()
-
-        f.__component_artifacts__.add_model_output(desc)
-        return f
-
-    return decorator
-
-
-def _prepare(roles, desc):
-    if roles is None:
-        roles = []
-    if desc:
-        desc = inspect.cleandoc(desc)
-    return roles, desc
-
-
-def _create_json_model_artifact_describe(name, roles, desc, optional, multi):
-    roles, desc = _prepare(roles, desc)
-    return JsonModelArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=multi)
-
-
-def _create_model_directory_artifact_describe(name, roles, desc, optional, multi):
-    roles, desc = _prepare(roles, desc)
-    return ModelDirectoryArtifactDescribe(name=name, roles=roles, stages=[], desc=desc, optional=optional, multi=multi)
+def model_directory_outputs(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[List[ModelDirectoryArtifactDescribe]]:
+    return _create_artifact_annotation(False, True, ModelDirectoryArtifactDescribe, "model")(roles, desc, optional)

@@ -27,7 +27,7 @@ class ParameterSpec(BaseModel):
 
 
 class ArtifactSpec(BaseModel):
-    type: str
+    types: List[str]
     optional: bool
     stages: Optional[List[Stage]]
     roles: List[Role]
@@ -81,12 +81,16 @@ class ComponentSpecV1(BaseModel):
     schema_version: str = "v1"
 
 
-class ComponentIOArtifactTypeSpec(BaseModel):
-    name: str
+class ArtifactTypeSpec(BaseModel):
     type_name: str
     uri_types: List[str]
     path_type: Literal["file", "directory", "distributed"]
+
+
+class ComponentIOArtifactTypeSpec(BaseModel):
+    name: str
     is_multi: bool
+    types: List[ArtifactTypeSpec]
 
 
 class ComponentIOInputsArtifactsTypeSpec(BaseModel):

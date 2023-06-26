@@ -16,10 +16,13 @@ from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-@cpn.dataframe_input("input_data", roles=[GUEST, HOST, ARBITER])
-@cpn.parameter("eval_type", type=str, default="binary", optional=True)
-@cpn.json_metric_output("output_metric", roles=[GUEST, HOST, ARBITER])
-def evaluation(ctx, role: Role, input_data, eval_type, output_metric):
+def evaluation(
+    ctx,
+    role: Role,
+    input_data: cpn.dataframe_input(roles=[GUEST, HOST, ARBITER]),
+    eval_type: cpn.parameter(type=str, default="binary", optional=True),
+    output_metric: cpn.json_metric_output(roles=[GUEST, HOST, ARBITER]),
+):
     evaluate(ctx, input_data, eval_type, output_metric)
 
 

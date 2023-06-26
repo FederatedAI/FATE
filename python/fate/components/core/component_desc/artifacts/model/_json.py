@@ -4,30 +4,46 @@ from pathlib import Path
 
 from fate.components.core.essential import JsonModelArtifactType
 
-from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+from .._base_type import (
+    URI,
+    ArtifactDescribe,
+    Metadata,
+    ModelOutputMetadata,
+    _ArtifactType,
+    _ArtifactTypeReader,
+    _ArtifactTypeWriter,
+)
 
 if typing.TYPE_CHECKING:
-    from fate.arch import URI
+    from fate.arch import Context
 
 
-class JsonModelWriter(_ArtifactTypeWriter):
-    def write(self, data):
+class JsonModelWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
+    def write(self, data, metadata: dict = None):
         path = Path(self.artifact.uri.path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:
             json.dump(data, fw)
+        if metadata is not None:
+            self.artifact.metadata.metadata = metadata
 
 
-class JsonModelArtifactDescribe(ArtifactDescribe[_ArtifactType]):
-    def get_type(self):
-        return JsonModelArtifactType
-
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
-        return JsonModelWriter(_ArtifactType(uri, metadata))
-
-    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
+class JsonModelReader(_ArtifactTypeReader):
+    def read(self):
         try:
-            with open(artifact.uri.path, "r") as fr:
+            with open(self.artifact.uri.path, "r") as fr:
                 return json.load(fr)
         except Exception as e:
-            raise RuntimeError(f"load json model from {artifact} failed: {e}")
+            raise RuntimeError(f"load json model named from {self.artifact} failed: {e}")
+
+
+class JsonModelArtifactDescribe(ArtifactDescribe[JsonModelArtifactType, ModelOutputMetadata]):
+    @classmethod
+    def get_type(cls):
+        return JsonModelArtifactType
+
+    def get_writer(self, ctx: "Context", uri: URI) -> JsonModelWriter:
+        return JsonModelWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata()))
+
+    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata) -> JsonModelReader:
+        return JsonModelReader(ctx, _ArtifactType(uri=uri, metadata=metadata))

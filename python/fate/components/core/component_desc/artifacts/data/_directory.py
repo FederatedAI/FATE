@@ -1,15 +1,19 @@
-import typing
 from pathlib import Path
 
 from fate.components.core.essential import DataDirectoryArtifactType
 
-from .._base_type import ArtifactDescribe, Metadata, _ArtifactType, _ArtifactTypeWriter
+from .._base_type import (
+    URI,
+    ArtifactDescribe,
+    DataOutputMetadata,
+    Metadata,
+    _ArtifactType,
+    _ArtifactTypeReader,
+    _ArtifactTypeWriter,
+)
 
-if typing.TYPE_CHECKING:
-    from fate.arch import URI
 
-
-class DataDirectoryWriter(_ArtifactTypeWriter):
+class DataDirectoryWriter(_ArtifactTypeWriter[DataDirectoryArtifactType]):
     def get_directory(self) -> Path:
         path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
@@ -23,12 +27,22 @@ class DataDirectoryWriter(_ArtifactTypeWriter):
             self.artifact.metadata.namespace = namespace
 
 
-class DataDirectoryArtifactDescribe(ArtifactDescribe):
-    def get_type(self):
+class DataDirectoryReader(_ArtifactTypeReader):
+    def get_directory(self) -> Path:
+        path = Path(self.artifact.uri.path)
+        return path
+
+    def get_metadata(self):
+        return self.artifact.metadata.metadata
+
+
+class DataDirectoryArtifactDescribe(ArtifactDescribe[DataDirectoryArtifactType, DataOutputMetadata]):
+    @classmethod
+    def get_type(cls):
         return DataDirectoryArtifactType
 
-    def get_writer(self, uri: "URI", metadata: Metadata) -> _ArtifactTypeWriter:
-        return DataDirectoryWriter(_ArtifactType(uri, metadata))
+    def get_writer(self, ctx, uri: URI) -> DataDirectoryWriter:
+        return DataDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata()))
 
-    def _load_as_component_execute_arg(self, ctx, artifact: _ArtifactType):
-        return artifact
+    def get_reader(self, ctx, uri: "URI", metadata: "Metadata") -> DataDirectoryReader:
+        return DataDirectoryReader(ctx, _ArtifactType(uri=uri, metadata=metadata))
