@@ -71,55 +71,61 @@ def transform_to_tensor(block_table,
                                               shapes=shapes)
 
 
-def transform_block_to_list(block_table, data_manager):
+def transform_block_table_to_list(block_table, data_manager):
     fields_loc = data_manager.get_fields_loc()
+    transform_block_to_list_func = functools.partial(
+        transform_block_to_list,
+        fields_loc=fields_loc
+    )
 
-    def _to_list(src_blocks):
-        if src_blocks[0].shape[0] == 0:
-            return []
+    return block_table.mapValues(transform_block_to_list_func)
 
-        i = 0
-        dst_list = None
-        lines = 0
-        while i < len(fields_loc):
-            bid = fields_loc[i][0]
-            if isinstance(src_blocks[bid], pd.Index):
-                if not dst_list:
-                    lines = len(src_blocks[bid])
-                    dst_list = [[] for i in range(lines)]
 
-                for j in range(lines):
-                    dst_list[j].append(src_blocks[bid][j])
+def transform_block_to_list(blocks, fields_loc):
 
-                i += 1
+    if blocks[0].shape[0] == 0:
+        return []
+
+    i = 0
+    dst_list = None
+    lines = 0
+    while i < len(fields_loc):
+        bid = fields_loc[i][0]
+        if isinstance(blocks[bid], pd.Index):
+            if not dst_list:
+                lines = len(blocks[bid])
+                dst_list = [[] for i in range(lines)]
+
+            for j in range(lines):
+                dst_list[j].append(blocks[bid][j])
+
+            i += 1
+        else:
+            """
+            pd.values or tensor
+            """
+            indexes = [fields_loc[i][1]]
+            j = i + 1
+            while j < len(fields_loc) and fields_loc[j] == fields_loc[j - 1]:
+                indexes.append(fields_loc[j][1])
+                j += 1
+
+            if isinstance(blocks[bid], np.ndarray):
+                for line_id, row_value in enumerate(blocks[bid][:, indexes]):
+                    dst_list[line_id].extend(row_value.tolist())
             else:
-                """
-                pd.values or tensor
-                """
-                indexes = [fields_loc[i][1]]
-                j = i + 1
-                while j < len(fields_loc) and fields_loc[j] == fields_loc[j - 1]:
-                    indexes.append(fields_loc[j][1])
-                    j += 1
+                try:
+                    for line_id, row_value in enumerate(blocks[bid][:, indexes].tolist()):
+                        dst_list[line_id].extend(row_value)
+                except Exception as e:
+                    assert 1 == 2, (e, type(blocks[bid]), indexes)
 
-                if isinstance(src_blocks[bid], np.ndarray):
-                    for line_id, row_value in enumerate(src_blocks[bid][:, indexes]):
-                        dst_list[line_id].extend(row_value.tolist())
-                else:
-                    try:
-                        for line_id, row_value in enumerate(src_blocks[bid][:, indexes].tolist()):
-                            dst_list[line_id].extend(row_value)
-                    except Exception as e:
-                        assert 1 == 2, (e, type(src_blocks[bid]), indexes)
+            i = j
 
-                i = j
-
-        return dst_list
-
-    return block_table.mapValues(_to_list)
+    return dst_list
 
 
-def transform_list_to_block(table, data_manager):
+def transform_list_to_block_table(table, data_manager):
     from ..manager.block_manager import BlockType
 
     def _to_block(values):
@@ -192,7 +198,7 @@ def transform_to_pandas_dataframe(block_table, data_manager):
     pd_df.set_index(data_manager.schema.sample_id_name)
 
     for name in fields[1:]:
-        dtype =  data_manager.get_field_type_by_name(name)
+        dtype = data_manager.get_field_type_by_name(name)
         if dtype in ["int32", "float32", "int64", "float64"]:
             pd_df[name] = pd_df[name].astype(dtype)
 

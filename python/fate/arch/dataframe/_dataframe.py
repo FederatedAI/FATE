@@ -553,4 +553,5 @@ class DataFrame(object):
         return transform_to_table(self._block_table, block_loc[0], self._partition_order_mappings)
 
     def data_overview(self, num=100):
-        return [[1, 2, 3, 4], [2, 2, 3, 4]]
+        from .ops._data_overview import collect_data
+        return collect_data(self, num=100)

@@ -65,9 +65,9 @@ def _serialize(ctx, data):
     # TODO: tensor does not provide method to get raw values directly, so we use .storages.blocks first
     schema = build_schema(data)
 
-    from ..ops._transformer import transform_block_to_list
+    from ..ops._transformer import transform_block_table_to_list
 
-    serialize_data = transform_block_to_list(data.block_table, data.data_manager)
+    serialize_data = transform_block_table_to_list(data.block_table, data.data_manager)
     serialize_data.schema = schema
     return serialize_data
 
@@ -80,8 +80,8 @@ def deserialize(ctx, data):
     fields, partition_order_mappings = parse_schema(data.schema)
 
     data_manager = DataManager.deserialize(fields)
-    from ..ops._transformer import transform_list_to_block
+    from ..ops._transformer import transform_list_to_block_table
 
-    block_table = transform_list_to_block(data, data_manager)
+    block_table = transform_list_to_block_table(data, data_manager)
 
     return DataFrame(ctx, block_table, partition_order_mappings, data_manager)
