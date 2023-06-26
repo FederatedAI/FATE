@@ -14,9 +14,7 @@
 #  limitations under the License.
 import logging
 
-from fate.arch import dataframe, tensor
-from fate.arch.tensor import dtype
-from fate.interface import Context
+from fate.arch import Context, dataframe, tensor
 
 from ..abc.module import HeteroModule
 
@@ -53,10 +51,10 @@ class LrModuleGuest(HeteroModule):
         # ctx.arbiter("encryptor").get()
 
         w = tensor.randn((train_data.num_features, 1), dtype=dtype.float32)
-        for i, iter_ctx in ctx.range(self.max_iter):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
-            for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
+            for batch_ctx, (X, Y) in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 h = X.shape[0]
 
                 # d

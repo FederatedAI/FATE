@@ -19,5 +19,8 @@ from .intersection import intersection
 from .reader import reader
 from .statistics import statistics
 from .homo_nn import homo_nn
+from .demo import run
 
-BUILDIN_COMPONENTS = [hetero_lr, reader, feature_scale, intersection, evaluation, homo_nn, statistics]
+
+BUILDIN_COMPONENTS = [hetero_lr, reader, feature_scale, intersection, evaluation, homo_nn, statistics, run]
+
