@@ -37,10 +37,13 @@ class ParameterDescribe:
             type_name = type(self.type).__name__
             type_meta = self.type.dict()
         else:
-            field_default = ... if self.default is None else self.default
-            parameter_type = pydantic.create_model(f"parameter_{self.name}", data=(self.type, field_default))
-            type_name = parameter_type.__name__
-            type_meta = parameter_type.schema()
+            type_name = getattr(self.type, "__name__", None)
+            if type_name is None:
+                type_name = str(self.type)
+            type_meta = pydantic.schema_of(self.type, title=type_name)
+            if self.default is not None:
+                type_meta["default"] = self.default
+            type_meta["description"] = self.desc
 
         return ParameterSpec(
             type=type_name,
