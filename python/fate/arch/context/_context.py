@@ -13,19 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-import typing
 from typing import Iterable, List, Literal, Optional, Tuple, TypeVar
 
-from fate.interface import PartyMeta
+from fate.arch.abc import CSessionABC, FederationEngine, PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import Parties, Party
 from ._metrics import MetricsWrap, NoopMetricsHandler
 from ._namespace import NS, default_ns
-
-if typing.TYPE_CHECKING:
-    from fate.interface import CSessionABC, FederationEngine
 
 logger = logging.getLogger(__name__)
 
