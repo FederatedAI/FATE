@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import Iterator, List, Optional, Type
 
 from .._base_type import Role, _create_artifact_annotation
 from ._directory import ModelDirectoryArtifactDescribe
@@ -17,7 +17,7 @@ def json_model_output(roles: Optional[List[Role]] = None, desc="", optional=Fals
     return _create_artifact_annotation(False, False, JsonModelArtifactDescribe, "model")(roles, desc, optional)
 
 
-def json_model_outputs(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[List[JsonModelWriter]]:
+def json_model_outputs(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[Iterator[JsonModelWriter]]:
     return _create_artifact_annotation(False, True, JsonModelArtifactDescribe, "model")(roles, desc, optional)
 
 
@@ -41,5 +41,5 @@ def model_directory_output(
 
 def model_directory_outputs(
     roles: Optional[List[Role]] = None, desc="", optional=False
-) -> Type[List[ModelDirectoryArtifactDescribe]]:
+) -> Type[Iterator[ModelDirectoryArtifactDescribe]]:
     return _create_artifact_annotation(False, True, ModelDirectoryArtifactDescribe, "model")(roles, desc, optional)
