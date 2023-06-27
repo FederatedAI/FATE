@@ -69,7 +69,7 @@ class MetricsWrap:
     def log_metric(self, value, name, type, step=None, timestamp=None, metadata=None):
         if metadata is None:
             metadata = {}
-        if step is not None:
+        if step is None:
             if isinstance(self.namespace, IndexedNS):
                 step = self.namespace.index
         if timestamp is None:
