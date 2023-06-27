@@ -11,15 +11,17 @@ class ComponentMetricsHandler(NoopMetricsHandler):
         super().__init__()
 
     def finalize(self):
-        jsonable_metrics = {}
+        jsonable_metrics = []
         for k, v in self._metrics.items():
-            jsonable_metrics[k[0]] = MetricData(
-                namespace=".".join(v.namespaces),
-                name=v.name,
-                groups=".".join(v.groups),
-                type=v.type,
-                data=v.data,
-            ).dict()
+            jsonable_metrics.append(
+                MetricData(
+                    namespace=".".join(v.namespaces),
+                    name=v.name,
+                    groups=".".join(v.groups),
+                    type=v.type,
+                    data=v.data,
+                ).dict()
+            )
         self._writer.write(jsonable_metrics)
 
 
