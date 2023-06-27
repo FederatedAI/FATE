@@ -21,12 +21,11 @@ def evaluation(
     role: Role,
     input_data: cpn.dataframe_input(roles=[GUEST, HOST, ARBITER]),
     eval_type: cpn.parameter(type=str, default="binary", optional=True),
-    output_metric: cpn.json_metric_output(roles=[GUEST, HOST, ARBITER]),
 ):
-    evaluate(ctx, input_data, eval_type, output_metric)
+    evaluate(ctx, input_data, eval_type)
 
 
-def evaluate(ctx, input_data, eval_type, output_metric):
+def evaluate(ctx, input_data, eval_type):
     from fate.ml.evaluation import BinaryEvaluator
 
     data = ctx.reader(input_data).read_dataframe().data

@@ -28,8 +28,6 @@ def multi_model_test(
     json_model_outputs: cpn.json_model_outputs(roles=[LOCAL]),
     model_directory_output: cpn.model_directory_output(roles=[LOCAL]),
     model_directory_outputs: cpn.model_directory_outputs(roles=[LOCAL]),
-    json_metric_output: cpn.json_metric_output(roles=[LOCAL]),
-    json_metric_outputs: cpn.json_metric_outputs(roles=[LOCAL]),
 ):
     df = dataframe_input.read()
     df = df + 1

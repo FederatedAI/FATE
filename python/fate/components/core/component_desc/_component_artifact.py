@@ -156,7 +156,6 @@ class ComponentArtifactDescribes:
         model_outputs: Dict[
             str, AllowArtifactDescribes[Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"]]
         ] = None,
-        metric_outputs: Dict[str, AllowArtifactDescribes["JsonMetricArtifactDescribe"]] = None,
     ):
         if data_inputs is None:
             data_inputs = {}
@@ -166,13 +165,11 @@ class ComponentArtifactDescribes:
             data_outputs = {}
         if model_outputs is None:
             model_outputs = {}
-        if metric_outputs is None:
-            metric_outputs = {}
         self.data_inputs = data_inputs
         self.model_inputs = model_inputs
         self.data_outputs = data_outputs
         self.model_outputs = model_outputs
-        self.metric_outputs = metric_outputs
+        self.metric_outputs = {}
         self._keys = (
             self.data_outputs.keys()
             | self.model_outputs.keys()
@@ -180,6 +177,11 @@ class ComponentArtifactDescribes:
             | self.data_inputs.keys()
             | self.model_inputs.keys()
         )
+
+        # invisible artifact: metrics
+        from .artifacts import json_metric_output
+
+        self.add(name="metric", annotation=json_metric_output([], desc="metric, invisible for user", optional=False))
 
     def keys(self):
         return self._keys
@@ -233,7 +235,6 @@ class ComponentArtifactDescribes:
             model_inputs=_merge(self.model_inputs, stage_artifacts.model_inputs),
             data_outputs=_merge(self.data_outputs, stage_artifacts.data_outputs),
             model_outputs=_merge(self.model_outputs, stage_artifacts.model_outputs),
-            metric_outputs=_merge(self.metric_outputs, stage_artifacts.metric_outputs),
         )
 
     def get_inputs_spec(self):

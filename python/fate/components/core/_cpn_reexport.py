@@ -24,8 +24,6 @@ from .component_desc import (
     dataframe_inputs,
     dataframe_output,
     dataframe_outputs,
-    json_metric_output,
-    json_metric_outputs,
     json_model_input,
     json_model_inputs,
     json_model_output,
@@ -60,6 +58,4 @@ __all__ = [
     "model_directory_outputs",
     "model_directory_output",
     "model_directory_input",
-    "json_metric_output",
-    "json_metric_outputs",
 ]

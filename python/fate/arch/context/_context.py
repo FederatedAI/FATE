@@ -57,8 +57,6 @@ class Context:
         self.namespace = namespace
         self.cipher = cipher
 
-        if self._metrics_handler is None:
-            self._metrics_handler = NoopMetricsHandler()
         if self.namespace is None:
             self.namespace = default_ns
         if self.cipher is None:
@@ -67,8 +65,13 @@ class Context:
         self._role_to_parties = None
         self._is_destroyed = False
 
+    def register_metric_handler(self, metrics_handler):
+        self._metrics_handler = metrics_handler
+
     @property
     def metrics(self):
+        if self._metrics_handler is None:
+            self._metrics_handler = NoopMetricsHandler()
         return MetricsWrap(self._metrics_handler, self.namespace)
 
     def with_namespace(self, namespace: NS):

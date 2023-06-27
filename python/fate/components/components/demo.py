@@ -23,9 +23,8 @@ def run(
     # dataframe_output: cpn.dataframe_output(roles=[GUEST, HOST]),
     dataset_outputs: cpn.data_directory_outputs(roles=[GUEST, HOST]),
     dataset_output: cpn.data_directory_output(roles=[GUEST, HOST]),
-    # json_model_output: cpn.json_model_output(roles=[GUEST, HOST]),
-    # model_directory_output: cpn.model_directory_output(roles=[GUEST, HOST]),
-    json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST], optional=True),
+    json_model_output: cpn.json_model_output(roles=[GUEST, HOST]),
+    model_directory_output: cpn.model_directory_output(roles=[GUEST, HOST]),
 ):
     # print("dataframe_input", dataframe_input)
     # print("dataset_inputs", dataset_inputs)
@@ -40,11 +39,11 @@ def run(
     # print("    dataframe_outputs_0", dataframe_outputs_0)
     # print("    dataframe_outputs_1", dataframe_outputs_1)
     #
-    # print("dataset_outputs", dataset_outputs)
-    # dataset_outputs_0 = next(dataset_outputs)
-    # dataset_outputs_1 = next(dataset_outputs)
-    # print("    dataset_outputs_0", dataset_outputs_0)
-    # print("    dataset_outputs_1", dataset_outputs_1)
+    print("dataset_outputs", dataset_outputs)
+    dataset_outputs_0 = next(dataset_outputs)
+    dataset_outputs_1 = next(dataset_outputs)
+    print("    dataset_outputs_0", dataset_outputs_0)
+    print("    dataset_outputs_1", dataset_outputs_1)
     #
     # print("dataframe_output", dataframe_output)
     # dataframe_output.write(dataframe_input.read(), name="myname", namespace="mynamespace")
@@ -59,8 +58,9 @@ def run(
 
     ctx.metrics.log_accuracy("s", 1.0, 0)
     for i, sub_ctx in ctx.ctxs_range(10):
-        sub_ctx.metrics.log_accuracy("sub", 1.0, 0)
+        sub_ctx.metrics.log_accuracy("sub", 1.0)
     print(ctx.metrics.handler._metrics)
+    ctx.sub_ctx("ssss").metrics.log_loss("loss", 1.0, 0)
     # print("dataframe_inputs", dataframe_inputs)
 
-    json_metric_output.write({"metricsdemo": {"data": [1, 2, 3]}}, metadata={"bbb": 2})
+    ctx.metrics.log_accuracy("aaa", 1, 0)
