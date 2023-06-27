@@ -268,6 +268,7 @@ public class Dict {
     public final static String PARTITIONER = "partitioner";
     public final static String SERDES = "serdes";
     public final static String TRANSFER_BROKER_NAME = "transfer_broker_name";
+    public final static String TRANSFER_QUEUE = "transfer_queue";
     public final static String IS_CYCLE="cycle";
 //    public final static String EGGROLL_SEND_TOPIC_PREFIX="EGGROLL_SEND_";
 //    public final static String EGGROLL_BACK_TOPIC_PREFIX="EGGROLL_BACK_";

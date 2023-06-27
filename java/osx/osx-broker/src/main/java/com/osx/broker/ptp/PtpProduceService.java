@@ -51,7 +51,10 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
         this.addPostProcessor(new Interceptor<FateContext, Osx.Inbound, Osx.Outbound>() {
             @Override
             public void doProcess(FateContext context, InboundPackage<Osx.Inbound> inboundPackage, OutboundPackage<Osx.Outbound> outboundPackage) {
-
+                TransferQueue transferQueue = (TransferQueue) context.getData(Dict.TRANSFER_QUEUE);
+                if (transferQueue != null) {
+                    transferQueue.cacheReceivedMsg(inboundPackage.getBody().getMetadataMap().get(Osx.Metadata.MessageCode.name()), outboundPackage);
+                }
             }
         });
     }
@@ -119,6 +122,7 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
             ServiceContainer.flowCounterManager.pass(resource, dataSize);
             if (transferQueue != null) {
+                context.putData(Dict.TRANSFER_QUEUE, transferQueue);
                 String msgCode = produceRequest.getMetadataMap().get(Osx.Metadata.MessageCode.name());
                 String retryCountString = produceRequest.getMetadataMap().get(Osx.Metadata.RetryCount.name());
                 //此处为处理重复请求
@@ -163,10 +167,6 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                 }
                 long logicOffset = putMessageResult.getMsgLogicOffset();
                 context.putData(Dict.CURRENT_INDEX, transferQueue.getIndexQueue().getLogicOffset().get());
-//                if (transferQueue != null) {
-//                    transferQueue.cacheReceivedMsg(inboundPackage.getBody().getMetadataMap().get(Osx.Metadata.MessageCode.name()), outboundPackage);
-//                }
-
                 Osx.Outbound.Builder outBoundBuilder = Osx.Outbound.newBuilder();
                 outBoundBuilder.setCode(StatusCode.SUCCESS);
                 outBoundBuilder.setMessage(Dict.SUCCESS);
