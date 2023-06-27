@@ -29,7 +29,7 @@ public class QueueTest {
     Logger logger = LoggerFactory.getLogger(QueueTest.class);
     String ip = "localhost";
     //int port = 8250;//nginx
-    int port = 9373;//nginx
+    int port = 9370;//nginx
     String desPartyId = "9999";
     String desRole = "";
     String srcPartyId = "10000";
@@ -128,6 +128,7 @@ public class QueueTest {
             inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
             inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
             inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
+            inboundBuilder.putMetadata(Osx.Metadata.MessageCode.name(), Long.toString(System.currentTimeMillis()));
             //inboundBuilder.getMetadataMap().put(Pcp.Metadata.MessageOffSet.name(),);
             Osx.Message.Builder messageBuilder = Osx.Message.newBuilder();
             messageBuilder.setBody(ByteString.copyFrom(("test body element " + i).getBytes()));

@@ -45,6 +45,19 @@ public class FateContext implements Context{
     long costTime;
     String resourceName;
     String messageFlag;
+    String messageCode;
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    @Override
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    String jobId;
+
     Throwable t;
     public  FateContext(){
     }
@@ -84,6 +97,12 @@ public class FateContext implements Context{
     }
     public String getMessageFlag() {
         return messageFlag;
+    }
+    public String getMessageCode() {
+        return messageCode;
+    }
+    public void setMessageCode(String messageCode) {
+        this.messageCode = messageCode;
     }
     public void setMessageFlag(String messageFlag) {
         this.messageFlag = messageFlag;
@@ -301,14 +320,20 @@ public class FateContext implements Context{
             stringBuffer.append("topic:").append(this.getTopic()).append(SPLIT);
         }
 
-            if (this.getMessageFlag() != null) {
+        if (this.getMessageFlag() != null) {
                 stringBuffer.append(this.getMessageFlag()).append(SPLIT);
-            }
+        }
         if (this.getRequestMsgIndex() != null) {
             stringBuffer.append("req-offset:").append(this.getRequestMsgIndex()).append(SPLIT);
         }
         if (this.getData(Dict.CURRENT_INDEX) != null) {
             stringBuffer.append("offset-in-queue:").append(this.getData(Dict.CURRENT_INDEX)).append(SPLIT);
+        }
+        if(this.messageCode!=null){
+            stringBuffer.append("msg-code:").append(this.getMessageCode()).append(SPLIT);
+        }
+        if(this.jobId!=null){
+            stringBuffer.append("job-id:").append(this.getJobId()).append(SPLIT);
         }
         if (this.getSrcPartyId() != null) {
             stringBuffer.append("src:").append(this.getSrcPartyId()).append(SPLIT);
@@ -321,7 +346,6 @@ public class FateContext implements Context{
         }
         stringBuffer.append("cost:").append(System.currentTimeMillis() - this.getTimeStamp()).append(SPLIT);
         if (this.getRouterInfo() != null) {
-
             Protocol protocol = this.getRouterInfo().getProtocol();
             if (protocol != null) {
                 if (protocol.equals(Protocol.grpc)) {

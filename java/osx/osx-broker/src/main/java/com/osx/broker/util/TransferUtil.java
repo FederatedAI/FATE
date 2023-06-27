@@ -210,6 +210,7 @@ public class TransferUtil {
     public static void assableContextFromInbound(Context context, Osx.Inbound request) {
         Map<String, String> metaDataMap = request.getMetadataMap();
         String version = metaDataMap.get(Osx.Header.Version.name());
+        String jobId = metaDataMap.get(Osx.Metadata.JobId.name());
         String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
         String traceId = metaDataMap.get(Osx.Header.TraceID.name());
         String token = metaDataMap.get(Osx.Header.Token.name());
@@ -225,14 +226,20 @@ public class TransferUtil {
         String targetPartyId = StringUtils.isEmpty(targetInstId) ? targetNodeId : targetInstId + "." + targetNodeId;
         String topic = metaDataMap.get(Osx.Metadata.MessageTopic.name());
         String offsetString = metaDataMap.get(Osx.Metadata.MessageOffSet.name());
+        String messageCode = metaDataMap.get(Osx.Metadata.MessageCode.name());
         Long offset = StringUtils.isNotEmpty(offsetString) ? Long.parseLong(offsetString) : null;
         context.setTraceId(traceId);
         context.setToken(token);
         context.setDesPartyId(targetPartyId);
         context.setSrcPartyId(sourcePartyId);
         context.setTopic(topic);
+        context.setJobId(jobId);
+
+
+
         if (context instanceof FateContext) {
             ((FateContext) context).setRequestMsgIndex(offset);
+            ((FateContext) context).setMessageCode(messageCode);
         }
         context.setSessionId(sessionId);
         context.setDesComponent(targetComponentName);
@@ -392,7 +399,7 @@ public class TransferUtil {
 
     static public Osx.Outbound redirect(FateContext context, Osx.Inbound
             produceRequest, RouterInfo routerInfo) {
-        AssertUtil.notNull(routerInfo, "router info is null");
+        AssertUtil.notNull(routerInfo, context.getDesPartyId()!=null?"des partyId "+context.getDesPartyId()+" router info is null":" error router info");
         Osx.Outbound result = null;
         // 目的端协议为grpc
         if (routerInfo.isCycle()) {

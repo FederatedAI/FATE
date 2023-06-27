@@ -127,6 +127,7 @@ public class Dict {
     public static final String CODE = "code";
     public static final String MESSAGE = "message";
     public static final String MESSAGE_FLAG = "message_flag";
+    public static final String MESSAGE_CODE = "message_code";
     public static final String MODEL_ID = "modelId";
     public static final String MODEL_VERSION = "modelVersion";
     public static final String TIMESTAMP = "timestamp";

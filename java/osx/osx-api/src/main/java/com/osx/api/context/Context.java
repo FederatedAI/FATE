@@ -8,6 +8,7 @@ public interface Context {
     public void setTechProviderCode(String techProviderCode) ;
     public String getTraceId() ;
     public void setTraceId(String traceId);
+    public void setJobId(String jobId);
     public String getToken() ;
     public void setToken(String token) ;
     public String getTopic();

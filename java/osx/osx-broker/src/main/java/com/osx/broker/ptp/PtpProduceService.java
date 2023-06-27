@@ -45,22 +45,20 @@ import static com.osx.broker.util.TransferUtil.redirect;
 public class PtpProduceService extends AbstractPtpServiceAdaptor {
 
     Logger logger = LoggerFactory.getLogger(PtpProduceService.class);
-    private TransferQueue transferQueue;
+
 
     public PtpProduceService() {
         this.addPostProcessor(new Interceptor<FateContext, Osx.Inbound, Osx.Outbound>() {
             @Override
             public void doProcess(FateContext context, InboundPackage<Osx.Inbound> inboundPackage, OutboundPackage<Osx.Outbound> outboundPackage) {
-                if (transferQueue != null) {
-                    transferQueue.cacheReceivedMsg(inboundPackage.getBody().getMetadataMap().get(Osx.Metadata.MessageCode.name()), outboundPackage);
-                }
+
             }
         });
     }
 
     @Override
     protected Osx.Outbound doService(FateContext context, InboundPackage<Osx.Inbound> data) {
-
+        TransferQueue   transferQueue ;
         String topic = context.getTopic();
         RouterInfo routerInfo = context.getRouterInfo();
         String srcPartyId = context.getSrcPartyId();
@@ -164,7 +162,11 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     throw new PutMessageException("put status " + putMessageResult.getPutMessageStatus());
                 }
                 long logicOffset = putMessageResult.getMsgLogicOffset();
-                context.putData(Dict.CURRENT_INDEX, logicOffset);
+                context.putData(Dict.CURRENT_INDEX, transferQueue.getIndexQueue().getLogicOffset().get());
+//                if (transferQueue != null) {
+//                    transferQueue.cacheReceivedMsg(inboundPackage.getBody().getMetadataMap().get(Osx.Metadata.MessageCode.name()), outboundPackage);
+//                }
+
                 Osx.Outbound.Builder outBoundBuilder = Osx.Outbound.newBuilder();
                 outBoundBuilder.setCode(StatusCode.SUCCESS);
                 outBoundBuilder.setMessage(Dict.SUCCESS);

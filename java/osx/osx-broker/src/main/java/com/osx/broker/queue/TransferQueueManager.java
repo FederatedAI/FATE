@@ -359,17 +359,24 @@ public class TransferQueueManager {
     }
 
 
-    public CreateQueueResult createNewQueue(String transferId, String sessionId, boolean forceCreateLocal) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
-        CreateQueueResult createQueueResult = new CreateQueueResult();
+    public ReentrantLock getLock(String  transferId){
         ReentrantLock transferCreateLock = transferIdLockMap.get(transferId);
         if (transferCreateLock == null) {
             transferIdLockMap.putIfAbsent(transferId, new ReentrantLock(false));
         }
         transferCreateLock = transferIdLockMap.get(transferId);
-        transferCreateLock.lock();
-        try {
+        return  transferCreateLock;
+    }
 
+
+
+
+    public CreateQueueResult createNewQueue(String transferId, String sessionId, boolean forceCreateLocal) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
+        CreateQueueResult createQueueResult = new CreateQueueResult();
+        ReentrantLock transferCreateLock= getLock(transferId);
+        try {
+            transferCreateLock.lock();
             boolean exist = this.transferQueueMap.get(transferId) != null;
             if (exist) {
                 createQueueResult.setTransferQueue(this.transferQueueMap.get(transferId));
@@ -446,6 +453,7 @@ public class TransferQueueManager {
             return createQueueResult;
         } finally {
             transferCreateLock.unlock();
+
         }
     }
 
