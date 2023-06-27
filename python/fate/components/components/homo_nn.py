@@ -67,14 +67,6 @@ def prepare_runner_class(runner_module, runner_class, runner_conf, source):
     return runner
 
 
-def transform_input_dataframe(sub_ctx, data):
-
-    df_: DataFrame = sub_ctx.reader(data).read_dataframe().data
-    df: pd.DataFrame = df_.as_pd_df()
-    df.match_id_name = df_.schema.match_id_name
-    return df
-
-
 def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
     with ctx.sub_ctx(sub_ctx_name) as sub_ctx:
         # set context
@@ -83,20 +75,19 @@ def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
         return sub_ctx
 
 
-
 def get_input_data(sub_ctx, stage, cpn_input_data, input_type='df'):
     if stage == 'train':
         train_data, validate_data = cpn_input_data
-
         if input_type == 'df':
-            train_data = transform_input_dataframe(sub_ctx, train_data)
+            train_data = sub_ctx.reader(train_data).read_dataframe().data
             if validate_data is not None:
-                validate_data = transform_input_dataframe(sub_ctx, validate_data)
+                validate_data = sub_ctx.reader(validate_data).read_dataframe().data
 
         return NNInput(train_data=train_data, validate_data=validate_data)
+    
     elif stage == 'predict':
         test_data = cpn_input_data
-        test_data = transform_input_dataframe(sub_ctx, test_data)
+        test_data = sub_ctx.reader(test_data).read_dataframe().data
         return NNInput(test_data=test_data)
     else:
         raise ValueError(f'Unknown stage {stage}')
@@ -154,7 +145,6 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
             if nn_output.validate_result is not None:
                 df_val = add_dataset_type(nn_output.validate_result, consts.VALIDATE_SET)
 
-            # concatenate train and validate dataframes vertically if both exist, otherwise use the one that exists
             if df_train is not None and df_val is not None:
                 df_train_val = pd.concat([df_train, df_val], axis=0)
                 df_train_val.match_id_name = df_train.match_id_name
@@ -171,7 +161,6 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
                 raise ValueError('test result not found in the NNOutput: {}'.format(nn_output))
     else:
         logger.warning('train output is not NNOutput, but {}'.format(type(nn_output)))
-
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
@@ -259,3 +248,4 @@ def predict(
 
     elif role.is_arbiter:  # is server
         logger.info('arbiter skip predict')
+        
