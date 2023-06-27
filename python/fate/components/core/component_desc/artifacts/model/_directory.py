@@ -41,8 +41,8 @@ class ModelDirectoryArtifactDescribe(ArtifactDescribe[ModelDirectoryArtifactType
     def get_type(cls):
         return ModelDirectoryArtifactType
 
-    def get_writer(self, ctx: "Context", uri: URI) -> ModelDirectoryWriter:
-        return ModelDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata()))
+    def get_writer(self, ctx: "Context", uri: URI, type_name: str) -> ModelDirectoryWriter:
+        return ModelDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata(), type_name=type_name))
 
-    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata) -> ModelDirectoryReader:
-        return ModelDirectoryReader(ctx, _ArtifactType(uri=uri, metadata=metadata))
+    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata, type_name: str) -> ModelDirectoryReader:
+        return ModelDirectoryReader(ctx, _ArtifactType(uri=uri, metadata=metadata, type_name=type_name))
