@@ -12,9 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Any, List, Optional, Protocol, Tuple, TypeVar, overload
-
-from ._consts import T_ROLE
+from typing import Any, List, Literal, Optional, Protocol, Tuple, TypeVar, overload
 
 T = TypeVar("T")
 
@@ -71,4 +69,4 @@ class Parties(Protocol):
         ...
 
 
-PartyMeta = Tuple[T_ROLE, str]
+PartyMeta = Tuple[Literal["guest", "host", "arbiter", "local"], str]

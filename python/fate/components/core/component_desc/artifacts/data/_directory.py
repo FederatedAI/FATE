@@ -41,8 +41,8 @@ class DataDirectoryArtifactDescribe(ArtifactDescribe[DataDirectoryArtifactType, 
     def get_type(cls):
         return DataDirectoryArtifactType
 
-    def get_writer(self, ctx, uri: URI) -> DataDirectoryWriter:
-        return DataDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata()))
+    def get_writer(self, ctx, uri: URI, type_name: str) -> DataDirectoryWriter:
+        return DataDirectoryWriter(ctx, _ArtifactType(uri=uri, metadata=DataOutputMetadata(), type_name=type_name))
 
-    def get_reader(self, ctx, uri: "URI", metadata: "Metadata") -> DataDirectoryReader:
-        return DataDirectoryReader(ctx, _ArtifactType(uri=uri, metadata=metadata))
+    def get_reader(self, ctx, uri: "URI", metadata: "Metadata", type_name: str) -> DataDirectoryReader:
+        return DataDirectoryReader(ctx, _ArtifactType(uri=uri, metadata=metadata, type_name=type_name))

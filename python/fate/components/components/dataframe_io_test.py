@@ -44,6 +44,10 @@ def dataframe_io_test(
         model_output = next(json_model_outputs)
         model_output.write({"io_model_out": i}, metadata={"i-th output": i})
 
+    path = model_directory_output.get_directory()
+    with open(path + "/output.txt", "w") as fw:
+        fw.write("xxx\n")
+
     model_directory_output.write_metadata({"model_directory_output_metadata": "test_directory"})
 
     for i in range(5):

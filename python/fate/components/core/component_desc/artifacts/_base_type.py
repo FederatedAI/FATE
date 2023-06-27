@@ -46,12 +46,13 @@ MM = TypeVar("MM", bound=Union[Metadata, DataOutputMetadata, ModelOutputMetadata
 
 
 class _ArtifactType(Generic[MM]):
-    def __init__(self, uri: "URI", metadata: MM) -> None:
+    def __init__(self, uri: "URI", metadata: MM, type_name) -> None:
         self.uri = uri
         self.metadata = metadata
+        self.type_name = type_name
 
     def __str__(self):
-        return f"{self.__class__.__name__}(uri={self.uri}, metadata={self.metadata})"
+        return f"{self.__class__.__name__}(uri={self.uri}, metadata={self.metadata}, type_name={self.type_name})"
 
     def __repr__(self):
         return self.__str__()
@@ -60,6 +61,7 @@ class _ArtifactType(Generic[MM]):
         return {
             "metadata": self.metadata,
             "uri": self.uri.to_string(),
+            "type_name": self.type_name,
         }
 
     def update_source_metadata(self, config, key):
@@ -135,10 +137,10 @@ class ArtifactDescribe(Generic[AT, M]):
     def get_type(cls) -> AT:
         raise NotImplementedError()
 
-    def get_writer(self, ctx: "Context", uri: "URI") -> _ArtifactTypeWriter[M]:
+    def get_writer(self, ctx: "Context", uri: "URI", type_name: str) -> _ArtifactTypeWriter[M]:
         raise NotImplementedError()
 
-    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata) -> _ArtifactTypeReader:
+    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata, type_name: str) -> _ArtifactTypeReader:
         raise NotImplementedError()
 
 
