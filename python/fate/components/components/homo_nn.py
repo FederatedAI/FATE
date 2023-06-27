@@ -30,9 +30,9 @@ from fate.interface import Context
 from fate.components.components.nn.runner.default_runner import DefaultRunner
 from fate.components.components.nn.nn_runner import NNRunner, NNInput, NNOutput
 from fate.components.components.nn.loader import Loader
-from fate.arch.dataframe._dataframe import DataFrame
 from fate.arch.dataframe import PandasReader
 from fate.components.components.utils import consts
+from fate.components.components.utils.predict_format import LABEL
 import logging
 
 
@@ -111,17 +111,10 @@ def model_output(runner_module,
         'model_output_path': model_output_path
     }
 
-def add_dataset_type(result_df: pd.DataFrame, dataset_type=consts.TRAIN_SET):
 
-    if isinstance(result_df, pd.DataFrame):
-        result_df['type'] = dataset_type
-        return result_df
-    else:
-        raise ValueError(f'Illegal type of result_df {type(result_df)}')
-
-def write_output_df(ctx, result_df: pd.DataFrame, output_data_cls):
+def write_output_df(ctx, result_df: pd.DataFrame, output_data_cls, match_id_name, sample_id_name):
     
-    reader = PandasReader(sample_id_name="sample_id", match_id_name=result_df.match_id_name, label_name="label", dtype="object")
+    reader = PandasReader(sample_id_name=sample_id_name, match_id_name=match_id_name, label_name=LABEL, dtype="object")
     data = reader.to_frame(ctx, result_df)
     ctx.writer(output_data_cls).write_dataframe(data)
 
@@ -138,27 +131,20 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
                 raise ValueError('train result and validate result are both None in the NNOutput: {}'.format(nn_output))
             
             df_train, df_val = None, None
-
-            if nn_output.train_result is not None:
-                df_train = add_dataset_type(nn_output.train_result, consts.TRAIN_SET)
-
-            if nn_output.validate_result is not None:
-                df_val = add_dataset_type(nn_output.validate_result, consts.VALIDATE_SET)
-
+            match_id_name, sample_id_name = nn_output.match_id_name, nn_output.sample_id_name
             if df_train is not None and df_val is not None:
                 df_train_val = pd.concat([df_train, df_val], axis=0)
                 df_train_val.match_id_name = df_train.match_id_name
-                write_output_df(ctx, df_train_val, output_class)
+                write_output_df(ctx, df_train_val, output_class, match_id_name, sample_id_name)
             elif df_train is not None:
-                write_output_df(ctx, df_train, output_class)
+                write_output_df(ctx, df_train, output_class, match_id_name, sample_id_name)
             elif df_val is not None:
-                write_output_df(ctx, df_val, output_class)
+                write_output_df(ctx, df_val, output_class, match_id_name, sample_id_name)
             
         if stage == consts.PREDICT:
-            if nn_output.test_result is not None:
-                write_output_df(ctx, add_dataset_type(nn_output.test_result, consts.TEST_SET), output_class)
-            else:
+            if nn_output.test_result is None:
                 raise ValueError('test result not found in the NNOutput: {}'.format(nn_output))
+            write_output_df(ctx, nn_output.test_result, output_class, nn_output.match_id_name, nn_output.sample_id_name)
     else:
         logger.warning('train output is not NNOutput, but {}'.format(type(nn_output)))
 
@@ -248,4 +234,3 @@ def predict(
 
     elif role.is_arbiter:  # is server
         logger.info('arbiter skip predict')
-        

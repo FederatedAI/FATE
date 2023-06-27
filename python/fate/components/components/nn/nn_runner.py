@@ -276,11 +276,11 @@ class NNRunner(object):
             raise ValueError('You need to provide either train_eval_prediction or test_eval_prediction')
         
         if train_eval_prediction is not None:
-            results["train"] = get_formatted_output_df(train_eval_prediction, input_data.get_train_ids(), consts.TRAIN_DATA, task_type, threshold=threshold)
+            results["train"] = get_formatted_output_df(train_eval_prediction, input_data.get_train_ids(), consts.TRAIN_SET, task_type, threshold=threshold)
         if validate_eval_prediction is not None:
-            results["validate"] = get_formatted_output_df(validate_eval_prediction, input_data.get_validate_ids(), consts.VALIDATE_DATA, task_type, threshold=threshold)
+            results["validate"] = get_formatted_output_df(validate_eval_prediction, input_data.get_validate_ids(), consts.VALIDATE_SET, task_type, threshold=threshold)
         if test_eval_prediction is not None:
-            results["test"] = get_formatted_output_df(test_eval_prediction, input_data.get_test_ids(), consts.TEST_DATA, task_type, threshold=threshold)
+            results["test"] = get_formatted_output_df(test_eval_prediction, input_data.get_test_ids(), consts.TEST_SET, task_type, threshold=threshold)
 
         return NNOutput(train_result=results.get("train"), validate_result=results.get("validate"), test_result=results.get("test"), 
                         match_id_name=match_id_name, sample_id_name=sample_id_name)
