@@ -61,6 +61,12 @@ def run(
         sub_ctx.metrics.log_accuracy("sub", 1.0)
     print(ctx.metrics.handler._metrics)
     ctx.sub_ctx("ssss").metrics.log_loss("loss", 1.0, 0)
+
+    ctx.metrics.log_metrics(
+        [1, 2, 3, 4],
+        "summary",
+        "summary",
+    )
     # print("dataframe_inputs", dataframe_inputs)
 
     ctx.metrics.log_accuracy("aaa", 1, 0)

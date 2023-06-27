@@ -14,7 +14,7 @@
 #  limitations under the License.
 
 import time
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from ._namespace import NS, IndexedNS
 
@@ -46,11 +46,11 @@ class NoopMetricsHandler:
                 self[metrics] = self[metrics].merge(metrics)
             else:
                 self[metrics] = metrics
-        # elif isinstance(metrics, Metrics):
-        #     if metrics.name in self._metrics:
-        #         raise ValueError(f"duplicated metrics: `{metrics.name}` already exists")
-        #     else:
-        #         self._metrics[metrics.name] = metrics
+        elif isinstance(metrics, OneTimeMetrics):
+            if metrics in self:
+                raise ValueError(f"duplicated metrics: `{metrics.name}` already exists")
+            else:
+                self[metrics] = metrics
         else:
             raise ValueError(f"metrics `{metrics}` not allowed")
 
@@ -60,13 +60,21 @@ class MetricsWrap:
         self.handler = handler
         self.namespace = namespace
 
-    def log_metrics(self, metrics: Union["OneTimeMetrics", "StepMetrics"]):
-        return self.handler.log_metrics(metrics)
+    def log_metrics(self, values, name: str, type: str, metadata: Optional[dict] = None):
+        if metadata is None:
+            metadata = {}
+        return self.handler.log_metrics(
+            OneTimeMetrics(
+                name=name,
+                namespaces=self.namespace.get_metrics_keys().namespaces,
+                groups=self.namespace.get_metrics_keys().groups,
+                type=type,
+                data=values,
+                metadata=metadata,
+            )
+        )
 
-    def log_meta(self, meta):
-        return self.log_metrics(meta)
-
-    def log_metric(self, value, name, type, step=None, timestamp=None, metadata=None):
+    def log_metric(self, value, name: str, type: str, step=None, timestamp=None, metadata: Optional[dict] = None):
         if metadata is None:
             metadata = {}
         if step is None:
@@ -75,7 +83,7 @@ class MetricsWrap:
         if timestamp is None:
             timestamp = time.time()
         metric_key = self.namespace.get_metrics_keys()
-        return self.log_metrics(
+        return self.handler.log_metrics(
             StepMetrics(
                 name=name,
                 namespaces=metric_key.namespaces,
