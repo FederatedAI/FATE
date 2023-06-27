@@ -1,14 +1,12 @@
-import time
 from transformers.training_args import TrainingArguments
 from fate.ml.aggregator.base import Aggregator
 from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, TrainingArguments
 from fate.ml.nn.trainer.trainer_base import FedArguments, time_decorator, TrainingArguments
 from dataclasses import field
 from dataclasses import dataclass, field
-from fate.interface import Context
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Callable
-from fate.interface import Context
+from fate.arch import Context
 from torch.optim import Optimizer
 from torch.utils.data import Dataset
 from torch.optim.lr_scheduler import _LRScheduler

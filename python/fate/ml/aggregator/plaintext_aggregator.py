@@ -1,6 +1,6 @@
 import torch as t
 import numpy as np
-from fate.interface import Context
+from fate.arch import Context
 from typing import Union
 from .base import Aggregator
 import logging

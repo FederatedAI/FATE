@@ -60,6 +60,8 @@ class ComponentExecutionIO:
                     if apply_spec is not None:
                         try:
                             if allow_artifacts.is_multi:
+                                if not isinstance(apply_spec, list):
+                                    
                                 readers = []
                                 for c in apply_spec:
                                     uri = URI.from_string(c.uri)

@@ -37,4 +37,3 @@ BUILDIN_COMPONENTS = [
     multi_model_test,
     homo_nn
 ]
->>>>>>> dev-2.0.0-beta

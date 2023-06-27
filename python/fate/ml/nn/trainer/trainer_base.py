@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union, Callable
 from enum import Enum
 from transformers.training_args import TrainingArguments
-from fate.interface import Context
+from fate.arch import Context
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
 from transformers import TrainingArguments as hf_TrainingArguments, PreTrainedTokenizer

@@ -12,17 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import (
-    ARBITER,
-    GUEST,
-    HOST,
-    Role,
-    cpn,
-)
-from fate.components.core import cpn
+from fate.components.core import cpn, ARBITER, GUEST, HOST, Role
 import numpy as np
 import pandas as pd
-from fate.components.params import string_choice
+from fate.components.core.params import string_choice
 from typing import Dict
 import logging
 from fate.ml.evaluation.tool import get_binary_metrics, get_multi_metrics, get_regression_metrics, get_specified_metrics
@@ -43,8 +36,8 @@ def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 def evaluation(ctx, 
                role: Role, 
                input_data: cpn.dataframe_inputs(roles=[GUEST, HOST, ARBITER]), 
-               default_eval_metrics: cpn.parameter("default_eval_metrics", type=string_choice(choice=['binary', 'multi', 'regression']), default="binary", optional=True), 
-               metrics: cpn.parameter("metrics", type=list, default=None, optional=True), 
+               default_eval_metrics: cpn.parameter(type=string_choice(choice=['binary', 'multi', 'regression']), default="binary", optional=True), 
+               metrics: cpn.parameter(type=list, default=None, optional=True), 
                json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST])
             ):
 

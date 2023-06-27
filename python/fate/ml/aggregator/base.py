@@ -1,4 +1,4 @@
-from fate.interface import Context
+from fate.arch import Context
 from typing import Optional
 import logging
 

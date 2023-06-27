@@ -2,8 +2,8 @@ import numpy as np
 import torch 
 import pandas as pd
 from typing import Union, Optional
-from fate.components import Role
-from fate.interface import Context
+from fate.components.core import Role
+from fate.arch import Context
 from typing import Optional, Callable, Tuple
 from transformers import EvalPrediction
 import numpy as np
