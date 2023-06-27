@@ -30,8 +30,6 @@ T = TypeVar("T")
 
 class Context:
     """
-    implement fate.interface.ContextInterface
-
     Note: most parameters has default dummy value,
           which is convenient when used in script.
           please pass in custom implements as you wish

@@ -34,7 +34,7 @@ from typing import List, Tuple
 import cloudpickle as f_pickle
 import lmdb
 import numpy as np
-from fate.interface import PartyMeta
+from fate.arch.abc import PartyMeta
 
 from .federation import FederationDataType
 
