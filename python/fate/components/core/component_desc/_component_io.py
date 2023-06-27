@@ -156,6 +156,9 @@ class ComponentExecutionIO:
                     logger.debug(
                         f"skip {output_type} artifact `{allowed_artifacts.name}` for stage `{stage}` and role `{role}`"
                     )
+                    self.output_artifacts[output_type][arg] = None
+                    self.output_artifacts_writer[output_type][arg] = None
+                    return True
         return False
 
     def get_kwargs(self, with_metrics=False):
