@@ -45,7 +45,7 @@ T2 = TypeVar("T2")
 
 def union(f1: Callable[..., Type[T1]], f2: Callable[..., Type[T2]]):
     def wrapper(roles: Optional[List[Role]] = None, desc="", optional=False) -> "Type[T1] | Type[T2]":
-        return f1(roles, desc, optional) | f2()
+        return f1(roles, desc, optional) | f2(optional=optional)
 
     return wrapper
 

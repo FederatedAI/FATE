@@ -120,10 +120,10 @@ class ArtifactDescribeAnnotation:
             raise ValueError("second annotation should not provide stages")
         if other.desc:
             raise ValueError("second annotation should not provide desc")
-        if other.optional:
-            raise ValueError("second annotation should not provide optional")
-        if other.multi:
-            raise ValueError("second annotation should not provide multi")
+        if other.optional != self.optional:
+            raise ValueError("optional and non-optional can't be mixed")
+        if self.multi != other.multi:
+            raise ValueError("multi and non-multi can't be mixed")
         if self.describe_type_kind != other.describe_type_kind:
             raise ValueError(f"{self.describe_type_kind} and {other.describe_type_kind} can't be mixed")
         self.describe_types.extend(other.describe_types)
