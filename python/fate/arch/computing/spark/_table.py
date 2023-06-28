@@ -21,7 +21,7 @@ import uuid
 from itertools import chain
 
 import pyspark
-from fate.interface import CTableABC
+from fate.arch.abc import CTableABC
 from pyspark.rddsampler import RDDSamplerBase
 from scipy.stats import hypergeom
 

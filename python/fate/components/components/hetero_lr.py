@@ -32,7 +32,6 @@ def train(
     max_iter: cpn.parameter(type=params.conint(gt=0), default=100),
     batch_size: cpn.parameter(type=params.conint(gt=0), default=100),
     train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-    train_output_metric: cpn.json_metric_output(roles=[ARBITER]),
     output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:

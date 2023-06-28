@@ -10,8 +10,8 @@ class Parameter:
         return pydantic.parse_obj_as(cls, obj)
 
     @classmethod
-    def dict(cls):
-        raise NotImplementedError()
+    def schema(cls):
+        return NotImplemented
 
 
 T = TypeVar("T")
@@ -76,7 +76,7 @@ class StringChoice(str, Parameter):
     lower = True
 
     @classmethod
-    def __get_validators__(cls) -> "CallableGenerator":
+    def __get_validators__(cls):
         yield cls.string_choice_validator
 
     @classmethod

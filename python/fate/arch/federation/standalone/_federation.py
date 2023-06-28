@@ -15,7 +15,7 @@
 import logging
 from typing import List, Tuple
 
-from fate.interface import FederationEngine, PartyMeta
+from fate.arch.abc import FederationEngine, PartyMeta
 
 from ..._standalone import Federation as RawFederation
 from ..._standalone import Table as RawTable

@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 class ParameterSpec(BaseModel):
     type: str
-    default: Any
+    default: Optional[Any]
     optional: bool
     description: str = ""
     type_meta: dict = {}

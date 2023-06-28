@@ -12,9 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import List
+def load_metric_handler(writer):
+    from fate.components.core.component_desc._metric import ComponentMetricsHandler
 
-
-class Tensor:
-    shape: List[int]
-    T: "Tensor"
+    return ComponentMetricsHandler(writer=writer)

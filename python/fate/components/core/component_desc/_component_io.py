@@ -34,6 +34,8 @@ class ComponentExecutionIO:
             ):
                 raise ValueError(f"args `{arg}` not provided")
 
+        self._handle_output(ctx, component, "metric", stage, role, config)
+
     def _handle_parameter(self, component, arg, config):
         if parameter := component.parameters.mapping.get(arg):
             apply_spec: ArtifactInputApplySpec = config.parameters.get(arg)
@@ -61,7 +63,9 @@ class ComponentExecutionIO:
                         try:
                             if allow_artifacts.is_multi:
                                 if not isinstance(apply_spec, list):
-                                    raise ComponentArtifactApplyError(f"`{arg}` expected list of artifact, but single artifact get")
+                                    raise ComponentArtifactApplyError(
+                                        f"`{arg}` expected list of artifact, but single artifact get"
+                                    )
                                 readers = []
                                 for c in apply_spec:
                                     uri = URI.from_string(c.uri)
@@ -97,7 +101,6 @@ class ComponentExecutionIO:
                     self.input_artifacts[input_type][arg] = None
                     self.input_artifacts_reader[input_type][arg] = None
                     return True
-
         return False
 
     def _handle_output(self, ctx, component, arg, stage, role, config):
@@ -158,15 +161,20 @@ class ComponentExecutionIO:
                     return True
         return False
 
-    def get_kwargs(self):
-        return {
+    def get_kwargs(self, with_metrics=False):
+        kwargs = {
             **self.parameter_artifacts_apply,
             **self.input_artifacts_reader["data"],
             **self.input_artifacts_reader["model"],
             **self.output_artifacts_writer["data"],
             **self.output_artifacts_writer["model"],
-            **self.output_artifacts_writer["metric"],
         }
+        if with_metrics:
+            kwargs.update(self.output_artifacts_writer["metric"])
+        return kwargs
+
+    def get_metric_writer(self):
+        return self.output_artifacts_writer["metric"]["metric"]
 
     def dump_io_meta(self, config: "TaskConfigSpec") -> dict:
         from fate.components.core.spec.artifact import IOArtifactMeta
