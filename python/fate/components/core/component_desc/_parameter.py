@@ -33,19 +33,26 @@ class ParameterDescribe:
         from fate.components.core.params import Parameter
         from fate.components.core.spec.component import ParameterSpec
 
-        if isinstance(self.type, Parameter):  # recomanded
+        default = self.default if self.default is not ... else None
+        if issubclass(self.type, Parameter):  # recommended
             type_name = type(self.type).__name__
-            type_meta = self.type.dict()
+            if (schema := self.type.schema()) != NotImplemented:
+                type_meta = schema
+            else:
+                type_meta = pydantic.schema_of(self.type, title=type_name)
         else:
-            field_default = ... if self.default is None else self.default
-            parameter_type = pydantic.create_model(f"parameter_{self.name}", data=(self.type, field_default))
-            type_name = parameter_type.__name__
-            type_meta = parameter_type.schema()
+            type_name = getattr(self.type, "__name__", None)
+            if type_name is None:
+                type_name = str(self.type)
+            type_meta = pydantic.schema_of(self.type, title=type_name)
+            if self.default is not ...:
+                type_meta["default"] = self.default
+            type_meta["description"] = self.desc
 
         return ParameterSpec(
             type=type_name,
             type_meta=type_meta,
-            default=self.default,
+            default=default,
             optional=self.optional,
             description=self.desc,
         )
@@ -100,7 +107,7 @@ class ParameterDescribeAnnotation:
 T = TypeVar("T")
 
 
-def parameter(type: T, default=None, optional=True, desc="") -> T:
+def parameter(type: T, default=..., optional=True, desc="") -> T:
     return ParameterDescribeAnnotation(type, default, optional, desc)
 
 

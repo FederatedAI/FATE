@@ -17,7 +17,7 @@ import logging
 from collections.abc import Iterable
 from typing import Optional
 
-from fate.interface import CSessionABC
+from fate.arch.abc import CSessionABC
 
 from ..._standalone import Session
 from ...unify import URI, generate_computing_uuid, uuid

@@ -22,9 +22,8 @@ import typing
 from pickle import dumps as p_dumps
 from pickle import loads as p_loads
 
-from fate.interface import FederationEngine, PartyMeta
+from fate.arch.abc import CTableABC, FederationEngine, PartyMeta
 
-from ..computing import CTableABC
 from ..federation import FederationDataType
 from ..federation._datastream import Datastream
 from ._gc import GarbageCollector

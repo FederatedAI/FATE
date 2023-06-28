@@ -12,35 +12,42 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components.core import cpn, ARBITER, GUEST, HOST, Role
+import logging
+from typing import Dict
+
 import numpy as np
 import pandas as pd
+from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 from fate.components.core.params import string_choice
-from typing import Dict
-import logging
-from fate.ml.evaluation.tool import get_binary_metrics, get_multi_metrics, get_regression_metrics, get_specified_metrics
-
+from fate.ml.evaluation.tool import (
+    get_binary_metrics,
+    get_multi_metrics,
+    get_regression_metrics,
+    get_specified_metrics,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 
-    if 'type' in input_df.columns:
-        return {dataset_type: input_df[input_df['type'] == dataset_type] for dataset_type in input_df['type'].unique()}
+    if "type" in input_df.columns:
+        return {dataset_type: input_df[input_df["type"] == dataset_type] for dataset_type in input_df["type"].unique()}
     else:
-        return {'origin': input_df}
+        return {"origin": input_df}
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-def evaluation(ctx, 
-               role: Role, 
-               input_data: cpn.dataframe_inputs(roles=[GUEST, HOST, ARBITER]), 
-               default_eval_metrics: cpn.parameter(type=string_choice(choice=['binary', 'multi', 'regression']), default="binary", optional=True), 
-               metrics: cpn.parameter(type=list, default=None, optional=True), 
-               json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST])
-            ):
-
+def evaluation(
+    ctx,
+    role: Role,
+    input_data: cpn.dataframe_inputs(roles=[GUEST, HOST, ARBITER]),
+    default_eval_metrics: cpn.parameter(
+        type=string_choice(choice=["binary", "multi", "regression"]), default="binary", optional=True
+    ),
+    metrics: cpn.parameter(type=list, default=None, optional=True),
+    json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
+):
 
     if role.is_arbiter:
         return
@@ -63,7 +70,7 @@ def evaluation(ctx,
             component_rs[name] = rs_dict
 
     json_metric_output.write(rs_dict)
-    logger.info('eval result: {}'.format(rs_dict))
+    logger.info("eval result: {}".format(rs_dict))
 
 
 def evaluate(input_data, metrics):
@@ -75,7 +82,7 @@ def evaluate(input_data, metrics):
     for name, df in split_dict.items():
 
         y_true = df.label.values.flatten()
-        y_pred = np.array( df.predict_prob.values.tolist()).flatten()
+        y_pred = np.array(df.predict_prob.values.tolist()).flatten()
         rs = metrics(predict=y_pred, label=y_true)
         rs_dict[name] = rs
 

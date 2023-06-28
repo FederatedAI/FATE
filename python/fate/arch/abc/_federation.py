@@ -14,8 +14,15 @@
 #  limitations under the License.
 from typing import List, Optional, Protocol
 
-from ._gc import GarbageCollector
 from ._party import Parties, Party, PartyMeta
+
+
+class GarbageCollector(Protocol):
+    def register_clean_action(self, name: str, tag: str, obj, method: str, kwargs):
+        ...
+
+    def clean(self, name: str, tag: str):
+        ...
 
 
 class FederationEngine(Protocol):

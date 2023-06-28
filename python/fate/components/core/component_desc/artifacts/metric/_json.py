@@ -11,7 +11,6 @@ from .._base_type import (
     Metadata,
     MetricOutputMetadata,
     _ArtifactType,
-    _ArtifactTypeReader,
     _ArtifactTypeWriter,
 )
 
@@ -30,15 +29,6 @@ class JsonMetricWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
             self.artifact.metadata.metadata = metadata
 
 
-class JsonMetricReader(_ArtifactTypeReader):
-    def read(self):
-        try:
-            with open(self.artifact.uri.path, "r") as fr:
-                return json.load(fr)
-        except Exception as e:
-            raise RuntimeError(f"load json model named from {self.artifact} failed: {e}")
-
-
 class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType, MetricOutputMetadata]):
     @classmethod
     def get_type(cls):
@@ -47,5 +37,5 @@ class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType, Metric
     def get_writer(self, ctx: "Context", uri: URI, type_name: str) -> JsonMetricWriter:
         return JsonMetricWriter(ctx, _ArtifactType(uri=uri, metadata=MetricOutputMetadata(), type_name=type_name))
 
-    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata, type_name: str) -> JsonMetricReader:
-        return JsonMetricReader(ctx, _ArtifactType(uri=uri, metadata=metadata, type_name=type_name))
+    def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata, type_name: str):
+        raise NotImplementedError()

@@ -13,19 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-import typing
 from typing import Iterable, List, Literal, Optional, Tuple, TypeVar
 
-from fate.interface import PartyMeta
+from fate.arch.abc import CSessionABC, FederationEngine, PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import Parties, Party
 from ._metrics import MetricsWrap, NoopMetricsHandler
 from ._namespace import NS, default_ns
-
-if typing.TYPE_CHECKING:
-    from fate.interface import CSessionABC, FederationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +30,6 @@ T = TypeVar("T")
 
 class Context:
     """
-    implement fate.interface.ContextInterface
-
     Note: most parameters has default dummy value,
           which is convenient when used in script.
           please pass in custom implements as you wish
@@ -57,8 +51,6 @@ class Context:
         self.namespace = namespace
         self.cipher = cipher
 
-        if self._metrics_handler is None:
-            self._metrics_handler = NoopMetricsHandler()
         if self.namespace is None:
             self.namespace = default_ns
         if self.cipher is None:
@@ -67,8 +59,13 @@ class Context:
         self._role_to_parties = None
         self._is_destroyed = False
 
+    def register_metric_handler(self, metrics_handler):
+        self._metrics_handler = metrics_handler
+
     @property
     def metrics(self):
+        if self._metrics_handler is None:
+            self._metrics_handler = NoopMetricsHandler()
         return MetricsWrap(self._metrics_handler, self.namespace)
 
     def with_namespace(self, namespace: NS):

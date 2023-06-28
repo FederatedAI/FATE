@@ -13,9 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import abc
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from ._namespace import NS, IndexedNS
 
@@ -24,123 +23,36 @@ class NoopMetricsHandler:
     def __init__(self) -> None:
         self._metrics = {}
 
-    def log_intime(self, metrics: "Metrics"):
-        pass
+    def __contains__(self, item: Union["StepMetrics", "OneTimeMetrics"]):
+        if not isinstance(item, (StepMetrics, OneTimeMetrics)):
+            return False
+        return (item.name, item.namespaces, item.groups) in self._metrics
 
-    def log_metrics(self, metrics: Union["Metrics", "InCompleteMetrics"]):
-        if isinstance(metrics, Metrics):
-            if metrics.name in self._metrics:
+    def __getitem__(self, item: Union["StepMetrics", "OneTimeMetrics"]):
+        if not isinstance(item, (StepMetrics, OneTimeMetrics)):
+            raise ValueError(f"metrics `{item}` not allowed")
+        return self._metrics[(item.name, item.namespaces, item.groups)]
+
+    def __setitem__(self, key: Union["StepMetrics", "OneTimeMetrics"], value: Union["StepMetrics", "OneTimeMetrics"]):
+        if not isinstance(key, (StepMetrics, OneTimeMetrics)):
+            raise ValueError(f"metrics `{key}` not allowed")
+        if not isinstance(value, (StepMetrics, OneTimeMetrics)):
+            raise ValueError(f"metrics `{value}` not allowed")
+        self._metrics[(key.name, key.namespaces, key.groups)] = value
+
+    def log_metrics(self, metrics: Union["StepMetrics", "OneTimeMetrics"]):
+        if isinstance(metrics, StepMetrics):
+            if metrics in self:
+                self[metrics] = self[metrics].merge(metrics)
+            else:
+                self[metrics] = metrics
+        elif isinstance(metrics, OneTimeMetrics):
+            if metrics in self:
                 raise ValueError(f"duplicated metrics: `{metrics.name}` already exists")
             else:
-                self._metrics[metrics.name] = metrics
-        elif isinstance(metrics, InCompleteMetrics):
-            if (metrics.name, metrics.namespace) not in self._metrics:
-                self._metrics[(metrics.name, metrics.namespace)] = metrics
-            else:
-                self._metrics[(metrics.name, metrics.namespace)] = self._metrics[
-                    (metrics.name, metrics.namespace)
-                ].merge(metrics)
+                self[metrics] = metrics
         else:
             raise ValueError(f"metrics `{metrics}` not allowed")
-
-
-class Metric(metaclass=abc.ABCMeta):
-    type: str
-
-    @abc.abstractmethod
-    def dict(self) -> dict:
-        ...
-
-
-class Metrics(metaclass=abc.ABCMeta):
-    name: str
-    type: str
-    nemaspace: Optional[str] = None
-    groups: Dict[str, str] = {}
-
-    @abc.abstractmethod
-    def dict(self) -> dict:
-        ...
-
-
-class InCompleteMetrics(metaclass=abc.ABCMeta):
-    name: str
-    type: str
-    namespace: Optional[str] = None
-    groups: Dict[str, str] = {}
-
-    @abc.abstractmethod
-    def dict(self) -> dict:
-        ...
-
-    @abc.abstractmethod
-    def merge(self, metrics: "InCompleteMetrics") -> "InCompleteMetrics":
-        ...
-
-    @classmethod
-    @abc.abstractmethod
-    def from_dict(cls, d) -> "InCompleteMetrics":
-        ...
-
-
-class ScalarMetric(Metric):
-    type = "scalar"
-
-    def __init__(self, scalar) -> None:
-        self.scalar = scalar
-
-    def dict(self):
-        return self.scalar
-
-
-class LossMetric(Metric):
-    type = "loss"
-
-    def __init__(self, loss) -> None:
-        self.loss = loss
-
-    def dict(self) -> dict:
-        return self.loss
-
-
-class AccuracyMetric(Metric):
-    type = "accuracy"
-
-    def __init__(self, accuracy) -> None:
-        self.accuracy = accuracy
-
-    def dict(self) -> dict:
-        return self.accuracy
-
-
-class AUCMetric(Metric):
-    type = "auc"
-
-    def __init__(self, auc) -> None:
-        self.auc = auc
-
-    def dict(self) -> dict:
-        return self.auc
-
-
-class ROCMetrics(Metrics):
-    type = "roc"
-
-    def __init__(self, name, data) -> None:
-        self.name = name
-        self.data = data
-        self.nemaspace: Optional[str] = None
-        self.groups: Dict[str, str] = {}
-
-    def dict(self) -> dict:
-        return dict(
-            name=self.name,
-            namespace=self.nemaspace,
-            groups=self.groups,
-            type=self.type,
-            metadata={},
-            data=self.data,
-        )
 
 
 class MetricsWrap:
@@ -148,70 +60,121 @@ class MetricsWrap:
         self.handler = handler
         self.namespace = namespace
 
-    def log_metrics(self, metrics: Union[Metrics, InCompleteMetrics]):
-        return self.handler.log_metrics(metrics)
-
-    def log_meta(self, meta):
-        return self.log_metrics(meta)
-
-    def log_metric(self, name: str, metric: Metric, step=None, timestamp=None, metadata=None):
+    def log_metrics(self, values, name: str, type: str, metadata: Optional[dict] = None):
         if metadata is None:
             metadata = {}
-        if step is not None:
-            if isinstance(self.namespace, IndexedNS):
-                step = self.namespace.index
-        if timestamp is None:
-            timestamp = time.time()
-        return self.log_metrics(
-            StepMetrics(
+        return self.handler.log_metrics(
+            OneTimeMetrics(
                 name=name,
-                namespace=self.namespace.get_metrics_keys(),
-                type=metric.type,
-                data=[dict(metric=metric.dict(), step=step, timestamp=timestamp)],
+                namespaces=self.namespace.get_metrics_keys().namespaces,
+                groups=self.namespace.get_metrics_keys().groups,
+                type=type,
+                data=values,
                 metadata=metadata,
             )
         )
 
-    def log_scalar(self, name: str, metric: float, step=None, timestamp=None):
-        return self.log_metric(name, ScalarMetric(metric), step, timestamp)
+    def log_metric(self, value, name: str, type: str, step=None, timestamp=None, metadata: Optional[dict] = None):
+        if metadata is None:
+            metadata = {}
+        if step is None:
+            if isinstance(self.namespace, IndexedNS):
+                step = self.namespace.index
+        if timestamp is None:
+            timestamp = time.time()
+        metric_key = self.namespace.get_metrics_keys()
+        return self.handler.log_metrics(
+            StepMetrics(
+                name=name,
+                namespaces=metric_key.namespaces,
+                groups=metric_key.groups,
+                type=type,
+                data=[dict(metric=value, step=step, timestamp=timestamp)],
+                metadata=metadata,
+            )
+        )
+
+    def log_scalar(self, name: str, scalar: float, step=None, timestamp=None):
+        return self.log_metric(value=scalar, name=name, type="scalar", step=step, timestamp=timestamp)
 
     def log_loss(self, name: str, loss: float, step, timestamp=None):
-        return self.log_metric(name, LossMetric(loss), step, timestamp)
+        return self.log_metric(value=loss, name=name, type="loss", step=step, timestamp=timestamp)
 
     def log_accuracy(self, name: str, accuracy: float, step=None, timestamp=None):
-        return self.log_metric(name, AccuracyMetric(accuracy), step, timestamp)
+        return self.log_metric(value=accuracy, name=name, type="accuracy", step=step, timestamp=timestamp)
 
     def log_auc(self, name: str, auc: float, step=None, timestamp=None):
-        return self.log_metric(name, AUCMetric(auc), step, timestamp)
+        return self.log_metric(value=auc, name=name, type="auc", step=step, timestamp=timestamp)
 
-    def log_roc(self, name: str, data: List[Tuple[float, float]]):
-        return self.log_metrics(ROCMetrics(name, data))
+    def log_roc(self, name: str, data: List[Tuple[float, float]], metadata=None):
+        if metadata is None:
+            metadata = {}
+        return self.log_metrics(
+            OneTimeMetrics(
+                name=name,
+                namespaces=self.namespace.get_metrics_keys().namespaces,
+                groups=self.namespace.get_metrics_keys().groups,
+                type="roc",
+                data=data,
+                metadata=metadata,
+            )
+        )
 
 
-class StepMetrics(InCompleteMetrics):
-    complete = False
-
-    def __init__(self, name, namespace, type, data, metadata) -> None:
+class OneTimeMetrics:
+    def __init__(self, name, namespaces, groups, type, data, metadata) -> None:
         self.name = name
-        self.namespace = namespace
+        self.namespaces = namespaces
+        self.groups = groups
         self.type = type
         self.data = data
         self.metadata = metadata
 
-    def merge(self, metrics: InCompleteMetrics):
+    def dict(self):
+        return dict(
+            name=self.name,
+            namespace=self.namespaces,
+            groups=self.groups,
+            type=self.type,
+            metadata=self.metadata,
+            data=self.data,
+        )
+
+    def __str__(self):
+        return str(self.dict())
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class StepMetrics:
+    complete = False
+
+    def __init__(self, name, namespaces, groups, type, data, metadata) -> None:
+        self.name = name
+        self.namespaces = namespaces
+        self.groups = groups
+        self.type = type
+        self.data = data
+        self.metadata = metadata
+
+    def merge(self, metrics: "StepMetrics"):
         if not isinstance(metrics, StepMetrics):
             raise ValueError(f"can't merge metrics type `{metrics}` with StepMetrics")
         if metrics.type != self.type:
             raise ValueError(f"can't merge metrics type `{metrics}` with StepMetrics named `{self.name}`")
-        if metrics.namespace != self.namespace:
+        if metrics.namespaces != self.namespaces:
             raise ValueError(
-                f"can't merge metrics namespace `{self.namespace}` with `{metrics.namespace}` named `{self.name}`"
+                f"can't merge metrics namespace `{self.namespaces}` with `{metrics.namespaces}` named `{self.name}`"
             )
+        if metrics.groups != self.groups:
+            raise ValueError(f"can't merge metrics groups `{self.groups}` with `{metrics.groups}` named `{self.name}`")
 
         return StepMetrics(
             name=self.name,
+            namespaces=self.namespaces,
+            groups=self.groups,
             type=self.type,
-            namespace=self.namespace,
             data=[*self.data, *metrics.data],
             metadata=self.metadata,
         )
@@ -219,7 +182,8 @@ class StepMetrics(InCompleteMetrics):
     def dict(self) -> dict:
         return dict(
             name=self.name,
-            namespace=self.namespace,
+            namespaces=self.namespaces,
+            groups=self.groups,
             type=self.type,
             metadata=self.metadata,
             data=self.data,
@@ -230,7 +194,7 @@ class StepMetrics(InCompleteMetrics):
         return StepMetrics(**d)
 
     def __str__(self):
-        return f"StepMetrics(name={self.name}, type={self.type}, namespace={self.namespace}, data={self.data}, metadata={self.metadata})"
+        return f"StepMetrics(name={self.name}, namespaces={self.namespaces}, groups={self.groups}, type={self.type}, metadata={self.metadata}, data={self.data})"
 
     def __repr__(self):
         return self.__str__()

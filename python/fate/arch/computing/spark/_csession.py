@@ -17,7 +17,7 @@ import logging
 import typing
 from typing import Iterable
 
-from fate.interface import CSessionABC
+from fate.arch.abc import CSessionABC
 
 from ...unify import URI
 from ._table import from_hdfs, from_hive, from_localfs, from_rdd

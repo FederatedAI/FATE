@@ -17,7 +17,7 @@ import itertools
 import logging
 import typing
 
-from fate.interface import CTableABC
+from fate.arch.abc import CTableABC
 
 from ...unify import URI
 from .._profile import computing_profile
