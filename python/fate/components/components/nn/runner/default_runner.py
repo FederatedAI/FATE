@@ -189,6 +189,7 @@ class DefaultRunner(NNRunner):
             save_path = cpn_input_data.get_fate_save_path()
             # if have input model for warm-start 
             model_path = cpn_input_data.get_model_path()
+            logger.info('paths are {} {}'.format(save_path, model_path))
             # resume_from checkpoint path
             resume_path = None
             if model_path is not None:

@@ -10,10 +10,11 @@ import json
 
 # variable:
 LABEL = "label"
-PREDICT_LABEL = "predict_label"
+PREDICT_LABEL = "predict_result"
 PREDICT_SCORE = "predict_score"
 PREDICT_DETAIL = "predict_detail"
 TYPE = "type"
+
 
 
 def predict_detail_dict_to_str(result_dict):
@@ -86,5 +87,3 @@ def predict_score_to_output(ctx, pred_table:DataFrame, train_data: DataFrame, da
     output_df = reader.to_frame(ctx, pred_rs_df)
 
     return output_df
-
-

@@ -60,7 +60,8 @@ def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
     return sub_ctx
 
 
-def get_input_data(stage, cpn_input_data,  save_path, input_type='df',):
+def get_input_data(stage, cpn_input_data, fate_save_path='./', saved_model_path=None,
+                  input_type='df',):
     if stage == 'train':
         train_data, validate_data = cpn_input_data
         if input_type == 'df':
@@ -68,12 +69,14 @@ def get_input_data(stage, cpn_input_data,  save_path, input_type='df',):
             if validate_data is not None:
                 validate_data = validate_data.read()
 
-        return NNInput(train_data=train_data, validate_data=validate_data)
+        return NNInput(train_data=train_data, validate_data=validate_data, 
+                       fate_save_path=fate_save_path, saved_model_path=saved_model_path)
     
     elif stage == 'predict':
         test_data = cpn_input_data
         test_data = test_data.read()
-        return NNInput(test_data=test_data)
+        return NNInput(test_data=test_data, save_path=fate_save_path, 
+                       fate_save_path=fate_save_path, saved_model_path=saved_model_path)
     else:
         raise ValueError(f'Unknown stage {stage}')
 
@@ -82,7 +85,7 @@ def get_input_data(stage, cpn_input_data,  save_path, input_type='df',):
 Output functions
 """
 
-def model_output(runner_module,
+def get_model_output_conf(runner_module,
                  runner_class,
                  runner_conf,
                  source,
@@ -150,7 +153,6 @@ def train(
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
     data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
-    metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
     model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
 ):
    
@@ -164,14 +166,13 @@ def train(
         ret: NNOutput = runner.train(input_data=input_data)
         logger.info("train result: {}".format(ret))
         handle_nn_output(sub_ctx, ret, data_output, consts.TRAIN)
-        output_conf = model_output(runner_module,
-                                   runner_class,
-                                   runner_conf,
-                                   source,
-                                   output_path)
+        output_conf = get_model_output_conf(runner_module,
+                                            runner_class,
+                                            runner_conf,
+                                            source,
+                                            output_path)
         logger.info("output_path: {}".format(output_conf))
         model_output.write_metadata(output_conf)
-        metric_output.write({"nn_conf": output_conf})
         
     elif role.is_arbiter:  # is server
         runner.train()
