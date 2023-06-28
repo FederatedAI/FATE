@@ -57,6 +57,7 @@ else:
         )
     )
 
+LOGGER.error(f"DATA_PATH: {_data_dir}")
 
 # noinspection PyPep8Naming
 class Table(object):

@@ -60,6 +60,8 @@ class ComponentExecutionIO:
                     if apply_spec is not None:
                         try:
                             if allow_artifacts.is_multi:
+                                if not isinstance(apply_spec, list):
+                                    raise ComponentArtifactApplyError(f"`{arg}` expected list of artifact, but single artifact get")
                                 readers = []
                                 for c in apply_spec:
                                     uri = URI.from_string(c.uri)
@@ -92,6 +94,10 @@ class ComponentExecutionIO:
                     logger.debug(
                         f"skip {input_type} artifact `{allow_artifacts.name}` for stage `{stage}` and role `{role}`"
                     )
+                    self.input_artifacts[input_type][arg] = None
+                    self.input_artifacts_reader[input_type][arg] = None
+                    return True
+
         return False
 
     def _handle_output(self, ctx, component, arg, stage, role, config):
@@ -147,6 +153,9 @@ class ComponentExecutionIO:
                     logger.debug(
                         f"skip {output_type} artifact `{allowed_artifacts.name}` for stage `{stage}` and role `{role}`"
                     )
+                    self.output_artifacts[output_type][arg] = None
+                    self.output_artifacts_writer[output_type][arg] = None
+                    return True
         return False
 
     def get_kwargs(self):

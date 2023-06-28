@@ -12,28 +12,71 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
+from fate.components.core import cpn, ARBITER, GUEST, HOST, Role
+import numpy as np
+import pandas as pd
+from fate.components.core.params import string_choice
+from typing import Dict
+import logging
+from fate.ml.evaluation.tool import get_binary_metrics, get_multi_metrics, get_regression_metrics, get_specified_metrics
+
+
+logger = logging.getLogger(__name__)
+
+
+def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+
+    if 'type' in input_df.columns:
+        return {dataset_type: input_df[input_df['type'] == dataset_type] for dataset_type in input_df['type'].unique()}
+    else:
+        return {'origin': input_df}
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-def evaluation(
-    ctx,
-    role: Role,
-    input_data: cpn.dataframe_input(roles=[GUEST, HOST, ARBITER]),
-    eval_type: cpn.parameter(type=str, default="binary", optional=True),
-    output_metric: cpn.json_metric_output(roles=[GUEST, HOST, ARBITER]),
-):
-    evaluate(ctx, input_data, eval_type, output_metric)
+def evaluation(ctx, 
+               role: Role, 
+               input_data: cpn.dataframe_inputs(roles=[GUEST, HOST, ARBITER]), 
+               default_eval_metrics: cpn.parameter(type=string_choice(choice=['binary', 'multi', 'regression']), default="binary", optional=True), 
+               metrics: cpn.parameter(type=list, default=None, optional=True), 
+               json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST])
+            ):
 
 
-def evaluate(ctx, input_data, eval_type, output_metric):
-    from fate.ml.evaluation import BinaryEvaluator
+    if role.is_arbiter:
+        return
+    else:
+        if metrics is not None:
+            metrics_ensemble = get_specified_metrics(metrics)
+        else:
+            if default_eval_metrics == "binary":
+                metrics_ensemble = get_binary_metrics()
+            elif default_eval_metrics == "multi":
+                metrics_ensemble = get_multi_metrics()
+            elif default_eval_metrics == "regression":
+                metrics_ensemble = get_regression_metrics()
 
-    data = ctx.reader(input_data).read_dataframe().data
-    y_true = data.label.tolist()
-    y_pred = data.predict_score.values.tolist()
+        df_list = [_input.read() for _input in input_data]
+        component_name = [_input.antifact.metadata.source.component for _input in input_data]
+        component_rs = {}
+        for name, df in zip(component_name, df_list):
+            rs_dict = evaluate(df, metrics_ensemble)
+            component_rs[name] = rs_dict
 
-    if eval_type == "binary":
-        ctx.metrics.handler.register_metrics(auc=ctx.writer(output_metric))
-        evaluator = BinaryEvaluator()
-        evaluator.fit(ctx, y_true, y_pred)
+    json_metric_output.write(rs_dict)
+    logger.info('eval result: {}'.format(rs_dict))
+
+
+def evaluate(input_data, metrics):
+
+    data = input_data.data.as_pd_df()
+    split_dict = split_dataframe_by_type(data)
+    rs_dict = {}
+
+    for name, df in split_dict.items():
+
+        y_true = df.label.values.flatten()
+        y_pred = np.array( df.predict_prob.values.tolist()).flatten()
+        rs = metrics(predict=y_pred, label=y_true)
+        rs_dict[name] = rs
+
+    return rs_dict
