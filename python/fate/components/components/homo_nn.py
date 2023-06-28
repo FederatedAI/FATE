@@ -28,9 +28,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-FATE_TEST_PATH = '/home/cwj/FATE/playground/test_output_path'
-
-
 def is_path(s):
     return os.path.exists(s)
 
@@ -63,7 +60,7 @@ def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
     return sub_ctx
 
 
-def get_input_data(stage, cpn_input_data, input_type='df'):
+def get_input_data(stage, cpn_input_data,  save_path, input_type='df',):
     if stage == 'train':
         train_data, validate_data = cpn_input_data
         if input_type == 'df':
@@ -134,7 +131,7 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
                 raise ValueError('test result not found in the NNOutput: {}'.format(nn_output))
             write_output_df(ctx, nn_output.test_result, output_class, nn_output.match_id_name, nn_output.sample_id_name)
     else:
-        logger.warning('train output is not NNOutput, but {}'.format(type(nn_output)))
+        logger.warning('train output is not NNOutput, but {}, fail to output dataframe'.format(type(nn_output)))
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
@@ -152,9 +149,9 @@ def train(
     runner_class: cpn.parameter(type=str, default='DefaultRunner', desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
-    dataframe_output: cpn.dataframe_output(roles=[GUEST, HOST]),
-    json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
-    model_directory_output: cpn.model_directory_output(roles=[GUEST, HOST]),
+    data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
+    metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
+    model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
 ):
    
     runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
@@ -162,53 +159,46 @@ def train(
 
     if role.is_guest or role.is_host:  # is client
 
-        input_data = get_input_data(consts.TRAIN, [train_data, validate_data])
-        input_data.fate_save_path = FATE_TEST_PATH
+        output_path = model_output.get_directory()
+        input_data = get_input_data(consts.TRAIN, [train_data, validate_data], output_path)
         ret: NNOutput = runner.train(input_data=input_data)
         logger.info("train result: {}".format(ret))
-        handle_nn_output(sub_ctx, ret, dataframe_output, consts.TRAIN)
-
+        handle_nn_output(sub_ctx, ret, data_output, consts.TRAIN)
         output_conf = model_output(runner_module,
                                    runner_class,
                                    runner_conf,
                                    source,
-                                   FATE_TEST_PATH)
-        output_path = model_directory_output.get_directory()
+                                   output_path)
         logger.info("output_path: {}".format(output_conf))
-        model_directory_output.write_metadata(output_conf)
-        json_metric_output.write({"train":1123})
+        model_output.write_metadata(output_conf)
+        metric_output.write({"nn_conf": output_conf})
         
     elif role.is_arbiter:  # is server
         runner.train()
 
 
-# @homo_nn.predict()
-# @cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
-# @cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-# @cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
-# def predict(
-#     ctx,
-#     role: Role,
-#     test_data,
-#     input_model,
-#     test_output_data,
-# ):
+@homo_nn.predict()
+def predict(
+    ctx,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
+    model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
+    data_output: cpn.dataframe_output(roles=[GUEST, HOST])
+):
 
-#     if role.is_guest or role.is_host:  # is client
+    if role.is_guest or role.is_host:  # is client
 
-#         import json
-#         path = '/home/cwj/FATE/playground/test_output_model/'
-#         model_conf = json.load(open(path + str(role.name) + '_conf.json', 'r'))
-#         runner_module = model_conf['runner_module']
-#         runner_class = model_conf['runner_class']
-#         runner_conf = model_conf['runner_conf']
-#         source = model_conf['source']
+        model_conf = model_input.get_metadata()
+        runner_module = model_conf['runner_module']
+        runner_class = model_conf['runner_class']
+        runner_conf = model_conf['runner_conf']
+        source = model_conf['source']
 
-#         runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
-#         sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
-#         input_data = get_input_data(consts.PREDICT, test_data)
-#         pred_rs = runner.predict(input_data)
-#         handle_nn_output(sub_ctx, pred_rs, test_output_data, consts.PREDICT)
+        runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
+        sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
+        input_data = get_input_data(consts.PREDICT, test_data)
+        ret: NNOutput = runner.predict(input_data)
+        handle_nn_output(sub_ctx, ret, data_output, consts.PREDICT)
 
-#     elif role.is_arbiter:  # is server
-#         logger.info('arbiter skip predict')
+    elif role.is_arbiter:  # is server
+        logger.info('arbiter skip predict')

@@ -144,8 +144,6 @@ class DefaultRunner(NNRunner):
         self.tokenizer_conf = tokenizer_conf
         self.task_type = task_type
 
-        self._resume_from_checkpoint = False
-
     def _loader_load_from_conf(self, conf, return_class=False):
         if conf is None:
             return None
@@ -181,26 +179,23 @@ class DefaultRunner(NNRunner):
 
             # load arguments, models, etc
             # prepare datatset
-
             # dataet
             train_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_train_data())
             validate_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_validate_data())
             test_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_test_data())
-
             # load model
             model = self._loader_load_from_conf(self.model_conf)
-
+            # save path: path to save provided by fate framework
+            save_path = cpn_input_data.get_fate_save_path()
             # if have input model for warm-start 
             model_path = cpn_input_data.get_model_path()
-
+            # resume_from checkpoint path
+            resume_path = None
             if model_path is not None:
-                path = cpn_input_data.get_model_path()
-                model_dict = load_model_dict_from_path(path)
+                model_dict = load_model_dict_from_path(model_path)
                 model.load_state_dict(model_dict)
-                if get_last_checkpoint(path) is not None:
-                    self._resume_from_checkpoint = True
-            else:
-                model_path = './'
+                if get_last_checkpoint(model_path) is not None:
+                    resume_path = model_path
 
             # load optimizer
             optimizer_loader = Loader.from_dict(self.optimizer_conf)
@@ -211,11 +206,12 @@ class DefaultRunner(NNRunner):
             loss = self._loader_load_from_conf(self.loss_conf)
             # load collator func
             data_collator = self._loader_load_from_conf(self.data_collator_conf)
-            # 
+            # load tokenizer if import conf provided
             tokenizer = self._loader_load_from_conf(self.tokenizer_conf)
             # args
             training_args = TrainingArguments(**self.training_args_conf)
-            training_args.output_dir = model_path  # reset to default, saving to arbitrary path is not allowed in NN component
+            training_args.output_dir = save_path  # reset to default, saving to arbitrary path is not allowed in NN component
+            training_args.resume_from_checkpoint = resume_path  # resume path
             fed_args = FedAVGArguments(**self.fed_args_conf)
 
             # prepare trainer
@@ -239,7 +235,7 @@ class DefaultRunner(NNRunner):
         trainer = setup['trainer']
         if self.is_client():
 
-            trainer.train(resume_from_checkpoint=self._resume_from_checkpoint)
+            trainer.train()
             trainer.save_model(input_data.get('fate_save_path'))
             # predict the dataset when training is done
             train_rs = trainer.predict(setup['train_set']) if setup['train_set'] else None
