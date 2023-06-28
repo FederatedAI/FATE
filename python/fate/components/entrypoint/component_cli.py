@@ -194,6 +194,13 @@ def artifact_type(name, role, stage, output_path):
     cpn = load_component(name)
     role = Role.from_str(role)
     stage = Stage.from_str(stage)
+    if not stage.is_default:
+        for stage_component in cpn.stage_components:
+            if stage_component.name == stage.name:
+                cpn = stage_component
+                break
+        else:
+            raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
 
     if output_path:
         cpn.dump_runtime_io_yaml(role, stage, output_path)
