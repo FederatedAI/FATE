@@ -5,12 +5,16 @@ from typing import Union, Optional
 from fate.components.core import Role
 from fate.arch import Context
 from typing import Optional, Callable, Tuple
-from transformers import EvalPrediction
+from transformers.trainer_utils import PredictionOutput
 import numpy as np
 from fate.arch.dataframe._dataframe import DataFrame
 from fate.arch.dataframe.manager.schema_manager import Schema
 from fate.components.components.utils import consts
 from fate.components.components.utils.predict_format import get_output_pd_df, LABEL, PREDICT_SCORE
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def _convert_to_numpy_array(data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
@@ -196,15 +200,16 @@ def task_type_infer(predict_result, true_label):
     return None
 
 
-def get_formatted_output_df(predict_rs: EvalPrediction, id_: SampleIDs, dataset_type, task_type=None, 
+def get_formatted_output_df(predict_rs: PredictionOutput, id_: SampleIDs, dataset_type, task_type=None, 
                             classes=None, threshold=0.5):
     
-    if isinstance(predict_rs, EvalPrediction):
+    logger.info("Start to format output dataframe {}".format(type(predict_rs)))
+    if isinstance(predict_rs, PredictionOutput):
         predict_score = predict_rs.predictions
         if hasattr(predict_rs, 'label_ids'):
             label = predict_rs.label_ids
         else:
-            raise ValueError("predict_rs should be EvalPrediction and label ids should be included in it, but got {}".format(predict_rs))
+            raise ValueError("predict_rs should be PredictionOutput and label ids should be included in it, but got {}".format(predict_rs))
 
         predict_score = _convert_to_numpy_array(predict_score)
         label = _convert_to_numpy_array(label)
@@ -216,14 +221,17 @@ def get_formatted_output_df(predict_rs: EvalPrediction, id_: SampleIDs, dataset_
         if task_type is None:
             task_type = task_type_infer(predict_score, label)
         if task_type == consts.BINARY or task_type == consts.MULTI:
-            classes = np.unique(label).tolist()
+            if task_type == consts.BINARY:
+                classes = [0, 1]
+            else:
+                classes = np.unique(label).tolist()
         if task_type is not None:
             return get_output_pd_df(df, label, id_.match_id_name, id_.sample_id_name, dataset_type, task_type, classes, threshold)
         else:
             df[LABEL] = label
             return df
     else:
-        raise ValueError("predict_rs should be EvalPrediction")
+        raise ValueError("predict_rs should be PredictionOutput")
 
 
 
@@ -258,10 +266,10 @@ class NNRunner(object):
     
     @staticmethod
     def generate_std_nn_output(input_data: NNInput,
-                           train_eval_prediction: Optional[EvalPrediction] = None,
-                           validate_eval_prediction: Optional[EvalPrediction] = None,
-                           test_eval_prediction: Optional[EvalPrediction] = None,
-                           task_type: str = consts.CLASSIFICATION,
+                           train_eval_prediction: Optional[PredictionOutput] = None,
+                           validate_eval_prediction: Optional[PredictionOutput] = None,
+                           test_eval_prediction: Optional[PredictionOutput] = None,
+                           task_type: str = consts.BINARY,
                            threshold: float = 0.5) -> NNOutput:
 
         results = {}

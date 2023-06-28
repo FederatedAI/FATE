@@ -125,7 +125,7 @@ class DefaultRunner(NNRunner):
                  loss_conf: Optional[Dict] = None,
                  data_collator_conf: Optional[Dict] = None,
                  tokenizer_conf: Optional[Dict] = None,
-                 task_type: Literal['classification', 'regression'] = 'classification',
+                 task_type: Literal['binary', 'multi', 'regression'] = 'classification',
                  use_hf_default_behavior: bool = False,
                  local_mode: bool = False
                 ) -> None:

@@ -46,16 +46,16 @@ def get_output_pd_df(pred_table: pd_DataFrame, label: Union[pd_DataFrame, pd.Ser
         if classes is None:
             raise ValueError("classes must be specified positive and negative when task_type is binary, example: [0, 1] as negative, positive")
         class_neg, class_pos = classes[0], classes[1]
-        pred_rs_df[PREDICT_LABEL] = df[PREDICT_SCORE].apply(lambda x: class_pos if x >= threshold else class_neg)
-        pred_rs_df[PREDICT_DETAIL] = df[PREDICT_SCORE].apply(lambda x: predict_detail_dict_to_str({class_pos: x, class_neg: 1 - x}))
-    elif task_type == consts.MULTY:
+        pred_rs_df[PREDICT_LABEL] = df[PREDICT_SCORE].apply(lambda x: class_pos if x[0] >= threshold else class_neg)
+        pred_rs_df[PREDICT_DETAIL] = df[PREDICT_SCORE].apply(lambda x: predict_detail_dict_to_str({class_pos: x[0], class_neg: 1 - x[0]}))
+    elif task_type == consts.MULTI:
         if classes is None:
-            raise ValueError("classes must be specified when task_type is multy")
+            raise ValueError("classes must be specified when task_type is multi")
         pred_rs_df[PREDICT_LABEL] = df[PREDICT_SCORE].apply(lambda x: classes[x.index(max(x))])
         pred_rs_df[PREDICT_DETAIL] = df[PREDICT_SCORE].apply(lambda x: predict_detail_dict_to_str({classes[i]: x[i] for i in range(len(x))}))
     elif task_type == consts.REGRESSION:
         pred_rs_df[PREDICT_LABEL] = df[PREDICT_SCORE]
-        pred_rs_df[PREDICT_DETAIL] = df[PREDICT_SCORE].apply(lambda x: predict_detail_dict_to_str({"label": x}))
+        pred_rs_df[PREDICT_DETAIL] = df[PREDICT_SCORE].apply(lambda x: predict_detail_dict_to_str({"label": x[0]}))
     else:
         raise ValueError(f"task_type {task_type} is not supported")
     

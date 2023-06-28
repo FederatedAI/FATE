@@ -57,26 +57,25 @@ def prepare_runner_class(runner_module, runner_class, runner_conf, source):
 
 
 def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
-    with ctx.sub_ctx(sub_ctx_name) as sub_ctx:
-        # set context
-        runner.set_context(sub_ctx)
-        runner.set_role(role)
-        return sub_ctx
+    sub_ctx = ctx.sub_ctx(sub_ctx_name)
+    runner.set_context(sub_ctx)
+    runner.set_role(role)
+    return sub_ctx
 
 
-def get_input_data(sub_ctx, stage, cpn_input_data, input_type='df'):
+def get_input_data(stage, cpn_input_data, input_type='df'):
     if stage == 'train':
         train_data, validate_data = cpn_input_data
         if input_type == 'df':
-            train_data = sub_ctx.reader(train_data).read_dataframe().data
+            train_data = train_data.read()
             if validate_data is not None:
-                validate_data = sub_ctx.reader(validate_data).read_dataframe().data
+                validate_data = validate_data.read()
 
         return NNInput(train_data=train_data, validate_data=validate_data)
     
     elif stage == 'predict':
         test_data = cpn_input_data
-        test_data = sub_ctx.reader(test_data).read_dataframe().data
+        test_data = test_data.read()
         return NNInput(test_data=test_data)
     else:
         raise ValueError(f'Unknown stage {stage}')
@@ -119,7 +118,8 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
             if nn_output.train_result is None and nn_output.validate_result is None:
                 raise ValueError('train result and validate result are both None in the NNOutput: {}'.format(nn_output))
             
-            df_train, df_val = None, None
+            df_train, df_val = nn_output.train_result, nn_output.validate_result
+
             match_id_name, sample_id_name = nn_output.match_id_name, nn_output.sample_id_name
             if df_train is not None and df_val is not None:
                 df_train_val = pd.concat([df_train, df_val], axis=0)
@@ -129,7 +129,6 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
                 write_output_df(ctx, df_train, output_class, match_id_name, sample_id_name)
             elif df_val is not None:
                 write_output_df(ctx, df_val, output_class, match_id_name, sample_id_name)
-            
         if stage == consts.PREDICT:
             if nn_output.test_result is None:
                 raise ValueError('test result not found in the NNOutput: {}'.format(nn_output))
@@ -147,15 +146,15 @@ def homo_nn(ctx, role):
 def train(
     ctx: Context,
     role: Role,
-    train_data: cpn.dataframe_inputs(roles=[GUEST, HOST]),
-    validate_data: cpn.dataframe_inputs(roles=[GUEST, HOST]),
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
+    validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
     runner_module: cpn.parameter(type=str, default='default_runner', desc="name of your runner script"),
     runner_class: cpn.parameter(type=str, default='DefaultRunner', desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
-    dataframe_output: cpn.dataframe_output(roles=[GUEST, HOST, ARBITER]),
-    json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST, ARBITER]),
-    model_directory_output: cpn.model_directory_output(roles=[GUEST, HOST, ARBITER]),
+    dataframe_output: cpn.dataframe_output(roles=[GUEST, HOST]),
+    json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
+    model_directory_output: cpn.model_directory_output(roles=[GUEST, HOST]),
 ):
    
     runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
@@ -163,9 +162,10 @@ def train(
 
     if role.is_guest or role.is_host:  # is client
 
-        input_data = get_input_data(sub_ctx, consts.TRAIN, [train_data, validate_data])
+        input_data = get_input_data(consts.TRAIN, [train_data, validate_data])
         input_data.fate_save_path = FATE_TEST_PATH
         ret: NNOutput = runner.train(input_data=input_data)
+        logger.info("train result: {}".format(ret))
         handle_nn_output(sub_ctx, ret, dataframe_output, consts.TRAIN)
 
         output_conf = model_output(runner_module,
@@ -173,12 +173,10 @@ def train(
                                    runner_conf,
                                    source,
                                    FATE_TEST_PATH)
-        # import json
-        # path = '/home/cwj/FATE/playground/test_output_model/'
-        # json.dump(output_conf, open(path + str(role.name) + '_conf.json', 'w'), indent=4)
-
-        # with output_model as model_writer:
-        #     model_writer.write_model("homo_nn", {}, metadata={})
+        output_path = model_directory_output.get_directory()
+        logger.info("output_path: {}".format(output_conf))
+        model_directory_output.write_metadata(output_conf)
+        json_metric_output.write({"train":1123})
         
     elif role.is_arbiter:  # is server
         runner.train()
@@ -208,7 +206,7 @@ def train(
 
 #         runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
 #         sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
-#         input_data = get_input_data(sub_ctx, consts.PREDICT, test_data)
+#         input_data = get_input_data(consts.PREDICT, test_data)
 #         pred_rs = runner.predict(input_data)
 #         handle_nn_output(sub_ctx, pred_rs, test_output_data, consts.PREDICT)
 
