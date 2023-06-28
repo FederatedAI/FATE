@@ -90,7 +90,7 @@ public class QueueStreamBuilder {
             public void onNext(AbstractMessage message) {
                 context.setMessageFlag(MessageFlag.SENDMSG.name());
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(), sendTopic,MessageFlag.SENDMSG,sessionId,message.toByteArray());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo);
+                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
                 TransferUtil.checkResponse(outbound);
             }
 
@@ -103,7 +103,7 @@ public class QueueStreamBuilder {
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
                                 sendTopic,MessageFlag.ERROR,sessionId,errorData.getBytes(StandardCharsets.UTF_8))
                         .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo);
+                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
                 TransferUtil.checkResponse(outbound);
                 countDownLatch.countDown();
             }
@@ -114,7 +114,7 @@ public class QueueStreamBuilder {
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
                                 sendTopic,MessageFlag.COMPELETED,sessionId,"completed".getBytes(StandardCharsets.UTF_8))
                         .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo);
+                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
 
                 TransferUtil.checkResponse(outbound);
                 countDownLatch.countDown();

@@ -75,7 +75,7 @@ public class UnaryCallService extends AbstractServiceAdaptor<FateContext,Proxy.P
         RouterInfo routerInfo=context.getRouterInfo();
         if(routerInfo.getProtocol().equals(Protocol.http)){
             Osx.Inbound  inbound = TransferUtil.buildInboundFromPushingPacket(req, MetaInfo.PROPERTY_FATE_TECH_PROVIDER, TargetMethod.UNARY_CALL.name(), SourceMethod.OLDUNARY_CALL.name()).build();
-            Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo);
+            Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo,true);
             if(outbound!=null) {
                 if (outbound.getCode().equals(StatusCode.SUCCESS)) {
                     try {

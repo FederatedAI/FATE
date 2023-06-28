@@ -85,7 +85,7 @@ public class MetaInfo {
     @Config(confKey = "grpc.client.max.connection.idle", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_GRPC_CLIENT_MAX_CONNECTION_IDLE_SEC = 86400;
     @Config(confKey = "grpc.client.per.rpc.buffer.limit", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT = 86400;
+    public static int PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT =  (2 << 30) - 1;
     @Config(confKey = "grpc.client.retry.buffer.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
     @Config(confKey = "transfer.cached.msgid.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -306,6 +306,11 @@ public class MetaInfo {
             }
         }
         return result;
+    }
+
+    public  static void main(String args){
+
+       System.err.println( (2 << 30) - 1);
     }
 
 }

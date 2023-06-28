@@ -46,7 +46,7 @@ public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
         if(transferStatus==TransferStatus.TRANSFERING) {
             Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId,
                     TargetMethod.PRODUCE_MSG.name(), backTopic, MessageFlag.COMPELETED, sessionId,e.toString().getBytes(StandardCharsets.UTF_8) );
-            TransferUtil.redirect(context,inboundBuilder.build(),backRouterInfo);
+            TransferUtil.redirect(context,inboundBuilder.build(),backRouterInfo,true);
 
         }else{
             logger.error("!!!!!!!!!transferStatus is {}",transferStatus);
@@ -57,7 +57,7 @@ public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
         if(transferStatus== TransferStatus.TRANSFERING) {
             Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId,
                     TargetMethod.PRODUCE_MSG.name(), backTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8));
-            TransferUtil.redirect(context,inboundBuilder.build(),backRouterInfo);
+            TransferUtil.redirect(context,inboundBuilder.build(),backRouterInfo,true);
         }else{
             logger.error("!!!!!!!!!transferStatus is {}",transferStatus);
         }
@@ -67,7 +67,7 @@ public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
         if(transferStatus== TransferStatus.TRANSFERING) {
             Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId,
                     TargetMethod.PRODUCE_MSG.name(), backTopic, MessageFlag.SENDMSG, sessionId, data);
-            TransferUtil.redirect(context,inboundBuilder.build(),backRouterInfo);
+            TransferUtil.redirect(context,inboundBuilder.build(),backRouterInfo,true);
         }else{
             logger.error("!!!!!!!!!transferStatus is {}",transferStatus);
         }

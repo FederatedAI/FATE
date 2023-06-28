@@ -34,7 +34,7 @@ public class PtpUnaryCallService extends AbstractPtpServiceAdaptor {
         RouterInfo routerInfo = context.getRouterInfo();
         Osx.Inbound inbound = data.getBody();
        // logger.info("PtpUnaryCallService receive : {}",inbound);
-        Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo);
+        Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo,true);
         return outbound;
     }
 

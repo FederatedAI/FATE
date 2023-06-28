@@ -71,7 +71,7 @@ public class PtpAckService extends AbstractPtpServiceAdaptor {
                     redirectRouterInfo.setHost(redirectIp);
                     redirectRouterInfo.setPort(redirectPort);
                     //context.setRouterInfo(redirectRouterInfo);
-                    return redirect(context, inbound, redirectRouterInfo);
+                    return redirect(context, inbound, redirectRouterInfo,true);
                 }
             } else {
                 throw new TransferQueueNotExistException();

@@ -41,6 +41,16 @@ public class FateContext implements Context{
     protected boolean needPrintFlowLog = true;
     protected boolean needCheckRouterInfo = true;
     protected Long dataSize;
+
+    public Integer getRetryTime() {
+        return retryTime;
+    }
+
+    public void setRetryTime(Integer retryTime) {
+        this.retryTime = retryTime;
+    }
+
+    protected Integer retryTime =1;
     protected Map dataMap = Maps.newHashMap();
     long costTime;
     String resourceName;
@@ -358,9 +368,14 @@ public class FateContext implements Context{
         if (this.getDataSize() != null) {
             stringBuffer.append("size:").append(this.getDataSize()).append(SPLIT);
         }
+        if(this.retryTime>1){
+            stringBuffer.append("retry:").append(this.retryTime).append(SPLIT);
+        }
         if (this.getReturnMsg() != null) {
             stringBuffer.append("msg:").append(this.getReturnMsg());
         }
+
+
         return  stringBuffer.toString();
     }
     static final String SPLIT= "|";

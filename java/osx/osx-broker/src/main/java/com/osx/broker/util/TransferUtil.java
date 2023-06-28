@@ -398,20 +398,18 @@ public class TransferUtil {
     }
 
     static public Osx.Outbound redirect(FateContext context, Osx.Inbound
-            produceRequest, RouterInfo routerInfo) {
+            produceRequest, RouterInfo routerInfo,boolean usePooled) {
         AssertUtil.notNull(routerInfo, context.getDesPartyId()!=null?"des partyId "+context.getDesPartyId()+" router info is null":" error router info");
         Osx.Outbound result = null;
-        // 目的端协议为grpc
+        context.setDataSize(produceRequest.getSerializedSize());
         if (routerInfo.isCycle()) {
             throw new CycleRouteInfoException("cycle router info");
         }
-
-
         if (routerInfo.getProtocol() == null || routerInfo.getProtocol().equals(Protocol.grpc)) {
             //来自旧版fateflow的请求，需要用旧版的stub
             if (context.isDestination() && Role.fateflow.name().equals(routerInfo.getDesRole())
                     && SourceMethod.OLDUNARY_CALL.name().equals(produceRequest.getMetadataMap().get(Osx.Metadata.SourceMethod.name()))) {
-                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
                 DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
                 Proxy.Packet request;
                 try {
@@ -425,7 +423,7 @@ public class TransferUtil {
 
                 PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
                 if (context.getData(Dict.BLOCKING_STUB) == null) {
-                    ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+                    ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
                     stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
                 } else {
                     stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
@@ -452,6 +450,7 @@ public class TransferUtil {
                     }
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 logger.error("sendPtpPost failed : ", e);
                 ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
                 result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();

@@ -51,6 +51,8 @@ public class GrpcConnectionFactory {
         }
         if(usePooled) {
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
+                ManagedChannel targetChannel = managedChannelPool.get(routerInfo.toKey());
+                logger.info("channel  is shutdown : {} isTerminated {}",targetChannel.isShutdown() ,targetChannel.isTerminated() ,targetChannel.getState(true));
                 return managedChannelPool.get(routerInfo.toKey());
             } else {
                 ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
@@ -102,6 +104,7 @@ public class GrpcConnectionFactory {
                         .trustManager(new File(routerInfo.getCaFile()))
                         .sessionTimeout(3600 << 4)
                         .sessionCacheSize(65536);
+
                 channelBuilder.sslContext(sslContextBuilder.build()).useTransportSecurity().overrideAuthority(routerInfo.getHost());
             } else {
                 channelBuilder.usePlaintext();

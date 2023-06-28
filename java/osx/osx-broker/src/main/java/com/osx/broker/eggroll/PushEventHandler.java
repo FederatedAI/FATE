@@ -252,7 +252,7 @@ public class PushEventHandler extends GrpcEventHandler {
                     //将其对调后再查路由
                     Osx.Inbound.Builder  inboundBuilder = TransferUtil.buildInbound(provider,desPartyId,srcPartyId,TargetMethod.PRODUCE_MSG.name(),
                             backTopic,MessageFlag.SENDMSG,sessionId, metadata.toByteString().toByteArray());
-                    TransferUtil.redirect(context,inboundBuilder.build(),revertRouterInfo);
+                    TransferUtil.redirect(context,inboundBuilder.build(),revertRouterInfo,true);
             }
 
             @Override
@@ -262,7 +262,7 @@ public class PushEventHandler extends GrpcEventHandler {
                     String message = throwable.getMessage();
                     Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
                             backTopic, MessageFlag.SENDMSG, sessionId, exceptionInfo.toString().getBytes(StandardCharsets.UTF_8));
-                    TransferUtil.redirect(context,inboundBuilder.build(),revertRouterInfo);
+                    TransferUtil.redirect(context,inboundBuilder.build(),revertRouterInfo,true);
 
             }
 
@@ -274,7 +274,7 @@ public class PushEventHandler extends GrpcEventHandler {
                 try {
                         Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
                                 backTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8));
-                        Osx.Outbound result =TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo);
+                        Osx.Outbound result =TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
                 }catch (Exception e){
                     logger.error("receive completed error",e);
                 }
