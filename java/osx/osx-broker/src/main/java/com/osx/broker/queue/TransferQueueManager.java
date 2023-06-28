@@ -444,7 +444,7 @@ public class TransferQueueManager {
                  * 单机版部署，直接本地建Q
                  */
                 createQueueResult.setTransferQueue(localCreate(transferId, sessionId));
-                String[] args = MetaInfo.INSTANCE_ID.split("_");
+                String[] args = MetaInfo.INSTANCE_ID.split(":");
                 String ip = args[0];
                 String portString = args[1];
                 createQueueResult.setPort(Integer.parseInt(portString));

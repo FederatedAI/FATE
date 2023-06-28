@@ -193,7 +193,7 @@ public class MetaInfo {
     public static Integer PROPERTY_QUEUE_MAX_FREE_TIME = 60000000;
     @Config(confKey = "queue.check.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 60 * 1000 * 10;
-    public static String INSTANCE_ID = NetUtils.getLocalHost() + "_" + MetaInfo.PROPERTY_GRPC_PORT;
+    public static String INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_GRPC_PORT;
 
 
 
