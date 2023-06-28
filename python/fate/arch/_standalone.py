@@ -59,7 +59,6 @@ else:
     )
     LOGGER.debug(f"env STANDALONE_DATA_PATH is not set, using {_data_dir} as data dir")
 
-LOGGER.error(f"DATA_PATH: {_data_dir}")
 
 # noinspection PyPep8Naming
 class Table(object):
