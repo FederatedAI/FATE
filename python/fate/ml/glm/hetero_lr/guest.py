@@ -19,8 +19,7 @@ import logging
 
 import torch
 
-from fate.arch import dataframe
-from fate.interface import Context
+from fate.arch import dataframe, Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
 from fate.ml.utils._optimizer import Optimizer, LRScheduler

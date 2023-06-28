@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,19 +12,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import (
-    ARBITER,
-    GUEST,
-    HOST,
-    DatasetArtifact,
-    Input,
-    LossMetrics,
-    ModelArtifact,
-    Output,
-    Role,
-    cpn,
-    params,
-)
+
+from fate.arch import Context
+from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
@@ -33,48 +23,34 @@ def hetero_linr(ctx, role):
 
 
 @hetero_linr.train()
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST], desc="training data")
-@cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST], desc="validation data")
-@cpn.parameter("max_iter", type=params.conint(gt=0), default=20, desc="max iteration num")
-@cpn.parameter("early_stop", type=params.string_choice(["weight_diff", "diff", "abs"]), default="diff",
-               desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}")
-@cpn.parameter("tol", type=params.confloat(ge=0), default=1e-4)
-@cpn.parameter(
-    "batch_size", type=params.conint(), default=-1, desc="batch size, value less or equals to 0 means full batch"
-)
-@cpn.parameter(
-    "optimizer", type=params.optimizer_param(),
-    default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
-                                  optimizer_params={"lr": 1e-2, "weight_decay": 0}),
-    desc="optimizer, select method from {'sgd', 'nesterov_momentum_sgd', 'adam', 'rmsprop', 'adagrad', 'sqn'} "
-         "for list of configurable arguments, refer to torch.optim"
-)
-@cpn.parameter(
-    "learning_rate_scheduler", type=params.lr_scheduler_param(),
-    default=params.LRSchedulerParam(method="constant"),
-    desc="learning rate scheduler, select method from {'step', 'linear', 'constant'}"
-         "for list of configurable arguments, refer to torch.optim.lr_scheduler"
-)
-@cpn.parameter("init_param", type=params.init_param(), default=params.InitParam(method='zeros', fit_intercept=True),
-               desc="Model param init setting.")
-@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
 def train(
-        ctx,
+        ctx: Context,
         role: Role,
-        train_data,
-        validate_data,
-        max_iter,
-        early_stop,
-        tol,
-        batch_size,
-        optimizer,
-        learning_rate_scheduler,
-        init_param,
-        train_output_data,
-        train_output_metric,
-        output_model,
+        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        validate_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
+                                               default=params.LRSchedulerParam(method="constant"),
+                                               desc="learning rate scheduler, "
+                                                    "select method from {'step', 'linear', 'constant'}"
+                                                    "for list of configurable arguments, "
+                                                    "refer to torch.optim.lr_scheduler"),
+        max_iter: cpn.parameter(type=params.conint(gt=0), default=20,
+                                desc="max iteration num"),
+        batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
+                                  desc="batch size, "
+                                       "value less or equals to 0 means full batch"),
+        optimizer: cpn.parameter(type=params.optimizer_param(),
+                                 default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
+                                                               optimizer_params={"lr": 1e-2, "weight_decay": 0})),
+        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+        early_stop: cpn.parameter(type=params.string_choice(["weight_diff", "diff", "abs"]), default="diff",
+                                  desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}"),
+        init_param: cpn.parameter(type=params.init_param(),
+                                  default=params.InitParam(method='zeros', fit_intercept=True),
+                                  desc="Model param init setting."),
+        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+        train_output_metric: cpn.json_metric_output(roles=[ARBITER]),
+        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
         train_guest(
@@ -92,15 +68,12 @@ def train(
 
 
 @hetero_linr.predict()
-@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
-@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def predict(
         ctx,
         role: Role,
-        test_data,
-        input_model,
-        test_output_data,
+        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     if role.is_guest:
         predict_guest(ctx, input_model, test_data, test_output_data)
@@ -111,7 +84,7 @@ def predict(
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,
                 batch_size, optimizer_param, learning_rate_param, init_param):
     from fate.ml.glm.hetero_linr import HeteroLinRModuleGuest
-    # ptimizer = optimizer_factory(optimizer_param)
+    # optimizer = optimizer_factory(optimizer_param)
 
     with ctx.sub_ctx("train") as sub_ctx:
         module = HeteroLinRModuleGuest(max_iter=max_iter, batch_size=batch_size,

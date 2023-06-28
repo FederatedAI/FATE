@@ -16,8 +16,8 @@ import logging
 
 import torch
 
+from fate.arch import Context
 from fate.arch.dataframe import DataLoader
-from fate.interface import Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._convergence import converge_func_factory
 from fate.ml.utils._optimizer import separate, Optimizer, LRScheduler

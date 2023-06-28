@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -24,33 +24,36 @@ def hetero_lr(ctx, role):
 
 @hetero_lr.train()
 def train(
-    ctx,
-    role: Role,
-    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-    validate_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-    learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
-    default=params.LRSchedulerParam(method="constant", scheduler_params={"gamma": 0.1}),
-    desc="learning rate scheduler, select method from {'step', 'linear', 'constant'}"
-         "for list of configurable arguments, refer to torch.optim.lr_scheduler"),
-    max_iter: cpn.parameter(type=params.conint(gt=0), default=20,
-                            desc="max iteration num"),
-    batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
-                              desc="batch size, "
-                                   "value less or equals to 0 means full batch"),
-    optimizer: cpn.parameter(type=params.optimizer_param(),
-                             default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
-                                  optimizer_params={"lr": 1e-2, "weight_decay": 0})),
-    tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
-    early_stop: cpn.parameter(type=params.string_choice(["weight_diff", "diff", "abs"]), default="diff",
-               desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}"),
-    init_param: cpn.parameter(type=params.init_param(),
-               default=params.InitParam(method='zeros', fit_intercept=True),
-               desc="Model param init setting."),
-    threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5,
-               desc="predict threshold for binary data"),
-    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-    train_output_metric: cpn.json_metric_output(roles=[ARBITER]),
-    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+        ctx: Context,
+        role: Role,
+        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        validate_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
+                                               default=params.LRSchedulerParam(method="constant",
+                                                                               scheduler_params={"gamma": 0.1}),
+                                               desc="learning rate scheduler, "
+                                                    "select method from {'step', 'linear', 'constant'}"
+                                                    "for list of configurable arguments, "
+                                                    "refer to torch.optim.lr_scheduler"),
+        max_iter: cpn.parameter(type=params.conint(gt=0), default=20,
+                                desc="max iteration num"),
+        batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
+                                  desc="batch size, "
+                                       "value less or equals to 0 means full batch"),
+        optimizer: cpn.parameter(type=params.optimizer_param(),
+                                 default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
+                                                               optimizer_params={"lr": 1e-2, "weight_decay": 0})),
+        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+        early_stop: cpn.parameter(type=params.string_choice(["weight_diff", "diff", "abs"]), default="diff",
+                                  desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}"),
+        init_param: cpn.parameter(type=params.init_param(),
+                                  default=params.InitParam(method='zeros', fit_intercept=True),
+                                  desc="Model param init setting."),
+        threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5,
+                                 desc="predict threshold for binary data"),
+        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+        train_output_metric: cpn.json_metric_output(roles=[ARBITER]),
+        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
         train_guest(
@@ -69,11 +72,12 @@ def train(
 
 @hetero_lr.predict()
 def predict(
-    ctx,
-    role: Role,
-    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+        ctx,
+        role: Role,
+        threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5),
+        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     if role.is_guest:
         predict_guest(ctx, input_model, test_data, test_output_data, threshold)
@@ -81,7 +85,7 @@ def predict(
         predict_host(ctx, input_model, test_data, test_output_data)
 
 
-@hetero_lr.cross_validation()
+"""@hetero_lr.cross_validation()
 def cross_validation(
     ctx: Context,
     role: Role,
@@ -98,9 +102,9 @@ def cross_validation(
     # TODO: split data
     for i, fold_ctx in cv_ctx.ctxs_range(num_fold):
         if role.is_guest:
-            from fate.ml.lr.guest import LrModuleGuest
+            from fate.ml.glm.hetero_lr import HeteroLrModuleGuest
 
-            module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate, batch_size=batch_size)
+            module = HeteroLrModuleGuest(max_iter=max_iter, learning_rate=learning_rate, batch_size=batch_size)
             train_data, validate_data = split_dataframe(data, num_fold, i)
             module.fit(fold_ctx, train_data)
             predicted = module.predict(fold_ctx, validate_data)
@@ -109,6 +113,7 @@ def cross_validation(
             ...
         elif role.is_arbiter:
             ...
+"""
 
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,

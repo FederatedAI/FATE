@@ -18,8 +18,7 @@ import logging
 
 import torch
 
-from fate.arch import dataframe
-from fate.interface import Context
+from fate.arch import dataframe, Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
 from fate.ml.utils._optimizer import Optimizer, LRScheduler
@@ -46,7 +45,6 @@ class HeteroLinRModuleGuest(HeteroModule):
                                         learning_rate_param["scheduler_params"])
 
         self.init_param = init_param
-        self.threshold = threshold
 
         self.estimator = None
 
@@ -119,7 +117,7 @@ class HeteroLinrEstimatorGuest(HeteroModule):
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
-            return_weight=True
+            # with_weight=True
         )  # @todo: include batch weight
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
@@ -127,7 +125,8 @@ class HeteroLinrEstimatorGuest(HeteroModule):
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
-            for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
+            # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
+            for batch_ctx, X, Y in iter_ctx.iter(batch_loader):
                 h = X.shape[0]
                 Xw = torch.matmul(X, w)
                 d = Xw - Y
@@ -138,8 +137,8 @@ class HeteroLinrEstimatorGuest(HeteroModule):
                 for Xw_h in batch_ctx.hosts.get("Xw_h"):
                     d += Xw_h
                     loss += 1 / h * torch.matmul(Xw.T, Xw_h)
-                if with_weight:
-                    d = d * weight
+                # if with_weight:
+                #    d = d * weight
                 for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
                     loss += 1 / 2 / h * Xw2_h
 
