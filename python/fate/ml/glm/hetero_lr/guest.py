@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 import copy
-import json
 import logging
 
 import torch
@@ -102,31 +101,35 @@ class HeteroLrModuleGuest(HeteroModule):
 
     def predict(self, ctx, test_data):
         if self.ovr:
-            pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
+            predict_score = test_data.create_dataframe(with_label=False, with_weight=False)
             for i, class_ctx in ctx.range(len(self.labels)):
                 estimator = self.estimator[i]
                 pred = estimator.predict(test_data)
-                pred_res[self.labels[i]] = pred
+                predict_score[self.labels[i]] = pred
 
-            df = test_data.create_dataframe(with_label=True, with_weight=False)
+            """df = test_data.create_dataframe(with_label=True, with_weight=False)
             df[["predict_result", "predict_score", "predict_detail"]] = pred_res.apply_row(
                 lambda v: [v.argmax(),
                            v[v.argmax()],
-                           json.dumps({label: v[label] for label in self.labels})],
-                enable_type_align_checking=False)
+                           json.dumps({label: v[label] for label in self.labels}),
+                           data_type],
+                enable_type_align_checking=False)"""
         else:
-            df = test_data.create_dataframe(with_label=True, with_weight=False)
+            predict_score = self.estimator.predict(test_data)
+            """df = test_data.create_dataframe(with_label=True, with_weight=False)
             prob = self.estimator.predict(test_data)
             pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
             pred_res["predict_result"] = prob
             df[["predict_result",
                 "predict_score",
-                "predict_detail"]] = pred_res.apply_row(lambda v: [int(v[0] > self.threshold),
+                "predict_detail",
+                "type"]] = pred_res.apply_row(lambda v: [int(v[0] > self.threshold),
                                                                    v[0],
                                                                    json.dumps({1: v[0],
-                                                                               0: 1 - v[0]})],
-                                                        enable_type_align_checking=False)
-        return df
+                                                                               0: 1 - v[0]}),
+                                                        data_type],
+                                                        enable_type_align_checking=False)"""
+        return predict_score
 
     def get_model(self):
         all_estimator = {}

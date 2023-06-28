@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import json
+
 from fate.arch import Context
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 
@@ -137,7 +139,9 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 
     with ctx.sub_ctx("predict") as sub_ctx:
         predict_score = module.predict(sub_ctx, validate_data)
-        predict_result = validate_data.data.transform_to_predict_result(predict_score)
+        predict_result = transform_to_predict_result(validate_data, predict_score, module.labels,
+                                                     threshold=module.threshold, is_ovr=module.ovr,
+                                                     data_type="test")
         sub_ctx.writer(train_output_data).write_dataframe(predict_result)
 
 
@@ -186,7 +190,9 @@ def predict_guest(ctx, input_model, test_data, test_output_data, threshold):
             module.threshold = threshold
         test_data = sub_ctx.reader(test_data).read_dataframe()
         predict_score = module.predict(sub_ctx, test_data)
-        predict_result = test_data.data.transform_to_predict_result(predict_score, data_type="predict")
+        predict_result = transform_to_predict_result(test_data, predict_score, module.labels,
+                                                     threshold=module.threshold, is_ovr=module.ovr,
+                                                     data_type="test")
         sub_ctx.writer(test_output_data).write_dataframe(predict_result)
 
 
@@ -199,3 +205,28 @@ def predict_host(ctx, input_model, test_data, test_output_data):
         module = HeteroLrModuleHost.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe()
         module.predict(sub_ctx, test_data)
+
+
+def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):
+    if is_ovr:
+        df = test_data.create_dataframe(with_label=True, with_weight=False)
+        df[["predict_result", "predict_score", "predict_detail"]] = predict_score.apply_row(
+            lambda v: [v.argmax(),
+                       v[v.argmax()],
+                       json.dumps({label: v[label] for label in labels}),
+                       data_type],
+            enable_type_align_checking=False)
+    else:
+        df = test_data.create_dataframe(with_label=True, with_weight=False)
+        pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
+        pred_res["predict_result"] = predict_score
+        df[["predict_result",
+            "predict_score",
+            "predict_detail",
+            "type"]] = pred_res.apply_row(lambda v: [int(v[0] > threshold),
+                                                     v[0],
+                                                     json.dumps({1: v[0],
+                                                                 0: 1 - v[0]}),
+                                                     data_type],
+                                          enable_type_align_checking=False)
+    return df

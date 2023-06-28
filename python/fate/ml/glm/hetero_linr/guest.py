@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import json
 import logging
 
 import torch
@@ -60,8 +59,9 @@ class HeteroLinRModuleGuest(HeteroModule):
         self.estimator = estimator
 
     def predict(self, ctx, test_data):
-        df = test_data.create_dataframe(with_label=True, with_weight=False)
         prob = self.estimator.predict(test_data)
+        """
+        df = test_data.create_dataframe(with_label=True, with_weight=False)
         pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
         pred_res["predict_result"] = prob
         df[["predict_result", "predict_score", "predict_detail"]] = pred_res.apply_row(lambda v: [
@@ -69,7 +69,8 @@ class HeteroLinRModuleGuest(HeteroModule):
             v[0],
             json.dumps({v[0]})],
                                                                                        enable_type_align_checking=False)
-        return df
+        return df"""
+        return prob
 
     def get_model(self):
         return {
