@@ -31,7 +31,6 @@ def dataframe_io_test(
 ):
     df = dataframe_input.read()
     df = df + 1
-
     df_list = [_input.read() for _input in dataframe_inputs]
     dataframe_output.write(df)
 

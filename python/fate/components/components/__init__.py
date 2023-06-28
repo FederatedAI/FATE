@@ -12,7 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 from .dataframe_io_test import dataframe_io_test
 from .dataframe_transformer import dataframe_transformer
 from .demo import run
@@ -23,6 +22,7 @@ from .intersection import intersection
 from .multi_model_test import multi_model_test
 from .reader import reader
 from .statistics import statistics
+from .homo_nn import homo_nn
 
 BUILDIN_COMPONENTS = [
     hetero_lr,
@@ -35,4 +35,5 @@ BUILDIN_COMPONENTS = [
     statistics,
     dataframe_io_test,
     multi_model_test,
+    homo_nn
 ]
