@@ -783,9 +783,10 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
         if self._use_hf_default_behavior:
             return super().compute_loss(model, inputs, **kwargs)
         else:
+            
             feats, labels = inputs
             logits = model(feats)
-            loss = self.loss_func(logits.flatten(), labels.flatten())
+            loss = self.loss_func(logits, labels)
             return loss
 
     def prediction_step(self,

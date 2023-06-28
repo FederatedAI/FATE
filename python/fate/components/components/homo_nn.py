@@ -75,7 +75,7 @@ def get_input_data(stage, cpn_input_data, fate_save_path='./', saved_model_path=
     elif stage == 'predict':
         test_data = cpn_input_data
         test_data = test_data.read()
-        return NNInput(test_data=test_data, save_path=fate_save_path, 
+        return NNInput(test_data=test_data,  
                        fate_save_path=fate_save_path, saved_model_path=saved_model_path)
     else:
         raise ValueError(f'Unknown stage {stage}')

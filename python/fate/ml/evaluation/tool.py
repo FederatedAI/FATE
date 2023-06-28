@@ -39,7 +39,7 @@ def get_binary_metrics():
 def get_multi_metrics():
     
     multi_ensembles = MetricEnsemble()
-    multi_ensembles.add_metric(classi.MultiAccuracy()).add_metric(classi.MultiPrecision).add_metric(classi.MultiRecall())
+    multi_ensembles.add_metric(classi.MultiAccuracy()).add_metric(classi.MultiPrecision()).add_metric(classi.MultiRecall())
     
     return multi_ensembles
 
