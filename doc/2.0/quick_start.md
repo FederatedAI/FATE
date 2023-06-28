@@ -34,7 +34,7 @@ host_data_path = os.path.join(base_path, "breast_hetero_host.csv")
 # create pipeline
 pipeline = StandalonePipeline().set_roles(guest="9999", host="10000", arbiter="10001")
 
-# create reader component
+# create reader component_desc
 reader_0 = Reader(name="reader_0")
 reader_0.guest.component_param(
     path=f"file://${guest_data_path}",
@@ -54,11 +54,11 @@ reader_0.hosts[0].component_param(
     dtype="float32",
 )
 
-# create intersection component
+# create intersection component_desc
 intersection_0 = Intersection(name="intersection_0", method="raw", input_data=reader_0.outputs["output_data"])
 intersection_1 = Intersection(name="intersection_1", method="raw", input_data=reader_0.outputs["output_data"])
 
-# create feature scale component
+# create feature scale component_desc
 feature_scale_0 = FeatureScale(
     name="feature_scale_0", method="standard", train_data=intersection_0.outputs["output_data"]
 )
@@ -68,7 +68,7 @@ feature_scale_1 = FeatureScale(
     input_model=feature_scale_0.outputs["output_model"],
 )
 
-# create lr component
+# create lr component_desc
 lr_0 = HeteroLR(
     name="lr_0",
     train_data=feature_scale_0.outputs["train_output_data"],
@@ -78,7 +78,7 @@ lr_0 = HeteroLR(
     batch_size=-1,
 )
 
-# create evaluation component
+# create evaluation component_desc
 evaluation_0 = Evaluation(name="evaluation_0", runtime_roles="guest", input_data=lr_0.outputs["train_output_data"])
 
 # add components

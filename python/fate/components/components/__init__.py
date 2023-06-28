@@ -12,12 +12,29 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from .dataframe_io_test import dataframe_io_test
+from .dataframe_transformer import dataframe_transformer
+from .demo import run
 from .evaluation import evaluation
 from .feature_scale import feature_scale
 from .hetero_linr import hetero_linr
 from .hetero_lr import hetero_lr
 from .intersection import intersection
+from .multi_model_test import multi_model_test
 from .reader import reader
 from .statistics import statistics
 
-BUILDIN_COMPONENTS = [hetero_lr, hetero_linr, reader, feature_scale, intersection, evaluation, statistics]
+BUILDIN_COMPONENTS = [
+    hetero_lr,
+    hetero_linr,
+    reader,
+    feature_scale,
+    intersection,
+    evaluation,
+    run,
+    dataframe_transformer,
+    statistics,
+    dataframe_io_test,
+    multi_model_test,
+]

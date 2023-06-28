@@ -12,11 +12,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from ._dataframe import DataFrame
 from ._frame_reader import (
     CSVReader,
     ImageReader,
     PandasReader,
-    RawTableReader,
+    TableReader,
     TorchDataSetReader,
 )
 from .io import build_schema, deserialize, parse_schema, serialize
@@ -25,11 +26,12 @@ from .utils import DataLoader
 __all__ = [
     "PandasReader",
     "CSVReader",
-    "RawTableReader",
+    "TableReader",
     "ImageReader",
     "TorchDataSetReader",
     "parse_schema",
     "build_schema",
     "serialize",
     "deserialize",
+    "DataFrame",
 ]

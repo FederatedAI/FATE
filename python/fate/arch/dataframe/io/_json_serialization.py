@@ -12,11 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.arch.context.io.data import df
 
 from .._dataframe import DataFrame
-from ._json_schema import build_schema, parse_schema
 from ..manager import DataManager
+from ._json_schema import build_schema, parse_schema
 
 
 def _serialize(ctx, data):
@@ -66,16 +65,14 @@ def _serialize(ctx, data):
     # TODO: tensor does not provide method to get raw values directly, so we use .storages.blocks first
     schema = build_schema(data)
 
-    from ..ops._transformer import transform_block_to_list
-    serialize_data = transform_block_to_list(data.block_table, data.data_manager)
+    from ..ops._transformer import transform_block_table_to_list
+
+    serialize_data = transform_block_table_to_list(data.block_table, data.data_manager)
     serialize_data.schema = schema
     return serialize_data
 
 
 def serialize(ctx, data):
-    if isinstance(data, df.Dataframe):
-        data = data.data
-
     return _serialize(ctx, data)
 
 
@@ -83,8 +80,8 @@ def deserialize(ctx, data):
     fields, partition_order_mappings = parse_schema(data.schema)
 
     data_manager = DataManager.deserialize(fields)
-    from ..ops._transformer import transform_list_to_block
+    from ..ops._transformer import transform_list_to_block_table
 
-    block_table = transform_list_to_block(data, data_manager)
+    block_table = transform_list_to_block_table(data, data_manager)
 
     return DataFrame(ctx, block_table, partition_order_mappings, data_manager)
