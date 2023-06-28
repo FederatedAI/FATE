@@ -7,7 +7,7 @@ if typing.TYPE_CHECKING:
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-def run(
+def artifact_test(
     ctx: "Context",
     role: Role,
     parameter: cpn.parameter(type=params.string_choice(["a", "b"]), desc="parameter", optional=False),
