@@ -17,6 +17,7 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+from fate.arch import Context
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 from fate.components.core.params import string_choice
 from fate.ml.evaluation.tool import (
@@ -39,14 +40,13 @@ def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
 def evaluation(
-    ctx,
+    ctx: Context,
     role: Role,
     input_data: cpn.dataframe_inputs(roles=[GUEST, HOST, ARBITER]),
     default_eval_metrics: cpn.parameter(
         type=string_choice(choice=["binary", "multi", "regression"]), default="binary", optional=True
     ),
     metrics: cpn.parameter(type=list, default=None, optional=True),
-    json_metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
 ):
 
     if role.is_arbiter:
@@ -69,7 +69,6 @@ def evaluation(
             rs_dict = evaluate(df, metrics_ensemble)
             component_rs[name] = rs_dict
 
-    json_metric_output.write(rs_dict)
     logger.info("eval result: {}".format(rs_dict))
 
 

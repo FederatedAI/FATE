@@ -1,29 +1,41 @@
 import logging
 import typing
-from typing import List, Union
+from typing import Dict, List, Union
 
 from fate.components.core.essential import Role, Stage
 
 from ._component import Component
+from .artifacts._base_type import AT, ArtifactDescribe, M, _ArtifactsType
 
 if typing.TYPE_CHECKING:
     from fate.arch import Context
 
     from ..spec.artifact import ArtifactInputApplySpec, ArtifactOutputApplySpec
     from ..spec.task import TaskConfigSpec
-    from .artifacts._base_type import AT, ArtifactDescribe, M
 
 logger = logging.getLogger(__name__)
 
 
 class ComponentExecutionIO:
+    class InputPair:
+        def __init__(self, artifact, reader):
+            self.artifact = artifact
+            self.reader = reader
+
+    class OutputPair:
+        def __init__(self, artifact, writer):
+            self.artifact = artifact
+            self.writer = writer
+
     def __init__(self, ctx: "Context", component: Component, role: Role, stage: Stage, config):
         self.parameter_artifacts_desc = {}
         self.parameter_artifacts_apply = {}
-        self.input_artifacts = dict(data={}, model={})
-        self.input_artifacts_reader = dict(data={}, model={})
-        self.output_artifacts = dict(data={}, model={}, metric={})
-        self.output_artifacts_writer = dict(data={}, model={}, metric={})
+        self.input_data: Dict[str, ComponentExecutionIO.InputPair] = {}
+        self.input_model: Dict[str, ComponentExecutionIO.InputPair] = {}
+        self.output_data: Dict[str, ComponentExecutionIO.OutputPair] = {}
+        self.output_model: Dict[str, ComponentExecutionIO.OutputPair] = {}
+        self.output_metric: Dict[str, ComponentExecutionIO.OutputPair] = {}
+
         logging.debug(f"parse and apply component artifacts")
 
         for arg in component.func_args[2:]:
@@ -48,12 +60,10 @@ class ComponentExecutionIO:
     def _handle_input(self, ctx, component, arg, stage, role, config):
         from fate.arch import URI
 
-        from .artifacts._base_type import _ArtifactsType
-
-        for input_type, artifacts in dict(
-            data=component.artifacts.data_inputs,
-            model=component.artifacts.model_inputs,
-        ).items():
+        for input_pair_dict, artifacts in [
+            (self.input_data, component.artifacts.data_inputs),
+            (self.input_model, component.artifacts.model_inputs),
+        ]:
             if allow_artifacts := artifacts.get(arg):
                 if allow_artifacts.is_active_for(stage, role):
                     apply_spec: Union[
@@ -71,46 +81,45 @@ class ComponentExecutionIO:
                                     uri = URI.from_string(c.uri)
                                     arti = allow_artifacts.get_correct_arti(c)
                                     readers.append(arti.get_reader(ctx, uri, c.metadata, arti.get_type().type_name))
-                                self.input_artifacts[input_type][arg] = _ArtifactsType([r.artifact for r in readers])
-                                self.input_artifacts_reader[input_type][arg] = readers
+                                input_pair_dict[arg] = ComponentExecutionIO.InputPair(
+                                    artifact=_ArtifactsType([r.artifact for r in readers]), reader=readers
+                                )
                             else:
                                 uri = URI.from_string(apply_spec.uri)
                                 arti = allow_artifacts.get_correct_arti(apply_spec)
                                 reader = arti.get_reader(ctx, uri, apply_spec.metadata, arti.get_type().type_name)
-                                self.input_artifacts[input_type][arg] = reader.artifact
-                                self.input_artifacts_reader[input_type][arg] = reader
+                                input_pair_dict[arg] = ComponentExecutionIO.InputPair(
+                                    artifact=reader.artifact, reader=reader
+                                )
                         except Exception as e:
                             raise ComponentArtifactApplyError(
                                 f"load as input artifact({allow_artifacts}) error: {e}"
                             ) from e
                     elif allow_artifacts.optional:
-                        self.input_artifacts_reader[input_type][arg] = None
-                        self.input_artifacts[input_type][arg] = None
+                        input_pair_dict[arg] = ComponentExecutionIO.InputPair(artifact=None, reader=None)
                     else:
                         raise ComponentArtifactApplyError(
                             f"load as input artifact({allow_artifacts}) error: `{arg}` is not optional but None got"
                         )
                     logger.debug(
-                        f"apply {input_type} artifact `{allow_artifacts.name}`: {apply_spec} -> {self.input_artifacts_reader[input_type][arg]}"
+                        f"apply artifact `{allow_artifacts.name}`: {apply_spec} -> {input_pair_dict[arg].reader}"
                     )
                     return True
                 else:
-                    logger.debug(
-                        f"skip {input_type} artifact `{allow_artifacts.name}` for stage `{stage}` and role `{role}`"
-                    )
-                    self.input_artifacts[input_type][arg] = None
-                    self.input_artifacts_reader[input_type][arg] = None
+                    logger.debug(f"skip artifact `{allow_artifacts.name}` for stage `{stage}` and role `{role}`")
+                    input_pair_dict[arg] = ComponentExecutionIO.InputPair(artifact=None, reader=None)
                     return True
         return False
 
     def _handle_output(self, ctx, component, arg, stage, role, config):
         from fate.arch import URI
 
-        for output_type, artifacts in dict(
-            data=component.artifacts.data_outputs,
-            model=component.artifacts.model_outputs,
-            metric=component.artifacts.metric_outputs,
-        ).items():
+        for output_pair_dict, artifacts in [
+            (self.output_data, component.artifacts.data_outputs),
+            (self.output_model, component.artifacts.model_outputs),
+            (self.output_metric, component.artifacts.metric_outputs),
+        ]:
+
             if allowed_artifacts := artifacts.get(arg):
                 if allowed_artifacts.is_active_for(stage, role):
                     apply_spec: ArtifactOutputApplySpec = config.output_artifacts.get(arg)
@@ -123,8 +132,9 @@ class ComponentExecutionIO:
                                     )
                                 arti = allowed_artifacts.get_correct_arti(apply_spec)
                                 writers = WriterGenerator(ctx, arti, apply_spec)
-                                self.output_artifacts[output_type][arg] = writers.recorder
-                                self.output_artifacts_writer[output_type][arg] = writers
+                                output_pair_dict[arg] = ComponentExecutionIO.OutputPair(
+                                    artifact=writers.recorder, writer=writers
+                                )
 
                             else:
                                 if apply_spec.is_template():
@@ -135,46 +145,41 @@ class ComponentExecutionIO:
                                 writer = arti.get_writer(
                                     ctx, URI.from_string(apply_spec.uri), arti.get_type().type_name
                                 )
-                                self.output_artifacts[output_type][arg] = writer.artifact
-                                self.output_artifacts_writer[output_type][arg] = writer
+                                output_pair_dict[arg] = ComponentExecutionIO.OutputPair(
+                                    artifact=writer.artifact, writer=writer
+                                )
                         except Exception as e:
                             raise ComponentArtifactApplyError(
                                 f"load as output artifact({allowed_artifacts}) error: {e}"
                             ) from e
                     elif allowed_artifacts.optional:
-                        self.output_artifacts_writer[output_type][arg] = None
-                        self.output_artifacts[output_type][arg] = None
+                        output_pair_dict[arg] = ComponentExecutionIO.OutputPair(artifact=None, writer=None)
                     else:
                         raise ComponentArtifactApplyError(
                             f"load as output artifact({allowed_artifacts}) error: apply_config is None but not optional"
                         )
                     logger.debug(
-                        f"apply {output_type} artifact `{allowed_artifacts.name}`: {apply_spec} -> {self.output_artifacts_writer[output_type][arg]}"
+                        f"apply artifact `{allowed_artifacts.name}`: {apply_spec} -> {output_pair_dict[arg].writer}"
                     )
                     return True
                 else:
-                    logger.debug(
-                        f"skip {output_type} artifact `{allowed_artifacts.name}` for stage `{stage}` and role `{role}`"
-                    )
-                    self.output_artifacts[output_type][arg] = None
-                    self.output_artifacts_writer[output_type][arg] = None
+                    logger.debug(f"skip artifact `{allowed_artifacts.name}` for stage `{stage}` and role `{role}`")
+                    output_pair_dict[arg] = ComponentExecutionIO.OutputPair(artifact=None, writer=None)
                     return True
         return False
 
     def get_kwargs(self, with_metrics=False):
-        kwargs = {
-            **self.parameter_artifacts_apply,
-            **self.input_artifacts_reader["data"],
-            **self.input_artifacts_reader["model"],
-            **self.output_artifacts_writer["data"],
-            **self.output_artifacts_writer["model"],
-        }
+        kwargs = {**self.parameter_artifacts_apply}
+        kwargs.update({k: v.reader for k, v in self.input_data.items()})
+        kwargs.update({k: v.reader for k, v in self.input_model.items()})
+        kwargs.update({k: v.writer for k, v in self.output_data.items()})
+        kwargs.update({k: v.writer for k, v in self.output_model.items()})
         if with_metrics:
-            kwargs.update(self.output_artifacts_writer["metric"])
+            kwargs.update({k: v.writer for k, v in self.output_metric.items()})
         return kwargs
 
     def get_metric_writer(self):
-        return self.output_artifacts_writer["metric"]["metric"]
+        return self.output_metric["metric"].writer
 
     def dump_io_meta(self, config: "TaskConfigSpec") -> dict:
         from fate.components.core.spec.artifact import IOArtifactMeta
@@ -190,13 +195,13 @@ class ComponentExecutionIO:
 
         io_meta = IOArtifactMeta(
             inputs=IOArtifactMeta.InputMeta(
-                data=_get_meta(self.input_artifacts["data"]),
-                model=_get_meta(self.input_artifacts["model"]),
+                data=_get_meta({k: v.artifact for k, v in self.input_data.items()}),
+                model=_get_meta({k: v.artifact for k, v in self.input_model.items()}),
             ),
             outputs=IOArtifactMeta.OutputMeta(
-                data=_get_meta(self.output_artifacts["data"], with_source=True),
-                model=_get_meta(self.output_artifacts["model"], with_source=True),
-                metric=_get_meta(self.output_artifacts["metric"], with_source=True),
+                data=_get_meta({k: v.artifact for k, v in self.output_data.items()}, with_source=True),
+                model=_get_meta({k: v.artifact for k, v in self.output_model.items()}, with_source=True),
+                metric=_get_meta({k: v.artifact for k, v in self.output_metric.items()}),
             ),
         )
         return io_meta.dict(exclude_none=True)
@@ -206,8 +211,6 @@ class WriterGenerator:
     def __init__(
         self, ctx: "Context", artifact_describe: "ArtifactDescribe[AT, M]", apply_config: "ArtifactOutputApplySpec"
     ):
-        from .artifacts._base_type import _ArtifactsType
-
         self.ctx = ctx
         self.artifact_describe = artifact_describe
         self.apply_config = apply_config

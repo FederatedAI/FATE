@@ -12,18 +12,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import logging
 import os
+
 import pandas as pd
 from fate.arch import Context
-from fate.components.components.nn.runner.default_runner import DefaultRunner
-from fate.components.components.nn.nn_runner import NNRunner, NNInput, NNOutput
-from fate.components.components.nn.loader import Loader
 from fate.arch.dataframe import PandasReader
+from fate.components.components.nn.loader import Loader
+from fate.components.components.nn.nn_runner import NNInput, NNOutput, NNRunner
+from fate.components.components.nn.runner.default_runner import DefaultRunner
 from fate.components.components.utils import consts
 from fate.components.components.utils.predict_format import LABEL
-from fate.components.core import cpn, ARBITER, GUEST, HOST, Role
-import logging
-
+from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 
 logger = logging.getLogger(__name__)
 
@@ -31,23 +31,26 @@ logger = logging.getLogger(__name__)
 def is_path(s):
     return os.path.exists(s)
 
+
 """
 Input Functions
 """
 
 
 def prepare_runner_class(runner_module, runner_class, runner_conf, source):
-    logger.info('runner conf is {}'.format(runner_conf))
-    logger.info('source is {}'.format(source))
-    if runner_module != 'fate_runner':
+    logger.info("runner conf is {}".format(runner_conf))
+    logger.info("source is {}".format(source))
+    if runner_module != "fate_runner":
         if source == None:
             # load from default folder
-            runner = Loader('fate.components.components.nn.runner.' + runner_module, runner_class, **runner_conf)()
+            runner = Loader("fate.components.components.nn.runner." + runner_module, runner_class, **runner_conf)()
         else:
             runner = Loader(runner_module, runner_class, source=source, **runner_conf)()
-        assert isinstance(runner, NNRunner), 'loaded class must be a subclass of NNRunner class, but got {}'.format(type(runner))
+        assert isinstance(runner, NNRunner), "loaded class must be a subclass of NNRunner class, but got {}".format(
+            type(runner)
+        )
     else:
-        logger.info('using default fate runner')
+        logger.info("using default fate runner")
         runner = DefaultRunner(**runner_conf)
 
     return runner
@@ -60,45 +63,46 @@ def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
     return sub_ctx
 
 
-def get_input_data(stage, cpn_input_data,  save_path, input_type='df',):
-    if stage == 'train':
+def get_input_data(
+    stage,
+    cpn_input_data,
+    save_path,
+    input_type="df",
+):
+    if stage == "train":
         train_data, validate_data = cpn_input_data
-        if input_type == 'df':
+        if input_type == "df":
             train_data = train_data.read()
             if validate_data is not None:
                 validate_data = validate_data.read()
 
         return NNInput(train_data=train_data, validate_data=validate_data)
-    
-    elif stage == 'predict':
+
+    elif stage == "predict":
         test_data = cpn_input_data
         test_data = test_data.read()
         return NNInput(test_data=test_data)
     else:
-        raise ValueError(f'Unknown stage {stage}')
+        raise ValueError(f"Unknown stage {stage}")
 
 
 """"
 Output functions
 """
 
-def model_output(runner_module,
-                 runner_class,
-                 runner_conf,
-                 source,
-                 model_output_path
-                ):
+
+def model_output(runner_module, runner_class, runner_conf, source, model_output_path):
     return {
-        'runner_module': runner_module,
-        'runner_class': runner_class,
-        'runner_conf': runner_conf,
-        'source': source,
-        'model_output_path': model_output_path
+        "runner_module": runner_module,
+        "runner_class": runner_class,
+        "runner_conf": runner_conf,
+        "source": source,
+        "model_output_path": model_output_path,
     }
 
 
 def write_output_df(ctx, result_df: pd.DataFrame, output_data_cls, match_id_name, sample_id_name):
-    
+
     reader = PandasReader(sample_id_name=sample_id_name, match_id_name=match_id_name, label_name=LABEL, dtype="object")
     data = reader.to_frame(ctx, result_df)
     output_data_cls.write(data)
@@ -107,14 +111,16 @@ def write_output_df(ctx, result_df: pd.DataFrame, output_data_cls, match_id_name
 def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
 
     if nn_output is None:
-        logger.warning('runner output is None in stage:{}, skip processing'.format(stage))
+        logger.warning("runner output is None in stage:{}, skip processing".format(stage))
 
     elif isinstance(nn_output, NNOutput):
         if stage == consts.TRAIN:
-            
+
             if nn_output.train_result is None and nn_output.validate_result is None:
-                raise ValueError('train result and validate result are both None in the NNOutput: {}'.format(nn_output))
-            
+                raise ValueError(
+                    "train result and validate result are both None in the NNOutput: {}".format(nn_output)
+                )
+
             df_train, df_val = nn_output.train_result, nn_output.validate_result
 
             match_id_name, sample_id_name = nn_output.match_id_name, nn_output.sample_id_name
@@ -128,10 +134,12 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
                 write_output_df(ctx, df_val, output_class, match_id_name, sample_id_name)
         if stage == consts.PREDICT:
             if nn_output.test_result is None:
-                raise ValueError('test result not found in the NNOutput: {}'.format(nn_output))
-            write_output_df(ctx, nn_output.test_result, output_class, nn_output.match_id_name, nn_output.sample_id_name)
+                raise ValueError("test result not found in the NNOutput: {}".format(nn_output))
+            write_output_df(
+                ctx, nn_output.test_result, output_class, nn_output.match_id_name, nn_output.sample_id_name
+            )
     else:
-        logger.warning('train output is not NNOutput, but {}, fail to output dataframe'.format(type(nn_output)))
+        logger.warning("train output is not NNOutput, but {}, fail to output dataframe".format(type(nn_output)))
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
@@ -145,15 +153,15 @@ def train(
     role: Role,
     train_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
     validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-    runner_module: cpn.parameter(type=str, default='default_runner', desc="name of your runner script"),
-    runner_class: cpn.parameter(type=str, default='DefaultRunner', desc="class name of your runner class"),
+    runner_module: cpn.parameter(type=str, default="default_runner", desc="name of your runner script"),
+    runner_class: cpn.parameter(type=str, default="DefaultRunner", desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
     data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
-    metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
+    # metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
     model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
 ):
-   
+
     runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
     sub_ctx = prepare_context_and_role(runner, ctx, role, consts.TRAIN)
 
@@ -164,15 +172,11 @@ def train(
         ret: NNOutput = runner.train(input_data=input_data)
         logger.info("train result: {}".format(ret))
         handle_nn_output(sub_ctx, ret, data_output, consts.TRAIN)
-        output_conf = model_output(runner_module,
-                                   runner_class,
-                                   runner_conf,
-                                   source,
-                                   output_path)
+        output_conf = model_output(runner_module, runner_class, runner_conf, source, output_path)
         logger.info("output_path: {}".format(output_conf))
         model_output.write_metadata(output_conf)
         metric_output.write({"nn_conf": output_conf})
-        
+
     elif role.is_arbiter:  # is server
         runner.train()
 
@@ -183,16 +187,16 @@ def predict(
     role: Role,
     test_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
     model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
-    data_output: cpn.dataframe_output(roles=[GUEST, HOST])
+    data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
 
     if role.is_guest or role.is_host:  # is client
 
         model_conf = model_input.get_metadata()
-        runner_module = model_conf['runner_module']
-        runner_class = model_conf['runner_class']
-        runner_conf = model_conf['runner_conf']
-        source = model_conf['source']
+        runner_module = model_conf["runner_module"]
+        runner_class = model_conf["runner_class"]
+        runner_conf = model_conf["runner_conf"]
+        source = model_conf["source"]
 
         runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
         sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
@@ -201,4 +205,4 @@ def predict(
         handle_nn_output(sub_ctx, ret, data_output, consts.PREDICT)
 
     elif role.is_arbiter:  # is server
-        logger.info('arbiter skip predict')
+        logger.info("arbiter skip predict")

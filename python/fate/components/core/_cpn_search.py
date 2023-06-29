@@ -18,14 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 def load_component(cpn_name: str):
-    from fate.components.components import BUILDIN_COMPONENTS
+    from fate.components.components import LazyBuildInComponentsLoader
 
     from .component_desc._component import Component
 
-    # from buildin
-    for cpn in BUILDIN_COMPONENTS:
-        if cpn.name == cpn_name:
-            return cpn
+    # from build in
+    lazy_build_in_components_loader = LazyBuildInComponentsLoader()
+    if lazy_build_in_components_loader.contains(cpn_name):
+        return lazy_build_in_components_loader.load_cpn(cpn_name)
 
     # from entrypoint
     import pkg_resources
@@ -41,14 +41,14 @@ def load_component(cpn_name: str):
             continue
         if candidate_cpn_name == cpn_name:
             return candidate_cpn
-    raise RuntimeError(f"could not find registerd cpn named `{cpn_name}`")
+    raise RuntimeError(f"could not find registered cpn named `{cpn_name}`")
 
 
 def list_components():
     import pkg_resources
-    from fate.components.components import BUILDIN_COMPONENTS
+    from fate.components.components import LazyBuildInComponentsLoader
 
-    buildin_components = [c.name for c in BUILDIN_COMPONENTS]
+    build_in_components = LazyBuildInComponentsLoader().list()
     third_parties_components = []
 
     for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component_desc"):
@@ -61,4 +61,4 @@ def list_components():
                 f"register cpn from entrypoint(named={cpn_ep.name}, module={cpn_ep.module_name}) failed: {e}"
             )
             continue
-    return dict(buildin=buildin_components, thirdparty=third_parties_components)
+    return dict(buildin=build_in_components, thirdparty=third_parties_components)
