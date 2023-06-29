@@ -146,33 +146,36 @@ def homo_nn(ctx, role):
 def train(
     ctx: Context,
     role: Role,
-    train_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
     validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
     runner_module: cpn.parameter(type=str, default='default_runner', desc="name of your runner script"),
     runner_class: cpn.parameter(type=str, default='DefaultRunner', desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
-    data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
-    model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
+    train_data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
+    train_model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
+    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
 ):
    
     runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
     sub_ctx = prepare_context_and_role(runner, ctx, role, consts.TRAIN)
 
     if role.is_guest or role.is_host:  # is client
-
-        output_path = model_output.get_directory()
+        
+        model_conf = train_model_input.get_metadata()
+        logger.info("model_conf is: {}".format(model_conf))
+        output_path = train_model_output.get_directory()
         input_data = get_input_data(consts.TRAIN, [train_data, validate_data], output_path)
         ret: NNOutput = runner.train(input_data=input_data)
         logger.info("train result: {}".format(ret))
-        handle_nn_output(sub_ctx, ret, data_output, consts.TRAIN)
+        handle_nn_output(sub_ctx, ret, train_data_output, consts.TRAIN)
         output_conf = get_model_output_conf(runner_module,
                                             runner_class,
                                             runner_conf,
                                             source,
                                             output_path)
         logger.info("output_path: {}".format(output_conf))
-        model_output.write_metadata(output_conf)
+        train_model_output.write_metadata(output_conf)
         
     elif role.is_arbiter:  # is server
         runner.train()
@@ -182,14 +185,14 @@ def train(
 def predict(
     ctx,
     role: Role,
-    test_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-    model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
-    data_output: cpn.dataframe_output(roles=[GUEST, HOST])
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
+    predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
 
     if role.is_guest or role.is_host:  # is client
 
-        model_conf = model_input.get_metadata()
+        model_conf = predict_model_input.get_metadata()
         runner_module = model_conf['runner_module']
         runner_class = model_conf['runner_class']
         runner_conf = model_conf['runner_conf']
@@ -199,7 +202,7 @@ def predict(
         sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
         input_data = get_input_data(consts.PREDICT, test_data)
         ret: NNOutput = runner.predict(input_data)
-        handle_nn_output(sub_ctx, ret, data_output, consts.PREDICT)
+        handle_nn_output(sub_ctx, ret, predict_data_output, consts.PREDICT)
 
     elif role.is_arbiter:  # is server
         logger.info('arbiter skip predict')

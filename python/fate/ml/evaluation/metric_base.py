@@ -70,13 +70,15 @@ class Metric(object):
             ret = np.array(data)
         elif isinstance(data, torch.Tensor):
             ret = data.detach().cpu().numpy()
+        elif isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
+            ret = np.array(data.values.tolist())
         else:
             ret = data
         
         if flatten:
             ret = ret.flatten()
         
-        return ret
+        return ret.astype(np.float64)
 
 
 class MetricEnsemble(object):

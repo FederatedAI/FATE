@@ -25,7 +25,7 @@ from fate.ml.evaluation.tool import (
     get_regression_metrics,
     get_specified_metrics,
 )
-from fate.components.components.utils.predict_format import PREDICT_SCORE, PREDICT_LABEL
+from fate.components.components.utils.predict_format import PREDICT_SCORE, LABEL
 
 logger = logging.getLogger(__name__)
 
@@ -83,10 +83,10 @@ def evaluate(input_data, metrics):
 
     for name, df in split_dict.items():
 
-        y_true = df[PREDICT_LABEL].values.astype(float)
-        y_pred = np.array(df[PREDICT_SCORE].values.tolist()).astype(float)
-        logger.info('y_true is {}'.format(y_true))
-        logger.info('y_pred is {}'.format(y_pred))
+        logger.info('eval dataframe is {}'.format(df))
+        y_true = df[LABEL]
+        # in case is multi result, use tolist
+        y_pred = df[PREDICT_SCORE]
         rs = metrics(predict=y_pred, label=y_true)
         rs_dict[name] = rs
 

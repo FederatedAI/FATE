@@ -125,7 +125,7 @@ class DefaultRunner(NNRunner):
                  loss_conf: Optional[Dict] = None,
                  data_collator_conf: Optional[Dict] = None,
                  tokenizer_conf: Optional[Dict] = None,
-                 task_type: Literal['binary', 'multi', 'regression'] = 'classification',
+                 task_type: Literal['binary', 'multi', 'regression', 'others'] = 'binary',
                  use_hf_default_behavior: bool = False,
                  local_mode: bool = False
                 ) -> None:
@@ -189,7 +189,6 @@ class DefaultRunner(NNRunner):
             save_path = cpn_input_data.get_fate_save_path()
             # if have input model for warm-start 
             model_path = cpn_input_data.get_model_path()
-            logger.info('paths are {} {}'.format(save_path, model_path))
             # resume_from checkpoint path
             resume_path = None
             if model_path is not None:
