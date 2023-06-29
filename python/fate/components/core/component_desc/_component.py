@@ -153,6 +153,7 @@ class Component:
             return ComponentIOArtifactTypeSpec(
                 name=v.name,
                 is_multi=v.is_multi,
+                optional=v.optional,
                 types=[
                     ArtifactTypeSpec(
                         type_name=v.get_type().type_name,

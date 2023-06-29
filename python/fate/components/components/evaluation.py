@@ -17,6 +17,7 @@ from typing import Dict
 from fate.arch import Context
 import numpy as np
 import pandas as pd
+from fate.arch import Context
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 from fate.components.core.params import string_choice
 from fate.ml.evaluation.tool import (
