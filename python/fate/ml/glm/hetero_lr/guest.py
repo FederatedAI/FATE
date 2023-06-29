@@ -141,7 +141,8 @@ class HeteroLrModuleGuest(HeteroModule):
         return {
             "estimator": all_estimator,
             "labels": self.labels,
-            "ovr": self.ovr
+            "ovr": self.ovr,
+            "threshold": self.threshold
         }
 
     @classmethod
@@ -149,6 +150,7 @@ class HeteroLrModuleGuest(HeteroModule):
         lr = HeteroLrModuleGuest(**model["metadata"])
         lr.ovr = model["ovr"]
         lr.labels = model["labels"]
+        lr.threshold = model["threshold"]
 
         all_estimator = model["estimator"]
         if lr.ovr:

@@ -76,13 +76,13 @@ def train(
 def predict(
         ctx,
         role: Role,
-        threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5),
+        # threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5),
         test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         input_model: cpn.json_model_input(roles=[GUEST, HOST]),
         test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     if role.is_guest:
-        predict_guest(ctx, input_model, test_data, test_output_data, threshold)
+        predict_guest(ctx, input_model, test_data, test_output_data)
     if role.is_host:
         predict_host(ctx, input_model, test_data, test_output_data)
 
@@ -178,7 +178,7 @@ def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, l
         module.fit(sub_ctx)
 
 
-def predict_guest(ctx, input_model, test_data, test_output_data, threshold):
+def predict_guest(ctx, input_model, test_data, test_output_data):
     from fate.ml.glm.hetero_lr import HeteroLrModuleGuest
 
     with ctx.sub_ctx("predict") as sub_ctx:
@@ -186,8 +186,8 @@ def predict_guest(ctx, input_model, test_data, test_output_data, threshold):
             model = model_reader.read_model()
 
         module = HeteroLrModuleGuest.from_model(model)
-        if threshold != 0.5:
-            module.threshold = threshold
+        # if module.threshold != 0.5:
+        #    module.threshold = threshold
         test_data = sub_ctx.reader(test_data).read_dataframe()
         predict_score = module.predict(sub_ctx, test_data)
         predict_result = transform_to_predict_result(test_data, predict_score, module.labels,
