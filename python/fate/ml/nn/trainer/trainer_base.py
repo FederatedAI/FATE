@@ -25,15 +25,15 @@ from transformers.trainer_callback import TrainerCallback, TrainerControl, Train
 from typing import Optional
 import time
 from dataclasses import dataclass, field, fields
+from transformers import trainer, trainer_callback
 
 
-# Reset huggingface logging
-logger = transformers_logging.get_logger("transformers")
+# Reset the logger to redirect logs output
 transformers_logging.disable_default_handler()
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] - %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-logger.setLevel(logging.INFO)
-logger.addHandler(handler)
+transformers_logging.enable_propagation()
+logger = logging.getLogger(__name__)
+# trainer.logger = logging.getLogger("transformers trainer")
+# trainer_callback.logger = logger
 
 
 def time_decorator(descr=""):
@@ -482,7 +482,7 @@ class FedParameterAlignCallback(TrainerCallback):
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         
         if self.trainer_class.local_mode:
-            logger.info('local model, skipping federated parameter checking')
+            logger.info('FedParameterAlignCallback: local model, skipping federated parameter checking')
             return
         else:
             if self.is_server:
