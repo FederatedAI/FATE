@@ -64,21 +64,10 @@ class _ArtifactType(Generic[MM]):
             "type_name": self.type_name,
         }
 
-    def update_source_metadata(self, config, key):
-        from fate.components.core.spec.artifact import ArtifactSource
-
-        self.metadata.source = ArtifactSource(
-            task_id=config.task_id,
-            party_task_id=config.party_task_id,
-            task_name=config.task_name,
-            component=config.component,
-            output_artifact_key=key,
-        )
-
 
 class _ArtifactsType(Generic[MM]):
     def __init__(self, artifacts: List[_ArtifactType[MM]]):
-        self.artifacts = []
+        self.artifacts = artifacts
 
     def __str__(self):
         return f"{self.__class__.__name__}(artifacts={self.artifacts})"
@@ -88,19 +77,6 @@ class _ArtifactsType(Generic[MM]):
 
     def dict(self):
         return [artifact.dict() for artifact in self.artifacts]
-
-    def update_source_metadata(self, config, key):
-        from fate.components.core.spec.artifact import ArtifactSource
-
-        for i, artifact in enumerate(self.artifacts):
-            artifact.metadata.source = ArtifactSource(
-                task_id=config.task_id,
-                party_task_id=config.party_task_id,
-                task_name=config.task_name,
-                component=config.component,
-                output_artifact_key=key,
-                output_index=i,
-            )
 
 
 AT = TypeVar("AT")
@@ -137,7 +113,7 @@ class ArtifactDescribe(Generic[AT, M]):
     def get_type(cls) -> AT:
         raise NotImplementedError()
 
-    def get_writer(self, ctx: "Context", uri: "URI", type_name: str) -> _ArtifactTypeWriter[M]:
+    def get_writer(self, config, ctx: "Context", uri: "URI", type_name: str) -> _ArtifactTypeWriter[M]:
         raise NotImplementedError()
 
     def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata, type_name: str) -> _ArtifactTypeReader:

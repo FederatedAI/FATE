@@ -1,40 +1,55 @@
 import logging
 import typing
-from typing import Dict, List, Union
+from typing import Dict, Generic, List, Optional, Union
 
 from fate.components.core.essential import Role, Stage
 
-from ._component import Component
-from .artifacts._base_type import AT, ArtifactDescribe, M, _ArtifactsType
+from .artifacts._base_type import (
+    AT,
+    MM,
+    ArtifactDescribe,
+    M,
+    _ArtifactsType,
+    _ArtifactType,
+)
 
 if typing.TYPE_CHECKING:
     from fate.arch import Context
 
-    from ..spec.artifact import ArtifactInputApplySpec, ArtifactOutputApplySpec
+    from ..spec.artifact import (
+        ArtifactInputApplySpec,
+        ArtifactOutputApplySpec,
+        DataOutputMetadata,
+        Metadata,
+        MetricOutputMetadata,
+        ModelOutputMetadata,
+    )
     from ..spec.task import TaskConfigSpec
+    from ._component import Component
 
 logger = logging.getLogger(__name__)
 
 
 class ComponentExecutionIO:
-    class InputPair:
-        def __init__(self, artifact, reader):
+    class InputPair(Generic[MM]):
+        def __init__(self, artifact: Optional[Union[_ArtifactsType[MM], _ArtifactType[MM]]], reader):
             self.artifact = artifact
             self.reader = reader
 
-    class OutputPair:
-        def __init__(self, artifact, writer):
+    class OutputPair(Generic[MM]):
+        def __init__(self, artifact: Optional[Union[_ArtifactsType[MM], _ArtifactType[MM]]], writer):
             self.artifact = artifact
             self.writer = writer
 
-    def __init__(self, ctx: "Context", component: Component, role: Role, stage: Stage, config):
+    def __init__(self, ctx: "Context", component: "Component", role: Role, stage: Stage, config):
+        self.cpn = component
         self.parameter_artifacts_desc = {}
         self.parameter_artifacts_apply = {}
-        self.input_data: Dict[str, ComponentExecutionIO.InputPair] = {}
-        self.input_model: Dict[str, ComponentExecutionIO.InputPair] = {}
-        self.output_data: Dict[str, ComponentExecutionIO.OutputPair] = {}
-        self.output_model: Dict[str, ComponentExecutionIO.OutputPair] = {}
-        self.output_metric: Dict[str, ComponentExecutionIO.OutputPair] = {}
+        self.input_data: Dict[str, ComponentExecutionIO.InputPair[Metadata]] = {}
+        self.input_model: Dict[str, ComponentExecutionIO.InputPair[Metadata]] = {}
+        self.output_data: Dict[str, ComponentExecutionIO.OutputPair[DataOutputMetadata]] = {}
+        self.output_model: Dict[str, ComponentExecutionIO.OutputPair[ModelOutputMetadata]] = {}
+        self.output_metric: Dict[str, ComponentExecutionIO.OutputPair[MetricOutputMetadata]] = {}
 
         logging.debug(f"parse and apply component artifacts")
 
@@ -131,7 +146,7 @@ class ComponentExecutionIO:
                                         "template uri required for multiple output artifact"
                                     )
                                 arti = allowed_artifacts.get_correct_arti(apply_spec)
-                                writers = WriterGenerator(ctx, arti, apply_spec)
+                                writers = WriterGenerator(component, arg, config, ctx, arti, apply_spec)
                                 output_pair_dict[arg] = ComponentExecutionIO.OutputPair(
                                     artifact=writers.recorder, writer=writers
                                 )
@@ -143,8 +158,10 @@ class ComponentExecutionIO:
                                     )
                                 arti = allowed_artifacts.get_correct_arti(apply_spec)
                                 writer = arti.get_writer(
-                                    ctx, URI.from_string(apply_spec.uri), arti.get_type().type_name
+                                    config, ctx, URI.from_string(apply_spec.uri), arti.get_type().type_name
                                 )
+                                _update_source_meta(writer.artifact.metadata, config, arg)
+                                _maybe_update_model_overview_meta(writer.artifact.metadata, self.cpn, config)
                                 output_pair_dict[arg] = ComponentExecutionIO.OutputPair(
                                     artifact=writer.artifact, writer=writer
                                 )
@@ -181,36 +198,35 @@ class ComponentExecutionIO:
     def get_metric_writer(self):
         return self.output_metric["metric"].writer
 
-    def dump_io_meta(self, config: "TaskConfigSpec") -> dict:
+    def dump_io_meta(self) -> dict:
         from fate.components.core.spec.artifact import IOArtifactMeta
 
-        def _get_meta(d, with_source=False):
-            result = {}
-            for k, arti_type in d.items():
-                if arti_type is not None:
-                    if with_source:
-                        arti_type.update_source_metadata(config, k)
-                    result[k] = arti_type.dict()
-            return result
-
-        io_meta = IOArtifactMeta(
+        return IOArtifactMeta(
             inputs=IOArtifactMeta.InputMeta(
-                data=_get_meta({k: v.artifact for k, v in self.input_data.items()}),
-                model=_get_meta({k: v.artifact for k, v in self.input_model.items()}),
+                data={k: v.artifact.dict() for k, v in self.input_data.items() if v.artifact is not None},
+                model={k: v.artifact.dict() for k, v in self.input_model.items() if v.artifact is not None},
             ),
             outputs=IOArtifactMeta.OutputMeta(
-                data=_get_meta({k: v.artifact for k, v in self.output_data.items()}, with_source=True),
-                model=_get_meta({k: v.artifact for k, v in self.output_model.items()}, with_source=True),
-                metric=_get_meta({k: v.artifact for k, v in self.output_metric.items()}),
+                data={k: v.artifact.dict() for k, v in self.output_data.items() if v.artifact is not None},
+                model={k: v.artifact.dict() for k, v in self.output_model.items() if v.artifact is not None},
+                metric={k: v.artifact.dict() for k, v in self.output_metric.items() if v.artifact is not None},
             ),
-        )
-        return io_meta.dict(exclude_none=True)
+        ).dict(exclude_none=True)
 
 
 class WriterGenerator:
     def __init__(
-        self, ctx: "Context", artifact_describe: "ArtifactDescribe[AT, M]", apply_config: "ArtifactOutputApplySpec"
+        self,
+        cpn,
+        name: str,
+        config,
+        ctx: "Context",
+        artifact_describe: "ArtifactDescribe[AT, M]",
+        apply_config: "ArtifactOutputApplySpec",
     ):
+        self.name = name
+        self.cpn = cpn
+        self.config = config
         self.ctx = ctx
         self.artifact_describe = artifact_describe
         self.apply_config = apply_config
@@ -228,7 +244,11 @@ class WriterGenerator:
         from fate.arch import URI
 
         uri = URI.from_string(self.apply_config.uri.format(index=self.current))
-        writer = self.artifact_describe.get_writer(self.ctx, uri, self.artifact_describe.get_type().type_name)
+        writer = self.artifact_describe.get_writer(
+            self.config, self.ctx, uri, self.artifact_describe.get_type().type_name
+        )
+        _update_source_meta(writer.artifact.metadata, self.config, self.name, self.current)
+        _maybe_update_model_overview_meta(writer.artifact.metadata, self.cpn, self.config)
         self.recorder.artifacts.append(writer.artifact)
         self.current += 1
         return writer
@@ -242,3 +262,45 @@ class WriterGenerator:
 
 class ComponentArtifactApplyError(RuntimeError):
     ...
+
+
+def _update_source_meta(metadata, config: "TaskConfigSpec", output_artifact_key, output_index=None):
+    from fate.components.core.spec.artifact import ArtifactSource
+
+    metadata.source = ArtifactSource(
+        task_id=config.task_id,
+        party_task_id=config.party_task_id,
+        task_name=config.task_name,
+        component=config.component,
+        output_artifact_key=output_artifact_key,
+        output_index=output_index,
+    )
+
+
+def _maybe_update_model_overview_meta(metadata, cpn, config: "TaskConfigSpec"):
+    from fate.components.core.spec.artifact import ModelOutputMetadata
+    from fate.components.core.spec.model import (
+        MLModelComponentSpec,
+        MLModelFederatedSpec,
+        MLModelPartiesSpec,
+        MLModelPartySpec,
+        MLModelSpec,
+    )
+
+    if not isinstance(metadata, ModelOutputMetadata):
+        return
+
+    metadata.model_overview = MLModelSpec(
+        federated=MLModelFederatedSpec(
+            task_id=config.task_id,
+            parties=MLModelPartiesSpec(
+                guest=[p.partyid for p in config.conf.federation.metadata.parties.parties if p.role == "guest"],
+                host=[p.partyid for p in config.conf.federation.metadata.parties.parties if p.role == "host"],
+                arbiter=[p.partyid for p in config.conf.federation.metadata.parties.parties if p.role == "arbiter"],
+            ),
+            component=MLModelComponentSpec(name=cpn.name, provider=cpn.provider, version=cpn.version, metadata={}),
+        ),
+        party=MLModelPartySpec(
+            party_task_id=config.party_task_id, role=config.role, partyid=config.party_id, models=[]
+        ),
+    )

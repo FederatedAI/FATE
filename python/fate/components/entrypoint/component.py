@@ -86,7 +86,7 @@ def execute_component_from_config(config: TaskConfigSpec, output_path):
         # finalize metric handler
         metrics_handler.finalize()
         # final execution io meta
-        execution_io_meta = execution_io.dump_io_meta(config)
+        execution_io_meta = execution_io.dump_io_meta()
         try:
             with open(output_path, "w") as fw:
                 json.dump(dict(status=dict(code=0), io_meta=execution_io_meta), fw, indent=4)

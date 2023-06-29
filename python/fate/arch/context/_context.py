@@ -181,7 +181,7 @@ class Context:
                 parties.extend(role_parties)
         else:
             if role not in self._role_to_parties:
-                raise RuntimeError(f"no {role} party has configurated")
+                raise RuntimeError(f"no {role} party has configured")
             else:
                 parties.extend(self._role_to_parties[role])
         return parties
