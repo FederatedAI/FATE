@@ -1,3 +1,4 @@
+import datetime
 import json
 import typing
 from pathlib import Path
@@ -20,12 +21,31 @@ if typing.TYPE_CHECKING:
 
 class JsonModelWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
     def write(self, data, metadata: dict = None):
+        if not hasattr(self, "_has_write"):
+            setattr(self, "_has_write", True)
+        else:
+            raise RuntimeError(f"json model writer {self.artifact} has been written, cannot write again")
+
         path = Path(self.artifact.uri.path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:
             json.dump(data, fw)
-        if metadata is not None:
-            self.artifact.metadata.metadata = metadata
+        if metadata is None:
+            metadata = {}
+        self.artifact.metadata.metadata = metadata
+
+        # update model overview
+        from fate.components.core.spec.model import MLModelModelSpec
+
+        model_overview = self.artifact.metadata.model_overview
+        model_overview.party.models.append(
+            MLModelModelSpec(
+                name="",
+                created_time=datetime.datetime.now().isoformat(),
+                file_format="json",
+                metadata=metadata,
+            )
+        )
 
 
 class JsonModelReader(_ArtifactTypeReader):
@@ -42,7 +62,7 @@ class JsonModelArtifactDescribe(ArtifactDescribe[JsonModelArtifactType, ModelOut
     def get_type(cls):
         return JsonModelArtifactType
 
-    def get_writer(self, ctx: "Context", uri: URI, type_name: str) -> JsonModelWriter:
+    def get_writer(self, config, ctx: "Context", uri: URI, type_name: str) -> JsonModelWriter:
         return JsonModelWriter(ctx, _ArtifactType(uri=uri, metadata=ModelOutputMetadata(), type_name=type_name))
 
     def get_reader(self, ctx: "Context", uri: URI, metadata: Metadata, type_name: str) -> JsonModelReader:

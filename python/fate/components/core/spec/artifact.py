@@ -62,23 +62,7 @@ class ModelOutputMetadata(pydantic.BaseModel):
     name: Optional[str] = None
     namespace: Optional[str] = None
     source: Optional[ArtifactSource] = None
-    model_overview: MLModelSpec = MLModelSpec(
-        federated=MLModelFederatedSpec(
-            task_id="",
-            parties=MLModelPartiesSpec(guest=[], host=[], arbiter=[]),
-            component=MLModelComponentSpec(name="", provider="", version="", metadata={}),
-        ),
-        party=MLModelPartySpec(
-            party_task_id="",
-            role="",
-            partyid="",
-            models=[
-                MLModelModelSpec(
-                    name="", created_time=datetime.datetime.now().isoformat(), file_format="", metadata={}
-                )
-            ],
-        ),
-    )
+    model_overview: MLModelSpec = None
 
     class Config:
         extra = "forbid"

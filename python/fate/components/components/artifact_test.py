@@ -54,6 +54,10 @@ def artifact_test(
     next(json_model_outputs).write({"aaa": 1}, metadata={"bbb": 2})
     next(json_model_outputs).write({"aaa": 2}, metadata={"bbb": 2})
 
+    json_model_output.write({"aaa": 1}, metadata={"bbb": 2})
+
+    model_directory_output.get_directory()
+
     # output_path = model_directory_output.get_directory()
     # with open(output_path + "/a.txt", "w") as fw:
     #     fw.write("a")
