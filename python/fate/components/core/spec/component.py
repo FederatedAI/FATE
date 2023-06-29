@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 class ParameterSpec(BaseModel):
     type: str
-    default: Any
+    default: Optional[Any]
     optional: bool
     description: str = ""
     type_meta: dict = {}
@@ -90,6 +90,7 @@ class ArtifactTypeSpec(BaseModel):
 class ComponentIOArtifactTypeSpec(BaseModel):
     name: str
     is_multi: bool
+    optional: bool
     types: List[ArtifactTypeSpec]
 
 

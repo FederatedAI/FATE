@@ -16,10 +16,10 @@ import io
 import pickle
 from typing import Any, List, Optional, TypeVar, Union
 
-from fate.interface import FederationEngine
-from fate.interface import Parties as PartiesInterface
-from fate.interface import Party as PartyInterface
-from fate.interface import PartyMeta
+from fate.arch.abc import FederationEngine
+from fate.arch.abc import Parties as PartiesInterface
+from fate.arch.abc import Party as PartyInterface
+from fate.arch.abc import PartyMeta
 
 from ..computing import is_table
 from ..federation._gc import IterationGC

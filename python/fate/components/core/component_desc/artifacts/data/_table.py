@@ -41,7 +41,7 @@ class TableArtifactDescribe(ArtifactDescribe[TableArtifactType, DataOutputMetada
     def get_type(cls):
         return TableArtifactType
 
-    def get_writer(self, ctx: "Context", uri: URI, type_name: str) -> TableWriter:
+    def get_writer(self, config, ctx: "Context", uri: URI, type_name: str) -> TableWriter:
         return TableWriter(ctx, _ArtifactType(uri, DataOutputMetadata(), type_name))
 
     def get_reader(self, ctx: "Context", uri: "URI", metadata: "Metadata", type_name: str) -> TableReader:

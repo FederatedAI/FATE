@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import Optional, Set
+from typing import Optional
 
 import pydantic
 
@@ -23,8 +23,17 @@ _NS_FEDERATION_SPLIT = "."
 
 
 class MetricsKey(pydantic.BaseModel):
-    name: str
-    special_tags: Optional[Set] = None
+    groups: tuple
+    namespaces: tuple
+
+    def __hash__(self):
+        # the hash is computed as a combination of all the attributes
+        return hash((self.groups, self.namespaces))
+
+    def __eq__(self, other):
+        if isinstance(other, MetricsKey):
+            return (self.groups, self.namespaces) == (other.groups, other.namespaces)
+        return False
 
 
 class NS:
@@ -48,11 +57,12 @@ class NS:
         return self._federation_tag_cache
 
     def get_metrics_keys(self):
-        pre_groups, pre_names = self.parent.get_metrics_keys() if self.parent is not None else (), ()
-        if self.is_special:
-            self._metrics_keys_cache = (*pre_groups, self.name), pre_names
-        else:
-            self._metrics_keys_cache = pre_groups, (*pre_names, self.name)
+        if self._metrics_keys_cache is None:
+            pre = self.parent.get_metrics_keys() if self.parent is not None else MetricsKey(groups=(), namespaces=())
+            if self.is_special:
+                self._metrics_keys_cache = MetricsKey(groups=(*pre.groups, self.name), namespaces=pre.namespaces)
+            else:
+                self._metrics_keys_cache = MetricsKey(groups=pre.groups, namespaces=(*pre.namespaces, self.name))
         return self._metrics_keys_cache
 
     def get_name(self):

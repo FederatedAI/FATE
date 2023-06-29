@@ -16,7 +16,7 @@
 
 import logging
 
-from fate.interface import CSessionABC
+from fate.arch.abc import CSessionABC
 
 from ...unify import URI, uuid
 from .._profile import computing_profile

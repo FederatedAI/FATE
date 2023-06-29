@@ -95,18 +95,6 @@ class Component:
         self.func_args = list(inspect.signature(self.callback).parameters.keys())
         self.stage_components: List[Component] = []
 
-    def validate_declare(self):
-        # validate
-        if self.func_args[0] != "ctx":
-            raise ComponentDeclareError("bad component_desc definition, first argument should be `ctx`")
-        if self.func_args[1] != "role":
-            raise ComponentDeclareError("bad component_desc definition, second argument should be `role`")
-
-        if set(self.func_args[2:]) != set(self.parameters.mapping.keys()).union(self.artifacts.keys()):
-            raise ComponentDeclareError(
-                f"bad component_desc definition, function arguments `{self.func_args[2:]}` should be same as {self.parameters.mapping.keys()} and {self.artifacts.keys()}"
-            )
-
     def execute(self, ctx, role, **kwargs):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"execution arguments: {kwargs}")
@@ -165,6 +153,7 @@ class Component:
             return ComponentIOArtifactTypeSpec(
                 name=v.name,
                 is_multi=v.is_multi,
+                optional=v.optional,
                 types=[
                     ArtifactTypeSpec(
                         type_name=v.get_type().type_name,
@@ -343,7 +332,15 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             raise TypeError("Attempted to convert a callback into a component_desc twice.")
         parameters = ComponentParameterDescribes()
         artifacts = ComponentArtifactDescribes()
-        for k, v in inspect.signature(f).parameters.items():
+        signatures = list(inspect.signature(f).parameters.items())
+        # first two arguments are ctx and role
+        if signatures[0][0] != "ctx":
+            raise ComponentDeclareError("bad component_desc definition, first argument should be `ctx`")
+        if signatures[1][0] != "role":
+            raise ComponentDeclareError("bad component_desc definition, second argument should be `role`")
+
+        # check if all arguments are annotated
+        for k, v in signatures[2:]:
             if isinstance(annotation := v.annotation, ArtifactDescribeAnnotation):
                 artifacts.add(annotation, k)
             elif isinstance(annotation, ParameterDescribeAnnotation):
@@ -354,6 +351,8 @@ def _component(name, roles, provider, version, description, is_subcomponent):
                     desc=annotation.desc,
                     optional=annotation.optional,
                 )
+            else:
+                raise ComponentDeclareError(f"bad component_desc definition, argument {k} is not annotated")
 
         if is_subcomponent:
             artifacts.update_roles_and_stages(stages=[Stage.from_str(cpn_name)], roles=roles)
@@ -378,7 +377,6 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             is_subcomponent=is_subcomponent,
         )
         cpn.__doc__ = f.__doc__
-        cpn.validate_declare()
         return cpn
 
     return decorator

@@ -14,7 +14,6 @@
 #  limitations under the License.
 import json
 import logging
-import os.path
 import traceback
 
 from fate.arch import Context
@@ -26,6 +25,7 @@ from fate.components.core import (
     load_computing,
     load_device,
     load_federation,
+    load_metric_handler,
 )
 from fate.components.core.spec.task import TaskCleanupConfigSpec, TaskConfigSpec
 
@@ -51,14 +51,12 @@ def execute_component_from_config(config: TaskConfigSpec, output_path):
     try:
         party_task_id = config.party_task_id
         device = load_device(config.conf.device)
-        # metrics_handler = load_metrics_handler()
         computing = load_computing(config.conf.computing)
         federation = load_federation(config.conf.federation, computing)
         ctx = Context(
             device=device,
             computing=computing,
             federation=federation,
-            # metrics_handler=metrics_handler,
         )
         role = Role.from_str(config.role)
         stage = Stage.from_str(config.stage)
@@ -78,11 +76,17 @@ def execute_component_from_config(config: TaskConfigSpec, output_path):
         # prepare
         execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
 
+        # register metric handler
+        metrics_handler = load_metric_handler(execution_io.get_metric_writer())
+        ctx.register_metric_handler(metrics_handler)
+
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
 
+        # finalize metric handler
+        metrics_handler.finalize()
         # final execution io meta
-        execution_io_meta = execution_io.dump_io_meta(config)
+        execution_io_meta = execution_io.dump_io_meta()
         try:
             with open(output_path, "w") as fw:
                 json.dump(dict(status=dict(code=0), io_meta=execution_io_meta), fw, indent=4)

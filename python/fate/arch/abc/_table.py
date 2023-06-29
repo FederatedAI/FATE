@@ -23,8 +23,6 @@ import typing
 from abc import ABCMeta
 from typing import Iterable
 
-from ._address import Address
-
 __all__ = ["CTableABC", "CSessionABC"]
 
 K = typing.TypeVar("K")
@@ -70,7 +68,7 @@ class CTableABC(typing.Generic[K, V], metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def save(self, address: Address, schema: dict, options: dict = None):
+    def save(self, uri, schema: dict, options: dict = None):
         """
         save table
 

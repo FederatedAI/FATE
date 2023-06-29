@@ -18,7 +18,7 @@ import typing
 from typing import List, Optional, Tuple, TypeVar, Union, cast
 
 import torch
-from fate.arch.computing import CTableABC
+from fate.arch.abc import CTableABC
 from fate.arch.context import Context
 
 _HANDLED_FUNCTIONS = {}

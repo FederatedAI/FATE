@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import Callable, List, Optional, Type, TypeVar
 
 # re-export
 from .component_desc import (
@@ -24,8 +25,6 @@ from .component_desc import (
     dataframe_inputs,
     dataframe_output,
     dataframe_outputs,
-    json_metric_output,
-    json_metric_outputs,
     json_model_input,
     json_model_inputs,
     json_model_output,
@@ -38,6 +37,18 @@ from .component_desc import (
     table_input,
     table_inputs,
 )
+from .essential import Role
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+
+
+def union(f1: Callable[..., Type[T1]], f2: Callable[..., Type[T2]]):
+    def wrapper(roles: Optional[List[Role]] = None, desc="", optional=False) -> "Type[T1] | Type[T2]":
+        return f1(roles, desc, optional) | f2(optional=optional)
+
+    return wrapper
+
 
 __all__ = [
     "component",
@@ -60,6 +71,4 @@ __all__ = [
     "model_directory_outputs",
     "model_directory_output",
     "model_directory_input",
-    "json_metric_output",
-    "json_metric_outputs",
 ]

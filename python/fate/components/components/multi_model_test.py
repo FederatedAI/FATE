@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate.arch import Context
 from fate.components.core import LOCAL, Role, cpn
 
 
 @cpn.component(roles=[LOCAL])
 def multi_model_test(
-    ctx,
+    ctx: Context,
     role: Role,
     dataframe_input: cpn.dataframe_input(roles=[LOCAL]),
     dataframe_output: cpn.dataframe_output(roles=[LOCAL]),
@@ -28,8 +29,6 @@ def multi_model_test(
     json_model_outputs: cpn.json_model_outputs(roles=[LOCAL]),
     model_directory_output: cpn.model_directory_output(roles=[LOCAL]),
     model_directory_outputs: cpn.model_directory_outputs(roles=[LOCAL]),
-    json_metric_output: cpn.json_metric_output(roles=[LOCAL]),
-    json_metric_outputs: cpn.json_metric_outputs(roles=[LOCAL]),
 ):
     df = dataframe_input.read()
     df = df + 1
@@ -59,7 +58,9 @@ def multi_model_test(
 
         directory_output.write_metadata({f"model_directory_output_{i}_metadata": f"test_directory_{i}"})
 
-    json_metric_output.write({"metric_single": {"data": [1, 2, 3]}}, metadata={"bbb": 2})
-    for i in range(4):
-        metric_output = next(json_metric_outputs)
-        metric_output.write({f"metric_multi_{i}": {"data": [0] for _ in range(i * 10)}}, metadata={"bbb": 2})
+    ctx.metrics.log_metrics(values=[1, 2, 3], name="metric_single", type="custom", metadata={"bbb": 2})
+    ctx.sub_ctx("sub_metric").metrics.log_loss("loss", 1.0, 0)
+    ctx.sub_ctx("sub_metric").metrics.log_loss("loss", 0.9, 1)
+
+    for i, auto_step_sub_ctx in ctx.ctxs_range(10):
+        auto_step_sub_ctx.metrics.log_accuracy("sub", 1.0)
