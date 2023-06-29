@@ -38,6 +38,12 @@ def load_model_dict_from_path(path):
     return model_dict
 
 
+def dir_warning(train_args):
+    if 'output_dir' in train_args or 'logging_dir' in train_args or 'resume_from_checkpoint' in train_args:
+        logger.warning("The output_dir, logging_dir, and resume_from_checkpoint arguments are not supported in the "
+                       "DefaultRunner when running the Pipeline. These arguments will be replaced by FATE provided paths.")
+
+
 class SetupReturn:
     """
     Class to encapsulate the return objects from the setup.
@@ -185,17 +191,22 @@ class DefaultRunner(NNRunner):
             test_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_test_data())
             # load model
             model = self._loader_load_from_conf(self.model_conf)
+            if model is None:
+                raise ValueError(f"model is None, cannot load model from conf {self.model_conf}")
             # save path: path to save provided by fate framework
             save_path = cpn_input_data.get_fate_save_path()
             # if have input model for warm-start 
-            model_path = cpn_input_data.get_model_path()
+            model_path = cpn_input_data.get_saved_model_path()
             # resume_from checkpoint path
             resume_path = None
+
             if model_path is not None:
                 model_dict = load_model_dict_from_path(model_path)
                 model.load_state_dict(model_dict)
+                logger.info(f"loading model dict from {model_path} to model done")
                 if get_last_checkpoint(model_path) is not None:
                     resume_path = model_path
+                    logger.info(f"checkpoint detected, resume_path set to {resume_path}")
 
             # load optimizer
             optimizer_loader = Loader.from_dict(self.optimizer_conf)
@@ -209,6 +220,7 @@ class DefaultRunner(NNRunner):
             # load tokenizer if import conf provided
             tokenizer = self._loader_load_from_conf(self.tokenizer_conf)
             # args
+            dir_warning(self.training_args_conf)
             training_args = TrainingArguments(**self.training_args_conf)
             training_args.output_dir = save_path  # reset to default, saving to arbitrary path is not allowed in NN component
             training_args.resume_from_checkpoint = resume_path  # resume path

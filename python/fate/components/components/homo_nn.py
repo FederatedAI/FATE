@@ -99,7 +99,7 @@ def get_model_output_conf(runner_module,
         "runner_class": runner_class,
         "runner_conf": runner_conf,
         "source": source,
-        "model_output_path": model_output_path,
+        "saved_model_path": model_output_path,
     }
 
 
@@ -144,6 +144,30 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
         logger.warning("train output is not NNOutput, but {}, fail to output dataframe".format(type(nn_output)))
 
 
+def warmstart_prepare(model_conf, runner_class, runner_module, runner_conf, source):
+
+    logger.info("loaded model_conf is: {}".format(model_conf))
+    if "saved_model_path" in model_conf:
+        saved_model_path = model_conf["saved_model_path"]
+    if "source" in model_conf:
+        if source is None:
+            source = model_conf["source"]
+    
+    runner_class_, runner_module_ = model_conf['runner_class'], model_conf['runner_module']
+    if runner_class_ == runner_class and runner_module_ == runner_module:
+        if "runner_conf" in model_conf:
+            saved_conf = model_conf['runner_conf']
+            saved_conf.update(runner_conf)
+            runner_conf = saved_conf
+            logger.info("runner_conf is updated: {}".format(runner_conf))
+    else:
+        logger.warning("runner_class or runner_module is not equal to the saved model, "
+                        "use the new runner_conf, runner_class and runner module to train the model,\
+                        saved module & class: {} {}, new module & class: {} {}".format(runner_module_, runner_class_, runner_module, runner_class))
+
+    return runner_conf, source, runner_class, runner_module, saved_model_path
+
+
 @cpn.component(roles=[GUEST, HOST, ARBITER])
 def homo_nn(ctx, role):
     ...
@@ -169,10 +193,13 @@ def train(
 
     if role.is_guest or role.is_host:  # is client
         
-        model_conf = train_model_input.get_metadata()
-        logger.info("model_conf is: {}".format(model_conf))
+        saved_model_path=None
+        if train_model_input is not None:
+            model_conf = train_model_input.get_metadata()
+            runner_conf, source, runner_class, runner_module, saved_model_path = warmstart_prepare(model_conf, runner_class, runner_module, runner_conf, source)
+
         output_path = train_model_output.get_directory()
-        input_data = get_input_data(consts.TRAIN, [train_data, validate_data], output_path)
+        input_data = get_input_data(consts.TRAIN, [train_data, validate_data], output_path, saved_model_path)
         ret: NNOutput = runner.train(input_data=input_data)
         logger.info("train result: {}".format(ret))
         handle_nn_output(sub_ctx, ret, train_data_output, consts.TRAIN)
