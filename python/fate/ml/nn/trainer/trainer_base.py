@@ -1,3 +1,5 @@
+import os
+import re
 import torch
 import math
 import sys
@@ -11,17 +13,27 @@ from transformers.training_args import TrainingArguments
 from fate.arch import Context
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
-from transformers import TrainingArguments as hf_TrainingArguments, PreTrainedTokenizer
+from transformers import TrainingArguments as _hf_TrainingArguments, PreTrainedTokenizer
 from transformers import Trainer, TrainerState, TrainerControl, EvalPrediction
 from transformers.trainer_utils import has_length
 from torch.optim.lr_scheduler import _LRScheduler, LambdaLR
 from torch.utils.data import _utils
 from fate.ml.aggregator.base import Aggregator
-from transformers.trainer import logger
+import logging
+from transformers import logging as transformers_logging
 from transformers.trainer_callback import TrainerCallback, TrainerControl, TrainerState
 from typing import Optional
 import time
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import dataclass, field, fields
+from transformers import trainer, trainer_callback
+
+
+# Reset the logger to redirect logs output
+transformers_logging.disable_default_handler()
+transformers_logging.enable_propagation()
+logger = logging.getLogger(__name__)
+# trainer.logger = logging.getLogger("transformers trainer")
+# trainer_callback.logger = logger
 
 
 def time_decorator(descr=""):
@@ -34,6 +46,27 @@ def time_decorator(descr=""):
             return result
         return wrapper
     return decorator
+
+
+def get_ith_checkpoint(directory, i):
+    # List all files in the directory
+    files = os.listdir(directory)
+    
+    # Filter for checkpoint directories
+    checkpoint_dirs = [f for f in files if f.startswith("checkpoint-")]
+    
+    # Extract the numbers from the checkpoint directory names
+    checkpoint_numbers = [int(re.search(r'\d+', dir).group()) for dir in checkpoint_dirs]
+    
+    # Pair the checkpoint directories with their numbers and sort by the numbers
+    sorted_checkpoints = sorted(zip(checkpoint_dirs, checkpoint_numbers), key=lambda x: x[1])
+    
+    if i < 0:
+        raise ValueError(f"checkpoint idx i must be greater than or equal to 0, got {i}")
+    if i > len(sorted_checkpoints) - 1:
+        raise ValueError(f"checkpoint number is {len(sorted_checkpoints)}, but got {i}")
+    # Return the name of the ith checkpoint directory
+    return sorted_checkpoints[i][0]
 
 
 """
@@ -73,16 +106,17 @@ class FedArguments(object):
 
 
 @dataclass
-class TrainingArguments(hf_TrainingArguments):
+class TrainingArguments(_hf_TrainingArguments):
     
     output_dir: str = field(default='./')
     disable_tqdm: bool = field(default=True)
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
     evaluation_strategy: str = field(default="no")
+    logging_dir: str = field(default=None)
+    checkpoint_idx: int = field(default=None)
 
     def __post_init__(self):
-        super().__post_init__()
         
         # Always use default values for hub-related attributes
         self.push_to_hub = False
@@ -93,7 +127,21 @@ class TrainingArguments(hf_TrainingArguments):
         self.push_to_hub_model_id = None
         self.push_to_hub_organization = None
         self.push_to_hub_token = None
+        
+        super().__post_init__()
 
+    def to_dict(self):
+        # Call the superclass's to_dict method
+        # print(self.logging_dir)
+        all_args = super().to_dict()
+
+        # Get a dict with default values for all fields
+        default_args = _hf_TrainingArguments(output_dir='./').to_dict()
+
+        # Filter out args that are equal to their default values
+        set_args = {name: value for name, value in all_args.items() if value != default_args.get(name)}
+
+        return set_args
 
 
 """
@@ -434,7 +482,7 @@ class FedParameterAlignCallback(TrainerCallback):
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         
         if self.trainer_class.local_mode:
-            logger.info('local model, skipping federated parameter checking')
+            logger.info('FedParameterAlignCallback: local model, skipping federated parameter checking')
             return
         else:
             if self.is_server:
@@ -762,6 +810,13 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
         if data_collator is None:
             data_collator = _utils.collate.default_collate
 
+        # concat checkpoint path if checkpoint idx is set
+        if self._args.checkpoint_idx is not None:
+            checkpoint_path = self._args.resume_from_checkpoint
+            if checkpoint_path is not None and os.path.exists(checkpoint_path):
+                checkpoint_folder = get_ith_checkpoint(checkpoint_path, self._args.checkpoint_idx)
+                self._args.resume_from_checkpoint = os.path.join(checkpoint_path, checkpoint_folder)
+
         Trainer.__init__(self,
                         model=model,
                         args=self._args,
@@ -783,9 +838,10 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
         if self._use_hf_default_behavior:
             return super().compute_loss(model, inputs, **kwargs)
         else:
+            
             feats, labels = inputs
             logits = model(feats)
-            loss = self.loss_func(logits.flatten(), labels.flatten())
+            loss = self.loss_func(logits, labels)
             return loss
 
     def prediction_step(self,

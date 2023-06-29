@@ -11,14 +11,6 @@ from sklearn.metrics import recall_score, precision_score, f1_score
 from fate.ml.evaluation.metric_base import EvalResult
 
 
-def to_numpy(data):
-    if isinstance(data, list):
-        return np.array(data)
-    elif isinstance(data, torch.Tensor):
-        return data.detach().cpu().numpy()
-    else:
-        return data
-
 
 """
 Single Value Metrics
@@ -32,8 +24,8 @@ class AUC(Metric):
         super().__init__()
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         auc_score = roc_auc_score(label, predict)
         return EvalResult(self.metric_name, auc_score)
 
@@ -50,8 +42,8 @@ class MultiAccuracy(Metric):
     metric_name = 'multi_accuracy'
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict, flatten=False)
+        label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         acc = accuracy_score(label, predict)
@@ -63,8 +55,8 @@ class MultiRecall(Metric):
     metric_name = 'multi_recall'
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict, flatten=False)
+        label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         recall = recall_score(label, predict, average='micro')
@@ -76,8 +68,8 @@ class MultiPrecision(Metric):
     metric_name = 'multi_precision'
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict, flatten=False)
+        label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         precision = precision_score(label, predict, average='micro')
@@ -89,9 +81,9 @@ class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
     metric_name = 'binary_accuracy'
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
+        predict = self.to_np_format(predict)
         predict = (predict > self.threshold).astype(int)
-        label = self.to_numpy(label)
+        label = self.to_np_format(label)
         acc = accuracy_score(label, predict)
         return EvalResult(self.metric_name, acc)
 
@@ -101,9 +93,9 @@ class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
     metric_name = 'binary_recall'
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
+        predict = self.to_np_format(predict)
         predict = (predict > self.threshold).astype(int)
-        label = self.to_numpy(label)
+        label = self.to_np_format(label)
         recall = recall_score(label, predict)
         return EvalResult(self.metric_name, recall)
 
@@ -113,9 +105,9 @@ class BinaryPrecision(MultiPrecision, BinaryMetricWithThreshold):
     metric_name = 'binary_precision'
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
+        predict = self.to_np_format(predict)
         predict = (predict > self.threshold).astype(int)
-        label = self.to_numpy(label)
+        label = self.to_np_format(label)
         precision = precision_score(label, predict)       
         return EvalResult(self.metric_name, precision)
 
@@ -129,8 +121,8 @@ class MultiF1Score(Metric):
         self.average = average
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict, flatten=False)
+        label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
         f1 = f1_score(label, predict, average=self.average)  
@@ -146,9 +138,9 @@ class BinaryF1Score(MultiF1Score, BinaryMetricWithThreshold):
         self.threshold = threshold
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
+        predict = self.to_np_format(predict)
         predict = (predict > self.threshold).astype(int)
-        label = self.to_numpy(label)
+        label = self.to_np_format(label)
         f1 = f1_score(label, predict, average=self.average)
         return EvalResult(self.metric_name, f1)
 
@@ -274,6 +266,9 @@ class BiClassMetric(object):
         self.pos_label = pos_label
 
     def prepare_confusion_mat(self, labels, scores, add_to_end=True, ):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info('labels are {}, scores are {}'.format(labels, scores))
         sorted_labels, sorted_scores = sort_score_and_label(labels, scores)
 
         score_threshold, cuts = None, None
@@ -314,8 +309,8 @@ class KS(Metric):
         super().__init__()
 
     def __call__(self, predict, label, **kwargs) -> Dict:
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         
         sorted_labels, sorted_scores = sort_score_and_label(label, predict)
         threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
@@ -349,8 +344,8 @@ class ConfusionMatrix(Metric):
 
     def __call__(self, predict, label, **kwargs):
 
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         
         sorted_labels, sorted_scores = sort_score_and_label(label, predict)
         threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
@@ -418,7 +413,9 @@ class Lift(Metric, BiClassMetric):
         return lifts_y, lifts_x
 
     def __call__(self, predict, label, **kwargs):
-
+        
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(label, predict, add_to_end=False, )
 
         lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(label), )
@@ -484,6 +481,8 @@ class Gain(Metric, BiClassMetric):
 
     def __call__(self, predict, label, **kwargs):
 
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(label, predict, add_to_end=False, )
 
         gain_y, gain_x = self.compute_metric_from_confusion_mat(confusion_mat, len(label))
@@ -519,6 +518,8 @@ class BiClassPrecisionTable(Metric, BiClassMetric):
         return precision_scores
     
     def __call__(self, predict, label, **kwargs) -> Dict:
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         p, threshold, cuts = self.compute(label, predict)
         return EvalResult(self.metric_name, pd.DataFrame({
             'p': p,
@@ -543,6 +544,8 @@ class BiClassRecallTable(Metric, BiClassMetric):
         return recall_scores
 
     def __call__(self, predict, label, **kwargs) -> Dict:
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         r, threshold, cuts = self.compute(label, predict)
         return EvalResult(self.metric_name, pd.DataFrame({
             'r': r,
@@ -573,6 +576,8 @@ class BiClassAccuracyTable(Metric, BiClassMetric):
         return rs[:-1]
 
     def __call__(self, predict, label, **kwargs) -> Dict:
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
         accuracy, threshold, cuts = self.compute(label, predict)
         return EvalResult(self.metric_name, pd.DataFrame({
             'accuracy': accuracy,
@@ -590,8 +595,8 @@ class FScoreTable(Metric):
 
     def __call__(self, predict, label, beta=1):
 
-        predict = self.to_numpy(predict)
-        label = self.to_numpy(label)
+        predict = self.to_np_format(predict)
+        label = self.to_np_format(label)
 
         sorted_labels, sorted_scores = sort_score_and_label(label, predict)
         _, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)

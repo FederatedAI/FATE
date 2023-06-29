@@ -63,25 +63,23 @@ def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
     return sub_ctx
 
 
-def get_input_data(
-    stage,
-    cpn_input_data,
-    save_path,
-    input_type="df",
-):
-    if stage == "train":
+def get_input_data(stage, cpn_input_data, fate_save_path='./', saved_model_path=None,
+                  input_type='df',):
+    if stage == 'train':
         train_data, validate_data = cpn_input_data
         if input_type == "df":
             train_data = train_data.read()
             if validate_data is not None:
                 validate_data = validate_data.read()
 
-        return NNInput(train_data=train_data, validate_data=validate_data)
-
-    elif stage == "predict":
+        return NNInput(train_data=train_data, validate_data=validate_data, 
+                       fate_save_path=fate_save_path, saved_model_path=saved_model_path)
+    
+    elif stage == 'predict':
         test_data = cpn_input_data
         test_data = test_data.read()
-        return NNInput(test_data=test_data)
+        return NNInput(test_data=test_data,  
+                       fate_save_path=fate_save_path, saved_model_path=saved_model_path)
     else:
         raise ValueError(f"Unknown stage {stage}")
 
@@ -90,14 +88,18 @@ def get_input_data(
 Output functions
 """
 
-
-def model_output(runner_module, runner_class, runner_conf, source, model_output_path):
+def get_model_output_conf(runner_module,
+                 runner_class,
+                 runner_conf,
+                 source,
+                 model_output_path
+                ):
     return {
         "runner_module": runner_module,
         "runner_class": runner_class,
         "runner_conf": runner_conf,
         "source": source,
-        "model_output_path": model_output_path,
+        "saved_model_path": model_output_path,
     }
 
 
@@ -142,6 +144,30 @@ def handle_nn_output(ctx, nn_output: NNOutput, output_class, stage):
         logger.warning("train output is not NNOutput, but {}, fail to output dataframe".format(type(nn_output)))
 
 
+def warmstart_prepare(model_conf, runner_class, runner_module, runner_conf, source):
+
+    logger.info("loaded model_conf is: {}".format(model_conf))
+    if "saved_model_path" in model_conf:
+        saved_model_path = model_conf["saved_model_path"]
+    if "source" in model_conf:
+        if source is None:
+            source = model_conf["source"]
+    
+    runner_class_, runner_module_ = model_conf['runner_class'], model_conf['runner_module']
+    if runner_class_ == runner_class and runner_module_ == runner_module:
+        if "runner_conf" in model_conf:
+            saved_conf = model_conf['runner_conf']
+            saved_conf.update(runner_conf)
+            runner_conf = saved_conf
+            logger.info("runner_conf is updated: {}".format(runner_conf))
+    else:
+        logger.warning("runner_class or runner_module is not equal to the saved model, "
+                        "use the new runner_conf, runner_class and runner module to train the model,\
+                        saved module & class: {} {}, new module & class: {} {}".format(runner_module_, runner_class_, runner_module, runner_class))
+
+    return runner_conf, source, runner_class, runner_module, saved_model_path
+
+
 @cpn.component(roles=[GUEST, HOST, ARBITER])
 def homo_nn(ctx, role):
     ...
@@ -151,32 +177,40 @@ def homo_nn(ctx, role):
 def train(
     ctx: Context,
     role: Role,
-    train_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
     validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
     runner_module: cpn.parameter(type=str, default="default_runner", desc="name of your runner script"),
     runner_class: cpn.parameter(type=str, default="DefaultRunner", desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
-    data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
-    # metric_output: cpn.json_metric_output(roles=[GUEST, HOST]),
-    model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
+    train_data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
+    train_model_output: cpn.model_directory_output(roles=[GUEST, HOST]),
+    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
 ):
 
     runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
     sub_ctx = prepare_context_and_role(runner, ctx, role, consts.TRAIN)
 
     if role.is_guest or role.is_host:  # is client
+        
+        saved_model_path=None
+        if train_model_input is not None:
+            model_conf = train_model_input.get_metadata()
+            runner_conf, source, runner_class, runner_module, saved_model_path = warmstart_prepare(model_conf, runner_class, runner_module, runner_conf, source)
 
-        output_path = model_output.get_directory()
-        input_data = get_input_data(consts.TRAIN, [train_data, validate_data], output_path)
+        output_path = train_model_output.get_directory()
+        input_data = get_input_data(consts.TRAIN, [train_data, validate_data], output_path, saved_model_path)
         ret: NNOutput = runner.train(input_data=input_data)
         logger.info("train result: {}".format(ret))
-        handle_nn_output(sub_ctx, ret, data_output, consts.TRAIN)
-        output_conf = model_output(runner_module, runner_class, runner_conf, source, output_path)
+        handle_nn_output(sub_ctx, ret, train_data_output, consts.TRAIN)
+        output_conf = get_model_output_conf(runner_module,
+                                            runner_class,
+                                            runner_conf,
+                                            source,
+                                            output_path)
         logger.info("output_path: {}".format(output_conf))
-        model_output.write_metadata(output_conf)
-        metric_output.write({"nn_conf": output_conf})
-
+        train_model_output.write_metadata(output_conf)
+        
     elif role.is_arbiter:  # is server
         runner.train()
 
@@ -185,24 +219,24 @@ def train(
 def predict(
     ctx,
     role: Role,
-    test_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-    model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
-    data_output: cpn.dataframe_output(roles=[GUEST, HOST]),
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
+    predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
 
     if role.is_guest or role.is_host:  # is client
 
-        model_conf = model_input.get_metadata()
-        runner_module = model_conf["runner_module"]
-        runner_class = model_conf["runner_class"]
-        runner_conf = model_conf["runner_conf"]
-        source = model_conf["source"]
+        model_conf = predict_model_input.get_metadata()
+        runner_module = model_conf['runner_module']
+        runner_class = model_conf['runner_class']
+        runner_conf = model_conf['runner_conf']
+        source = model_conf['source']
 
         runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
         sub_ctx = prepare_context_and_role(runner, ctx, role, consts.PREDICT)
         input_data = get_input_data(consts.PREDICT, test_data)
         ret: NNOutput = runner.predict(input_data)
-        handle_nn_output(sub_ctx, ret, data_output, consts.PREDICT)
+        handle_nn_output(sub_ctx, ret, predict_data_output, consts.PREDICT)
 
     elif role.is_arbiter:  # is server
         logger.info("arbiter skip predict")

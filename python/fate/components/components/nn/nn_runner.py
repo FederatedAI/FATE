@@ -88,7 +88,7 @@ class NNInput:
             self.test_data = test_data
             self.test_ids = SampleIDs()
 
-        self.model_path = saved_model_path
+        self.saved_model_path = saved_model_path
         self.fate_save_path = fate_save_path
 
     def _extract_fate_df(self, df: DataFrame):
@@ -113,8 +113,8 @@ class NNInput:
     def get_test_data(self) -> Union[pd.DataFrame, str]:
         return self.test_data
     
-    def get_model_path(self) -> str:
-        return self.model_path
+    def get_saved_model_path(self) -> str:
+        return self.saved_model_path
     
     def get_fate_save_path(self) -> str:
         return self.fate_save_path
@@ -136,7 +136,7 @@ class NNInput:
     
     def __repr__(self) -> str:
         return f"NNInput(\ntrain_data={self.train_data},\nvalidate_data={self.validate_data}, \
-        \ntest_data={self.test_data},\nmodel_path={self.model_path},\nfate_save_path={self.fate_save_path}\n)"
+        \ntest_data={self.test_data},\nmodel_path={self.saved_model_path},\nfate_save_path={self.fate_save_path}\n)"
 
 
 

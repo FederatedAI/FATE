@@ -5,6 +5,9 @@ import torch
 import numpy as np
 from typing import Union
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 SINGLE_VALUE = 'single_value'
@@ -61,13 +64,21 @@ class Metric(object):
     def __call__(self, predict, label, **kwargs) -> EvalResult:
         pass
 
-    def to_numpy(self, data):
+    def to_np_format(self, data, flatten=True):
+
         if isinstance(data, list):
-            return np.array(data)
+            ret = np.array(data)
         elif isinstance(data, torch.Tensor):
-            return data.detach().cpu().numpy()
+            ret = data.detach().cpu().numpy()
+        elif isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
+            ret = np.array(data.values.tolist())
         else:
-            return data
+            ret = data
+        
+        if flatten:
+            ret = ret.flatten()
+        
+        return ret.astype(np.float64)
 
 
 class MetricEnsemble(object):
@@ -107,6 +118,7 @@ class MetricEnsemble(object):
 
         for metric in self._metrics:
             rs = metric(predict, label)
+            logger.info('metric: {}, result: {}'.format(metric.metric_name, rs))
             if isinstance(rs, tuple):
                 new_rs = [r.to_dict() for r in rs]
                 rs = new_rs
