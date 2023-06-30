@@ -26,7 +26,7 @@ from fate.ml.utils._optimizer import Optimizer, LRScheduler
 logger = logging.getLogger(__name__)
 
 
-class HeteroLrModuleHost(HeteroModule):
+class CoordinatedLRModuleHost(HeteroModule):
     def __init__(
             self,
             max_iter,
@@ -67,19 +67,19 @@ class HeteroLrModuleHost(HeteroModule):
             for i, class_ctx in ctx.range(range(self.label_count)):
                 optimizer = copy.deepcopy(self.optimizer)
                 lr_scheduler = copy.deepcopy(self.lr_scheduler)
-                single_estimator = HeteroLrEstimatorHost(max_iter=self.max_iter,
-                                                         batch_size=self.batch_size,
-                                                         optimizer=optimizer,
-                                                         learning_rate_scheduler=lr_scheduler,
-                                                         init_param=self.init_param)
+                single_estimator = CoordinatedLREstimatorHost(max_iter=self.max_iter,
+                                                              batch_size=self.batch_size,
+                                                              optimizer=optimizer,
+                                                              learning_rate_scheduler=lr_scheduler,
+                                                              init_param=self.init_param)
                 single_estimator.fit_single_model(class_ctx, encryptor, train_data, validate_data)
                 self.estimator[i] = single_estimator
         else:
-            single_estimator = HeteroLrEstimatorHost(max_iter=self.max_iter,
-                                                     batch_size=self.batch_size,
-                                                     optimizer=self.optimizer,
-                                                     learning_rate_scheduler=self.lr_scheduler,
-                                                     init_param=self.init_param)
+            single_estimator = CoordinatedLREstimatorHost(max_iter=self.max_iter,
+                                                          batch_size=self.batch_size,
+                                                          optimizer=self.optimizer,
+                                                          learning_rate_scheduler=self.lr_scheduler,
+                                                          init_param=self.init_param)
             single_estimator.fit_single_model(ctx, encryptor, train_data, validate_data)
             self.estimator = single_estimator
 
@@ -105,25 +105,25 @@ class HeteroLrModuleHost(HeteroModule):
         }
 
     @classmethod
-    def from_model(cls, model) -> "HeteroLrModuleHost":
-        lr = HeteroLrModuleHost(**model["metadata"])
+    def from_model(cls, model) -> "CoordinatedLRModuleHost":
+        lr = CoordinatedLRModuleHost(**model["metadata"])
         lr.label_count = model["label_count"]
         lr.ovr = model["ovr"]
 
         all_estimator = model["estimator"]
         if lr.ovr:
             lr.estimator = {
-                label: HeteroLrEstimatorHost().restore(d) for label, d in all_estimator.items()
+                label: CoordinatedLREstimatorHost().restore(d) for label, d in all_estimator.items()
             }
         else:
-            estimator = HeteroLrEstimatorHost()
+            estimator = CoordinatedLREstimatorHost()
             estimator.restore(all_estimator)
             lr.estimator = estimator
 
         return lr
 
 
-class HeteroLrEstimatorHost(HeteroModule):
+class CoordinatedLREstimatorHost(HeteroModule):
     def __init__(
             self,
             max_iter=None,

@@ -37,7 +37,7 @@ def raw_intersect_guest(ctx, input_data, output_data):
     data = input_data.read()
     guest_intersect_obj = RawIntersectionGuest()
     intersect_data = guest_intersect_obj.fit(ctx, data)
-    ctx.writer(output_data).write_dataframe(intersect_data)
+    output_data.write(intersect_data)
 
 
 def raw_intersect_host(ctx, input_data, output_data):
@@ -46,4 +46,4 @@ def raw_intersect_host(ctx, input_data, output_data):
     data = input_data.read()
     host_intersect_obj = RawIntersectionHost()
     intersect_data = host_intersect_obj.fit(ctx, data)
-    ctx.writer(output_data).write_dataframe(intersect_data)
+    output_data.write(intersect_data)

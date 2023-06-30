@@ -29,7 +29,7 @@ def train(
         ctx: Context,
         role: Role,
         train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        validate_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
         learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
                                                default=params.LRSchedulerParam(method="constant"),
                                                desc="learning rate scheduler, "
@@ -51,7 +51,6 @@ def train(
                                   default=params.InitParam(method='zeros', fit_intercept=True),
                                   desc="Model param init setting."),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        train_output_metric: cpn.json_metric_output(roles=[ARBITER]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
@@ -65,8 +64,7 @@ def train(
             batch_size, optimizer, learning_rate_scheduler, init_param
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer, learning_rate_scheduler,
-                      train_output_metric)
+        train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
 
 
 @hetero_linr.predict()
@@ -98,12 +96,12 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
-            model_writer.write_model("hetero_linr_guest", model, metadata={})
+            model_writer.write_model("hetero_linr_host", model, metadata={})
 
     with ctx.sub_ctx("predict") as sub_ctx:
         predict_score = module.predict(sub_ctx, validate_data)
         predict_result = transform_to_predict_result(validate_data, predict_score, data_type="train")
-        sub_ctx.writer(train_output_data).write_dataframe(predict_result)
+        train_output_data.write(predict_result)
 
 
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, batch_size,
@@ -127,10 +125,8 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
 
 
 def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param,
-                  learning_rate_param, train_output_metric):
+                  learning_rate_param):
     from fate.ml.glm.hetero_linr import HeteroLinRModuleArbiter
-
-    ctx.metrics.handler.register_metrics(linr_loss=ctx.writer(train_output_metric))
 
     with ctx.sub_ctx("train") as sub_ctx:
         module = HeteroLinRModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
