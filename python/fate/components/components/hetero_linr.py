@@ -92,9 +92,9 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         module = HeteroLinRModuleGuest(max_iter=max_iter, batch_size=batch_size,
                                        optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                        init_param=init_param)
-        train_data = sub_ctx.reader(train_data).read_dataframe()
+        train_data = train_data.read()
         if validate_data is not None:
-            validate_data = sub_ctx.reader(validate_data).read_dataframe()
+            validate_data = validate_data.read()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
@@ -115,9 +115,9 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module = HeteroLinRModuleHost(max_iter=max_iter, batch_size=batch_size,
                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                       init_param=init_param)
-        train_data = sub_ctx.reader(train_data).read_dataframe()
+        train_data = train_data.read()
         if validate_data is not None:
-            validate_data = sub_ctx.reader(validate_data).read_dataframe()
+            validate_data = validate_data.read()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
@@ -146,7 +146,7 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
             model = model_reader.read_model()
 
         module = HeteroLinRModuleGuest.from_model(model)
-        test_data = sub_ctx.reader(test_data).read_dataframe()
+        test_data = test_data.read()
         predict_score = module.predict(sub_ctx, test_data)
         predict_result = transform_to_predict_result(test_data, predict_score, data_type="predict")
         sub_ctx.writer(test_output_data).write_dataframe(predict_result)
@@ -159,7 +159,7 @@ def predict_host(ctx, input_model, test_data, test_output_data):
         with input_model as model_reader:
             model = model_reader.read_model()
         module = HeteroLinRModuleHost.from_model(model)
-        test_data = sub_ctx.reader(test_data).read_dataframe()
+        test_data = test_data.read()
         module.predict(sub_ctx, test_data)
 
 
