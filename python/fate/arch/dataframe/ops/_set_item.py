@@ -51,7 +51,7 @@ def set_label_or_weight(df: "DataFrame", item: "DataFrame", key_type="label"):
                                            for bid, block in enumerate(blocks1)]
         )
         if data_manager.blocks[block_id].block_type < other_block_type:
-            data_manager = data_manager.blocks[block_id].convert_block_type(other_block_type)
+            data_manager.blocks[block_id].convert_block_type(other_block_type)
     else:
         data_manager.add_label_or_weight(key_type=key_type,
                                          name=other_field_names[0],
