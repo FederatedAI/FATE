@@ -80,7 +80,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
             self.ovr = True
             self.estimator = {}
             # train_data_binarized_label = train_data.label.one_hot()
-            for i, class_ctx in ctx.range(range(label_count)):
+            for i, class_ctx in ctx.ctxs_range(label_count):
                 optimizer = copy.deepcopy(self.optimizer)
                 single_estimator = CoordinatedLREstimatorGuest(max_iter=self.max_iter,
                                                                batch_size=self.batch_size,
@@ -218,19 +218,20 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             self.start_iter = self.end_iter + 1
         """if train_data.weight:
             self.with_weight = True"""
-        """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
-        # temp code start
-        for i, iter_ctx in ctx.range(self.max_iter):
+
+        for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
+            # temp code start
+            # for i, iter_ctx in ctx.range(self.max_iter):
             # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set iters{i}")
             # todo: if self.with_weight: include weight in batch result
-            # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
-            # temp code start
-            # for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
-            for batch_ctx, X, Y in [(iter_ctx, train_data, train_data.label)]:
+            for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
+                # temp code start
+                # for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
+                # for batch_ctx, X, Y in [(iter_ctx, train_data, train_data.label)]:
                 # temp code end
                 logger.info(f"X: {X}, Y: {Y}")
                 # temp code start

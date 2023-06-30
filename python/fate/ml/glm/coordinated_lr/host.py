@@ -64,7 +64,7 @@ class CoordinatedLRModuleHost(HeteroModule):
         if self.label_count > 2:
             self.ovr = True
             self.estimator = {}
-            for i, class_ctx in ctx.range(range(self.label_count)):
+            for i, class_ctx in ctx.ctxs_range(self.label_count):
                 optimizer = copy.deepcopy(self.optimizer)
                 lr_scheduler = copy.deepcopy(self.lr_scheduler)
                 single_estimator = CoordinatedLREstimatorHost(max_iter=self.max_iter,
@@ -159,17 +159,17 @@ class CoordinatedLREstimatorHost(HeteroModule):
         batch_loader = DataLoader(train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
-        """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
-        # temp code start
-        for i, iter_ctx in ctx.range(self.max_iter):
+        for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
+            # temp code start
+            # for i, iter_ctx in ctx.range(self.max_iter):
             # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set iters{i}")
             # temp code start
-            # for batch_ctx, X in iter_ctx.iter(batch_loader):
-            for batch_ctx, X in zip([iter_ctx], [train_data]):
+            for batch_ctx, X in iter_ctx.iter(batch_loader):
+                # for batch_ctx, X in zip([iter_ctx], [train_data]):
                 # temp code end
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")
