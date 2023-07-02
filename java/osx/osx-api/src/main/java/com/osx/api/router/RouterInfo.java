@@ -19,7 +19,6 @@ import com.osx.api.constants.Protocol;
 
 
 
-
 public class RouterInfo {
     private Protocol protocol;
     private String sourcePartyId;
@@ -179,10 +178,10 @@ public class RouterInfo {
         return sb.toString();
     }
 
-//    @Override
-//    public String toString() {
-//        return JsonUtil.object2Json(this);
-//    }
+    @Override
+    public String toString() {
+        return  toKey();
+    }
 
     public String getResource() {
         StringBuilder sb = new StringBuilder();

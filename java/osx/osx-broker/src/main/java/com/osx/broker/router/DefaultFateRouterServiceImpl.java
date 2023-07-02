@@ -26,10 +26,7 @@ import com.osx.broker.util.TelnetUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.datasource.FileRefreshableDataSource;
-import com.osx.core.exceptions.CycleRouteInfoException;
-import com.osx.core.exceptions.ErrorMessageUtil;
-import com.osx.core.exceptions.ExceptionInfo;
-import com.osx.core.exceptions.InvalidRouteInfoException;
+import com.osx.core.exceptions.*;
 import com.osx.core.flow.PropertyListener;
 import com.osx.core.frame.Lifecycle;
 import com.osx.core.frame.ServiceThread;
@@ -369,10 +366,19 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         @Override
         public void configLoad(String value) {
             Map confJson = JsonUtil.json2Object(value, Map.class);
-            Map content = (Map) confJson.get("route_table");
-            endPointMap = initRouteTable(content);
-            logger.info("load router config {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
-        }
+            if(confJson!=null){
+
+               // throw new ConfigErrorException("content of route_table.json is invalid");
+
+                Map content = (Map) confJson.get("route_table");
+                endPointMap = initRouteTable(content);
+                logger.info("load router config {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
+
+            }else{
+                logger.error("content of route_table.json is invalid , content is {}",value);
+
+            }
+                   }
     }
 
 

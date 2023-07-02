@@ -56,7 +56,9 @@ public class GrpcConnectionFactory {
                 return managedChannelPool.get(routerInfo.toKey());
             } else {
                 ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
-                managedChannelPool.put(routerInfo.toKey(), managedChannel);
+                if(managedChannel!=null) {
+                    managedChannelPool.put(routerInfo.toKey(), managedChannel);
+                }
                 return managedChannel;
             }
         }else{
@@ -111,7 +113,7 @@ public class GrpcConnectionFactory {
             }
             return channelBuilder.build();
         } catch (Exception e) {
-            logger.error("create channel error : ", e);
+            logger.error("create channel to {} error : ",routerInfo, e);
             //e.printStackTrace();
         }
         return null;

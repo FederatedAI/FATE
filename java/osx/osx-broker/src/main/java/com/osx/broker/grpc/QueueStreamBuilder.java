@@ -73,9 +73,9 @@ public class QueueStreamBuilder {
 
         String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX + srcPartyId+"_"+desPartyId+"_"+now+"_"+temp;
         String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX + srcPartyId+"_"+desPartyId+"_"+now+"_"+temp;
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-        context.putData(Dict.BLOCKING_STUB,stub);
+ //       ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+//        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+//        context.putData(Dict.BLOCKING_STUB,stub);
         context.setTopic(sendTopic);
         context.setActionType(ActionType.MSG_REDIRECT.getAlias());
         CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(backTopic, sessionId, true);
