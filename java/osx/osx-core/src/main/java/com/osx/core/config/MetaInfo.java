@@ -182,6 +182,8 @@ public class MetaInfo {
     public static String PROPERTY_FLOW_RULE_TABLE = "broker/flowRule.json";
     @Config(confKey = "use.zookeeper", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_USE_ZOOKEEPER = true;
+    @Config(confKey = "open.route.cycle.checker", pattern = Dict.BOOLEAN_PATTERN)
+    public static Boolean PROPERTY_OPEN_ROUTE_CYCLE_CHECKER = false;
 
     @Config(confKey = "zookeeper.acl.enable", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_ACL_ENABLE = false;
@@ -194,6 +196,7 @@ public class MetaInfo {
     @Config(confKey = "queue.check.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 60 * 1000 * 10;
     public static String INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_GRPC_PORT;
+
 
 
 

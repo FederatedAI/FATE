@@ -330,20 +330,23 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     private boolean checkCycle(String ip, int port) {
 
         boolean cycle = false;
-        String localIp = MetaInfo.INSTANCE_ID.split(":")[0];
 
-        if (localIp.equals(ip) || Dict.LOCALHOST.equals(ip) || Dict.LOCALHOST2.equals(ip)) {
-            if (MetaInfo.PROPERTY_GRPC_PORT == (port)) {
-                cycle = true;
-            }
-            if (MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER) {
-                if (MetaInfo.PROPERTY_GRPC_TLS_PORT == port) {
+        if(MetaInfo.PROPERTY_OPEN_ROUTE_CYCLE_CHECKER) {
+            String localIp = MetaInfo.INSTANCE_ID.split(":")[0];
+
+            if (localIp.equals(ip) || Dict.LOCALHOST.equals(ip) || Dict.LOCALHOST2.equals(ip)) {
+                if (MetaInfo.PROPERTY_GRPC_PORT == (port)) {
                     cycle = true;
                 }
-            }
-            if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
-                if (MetaInfo.PROPERTY_HTTP_PORT == (port)) {
-                    cycle = true;
+                if (MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER) {
+                    if (MetaInfo.PROPERTY_GRPC_TLS_PORT == port) {
+                        cycle = true;
+                    }
+                }
+                if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
+                    if (MetaInfo.PROPERTY_HTTP_PORT == (port)) {
+                        cycle = true;
+                    }
                 }
             }
         }

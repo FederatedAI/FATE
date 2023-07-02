@@ -52,7 +52,7 @@ public class GrpcConnectionFactory {
         if(usePooled) {
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
                 ManagedChannel targetChannel = managedChannelPool.get(routerInfo.toKey());
-                logger.info("channel  is shutdown : {} isTerminated {}",targetChannel.isShutdown() ,targetChannel.isTerminated() ,targetChannel.getState(true));
+               // logger.info("channel  is shutdown : {} isTerminated {}",targetChannel.isShutdown() ,targetChannel.isTerminated() ,targetChannel.getState(true));
                 return managedChannelPool.get(routerInfo.toKey());
             } else {
                 ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
