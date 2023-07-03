@@ -66,7 +66,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
-        self.labels = [label_name.split('_')[1] for label_name in label_count.columns]
+        self.labels = [label_name.split('_')[1] for label_name in train_data_binarized_label.columns]
         with_weight = train_data.weight is not None
         """
         # temp code start
@@ -219,16 +219,16 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         """if train_data.weight:
             self.with_weight = True"""
 
-        for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
-            # temp code start
-            # for i, iter_ctx in ctx.range(self.max_iter):
+        # for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
+        # temp code start
+        for i, iter_ctx in ctx.ctxs_range(self.max_iter):
             # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set iters{i}")
             # todo: if self.with_weight: include weight in batch result
-            for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
+            for batch_ctx, (X, Y) in iter_ctx.ctxs_zip(batch_loader):
                 # temp code start
                 # for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
                 # for batch_ctx, X, Y in [(iter_ctx, train_data, train_data.label)]:
@@ -266,8 +266,9 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 g = self.optimizer.add_regular_to_grad(X.T @ d, w, self.init_param.fit_intercept)
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
-                # @todo: optimizer.step()?
+                # self.optimizer.step(g)
                 w = self.optimizer.update_weights(w, g, self.init_param.fit_intercept, self.lr_scheduler.lr)
+
                 logger.info(f"w={w}")
                 j += 1
             self.is_converged = ctx.arbiter("converge_flag").get()

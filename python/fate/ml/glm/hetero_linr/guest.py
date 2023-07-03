@@ -119,7 +119,7 @@ class HeteroLinrEstimatorGuest(HeteroModule):
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
             # with_weight=True
-        )  # @todo: include batch weight
+        )
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
         for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):
@@ -127,7 +127,7 @@ class HeteroLinrEstimatorGuest(HeteroModule):
             j = 0
             self.optimizer.set_iters(i)
             # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
-            for batch_ctx, X, Y in iter_ctx.iter(batch_loader):
+            for batch_ctx, X, Y in iter_ctx.ctxs_zip(batch_loader):
                 h = X.shape[0]
                 Xw = torch.matmul(X, w)
                 d = Xw - Y
