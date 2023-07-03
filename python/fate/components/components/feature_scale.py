@@ -37,31 +37,31 @@ def feature_scale_train(
                  "take either dict in format: {col_name: [min, max]} for specific columns "
                  "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]",
     ),
-    scale_col: cpn.parameter(
-        type=List[str],
-        default=None,
-        optional=True,
-        desc="list of column names to be scaled, if None, all columns will be scaled; "
-             "only one of {scale_col, scale_idx} should be specified",
-    ),
-    scale_idx: cpn.parameter(
-        type=List[params.conint(ge=0)],
-        default=None,
-        optional=True,
-        desc="list of column index to be scaled, if None, all columns will be scaled; "
-             "only one of {scale_col, scale_idx} should be specified",
-    ),
-    strict_range: cpn.parameter(
-        type=bool,
-        default=True,
-        desc="whether transformed value to be strictly restricted within given range; "
-        "effective for 'min_max' scale method only",
-    ),
-    use_anonymous: cpn.parameter(
-        type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
-    ),
-    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-    output_model: cpn.dataframe_output(roles=[GUEST, HOST]),
+        scale_col: cpn.parameter(
+            type=List[str],
+            default=None,
+            optional=True,
+            desc="list of column names to be scaled, if None, all columns will be scaled; "
+                 "only one of {scale_col, scale_idx} should be specified",
+        ),
+        scale_idx: cpn.parameter(
+            type=List[params.conint(ge=0)],
+            default=None,
+            optional=True,
+            desc="list of column index to be scaled, if None, all columns will be scaled; "
+                 "only one of {scale_col, scale_idx} should be specified",
+        ),
+        strict_range: cpn.parameter(
+            type=bool,
+            default=True,
+            desc="whether transformed value to be strictly restricted within given range; "
+                 "effective for 'min_max' scale method only",
+        ),
+        use_anonymous: cpn.parameter(
+            type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
+        ),
+        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     train(
         ctx,
@@ -104,37 +104,35 @@ def train(
 
     train_data = train_data.read()
 
-    with ctx.sub_ctx("train") as sub_ctx:
-        columns = train_data.schema.columns.to_list()
-        anonymous_columns = None
-        if use_anonymous:
-            anonymous_columns = train_data.schema.anonymous_columns.to_list()
-            if method != "min_max":
-                feature_range = None
-        scale_col, feature_range = get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_range)
+    sub_ctx = ctx.sub_ctx("train")
+    columns = train_data.schema.columns.to_list()
+    anonymous_columns = None
+    if use_anonymous:
+        anonymous_columns = train_data.schema.anonymous_columns.to_list()
+        if method != "min_max":
+            feature_range = None
+    scale_col, feature_range = get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_range)
 
-        scaler = FeatureScale(method, scale_col, feature_range, strict_range)
-        scaler.fit(sub_ctx, train_data)
+    scaler = FeatureScale(method, scale_col, feature_range, strict_range)
+    scaler.fit(sub_ctx, train_data)
 
-        model = scaler.to_model()
-        with output_model as model_writer:
-            model_writer.write_model("feature_scale", model, metadata={})
+    model = scaler.to_model()
+    output_model.write(model, metadata={"model_type": "feature_scale"})
 
-    with ctx.sub_ctx("predict") as sub_ctx:
-        output_data = scaler.transform(sub_ctx, train_data)
-        train_output_data.write(output_data)
+    sub_ctx = ctx.sub_ctx("predict")
+    output_data = scaler.transform(sub_ctx, train_data)
+    train_output_data.write(output_data)
 
 
 def predict(ctx, input_model, test_data, test_output_data):
     from fate.ml.preprocessing import FeatureScale
 
-    with ctx.sub_ctx("predict") as sub_ctx:
-        with input_model as model_reader:
-            model = model_reader.read_model()
-        scaler = FeatureScale.from_model(model)
-        test_data = test_data.read()
-        output_data = scaler.transform(sub_ctx, test_data)
-        test_output_data.write(output_data)
+    sub_ctx = ctx.sub_ctx("predict")
+    model = input_model.read()
+    scaler = FeatureScale.from_model(model)
+    test_data = test_data.read()
+    output_data = scaler.transform(sub_ctx, test_data)
+    test_output_data.write(output_data)
 
 
 def get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_range):
