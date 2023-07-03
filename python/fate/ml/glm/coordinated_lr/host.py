@@ -169,13 +169,9 @@ class CoordinatedLREstimatorHost(HeteroModule):
             logger.info(f"self.optimizer set iters{i}")
             # temp code start
             for batch_ctx, X in iter_ctx.ctxs_zip(batch_loader):
-                # for batch_ctx, X in zip([iter_ctx], [train_data]):
                 # temp code end
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")
-                # temp code start
-                # X = X.values.as_tensor()
-                # temp code end
                 Xw_h = 0.25 * torch.matmul(X, w)
                 if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
                     Xw_h = self.optimizer.add_regular_to_grad(Xw_h, w)
@@ -226,4 +222,3 @@ class CoordinatedLREstimatorHost(HeteroModule):
         self.lr_scheduler.load_state_dict(model["lr_scheduler"])
         self.end_iter = model["end_iter"]
         self.is_converged = model["is_converged"]
-        # self.start_iter = model["end_iter"] + 1
