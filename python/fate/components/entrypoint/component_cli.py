@@ -74,13 +74,18 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_
 
 
 @component.command()
-@click.option("--process-tag", required=True, help="unique id to identify this execution process")
+@click.option("--process-tag", required=False, help="unique id to identify this execution process")
 @click.option("--config", required=False, type=click.File(), help="config path")
-def cleanup(process_tag, config):
+@click.option("--env-name", required=False, type=str, help="env name for config")
+def cleanup(process_tag, config, env_name):
     from fate.components.core.spec.task import TaskCleanupConfigSpec
     from fate.components.entrypoint.component import cleanup_component_execution
 
-    cleanup_component_execution(TaskCleanupConfigSpec.parse_obj(config))
+    configs = {}
+    configs = load_config_from_env(configs, env_name)
+    load_config_from_file(configs, config)
+
+    cleanup_component_execution(TaskCleanupConfigSpec.parse_obj(configs))
 
 
 def load_properties(properties) -> dict:

@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 def cleanup_component_execution(config: TaskCleanupConfigSpec):
     try:
+        print("start destroy")
         computing = load_computing(config.computing)
         federation = load_federation(config.federation, computing)
         ctx = Context(
@@ -41,8 +42,9 @@ def cleanup_component_execution(config: TaskCleanupConfigSpec):
             federation=federation,
         )
         ctx.destroy()
+        print("destroy done")
     except Exception as e:
-        traceback.print_exception(e)
+        traceback.format_exc()
         raise e
 
 
