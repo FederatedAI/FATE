@@ -12,18 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import argparse
 import json
 
 from fate_client.pipeline import StandalonePipeline, FateFlowPipeline
-from fate_client.pipeline.components.fate import FeatureScale
 from fate_client.pipeline.components.fate import Intersection
-from fate_client.pipeline.components.fate import Reader
 from fate_client.pipeline.components.fate import Statistics
 from fate_client.pipeline.utils import test_utils
 
 
-def main(config="./config.yaml", namespace=""):
+def main():
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
 
@@ -108,11 +105,4 @@ def main(config="./config.yaml", namespace=""):
     print(json.dumps(pipeline.get_task_info("statistics_0").get_output_model(), indent=4))
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str, default="",
-                        help="config file")
-    parser.add_argument("-namespace", type=str, default="",
-                        help="namespace for data stored in FATE")
-    args = parser.parse_args()
-    main(config=args.config, namespace=args.namespace)
+main()
