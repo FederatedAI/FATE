@@ -31,7 +31,7 @@ def div(input, other):
 def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
     # swap input and output if input is not DTensor
     if not isinstance(input, DTensor):
-        return _binary(op, other, input, swap_operad=not swap_operad, dtype_promote_to=dtype_promote_to)
+        return _binary(other, input, op, swap_operad=not swap_operad, dtype_promote_to=dtype_promote_to)
 
     if isinstance(other, DTensor):
         if swap_operad:
