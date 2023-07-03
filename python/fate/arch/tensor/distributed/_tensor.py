@@ -15,7 +15,7 @@
 
 import functools
 import typing
-from typing import List, Optional, Tuple, TypeVar, Union, cast
+from typing import List, Optional, Tuple, TypeVar, cast
 
 import torch
 from fate.arch.abc import CTableABC
@@ -43,6 +43,10 @@ class DTensor:
         if func not in _HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, DTensor)) for t in types):
             return NotImplemented
         return _HANDLED_FUNCTIONS[func](*args, **kwargs)
+
+    @property
+    def T(self):
+        return torch.transpose(self, 0, 1)
 
     def __init__(self, shardings: "Shardings") -> None:
         self.shardings = shardings
@@ -292,6 +296,9 @@ class _ShardingShapes:
 
     def __str__(self) -> str:
         return f"<ShardingShape(shapes={self.shapes}, axis={self.axis})>"
+
+    def __repr__(self):
+        return self.__str__()
 
     def bc_shapes(self, other: "_ShardingShapes") -> "_ShardingShapes":
         if isinstance(other, _ShardingShapes):
