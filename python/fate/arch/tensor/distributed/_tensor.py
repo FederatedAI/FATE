@@ -314,7 +314,7 @@ class _ShardingShapes:
                     assert other[other_align_axis] == 1, f"shape in distributed axis should be 1: {self} vs {other}"
             self_axis = len(_bc_shapes[0]) - len(self.shapes[0]) + self.axis
 
-            return _ShardingShapes(_bc_shapes, self.axis)
+            return _ShardingShapes(_bc_shapes, self_axis)
         else:
             raise NotImplementedError(f"type `{other}`")
 

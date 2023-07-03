@@ -41,7 +41,12 @@ def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
 
     # other is local tensor, broadcast to partitions
     else:
-        shapes = input.shardings.shapes.bc_shapes(other.shape)
+        if isinstance(other, torch.Tensor):
+            shapes = input.shardings.shapes.bc_shapes(other.shape)
+        else:
+            # other is scalar
+            shapes = input.shardings.shapes.bc_shapes(torch.Size([]))
+
         if swap_operad:
             return DTensor(
                 input.shardings.map_shard(
