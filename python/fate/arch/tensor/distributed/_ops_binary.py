@@ -50,9 +50,10 @@ def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
         if swap_operad:
             return DTensor(
                 input.shardings.map_shard(
-                    lambda x: op(other, x, dtype_promote_to=dtype_promote_to), shapes=shapes.shapes, axis=shapes.axis
+                    lambda x: op(other, x), dtype_promote_to=dtype_promote_to, shapes=shapes.shapes, axis=shapes.axis
                 )
             )
+
         else:
             return DTensor(
                 input.shardings.map_shard(
