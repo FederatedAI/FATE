@@ -274,10 +274,10 @@ def lr_scheduler_factory(optimizer, method, scheduler_param):
     scheduler_method = method
 
     if scheduler_method == 'constant':
-        return torch.optim.lr_scheduler.ConstantLR(optimizer, **scheduler_params)
+        return torch.optim.lr_scheduler.ConstantLR(optimizer, **scheduler_param)
     elif scheduler_method == 'step':
-        return torch.optim.lr_scheduler.StepLR(optimizer, **scheduler_params)
+        return torch.optim.lr_scheduler.StepLR(optimizer, **scheduler_param)
     elif scheduler_method == 'linear':
-        return torch.optim.lr_scheduler.LinearLR(optimizer, **scheduler_params)
+        return torch.optim.lr_scheduler.LinearLR(optimizer, **scheduler_param)
     else:
         raise NotImplementedError(f"Learning rate method cannot be recognized: {scheduler_method}")
