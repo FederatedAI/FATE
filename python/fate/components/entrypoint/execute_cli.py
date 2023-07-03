@@ -13,19 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import os
-import pathlib
+import typing
 
 import click
 
-
-@click.group()
-def component():
-    """
-    Manipulate components: execute, list, generate describe file
-    """
+if typing.TYPE_CHECKING:
+    from fate.components.core.spec.task import TaskConfigSpec
 
 
-@component.command()
+@click.command()
 @click.option("--process-tag", required=False, help="unique id to identify this execution process")
 @click.option("--config", required=False, type=click.File(), help="config path")
 @click.option("--config-entrypoint", required=False, help="entrypoint to get config")
@@ -67,20 +63,82 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_
     logger.debug("logger installed")
     logger.debug(f"task config: {task_config}")
 
-    from fate.components.entrypoint.component import execute_component_from_config
-
     os.makedirs(os.path.dirname(execution_final_meta_path), exist_ok=True)
     execute_component_from_config(task_config, execution_final_meta_path)
 
 
-@component.command()
-@click.option("--process-tag", required=True, help="unique id to identify this execution process")
-@click.option("--config", required=False, type=click.File(), help="config path")
-def cleanup(process_tag, config):
-    from fate.components.core.spec.task import TaskCleanupConfigSpec
-    from fate.components.entrypoint.component import cleanup_component_execution
+def execute_component_from_config(config: "TaskConfigSpec", output_path):
+    import json
+    import logging
+    import traceback
 
-    cleanup_component_execution(TaskCleanupConfigSpec.parse_obj(config))
+    from fate.arch import Context
+    from fate.components.core import (
+        ComponentExecutionIO,
+        Role,
+        Stage,
+        load_component,
+        load_computing,
+        load_device,
+        load_federation,
+        load_metric_handler,
+    )
+
+    logger = logging.getLogger(__name__)
+    logger.debug(f"logging final status to  `{output_path}`")
+    try:
+        party_task_id = config.party_task_id
+        device = load_device(config.conf.device)
+        computing = load_computing(config.conf.computing)
+        federation = load_federation(config.conf.federation, computing)
+        ctx = Context(
+            device=device,
+            computing=computing,
+            federation=federation,
+        )
+        role = Role.from_str(config.role)
+        stage = Stage.from_str(config.stage)
+        logger.debug(f"component={config.component}, context={ctx}")
+        logger.debug("running...")
+
+        # get correct component_desc/subcomponent handle stage
+        component = load_component(config.component)
+        if not stage.is_default:
+            for stage_component in component.stage_components:
+                if stage_component.name == stage.name:
+                    component = stage_component
+                    break
+            else:
+                raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
+
+        # prepare
+        execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
+
+        # register metric handler
+        metrics_handler = load_metric_handler(execution_io.get_metric_writer())
+        ctx.register_metric_handler(metrics_handler)
+
+        # execute
+        component.execute(ctx, role, **execution_io.get_kwargs())
+
+        # finalize metric handler
+        metrics_handler.finalize()
+        # final execution io meta
+        execution_io_meta = execution_io.dump_io_meta()
+        try:
+            with open(output_path, "w") as fw:
+                json.dump(dict(status=dict(code=0), io_meta=execution_io_meta), fw, indent=4)
+        except Exception as e:
+            raise RuntimeError(f"failed to dump execution io meta to `{output_path}`: meta={execution_io_meta}") from e
+
+        logger.debug("done without error, waiting signal to terminate")
+        logger.debug("terminating, bye~")
+
+    except Exception as e:
+        logger.error(e, exc_info=True)
+        with open(output_path, "w") as fw:
+            json.dump(dict(status=dict(code=-1, exceptions=traceback.format_exc())), fw)
+        raise e
 
 
 def load_properties(properties) -> dict:
@@ -169,66 +227,5 @@ def load_config_from_env(configs, env_name):
     return configs
 
 
-@component.command()
-@click.option("--name", required=True, help="name of component_desc")
-@click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
-def desc(name, save):
-    "generate component_desc describe config"
-    from fate.components.core import load_component
-
-    cpn = load_component(name)
-    if save:
-        cpn.dump_yaml(save)
-    else:
-        print(cpn.dump_yaml())
-
-
-@component.command()
-@click.option("--name", type=str, required=True, help="component name")
-@click.option("--role", type=str, required=True, help="component name")
-@click.option("--stage", type=str, required=True, help="component name")
-@click.option("--output-path", type=click.File("w", lazy=True), help="output path")
-def artifact_type(name, role, stage, output_path):
-    from fate.components.core import Role, Stage, load_component
-
-    cpn = load_component(name)
-    role = Role.from_str(role)
-    stage = Stage.from_str(stage)
-    if not stage.is_default:
-        for stage_component in cpn.stage_components:
-            if stage_component.name == stage.name:
-                cpn = stage_component
-                break
-        else:
-            raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
-
-    if output_path:
-        cpn.dump_runtime_io_yaml(role, stage, output_path)
-    else:
-        print(cpn.dump_runtime_io_yaml(role, stage, output_path))
-
-
-@component.command()
-@click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
-def task_schema(save):
-    "generate component_desc task config json schema"
-    from fate.components.core.spec.task import TaskConfigSpec
-
-    if save:
-        save.write(TaskConfigSpec.schema_json())
-    else:
-        print(TaskConfigSpec.schema_json())
-
-
-@component.command()
-@click.option("--save", type=click.File(mode="w", lazy=True), help="save list output to specified file in json format")
-def list(save):
-    "list all components"
-    from fate.components.core import list_components
-
-    if save:
-        import json
-
-        json.dump(list_components(), save)
-    else:
-        print(list_components())
+if __name__ == "__main__":
+    main()

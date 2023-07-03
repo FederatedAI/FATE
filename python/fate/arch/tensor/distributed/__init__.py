@@ -1,5 +1,6 @@
 from ._op_matmul import *
 from ._op_slice import *
+from ._op_transpose import *
 from ._ops_agg import *
 from ._ops_binary import *
 from ._ops_cipher import *
