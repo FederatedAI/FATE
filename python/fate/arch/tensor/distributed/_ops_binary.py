@@ -31,7 +31,7 @@ def div(input, other):
 def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
     # swap input and output if input is not DTensor
     if not isinstance(input, DTensor):
-        return _binary(op, other, input, swap_operad=not swap_operad, dtype_promote_to=dtype_promote_to)
+        return _binary(other, input, op, swap_operad=not swap_operad, dtype_promote_to=dtype_promote_to)
 
     if isinstance(other, DTensor):
         if swap_operad:
@@ -41,13 +41,19 @@ def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
 
     # other is local tensor, broadcast to partitions
     else:
-        shapes = input.shardings.shapes.bc_shapes(other.shape)
+        if isinstance(other, torch.Tensor):
+            shapes = input.shardings.shapes.bc_shapes(other.shape)
+        else:
+            # other is scalar
+            shapes = input.shardings.shapes.bc_shapes(torch.Size([]))
+
         if swap_operad:
             return DTensor(
                 input.shardings.map_shard(
-                    lambda x: op(other, x, dtype_promote_to=dtype_promote_to), shapes=shapes.shapes, axis=shapes.axis
+                    lambda x: op(other, x), dtype_promote_to=dtype_promote_to, shapes=shapes.shapes, axis=shapes.axis
                 )
             )
+
         else:
             return DTensor(
                 input.shardings.map_shard(

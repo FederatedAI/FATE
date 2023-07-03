@@ -15,7 +15,7 @@
 
 import functools
 import typing
-from typing import List, Optional, Tuple, TypeVar, Union, cast
+from typing import List, Optional, Tuple, TypeVar, cast
 
 import torch
 from fate.arch.abc import CTableABC
@@ -43,6 +43,10 @@ class DTensor:
         if func not in _HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, DTensor)) for t in types):
             return NotImplemented
         return _HANDLED_FUNCTIONS[func](*args, **kwargs)
+
+    @property
+    def T(self):
+        return torch.transpose(self, 0, 1)
 
     def __init__(self, shardings: "Shardings") -> None:
         self.shardings = shardings
@@ -293,6 +297,9 @@ class _ShardingShapes:
     def __str__(self) -> str:
         return f"<ShardingShape(shapes={self.shapes}, axis={self.axis})>"
 
+    def __repr__(self):
+        return self.__str__()
+
     def bc_shapes(self, other: "_ShardingShapes") -> "_ShardingShapes":
         if isinstance(other, _ShardingShapes):
             assert len(self.shapes) == len(other.shapes), f"sharding num mismatch: {self.shapes} vs {other.shapes}"
@@ -314,7 +321,7 @@ class _ShardingShapes:
                     assert other[other_align_axis] == 1, f"shape in distributed axis should be 1: {self} vs {other}"
             self_axis = len(_bc_shapes[0]) - len(self.shapes[0]) + self.axis
 
-            return _ShardingShapes(_bc_shapes, self.axis)
+            return _ShardingShapes(_bc_shapes, self_axis)
         else:
             raise NotImplementedError(f"type `{other}`")
 

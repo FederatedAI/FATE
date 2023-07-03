@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import Iterable, List, Literal, Optional, Tuple, TypeVar
+from typing import Iterable, List, Literal, Optional, Tuple, TypeVar, overload
 
 from fate.arch.abc import CSessionABC, FederationEngine, PartyMeta
 
@@ -101,11 +101,45 @@ class Context:
     def on_cross_validations(self) -> "Context":
         return self.sub_ctx("cross_validations")
 
+    @overload
     def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:
+        ...
+
+    @overload
+    def ctxs_range(self, start: int, end: int) -> Iterable[Tuple[int, "Context"]]:
+        ...
+
+    def ctxs_range(self, *args, **kwargs) -> Iterable[Tuple[int, "Context"]]:
+
         """
         create contexes with namespaces indexed from 0 to end(excluded)
         """
-        for i in range(end):
+
+        if "start" in kwargs:
+            start = kwargs["start"]
+            if "end" not in kwargs:
+                raise ValueError("End value must be provided")
+            end = kwargs["end"]
+            if len(args) > 0:
+                raise ValueError("Too many arguments")
+        else:
+            if "end" in kwargs:
+                end = kwargs["end"]
+                if len(args) > 1:
+                    raise ValueError("Too many arguments")
+                elif len(args) == 0:
+                    raise ValueError("Start value must be provided")
+                else:
+                    start = args[0]
+            else:
+                if len(args) == 1:
+                    start, end = 0, args[0]
+                elif len(args) == 2:
+                    start, end = args
+                else:
+                    raise ValueError("Too few arguments")
+
+        for i in range(start, end):
             yield i, self.with_namespace(self.namespace.indexed_ns(index=i))
 
     def ctxs_zip(self, iterable: Iterable[T]) -> Iterable[Tuple["Context", T]]:
