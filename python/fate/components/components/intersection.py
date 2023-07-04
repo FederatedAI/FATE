@@ -35,8 +35,10 @@ def raw_intersect_guest(ctx, input_data, output_data):
     from fate.ml.intersection import RawIntersectionGuest
 
     data = input_data.read()
+    # data = ctx.reader(input_data).read_dataframe().data
     guest_intersect_obj = RawIntersectionGuest()
     intersect_data = guest_intersect_obj.fit(ctx, data)
+    # ctx.writer(output_data).write_dataframe(intersect_data)
     output_data.write(intersect_data)
 
 
@@ -44,6 +46,8 @@ def raw_intersect_host(ctx, input_data, output_data):
     from fate.ml.intersection import RawIntersectionHost
 
     data = input_data.read()
+    # data = ctx.reader(input_data).read_dataframe().data
     host_intersect_obj = RawIntersectionHost()
     intersect_data = host_intersect_obj.fit(ctx, data)
+    # ctx.writer(output_data).write_dataframe(intersect_data)
     output_data.write(intersect_data)
