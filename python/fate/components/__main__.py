@@ -18,10 +18,9 @@
 execute with python -m fate.components --execution_id xxx --config xxx
 """
 
-
 if __name__ == "__main__":
     import click
-    from fate.components.entrypoint.component_cli import component
+    from fate.components.entrypoint.cli.component.__main__ import component
 
     cli = click.Group()
     cli.add_command(component)
