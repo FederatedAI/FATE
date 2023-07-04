@@ -89,6 +89,14 @@ class BlockType(str, Enum):
         else:
             return BlockType.np_object
 
+    @staticmethod
+    def is_tensor(block_type):
+        return block_type in [BlockType.bool, BlockType.int32, BlockType.int64, BlockType.float32, BlockType.float64]
+
+    @staticmethod
+    def is_float(block_type):
+        return block_type in [BlockType.float32, BlockType.float64]
+
 
 class Block(object):
     def __init__(self, field_indexes, block_type=None, should_compress=True):

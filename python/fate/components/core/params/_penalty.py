@@ -4,12 +4,12 @@ from ._fields import StringChoice
 
 
 class Penalty(StringChoice):
-    chooice = {}
+    choice = {}
 
 
-def penalty_param(l1=True, l2=True) -> Type[str]:
-    choice = {"L1": l1, "L2": l2}
+def penalty_param(l1=True, l2=True, none=True) -> Type[str]:
+    choice = {"L1": l1, "L2": l2, "none": none}
     namespace = dict(
-        chooice={k for k, v in choice.items() if v},
+        choice={k for k, v in choice.items() if v},
     )
     return type("PenaltyValue", (Penalty,), namespace)

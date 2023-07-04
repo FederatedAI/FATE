@@ -1,3 +1,4 @@
+import typing
 from typing import Dict, TypeVar
 
 import pydantic
@@ -34,7 +35,7 @@ class ParameterDescribe:
         from fate.components.core.spec.component import ParameterSpec
 
         default = self.default if self.default is not ... else None
-        if issubclass(self.type, Parameter):  # recommended
+        if not typing.get_origin(self.type) and issubclass(self.type, Parameter):  # recommended
             type_name = type(self.type).__name__
             if (schema := self.type.schema()) != NotImplemented:
                 type_meta = schema

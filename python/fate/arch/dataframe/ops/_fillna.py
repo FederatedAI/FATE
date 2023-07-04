@@ -44,12 +44,13 @@ def fillna(df: DataFrame, value, downcast=None):
     else:
         raise ValueError(f"Not support value type={type(value)}")
 
-    return type(df) (
+    return DataFrame(
         df._ctx,
         block_table,
         df.partition_order_mappings,
         data_manager.duplicate()
     )
+
 
 def _fillna(block_table, value, block_indexes):
     block_index_set = set(block_indexes)
@@ -74,7 +75,7 @@ def _fillna(block_table, value, block_indexes):
                 if bid not in block_index_set:
                     ret_blocks.append(block)
                 elif isinstance(block, torch.Tensor):
-                    block = block.clock()
+                    block = block.clone()
                     for offset, fill_value in value.get(bid, {}).items():
                         block[:, offset] = torch.nan_to_num(block[:, offset], fill_value)
                     ret_blocks.append(block)

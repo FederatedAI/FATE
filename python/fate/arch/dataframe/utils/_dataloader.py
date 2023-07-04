@@ -134,10 +134,10 @@ class FullBatchDataLoader(object):
                 random.shuffle(indexer)
 
                 for i, iter_ctx in self._ctx.range(self._batch_num):
-                    batch_indexer = indexer[self._batch_size * i : self._batch_size * (i + 1)]
-                    batch_indexer = self._ctx.computing.parallelize(
-                        batch_indexer, include_key=True, partition=self._dataset.block_table.partitions
-                    )
+                    batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]
+                    batch_indexer = self._ctx.computing.parallelize(batch_indexer,
+                                                                    include_key=True,
+                                                                    partition=self._dataset.block_table.partitions)
 
                     sub_frame = self._dataset.loc(batch_indexer, preserve_order=True)
 
@@ -159,11 +159,11 @@ class FullBatchDataLoader(object):
 
         for batch in self._batch_splits:
             if batch.label and batch.weight:
-                yield batch.values, batch.label, batch.weight
+                yield batch.values.as_tensor(), batch.label.as_tensr(), batch.weight.as_tensor()
             elif batch.label:
-                yield batch.values, batch.label
+                yield batch.values.as_tensor(), batch.label.as_tensor()
             else:
-                yield batch.values
+                yield batch.values.as_tensor()
 
     def __iter__(self):
         if self._role == "arbiter":
@@ -173,11 +173,11 @@ class FullBatchDataLoader(object):
 
         for batch in self._batch_splits:
             if batch.label and batch.weight:
-                yield batch.values, batch.label, batch.weight
+                yield batch.values.as_tensor(), batch.label.as_tensor(), batch.weight.as_tensor()
             elif batch.label:
-                yield batch.values, batch.label
+                yield batch.values.as_tensor(), batch.label.as_tensor()
             else:
-                yield batch.values
+                yield batch.values.as_tensor()
 
     @property
     def batch_num(self):
