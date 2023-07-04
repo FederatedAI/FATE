@@ -92,6 +92,10 @@ public class MetaInfo {
     public static int PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
     @Config(confKey = "transfer.cached.msgid.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
+    @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
+    @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE = 65536;
 
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
@@ -221,6 +225,9 @@ public class MetaInfo {
      */
     @Config(confKey = "http.client.connection.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 10000;
+
+    @Config(confKey = "http.client.max.idle.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME = 5;
     /**
      * 等待数据
      */

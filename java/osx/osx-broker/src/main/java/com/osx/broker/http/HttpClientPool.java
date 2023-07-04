@@ -21,6 +21,7 @@ import com.google.protobuf.ByteString;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.PtpHttpHeader;
+import com.osx.core.utils.JsonUtil;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -37,6 +38,7 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
@@ -117,7 +119,7 @@ public class HttpClientPool {
                 .setConnectionManager(poolConnManager)
                 .setDefaultRequestConfig(requestConfig)
                 .evictExpiredConnections()
-                .evictIdleConnections(5, TimeUnit.SECONDS)
+                .evictIdleConnections(MetaInfo.PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME, TimeUnit.SECONDS)
                 .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false))
                 .build();
         return httpClient;

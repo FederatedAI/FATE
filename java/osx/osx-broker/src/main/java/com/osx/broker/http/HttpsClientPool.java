@@ -84,7 +84,7 @@ public class HttpsClientPool {
                     .setConnectionManager(poolConnManager)
                     .setDefaultRequestConfig(requestConfig)
                     .evictExpiredConnections()
-                    .evictIdleConnections(5, TimeUnit.SECONDS)
+                    .evictIdleConnections(MetaInfo.PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME, TimeUnit.SECONDS)
                     .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false))
                     .build();
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
