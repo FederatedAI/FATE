@@ -9,4 +9,4 @@ parties: # parties default id
 
 work_mode: 0 # 0 for standalone, or 1 for cluster
 
-data_base_dir: "/Users/yuwu/PycharmProjects/FATE" # pa th to project base where data is located
+data_base_dir: "/data/projects/fate" # path to project base where data is located
