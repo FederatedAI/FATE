@@ -71,7 +71,7 @@ class IVFilterParam(FederatedStandardFilterParam, Parameter):
 
 
 class StatisticFilterParam(StandardFilterParam, Parameter):
-    metrics: List[statistic_metrics_param(describe=False)] = ["mean"]
+    metrics: List[statistic_metrics_param()] = ["mean"]
 
 
 class ManualFilterParam(pydantic.BaseModel, Parameter):
