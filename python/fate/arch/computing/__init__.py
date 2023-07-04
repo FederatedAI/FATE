@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fate.interface import CTableABC
 
 from ._type import ComputingEngine
 
 
 def is_table(v):
+    from fate.arch.abc import CTableABC
+
     return isinstance(v, CTableABC)
 
 

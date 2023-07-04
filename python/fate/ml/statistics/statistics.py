@@ -17,8 +17,8 @@ import logging
 from typing import List
 
 import pandas as pd
+from fate.arch import Context
 
-from fate.interface import Context
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -49,10 +49,10 @@ class FeatureStatistics(Module):
 class StatisticsSummary(Module):
     def __init__(self, ddof=1, bias=True):
         """if metrics is not None:
-            if len(metrics) == 1 and metrics[0] == "describe":
-                self.inner_metric_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
-            else:
-                self.inner_metric_names = metrics"""
+        if len(metrics) == 1 and metrics[0] == "describe":
+            self.inner_metric_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
+        else:
+            self.inner_metric_names = metrics"""
         self.ddof = ddof
         self.bias = bias
         self.inner_metric_names = []
@@ -106,14 +106,14 @@ class StatisticsSummary(Module):
         has_nan = res.isnull().any()
         if has_nan.any():
             nan_cols = res.columns[has_nan].to_list()
-            logger.warning(f"NaN value(s) found in statistics over columns: {nan_cols}; "
-                           f"this may lead to unexpected behavior.")
+            logger.warning(
+                f"NaN value(s) found in statistics over columns: {nan_cols}; " f"this may lead to unexpected behavior."
+            )
         self.metrics_summary = res
         self.inner_metric_names = list(res.index)
 
     def to_model(self):
-        return {"inner_metric_names": self.inner_metric_names,
-                "metrics_summary": self.metrics_summary.to_dict()}
+        return {"inner_metric_names": self.inner_metric_names, "metrics_summary": self.metrics_summary.to_dict()}
 
     def restore(self, model):
         self.inner_metric_names = model["inner_metric_names"]

@@ -1,0 +1,135 @@
+component:
+  name: homo_nn
+  description: ''
+  provider: fate
+  version: 2.0.0-alpha
+  labels: []
+  roles:
+    - guest
+    - host
+    - arbiter
+  parameters:
+    runner_module:
+      type: str
+      default: default_runner
+      optional: true
+      description: name of your runner script
+      type_meta:
+        title: str
+        type: string
+        default:
+        description: path to your runner script folder
+    runner_class:
+      type: str
+      default: DefaultRunner
+      optional: true
+      description: class name of your runner class
+      type_meta:
+        title: str
+        type: string
+        default:
+        description: path to your runner script folder
+    runner_conf:
+      type: dict
+      default: {}
+      optional: true
+      description: the parameter dict of the NN runner class
+      type_meta:
+        title: dict
+        type: object
+        default: {}
+        description: the parameter dict of the NN runner class
+    source:
+      type: str
+      default:
+      optional: true
+      description: path to your runner script folder
+      type_meta:
+        title: str
+        type: string
+        default:
+        description: path to your runner script folder
+  input_artifacts:
+    data:
+      train_data:
+        types:
+          - dataframe
+        optional: true
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+        description: ''
+        is_multi: false
+      validate_data:
+        types:
+          - dataframe
+        optional: true
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+        description: ''
+        is_multi: false
+      test_data:
+        types:
+          - dataframe
+        optional: true
+        stages:
+          - predict
+        roles:
+          - guest
+          - host
+        description: ''
+        is_multi: false
+    model:
+      model_input:
+        types:
+          - model_directory
+        optional: false
+        stages:
+          - predict
+        roles:
+          - guest
+          - host
+        description: ''
+        is_multi: false
+  output_artifacts:
+    data:
+      data_output:
+        types:
+          - dataframe
+        optional: false
+        stages:
+          - predict
+          - train
+        roles:
+          - guest
+          - host
+        description: ''
+        is_multi: false
+    model:
+      model_output:
+        types:
+          - model_directory
+        optional: false
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+        description: ''
+        is_multi: false
+    metric:
+      metric:
+        types:
+          - json_metric
+        optional: false
+        stages: []
+        roles: []
+        description: metric, invisible for user
+        is_multi: false
+schema_version: v1
+

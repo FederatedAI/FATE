@@ -15,9 +15,8 @@
 import logging
 
 import torch
-from fate.arch import tensor
+from fate.arch import Context, tensor
 from fate.arch.dataframe import DataLoader
-from fate.interface import Context
 
 from ..abc.module import HeteroModule
 

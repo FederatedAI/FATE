@@ -34,7 +34,7 @@ from typing import List, Tuple
 import cloudpickle as f_pickle
 import lmdb
 import numpy as np
-from fate.interface import PartyMeta
+from fate.arch.abc import PartyMeta
 
 from .federation import FederationDataType
 
@@ -48,6 +48,7 @@ DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 if (STANDALONE_DATA_PATH := os.getenv("STANDALONE_DATA_PATH")) is not None:
     _data_dir = Path(STANDALONE_DATA_PATH)
+    LOGGER.debug(f"env STANDALONE_DATA_PATH is set to {STANDALONE_DATA_PATH}, using {_data_dir} as data dir")
 else:
     _data_dir = Path(
         os.path.abspath(
@@ -56,6 +57,7 @@ else:
             )
         )
     )
+    LOGGER.debug(f"env STANDALONE_DATA_PATH is not set, using {_data_dir} as data dir")
 
 
 # noinspection PyPep8Naming

@@ -17,7 +17,7 @@
 import logging
 from typing import List, Optional
 
-from fate.interface import PartyMeta
+from fate.arch.abc import PartyMeta
 
 from .._federation import FederationBase
 from ._mq_channel import (

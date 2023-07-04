@@ -16,14 +16,14 @@ import io
 import pickle
 from typing import Any, List, Optional, TypeVar, Union
 
-from fate.interface import FederationEngine
-from fate.interface import Parties as PartiesInterface
-from fate.interface import Party as PartyInterface
-from fate.interface import PartyMeta
+from fate.arch.abc import FederationEngine
+from fate.arch.abc import Parties as PartiesInterface
+from fate.arch.abc import Party as PartyInterface
+from fate.arch.abc import PartyMeta
 
 from ..computing import is_table
 from ..federation._gc import IterationGC
-from ._namespace import Namespace
+from ._namespace import NS
 
 T = TypeVar("T")
 
@@ -57,7 +57,7 @@ class _KeyedParty:
 
 
 class Party(PartyInterface):
-    def __init__(self, federation, party: PartyMeta, namespace, key=None) -> None:
+    def __init__(self, federation, party: PartyMeta, namespace: NS, key=None) -> None:
         self.federation = federation
         self.party = party
         self.namespace = namespace
@@ -87,7 +87,7 @@ class Parties(PartiesInterface):
         federation: FederationEngine,
         party: PartyMeta,
         parties: List[PartyMeta],
-        namespace: Namespace,
+        namespace: NS,
     ) -> None:
         self.federation = federation
         self.party = party
@@ -143,21 +143,21 @@ class Parties(PartiesInterface):
 def _push(
     federation: FederationEngine,
     name: str,
-    namespace: Namespace,
+    namespace: NS,
     parties: List[PartyMeta],
     value,
 ):
-    tag = namespace.fedeation_tag()
+    tag = namespace.get_federation_tag()
     _TableRemotePersistentPickler.push(value, federation, name, tag, parties)
 
 
 def _pull(
     federation: FederationEngine,
     name: str,
-    namespace: Namespace,
+    namespace: NS,
     parties: List[PartyMeta],
 ):
-    tag = namespace.fedeation_tag()
+    tag = namespace.get_federation_tag()
     raw_values = federation.pull(
         name=name,
         tag=tag,

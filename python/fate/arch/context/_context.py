@@ -13,28 +13,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from contextlib import contextmanager
-from copy import copy
-from typing import Iterator, List, Optional
+from typing import Iterable, List, Literal, Optional, Tuple, TypeVar
 
-from fate.interface import T_ROLE, ComputingEngine
-from fate.interface import Context as ContextInterface
-from fate.interface import FederationEngine, MetricsHandler, PartyMeta
+from fate.arch.abc import CSessionABC, FederationEngine, PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
-from ._federation import GC, Parties, Party
-from ._namespace import Namespace
-from .io.kit import IOKit
-from .metric import MetricsWrap
+from ._federation import Parties, Party
+from ._metrics import MetricsWrap, NoopMetricsHandler
+from ._namespace import NS, default_ns
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-class Context(ContextInterface):
+
+class Context:
     """
-    implement fate.interface.ContextInterface
-
     Note: most parameters has default dummy value,
           which is convenient when used in script.
           please pass in custom implements as you wish
@@ -42,66 +37,85 @@ class Context(ContextInterface):
 
     def __init__(
         self,
-        context_name: Optional[str] = None,
         device: device = device.CPU,
-        computing: Optional[ComputingEngine] = None,
-        federation: Optional[FederationEngine] = None,
-        metrics_handler: Optional[MetricsHandler] = None,
-        namespace: Optional[Namespace] = None,
+        computing: Optional["CSessionABC"] = None,
+        federation: Optional["FederationEngine"] = None,
+        metrics_handler: Optional = None,
+        namespace: Optional[NS] = None,
+        cipher: Optional[CipherKit] = None,
     ) -> None:
-        self.context_name = context_name
-        self.metrics = MetricsWrap(metrics_handler)
-
-        if namespace is None:
-            namespace = Namespace()
-        self.namespace = namespace
-        self.super_namespace = Namespace()
-
-        self.cipher: CipherKit = CipherKit(device)
-        self._io_kit: IOKit = IOKit()
-
+        self._device = device
         self._computing = computing
         self._federation = federation
-        self._role_to_parties = None
+        self._metrics_handler = metrics_handler
+        self.namespace = namespace
+        self.cipher = cipher
 
-        self._gc = GC()
+        if self.namespace is None:
+            self.namespace = default_ns
+        if self.cipher is None:
+            self.cipher: CipherKit = CipherKit(device)
+
+        self._role_to_parties = None
         self._is_destroyed = False
 
-    def with_namespace(self, namespace: Namespace):
-        context = copy(self)
-        context.namespace = namespace
-        return context
+    def register_metric_handler(self, metrics_handler):
+        self._metrics_handler = metrics_handler
 
-    def into_group_namespace(self, group_name: str, group_id: str):
-        context = copy(self)
-        context.metrics = context.metrics.into_group(group_name, group_id)
-        context.namespace = self.namespace.sub_namespace(f"{group_name}_{group_id}")
-        return context
+    @property
+    def metrics(self):
+        if self._metrics_handler is None:
+            self._metrics_handler = NoopMetricsHandler()
+        return MetricsWrap(self._metrics_handler, self.namespace)
 
-    def range(self, end):
-        for i in range(end):
-            yield i, self.with_namespace(self.namespace.sub_namespace(f"{i}"))
-
-    def iter(self, iterable):
-        for i, it in enumerate(iterable):
-            yield self.with_namespace(self.namespace.sub_namespace(f"{i}")), it
+    def with_namespace(self, namespace: NS):
+        return Context(
+            device=self._device,
+            computing=self._computing,
+            federation=self._federation,
+            metrics_handler=self._metrics_handler,
+            namespace=namespace,
+            cipher=self.cipher,
+        )
 
     @property
     def computing(self):
         return self._get_computing()
 
     @property
-    def federation(self) -> FederationEngine:
+    def federation(self) -> "FederationEngine":
         return self._get_federation()
 
-    @contextmanager
-    def sub_ctx(self, namespace: str) -> Iterator["Context"]:
-        try:
-            yield self.with_namespace(self.namespace.sub_namespace(namespace))
-        finally:
-            ...
+    def sub_ctx(self, name: str) -> "Context":
+        return self.with_namespace(self.namespace.sub_ns(name=name))
 
-    def set_federation(self, federation: FederationEngine):
+    @property
+    def on_iterations(self) -> "Context":
+        return self.sub_ctx("iterations")
+
+    @property
+    def on_batches(self) -> "Context":
+        return self.sub_ctx("iterations")
+
+    @property
+    def on_cross_validations(self) -> "Context":
+        return self.sub_ctx("cross_validations")
+
+    def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:
+        """
+        create contexes with namespaces indexed from 0 to end(excluded)
+        """
+        for i in range(end):
+            yield i, self.with_namespace(self.namespace.indexed_ns(index=i))
+
+    def ctxs_zip(self, iterable: Iterable[T]) -> Iterable[Tuple["Context", T]]:
+        """
+        zip contexts with iterable with namespaces indexed from 0
+        """
+        for i, it in enumerate(iterable):
+            yield self.with_namespace(self.namespace.indexed_ns(index=i)), it
+
+    def set_federation(self, federation: "FederationEngine"):
         self._federation = federation
 
     @property
@@ -142,7 +156,7 @@ class Context(ContextInterface):
         return self.local[0] == "host"
 
     @property
-    def is_on_artbiter(self):
+    def is_on_arbiter(self):
         return self.local[0] == "arbiter"
 
     @property
@@ -154,7 +168,7 @@ class Context(ContextInterface):
             self.namespace,
         )
 
-    def _get_parties(self, role: Optional[T_ROLE] = None) -> List[PartyMeta]:
+    def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter"]] = None) -> List[PartyMeta]:
         # update role to parties mapping
         if self._role_to_parties is None:
             self._role_to_parties = {}
@@ -167,7 +181,7 @@ class Context(ContextInterface):
                 parties.extend(role_parties)
         else:
             if role not in self._role_to_parties:
-                raise RuntimeError(f"no {role} party has configurated")
+                raise RuntimeError(f"no {role} party has configured")
             else:
                 parties.extend(self._role_to_parties[role])
         return parties
@@ -181,12 +195,6 @@ class Context(ContextInterface):
         if self._computing is None:
             raise RuntimeError(f"computing not set")
         return self._computing
-
-    def reader(self, uri, **kwargs):
-        return self._io_kit.reader(self, uri, **kwargs)
-
-    def writer(self, uri, **kwargs):
-        return self._io_kit.writer(self, uri, **kwargs)
 
     def destroy(self):
         if not self._is_destroyed:

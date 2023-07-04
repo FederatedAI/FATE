@@ -18,7 +18,7 @@ import logging
 import typing
 from collections import deque
 
-from fate.interface import GarbageCollector as GarbageCollectorInterface
+from fate.arch.abc import GarbageCollector as GarbageCollectorInterface
 
 LOGGER = logging.getLogger(__name__)
 

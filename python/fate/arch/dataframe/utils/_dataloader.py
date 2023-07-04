@@ -14,8 +14,6 @@
 #  limitations under the License.
 import random
 
-from fate.arch.context.io.data import df
-
 
 class DataLoader(object):
     def __init__(
@@ -50,9 +48,6 @@ class DataLoader(object):
         self._init_settings()
 
     def _init_settings(self):
-        if isinstance(self._dataset, df.Dataframe):
-            self._dataset = self._dataset.data
-
         if self._batch_strategy == "full":
             self._batch_generator = FullBatchDataLoader(
                 self._dataset,
@@ -139,10 +134,10 @@ class FullBatchDataLoader(object):
                 random.shuffle(indexer)
 
                 for i, iter_ctx in self._ctx.range(self._batch_num):
-                    batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]
-                    batch_indexer = self._ctx.computing.parallelize(batch_indexer,
-                                                                    include_key=True,
-                                                                    partition=self._dataset.block_table.partitions)
+                    batch_indexer = indexer[self._batch_size * i : self._batch_size * (i + 1)]
+                    batch_indexer = self._ctx.computing.parallelize(
+                        batch_indexer, include_key=True, partition=self._dataset.block_table.partitions
+                    )
 
                     sub_frame = self._dataset.loc(batch_indexer, preserve_order=True)
 

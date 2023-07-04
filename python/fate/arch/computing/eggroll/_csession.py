@@ -15,11 +15,10 @@
 #
 
 import logging
-from typing import Optional
 
-from fate.interface import CSessionABC
+from fate.arch.abc import CSessionABC
 
-from ...unify import uuid
+from ...unify import URI, uuid
 from .._profile import computing_profile
 from ._table import Table
 
@@ -52,34 +51,36 @@ class CSession(CSessionABC):
         return self._session_id
 
     @computing_profile
-    def load(self, address, partitions: Optional[int], schema: dict, **kwargs):
-
-        from .._address import EggRollAddress
+    def load(self, uri: URI, schema: dict, options: dict = None) -> Table:
         from ._type import EggRollStoreType
 
-        if isinstance(address, EggRollAddress):
-            options = kwargs.get("option", {})
-            if partitions is not None:
-                options["total_partitions"] = partitions
-            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
-            options["create_if_missing"] = False
-            rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
-            if rp is None or rp.get_partitions() == 0:
-                raise RuntimeError(f"no exists: {address.name}, {address.namespace}")
+        if uri.schema != "eggroll":
+            raise ValueError(f"uri scheme {uri.schema} not supported with eggroll backend")
+        try:
+            _, namespace, name = uri.path_splits()
+        except Exception as e:
+            raise ValueError(f"uri {uri} not valid, demo format: eggroll:///namespace/name") from e
 
-            if options["store_type"] != EggRollStoreType.ROLLPAIR_IN_MEMORY:
-                rp = rp.save_as(
-                    name=f"{address.name}_{uuid()}",
-                    namespace=self.session_id,
-                    partition=partitions,
-                    options={"store_type": EggRollStoreType.ROLLPAIR_IN_MEMORY},
-                )
+        if options is None:
+            options = {}
+        if "store_type" not in options:
+            options["store_type"] = EggRollStoreType.ROLLPAIR_LMDB
+        options["create_if_missing"] = False
+        rp = self._rpc.load(namespace=namespace, name=name, options=options)
+        if rp is None or rp.get_partitions() == 0:
+            raise RuntimeError(f"no exists: {name}, {namespace}")
+
+        if options["store_type"] != EggRollStoreType.ROLLPAIR_IN_MEMORY:
+            rp = rp.save_as(
+                name=f"{name}_{uuid()}",
+                namespace=self.session_id,
+                partition=rp.get_partitions(),
+                options={"store_type": EggRollStoreType.ROLLPAIR_IN_MEMORY},
+            )
 
             table = Table(rp=rp)
             table.schema = schema
             return table
-
-        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @computing_profile
     def parallelize(self, data, partition: int, include_key: bool, **kwargs) -> Table:

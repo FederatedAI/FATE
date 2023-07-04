@@ -12,12 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.interface import CipherKit as CipherKitInterface
 
 from ..unify import device
 
 
-class CipherKit(CipherKitInterface):
+class CipherKit:
     def __init__(self, device: device) -> None:
         self.device = device
 

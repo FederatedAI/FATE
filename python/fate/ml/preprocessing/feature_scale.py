@@ -15,8 +15,8 @@
 import logging
 
 import pandas as pd
+from fate.arch import Context
 
-from fate.interface import Context
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class StandardScaler(Module):
             mean_dtype=self._mean.dtype.name,
             std=self._std.to_dict(),
             std_dtype=self._std.dtype.name,
-            select_col=self.select_col
+            select_col=self.select_col,
         )
 
     def from_model(self, model):
@@ -88,13 +88,13 @@ class StandardScaler(Module):
 
 class MinMaxScaler(Module):
     """
-       Transform data by scaling features to given feature range.
-       Note that if `strict_range` is set, transformed values will always be within given range,
-       regardless whether transform data exceeds training data value range (as in 1.x ver)
+    Transform data by scaling features to given feature range.
+    Note that if `strict_range` is set, transformed values will always be within given range,
+    regardless whether transform data exceeds training data value range (as in 1.x ver)
 
-       The transformation is given by::
-           X_scaled = (X - X.min()) / (X.max() - X.min()) * feature_range + feature_range_min
-                    = (X - X.min()) * (feature_range / (X.max() - X.min()) + feature_range_min
+    The transformation is given by::
+        X_scaled = (X - X.min()) / (X.max() - X.min()) * feature_range + feature_range_min
+                 = (X - X.min()) * (feature_range / (X.max() - X.min()) + feature_range_min
     """
 
     def __init__(self, select_col, feature_range, strict_range):
@@ -151,7 +151,7 @@ class MinMaxScaler(Module):
             range_max=self._range_max.to_dict(),
             range_max_dtype=self._range_max.dtype.name,
             strict_range=self.strict_range,
-            select_col=self.select_col
+            select_col=self.select_col,
         )
 
     def from_model(self, model):

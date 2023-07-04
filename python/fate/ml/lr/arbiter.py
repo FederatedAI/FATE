@@ -14,8 +14,8 @@
 #  limitations under the License.
 import logging
 
+from fate.arch import Context
 from fate.arch.dataframe import DataLoader
-from fate.interface import Context
 
 from ..abc.module import HeteroModule
 
