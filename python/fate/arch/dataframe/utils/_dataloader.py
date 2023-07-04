@@ -159,11 +159,11 @@ class FullBatchDataLoader(object):
 
         for batch in self._batch_splits:
             if batch.label and batch.weight:
-                yield batch.values, batch.label, batch.weight
+                yield batch.values.as_tensor(), batch.label.as_tensr(), batch.weight.as_tensor()
             elif batch.label:
-                yield batch.values, batch.label
+                yield batch.values.as_tensor(), batch.label.as_tensor()
             else:
-                yield batch.values
+                yield batch.values.as_tensor()
 
     def __iter__(self):
         if self._role == "arbiter":
@@ -173,11 +173,11 @@ class FullBatchDataLoader(object):
 
         for batch in self._batch_splits:
             if batch.label and batch.weight:
-                yield batch.values, batch.label, batch.weight
+                yield batch.values.as_tensor(), batch.label.as_tensor(), batch.weight.as_tensor()
             elif batch.label:
-                yield batch.values, batch.label
+                yield batch.values.as_tensor(), batch.label.as_tensor()
             else:
-                yield batch.values
+                yield batch.values.as_tensor()
 
     @property
     def batch_num(self):

@@ -12,16 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
-"""
-execute with python -m fate.components --execution_id xxx --config xxx
-"""
-
-if __name__ == "__main__":
-    import click
-    from fate.components.entrypoint.cli.component.__main__ import component
-
-    cli = click.Group()
-    cli.add_command(component)
-    cli(prog_name="python -m fate.components")
+from .arbiter import HeteroLinRModuleArbiter
+from .guest import HeteroLinRModuleGuest
+from .host import HeteroLinRModuleHost
