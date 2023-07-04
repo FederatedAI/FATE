@@ -43,18 +43,6 @@ public class HttpsClientPool {
     private static final Logger logger = LoggerFactory.getLogger(HttpsClientPool.class);
     private static final Map<String, CloseableHttpClient> httpsClientPool = new HashMap<>();
 
-    private static void config(HttpRequestBase httpRequestBase, Map<String, String> headers) {
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
-                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
-                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
-        httpRequestBase.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
-        if (headers != null) {
-            headers.forEach(httpRequestBase::addHeader);
-        }
-        httpRequestBase.setConfig(requestConfig);
-    }
-
     public static CloseableHttpClient getConnection(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
         String certKey = buildCertKey(caPath, clientCertPath, clientKeyPath);
         CloseableHttpClient httpClient = httpsClientPool.get(certKey);
@@ -108,7 +96,7 @@ public class HttpsClientPool {
     public static Osx.Outbound sendPtpPost(String url, byte[] body, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
 
         HttpPost httpPost = new HttpPost(url);
-        config(httpPost, headers);
+        HttpClientPool.config(httpPost, headers);
         if (body != null) {
             ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
             httpPost.setEntity(byteArrayEntity);
@@ -119,7 +107,7 @@ public class HttpsClientPool {
     @SuppressWarnings("unused")
     public static String sendPost(String url, byte[] body, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) {
         HttpPost httpPost = new HttpPost(url);
-        config(httpPost, headers);
+        HttpClientPool.config(httpPost, headers);
         ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
         httpPost.setEntity(byteArrayEntity);
         return getResponse(httpPost, caPath, clientCertPath, clientKeyPath);
@@ -135,7 +123,7 @@ public class HttpsClientPool {
 
     public static String sendGet(String url, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) {
         HttpGet httpGet = new HttpGet(url);
-        config(httpGet, headers);
+        HttpClientPool.config(httpGet, headers);
         return getResponse(httpGet, caPath, clientCertPath, clientKeyPath);
     }
 

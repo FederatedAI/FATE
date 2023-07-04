@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.PtpHttpHeader;
-import com.osx.core.utils.JsonUtil;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
@@ -37,7 +37,6 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
@@ -60,11 +59,25 @@ public class HttpClientPool {
     private static PoolingHttpClientConnectionManager poolConnManager;
     private static CloseableHttpClient httpClient;
 
-    private static void config(HttpRequestBase httpRequestBase, Map<String, String> headers) {
+    static void config(HttpRequestBase httpRequestBase, Map<String, String> headers) {
+        Integer reqTimeout = null;
+        Integer connectionTimeout = null;
+        Integer socketTimeout = null;
+
+        if (MetaInfo.PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP != null) {
+            Map<String, Integer> methodConfig = MetaInfo.PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP.get(headers.get(PtpHttpHeader.SourceMethod));
+            if (methodConfig != null) {
+                reqTimeout = methodConfig.get(Dict.METHOD_CONFIG_REQ_TIMEOUT);
+                connectionTimeout = methodConfig.get(Dict.METHOD_CONFIG_CONNECTION_TIMEOUT);
+                socketTimeout = methodConfig.get(Dict.METHOD_CONFIG_SOCKET_TIMEOUT);
+
+            }
+        }
+
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
-                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
-                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
+                .setConnectionRequestTimeout(ObjectUtils.firstNonNull(reqTimeout, MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT))
+                .setConnectTimeout(ObjectUtils.firstNonNull(connectionTimeout, MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT))
+                .setSocketTimeout(ObjectUtils.firstNonNull(socketTimeout, MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT)).build();
         httpRequestBase.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
         if (headers != null) {
             headers.forEach((key, value) -> {
@@ -91,6 +104,7 @@ public class HttpClientPool {
             logger.error("init http client pool failed:", ex);
         }
     }
+
     public static CloseableHttpClient getConnection() {
         return httpClient;
     }
@@ -109,16 +123,18 @@ public class HttpClientPool {
                 .build();
         return httpClient;
     }
+
     public static Osx.Outbound sendPtpPost(String url, byte[] body, Map<String, String> headers) {
 
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
-        if(body!=null) {
+        if (body != null) {
             ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
             httpPost.setEntity(byteArrayEntity);
         }
         return getPtpHttpResponse(httpPost);
     }
+
     public static String sendPost(String url, byte[] body, Map<String, String> headers) {
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
@@ -126,6 +142,7 @@ public class HttpClientPool {
         httpPost.setEntity(byteArrayEntity);
         return getResponse(httpPost);
     }
+
     public static String get(String url, Map<String, String> headers) {
         return sendGet(url, headers);
     }
@@ -164,25 +181,25 @@ public class HttpClientPool {
 
     private static Osx.Outbound getPtpHttpResponse(HttpRequestBase request) {
 
-        Osx.Outbound.Builder  outboundBuilder = Osx.Outbound.newBuilder();
+        Osx.Outbound.Builder outboundBuilder = Osx.Outbound.newBuilder();
         CloseableHttpResponse response = null;
         try {
             response = httpClient.execute(request, HttpClientContext.create());
             HttpEntity entity = response.getEntity();
             byte[] payload = EntityUtils.toByteArray(entity);
-            Header[]  headers = response.getAllHeaders();
-            Map<String,String> headMap = Maps.newHashMap();
-            if(headers!=null){
-                for(int i=0;i<headers.length;i++){
-                    Header  temp = headers[i];
-                    headMap.put(temp.getName(),temp.getValue());
+            Header[] headers = response.getAllHeaders();
+            Map<String, String> headMap = Maps.newHashMap();
+            if (headers != null) {
+                for (int i = 0; i < headers.length; i++) {
+                    Header temp = headers[i];
+                    headMap.put(temp.getName(), temp.getValue());
                 }
             }
-            if(payload!=null)
+            if (payload != null)
                 outboundBuilder.setPayload(ByteString.copyFrom(payload));
-            if(headMap.get(PtpHttpHeader.ReturnCode)!=null)
+            if (headMap.get(PtpHttpHeader.ReturnCode) != null)
                 outboundBuilder.setCode(headMap.get(PtpHttpHeader.ReturnCode));
-            if(headMap.get(PtpHttpHeader.ReturnMessage)!=null)
+            if (headMap.get(PtpHttpHeader.ReturnMessage) != null)
                 outboundBuilder.setMessage(headMap.get(PtpHttpHeader.ReturnMessage));
 
             EntityUtils.consume(entity);
@@ -202,17 +219,17 @@ public class HttpClientPool {
         }
     }
 
-    public static String transferPost(String url, Map<String, Object> requestData) {
-        HttpPost httpPost = new HttpPost(url);
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
-                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
-                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
-        httpPost.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
-        httpPost.setConfig(requestConfig);
-        StringEntity stringEntity = new StringEntity(JsonUtil.object2Json(requestData), Dict.CHARSET_UTF8);
-        stringEntity.setContentEncoding(Dict.CHARSET_UTF8);
-        httpPost.setEntity(stringEntity);
-        return getResponse(httpPost);
-    }
+//    public static String transferPost(String url, Map<String, Object> requestData) {
+//        HttpPost httpPost = new HttpPost(url);
+//        RequestConfig requestConfig = RequestConfig.custom()
+//                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
+//                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
+//                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
+//        httpPost.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
+//        httpPost.setConfig(requestConfig);
+//        StringEntity stringEntity = new StringEntity(JsonUtil.object2Json(requestData), Dict.CHARSET_UTF8);
+//        stringEntity.setContentEncoding(Dict.CHARSET_UTF8);
+//        httpPost.setEntity(stringEntity);
+//        return getResponse(httpPost);
+//    }
 }
