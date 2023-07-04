@@ -339,7 +339,7 @@ public class FateContext implements Context{
         if (this.getData(Dict.CURRENT_INDEX) != null) {
             stringBuffer.append("offset-in-queue:").append(this.getData(Dict.CURRENT_INDEX)).append(SPLIT);
         }
-        if(this.messageCode!=null){
+        if(StringUtils.isNotEmpty(this.messageCode)){
             stringBuffer.append("msg-code:").append(this.getMessageCode()).append(SPLIT);
         }
         if(this.jobId!=null){

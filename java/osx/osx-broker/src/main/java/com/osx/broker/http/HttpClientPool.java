@@ -180,8 +180,11 @@ public class HttpClientPool {
             }
             if(payload!=null)
                 outboundBuilder.setPayload(ByteString.copyFrom(payload));
-            if(headMap.get(PtpHttpHeader.ReturnCode)!=null)
+            if(headMap.get(PtpHttpHeader.ReturnCode)!=null){
                 outboundBuilder.setCode(headMap.get(PtpHttpHeader.ReturnCode));
+            }else{
+                logger.error("========kaideng test ,http respose has no return code {}",headers);
+            };
             if(headMap.get(PtpHttpHeader.ReturnMessage)!=null)
                 outboundBuilder.setMessage(headMap.get(PtpHttpHeader.ReturnMessage));
 

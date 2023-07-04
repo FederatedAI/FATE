@@ -70,12 +70,9 @@ public class QueueStreamBuilder {
         //String uuid = UUID.randomUUID().toString();
         int  temp = count.addAndGet(1);
         long  now = System.currentTimeMillis();
-
-        String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX + srcPartyId+"_"+desPartyId+"_"+now+"_"+temp;
-        String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX + srcPartyId+"_"+desPartyId+"_"+now+"_"+temp;
- //       ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-//        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-//        context.putData(Dict.BLOCKING_STUB,stub);
+        //srcPartyId+"_"+desPartyId
+        String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX +"_"+now+ "_"+sessionId+"_"+temp;
+        String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX +"_"+now+"_"+"sessionId"+"_"+temp;
         context.setTopic(sendTopic);
         context.setActionType(ActionType.MSG_REDIRECT.getAlias());
         CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(backTopic, sessionId, true);

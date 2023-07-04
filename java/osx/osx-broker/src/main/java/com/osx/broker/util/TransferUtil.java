@@ -429,7 +429,6 @@ public class TransferUtil {
                     stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
                 }
                 try {
-                    //  logger.info("===========send data {}",produceRequest);
                     result = stub.invoke(produceRequest);
                 } catch (StatusRuntimeException e) {
                     logger.error("redirect error", e);
@@ -490,6 +489,7 @@ public class TransferUtil {
             String code = outbound.getCode();
             String message = outbound.getMessage();
             if (!StatusCode.SUCCESS.equals(code)) {
+                logger.error("================== xxxxxx  {}",outbound);
                 throw new RemoteRpcException("remote code : " + code + " remote msg: " + message);
             }
         } else {
