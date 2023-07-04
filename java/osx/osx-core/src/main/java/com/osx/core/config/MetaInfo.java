@@ -220,12 +220,12 @@ public class MetaInfo {
      * 建立连接的超时时间
      */
     @Config(confKey = "http.client.connection.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 2000;
+    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 10000;
     /**
      * 等待数据
      */
     @Config(confKey = "http.client.socket.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT = 30000;
+    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT = 300000;
     @Config(confKey = "http.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_SSL_SESSION_TIME_OUT = 3600 << 4;
     @Config(confKey = "http.client.pool.max.total", pattern = Dict.POSITIVE_INTEGER_PATTERN)

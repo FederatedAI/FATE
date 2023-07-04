@@ -104,7 +104,6 @@ public class HttpClientPool {
             logger.error("init http client pool failed:", ex);
         }
     }
-
     public static CloseableHttpClient getConnection() {
         return httpClient;
     }
@@ -123,18 +122,16 @@ public class HttpClientPool {
                 .build();
         return httpClient;
     }
-
     public static Osx.Outbound sendPtpPost(String url, byte[] body, Map<String, String> headers) {
 
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
-        if (body != null) {
+        if(body!=null) {
             ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
             httpPost.setEntity(byteArrayEntity);
         }
         return getPtpHttpResponse(httpPost);
     }
-
     public static String sendPost(String url, byte[] body, Map<String, String> headers) {
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
@@ -142,7 +139,6 @@ public class HttpClientPool {
         httpPost.setEntity(byteArrayEntity);
         return getResponse(httpPost);
     }
-
     public static String get(String url, Map<String, String> headers) {
         return sendGet(url, headers);
     }
@@ -181,25 +177,28 @@ public class HttpClientPool {
 
     private static Osx.Outbound getPtpHttpResponse(HttpRequestBase request) {
 
-        Osx.Outbound.Builder outboundBuilder = Osx.Outbound.newBuilder();
+        Osx.Outbound.Builder  outboundBuilder = Osx.Outbound.newBuilder();
         CloseableHttpResponse response = null;
         try {
             response = httpClient.execute(request, HttpClientContext.create());
             HttpEntity entity = response.getEntity();
             byte[] payload = EntityUtils.toByteArray(entity);
-            Header[] headers = response.getAllHeaders();
-            Map<String, String> headMap = Maps.newHashMap();
-            if (headers != null) {
-                for (int i = 0; i < headers.length; i++) {
-                    Header temp = headers[i];
-                    headMap.put(temp.getName(), temp.getValue());
+            Header[]  headers = response.getAllHeaders();
+            Map<String,String> headMap = Maps.newHashMap();
+            if(headers!=null){
+                for(int i=0;i<headers.length;i++){
+                    Header  temp = headers[i];
+                    headMap.put(temp.getName(),temp.getValue());
                 }
             }
-            if (payload != null)
+            if(payload!=null)
                 outboundBuilder.setPayload(ByteString.copyFrom(payload));
-            if (headMap.get(PtpHttpHeader.ReturnCode) != null)
+            if(headMap.get(PtpHttpHeader.ReturnCode)!=null){
                 outboundBuilder.setCode(headMap.get(PtpHttpHeader.ReturnCode));
-            if (headMap.get(PtpHttpHeader.ReturnMessage) != null)
+            }else{
+                logger.error("========kaideng test ,http respose has no return code {}",headers);
+            };
+            if(headMap.get(PtpHttpHeader.ReturnMessage)!=null)
                 outboundBuilder.setMessage(headMap.get(PtpHttpHeader.ReturnMessage));
 
             EntityUtils.consume(entity);
@@ -219,17 +218,17 @@ public class HttpClientPool {
         }
     }
 
-//    public static String transferPost(String url, Map<String, Object> requestData) {
-//        HttpPost httpPost = new HttpPost(url);
-//        RequestConfig requestConfig = RequestConfig.custom()
-//                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
-//                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
-//                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
-//        httpPost.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
-//        httpPost.setConfig(requestConfig);
-//        StringEntity stringEntity = new StringEntity(JsonUtil.object2Json(requestData), Dict.CHARSET_UTF8);
-//        stringEntity.setContentEncoding(Dict.CHARSET_UTF8);
-//        httpPost.setEntity(stringEntity);
-//        return getResponse(httpPost);
-//    }
+    public static String transferPost(String url, Map<String, Object> requestData) {
+        HttpPost httpPost = new HttpPost(url);
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
+                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
+                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
+        httpPost.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
+        httpPost.setConfig(requestConfig);
+        StringEntity stringEntity = new StringEntity(JsonUtil.object2Json(requestData), Dict.CHARSET_UTF8);
+        stringEntity.setContentEncoding(Dict.CHARSET_UTF8);
+        httpPost.setEntity(stringEntity);
+        return getResponse(httpPost);
+    }
 }

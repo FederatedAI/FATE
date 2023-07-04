@@ -124,19 +124,19 @@ public class TransferQueue {
     }
 
     public synchronized PutMessageResult putMessage(final MessageExtBrokerInner msg) {
-        logger.info("====={} putMessage",transferId);
+
         if (transferStatus == TransferStatus.TRANSFERING) {
             String msgId = msg.getMsgId();
             this.lastWriteTimestamp = System.currentTimeMillis();
             PutMessageResult putMessageResult = transferQueueManager.messageStore.putMessage(msg);
             if (putMessageResult.isOk()) {
-                logger.info("topic {} put msg ok",transferId);
+
                 int cacheIdx = wrotePosition.addAndGet(1) % MetaInfo.PROPERTY_TRANSFER_CACHED_MSGID_SIZE;
                 receivedMsgIds.set(cacheIdx, msgId);
                 long beginWriteOffset = putMessageResult.getAppendMessageResult().getWroteOffset();
                 int size = putMessageResult.getAppendMessageResult().getWroteBytes();
                 putMessageResult.setMsgLogicOffset(indexQueue.putMessagePositionInfoWrapper(beginWriteOffset, size));
-                logger.info("topic {} after update index queue, now {}",transferId,indexQueue.getLogicOffset().get());
+
                 if (this.msgCallbacks.size() > 0) {
                     this.msgCallbacks.forEach(msgCallback -> {
                         msgCallback.callback(this, msg);
