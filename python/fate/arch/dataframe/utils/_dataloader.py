@@ -134,10 +134,10 @@ class FullBatchDataLoader(object):
                 random.shuffle(indexer)
 
                 for i, iter_ctx in self._ctx.range(self._batch_num):
-                    batch_indexer = indexer[self._batch_size * i : self._batch_size * (i + 1)]
-                    batch_indexer = self._ctx.computing.parallelize(
-                        batch_indexer, include_key=True, partition=self._dataset.block_table.partitions
-                    )
+                    batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]
+                    batch_indexer = self._ctx.computing.parallelize(batch_indexer,
+                                                                    include_key=True,
+                                                                    partition=self._dataset.block_table.partitions)
 
                     sub_frame = self._dataset.loc(batch_indexer, preserve_order=True)
 
