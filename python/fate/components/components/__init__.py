@@ -51,10 +51,10 @@ class LazyBuildInComponentsLoader:
         return reader
 
     @_lazy_cpn
-    def hetero_lr(self):
-        from .hetero_lr import hetero_lr
+    def coordinated_lr(self):
+        from .coordinated_lr import coordinated_lr
 
-        return hetero_lr
+        return coordinated_lr
 
     @_lazy_cpn
     def homo_nn(self):

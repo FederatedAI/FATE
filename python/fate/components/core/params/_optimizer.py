@@ -1,13 +1,16 @@
-import enum
-from typing import Type
+import pydantic
+
+from ._fields import string_choice
+from ._penalty import penalty_param
 
 
-class Optimizer(str, enum.Enum):
-    @classmethod
-    def __modify_schema__(cls, field_schema: dict):
-        field_schema["description"] = "optimizer params"
+class OptimizerParam(pydantic.BaseModel):
+    method: string_choice(['sgd', 'adadelta', 'adagrad', 'adam', 'adamax', 'adamw',
+                           'asgd', 'nadam', 'radam', 'rmsprop', 'rprop']) = 'sgd'
+    penalty: penalty_param(l1=True, l2=True, none=True) = 'l2'
+    alpha: float = 1.0
+    optimizer_params: dict
 
-
-def optimizer_param(rmsprop=True, sgd=True, adam=True, nesterov_momentum_sgd=True, adagrad=True) -> Type[str]:
-    choice = dict(rmsprop=rmsprop, sgd=sgd, adam=adam, nesterov_momentum_sgd=nesterov_momentum_sgd, adagrad=adagrad)
-    return Optimizer("OptimizerParam", {k: k for k, v in choice.items() if v})
+def optimizer_param():
+    namespace = {}
+    return type("OptimizerParam", (OptimizerParam,), namespace)
