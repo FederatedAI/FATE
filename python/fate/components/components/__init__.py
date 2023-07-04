@@ -93,6 +93,12 @@ class LazyBuildInComponentsLoader:
         return statistics
 
     @_lazy_cpn
+    def hetero_feature_selection(self):
+        from .hetero_feature_selection import hetero_feature_selection
+
+        return hetero_feature_selection
+
+    @_lazy_cpn
     def dataframe_io_test(self):
         from .dataframe_io_test import dataframe_io_test
 
