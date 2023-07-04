@@ -157,7 +157,7 @@ class Shardings:
         self._shapes = _ShardingShapes(_shapes, axis)
 
         if dtype is None or device is None:
-            first_shard = self._data.first()
+            first_shard = self._data.first()[1]
             shard_dtype = cast(torch.dtype, first_shard.dtype)
             shard_device = cast(torch.device, first_shard.device)
             if dtype is not None:
