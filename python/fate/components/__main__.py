@@ -18,23 +18,10 @@
 execute with python -m fate.components --execution_id xxx --config xxx
 """
 
-
 if __name__ == "__main__":
     import click
-    from fate.components.entrypoint import (
-        cleanup_cli,
-        desc_cli,
-        execute_cli,
-        list_cli,
-        task_schema_cli,
-    )
+    from fate.components.entrypoint.cli.component.__main__ import component
 
     cli = click.Group()
-    component = click.Group(name="component")
-    component.add_command(execute_cli.execute)
-    component.add_command(cleanup_cli.cleanup)
-    component.add_command(desc_cli.desc)
-    component.add_command(list_cli.list)
-    component.add_command(task_schema_cli.task_schema)
     cli.add_command(component)
     cli(prog_name="python -m fate.components")
