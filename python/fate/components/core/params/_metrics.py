@@ -39,8 +39,7 @@ def statistic_metrics_param(
     missing_count=True,
     missing_ratio=True,
     skewness=True,
-    kurtosis=True,
-    describe=True,
+    kurtosis=True
 ) -> Type[str]:
     choice = {
         "count": count,
