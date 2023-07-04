@@ -17,8 +17,8 @@ import logging
 from typing import List
 
 import pandas as pd
-from fate.arch import Context
 
+from fate.arch import Context
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -29,8 +29,8 @@ class FeatureStatistics(Module):
         self.metrics = metrics
         self.summary = StatisticsSummary(ddof, bias)
 
-    def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        self.summary.compute_metrics(train_data, self.metrics)
+    def fit(self, ctx: Context, input_data, validate_data=None) -> None:
+        self.summary.compute_metrics(input_data, self.metrics)
 
     def to_model(self):
         model = self.summary.to_model()
