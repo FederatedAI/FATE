@@ -199,7 +199,7 @@ class DefaultRunner(NNRunner):
             model_path = cpn_input_data.get_saved_model_path()
             # resume_from checkpoint path
             resume_path = None
-
+            
             if model_path is not None:
                 model_dict = load_model_dict_from_path(model_path)
                 model.load_state_dict(model_dict)
