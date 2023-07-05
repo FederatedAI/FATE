@@ -20,11 +20,11 @@ from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-def hetero_linr(ctx, role):
+def coordinated_linr(ctx, role):
     ...
 
 
-@hetero_linr.train()
+@coordinated_linr.train()
 def train(
         ctx: Context,
         role: Role,
@@ -67,7 +67,7 @@ def train(
         train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
 
 
-@hetero_linr.predict()
+@coordinated_linr.predict()
 def predict(
         ctx,
         role: Role,
@@ -83,20 +83,19 @@ def predict(
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,
                 batch_size, optimizer_param, learning_rate_param, init_param):
-    from fate.ml.glm.hetero_linr import HeteroLinRModuleGuest
+    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleGuest
     # optimizer = optimizer_factory(optimizer_param)
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = HeteroLinRModuleGuest(max_iter=max_iter, batch_size=batch_size,
-                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                       init_param=init_param)
+        module = CoordinatedLinRModuleGuest(max_iter=max_iter, batch_size=batch_size,
+                                            optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                            init_param=init_param)
         train_data = train_data.read()
         if validate_data is not None:
             validate_data = validate_data.read()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
-        with output_model as model_writer:
-            model_writer.write_model("hetero_linr_host", model, metadata={})
+        output_model.write(model, metadata={})
 
     with ctx.sub_ctx("predict") as sub_ctx:
         predict_score = module.predict(sub_ctx, validate_data)
@@ -106,42 +105,41 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, batch_size,
                optimizer_param, learning_rate_param, init_param):
-    from fate.ml.glm.hetero_linr import HeteroLinRModuleHost
+    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleHost
     # optimizer = optimizer_factory(optimizer_param)
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = HeteroLinRModuleHost(max_iter=max_iter, batch_size=batch_size,
-                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                      init_param=init_param)
+        module = CoordinatedLinRModuleHost(max_iter=max_iter, batch_size=batch_size,
+                                           optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                           init_param=init_param)
         train_data = train_data.read()
         if validate_data is not None:
             validate_data = validate_data.read()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
-        with output_model as model_writer:
-            model_writer.write_model("hetero_linr_host", model, metadata={})
+        output_model.write(model, metadata={})
     with ctx.sub_ctx("predict") as sub_ctx:
         module.predict(sub_ctx, validate_data)
 
 
 def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param,
                   learning_rate_param):
-    from fate.ml.glm.hetero_linr import HeteroLinRModuleArbiter
+    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleArbiter
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = HeteroLinRModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
-                                         optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
+        module = CoordinatedLinRModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
+                                              optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
         module.fit(sub_ctx)
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.hetero_linr import HeteroLinRModuleGuest
+    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleGuest
 
     with ctx.sub_ctx("predict") as sub_ctx:
         with input_model as model_reader:
             model = model_reader.read_model()
 
-        module = HeteroLinRModuleGuest.from_model(model)
+        module = CoordinatedLinRModuleGuest.from_model(model)
         test_data = test_data.read()
         predict_score = module.predict(sub_ctx, test_data)
         predict_result = transform_to_predict_result(test_data, predict_score, data_type="predict")
@@ -149,12 +147,12 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.hetero_linr import HeteroLinRModuleHost
+    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleHost
 
     with ctx.sub_ctx("predict") as sub_ctx:
         with input_model as model_reader:
             model = model_reader.read_model()
-        module = HeteroLinRModuleHost.from_model(model)
+        module = CoordinatedLinRModuleHost.from_model(model)
         test_data = test_data.read()
         module.predict(sub_ctx, test_data)
 
