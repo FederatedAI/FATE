@@ -151,7 +151,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set iters{i}")
             # temp code start
-            for batch_ctx, X in iter_ctx.ctxs_zip(batch_loader):
+            for batch_ctx, (X, _) in iter_ctx.ctxs_zip(batch_loader):
                 # temp code end
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")

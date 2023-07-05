@@ -108,7 +108,13 @@ def promote_torch_matmul(a: torch.Tensor, b: torch.Tensor):
         a = a.type(target_dtype)
     if target_dtype != b.dtype:
         b = b.type(target_dtype)
-    return torch.matmul(a, b)
+    return torch.matmul(_maybe_detach(a), _maybe_detach(b))
+
+
+def _maybe_detach(a):
+    if isinstance(a, torch.Tensor):
+        return a.detach()
+    return a
 
 
 @implements(torch.matmul)

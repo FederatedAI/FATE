@@ -52,7 +52,10 @@ class DTensor:
         self.shardings = shardings
 
     def __add__(self, other):
-        return torch.add(self, other)
+        try:
+            return torch.add(self, other)
+        except Exception as e:
+            raise RuntimeError(f"Failed to add {self} and {other}") from e
 
     def __radd__(self, other):
         return torch.add(other, self)
