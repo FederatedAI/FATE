@@ -59,6 +59,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.labels = []
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
+        encryptor = ctx.arbiter("encryptor").get()
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
@@ -87,7 +88,8 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     init_param=self.init_param,
                 )
                 train_data.label = train_data_binarized_label[self.labels[i]]
-                single_estimator.fit_single_model(class_ctx, train_data, validate_data, with_weight=with_weight)
+                single_estimator.fit_single_model(class_ctx, encryptor, train_data, validate_data,
+                                                  with_weight=with_weight)
                 self.estimator[i] = single_estimator
         else:
             single_estimator = CoordinatedLREstimatorGuest(
@@ -103,7 +105,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
     def predict(self, ctx, test_data):
         if self.ovr:
             predict_score = test_data.create_dataframe(with_label=False, with_weight=False)
-            for i, class_ctx in ctx.range(len(self.labels)):
+            for i, class_ctx in ctx.ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
                 pred = estimator.predict(test_data)
                 predict_score[self.labels[i]] = pred
@@ -143,7 +145,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLRModuleGuest":
-        lr = CoordinatedLRModuleGuest(**model["metadata"])
+        lr = CoordinatedLRModuleGuest()
         lr.ovr = model["ovr"]
         lr.labels = model["labels"]
         lr.threshold = model["threshold"]
@@ -173,7 +175,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.is_converged = False
         self.with_weight = False
 
-    def fit_single_model(self, ctx, train_data, validate_data=None, with_weight=False):
+    def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None, with_weight=False):
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
         ∇l(w) = 1/h * Σ(0.25 * xw - 0.5 * y)x = 1/h * Σdx
@@ -221,11 +223,12 @@ class CoordinatedLREstimatorGuest(HeteroModule):
 
                 Xw = torch.matmul(X, w.detach())
                 d = 0.25 * Xw - 0.5 * Y
+                encryptor.encrypt(d).to(batch_ctx.hosts, "d")
                 loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
+
                 if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
                     loss_norm = self.optimizer.loss_norm(w)
                     loss += loss_norm
-                    d = self.optimizer.add_regular_to_grad(d, w)
                 for Xw_h in batch_ctx.hosts.get("Xw_h"):
                     d += Xw_h
                     loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
@@ -243,9 +246,10 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = self.optimizer.add_regular_to_grad(X.T @ d, w, self.init_param.fit_intercept)
+                g = X.T @ d
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
+                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.fit_intercept)
                 # self.optimizer.step(g)
                 w = self.optimizer.update_weights(w, g, self.init_param.fit_intercept, self.lr_scheduler.lr)
 
