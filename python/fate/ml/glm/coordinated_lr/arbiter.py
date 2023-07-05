@@ -16,37 +16,29 @@ import copy
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._convergence import converge_func_factory
-from fate.ml.utils._optimizer import separate, Optimizer, LRScheduler
+from fate.ml.utils._optimizer import LRScheduler, Optimizer, separate
 
 logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleArbiter(HeteroModule):
-    def __init__(
-            self,
-            max_iter,
-            early_stop,
-            tol,
-            batch_size,
-            optimizer_param,
-            learning_rate_param
-    ):
+    def __init__(self, max_iter, early_stop, tol, batch_size, optimizer_param, learning_rate_param):
         self.max_iter = max_iter
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
 
-        self.optimizer = Optimizer(optimizer_param["method"],
-                                   optimizer_param["penalty"],
-                                   optimizer_param["alpha"],
-                                   optimizer_param["optimizer_params"])
-        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+        self.optimizer = Optimizer(
+            optimizer_param["method"],
+            optimizer_param["penalty"],
+            optimizer_param["alpha"],
+            optimizer_param["optimizer_params"],
+        )
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"], learning_rate_param["scheduler_params"])
 
         # temp code block start
         """self.optimizer = Optimizer(optimizer_param.method,
@@ -70,24 +62,28 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         if label_count > 2:
             self.ovr = True
             self.estimator = {}
-            for i, class_ctx in ctx.ctxs_range(label_count):
+            for i, class_ctx in ctx.sub_ctx("class").ctxs_range(label_count):
                 optimizer = copy.deepcopy(self.optimizer)
                 lr_scheduler = copy.deepcopy(self.lr_scheduler)
-                single_estimator = CoordinatedLREstimatorArbiter(max_iter=self.max_iter,
-                                                                 early_stop=self.early_stop,
-                                                                 tol=self.tol,
-                                                                 batch_size=self.batch_size,
-                                                                 optimizer=optimizer,
-                                                                 learning_rate_scheduler=lr_scheduler)
+                single_estimator = CoordinatedLREstimatorArbiter(
+                    max_iter=self.max_iter,
+                    early_stop=self.early_stop,
+                    tol=self.tol,
+                    batch_size=self.batch_size,
+                    optimizer=optimizer,
+                    learning_rate_scheduler=lr_scheduler,
+                )
                 single_estimator.fit_single_model(class_ctx, decryptor)
                 self.estimator[i] = single_estimator
         else:
-            single_estimator = CoordinatedLREstimatorArbiter(max_iter=self.max_iter,
-                                                             early_stop=self.early_stop,
-                                                             tol=self.tol,
-                                                             batch_size=self.batch_size,
-                                                             optimizer=self.optimizer,
-                                                             learning_rate_scheduler=self.lr_scheduler)
+            single_estimator = CoordinatedLREstimatorArbiter(
+                max_iter=self.max_iter,
+                early_stop=self.early_stop,
+                tol=self.tol,
+                batch_size=self.batch_size,
+                optimizer=self.optimizer,
+                learning_rate_scheduler=self.lr_scheduler,
+            )
             single_estimator.fit_single_model(ctx, decryptor)
             self.estimator = single_estimator
 
@@ -98,18 +94,13 @@ class CoordinatedLRModuleArbiter(HeteroModule):
                 all_estimator[label] = estimator.get_model()
         else:
             all_estimator = self.estimator.get_model()
-        return {
-            "estimator": all_estimator,
-            "ovr": self.ovr
-        }
+        return {"estimator": all_estimator, "ovr": self.ovr}
 
     def from_model(cls, model):
         lr = CoordinatedLRModuleArbiter(**model["metadata"])
         all_estimator = model["estimator"]
         if lr.ovr:
-            lr.estimator = {
-                label: CoordinatedLREstimatorArbiter().restore(d) for label, d in all_estimator.items()
-            }
+            lr.estimator = {label: CoordinatedLREstimatorArbiter().restore(d) for label, d in all_estimator.items()}
         else:
             estimator = CoordinatedLREstimatorArbiter()
             estimator.restore(all_estimator)
@@ -120,13 +111,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
 
 class CoordinatedLREstimatorArbiter(HeteroModule):
     def __init__(
-            self,
-            max_iter=None,
-            early_stop=None,
-            tol=None,
-            batch_size=None,
-            optimizer=None,
-            learning_rate_scheduler=None
+        self, max_iter=None, early_stop=None, tol=None, batch_size=None, optimizer=None, learning_rate_scheduler=None
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
@@ -140,7 +125,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
         self.end_iter = -1
         self.is_converged = False
 
-    def fit_single_model(self, ctx, decryptor):
+    def fit_single_model(self, ctx: Context, decryptor):
         batch_loader = DataLoader(
             dataset=None, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="arbiter", sync_arbiter=True
         )
@@ -152,13 +137,13 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             self.start_iter = self.end_iter + 1
         # temp code start
         # for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
-        for i, iter_ctx in ctx.ctxs_range(self.max_iter):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.max_iter):
             # temp code ends
-            logger.info(f"start iter {i}")
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
-            for batch_ctx, _ in iter_ctx.ctxs_zip(batch_loader):
+            for batch_ctx, _ in iter_ctx.on_batches.ctxs_zip(batch_loader):
+
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g_guest = decryptor.decrypt(g_guest_enc)
                 size_list = [g_guest.size()[0]]
@@ -197,12 +182,14 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
 
             if iter_loss is not None:
                 iter_ctx.metrics.log_loss("lr_loss", iter_loss.tolist(), step=i)
-            if self.early_stop == 'weight_diff':
+            if self.early_stop == "weight_diff":
                 self.is_converged = self.converge_func.is_converge(iter_g)
             else:
                 if iter_loss is None:
-                    raise ValueError("Multiple host situation, loss early stop function is not available."
-                                     "You should use 'weight_diff' instead")
+                    raise ValueError(
+                        "Multiple host situation, loss early stop function is not available."
+                        "You should use 'weight_diff' instead"
+                    )
                 self.is_converged = self.converge_func.is_converge(iter_loss)
 
             iter_ctx.hosts.put("converge_flag", self.is_converged)
@@ -220,7 +207,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_iter": self.end_iter,
-            "converged": self.is_converged
+            "converged": self.is_converged,
         }
 
     def restore(self, model):

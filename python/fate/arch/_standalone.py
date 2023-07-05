@@ -107,7 +107,7 @@ class Table(object):
                 db = env.open_db()
                 with env.begin(write=True) as txn:
                     txn.drop(db)
-        _TableMetaManager.destory_table(self._namespace, self._name)
+        _TableMetaManager.destroy_table(self._namespace, self._name)
 
     def take(self, n, **kwargs):
         if n <= 0:
@@ -1155,7 +1155,7 @@ class _TableMetaManager:
             return old_value_bytes
 
     @classmethod
-    def destory_table(cls, namespace: str, name: str):
+    def destroy_table(cls, namespace: str, name: str):
         k_bytes, env = cls._get_meta_env(namespace, name)
         with env.begin(write=True) as txn:
             txn.delete(k_bytes)
