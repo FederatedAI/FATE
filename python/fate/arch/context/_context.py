@@ -95,7 +95,7 @@ class Context:
 
     @property
     def on_batches(self) -> "Context":
-        return self.sub_ctx("iterations")
+        return self.sub_ctx("batches")
 
     @property
     def on_cross_validations(self) -> "Context":

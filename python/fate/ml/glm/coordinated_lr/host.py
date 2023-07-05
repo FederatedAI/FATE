@@ -16,7 +16,6 @@ import copy
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -31,12 +30,13 @@ class CoordinatedLRModuleHost(HeteroModule):
         self, max_iter=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None
     ):
         self.max_iter = max_iter
-        self.optimizer = Optimizer(optimizer_param["method"],
-                                   optimizer_param["penalty"],
-                                   optimizer_param["alpha"],
-                                   optimizer_param["optimizer_params"])
-        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+        self.optimizer = Optimizer(
+            optimizer_param["method"],
+            optimizer_param["penalty"],
+            optimizer_param["alpha"],
+            optimizer_param["optimizer_params"],
+        )
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"], learning_rate_param["scheduler_params"])
         # temp ode block start
         """self.optimizer = Optimizer(
             optimizer_param.method, optimizer_param.penalty, optimizer_param.alpha, optimizer_param.optimizer_params
@@ -56,7 +56,7 @@ class CoordinatedLRModuleHost(HeteroModule):
         if self.label_count > 2:
             self.ovr = True
             self.estimator = {}
-            for i, class_ctx in ctx.ctxs_range(self.label_count):
+            for i, class_ctx in ctx.sub_ctx("class").ctxs_range(self.label_count):
                 optimizer = copy.deepcopy(self.optimizer)
                 lr_scheduler = copy.deepcopy(self.lr_scheduler)
                 single_estimator = CoordinatedLREstimatorHost(
@@ -142,14 +142,14 @@ class CoordinatedLREstimatorHost(HeteroModule):
             self.start_iter = self.end_iter + 1
         # for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
         # temp code start
-        for i, iter_ctx in ctx.ctxs_range(self.max_iter):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.max_iter):
             # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set iters{i}")
             # temp code start
-            for batch_ctx, (X, _) in iter_ctx.ctxs_zip(batch_loader):
+            for batch_ctx, (X, _) in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 # temp code end
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")
@@ -172,7 +172,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
                 w = self.optimizer.update_weights(w, g, False, self.lr_scheduler.lr)
                 logger.info(f"w={w}")
                 j += 1
-            self.is_converged = ctx.arbiter("converge_flag").get()
+            self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:
                 self.end_iter = i
                 break
