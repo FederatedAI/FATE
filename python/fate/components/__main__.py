@@ -15,7 +15,7 @@
 #
 
 """
-execute with python -m fate.components --execution_id xxx --config xxx
+execute with python -m fate.components --config xxx
 """
 
 if __name__ == "__main__":

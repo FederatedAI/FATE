@@ -81,6 +81,9 @@ class DTensor:
     def __rmatmul__(self, other):
         return torch.matmul(other, self)
 
+    def encrypt(self, encryptor):
+        return torch.encrypt_f(self, encryptor)
+
     @property
     def shape(self):
         return self.shardings.shape
