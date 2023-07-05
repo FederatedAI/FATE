@@ -58,7 +58,6 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
-        ctx.guest("encryptor").put(encryptor)
         single_estimator = HeteroLinrEstimatorArbiter(max_iter=self.max_iter,
                                                       early_stop=self.early_stop,
                                                       tol=self.tol,

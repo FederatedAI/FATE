@@ -17,6 +17,7 @@ import copy
 import logging
 
 import torch
+
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
@@ -59,7 +60,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.labels = []
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        encryptor = ctx.arbiter("encryptor").get()
+        # encryptor = ctx.arbiter("encryptor").get()
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
@@ -88,7 +89,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     init_param=self.init_param,
                 )
                 train_data.label = train_data_binarized_label[self.labels[i]]
-                single_estimator.fit_single_model(class_ctx, encryptor, train_data, validate_data,
+                single_estimator.fit_single_model(class_ctx, train_data, validate_data,
                                                   with_weight=with_weight)
                 self.estimator[i] = single_estimator
         else:
@@ -175,7 +176,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.is_converged = False
         self.with_weight = False
 
-    def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None, with_weight=False):
+    def fit_single_model(self, ctx: Context, train_data, validate_data=None, with_weight=False):
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
         ∇l(w) = 1/h * Σ(0.25 * xw - 0.5 * y)x = 1/h * Σdx
@@ -223,7 +224,6 @@ class CoordinatedLREstimatorGuest(HeteroModule):
 
                 Xw = torch.matmul(X, w.detach())
                 d = 0.25 * Xw - 0.5 * Y
-                encryptor.encrypt(d).to(batch_ctx.hosts, "d")
                 loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
 
                 if self.optimizer.l1_penalty or self.optimizer.l2_penalty:

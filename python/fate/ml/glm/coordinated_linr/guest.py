@@ -49,14 +49,13 @@ class CoordinatedLinRModuleGuest(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         with_weight = train_data.weight is not None
-        encryptor = ctx.arbiter("encryptor").get()
 
         estimator = CoordinatedLinREstimatorGuest(max_iter=self.max_iter,
                                                   batch_size=self.batch_size,
                                                   optimizer=self.optimizer,
                                                   learning_rate_scheduler=self.lr_scheduler,
                                                   init_param=self.init_param)
-        estimator.fit_model(ctx, encryptor, train_data, validate_data, with_weight=with_weight)
+        estimator.fit_model(ctx, train_data, validate_data, with_weight=with_weight)
         self.estimator = estimator
 
     def predict(self, ctx, test_data):
@@ -108,7 +107,7 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         self.end_iter = -1
         self.is_converged = False
 
-    def fit_model(self, ctx, encryptor, train_data, validate_data=None, with_weight=False):
+    def fit_model(self, ctx, train_data, validate_data=None, with_weight=False):
         coef_count = train_data.shape[1]
         if self.init_param.fit_intercept:
             train_data["intercept"] = 1
@@ -136,7 +135,6 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
                 h = X.shape[0]
                 Xw = torch.matmul(X, w)
                 d = Xw - Y
-                encryptor.encrypt(d).to(batch_ctx.hosts, "d")
                 loss = 1 / 2 / h * torch.matmul(d.T, d)
                 if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
                     loss_norm = self.optimizer.loss_norm(w)
