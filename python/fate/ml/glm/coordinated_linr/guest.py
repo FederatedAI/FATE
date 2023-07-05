@@ -25,7 +25,7 @@ from fate.ml.utils._optimizer import Optimizer, LRScheduler
 logger = logging.getLogger(__name__)
 
 
-class HeteroLinRModuleGuest(HeteroModule):
+class CoordinatedLinRModuleGuest(HeteroModule):
     def __init__(
             self,
             max_iter=None,
@@ -50,11 +50,11 @@ class HeteroLinRModuleGuest(HeteroModule):
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         with_weight = train_data.weight is not None
 
-        estimator = HeteroLinrEstimatorGuest(max_iter=self.max_iter,
-                                             batch_size=self.batch_size,
-                                             optimizer=self.optimizer,
-                                             learning_rate_scheduler=self.lr_scheduler,
-                                             init_param=self.init_param)
+        estimator = CoordinatedLinREstimatorGuest(max_iter=self.max_iter,
+                                                  batch_size=self.batch_size,
+                                                  optimizer=self.optimizer,
+                                                  learning_rate_scheduler=self.lr_scheduler,
+                                                  init_param=self.init_param)
         estimator.fit_model(ctx, train_data, validate_data, with_weight=with_weight)
         self.estimator = estimator
 
@@ -78,16 +78,16 @@ class HeteroLinRModuleGuest(HeteroModule):
         }
 
     @classmethod
-    def from_model(cls, model) -> "HeteroLinRModuleGuest":
-        linr = HeteroLinRModuleGuest(**model["metadata"])
-        estimator = HeteroLinrEstimatorGuest()
+    def from_model(cls, model) -> "CoordinatedLinRModuleGuest":
+        linr = CoordinatedLinRModuleGuest()
+        estimator = CoordinatedLinREstimatorGuest()
         estimator.restore(model["estimator"])
         linr.estimator = estimator
 
         return linr
 
 
-class HeteroLinrEstimatorGuest(HeteroModule):
+class CoordinatedLinREstimatorGuest(HeteroModule):
     def __init__(
             self,
             max_iter=None,
@@ -155,10 +155,11 @@ class HeteroLinrEstimatorGuest(HeteroModule):
                 batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = self.optimizer.add_regular_to_grad(X.T @ d, w, self.init_param.fit_intercept)
+                g = X.T @ d
                 batch_ctx.arbiter.put("g_enc", X.T @ g)
                 g = batch_ctx.arbiter.get("g")
 
+                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.fit_intercept)
                 w = self.optimizer.update_weights(w, g, self.init_param.fit_intercept, self.lr_scheduler.lr)
                 logger.info(f"w={w}")
                 j += 1

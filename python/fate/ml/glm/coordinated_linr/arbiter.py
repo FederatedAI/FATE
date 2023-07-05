@@ -25,7 +25,7 @@ from fate.ml.utils._optimizer import separate, Optimizer, LRScheduler
 logger = logging.getLogger(__name__)
 
 
-class HeteroLinRModuleArbiter(HeteroModule):
+class CoordinatedLinRModuleArbiter(HeteroModule):
     def __init__(
             self,
             max_iter,
@@ -73,7 +73,7 @@ class HeteroLinRModuleArbiter(HeteroModule):
         }
 
     def from_model(cls, model):
-        linr = HeteroLinRModuleArbiter(**model["metadata"])
+        linr = CoordinatedLinRModuleArbiter(**model["metadata"])
         estimator = HeteroLinrEstimatorArbiter()
         estimator.restore(model["estimator"])
         linr.estimator = estimator

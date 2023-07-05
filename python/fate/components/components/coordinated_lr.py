@@ -14,9 +14,12 @@
 #  limitations under the License.
 
 import json
+import logging
 
 from fate.arch import Context
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
+
+logger = logging.getLogger(__name__)
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
@@ -56,6 +59,7 @@ def train(
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
+    logger.info(f"enter coordinated lr train")
     if role.is_guest:
         train_guest(
             ctx, train_data, validate_data, train_output_data, output_model, max_iter,
@@ -118,8 +122,9 @@ def cross_validation(
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,
                 batch_size, optimizer_param, learning_rate_param, init_param, threshold):
-    from fate.ml.glm.coordinated_lr import CoordinatedLRModuleGuest
     # optimizer = optimizer_factory(optimizer_param)
+    logger.info(f"coordinated lr guest start train")
+    from fate.ml.glm import CoordinatedLRModuleGuest
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLRModuleGuest(max_iter=max_iter, batch_size=batch_size,
                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
@@ -127,6 +132,7 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     train_data = train_data.read()
 
     if validate_data is not None:
+        logger.info(f"validate data provided")
         validate_data = validate_data.read()
 
     module.fit(sub_ctx, train_data, validate_data)
@@ -134,35 +140,46 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     output_model.write(model, metadata={"threshold": threshold})
 
     sub_ctx = ctx.sub_ctx("predict")
-    predict_score = module.predict(sub_ctx, validate_data)
-    predict_result = transform_to_predict_result(validate_data, predict_score, module.labels,
-                                                 threshold=module.threshold, is_ovr=module.ovr,
-                                                 data_type="test")
+    if validate_data is not None:
+        predict_score = module.predict(sub_ctx, validate_data)
+        predict_result = transform_to_predict_result(validate_data, predict_score, module.labels,
+                                                     threshold=module.threshold, is_ovr=module.ovr,
+                                                     data_type="validate")
+    else:
+        predict_score = module.predict(sub_ctx, train_data)
+        predict_result = transform_to_predict_result(train_data, predict_score, module.labels,
+                                                     threshold=module.threshold, is_ovr=module.ovr,
+                                                     data_type="train")
     train_output_data.write(predict_result)
 
 
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, batch_size,
                optimizer_param, learning_rate_param, init_param):
-    from fate.ml.glm.coordinated_lr import CoordinatedLRModuleHost
+    logger.info(f"coordinated lr host start train")
+    from fate.ml.glm import CoordinatedLRModuleHost
     sub_ctx = ctx.sub_ctx("train")
-
     module = CoordinatedLRModuleHost(max_iter=max_iter, batch_size=batch_size,
                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                      init_param=init_param)
     train_data = train_data.read()
 
     if validate_data is not None:
+        logger.info(f"validate data provided")
         validate_data = validate_data.read()
 
     module.fit(sub_ctx, train_data, validate_data)
     model = module.get_model()
     output_model.write(model, metadata={})
     sub_ctx = ctx.sub_ctx("predict")
-    module.predict(sub_ctx, validate_data)
+    if validate_data is not None:
+        module.predict(sub_ctx, validate_data)
+    else:
+        module.predict(sub_ctx, train_data)
 
 
 def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler):
-    from fate.ml.glm.coordinated_lr import CoordinatedLRModuleArbiter
+    logger.info(f"coordinated lr arbiter start train")
+    from fate.ml.glm import CoordinatedLRModuleArbiter
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLRModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
                                         optimizer_param=optimizer_param,
@@ -171,7 +188,8 @@ def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, l
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.coordinated_lr import CoordinatedLRModuleGuest
+    logger.info(f"coordinated lr guest start predict")
+    from fate.ml.glm import CoordinatedLRModuleGuest
 
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()
@@ -187,13 +205,14 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.coordinated_lr import CoordinatedLRModuleHost
+    logger.info(f"coordinated lr host start predict")
+    from fate.ml.glm import CoordinatedLRModuleHost
 
-    with ctx.sub_ctx("predict") as sub_ctx:
-        model = input_model.read()
-        module = CoordinatedLRModuleHost.from_model(model)
-        test_data = test_data.read()
-        module.predict(sub_ctx, test_data)
+    sub_ctx = ctx.sub_ctx("predict")
+    model = input_model.read()
+    module = CoordinatedLRModuleHost.from_model(model)
+    test_data = test_data.read()
+    module.predict(sub_ctx, test_data)
 
 
 def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):

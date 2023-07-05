@@ -29,11 +29,11 @@ logger = logging.getLogger(__name__)
 class CoordinatedLRModuleHost(HeteroModule):
     def __init__(
             self,
-            max_iter,
-            batch_size,
-            optimizer_param,
-            learning_rate_param,
-            init_param
+            max_iter=None,
+            batch_size=None,
+            optimizer_param=None,
+            learning_rate_param=None,
+            init_param=None
     ):
         self.max_iter = max_iter
         # temp code block start
@@ -85,7 +85,7 @@ class CoordinatedLRModuleHost(HeteroModule):
 
     def predict(self, ctx, test_data):
         if self.ovr:
-            for i, class_ctx in ctx.range(self.label_count):
+            for i, class_ctx in ctx.ctxs_range(self.label_count):
                 estimator = self.estimator[i]
                 estimator.predict(test_data)
         else:
@@ -106,7 +106,7 @@ class CoordinatedLRModuleHost(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLRModuleHost":
-        lr = CoordinatedLRModuleHost(**model["metadata"])
+        lr = CoordinatedLRModuleHost()
         lr.label_count = model["label_count"]
         lr.ovr = model["ovr"]
 
@@ -173,12 +173,10 @@ class CoordinatedLREstimatorHost(HeteroModule):
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")
                 Xw_h = 0.25 * torch.matmul(X, w)
-                if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-                    Xw_h = self.optimizer.add_regular_to_grad(Xw_h, w)
                 encryptor.encrypt(Xw_h).to(batch_ctx.guest, "Xw_h")
                 encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)).to(batch_ctx.guest, "Xw2_h")
                 d = batch_ctx.guest.get("d")
-                g = self.optimizer.add_regular_to_grad(torch.matmul(X.T, d), w)
+                g = torch.matmul(X.T, d)
                 g.to(batch_ctx.arbiter, "g_enc")
 
                 loss_norm = self.optimizer.loss_norm(w)
@@ -187,6 +185,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
                 else:
                     batch_ctx.guest.put(h_loss=loss_norm)
                 g = batch_ctx.arbiter.get("g")
+                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.fit_intercept)
                 # g = g / h + self.alpha * w
                 #  w -= self.learning_rate * g"
                 w = self.optimizer.update_weights(w, g, False, self.lr_scheduler.lr)

@@ -25,7 +25,7 @@ from fate.ml.utils._optimizer import Optimizer, LRScheduler
 logger = logging.getLogger(__name__)
 
 
-class HeteroLinRModuleHost(HeteroModule):
+class CoordinatedLinRModuleHost(HeteroModule):
     def __init__(
             self,
             max_iter,
@@ -49,11 +49,11 @@ class HeteroLinRModuleHost(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
-        estimator = HeteroLinrEstimatorHost(max_iter=self.max_iter,
-                                            batch_size=self.batch_size,
-                                            optimizer=self.optimizer,
-                                            learning_rate_scheduler=self.lr_scheduler,
-                                            init_param=self.init_param)
+        estimator = CoordiantedLinREstimatorHost(max_iter=self.max_iter,
+                                                 batch_size=self.batch_size,
+                                                 optimizer=self.optimizer,
+                                                 learning_rate_scheduler=self.lr_scheduler,
+                                                 init_param=self.init_param)
         estimator.fit_model(ctx, encryptor, train_data, validate_data)
         self.estimator = estimator
 
@@ -66,16 +66,16 @@ class HeteroLinRModuleHost(HeteroModule):
         }
 
     @classmethod
-    def from_model(cls, model) -> "HeteroLinRModuleHost":
-        linr = HeteroLinRModuleHost(**model["metadata"])
-        estimator = HeteroLinrEstimatorHost()
+    def from_model(cls, model) -> "CoordinatedLinRModuleHost":
+        linr = CoordinatedLinRModuleHost()
+        estimator = CoordiantedLinREstimatorHost()
         estimator.restore(model["estimator"])
         linr.estimator = estimator
 
         return linr
 
 
-class HeteroLinrEstimatorHost(HeteroModule):
+class CoordiantedLinREstimatorHost(HeteroModule):
     def __init__(
             self,
             max_iter=None,
