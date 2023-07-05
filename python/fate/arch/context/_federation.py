@@ -16,10 +16,7 @@ import io
 import pickle
 from typing import Any, List, Optional, TypeVar, Union
 
-from fate.arch.abc import FederationEngine
-from fate.arch.abc import Parties as PartiesInterface
-from fate.arch.abc import Party as PartyInterface
-from fate.arch.abc import PartyMeta
+from fate.arch.abc import FederationEngine, PartyMeta
 
 from ..computing import is_table
 from ..federation._gc import IterationGC
@@ -56,7 +53,7 @@ class _KeyedParty:
         return self.party.get(self.key)
 
 
-class Party(PartyInterface):
+class Party:
     def __init__(self, federation, party: PartyMeta, namespace: NS, key=None) -> None:
         self.federation = federation
         self.party = party
@@ -81,7 +78,7 @@ class Party(PartyInterface):
         return _pull(self.federation, name, self.namespace, [self.party])[0]
 
 
-class Parties(PartiesInterface):
+class Parties:
     def __init__(
         self,
         federation: FederationEngine,
@@ -129,7 +126,7 @@ class Parties(PartiesInterface):
     def put(self, *args, **kwargs):
         if args:
             assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
-            assert not kwargs, "keywords paramters not allowed when position parameter provided"
+            assert not kwargs, "keywords parameters not allowed when position parameter provided"
             kvs = [args]
         else:
             kvs = kwargs.items()
@@ -169,7 +166,7 @@ def _pull(
     return values
 
 
-class _TablePersistantId:
+class _TablePersistentId:
     def __init__(self, key) -> None:
         self.key = key
 
@@ -201,7 +198,7 @@ class _TableRemotePersistentPickler(pickle.Pickler):
             key = self._get_next_table_key()
             self._federation.push(v=obj, name=key, tag=self._tag, parties=self._parties)
             self._table_index += 1
-            return _TablePersistantId(key)
+            return _TablePersistentId(key)
 
     @classmethod
     def push(
@@ -234,7 +231,7 @@ class _TableRmotePersistentUnpickler(pickle.Unpickler):
         super().__init__(f)
 
     def persistent_load(self, pid: Any) -> Any:
-        if isinstance(pid, _TablePersistantId):
+        if isinstance(pid, _TablePersistentId):
             table = self._federation.pull(pid.key, self._tag, [self._party])[0]
             return table
 

@@ -498,7 +498,7 @@ class Federation(object):
         self._session.cleanup(namespace=self._session_id, name="*")
 
     # noinspection PyUnusedLocal
-    def remote(self, v, name: str, tag: str, parties: List[Tuple[str, str]]):
+    def remote(self, v, name: str, tag: str, parties: List[PartyMeta]):
         log_str = f"federation.standalone.remote.{name}.{tag}"
 
         if v is None:
