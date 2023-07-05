@@ -102,6 +102,15 @@ def rmatmul_f(a: DTensor, b: DTensor):
                 return a.shardings.map_reduce_shard_with_stride(_mapper, torch.add)
 
 
+def promote_torch_matmul(a: torch.Tensor, b: torch.Tensor):
+    target_dtype = torch.promote_types(a.dtype, b.dtype)
+    if target_dtype != a.dtype:
+        a = a.type(target_dtype)
+    if target_dtype != b.dtype:
+        b = b.type(target_dtype)
+    return torch.matmul(a, b)
+
+
 @implements(torch.matmul)
 def matmul(a: DTensor, b: DTensor):
     assert isinstance(a, DTensor) or isinstance(b, DTensor), "atleast one dtensor"
@@ -110,18 +119,18 @@ def matmul(a: DTensor, b: DTensor):
 
     if len(a.shape) == 1 and len(b.shape) == 1:
         if isinstance(b, DTensor):
-            return a.shardings.join_reduce_shard(b.shardings, torch.matmul, torch.add)
+            return a.shardings.join_reduce_shard(b.shardings, promote_torch_matmul, torch.add)
         else:
             assert a.shape[0] == b.shape[0], f"shapes mismatch: {a.shape} and {b.shape}"
             logger.warning("matmul shape 1 distributed tensor with local shape 1 tensor maybe slow")
             return a.shardings.map_reduce_shard_with_stride(
-                lambda stride, size, s: torch.matmul(s, b[stride : stride + size]), torch.add
+                lambda stride, size, s: promote_torch_matmul(s, b[stride : stride + size]), torch.add
             )
 
     elif len(a.shape) == 1 and len(b.shape) > 1:
         if isinstance(b, DTensor):
             assert b.shardings.shapes.axis == len(b.shardings.shape) - 2, "distributed axis mismatch"
-            return a.shardings.join_reduce_shard(b.shardings, torch.matmul, torch.add)
+            return a.shardings.join_reduce_shard(b.shardings, promote_torch_matmul, torch.add)
         else:
             assert a.shape[0] == b.shape[-2:][0], f"shapes mismatch: {a.shape} and {b.shape}"
             logger.warning("matmul shape 1 distributed tensor with local tensor maybe slow")
@@ -132,21 +141,21 @@ def matmul(a: DTensor, b: DTensor):
                     slice(stride, stride + size, 1) if i == axis else slice(None, None, None)
                     for i in range(len(b.shape))
                 )
-                return torch.matmul(s, b[slices])
+                return promote_torch_matmul(s, b[slices])
 
             return a.shardings.map_reduce_shard_with_stride(_mapper, torch.add)
 
     elif len(a.shape) > 1 and len(b.shape) == 1:
         if isinstance(b, DTensor):
             assert a.shardings.shapes.axis == len(a.shardings.shape) - 1, "distributed axis mismatch"
-            return a.shardings.join_reduce_shard(b.shardings, torch.matmul, torch.add)
+            return a.shardings.join_reduce_shard(b.shardings, promote_torch_matmul, torch.add)
         else:
             assert a.shape[-1] == b.shape[0], f"shapes mismatch: {a.shape} and {b.shape}"
             logger.warning("matmul shape 1 distributed tensor with local tensor maybe slow")
 
             def _mapper(stride, size, s):
                 slices = slice(stride, stride + size, 1)
-                return torch.matmul(s, b[slices])
+                return promote_torch_matmul(s, b[slices])
 
             return a.shardings.map_reduce_shard_with_stride(_mapper, torch.add)
 
@@ -162,12 +171,14 @@ def matmul(a: DTensor, b: DTensor):
                 ]
                 axis = len(shapes[0]) + na_axis
                 return DTensor(
-                    a.shardings.join_shard(b.shardings, func=torch.matmul, out_shapes=shapes, out_axis=axis)
+                    a.shardings.join_shard(b.shardings, func=promote_torch_matmul, out_shapes=shapes, out_axis=axis)
                 )
 
             # distributed axis in matmul part
             elif na_axis == -1 and nb_axis == -2:
-                return a.shardings.join_reduce_shard(b.shardings, mapper_func=torch.matmul, reduce_func=torch.add)
+                return a.shardings.join_reduce_shard(
+                    b.shardings, mapper_func=promote_torch_matmul, reduce_func=torch.add
+                )
             else:
                 raise RuntimeError(f"invalid shape {a.shape} and {b.shape}")
 
@@ -180,7 +191,7 @@ def matmul(a: DTensor, b: DTensor):
                     for sa in a.shardings.shapes.shapes
                 ]
                 axis = len(shapes[0]) + na_axis
-                return DTensor(a.shardings.map_shard(lambda x: torch.matmul(x, b), shapes=shapes, axis=axis))
+                return DTensor(a.shardings.map_shard(lambda x: promote_torch_matmul(x, b), shapes=shapes, axis=axis))
             else:
                 logger.warning("matmul shape 1 distributed tensor with local tensor maybe slow")
                 axis = len(b.shape) - 2
@@ -190,6 +201,6 @@ def matmul(a: DTensor, b: DTensor):
                         slice(stride, stride + size, 1) if i == axis else slice(None, None, None)
                         for i in range(len(b.shape))
                     )
-                    return torch.matmul(s, b[slices])
+                    return promote_torch_matmul(s, b[slices])
 
                 return a.shardings.map_reduce_shard_with_stride(_mapper, torch.add)

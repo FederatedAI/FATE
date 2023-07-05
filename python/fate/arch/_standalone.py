@@ -459,7 +459,10 @@ class Session(object):
             left = _Operand(namespace, name, p, partitions)
             right = _Operand(other_namespace, other_name, p, partitions)
             futures.append(self._pool.submit(do_func, _BinaryProcess(task_info, left, right)))
-        results = [r.result() for r in futures]
+        results = []
+        for f in futures:
+            r = f.result()
+            results.append(r)
         return results
 
 
@@ -1009,7 +1012,10 @@ def _do_join(p: _BinaryProcess):
                 continue
             v1 = deserialize(v1_bytes)
             v2 = deserialize(v2_bytes)
-            v3 = p.get_func()(v1, v2)
+            try:
+                v3 = p.get_func()(v1, v2)
+            except Exception as e:
+                raise RuntimeError(f"Error when joining {v1} and {v2}: {e}") from e
             dst_txn.put(k_bytes, serialize(v3))
     return rtn
 
