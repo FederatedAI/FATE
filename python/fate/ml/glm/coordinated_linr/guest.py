@@ -109,14 +109,14 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
 
     def fit_model(self, ctx, train_data, validate_data=None, with_weight=False):
         coef_count = train_data.shape[1]
-        if self.init_param.fit_intercept:
+        if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1
             coef_count += 1
         w = self.w
         if self.w is None:
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
-            self.lr_scheduler.init_scheduler(base_model=self.optimizer.optimizer)
+            self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
             # with_weight=True

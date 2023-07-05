@@ -45,6 +45,7 @@ class CoordinatedLRModuleHost(HeteroModule):
         # temp ode block ends
         self.batch_size = batch_size
         self.init_param = init_param
+        self.init_param["fit_intercept"] = False
 
         self.estimator = None
         self.ovr = False

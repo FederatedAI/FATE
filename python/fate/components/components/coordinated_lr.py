@@ -17,6 +17,7 @@ import json
 import logging
 
 from fate.arch import Context
+from fate.arch.dataframe import DataFrame
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 
 logger = logging.getLogger(__name__)
@@ -145,16 +146,17 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     output_model.write(model, metadata={"threshold": threshold})
 
     sub_ctx = ctx.sub_ctx("predict")
+
+    predict_score = module.predict(sub_ctx, train_data)
+    predict_result = transform_to_predict_result(train_data, predict_score, module.labels,
+                                                 threshold=module.threshold, is_ovr=module.ovr,
+                                                 data_type="train")
     if validate_data is not None:
         predict_score = module.predict(sub_ctx, validate_data)
-        predict_result = transform_to_predict_result(validate_data, predict_score, module.labels,
-                                                     threshold=module.threshold, is_ovr=module.ovr,
-                                                     data_type="validate")
-    else:
-        predict_score = module.predict(sub_ctx, train_data)
-        predict_result = transform_to_predict_result(train_data, predict_score, module.labels,
-                                                     threshold=module.threshold, is_ovr=module.ovr,
-                                                     data_type="train")
+        validate_predict_result = transform_to_predict_result(validate_data, predict_score, module.labels,
+                                                              threshold=module.threshold, is_ovr=module.ovr,
+                                                              data_type="validate")
+        predict_result = DataFrame.vstack([predict_result, validate_predict_result])
     train_output_data.write(predict_result)
 
 
@@ -176,10 +178,9 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
     model = module.get_model()
     output_model.write(model, metadata={})
     sub_ctx = ctx.sub_ctx("predict")
+    module.predict(sub_ctx, train_data)
     if validate_data is not None:
         module.predict(sub_ctx, validate_data)
-    else:
-        module.predict(sub_ctx, train_data)
 
 
 def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler):

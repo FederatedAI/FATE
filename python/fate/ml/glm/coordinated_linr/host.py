@@ -43,7 +43,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
                                         learning_rate_param["scheduler_params"])
         self.batch_size = batch_size
         self.init_param = init_param
-        self.init_param.fit_intercept = False
+        self.init_param["fit_intercept"] = False
 
         self.estimator = None
 
@@ -103,7 +103,7 @@ class CoordiantedLinREstimatorHost(HeteroModule):
         if self.w is None:
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
-            self.lr_scheduler.init_scheduler(base_model=self.optimizer.optimizer)
+            self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
         """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
