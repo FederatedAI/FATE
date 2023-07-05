@@ -154,11 +154,11 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
         # for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
         for i, iter_ctx in ctx.ctxs_range(self.max_iter):
             # temp code ends
+            logger.info(f"start iter {i}")
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
             for batch_ctx, _ in iter_ctx.ctxs_zip(batch_loader):
-
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g_guest = decryptor.decrypt(g_guest_enc)
                 size_list = [g_guest.size()[0]]
