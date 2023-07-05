@@ -108,7 +108,7 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             dataset=None, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="arbiter", sync_arbiter=True
         )
         logger.info(f"batch_num={batch_loader.batch_num}")
-        if self.optimizer is None:
+        if self.optimizer.optimizer is None:
             optimizer_ready = False
         else:
             optimizer_ready = True
@@ -126,27 +126,31 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g_guest = decryptor.decrypt(g_guest_enc)
                 size_list = [g_guest.size()[0]]
-                g_total = g_guest  # get torch tensor
+                g_total = g_guest.squeeze()  # get torch tensor
 
                 host_g = batch_ctx.hosts.get("g_enc")
                 for i, g_host_enc in enumerate(host_g):
                     g = decryptor.decrypt(g_host_enc)
                     size_list.append(g.size()[0])
-                    g_total = torch.hstack((g_total, g))
+                    g_total = torch.hstack((g_total, g.squeeze()))
                 if not optimizer_ready:
-                    self.optimizer.init_optimizer(size_list)
-                    self.lr_scheduler.init_scheduler(self.optimizer)
+                    self.optimizer.init_optimizer(sum(size_list))
+                    self.lr_scheduler.init_scheduler(self.optimizer.optimizer)
                     optimizer_ready = True
-                self.optimizer.step(g_total)
+                self.optimizer.step(g_total.unsqueeze(1))
                 delta_g = self.optimizer.get_delta_gradients()
                 delta_g_list = separate(delta_g, size_list)
+
+                delta_g_list_squeezed = []
+                batch_ctx.guest.put("g", delta_g_list[0])
+                delta_g_list_squeezed.append(delta_g_list[0].squeeze())
                 for i, g_host in enumerate(delta_g_list[1:]):
                     batch_ctx.hosts[i].put("g", g_host)
-                batch_ctx.guest.put("g", delta_g_list[0])
+                    delta_g_list_squeezed.append(g_host.squeeze())
                 if iter_g is None:
-                    iter_g = torch.hstack(delta_g_list)
+                    iter_g = torch.hstack(delta_g_list_squeezed)
                 else:
-                    iter_g += torch.hstack(delta_g_list)
+                    iter_g += torch.hstack(delta_g_list_squeezed)
 
                 if len(host_g) == 1:
                     loss = decryptor.decrypt(batch_ctx.guest.get("loss"))

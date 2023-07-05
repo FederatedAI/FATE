@@ -34,8 +34,8 @@ def train(
         train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
         learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
-                                               default=params.LRSchedulerParam(method="constant",
-                                                                               scheduler_params={"gamma": 0.1}),
+                                               default=params.LRSchedulerParam(method="linear",
+                                                                               scheduler_params={"start_factor": 1.0}),
                                                desc="learning rate scheduler, "
                                                     "select method from {'step', 'linear', 'constant'}"
                                                     "for list of configurable arguments, "
@@ -60,6 +60,11 @@ def train(
         output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     logger.info(f"enter coordinated lr train")
+    # temp code start
+    optimizer = optimizer.dict()
+    learning_rate_scheduler = learning_rate_scheduler.dict()
+    init_param = init_param.dict()
+    # temp code end
     if role.is_guest:
         train_guest(
             ctx, train_data, validate_data, train_output_data, output_model, max_iter,

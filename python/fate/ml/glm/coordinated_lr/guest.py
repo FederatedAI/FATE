@@ -38,20 +38,20 @@ class CoordinatedLRModuleGuest(HeteroModule):
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
-        # temp code block start
-        """self.optimizer = Optimizer(optimizer_param["method"],
+
+        self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])"""
-        # temp ode block ends
+                                        learning_rate_param["scheduler_params"])
 
-        self.optimizer = Optimizer(
+        # temp code block start
+        """self.optimizer = Optimizer(
             optimizer_param.method, optimizer_param.penalty, optimizer_param.alpha, optimizer_param.optimizer_params
         )
-        self.lr_scheduler = LRScheduler(learning_rate_param.method, learning_rate_param.scheduler_params)
-
+        self.lr_scheduler = LRScheduler(learning_rate_param.method, learning_rate_param.scheduler_params)"""
+        # temp ode block ends
         self.init_param = init_param
         self.threshold = threshold
 
@@ -98,7 +98,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 batch_size=self.batch_size,
                 optimizer=self.optimizer,
                 learning_rate_scheduler=self.lr_scheduler,
-                init_param=self.init_param,
+                init_param=self.init_param
             )
             single_estimator.fit_single_model(ctx, train_data, validate_data, with_weight=with_weight)
             self.estimator = single_estimator
@@ -185,7 +185,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         """
         coef_count = train_data.shape[1]
         # @todo: need to make sure add single-valued column works
-        if self.init_param.fit_intercept:
+        if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1.0
             coef_count += 1
 
@@ -195,10 +195,9 @@ class CoordinatedLREstimatorGuest(HeteroModule):
 
         w = self.w
         if w is None:
-            """w = initialize_param(coef_count, **self.init_param)"""
-            # temp code start
-            w = initialize_param(coef_count, fit_intercept=False, method="zeros")
+            w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
+            self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
             # temp code end
 
         batch_loader = dataframe.DataLoader(
@@ -249,9 +248,9 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 g = X.T @ d
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
-                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.fit_intercept)
+                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 # self.optimizer.step(g)
-                w = self.optimizer.update_weights(w, g, self.init_param.fit_intercept, self.lr_scheduler.lr)
+                w = self.optimizer.update_weights(w, g, self.init_param.get("fit_intercept"), self.lr_scheduler.lr)
 
                 logger.info(f"w={w}")
                 j += 1

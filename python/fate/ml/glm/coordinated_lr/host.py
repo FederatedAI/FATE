@@ -16,6 +16,7 @@ import copy
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -30,19 +31,18 @@ class CoordinatedLRModuleHost(HeteroModule):
         self, max_iter=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None
     ):
         self.max_iter = max_iter
-        # temp code block start
-        """self.optimizer = Optimizer(optimizer_param["method"],
+        self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])"""
-        # temp ode block ends
-
-        self.optimizer = Optimizer(
+                                        learning_rate_param["scheduler_params"])
+        # temp ode block start
+        """self.optimizer = Optimizer(
             optimizer_param.method, optimizer_param.penalty, optimizer_param.alpha, optimizer_param.optimizer_params
         )
-        self.lr_scheduler = LRScheduler(learning_rate_param.method, learning_rate_param.scheduler_params)
+        self.lr_scheduler = LRScheduler(learning_rate_param.method, learning_rate_param.scheduler_params)"""
+        # temp ode block ends
         self.batch_size = batch_size
         self.init_param = init_param
 
@@ -120,7 +120,6 @@ class CoordinatedLREstimatorHost(HeteroModule):
         self.lr_scheduler = learning_rate_scheduler
         self.batch_size = batch_size
         self.init_param = init_param
-        self.init_param.fit_intercept = False
 
         self.w = None
         self.start_iter = 0
@@ -135,10 +134,9 @@ class CoordinatedLREstimatorHost(HeteroModule):
         # temp code end
         w = self.w
         if self.w is None:
-            """w = initialize_param(coef_count, **self.init_param)"""
-            # temp code start
-            w = initialize_param(coef_count, fit_intercept=False, method="zeros")
+            w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
+            self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
         batch_loader = DataLoader(train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
@@ -168,7 +166,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
                 else:
                     batch_ctx.guest.put(h_loss=loss_norm)
                 g = batch_ctx.arbiter.get("g")
-                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.fit_intercept)
+                g = self.optimizer.add_regular_to_grad(g, w, False)
                 # g = g / h + self.alpha * w
                 #  w -= self.learning_rate * g"
                 w = self.optimizer.update_weights(w, g, False, self.lr_scheduler.lr)

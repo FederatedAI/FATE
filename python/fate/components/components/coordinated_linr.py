@@ -31,7 +31,8 @@ def train(
         train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
         learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
-                                               default=params.LRSchedulerParam(method="constant"),
+                                               default=params.LRSchedulerParam(method="linear",
+                                                                               scheduler_params={"start_factor": 1.0}),
                                                desc="learning rate scheduler, "
                                                     "select method from {'step', 'linear', 'constant'}"
                                                     "for list of configurable arguments, "

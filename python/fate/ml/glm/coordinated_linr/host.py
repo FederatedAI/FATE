@@ -103,6 +103,7 @@ class CoordiantedLinREstimatorHost(HeteroModule):
         if self.w is None:
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
+            self.lr_scheduler.init_scheduler(base_model=self.optimizer.optimizer)
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
         """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
@@ -125,7 +126,7 @@ class CoordiantedLinREstimatorHost(HeteroModule):
                     batch_ctx.guest.put(h_loss=loss_norm)
 
                 d = batch_ctx.guest.get("d")
-                g = self.optimizer.add_regular_to_grad(torch.matmul(X.T, d), w)
+                g = self.optimizer.add_regular_to_grad(torch.matmul(X.T, d), w, False)
                 g.to(batch_ctx.arbiter, "g_enc")
 
                 g = batch_ctx.arbiter.get("g")

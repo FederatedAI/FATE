@@ -116,6 +116,7 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         if self.w is None:
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
+            self.lr_scheduler.init_scheduler(base_model=self.optimizer.optimizer)
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
             # with_weight=True
@@ -159,8 +160,8 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
                 batch_ctx.arbiter.put("g_enc", X.T @ g)
                 g = batch_ctx.arbiter.get("g")
 
-                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.fit_intercept)
-                w = self.optimizer.update_weights(w, g, self.init_param.fit_intercept, self.lr_scheduler.lr)
+                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
+                w = self.optimizer.update_weights(w, g, self.init_param.get("fit_intercept"), self.lr_scheduler.lr)
                 logger.info(f"w={w}")
                 j += 1
             self.is_converged = ctx.arbiter("converge_flag").get()

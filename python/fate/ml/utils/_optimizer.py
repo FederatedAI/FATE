@@ -14,9 +14,12 @@
 #  limitations under the License.
 
 import copy
+import logging
 
 import numpy as np
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 class LRScheduler:
@@ -62,8 +65,8 @@ class Optimizer(object):
 
     def init_optimizer(self, model_parameter_length=None, model_parameter=None):
         if model_parameter_length is not None:
-            model_parameter = torch.nn.parameter.Parameter(torch.tensor([[0.0]] * model_parameter_length),
-                                                           requires_grad=True)
+            model_parameter = torch.nn.parameter.Parameter(torch.zeros((model_parameter_length, 1),
+                                                                       requires_grad=True))
         self.model_parameter = model_parameter
         self.optimizer = optimizer_factory([model_parameter], self.method, self.optim_param)
         # for regularization
@@ -71,11 +74,12 @@ class Optimizer(object):
 
     def step(self, gradient):
         self.prev_model_parameter = copy.deepcopy(self.model_parameter)
+        logger.info(f"gradient shape: {gradient.shape}, parameter shape: {self.model_parameter.shape}")
         self.model_parameter.grad = gradient
         self.optimizer.step()
 
     def get_delta_gradients(self):
-        if self.prev_model_parameter:
+        if self.prev_model_parameter is not None:
             return self.model_parameter - self.prev_model_parameter
         else:
             raise ValueError(f"No optimization history found, please check.")
@@ -228,17 +232,17 @@ def separate(value, size_list):
     Separate value in order to several set according size_list
     Parameters
     ----------
-    value: tensor, input data
+    value: 2d-tensor, input data
     size_list: list, each set size
     Returns
     ----------
     list
-        set after separate
+        separated 2d-tensors of sizes given in size_list
     """
     separate_res = []
     cur = 0
     for size in size_list:
-        separate_res.append(value[cur:cur + size])
+        separate_res.append(value[cur:cur + size, :])
         cur += size
     return separate_res
 

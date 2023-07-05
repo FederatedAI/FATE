@@ -57,6 +57,12 @@ class LazyBuildInComponentsLoader:
         return coordinated_lr
 
     @_lazy_cpn
+    def coordinated_linr(self):
+        from .coordinated_linr import coordinated_linr
+
+        return coordinated_linr
+
+    @_lazy_cpn
     def homo_nn(self):
         from .homo_nn import homo_nn
 
