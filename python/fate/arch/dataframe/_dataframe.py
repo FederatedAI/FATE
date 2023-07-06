@@ -250,6 +250,17 @@ class DataFrame(object):
 
         return sigmoid(self)
 
+    def rename(self, sample_id_name: str = None,
+               match_id_name: str = None,
+               label_name: str = None,
+               weight_name: str = None,
+               columns: dict = None):
+        self._data_manager.rename(sample_id_name=sample_id_name,
+                                  match_id_name=match_id_name,
+                                  label_name=label_name,
+                                  weight_name=weight_name,
+                                  columns=columns)
+
     def count(self) -> "int":
         return self.shape[0]
 
