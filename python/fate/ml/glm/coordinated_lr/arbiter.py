@@ -16,6 +16,7 @@ import copy
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -142,6 +143,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
+            logger.info(f"self.optimizer set iters {i}")
             for batch_ctx, _ in iter_ctx.on_batches.ctxs_zip(batch_loader):
 
                 g_guest_enc = batch_ctx.guest.get("g_enc")

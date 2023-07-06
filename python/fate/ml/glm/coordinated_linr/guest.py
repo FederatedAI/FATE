@@ -59,17 +59,7 @@ class CoordinatedLinRModuleGuest(HeteroModule):
         self.estimator = estimator
 
     def predict(self, ctx, test_data):
-        prob = self.estimator.predict(test_data)
-        """
-        df = test_data.create_dataframe(with_label=True, with_weight=False)
-        pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
-        pred_res["predict_result"] = prob
-        df[["predict_result", "predict_score", "predict_detail"]] = pred_res.apply_row(lambda v: [
-            v[0],
-            v[0],
-            json.dumps({v[0]})],
-                                                                                       enable_type_align_checking=False)
-        return df"""
+        prob = self.estimator.predict(ctx, test_data)
         return prob
 
     def get_model(self):
@@ -109,14 +99,14 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
 
     def fit_model(self, ctx, train_data, validate_data=None, with_weight=False):
         coef_count = train_data.shape[1]
-        if self.init_param.fit_intercept:
+        if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1
             coef_count += 1
         w = self.w
         if self.w is None:
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
-            self.lr_scheduler.init_scheduler(base_model=self.optimizer.optimizer)
+            self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
             # with_weight=True
