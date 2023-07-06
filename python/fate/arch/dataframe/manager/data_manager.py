@@ -239,6 +239,13 @@ class DataManager(object):
 
         return to_compress_block_loc, non_compress_block_changes
 
+    def rename(self, sample_id_name=None, match_id_name=None, label_name=None, weight_name=None, columns: dict = None):
+        self._schema_manager.rename(sample_id_name=sample_id_name,
+                                    match_id_name=match_id_name,
+                                    label_name=label_name,
+                                    weight_name=weight_name,
+                                    columns=columns)
+
     def serialize(self):
         fields = self._schema_manager.serialize()
         for col_id, field in enumerate(fields):
