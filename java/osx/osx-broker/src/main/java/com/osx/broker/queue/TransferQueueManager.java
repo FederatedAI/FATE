@@ -38,6 +38,7 @@ import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.frame.ServiceThread;
 import com.osx.core.ptp.TargetMethod;
 import com.osx.core.utils.JsonUtil;
+import com.osx.core.utils.NetUtils;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
@@ -449,7 +450,7 @@ public class TransferQueueManager {
 //                String portString = args[1];
 
                 createQueueResult.setPort(MetaInfo.PROPERTY_GRPC_PORT);
-                createQueueResult.setRedirectIp("localhost");
+                createQueueResult.setRedirectIp(NetUtils.getLocalHost());
             }
             return createQueueResult;
         } finally {

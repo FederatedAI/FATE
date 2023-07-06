@@ -106,6 +106,8 @@ public class MetaInfo {
     public static String PROPERTY_SERVER_PRIVATE_KEY_FILE;
     @Config(confKey = "server.ca.file")
     public static String PROPERTY_SERVER_CA_FILE;
+    @Config(confKey = "custom.local.host")
+    public static String PROPERTY_CUSTOMER_LOCAL_HOST;
     @Config(confKey = "bind.host")
     public static String PROPERTY_BIND_HOST = "0.0.0.0";
     @Config(confKey = "open.grpc.tls.server", pattern = Dict.BOOLEAN_PATTERN)
