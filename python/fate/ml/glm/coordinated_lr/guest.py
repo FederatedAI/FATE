@@ -169,8 +169,9 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
             self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
-            # temp code end
 
+        # @todo: need to convert label to 1 and -1
+        train_data.label = train_data.label.apply_row(lambda x: [1.0] if abs(x[0] - 1) < 1e-8 else [-1.0])
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
         )
