@@ -239,8 +239,8 @@ public class OsxServer {
                 SslContextBuilder sslContextBuilder = GrpcSslContexts.forServer(new File(certChainFilePath), new File(privateKeyFilePath))
                         .trustManager(new File(trustCertCollectionFilePath))
                         .clientAuth(ClientAuth.REQUIRE)
-                        .sessionTimeout(3600 << 4)
-                        .sessionCacheSize(65536);
+                        .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
+                        .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
                 logger.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
                         certChainFilePath, privateKeyFilePath, trustCertCollectionFilePath);
                 //serverBuilder.executor(executor);

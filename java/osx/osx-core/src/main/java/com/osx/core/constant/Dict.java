@@ -144,8 +144,9 @@ public class Dict {
     public static final String HEAD = "head";
     public static final String BODY = "body";
     public static final String SESSION_ID = "sessionId";
-
-
+    public static final String METHOD_CONFIG_REQ_TIMEOUT = "reqTimeout";
+    public static final String METHOD_CONFIG_CONNECTION_TIMEOUT = "connectionTimeout";
+    public static final String METHOD_CONFIG_SOCKET_TIMEOUT = "socketTimeout";
 
     public static final String SBT_TREE_NODE_ID_ARRAY = "sbtTreeNodeIdArray";
 

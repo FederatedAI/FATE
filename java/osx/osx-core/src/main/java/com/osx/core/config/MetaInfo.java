@@ -16,6 +16,7 @@
 
 package com.osx.core.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -23,6 +24,7 @@ import com.osx.core.constant.DeployMode;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.StreamLimitMode;
 import com.osx.core.exceptions.ConfigErrorException;
+import com.osx.core.utils.JsonUtil;
 import com.osx.core.utils.NetUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -90,6 +92,10 @@ public class MetaInfo {
     public static int PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
     @Config(confKey = "transfer.cached.msgid.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
+    @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
+    @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE = 65536;
 
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
@@ -211,6 +217,9 @@ public class MetaInfo {
     /**
      * 从连接池中申请连接的超时时间
      */
+    @Config(confKey = "http.client.method.config")
+    public static Map<String,Map<String,Integer>> PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP =new HashMap<>();
+
     @Config(confKey = "http.client.con.req.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT = 500;
     /**
@@ -218,6 +227,9 @@ public class MetaInfo {
      */
     @Config(confKey = "http.client.connection.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 10000;
+
+    @Config(confKey = "http.client.max.idle.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME = 5;
     /**
      * 等待数据
      */
@@ -281,6 +293,11 @@ public class MetaInfo {
                             Set set = new HashSet();
                             set.addAll(Lists.newArrayList(value.toString().split(",")));
                             field.set(null, set);
+                        } else if (clazz.isAssignableFrom(Map.class)) {
+
+                            Map<String,  Map<String,Integer>> conConfig = JsonUtil.object2Objcet(value, new TypeReference<Map<String, Map<String,Integer>>>() {
+                            });
+                            field.set(null,conConfig);
                         }
                     }
                     if (StringUtils.isNotEmpty(confKey)) {

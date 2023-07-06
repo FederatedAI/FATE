@@ -22,6 +22,7 @@ import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.PtpHttpHeader;
 import com.osx.core.utils.JsonUtil;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
@@ -60,11 +61,25 @@ public class HttpClientPool {
     private static PoolingHttpClientConnectionManager poolConnManager;
     private static CloseableHttpClient httpClient;
 
-    private static void config(HttpRequestBase httpRequestBase, Map<String, String> headers) {
+    static void config(HttpRequestBase httpRequestBase, Map<String, String> headers) {
+        Integer reqTimeout = null;
+        Integer connectionTimeout = null;
+        Integer socketTimeout = null;
+
+        if (MetaInfo.PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP != null) {
+            Map<String, Integer> methodConfig = MetaInfo.PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP.get(headers.get(PtpHttpHeader.SourceMethod));
+            if (methodConfig != null) {
+                reqTimeout = methodConfig.get(Dict.METHOD_CONFIG_REQ_TIMEOUT);
+                connectionTimeout = methodConfig.get(Dict.METHOD_CONFIG_CONNECTION_TIMEOUT);
+                socketTimeout = methodConfig.get(Dict.METHOD_CONFIG_SOCKET_TIMEOUT);
+
+            }
+        }
+
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT)
-                .setConnectTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT)
-                .setSocketTimeout(MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT).build();
+                .setConnectionRequestTimeout(ObjectUtils.firstNonNull(reqTimeout, MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT))
+                .setConnectTimeout(ObjectUtils.firstNonNull(connectionTimeout, MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT))
+                .setSocketTimeout(ObjectUtils.firstNonNull(socketTimeout, MetaInfo.PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT)).build();
         httpRequestBase.addHeader(Dict.CONTENT_TYPE, Dict.CONTENT_TYPE_JSON_UTF8);
         if (headers != null) {
             headers.forEach((key, value) -> {
@@ -104,7 +119,7 @@ public class HttpClientPool {
                 .setConnectionManager(poolConnManager)
                 .setDefaultRequestConfig(requestConfig)
                 .evictExpiredConnections()
-                .evictIdleConnections(5, TimeUnit.SECONDS)
+                .evictIdleConnections(MetaInfo.PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME, TimeUnit.SECONDS)
                 .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false))
                 .build();
         return httpClient;
