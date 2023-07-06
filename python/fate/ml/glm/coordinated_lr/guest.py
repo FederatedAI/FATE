@@ -212,10 +212,11 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 for h_loss in h_loss_list:
                     if h_loss is not None:
                         loss += h_loss
+
                 batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = X.T @ d
+                g = 1 / h * X.T @ d
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
                 g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
@@ -234,6 +235,8 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.w = w
 
     def predict(self, ctx, test_data):
+        if self.init_param.get("fit_intercept"):
+            test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):
@@ -242,16 +245,26 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         return pred
 
     def get_model(self):
+        w = self.w.tolist()
+        intercept = None
+        if self.init_param.get("fit_intercept"):
+            w = w[:-1]
+            intercept = w[-1]
         return {
-            "w": self.w.tolist(),
+            "w": w,
+            "intercept": intercept,
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_iter": self.end_iter,
             "converged": self.is_converged,
+            "fit_intercept": self.init_param.get("fit_intercept")
         }
 
     def restore(self, model):
-        self.w = torch.tensor(model["w"])
+        w = model["w"]
+        if model["fit_intercept"]:
+            w.append(model["intercept"])
+        self.w = torch.tensor(w)
         self.optimizer.load_state_dict(model["optimizer"])
         self.lr_scheduler.load_state_dict(model["lr_scheduler"])
         self.end_iter = model["end_iter"]

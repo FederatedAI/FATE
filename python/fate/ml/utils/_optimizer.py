@@ -125,8 +125,8 @@ class Optimizer(object):
     def add_regular_to_grad(self, grad, model_weights, fit_intercept=False):
         if self.l2_penalty:
             if fit_intercept:
-                weights_dum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
-                new_grad = grad + self.alpha * weights_dum
+                weights_sum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
+                new_grad = grad + self.alpha * weights_sum
             else:
                 new_grad = grad + self.alpha * model_weights
         else:
