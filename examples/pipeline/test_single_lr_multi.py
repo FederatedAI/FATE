@@ -32,13 +32,13 @@ lr_0 = CoordinatedLR("lr_0",
                      batch_size=-1,
                      init_param={"fit_intercept": False})
 
-lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest",
+lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
                                                              namespace="experiment"))
-lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest",
+lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_host",
                                                                 namespace="experiment"))
 
 evaluation_0 = Evaluation("evaluation_0",
-                          runtime_roles="guest",
+                          runtime_roles=["guest"],
                           input_data=lr_0.outputs["train_output_data"])
 
 # pipeline.add_task(feature_scale_0)
