@@ -25,7 +25,7 @@ pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998
 statistics_0 = Statistics("statistics_0",
                           input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                           namespace="experiment"),
-                          metrics=["mean", "max", "std", "var", "kurtosis", "skewness", "median", "count", "min"])
+                          metrics=["mean", "max", "std", "var", "kurtosis", "skewness", "count", "min"])
 
 pipeline.add_task(statistics_0)
 pipeline.compile()
