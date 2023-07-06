@@ -38,7 +38,7 @@ lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_het
                                                                 namespace="experiment"))
 
 evaluation_0 = Evaluation("evaluation_0",
-                          runtime_roles="guest",
+                          runtime_roles=["guest"],
                           input_data=lr_0.outputs["train_output_data"])
 
 # pipeline.add_task(feature_scale_0)
@@ -52,7 +52,8 @@ pipeline.fit()
 
 # print(pipeline.get_task_info("statistics_0").get_output_model())
 print(pipeline.get_task_info("lr_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_data())
+# print(pipeline.get_task_info("lr_0").get_output_data())
+print(f"evaluation metrics: ")
 print(pipeline.get_task_info("evaluation_0").get_output_metrics())
 
 pipeline.deploy([lr_0])

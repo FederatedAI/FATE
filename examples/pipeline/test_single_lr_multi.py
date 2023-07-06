@@ -34,7 +34,7 @@ lr_0 = CoordinatedLR("lr_0",
 
 lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
                                                              namespace="experiment"))
-lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_host",
+lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
                                                                 namespace="experiment"))
 
 evaluation_0 = Evaluation("evaluation_0",
