@@ -62,6 +62,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         # encryptor = ctx.arbiter("encryptor").get()
+        original_label = train_data.label
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
@@ -89,9 +90,10 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     learning_rate_scheduler=self.lr_scheduler,
                     init_param=self.init_param,
                 )
-                train_data.label = train_data_binarized_label[self.labels[i]]
+                train_data.label = train_data_binarized_label[f"{train_data.schema.label_name}_{self.labels[i]}"]
                 single_estimator.fit_single_model(class_ctx, train_data, validate_data, with_weight=with_weight)
                 self.estimator[i] = single_estimator
+            train_data.label = original_label
         else:
             single_estimator = CoordinatedLREstimatorGuest(
                 max_iter=self.max_iter,
@@ -246,6 +248,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred
+        pred = torch.sigmoid(pred)
         return pred
 
     def get_model(self):
