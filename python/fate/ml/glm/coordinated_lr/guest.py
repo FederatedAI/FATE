@@ -69,18 +69,9 @@ class CoordinatedLRModuleGuest(HeteroModule):
         ctx.hosts.put("label_count", label_count)
         self.labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
         with_weight = train_data.weight is not None
-        """
-        # temp code start
-        label_count = 2
-        ctx.arbiter.put("label_count", label_count)
-        ctx.hosts.put("label_count", label_count)
-        with_weight = False
-        # temp code end
-        """
         if label_count > 2:
             self.ovr = True
             self.estimator = {}
-            # train_data_binarized_label = train_data.label.one_hot()
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(label_count):
                 optimizer = copy.deepcopy(self.optimizer)
                 single_estimator = CoordinatedLREstimatorGuest(
@@ -165,7 +156,6 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
         """
         coef_count = train_data.shape[1]
-        # @todo: need to make sure add single-valued column works
         if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1.0
             coef_count += 1

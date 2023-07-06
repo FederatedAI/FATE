@@ -244,4 +244,7 @@ def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5,
                                                                  0: 1 - v[0]}),
                                                      data_type],
                                           enable_type_align_checking=False)
+    # temp code start
+    df.rename(label_name="label")
+    # temp code end
     return df
