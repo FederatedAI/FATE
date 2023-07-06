@@ -16,6 +16,7 @@ import copy
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -84,9 +85,9 @@ class CoordinatedLRModuleHost(HeteroModule):
         if self.ovr:
             for i, class_ctx in ctx.ctxs_range(self.label_count):
                 estimator = self.estimator[i]
-                estimator.predict(test_data)
+                estimator.predict(ctx, test_data)
         else:
-            self.estimator.predict(test_data)
+            self.estimator.predict(ctx, test_data)
 
     def get_model(self):
         all_estimator = {}
@@ -145,10 +146,10 @@ class CoordinatedLREstimatorHost(HeteroModule):
         # temp code start
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.max_iter):
             # temp code end
-            logger.info(f"start iter {i}")
+            # logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
-            logger.info(f"self.optimizer set iters{i}")
+            logger.info(f"self.optimizer set iters {i}")
             # temp code start
             for batch_ctx, (X, _) in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 # temp code end

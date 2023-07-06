@@ -58,7 +58,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
         self.estimator = estimator
 
     def predict(self, ctx, test_data):
-        self.estimator.predict(test_data)
+        self.estimator.predict(ctx, test_data)
 
     def get_model(self):
         return {

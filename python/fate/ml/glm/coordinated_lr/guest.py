@@ -17,6 +17,7 @@ import copy
 import logging
 
 import torch
+
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
@@ -107,31 +108,10 @@ class CoordinatedLRModuleGuest(HeteroModule):
             predict_score = test_data.create_dataframe(with_label=False, with_weight=False)
             for i, class_ctx in ctx.ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
-                pred = estimator.predict(test_data)
+                pred = estimator.predict(ctx, test_data)
                 predict_score[self.labels[i]] = pred
-
-            """df = test_data.create_dataframe(with_label=True, with_weight=False)
-            df[["predict_result", "predict_score", "predict_detail"]] = pred_res.apply_row(
-                lambda v: [v.argmax(),
-                           v[v.argmax()],
-                           json.dumps({label: v[label] for label in self.labels}),
-                           data_type],
-                enable_type_align_checking=False)"""
         else:
-            predict_score = self.estimator.predict(test_data)
-            """df = test_data.create_dataframe(with_label=True, with_weight=False)
-            prob = self.estimator.predict(test_data)
-            pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
-            pred_res["predict_result"] = prob
-            df[["predict_result",
-                "predict_score",
-                "predict_detail",
-                "type"]] = pred_res.apply_row(lambda v: [int(v[0] > self.threshold),
-                                                                   v[0],
-                                                                   json.dumps({1: v[0],
-                                                                               0: 1 - v[0]}),
-                                                        data_type],
-                                                        enable_type_align_checking=False)"""
+            predict_score = self.estimator.predict(ctx, test_data)
         return predict_score
 
     def get_model(self):
@@ -211,13 +191,12 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         # temp code start
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.max_iter):
             # temp code end
-            logger.info(f"start iter {i}")
+            # logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
-            logger.info(f"self.optimizer set iters{i}")
+            logger.info(f"self.optimizer set iters {i}")
             # todo: if self.with_weight: include weight in batch result
             for batch_ctx, (X, Y) in iter_ctx.on_batches.ctxs_zip(batch_loader):
-                logger.info(f"X: {X}, Y: {Y}")
                 h = X.shape[0]
 
                 Xw = torch.matmul(X, w.detach())
@@ -251,7 +230,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 # self.optimizer.step(g)
                 w = self.optimizer.update_weights(w, g, self.init_param.get("fit_intercept"), self.lr_scheduler.lr)
 
-                logger.info(f"w={w}")
+                # logger.info(f"w={w}")
                 j += 1
             self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:

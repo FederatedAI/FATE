@@ -59,17 +59,7 @@ class CoordinatedLinRModuleGuest(HeteroModule):
         self.estimator = estimator
 
     def predict(self, ctx, test_data):
-        prob = self.estimator.predict(test_data)
-        """
-        df = test_data.create_dataframe(with_label=True, with_weight=False)
-        pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
-        pred_res["predict_result"] = prob
-        df[["predict_result", "predict_score", "predict_detail"]] = pred_res.apply_row(lambda v: [
-            v[0],
-            v[0],
-            json.dumps({v[0]})],
-                                                                                       enable_type_align_checking=False)
-        return df"""
+        prob = self.estimator.predict(ctx, test_data)
         return prob
 
     def get_model(self):

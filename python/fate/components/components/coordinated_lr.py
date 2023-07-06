@@ -231,9 +231,10 @@ def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5,
                        data_type],
             enable_type_align_checking=False)
     else:
-        df = test_data.create_dataframe(with_label=True, with_weight=False)
-        pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
+        df = test_data.create_frame(with_label=True, with_weight=False)
+        pred_res = test_data.create_frame(with_label=False, with_weight=False)
         pred_res["predict_result"] = predict_score
+        # logger.info(f"predict score: {list(predict_score.shardings._data.collect())}")
         df[["predict_result",
             "predict_score",
             "predict_detail",
