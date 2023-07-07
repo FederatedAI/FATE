@@ -14,7 +14,7 @@
 #  limitations under the License.
 import io
 import pickle
-from typing import Any, List, Optional, TypeVar, Union
+from typing import Any, List, Tuple, TypeVar, Union
 
 from fate.arch.abc import FederationEngine, PartyMeta
 
@@ -54,9 +54,10 @@ class _KeyedParty:
 
 
 class Party:
-    def __init__(self, federation, party: PartyMeta, namespace: NS, key=None) -> None:
+    def __init__(self, federation, party: PartyMeta, rank: int, namespace: NS, key=None) -> None:
         self.federation = federation
         self.party = party
+        self.rank = rank
         self.namespace = namespace
         self.key = key
 
@@ -66,7 +67,7 @@ class Party:
     def put(self, *args, **kwargs):
         if args:
             assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
-            assert not kwargs, "keywords paramters not allowed when position parameter provided"
+            assert not kwargs, "keywords parameters not allowed when position parameter provided"
             kvs = [args]
         else:
             kvs = kwargs.items()
@@ -82,46 +83,29 @@ class Parties:
     def __init__(
         self,
         federation: FederationEngine,
-        party: PartyMeta,
-        parties: List[PartyMeta],
+        parties: List[Tuple[int, PartyMeta]],
         namespace: NS,
     ) -> None:
         self.federation = federation
-        self.party = party
         self.parties = parties
         self.namespace = namespace
 
+    @property
+    def ranks(self):
+        return [p[0] for p in self.parties]
+
     def __getitem__(self, key: int) -> Party:
-        return Party(self.federation, self.parties[key], self.namespace)
+        rank, party = self.parties[key]
+        return Party(self.federation, party, rank, self.namespace)
+
+    def __iter__(self):
+        return iter([Party(self.federation, party, rank, self.namespace) for rank, party in self.parties])
 
     def __len__(self) -> int:
         return len(self.parties)
 
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
-
-    def get_neighbor(self, shift: int, module: bool = False) -> Party:
-        start_index = self.get_local_index()
-        if start_index is None:
-            raise RuntimeError(f"local party `{self.party}` not in `{self.parties}`")
-        target_index = start_index + shift
-        if module:
-            target_index = target_index % module
-
-        if 0 <= target_index < len(self.parties):
-            return self(target_index)
-        else:
-            raise IndexError(f"target index `{target_index}` out of bound")
-
-    def get_neighbors(self) -> "Parties":
-        parties = [party for party in self.parties if party != self.party]
-        return Parties(self.federation, self.party, parties, self.namespace)
-
-    def get_local_index(self) -> Optional[int]:
-        if self.party not in self.parties:
-            return None
-        else:
-            return self.parties.index(self.party)
 
     def put(self, *args, **kwargs):
         if args:
@@ -131,10 +115,10 @@ class Parties:
         else:
             kvs = kwargs.items()
         for k, v in kvs:
-            return _push(self.federation, k, self.namespace, self.parties, v)
+            return _push(self.federation, k, self.namespace, [p[1] for p in self.parties], v)
 
     def get(self, name: str):
-        return _pull(self.federation, name, self.namespace, self.parties)
+        return _pull(self.federation, name, self.namespace, [p[1] for p in self.parties])
 
 
 def _push(
