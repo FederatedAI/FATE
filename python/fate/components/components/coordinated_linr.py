@@ -41,8 +41,8 @@ def train(
                                                     "select method from {'step', 'linear', 'constant'}"
                                                     "for list of configurable arguments, "
                                                     "refer to torch.optim.lr_scheduler"),
-        max_iter: cpn.parameter(type=params.conint(gt=0), default=20,
-                                desc="max iteration num"),
+        epochs: cpn.parameter(type=params.conint(gt=0), default=20,
+                              desc="max iteration num"),
         batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
                                   desc="batch size, "
                                        "value less or equals to 0 means full batch"),
@@ -66,16 +66,16 @@ def train(
     # temp code end
     if role.is_guest:
         train_guest(
-            ctx, train_data, validate_data, train_output_data, output_model, max_iter,
+            ctx, train_data, validate_data, train_output_data, output_model, epochs,
             batch_size, optimizer, learning_rate_scheduler, init_param
         )
     elif role.is_host:
         train_host(
-            ctx, train_data, validate_data, train_output_data, output_model, max_iter,
+            ctx, train_data, validate_data, train_output_data, output_model, epochs,
             batch_size, optimizer, learning_rate_scheduler, init_param
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
+        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
 
 
 @coordinated_linr.predict()
@@ -92,13 +92,13 @@ def predict(
         predict_host(ctx, input_model, test_data, test_output_data)
 
 
-def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,
+def train_guest(ctx, train_data, validate_data, train_output_data, output_model, epochs,
                 batch_size, optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated linr guest start train")
     from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleGuest
     # optimizer = optimizer_factory(optimizer_param)
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLinRModuleGuest(max_iter=max_iter, batch_size=batch_size,
+    module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
                                         optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                         init_param=init_param)
     train_data = train_data.read()
@@ -121,7 +121,7 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     train_output_data.write(predict_result)
 
 
-def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, batch_size,
+def train_host(ctx, train_data, validate_data, train_output_data, output_model, epochs, batch_size,
                optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated linr host start train")
 
@@ -129,7 +129,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
     # optimizer = optimizer_factory(optimizer_param)
 
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLinRModuleHost(max_iter=max_iter, batch_size=batch_size,
+    module = CoordinatedLinRModuleHost(epochs=epochs, batch_size=batch_size,
                                        optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                        init_param=init_param)
     train_data = train_data.read()
@@ -145,14 +145,14 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param,
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
                   learning_rate_param):
     logger.info(f"coordinated linr arbiter start train")
 
     from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleArbiter
 
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLinRModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
+    module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
                                           optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
     module.fit(sub_ctx)
 
@@ -181,8 +181,8 @@ def predict_host(ctx, input_model, test_data, test_output_data):
 
 
 def transform_to_predict_result(test_data, predict_score, data_type="test"):
-    df = test_data.create_dataframe(with_label=True, with_weight=False)
-    pred_res = test_data.create_dataframe(with_label=False, with_weight=False)
+    df = test_data.create_frame(with_label=True, with_weight=False)
+    pred_res = test_data.create_frame(with_label=False, with_weight=False)
     pred_res["predict_result"] = predict_score
     df[["predict_result", "predict_score", "predict_detail", "type"]] = pred_res.apply_row(lambda v: [
         v[0],

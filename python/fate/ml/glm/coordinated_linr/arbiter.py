@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class CoordinatedLinRModuleArbiter(HeteroModule):
     def __init__(
             self,
-            max_iter,
+            epochs,
             early_stop,
             tol,
             batch_size,
@@ -36,7 +36,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
             learning_rate_param
 
     ):
-        self.max_iter = max_iter
+        self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
@@ -58,7 +58,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
-        single_estimator = HeteroLinrEstimatorArbiter(max_iter=self.max_iter,
+        single_estimator = HeteroLinrEstimatorArbiter(epochs=self.epochs,
                                                       early_stop=self.early_stop,
                                                       tol=self.tol,
                                                       batch_size=self.batch_size,
@@ -83,7 +83,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
 class HeteroLinrEstimatorArbiter(HeteroModule):
     def __init__(
             self,
-            max_iter=None,
+            epochs=None,
             early_stop=None,
             tol=None,
             batch_size=None,
@@ -91,7 +91,7 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             learning_rate_scheduler=None
 
     ):
-        self.max_iter = max_iter
+        self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
@@ -99,8 +99,8 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
         self.lr_scheduler = learning_rate_scheduler
 
         self.converge_func = converge_func_factory(early_stop, tol)
-        self.start_iter = 0
-        self.end_iter = -1
+        self.start_epoch = 0
+        self.end_epoch = -1
         self.is_converged = False
 
     def fit_model(self, ctx, decryptor):
@@ -112,17 +112,17 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             optimizer_ready = False
         else:
             optimizer_ready = True
-            self.start_iter = self.end_iter + 1
+            self.start_epoch = self.end_epoch + 1
 
-        # for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):
+        # for i, iter_ctx in ctx.range(self.start_epoch, self.epochs):
         # temp code start
-        for i, iter_ctx in ctx.ctxs_range(self.max_iter):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             # temp code end
             logger.info(f"start iter {i}")
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
-            for batch_ctx, _ in iter_ctx.ctxs_zip(batch_loader):
+            for batch_ctx, _ in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g_guest = decryptor.decrypt(g_guest_enc)
                 size_list = [g_guest.size()[0]]
@@ -173,24 +173,25 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             iter_ctx.guest.put("converge_flag", self.is_converged)
 
             if self.is_converged:
-                self.end_iter = i
+                self.end_epoch = i
                 break
-            self.lr_scheduler.step()
+            if i < self.epochs - 1:
+                self.lr_scheduler.step()
         if not self.is_converged:
-            self.end_iter = self.max_iter
-        logger.debug(f"Finish training at {self.end_iter}th iteration.")
+            self.end_epoch = self.epochs
+        logger.debug(f"Finish training at {self.end_epoch}th epoch.")
 
     def to_model(self):
         return {
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
-            "end_iter": self.end_iter,
+            "end_epoch": self.end_epoch,
             "converged": self.is_converged
         }
 
     def restore(self, model):
         self.optimizer.load_state_dict(model["optimizer"])
         self.lr_scheduler.load_state_dict(model["lr_scheduler"])
-        self.end_iter = model["end_iter"]
+        self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]
-        # self.start_iter = model["end_iter"] + 1
+        # self.start_epoch = model["end_epoch"] + 1

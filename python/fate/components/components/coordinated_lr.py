@@ -41,8 +41,8 @@ def train(
                                                     "select method from {'step', 'linear', 'constant'}"
                                                     "for list of configurable arguments, "
                                                     "refer to torch.optim.lr_scheduler"),
-        max_iter: cpn.parameter(type=params.conint(gt=0), default=20,
-                                desc="max iteration num"),
+        epochs: cpn.parameter(type=params.conint(gt=0), default=20,
+                              desc="max iteration num"),
         batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
                                   desc="batch size, "
                                        "value less or equals to 0 means full batch"),
@@ -68,16 +68,16 @@ def train(
     # temp code end
     if role.is_guest:
         train_guest(
-            ctx, train_data, validate_data, train_output_data, output_model, max_iter,
+            ctx, train_data, validate_data, train_output_data, output_model, epochs,
             batch_size, optimizer, learning_rate_scheduler, init_param, threshold
         )
     elif role.is_host:
         train_host(
-            ctx, train_data, validate_data, train_output_data, output_model, max_iter,
+            ctx, train_data, validate_data, train_output_data, output_model, epochs,
             batch_size, optimizer, learning_rate_scheduler, init_param
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
+        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
 
 
 @coordinated_lr.predict()
@@ -102,7 +102,7 @@ def cross_validation(
     data: cpn.dataframe_input(roles=[GUEST, HOST]),
     num_fold: cpn.parameter(type=params.conint(ge=2), desc="num cross validation fold"),
     learning_rate: cpn.parameter(type=params.learning_rate_param(), default=0.1, desc="learning rate"),
-    max_iter: cpn.parameter(type=params.conint(gt=0), default=100, desc="max iteration num"),
+    epochs: cpn.parameter(type=params.conint(gt=0), default=100, desc="max iteration num"),
     batch_size: cpn.parameter(
         type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
     ),
@@ -114,7 +114,7 @@ def cross_validation(
         if role.is_guest:
             from fate.ml.glm.coordinated_lr import CoordinatedLRModuleGuest
 
-            module = CoordinatedLRModuleGuest(max_iter=max_iter, learning_rate=learning_rate, batch_size=batch_size)
+            module = CoordinatedLRModuleGuest(epochs=epochs, learning_rate=learning_rate, batch_size=batch_size)
             train_data, validate_data = split_dataframe(data, num_fold, i)
             module.fit(fold_ctx, train_data)
             predicted = module.predict(fold_ctx, validate_data)
@@ -126,13 +126,13 @@ def cross_validation(
 """
 
 
-def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,
+def train_guest(ctx, train_data, validate_data, train_output_data, output_model, epochs,
                 batch_size, optimizer_param, learning_rate_param, init_param, threshold):
     # optimizer = optimizer_factory(optimizer_param)
     logger.info(f"coordinated lr guest start train")
     from fate.ml.glm import CoordinatedLRModuleGuest
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLRModuleGuest(max_iter=max_iter, batch_size=batch_size,
+    module = CoordinatedLRModuleGuest(epochs=epochs, batch_size=batch_size,
                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                       init_param=init_param, threshold=threshold)
     train_data = train_data.read()
@@ -160,12 +160,12 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     train_output_data.write(predict_result)
 
 
-def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, batch_size,
+def train_host(ctx, train_data, validate_data, train_output_data, output_model, epochs, batch_size,
                optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated lr host start train")
     from fate.ml.glm import CoordinatedLRModuleHost
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLRModuleHost(max_iter=max_iter, batch_size=batch_size,
+    module = CoordinatedLRModuleHost(epochs=epochs, batch_size=batch_size,
                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                      init_param=init_param)
     train_data = train_data.read()
@@ -183,11 +183,11 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler):
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler):
     logger.info(f"coordinated lr arbiter start train")
     from fate.ml.glm import CoordinatedLRModuleArbiter
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLRModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
+    module = CoordinatedLRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
                                         optimizer_param=optimizer_param,
                                         learning_rate_param=learning_rate_scheduler)
     module.fit(sub_ctx)
@@ -223,8 +223,8 @@ def predict_host(ctx, input_model, test_data, test_output_data):
 
 def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):
     if is_ovr:
-        df = test_data.create_dataframe(with_label=True, with_weight=False)
-        df[["predict_result", "predict_score", "predict_detail"]] = predict_score.apply_row(
+        df = test_data.create_frame(with_label=True, with_weight=False)
+        df[["predict_result", "predict_score", "predict_detail", "type"]] = predict_score.apply_row(
             lambda v: [v.argmax(),
                        v[v.argmax()],
                        json.dumps({label: v[label] for label in labels}),

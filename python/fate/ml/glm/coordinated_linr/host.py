@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 class CoordinatedLinRModuleHost(HeteroModule):
     def __init__(
             self,
-            max_iter,
+            epochs,
             batch_size,
             optimizer_param,
             learning_rate_param,
             init_param
     ):
-        self.max_iter = max_iter
+        self.epochs = epochs
         self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
@@ -49,7 +49,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
-        estimator = CoordiantedLinREstimatorHost(max_iter=self.max_iter,
+        estimator = CoordiantedLinREstimatorHost(epochs=self.epochs,
                                                  batch_size=self.batch_size,
                                                  optimizer=self.optimizer,
                                                  learning_rate_scheduler=self.lr_scheduler,
@@ -78,21 +78,21 @@ class CoordinatedLinRModuleHost(HeteroModule):
 class CoordiantedLinREstimatorHost(HeteroModule):
     def __init__(
             self,
-            max_iter=None,
+            epochs=None,
             batch_size=None,
             optimizer=None,
             learning_rate_scheduler=None,
             init_param=None
     ):
-        self.max_iter = max_iter
+        self.epochs = epochs
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.batch_size = batch_size
         self.init_param = init_param
 
         self.w = None
-        self.start_iter = 0
-        self.end_iter = -1
+        self.start_epoch = 0
+        self.end_epoch = -1
         self.is_converged = False
 
     def fit_model(self, ctx: Context, encryptor, train_data, validate_data=None) -> None:
@@ -104,16 +104,16 @@ class CoordiantedLinREstimatorHost(HeteroModule):
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
             self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
-        if self.end_iter >= 0:
-            self.start_iter = self.end_iter + 1
-        """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
+        if self.end_epoch >= 0:
+            self.start_epoch = self.end_epoch + 1
+        """for i, iter_ctx in ctx.range(self.start_epoch, self.epochs):"""
         # temp code start
-        for i, iter_ctx in ctx.ctxs_range(self.max_iter):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
-            for batch_ctx, X in iter_ctx.ctxs_zip(batch_loader):
+            for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")
                 Xw_h = torch.matmul(X, w)
@@ -137,13 +137,14 @@ class CoordiantedLinREstimatorHost(HeteroModule):
                 j += 1
             self.is_converged = ctx.arbiter("converge_flag").get()
             if self.is_converged:
-                self.end_iter = i
+                self.end_epoch = i
                 break
-            self.lr_scheduler.step()
+            if i < self.epochs - 1:
+                self.lr_scheduler.step()
         if not self.is_converged:
-            self.end_iter = self.max_iter
+            self.end_epoch = self.epochs
         self.w = w
-        logger.debug(f"Finish training at {self.end_iter}th iteration.")
+        logger.debug(f"Finish training at {self.end_epoch}th epoch.")
 
     def predict(self, ctx, test_data):
         X = test_data.values.as_tensor()
@@ -155,7 +156,7 @@ class CoordiantedLinREstimatorHost(HeteroModule):
             "w": self.w.tolist(),
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
-            "end_iter": self.end_iter,
+            "end_epoch": self.end_epoch,
             "converged": self.is_converged
         }
 
@@ -163,5 +164,5 @@ class CoordiantedLinREstimatorHost(HeteroModule):
         self.w = torch.tensor(model["w"])
         self.optimizer.load_state_dict(model["optimizer"])
         self.lr_scheduler.load_state_dict(model["lr_scheduler"])
-        self.end_iter = model["end_iter"]
+        self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]

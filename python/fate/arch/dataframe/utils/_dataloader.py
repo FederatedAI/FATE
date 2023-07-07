@@ -133,7 +133,7 @@ class FullBatchDataLoader(object):
                     random.seed = self._random_seed
                 random.shuffle(indexer)
 
-                for i, iter_ctx in self._ctx.range(self._batch_num):
+                for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]
                     batch_indexer = self._ctx.computing.parallelize(batch_indexer,
                                                                     include_key=True,
@@ -146,7 +146,7 @@ class FullBatchDataLoader(object):
 
                     self._batch_splits.append(sub_frame)
             elif self._mode == "hetero" and self._role == "host":
-                for i, iter_ctx in self._ctx.range(self._batch_num):
+                for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")
                     sub_frame = self._dataset.loc(batch_indexes, preserve_order=True)
                     self._batch_splits.append(sub_frame)

@@ -28,15 +28,15 @@ logger = logging.getLogger(__name__)
 
 class CoordinatedLRModuleGuest(HeteroModule):
     def __init__(
-        self,
-        max_iter=None,
-        batch_size=None,
-        optimizer_param=None,
-        learning_rate_param=None,
-        init_param=None,
-        threshold=0.5,
+            self,
+            epochs=None,
+            batch_size=None,
+            optimizer_param=None,
+            learning_rate_param=None,
+            init_param=None,
+            threshold=0.5,
     ):
-        self.max_iter = max_iter
+        self.epochs = epochs
         self.batch_size = batch_size
 
         self.optimizer = Optimizer(
@@ -58,10 +58,9 @@ class CoordinatedLRModuleGuest(HeteroModule):
 
         self.estimator = None
         self.ovr = False
-        self.labels = []
+        self.labels = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        # encryptor = ctx.arbiter("encryptor").get()
         original_label = train_data.label
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
@@ -70,24 +69,25 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
         with_weight = train_data.weight is not None
         if label_count > 2:
+            logger.info(f"OVR data provided, will train OVR models.")
             self.ovr = True
             self.estimator = {}
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(label_count):
+                logger.info(f"start train for {i}th class")
                 optimizer = copy.deepcopy(self.optimizer)
                 single_estimator = CoordinatedLREstimatorGuest(
-                    max_iter=self.max_iter,
+                    epochs=self.epochs,
                     batch_size=self.batch_size,
                     optimizer=optimizer,
                     learning_rate_scheduler=self.lr_scheduler,
                     init_param=self.init_param,
                 )
-                train_data.label = train_data_binarized_label[f"{train_data.schema.label_name}_{self.labels[i]}"]
+                train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
                 single_estimator.fit_single_model(class_ctx, train_data, validate_data, with_weight=with_weight)
                 self.estimator[i] = single_estimator
-            train_data.label = original_label
         else:
             single_estimator = CoordinatedLREstimatorGuest(
-                max_iter=self.max_iter,
+                epochs=self.epochs,
                 batch_size=self.batch_size,
                 optimizer=self.optimizer,
                 learning_rate_scheduler=self.lr_scheduler,
@@ -95,13 +95,14 @@ class CoordinatedLRModuleGuest(HeteroModule):
             )
             single_estimator.fit_single_model(ctx, train_data, validate_data, with_weight=with_weight)
             self.estimator = single_estimator
+        train_data.label = original_label
 
     def predict(self, ctx, test_data):
         if self.ovr:
-            predict_score = test_data.create_dataframe(with_label=False, with_weight=False)
-            for i, class_ctx in ctx.ctxs_range(len(self.labels)):
+            predict_score = test_data.create_frame(with_label=False, with_weight=False)
+            for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
-                pred = estimator.predict(ctx, test_data)
+                pred = estimator.predict(class_ctx, test_data)
                 predict_score[self.labels[i]] = pred
         else:
             predict_score = self.estimator.predict(ctx, test_data)
@@ -135,16 +136,16 @@ class CoordinatedLRModuleGuest(HeteroModule):
 
 
 class CoordinatedLREstimatorGuest(HeteroModule):
-    def __init__(self, max_iter=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
-        self.max_iter = max_iter
+    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
+        self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.init_param = init_param
 
         self.w = None
-        self.start_iter = 0
-        self.end_iter = -1
+        self.start_epoch = 0
+        self.end_epoch = -1
         self.is_converged = False
         self.with_weight = False
 
@@ -158,39 +159,36 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         coef_count = train_data.shape[1]
         if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1.0
-            coef_count += 1
-
-        # temp code start
-        # coef_count = 10
-        # temp code end
 
         w = self.w
         if w is None:
             w = initialize_param(coef_count, **self.init_param)
+
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
             self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
 
-        # @todo: need to convert label to 1 and -1
-        train_data.label = train_data.label.apply_row(lambda x: [1.0] if abs(x[0] - 1) < 1e-8 else [-1.0])
+        train_data.label = train_data.label.apply_row(lambda x: [1.0] if abs(x[0] - 1) < 1e-8 else [-1.0],
+                                                      with_label=True)
+
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
         )
-        if self.end_iter >= 0:
-            self.start_iter = self.end_iter + 1
+        if self.end_epoch >= 0:
+            self.start_epoch = self.end_epoch + 1
         """if train_data.weight:
             self.with_weight = True"""
 
-        # for i, iter_ctx in ctx.ctxs_range(self.start_iter, self.max_iter):
+        # for i, iter_ctx in ctx.ctxs_range(self.start_epoch, self.epochs):
         # temp code start
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.max_iter):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             # temp code end
             # logger.info(f"start iter {i}")
-            j = 0
             self.optimizer.set_iters(i)
-            logger.info(f"self.optimizer set iters {i}")
+            logger.info(f"self.optimizer set epoch {i}")
             # todo: if self.with_weight: include weight in batch result
             for batch_ctx, (X, Y) in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 h = X.shape[0]
+                # logger.info(f"h: {h}")
 
                 Xw = torch.matmul(X, w.detach())
                 d = 0.25 * Xw - 0.5 * Y
@@ -225,15 +223,18 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 w = self.optimizer.update_weights(w, g, self.init_param.get("fit_intercept"), self.lr_scheduler.lr)
 
                 # logger.info(f"w={w}")
-                j += 1
+
             self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:
-                self.end_iter = i
+                self.end_epoch = i
                 break
-            self.lr_scheduler.step()
+            if i < self.epochs - 1:
+                logger.info(f"lr step at {i}th epoch")
+                self.lr_scheduler.step()
         if not self.is_converged:
-            self.end_iter = self.max_iter
+            self.end_epoch = self.epochs
         self.w = w
+        logger.debug(f"Finish training at {self.end_epoch}th epoch.")
 
     def predict(self, ctx, test_data):
         if self.init_param.get("fit_intercept"):
@@ -256,7 +257,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             "intercept": intercept,
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
-            "end_iter": self.end_iter,
+            "end_epoch": self.end_epoch,
             "converged": self.is_converged,
             "fit_intercept": self.init_param.get("fit_intercept")
         }
@@ -268,5 +269,5 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.w = torch.tensor(w)
         self.optimizer.load_state_dict(model["optimizer"])
         self.lr_scheduler.load_state_dict(model["lr_scheduler"])
-        self.end_iter = model["end_iter"]
+        self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]
