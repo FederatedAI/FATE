@@ -1,7 +1,8 @@
 from typing import Optional, Union
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-from fate.ml.abc.module import HomoModule, Model, Module
+from fate.ml.abc.module import HomoModule, Module
+from fate.ml.utils.model_io import ModelExporter
 from fate.arch import Context
 import logging
 import pandas as pd
@@ -225,9 +226,9 @@ class HomoLRClient(HomoModule):
         
         meta = {'batch_size': self.batch_size, 'max_iter': self.max_iter, 'threshold': self.threshold, 
                 'optimizer_param': self.optimizer_param, 'learning_rate_param': self.learning_rate_param, 'init_param': self.init_param}
-        ret = {'meta': meta, 'param': param}
+        export_ = ModelExporter(data=param, meta=meta)
 
-        return ret
+        return export_
     
     @classmethod
     def from_model(cls, model: dict) -> Module:
