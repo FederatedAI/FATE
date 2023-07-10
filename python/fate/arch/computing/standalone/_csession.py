@@ -43,8 +43,8 @@ class CSession(CSessionABC):
         return self._session.session_id
 
     def load(self, uri: URI, schema: dict, options: dict = None):
-        if uri.schema != "standalone":
-            raise ValueError(f"uri scheme `{uri.schema}` not supported with standalone backend")
+        if uri.scheme != "standalone":
+            raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
         try:
             *database, namespace, name = uri.path_splits()
         except Exception as e:

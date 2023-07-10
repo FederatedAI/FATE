@@ -50,7 +50,7 @@ class DataframeWriter(_ArtifactTypeWriter[DataOutputMetadata]):
 class DataframeReader(_ArtifactTypeReader):
     def read(self) -> "DataFrame":
         logger.debug(f"start reading dataframe from artifact: {self.artifact}")
-        if self.artifact.uri.schema == "file":
+        if self.artifact.uri.scheme == "file":
             import inspect
 
             from fate.arch import dataframe

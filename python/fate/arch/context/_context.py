@@ -20,7 +20,7 @@ from fate.arch.abc import CSessionABC, FederationEngine
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import Parties, Party
-from ._metrics import MetricsWrap, NoopMetricsHandler
+from ._metrics import InMemoryMetricsHandler, MetricsWrap
 from ._namespace import NS, default_ns
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class Context:
     @property
     def metrics(self):
         if self._metrics_handler is None:
-            self._metrics_handler = NoopMetricsHandler()
+            self._metrics_handler = InMemoryMetricsHandler()
         return MetricsWrap(self._metrics_handler, self.namespace)
 
     def with_namespace(self, namespace: NS):
