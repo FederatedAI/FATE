@@ -87,6 +87,18 @@ class DTensor:
     def encrypt(self, encryptor):
         return torch.encrypt_f(self, encryptor)
 
+    def exp(self):
+        return torch.exp(self)
+
+    def log(self):
+        return torch.log(self)
+
+    def square(self):
+        return torch.square(self)
+
+    def sigmoid(self):
+        return torch.sigmoid(self)
+
     @property
     def shape(self):
         return self.shardings.shape

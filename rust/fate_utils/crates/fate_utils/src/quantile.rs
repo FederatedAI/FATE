@@ -2,12 +2,12 @@ use bincode::{deserialize, serialize};
 use ndarray::prelude::*;
 use ndarray::{Array, ArrayView1, Axis};
 use numpy::{IntoPyArray, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use pyo3::types::PyTuple;
 use quantile::greenwald_khanna;
 use serde::{Deserialize, Serialize};
-use pyo3::types::PyTuple;
-use pyo3::exceptions::PyTypeError;
 
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Serialize, Deserialize)]
 struct Ordf64(f64);

@@ -1,8 +1,9 @@
 use super::BInt;
 use rand::rngs::StdRng;
-use rand_core::{RngCore, SeedableRng};
 use rug::rand::{RandGen, RandState};
 use rug::Integer;
+use rand::RngCore;
+use rand::SeedableRng;
 pub(crate) struct StdRngGen(StdRng);
 impl RandGen for StdRngGen {
     fn gen(&mut self) -> u32 {

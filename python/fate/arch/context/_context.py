@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import Iterable, List, Literal, Optional, Tuple, TypeVar, overload
+from typing import Iterable, Literal, Optional, Tuple, TypeVar, overload
 
-from fate.arch.abc import CSessionABC, FederationEngine, PartyMeta
+from fate.arch.abc import CSessionABC, FederationEngine
 
 from ..unify import device
 from ._cipher import CipherKit
@@ -86,8 +86,8 @@ class Context:
     def federation(self) -> "FederationEngine":
         return self._get_federation()
 
-    def sub_ctx(self, name: str) -> "Context":
-        return self.with_namespace(self.namespace.sub_ns(name=name))
+    def sub_ctx(self, name: str, is_special=False) -> "Context":
+        return self.with_namespace(self.namespace.sub_ns(name=name, is_special=is_special))
 
     @property
     def on_iterations(self) -> "Context":
@@ -99,7 +99,7 @@ class Context:
 
     @property
     def on_cross_validations(self) -> "Context":
-        return self.sub_ctx("cross_validations")
+        return self.sub_ctx("cross_validations", is_special=True)
 
     @overload
     def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:
@@ -154,60 +154,46 @@ class Context:
 
     @property
     def guest(self) -> Party:
-        return Party(
-            self._get_federation(),
-            self._get_parties("guest")[0],
-            self.namespace,
-        )
+        return self._get_parties("guest")[0]
 
     @property
     def hosts(self) -> Parties:
-        return Parties(
-            self._get_federation(),
-            self._get_federation().local_party,
-            self._get_parties("host"),
-            self.namespace,
-        )
+        return self._get_parties("host")
 
     @property
     def arbiter(self) -> Party:
-        return Party(
-            self._get_federation(),
-            self._get_parties("arbiter")[0],
-            self.namespace,
-        )
+        return self._get_parties("arbiter")[0]
 
     @property
     def local(self):
-        return self._get_federation().local_party
+        role, party_id = self._get_federation().local_party
+        for party in self._get_parties(role):
+            if party.party[1] == party_id:
+                return party
+        raise RuntimeError("local party not found")
 
     @property
     def is_on_guest(self):
-        return self.local[0] == "guest"
+        return self._federation.local_party[0] == "guest"
 
     @property
     def is_on_host(self):
-        return self.local[0] == "host"
+        return self._federation.local_party[0] == "host"
 
     @property
     def is_on_arbiter(self):
-        return self.local[0] == "arbiter"
+        return self._federation.local_party[0] == "arbiter"
 
     @property
     def parties(self) -> Parties:
-        return Parties(
-            self._get_federation(),
-            self._get_federation().local_party,
-            self._get_parties(),
-            self.namespace,
-        )
+        return self._get_parties()
 
-    def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter"]] = None) -> List[PartyMeta]:
+    def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter"]] = None) -> Parties:
         # update role to parties mapping
         if self._role_to_parties is None:
             self._role_to_parties = {}
-            for party in self._get_federation().parties:
-                self._role_to_parties.setdefault(party[0], []).append(party)
+            for i, party in enumerate(self._get_federation().parties):
+                self._role_to_parties.setdefault(party[0], []).append((i, party))
 
         parties = []
         if role is None:
@@ -218,7 +204,12 @@ class Context:
                 raise RuntimeError(f"no {role} party has configured")
             else:
                 parties.extend(self._role_to_parties[role])
-        return parties
+        parties.sort(key=lambda x: x[0])
+        return Parties(
+            self._get_federation(),
+            parties,
+            self.namespace,
+        )
 
     def _get_federation(self):
         if self._federation is None:
