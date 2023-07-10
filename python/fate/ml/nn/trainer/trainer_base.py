@@ -838,11 +838,15 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
         if self._use_hf_default_behavior:
             return super().compute_loss(model, inputs, **kwargs)
         else:
+            # (features, labels), this format is used in FATE-1.x
+            if isinstance(inputs, tuple) or isinstance(inputs, list) and len(inputs) == 2:
+                feats, labels = inputs
+                output = model(feats)
+                loss = self.loss_func(output, labels)
+                return loss
+            else:
+                return super().compute_loss(model, inputs, **kwargs)
             
-            feats, labels = inputs
-            logits = model(feats)
-            loss = self.loss_func(logits, labels)
-            return loss
 
     def prediction_step(self,
                         model: nn.Module,
