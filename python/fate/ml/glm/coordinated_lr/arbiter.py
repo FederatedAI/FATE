@@ -12,7 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import copy
 import logging
 
 import torch
@@ -32,24 +31,8 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
-
-        self.optimizer = Optimizer(
-            optimizer_param["method"],
-            optimizer_param["penalty"],
-            optimizer_param["alpha"],
-            optimizer_param["optimizer_params"],
-        )
-        self.lr_scheduler = LRScheduler(learning_rate_param["method"], learning_rate_param["scheduler_params"])
-
-        # temp code block start
-        """self.optimizer = Optimizer(optimizer_param.method,
-                                   optimizer_param.penalty,
-                                   optimizer_param.alpha,
-                                   optimizer_param.optimizer_params)
-        self.lr_scheduler = LRScheduler(learning_rate_param.method,
-                                        learning_rate_param.scheduler_params)"""
-        # temp code block ends
-
+        self.learning_rate_param = learning_rate_param
+        self.optimizer_param = optimizer_param
         self.lr_param = learning_rate_param
 
         self.estimator = None
@@ -63,8 +46,14 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             self.ovr = True
             self.estimator = {}
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(label_count):
-                optimizer = copy.deepcopy(self.optimizer)
-                lr_scheduler = copy.deepcopy(self.lr_scheduler)
+                optimizer = Optimizer(
+                    self.optimizer_param["method"],
+                    self.optimizer_param["penalty"],
+                    self.optimizer_param["alpha"],
+                    self.optimizer_param["optimizer_params"],
+                )
+                lr_scheduler = LRScheduler(self.learning_rate_param["method"],
+                                           self.learning_rate_param["scheduler_params"])
                 single_estimator = CoordinatedLREstimatorArbiter(
                     epochs=self.epochs,
                     early_stop=self.early_stop,
@@ -76,13 +65,21 @@ class CoordinatedLRModuleArbiter(HeteroModule):
                 single_estimator.fit_single_model(class_ctx, decryptor)
                 self.estimator[i] = single_estimator
         else:
+            optimizer = Optimizer(
+                self.optimizer_param["method"],
+                self.optimizer_param["penalty"],
+                self.optimizer_param["alpha"],
+                self.optimizer_param["optimizer_params"],
+            )
+            lr_scheduler = LRScheduler(self.learning_rate_param["method"],
+                                       self.learning_rate_param["scheduler_params"])
             single_estimator = CoordinatedLREstimatorArbiter(
                 epochs=self.epochs,
                 early_stop=self.early_stop,
                 tol=self.tol,
                 batch_size=self.batch_size,
-                optimizer=self.optimizer,
-                learning_rate_scheduler=self.lr_scheduler,
+                optimizer=optimizer,
+                learning_rate_scheduler=lr_scheduler,
             )
             single_estimator.fit_single_model(ctx, decryptor)
             self.estimator = single_estimator
@@ -94,18 +91,32 @@ class CoordinatedLRModuleArbiter(HeteroModule):
                 all_estimator[label] = estimator.get_model()
         else:
             all_estimator = self.estimator.get_model()
-        return {"estimator": all_estimator, "ovr": self.ovr}
+        return {"data": {"estimator": all_estimator},
+                "meta": {"epochs": self.epochs,
+                         "ovr": self.ovr,
+                         "early_stop": self.early_stop,
+                         "tol": self.tol,
+                         "batch_size": self.batch_size,
+                         "learning_rate_param": self.learning_rate_param,
+                         "optimizer_param": self.optimizer_param},
+                }
 
     def from_model(cls, model):
-        lr = CoordinatedLRModuleArbiter(**model["metadata"])
-        all_estimator = model["estimator"]
+        lr = CoordinatedLRModuleArbiter(epochs=model["meta"]["epochs"],
+                                        early_stop=model["meta"]["early_stop"],
+                                        tol=model["meta"]["tol"],
+                                        batch_size=model["meta"]["batch_size"],
+                                        optimizer_param=model["meta"]["optimizer_param"],
+                                        learning_rate_param=model["meta"]["learning_rate_param"])
+        all_estimator = model["data"]["estimator"]
         if lr.ovr:
             lr.estimator = {label: CoordinatedLREstimatorArbiter().restore(d) for label, d in all_estimator.items()}
         else:
             estimator = CoordinatedLREstimatorArbiter()
             estimator.restore(all_estimator)
             lr.estimator = estimator
-            return lr
+        logger.info(f"finish from model")
+
         return lr
 
 
@@ -135,10 +146,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
         else:
             optimizer_ready = True
             self.start_epoch = self.end_epoch + 1
-        # temp code start
-        # for i, iter_ctx in ctx.ctxs_range(self.start_epoch, self.epochs):
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
-            # temp code ends
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
@@ -182,6 +190,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
                     logger.info("Multiple hosts exist, do not compute loss.")
 
             if iter_loss is not None:
+                logger.info(f"step={i}: lr_loss={iter_loss.tolist()}")
                 iter_ctx.metrics.log_loss("lr_loss", iter_loss.tolist(), step=i)
             if self.early_stop == "weight_diff":
                 self.is_converged = self.converge_func.is_converge(iter_g)
@@ -209,12 +218,14 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
-            "converged": self.is_converged,
+            "is_converged": self.is_converged
         }
 
     def restore(self, model):
-        self.optimizer.load_state_dict(model["optimizer"])
-        self.lr_scheduler.load_state_dict(model["lr_scheduler"])
+        self.optimizer = Optimizer()
+        self.lr_scheduler = LRScheduler()
+        self.optimizer.load_state_dict(model["optimizer"]),
+        self.lr_scheduler.load_state_dict(model["lr_scheduler"], self.optimizer.optimizer)
         self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]
         # self.start_epoch = model["end_epoch"] + 1

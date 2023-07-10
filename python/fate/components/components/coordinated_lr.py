@@ -58,7 +58,7 @@ def train(
         threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5,
                                  desc="predict threshold for binary data"),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+        output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
 ):
     logger.info(f"enter coordinated lr train")
     # temp code start
@@ -77,7 +77,7 @@ def train(
             batch_size, optimizer, learning_rate_scheduler, init_param
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler)
+        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler, output_model)
 
 
 @coordinated_lr.predict()
@@ -143,7 +143,7 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 
     module.fit(sub_ctx, train_data, validate_data)
     model = module.get_model()
-    output_model.write(model, metadata={"threshold": threshold})
+    output_model.write(model, metadata={})
 
     sub_ctx = ctx.sub_ctx("predict")
 
@@ -183,7 +183,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler):
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, output_model):
     logger.info(f"coordinated lr arbiter start train")
     from fate.ml.glm import CoordinatedLRModuleArbiter
     sub_ctx = ctx.sub_ctx("train")
@@ -191,6 +191,8 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, lea
                                         optimizer_param=optimizer_param,
                                         learning_rate_param=learning_rate_scheduler)
     module.fit(sub_ctx)
+    model = module.get_model()
+    output_model.write(model, metadata={})
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):

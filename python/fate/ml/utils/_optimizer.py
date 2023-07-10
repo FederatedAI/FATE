@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class LRScheduler:
-    def __init__(self, method, lr_params, iters=0):
+    def __init__(self, method=None, lr_params=None, iters=0):
         self.method = method
         self.lr_params = lr_params
         self.iters = iters
@@ -40,17 +40,22 @@ class LRScheduler:
         return self.lr_scheduler.get_last_lr()[0]
 
     def state_dict(self):
-        return self.lr_scheduler.state_dict()
+        return {"lr_scheduler": self.lr_scheduler.state_dict(),
+                "method": self.method,
+                "lr_params": self.lr_params}
 
-    def load_state_dict(self, dict):
-        self.lr_scheduler.load_state_dict(dict)
+    def load_state_dict(self, dict, optimizer):
+        self.method = dict["method"]
+        self.lr_params = dict["lr_params"]
+        self.init_scheduler(optimizer)
+        self.lr_scheduler.load_state_dict(dict["lr_scheduler"])
 
     def get_last_lr(self):
         return self.get_last_lr()
 
 
 class Optimizer(object):
-    def __init__(self, method, penalty, alpha, optim_param: dict, iters: int = 0):
+    def __init__(self, method=None, penalty=None, alpha=None, optim_param: dict = None, iters: int = 0):
         self.method = method
         self.optim_param = optim_param
         self.iters = iters
@@ -102,13 +107,19 @@ class Optimizer(object):
             "l2_penalty": self.l2_penalty,
             "l1_penalty": self.l1_penalty,
             "alpha": self.alpha,
-            "optimizer": self.optimizer.state_dict()
+            "optimizer": self.optimizer.state_dict(),
+            "method": self.method,
+            "optim_param": self.optim_param,
+            "model_parameter": self.model_parameter.tolist()
         }
 
-    def load_state_dict(self, dict):
+    def load_state_dict(self, dict, model_parameter=None):
         self.l2_penalty = dict["l2_penalty"]
         self.l1_penalty = dict["l1_penalty"]
         self.alpha = dict["alpha"]
+        self.method = dict["method"]
+        self.optim_param = dict["optim_param"]
+        self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(dict["model_parameter"])))
         self.optimizer.load_state_dict(dict["optimizer"])
 
     def set_iters(self, new_iters):
