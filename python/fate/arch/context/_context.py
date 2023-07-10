@@ -86,8 +86,8 @@ class Context:
     def federation(self) -> "FederationEngine":
         return self._get_federation()
 
-    def sub_ctx(self, name: str) -> "Context":
-        return self.with_namespace(self.namespace.sub_ns(name=name))
+    def sub_ctx(self, name: str, is_special=False) -> "Context":
+        return self.with_namespace(self.namespace.sub_ns(name=name, is_special=is_special))
 
     @property
     def on_iterations(self) -> "Context":
@@ -99,7 +99,7 @@ class Context:
 
     @property
     def on_cross_validations(self) -> "Context":
-        return self.sub_ctx("cross_validations")
+        return self.sub_ctx("cross_validations", is_special=True)
 
     @overload
     def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:

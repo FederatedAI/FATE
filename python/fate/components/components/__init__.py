@@ -13,7 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import typing
 from typing import List
+
+if typing.TYPE_CHECKING:
+    from fate.components.core import Component
 
 
 class _ComponentDecorator:
@@ -110,6 +114,12 @@ class LazyBuildInComponentsLoader:
 
         return multi_model_test
 
+    @_lazy_cpn
+    def cv_test2(self):
+        from .cross_validation_test import cv_test
+
+        return cv_test
+
     @classmethod
     def contains(cls, cpn_name: str):
         return cpn_name in _lazy_cpn
@@ -118,8 +128,15 @@ class LazyBuildInComponentsLoader:
     def list(cls) -> List[str]:
         return list(_lazy_cpn)
 
-    def load_cpn(self, cpn_name: str):
+    def load_cpn(self, cpn_name: str) -> "Component":
         if self.contains(cpn_name):
-            return _lazy_cpn[cpn_name](self)
+            cpn = _lazy_cpn[cpn_name](self)
+            if cpn.name != cpn_name:
+                # TODO: add warning
+                # logger.warning(f"Component name {cpn_name} is not consistent with the name of the component class.")
+                # the cpn name updated by the lazy decorator, treat it as a reexport component
+                cpn.name = cpn_name
+            return cpn
+
         else:
             raise ValueError(f"Component {cpn_name} does not exist.")

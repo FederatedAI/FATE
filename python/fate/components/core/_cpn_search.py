@@ -13,35 +13,58 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
+import typing
+from typing import Optional
+
+if typing.TYPE_CHECKING:
+    from fate.components.core import Component, Stage
 
 logger = logging.getLogger(__name__)
 
 
-def load_component(cpn_name: str):
+def load_component(cpn_name: str, stage: Optional["Stage"] = None):
     from fate.components.components import LazyBuildInComponentsLoader
 
-    from .component_desc._component import Component
-
     # from build in
+    cpn = None
     lazy_build_in_components_loader = LazyBuildInComponentsLoader()
     if lazy_build_in_components_loader.contains(cpn_name):
-        return lazy_build_in_components_loader.load_cpn(cpn_name)
+        cpn = lazy_build_in_components_loader.load_cpn(cpn_name)
+    else:
+        # from entrypoint
+        import pkg_resources
 
-    # from entrypoint
-    import pkg_resources
+        for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component_desc"):
+            try:
+                candidate_cpn: "Component" = cpn_ep.load()
+                candidate_cpn_name = candidate_cpn.name
+            except Exception as e:
+                logger.warning(
+                    f"register cpn from entrypoint(named={cpn_ep.name}, module={cpn_ep.module_name}) failed: {e}"
+                )
+                continue
+            if candidate_cpn_name == cpn_name:
+                cpn = candidate_cpn
+                break
+    if cpn is None:
+        raise RuntimeError(f"could not find registered cpn named `{cpn_name}`")
+    if stage is not None:
+        cpn = load_stage_component(cpn, stage)
+    return cpn
 
-    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component_desc"):
-        try:
-            candidate_cpn: Component = cpn_ep.load()
-            candidate_cpn_name = candidate_cpn.name
-        except Exception as e:
-            logger.warning(
-                f"register cpn from entrypoint(named={cpn_ep.name}, module={cpn_ep.module_name}) failed: {e}"
+
+def load_stage_component(cpn, stage: "Stage"):
+    if not stage.is_default:
+        for stage_component in cpn.stage_components:
+            if stage_component.name == stage.name:
+                cpn = stage_component
+                break
+        else:
+            supported_stage_names = [stage_component.name for stage_component in cpn.stage_components]
+            raise ValueError(
+                f"stage `{stage.name}` not supported for component `{cpn.name}`, use one listed in: {supported_stage_names}"
             )
-            continue
-        if candidate_cpn_name == cpn_name:
-            return candidate_cpn
-    raise RuntimeError(f"could not find registered cpn named `{cpn_name}`")
+    return cpn
 
 
 def list_components():

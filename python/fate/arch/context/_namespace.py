@@ -74,8 +74,8 @@ class NS:
     def indexed_ns(self, index: int):
         return IndexedNS(index=index, name=self.name, deep=self.deep, is_special=self.is_special, parent=self.parent)
 
-    def sub_ns(self, name: str):
-        return NS(name=name, deep=self.deep + 1, parent=self, is_special=False)
+    def sub_ns(self, name: str, is_special=False):
+        return NS(name=name, deep=self.deep + 1, parent=self, is_special=is_special)
 
 
 class IndexedNS(NS):
