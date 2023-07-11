@@ -26,7 +26,7 @@ from ..abc.module import Module, HeteroModule
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_METRIC = {"iv": ["iv"], "statistic": ["mean"]}
+DEFAULT_METRIC = {"iv": ["iv"], "statistics": ["mean"]}
 
 
 class HeteroSelectionModuleGuest(HeteroModule):
@@ -186,7 +186,7 @@ class HeteroSelectionModuleHost(HeteroModule):
                                                   param=self.iv_param,
                                                   model=model,
                                                   keep_one=self.keep_one)
-            elif filter_type == "statistic":
+            elif filter_type == "statistics":
                 model = self.isometric_model_dict.get("statistics", None)
                 if model is None:
                     raise ValueError(f"Cannot find statistics model in input, please check")
@@ -400,13 +400,13 @@ class StandardSelection(Module):
         """metric_names = self.param.metrics or []"""
         # temp code ends
         # local only
-        if self.method in ["statistic"]:
+        if self.method in ["statistics"]:
             for metric_name in metric_names:
-                if metric_name not in self.model.get("metrics", {}):
+                if metric_name not in self.model.get("meta", {}).get("metrics", {}):
                     raise ValueError(f"metric {metric_name} not found in given statistic model with metrics: "
-                                     f"{metric_names}, please check")
-
-            metrics_all = pd.DataFrame(self.model.get("metrics_summary", {})).loc[metric_names]
+                                     f"{self.model.get('metrics', {})}, please check")
+            model_data = self.model.get("data", {})
+            metrics_all = pd.DataFrame(model_data.get("metrics_summary", {})).loc[metric_names]
             self._all_metrics = metrics_all
             missing_col = set(self._prev_selected_mask[self._prev_selected_mask].index). \
                 difference(set(metrics_all.columns))
@@ -431,7 +431,8 @@ class StandardSelection(Module):
             # host does not perform local iv selection
             if ctx.local[0] == "host":
                 return
-            iv_metrics = pd.Series(self.model["metrics_summary"]["iv"])
+            model_data = self.model.get("data", {})
+            iv_metrics = pd.Series(model_data["metrics_summary"]["iv"])
             metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
             self._all_metrics = metrics_all
             # works for multiple iv filters
