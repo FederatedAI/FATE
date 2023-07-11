@@ -25,7 +25,7 @@ from transformers.trainer_callback import TrainerCallback, TrainerControl, Train
 from typing import Optional
 import time
 from dataclasses import dataclass, field, fields
-from transformers import trainer, trainer_callback
+from transformers.trainer_callback import PrinterCallback
 
 
 # Reset the logger to redirect logs output
@@ -108,6 +108,7 @@ class FedArguments(object):
 @dataclass
 class TrainingArguments(_hf_TrainingArguments):
     
+    # in fate-2.0, we will control the output dir when using pipeline
     output_dir: str = field(default='./')
     disable_tqdm: bool = field(default=True)
     save_strategy: str = field(default="no")
@@ -115,6 +116,8 @@ class TrainingArguments(_hf_TrainingArguments):
     evaluation_strategy: str = field(default="no")
     logging_dir: str = field(default=None)
     checkpoint_idx: int = field(default=None)
+    # by default we use constant learning rate, the same as FATE-1.X
+    lr_scheduler_type: str = field(default="constant")  
 
     def __post_init__(self):
         
@@ -492,6 +495,14 @@ class FedParameterAlignCallback(TrainerCallback):
                 self._client_send_parameters(state, args, train_dataloader)
 
 
+class FatePrinterCallback(TrainerCallback):
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if state.is_local_process_zero:
+            _ = logs.pop("total_flos", None)
+            logger.info(str(logs))
+
+
 class CallbackWrapper(TrainerCallback):
 
 
@@ -651,12 +662,12 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
     def __init__(self,
                  ctx: Context, 
                  model: nn.Module,
-                 loss_fn: nn.Module,
-                 optimizer: torch.optim.Optimizer,
                  training_args: TrainingArguments,
                  fed_args: FedArguments,
                  train_set: Dataset,
                  val_set: Dataset = None,
+                 loss_fn: nn.Module = None,
+                 optimizer: torch.optim.Optimizer = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  tokenizer: Optional[PreTrainedTokenizer] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
@@ -712,6 +723,14 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
         # fed callback aggregator init(once), parameter check(once), 
         # on federation of fedcallback
         # callbacks of shortcutcallback
+        new_callback_list = []
+        for i in callback_handler.callbacks:
+            if isinstance(i, PrinterCallback):
+                continue
+            else:
+                new_callback_list.append(i)
+        new_callback_list.append(FatePrinterCallback())
+        callback_handler.callbacks = new_callback_list
         callback_handler.callbacks.append(FedCallbackWrapper(self.ctx, self))
         if self.parameter_alignment:
             callback_handler.callbacks.append(FedParameterAlignCallback(self,
@@ -762,12 +781,12 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
     def __init__(self,
                  ctx: Context,
                  model: nn.Module,
-                 loss_fn: nn.Module,
-                 optimizer: torch.optim.Optimizer,
                  training_args: TrainingArguments,
                  fed_args: FedArguments,
                  train_set: Dataset,
                  val_set: Dataset = None,
+                 loss_fn: nn.Module = None,
+                 optimizer: torch.optim.Optimizer = None,
                  data_collator: Callable = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  tokenizer: Optional[PreTrainedTokenizer] = None,
@@ -777,13 +796,6 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  local_mode: bool = False,
                  parameter_alignment = True
                  ):
-
-        # default use no lr decay
-        if scheduler is None:
-            if use_hf_default_behavior and optimizer is None:
-                pass
-            else:
-                scheduler = LambdaLR(optimizer, lambda x: 1)
     
         # in case you forget to set evaluation_strategy
         if val_set is not None and training_args.evaluation_strategy == 'no':
@@ -859,11 +871,16 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
         if self._use_hf_default_behavior:
             return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys)
         else:
-            with torch.no_grad():
-                feats, labels = inputs
-                logits = model(feats)
-            return (None, logits, labels)
-        
+            # (features, labels), this format is used in FATE-1.x
+            # now the model is in eval status
+            if isinstance(inputs, tuple) or isinstance(inputs, list) and len(inputs) == 2:
+                with torch.no_grad():
+                    feats, labels = inputs
+                    logits = model(feats)
+                    return (None, logits, labels)
+            else:
+                return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys)
+
 
 class FedTrainerServer(object):
 
