@@ -38,6 +38,9 @@ class JsonMetricRestfulWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
     def write_metadata(self, metadata: Dict):
         self.artifact.metadata.metadata = metadata
 
+    def close(self):
+        pass
+
 
 class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType, MetricOutputMetadata]):
     @classmethod

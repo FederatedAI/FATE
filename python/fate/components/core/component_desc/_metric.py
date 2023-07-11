@@ -28,3 +28,6 @@ class ComponentMetricsRestfulHandler(BaseMetricsHandler):
     def _log_one_time_metrics(self, metrics: "OneTimeMetrics"):
         record = metrics.to_record()
         self._writer.write(record.dict())
+
+    def finalize(self):
+        self._writer.close()
