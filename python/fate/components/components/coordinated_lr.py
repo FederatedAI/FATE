@@ -80,7 +80,7 @@ def train(
         train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler, output_model)
 
 
-@coordinated_lr.predict(roles=[GUEST, HOST])
+@coordinated_lr.predict()
 def predict(
         ctx,
         role: Role,

@@ -160,12 +160,8 @@ class CoordinatedLREstimatorHost(HeteroModule):
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch{i}")
-            # for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
-            # temp code start
-            for batch_ctx, (X, _) in iter_ctx.on_batches.ctxs_zip(batch_loader):
-                # temp code end
+            for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 h = X.shape[0]
-                # for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 Xw_h = 0.25 * torch.matmul(X, w.detach())
                 batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
                 batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))

@@ -78,7 +78,7 @@ def train(
         train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler, output_model)
 
 
-@coordinated_linr.predict(roles=[GUEST, HOST])
+@coordinated_linr.predict()
 def predict(
         ctx,
         role: Role,
@@ -195,6 +195,8 @@ def transform_to_predict_result(test_data, predict_score, data_type="test"):
         v[0],
         v[0],
         json.dumps({"label": v[0]}),
-        data_type],
-                                                                                           enable_type_align_checking=False)
+        data_type], enable_type_align_checking=False)
+    # temp code start
+    df.rename(label_name="label")
+    # temp code end
     return df

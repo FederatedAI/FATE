@@ -15,6 +15,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -194,8 +195,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
                     logger.info("Multiple hosts exist, do not compute loss.")
 
             if iter_loss is not None:
-                logger.info(f"step={i}: lr_loss={iter_loss.tolist()}")
-                iter_ctx.metrics.log_loss("lr_loss", iter_loss.tolist())
+                iter_ctx.metrics.log_loss("lr_loss", iter_loss.tolist()[0])
             if self.early_stop == "weight_diff":
                 self.is_converged = self.converge_func.is_converge(iter_g)
             else:

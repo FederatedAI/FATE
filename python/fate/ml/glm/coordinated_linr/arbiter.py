@@ -167,8 +167,8 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
                     logger.info("Multiple hosts exist, do not compute loss.")
 
             if iter_loss is not None:
-                logger.info(f"step={i}: linr_loss={iter_loss.tolist()}")
-                iter_ctx.metrics.log_loss("linr_loss", iter_loss.tolist(), step=i)
+                # logger.info(f"step={i}: linr_loss={iter_loss.tolist()}")
+                iter_ctx.metrics.log_loss("linr_loss", iter_loss.tolist()[0])
             if self.early_stop == 'weight_diff':
                 self.is_converged = self.converge_func.is_converge(iter_g)
             else:
