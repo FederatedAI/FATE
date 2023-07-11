@@ -84,7 +84,8 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
     import logging
     import traceback
 
-    from fate.arch import Context
+    from fate.arch import CipherKit, Context
+    from fate.arch.computing import profile_ends, profile_start
     from fate.components.core import (
         ComponentExecutionIO,
         Role,
@@ -103,10 +104,13 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         device = load_device(config.conf.device)
         computing = load_computing(config.conf.computing)
         federation = load_federation(config.conf.federation, computing)
+        cipher = CipherKit(device=device)
+
         ctx = Context(
             device=device,
             computing=computing,
             federation=federation,
+            cipher=cipher,
         )
         role = Role.from_str(config.role)
         stage = Stage.from_str(config.stage)
@@ -115,6 +119,9 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
 
         # get correct component_desc/subcomponent handle stage
         component = load_component(config.component, stage)
+
+        # enable profiling
+        profile_start()
 
         # prepare
         execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
@@ -136,6 +143,7 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         except Exception as e:
             raise RuntimeError(f"failed to dump execution io meta to `{output_path}`: meta={execution_io_meta}") from e
 
+        profile_ends()
         logger.debug("done without error, waiting signal to terminate")
         logger.debug("terminating, bye~")
 

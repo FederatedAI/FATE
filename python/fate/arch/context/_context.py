@@ -71,8 +71,8 @@ class Context:
     def cipher(self):
         return self._cipher
 
-    def set_cipher(self, cipher: CipherKit):
-        self._cipher = cipher
+    def set_cipher(self, cipher_mapping):
+        self._cipher = CipherKit(self._device, {"phe": {self._device: cipher_mapping["phe"]}})
 
     def set_metric_handler(self, metrics_handler):
         self._metrics_handler = metrics_handler
@@ -90,7 +90,7 @@ class Context:
             federation=self._federation,
             metrics_handler=self._metrics_handler,
             namespace=namespace,
-            cipher=self.cipher,
+            cipher=self._cipher,
         )
 
     @property
