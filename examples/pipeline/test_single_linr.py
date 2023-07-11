@@ -60,10 +60,10 @@ pipeline.deploy([linr_0])
 predict_pipeline = FateFlowPipeline()
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
-linr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                              namespace="experiment"))
-linr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                 namespace="experiment"))
+deployed_pipeline.linr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                                namespace="experiment"))
+deployed_pipeline.linr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                   namespace="experiment"))
 
 predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.compile()

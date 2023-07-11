@@ -28,16 +28,17 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
                                input_model=feature_scale_0.outputs["output_model"])"""
 
 lr_0 = CoordinatedLR("lr_0",
-                     max_iter=10,
+                     epochs=10,
                      batch_size=-1,
                      init_param={"fit_intercept": False})
 
 lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
-                                                             namespace="experiment"))
+                                                             namespace="experiment_64"))
 lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
-                                                                namespace="experiment"))
+                                                                namespace="experiment_64"))
 
 evaluation_0 = Evaluation("evaluation_0",
+                          default_eval_metrics="multi",
                           runtime_roles=["guest"],
                           input_data=lr_0.outputs["train_output_data"])
 
@@ -60,10 +61,10 @@ pipeline.deploy([lr_0])
 predict_pipeline = FateFlowPipeline()
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
-lr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                            namespace="experiment"))
-lr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                               namespace="experiment"))
+deployed_pipeline.lr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                              namespace="experiment_64"))
+deployed_pipeline.lr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                 namespace="experiment_64"))
 
 predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.compile()
