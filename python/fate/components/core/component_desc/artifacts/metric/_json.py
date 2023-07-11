@@ -39,7 +39,6 @@ class JsonMetricRestfulWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
             output = requests.post(url=self.artifact.uri.original_uri, json=dict(data=[data]))
         except Exception as e:
             logger.error(f"write data `{data}` to {self.artifact.uri.original_uri} failed, error: {e}")
-            raise e
         else:
             logger.debug(f"write data `{data}` to {self.artifact.uri.original_uri} success, output: {output}")
 
