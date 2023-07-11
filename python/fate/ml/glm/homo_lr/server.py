@@ -13,14 +13,13 @@ class HomoLRServer(HomoModule):
     def __init__(self) -> None:
         pass
 
-    def fit(self, ctx: Context, data: DataFrame) -> None:
+    def fit(self, ctx: Context, data: DataFrame=None) -> None:
         
-
         server = FedAVGServer(ctx=ctx)
         logger.info('server class init done, start fed training')
         server.train()
         logger.info('homo lr fit done')
 
-    def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
+    def predict(self, ctx: Context, predict_data: DataFrame=None) -> DataFrame:
         
         logger.info('kkip prediction stage')
