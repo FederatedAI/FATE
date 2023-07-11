@@ -40,7 +40,7 @@ class CipherKit:
         if self._device not in self._cipher_mapping["phe"]:
             raise ValueError(f"phe is not set for device {self._device}")
 
-        return PHECipher(self._cipher_mapping["phe"])
+        return PHECipher(self._cipher_mapping["phe"][self._device])
 
 
 class PHECipher:
