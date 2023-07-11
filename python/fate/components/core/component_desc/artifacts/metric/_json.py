@@ -1,9 +1,13 @@
 import json
+import logging
 import typing
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+import requests
 from fate.components.core.essential import JsonMetricArtifactType
+
+logger = logging.getLogger(__name__)
 
 from .._base_type import (
     URI,
@@ -31,9 +35,13 @@ class JsonMetricFileWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
 
 class JsonMetricRestfulWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
     def write(self, data):
-        import requests
-
-        requests.post(url=self.artifact.uri.original_uri, json=data)
+        try:
+            output = requests.post(url=self.artifact.uri.original_uri, json=dict(data=[data]))
+        except Exception as e:
+            logger.error(f"write data `{data}` to {self.artifact.uri.original_uri} failed, error: {e}")
+            raise e
+        else:
+            logger.debug(f"write data `{data}` to {self.artifact.uri.original_uri} success, output: {output}")
 
     def write_metadata(self, metadata: Dict):
         self.artifact.metadata.metadata = metadata
