@@ -905,6 +905,14 @@ class FedTrainerServer(object):
         assert isinstance(ctx, Context), 'ctx must be a Context object, but got {}'.format(ctx)
         self.ctx = ctx
 
+    def set_local_mode(self):
+        self.local_mode = True
+        logger.info('trainer set to local mode')
+
+    def set_fed_mode(self):
+        self.local_mode = False
+        logger.info('trainer set to federated mode')
+
     def init_aggregator(self):
         return None
     

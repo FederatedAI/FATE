@@ -11,8 +11,10 @@ from torch.optim.lr_scheduler import _LRScheduler
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments, FedTrainerClient, FedTrainerServer
 from typing import Union, Type, Callable, Optional
 from transformers.trainer_utils import get_last_checkpoint
+from fate.ml.nn.dataset.table import TableDataset
 from typing import Literal
 import logging
+from fate.components.components.utils import consts
 
 
 logger = logging.getLogger(__name__)
@@ -157,14 +159,36 @@ class DefaultRunner(NNRunner):
             return Loader.from_dict(conf).load_item()
         return Loader.from_dict(conf).call_item()
 
-    def _prepare_dataset(self, dataset_conf, cpn_input_data):
-        dataset = self._loader_load_from_conf(dataset_conf)
-        if hasattr(dataset, 'load'):
-            if cpn_input_data is not None:
-                dataset.load(cpn_input_data)
-                return dataset
+    def _prepare_dataset(self, dataset_conf, cpn_input_data, schema=None):
+        
+        if cpn_input_data is None:
+            logger.info('input cpn data is None, return')
+            return
+
+        if dataset_conf is None:
+            # Automatically create dataset class
+            label_name = None
+            if schema is not None:
+                label_name = schema.label_name
+                if label_name is None:
+                    logger.info('schema is provided, but label name is None, TableDataset will automatically infer label')
+                else:
+                    logger.info('schema is provided, label name is {}'.format(label_name))
             else:
-                return None
+                logger.info('schema is not provided')
+
+            if self.task_type == consts.MULTI:
+                dataset = TableDataset(label_col=label_name, flatten_label=True, label_dtype='long')
+            else:
+                dataset = TableDataset(label_col=label_name)
+            logger.info('dataset conf is not set, use default FATE Table Dataset')
+
+        else:
+            dataset = self._loader_load_from_conf(dataset_conf)
+
+        if hasattr(dataset, 'load'):
+            dataset.load(cpn_input_data)
+            return dataset
         else:
             raise ValueError(f"dataset {dataset} has no load() method")
 
@@ -186,9 +210,10 @@ class DefaultRunner(NNRunner):
             # load arguments, models, etc
             # prepare datatset
             # dataet
-            train_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_train_data())
-            validate_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_validate_data())
-            test_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_test_data())
+            logger.info('NNInput data type is {}'.format(cpn_input_data.input_type))
+            train_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_train_data(), schema=cpn_input_data.get_schema())
+            validate_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_validate_data(), schema=cpn_input_data.get_schema())
+            test_set = self._prepare_dataset(self.dataset_conf, cpn_input_data.get_test_data(), schema=cpn_input_data.get_schema())
             # load model
             model = self._loader_load_from_conf(self.model_conf)
             if model is None:
