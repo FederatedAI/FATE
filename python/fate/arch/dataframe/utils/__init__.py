@@ -13,3 +13,4 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from ._dataloader import DataLoader
+from ._k_fold import KFold

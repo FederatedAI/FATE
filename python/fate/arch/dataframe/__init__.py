@@ -22,6 +22,7 @@ from ._frame_reader import (
 )
 from .io import build_schema, deserialize, parse_schema, serialize
 from .utils import DataLoader
+from .utils import KFold
 
 __all__ = [
     "PandasReader",
@@ -34,4 +35,6 @@ __all__ = [
     "serialize",
     "deserialize",
     "DataFrame",
+    "KFold",
+    "DataLoader",
 ]
