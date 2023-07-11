@@ -1,7 +1,7 @@
 from typing import Optional
 
 
-class ModelExporter:
+class ModelIO:
     _META = "meta"
     _DATA = "data"
 
