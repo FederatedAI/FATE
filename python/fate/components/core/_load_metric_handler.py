@@ -12,7 +12,19 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-def load_metric_handler(writer):
-    from fate.components.core.component_desc._metric import ComponentMetricsHandler
 
-    return ComponentMetricsHandler(writer=writer)
+
+def load_metric_handler(writer):
+    from fate.components.core.component_desc._metric import (
+        ComponentMetricsFileHandler,
+        ComponentMetricsRestfulHandler,
+        JsonMetricFileWriter,
+        JsonMetricRestfulWriter,
+    )
+
+    if isinstance(writer, JsonMetricRestfulWriter):
+        return ComponentMetricsRestfulHandler(writer=writer)
+    elif isinstance(writer, JsonMetricFileWriter):
+        return ComponentMetricsFileHandler(writer=writer)
+    else:
+        raise ValueError(f"writer `{writer}` not allowed")

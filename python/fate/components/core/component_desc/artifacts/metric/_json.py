@@ -29,7 +29,7 @@ class JsonMetricFileWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
             self.artifact.metadata.metadata = metadata
 
 
-class JsonMetricResultWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
+class JsonMetricRestfulWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
     def write(self, data):
         import requests
 
@@ -46,9 +46,9 @@ class JsonMetricArtifactDescribe(ArtifactDescribe[JsonMetricArtifactType, Metric
 
     def get_writer(
         self, config, ctx: "Context", uri: URI, type_name: str
-    ) -> Union[JsonMetricFileWriter, JsonMetricResultWriter]:
+    ) -> Union[JsonMetricFileWriter, JsonMetricRestfulWriter]:
         if uri.scheme == "http" or uri.scheme == "https":
-            return JsonMetricResultWriter(
+            return JsonMetricRestfulWriter(
                 ctx, _ArtifactType(uri=uri, metadata=MetricOutputMetadata(), type_name=type_name)
             )
         elif uri.scheme == "file":

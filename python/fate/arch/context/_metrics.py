@@ -15,16 +15,14 @@
 
 import time
 import typing
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
+
+import pydantic
 
 from ._namespace import NS, IndexedNS
 
 
-class InMemoryMetricsHandler:
-    def __init__(self):
-        self._step_metrics: typing.Dict[typing.Any, "StepMetrics"] = {}
-        self._one_time_metrics: typing.Dict[typing.Any, "OneTimeMetrics"] = {}
-
+class BaseMetricsHandler:
     def log_metrics(self, metrics: Union["StepMetrics", "OneTimeMetrics"]):
         if isinstance(metrics, StepMetrics):
             self._log_step_metrics(metrics)
@@ -32,6 +30,18 @@ class InMemoryMetricsHandler:
             self._log_one_time_metrics(metrics)
         else:
             raise ValueError(f"metrics `{metrics}` not allowed")
+
+    def _log_step_metrics(self, metrics: "StepMetrics"):
+        raise NotImplementedError
+
+    def _log_one_time_metrics(self, metrics: "OneTimeMetrics"):
+        raise NotImplementedError
+
+
+class InMemoryMetricsHandler(BaseMetricsHandler):
+    def __init__(self):
+        self._step_metrics: typing.Dict[typing.Any, "StepMetrics"] = {}
+        self._one_time_metrics: typing.Dict[typing.Any, "OneTimeMetrics"] = {}
 
     def _log_step_metrics(self, metrics: "StepMetrics"):
         if (metrics.name, tuple(metrics.groups)) in self._step_metrics:
@@ -106,16 +116,21 @@ class MetricsWrap:
 
 
 class OneTimeMetrics:
-    def __init__(self, name, groups, type, data) -> None:
+    def __init__(
+        self, name: str, type: Optional[str], groups: List[Tuple[str, Optional[int]]], data: Union[List, Dict]
+    ) -> None:
         self.name = name
         self.groups = groups
         self.type = type
         self.data = data
 
     def dict(self):
-        return dict(
+        return self.to_record().dict()
+
+    def to_record(self):
+        return MetricRecord(
             name=self.name,
-            groups=self.groups,
+            groups=[MetricRecord.Group(name=k, index=v) for k, v in self.groups],
             type=self.type,
             step_axis=None,
             data=self.data,
@@ -129,8 +144,6 @@ class OneTimeMetrics:
 
 
 class StepMetrics:
-    complete = False
-
     def __init__(
         self, name: str, type: Optional[str], groups: List[Tuple[str, Optional[int]]], step_axis: str, data: List
     ) -> None:
@@ -159,11 +172,14 @@ class StepMetrics:
         raise RuntimeError(f"metrics merge not allowed: `{metrics}` with `{self}`")
 
     def dict(self) -> dict:
-        return dict(
-            step_axis=self.step_axis,
+        return self.to_record().dict()
+
+    def to_record(self) -> "MetricRecord":
+        return MetricRecord(
             name=self.name,
             type=self.type,
-            groups=[dict(name=g[0], group_index=g[1]) for g in self.groups],
+            groups=[MetricRecord.Group(name=g[0], index=g[1]) for g in self.groups],
+            step_axis=self.step_axis,
             data=self.data,
         )
 
@@ -172,3 +188,15 @@ class StepMetrics:
 
     def __repr__(self):
         return self.__str__()
+
+
+class MetricRecord(pydantic.BaseModel):
+    class Group(pydantic.BaseModel):
+        name: str
+        index: Optional[int]
+
+    name: str
+    type: Optional[str]
+    groups: List[Group]
+    step_axis: Optional[str]
+    data: Union[List, Dict]
