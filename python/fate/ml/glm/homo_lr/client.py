@@ -1,17 +1,19 @@
-from typing import Optional, Union
+import torch.nn as nn
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-from fate.ml.abc.module import HomoModule, Module
-from fate.ml.utils.model_io import ModelExporter
+from fate.ml.abc.module import HomoModule
+from fate.ml.utils.model_io import ModelIO
 from fate.arch import Context
 import logging
 import pandas as pd
 import torch as t
-from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, FedAVGServer, TrainingArguments, FedAVGArguments
-from torch.utils.data import TensorDataset
+from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, TrainingArguments, FedAVGArguments
+from transformers import default_data_collator
 import numpy as np
 from torch.nn import functional as F
 import functools
+import tempfile
+from torch.utils.data import Dataset
 
 
 logger = logging.getLogger(__name__)
@@ -40,58 +42,6 @@ class Data(object):
         return Data(features, sample_ids, match_ids, labels)
 
 
-class HomoLRModel(t.nn.Module):
-
-    def __init__(self, feature_num, label_num=2) -> None:
-        super().__init__()
-        assert feature_num >= 2 and isinstance(feature_num, int), "feature_num must be int greater than 2"
-        assert label_num >= 1 and isinstance(label_num, int), "label_num must be int greater than 1"
-        self.models = t.nn.ModuleList()
-
-        if label_num <= 2 and label_num > 0:
-            self.models.append(
-                t.nn.Linear(feature_num, 1)
-            )
-        else:
-            # OVR Setting
-            for i in range(label_num):
-                self.models.append(
-                    t.nn.Linear(feature_num, 1)
-                )
-        self.sigmoid = t.nn.Sigmoid()
-        self.softmax = t.nn.Softmax(dim=1)
-
-    def forward(self, x):
-
-        if len(self.models) == 1:
-            linear_out = self.models[0](x)
-        else:
-            linear_out = t.cat([model(x) for model in self.models], dim=1)
-
-        linear_out = self.sigmoid(linear_out).reshape((-1, len(self.models)))
-
-        if not self.training:
-            prob = self.softmax(linear_out)
-            return prob
-        else:
-            return linear_out
-        
-    def to_dict(self):
-        model_dict = {
-            "feature_num": self.models[0].in_features,
-            "label_num": len(self.models),
-            "state_dict": {k: v.tolist() for k, v in self.state_dict().items()}  # convert tensor to list
-        }
-        return model_dict
-
-    @classmethod
-    def from_dict(cls, model_dict):
-        model = cls(model_dict["feature_num"], model_dict["label_num"])
-        model_state_dict = {k: t.tensor(v) for k, v in model_dict["state_dict"].items()}  # convert list back to tensor
-        model.load_state_dict(model_state_dict)
-        return model
-
-
 def homo_lr_loss(pred, labels, dim=1):
     """
     The function assumes that pred has shape (n, num_classes) where each class has its own linear model.
@@ -117,21 +67,133 @@ def homo_lr_loss(pred, labels, dim=1):
     return loss
 
 
-def optimizer_to_dict(optimizer):
-    # Convert the optimizer state to a dictionary that can be transformed to JSON
-    optimizer_dict = {
-        "state": {k: v.tolist() for k, v in optimizer.state_dict()['state'].items()},
-        "param_groups": optimizer.state_dict()['param_groups'],
-    }
-    return optimizer_dict
+class HomoLRModel(t.nn.Module):
+
+    def __init__(self, feature_num, label_num=2, l1=0) -> None:
+        super().__init__()
+        assert feature_num >= 2 and isinstance(feature_num, int), "feature_num must be int greater than 2"
+        assert label_num >= 1 and isinstance(label_num, int), "label_num must be int greater than 1"
+        self.models = t.nn.ModuleList()
+
+        if 2 >= label_num > 0:
+            self.models.append(
+                t.nn.Linear(feature_num, 1)
+            )
+        else:
+            # OVR Setting
+            for i in range(label_num):
+                self.models.append(
+                    t.nn.Linear(feature_num, 1)
+                )
+        self.sigmoid = t.nn.Sigmoid()
+        self.softmax = t.nn.Softmax(dim=1)
+        self.l1 = l1
+
+    def forward(self, x, labels=None):
+
+        if len(self.models) == 1:
+            linear_out = self.models[0](x)
+        else:
+            linear_out = t.cat([model(x) for model in self.models], dim=1)
+
+        ret_dict = {}
+        linear_out = self.sigmoid(linear_out).reshape((-1, len(self.models)))
+
+        if not self.training:
+            if len(self.models) > 1:
+                linear_out = self.softmax(linear_out)
+
+        ret_dict['pred'] = linear_out
+        
+        if labels is not None:
+            loss = homo_lr_loss(linear_out, labels, dim=len(self.models))
+            if self.l1 != 0:
+                l1_regularization = t.tensor(0.)
+                for param in self.models.parameters():
+                    l1_regularization += t.norm(param, 1)
+                loss += self.l1 * l1_regularization
+            ret_dict['loss'] = loss
+
+        return ret_dict
+        
+    def to_dict(self):
+        model_dict = {
+            "feature_num": self.models[0].in_features,
+            "label_num": len(self.models),
+            "state_dict": {k: v.tolist() for k, v in self.state_dict().items()}  # convert tensor to list
+        }
+        return model_dict
+
+    @classmethod
+    def from_dict(cls, model_dict):
+        model = cls(model_dict["feature_num"], model_dict["label_num"])
+        model_state_dict = {k: t.tensor(v) for k, v in model_dict["state_dict"].items()}  # convert list back to tensor
+        model.load_state_dict(model_state_dict)
+        return model
+
+
+def init_model(model, method='random', val=1.0):
+    if method == 'zeros':
+        init_fn = nn.init.zeros_
+    elif method == 'ones':
+        init_fn = nn.init.ones_
+    elif method == 'consts':
+        init_fn = lambda x: nn.init.constant_(x, val)
+    elif method == 'random':
+        init_fn = nn.init.normal_
+    else:
+        raise ValueError("Invalid method. Options are: 'zeros', 'ones', 'consts', 'random'")
+    
+    for name, param in model.named_parameters():
+        if 'bias' in name:
+            nn.init.zeros_(param)  # usually it's good practice to initialize biases to zero
+        else:
+            init_fn(param)
+
+
+# read model from model bytes
+def recover_torch_bytes(model_bytes):
+
+    with tempfile.TemporaryFile() as f:
+        f.write(model_bytes)
+        f.seek(0)
+        model_dict = t.load(f)
+
+    return model_dict
+
+
+def get_torch_bytes(model_dict):
+
+    with tempfile.TemporaryFile() as f:
+        t.save(model_dict, f)
+        f.seek(0)
+        model_saved_bytes = f.read()
+
+        return model_saved_bytes
+
+
+class DictDataset(Dataset):
+    """TensorDataset with support of transforms.
+    """
+    def __init__(self, data):
+        self.X = np.array(data.features.values).astype(np.float32)
+        self.y = np.array(data.labels.values).astype(np.float32)
+        self.X_tensor = t.tensor(self.X, dtype=t.float32)
+        self.y_tensor = t.tensor(self.y.reshape((-1, 1)), dtype=t.float32)
+
+    def __getitem__(self, index):
+        return {'x': self.X_tensor[index], 'label': self.y_tensor[index]}
+
+    def __len__(self):
+        return self.X_tensor.shape[0]
 
 
 class HomoLRClient(HomoModule):
 
-    def __init__(self, max_iter: int, batch_size: int, optimizer_param=None,
+    def __init__(self, max_iter: int=5, batch_size: int=32, optimizer_param=None,
                 learning_rate_param=None,
                 init_param=None,
-                threshold=0.5
+                threshold: float=0.5
                 ) -> None:
         
         super().__init__()
@@ -155,21 +217,23 @@ class HomoLRClient(HomoModule):
         self.model = None
         self.optimizer = None
         self.scheduler = None
+        self.optimizer_state_dict = None
+        self.trainer = None
+
+        # loaded meta
+        self.loaded_meta = None
+
+        # l1 & l2
+        self.l1 = 0
+        self.l2 = 0
 
         # checkping param
         assert self.max_iter > 0 and isinstance(self.max_iter, int), "max_iter must be int greater than 0"
         assert self.batch_size > 0 and isinstance(self.batch_size, int), "batch_size must be int greater than 0"
         assert self.threshold > 0 and self.threshold < 1, "threshold must be float between 0 and 1"
     
-
     def _make_dataset(self, data: Data):
-
-        X = np.array(data.features.values).astype(np.float32)
-        y = np.array(data.labels.values).astype(np.float32)
-        X_tensor = t.tensor(X, dtype=t.float32)
-        y_tensor = t.tensor(y.reshape((-1, 1)), dtype=t.float32)
-        dataset = TensorDataset(X_tensor, y_tensor)
-        return dataset
+        return DictDataset(data)
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
 
@@ -192,51 +256,84 @@ class HomoLRClient(HomoModule):
         else:
             validate_set = None
 
+        # prepare loss function
         loss_fn = functools.partial(homo_lr_loss, dim=len(unique_label_set))
 
-        model = HomoLRModel(self.train_feature_num, label_num=len(unique_label_set))
-        self.model = model
-        logger.info('model structure is {}'.format(model))
+        # initialize model
+        if self.model is None:
 
-        optimizer = t.optim.SGD(model.parameters(), lr=self.learning_rate_param)
-        self.optimizer = optimizer
+            self.model = HomoLRModel(self.train_feature_num, label_num=len(unique_label_set), l1=self.l1)
+
+            # init model here
+            init_model(self.model)
+
+            logger.info('model initialized')
+            logger.info('model parameters are {}'.format(list(self.model.parameters())))
+        else:
+            logger.info('model is loaded')
+        logger.info('model structure is {}'.format(self.model))
+
+        # initialize optimizer
+        self.optimizer = t.optim.SGD(self.model.parameters(), lr=self.learning_rate_param, weight_decay=self.l2)  
+        if self.optimizer_state_dict is not None:
+            optimizer_state_dict = {
+                "state": {k: t.tensor(v) for k, v in self.optimizer_state_dict['state'].items()},
+                "param_groups": self.optimizer_state_dict['param_groups'],
+            }
+            self.optimizer.load_state_dict(optimizer_state_dict)
+            logger.info('load warmstart optimizer state dict')
         # training
         fed_arg = FedAVGArguments()
         train_arg = TrainingArguments(num_train_epochs=self.max_iter, 
                                       per_device_train_batch_size=self.batch_size, per_gpu_eval_batch_size=self.batch_size)
-        trainer = FedAVGCLient(ctx, model=model, loss_fn=loss_fn, optimizer=optimizer, train_set=train_set, 
-                               val_set=validate_set, training_args=train_arg, fed_args=fed_arg)
+        self.trainer = FedAVGCLient(ctx, model=self.model, loss_fn=loss_fn, optimizer=self.optimizer, train_set=train_set, 
+                               val_set=validate_set, training_args=train_arg, fed_args=fed_arg, data_collator=default_data_collator)
+        self.trainer.set_local_mode()
+        self.trainer.train()
         
-        # !!!!!!!!!!
-        # TODO
-        # !!!!!!!!!!
-        trainer.set_local_mode()
-        trainer.train()
-        
-    
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
-        return super().predict(ctx, predict_data)
-    
-    def get_model(self) -> dict:
+        
+        if self.model is None:
+            raise ValueError("model is not initialized")
+        self.predict_data = Data.from_fate_dataframe(predict_data)
+        predict_set = self._make_dataset(self.predict_data)
+        if self.trainer is None:
+            train_arg = TrainingArguments(num_train_epochs=self.max_iter, per_device_eval_batch_size=self.batch_size)
+            trainer = FedAVGCLient(ctx, train_set=predict_set, model=self.model, training_args=train_arg, 
+                                        fed_args=FedAVGArguments(), data_collator=default_data_collator)
+            trainer.set_local_mode()
+        else:
+            trainer = self.trainer
+        predict_rs = trainer.predict(predict_set)
+
+        return predict_rs
+
+    def get_model(self) -> ModelIO:
         param = {}
         if self.model is not None:
             param['model'] = self.model.to_dict()
         if self.optimizer is not None:
-            param['optimizer'] = optimizer_to_dict(self.optimizer)
+            param['optimizer'] = get_torch_bytes(self.optimizer.state_dict())
         
         meta = {'batch_size': self.batch_size, 'max_iter': self.max_iter, 'threshold': self.threshold, 
                 'optimizer_param': self.optimizer_param, 'learning_rate_param': self.learning_rate_param, 'init_param': self.init_param}
-        export_ = ModelExporter(data=param, meta=meta)
+        export_ = ModelIO(data=param, meta=meta)
 
         return export_
-    
-    @classmethod
-    def from_model(cls, model: dict) -> Module:
-        if not hasattr(model, 'model'):
-            raise ('key "param" is not found in the input model dict')
-        param = model['param']
-        if not hasattr(param, 'model'):
-            raise ValueError("param dict must have key 'model' that contains the model parameter and structure info") 
+
+    def from_model(self, model: ModelIO):
+
+        model = model.dict()
+        if not 'data' in model:
+            raise ('key "data" is not found in the input model dict')
         
+        model_param = model['data']
+        if not 'model' in model_param:
+            raise ValueError("param dict must have key 'model' that contains the model parameter and structure info")
+        self.model = HomoLRModel.from_dict(model_param['model'])
+        self.model.l1 = self.l1
+        if hasattr(model_param, 'optimizer'):
+            self.optimizer_state_dict = recover_torch_bytes(model_param['optimizer'])
+        self.loaded_meta = model['meta']
 
 

@@ -39,9 +39,12 @@ class FedAVGCLient(FedTrainerClient):
     
     def __init__(self, 
                  ctx: Context,
-                 model: Module, loss_fn: Module, optimizer: Optimizer, 
+                 model: Module, 
                  training_args: TrainingArguments, fed_args: FedArguments, 
-                 train_set: Dataset, val_set: Dataset = None, 
+                 train_set: Dataset, 
+                 val_set: Dataset = None, 
+                 loss_fn: Module = None, 
+                 optimizer: Optimizer = None, 
                  scheduler: _LRScheduler = None, 
                  callbacks: List[TrainerCallback] = [], 
                  data_collator: Callable=None,
@@ -51,8 +54,8 @@ class FedAVGCLient(FedTrainerClient):
                  local_mode: bool = False
                  ):
         
-        super().__init__(ctx, model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator, tokenizer,
-                         scheduler, callbacks, use_hf_default_behavior,
+        super().__init__(ctx, model, training_args, fed_args, train_set, val_set, loss_fn, optimizer, data_collator, scheduler,
+                         tokenizer, callbacks, use_hf_default_behavior,
                          compute_metrics=compute_metrics, local_mode=local_mode)
 
     def init_aggregator(self):
