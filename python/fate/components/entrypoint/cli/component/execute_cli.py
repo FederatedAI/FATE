@@ -121,7 +121,7 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
 
         # register metric handler
         metrics_handler = load_metric_handler(execution_io.get_metric_writer())
-        ctx.register_metric_handler(metrics_handler)
+        ctx.set_metric_handler(metrics_handler)
 
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())

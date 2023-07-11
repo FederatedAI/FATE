@@ -84,31 +84,31 @@ class PipelineLogger(pydantic.BaseModel):
             root_handlers.append(handler_name)
 
         # add component_desc logger
-        component_handlers = []
-        component_base_path = self.metadata.basepath.joinpath("component_desc")
-        component_base_path.mkdir(parents=True, exist_ok=True)
-        filters["components"] = {"name": "fate.components"}
-        filters["ml"] = {"name": "fate.ml"}
-        for level in levels:
-            handler_name = f"component_{level.lower()}"
-            add_file_handler(
-                name=handler_name,
-                filename=component_base_path.joinpath(level),
-                level=level,
-            )
-            component_handlers.append(handler_name)
-        component_loggers = {
-            "fate.components": dict(
-                handlers=component_handlers,
-                filters=["components"],
-                level=self.metadata.level,
-            ),
-            "fate.ml": dict(
-                handlers=component_handlers,
-                filters=["ml"],
-                level=self.metadata.level,
-            ),
-        }
+        # component_handlers = []
+        # component_base_path = self.metadata.basepath.joinpath("component_desc")
+        # component_base_path.mkdir(parents=True, exist_ok=True)
+        # filters["components"] = {"name": "fate.components"}
+        # filters["ml"] = {"name": "fate.ml"}
+        # for level in levels:
+        #     handler_name = f"component_{level.lower()}"
+        #     add_file_handler(
+        #         name=handler_name,
+        #         filename=component_base_path.joinpath(level),
+        #         level=level,
+        #     )
+        #     component_handlers.append(handler_name)
+        # component_loggers = {
+        #     "fate.components": dict(
+        #         handlers=component_handlers,
+        #         filters=["components"],
+        #         level=self.metadata.level,
+        #     ),
+        #     "fate.ml": dict(
+        #         handlers=component_handlers,
+        #         filters=["ml"],
+        #         level=self.metadata.level,
+        #     ),
+        # }
 
         logging.config.dictConfig(
             dict(
@@ -116,7 +116,8 @@ class PipelineLogger(pydantic.BaseModel):
                 formatters=formatters,
                 handlers=handlers,
                 filters=filters,
-                loggers=component_loggers,
+                # loggers=component_loggers,
+                loggers={},
                 root=dict(handlers=root_handlers, level=self.metadata.level),
                 disable_existing_loggers=False,
             )

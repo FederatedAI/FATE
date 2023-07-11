@@ -1,34 +1,33 @@
-from typing import Dict, List, Optional, Union
+from fate.arch.context._metrics import (
+    BaseMetricsHandler,
+    InMemoryMetricsHandler,
+    OneTimeMetrics,
+    StepMetrics,
+)
 
-import pydantic
-from fate.arch.context._metrics import NoopMetricsHandler
-from fate.components.core.component_desc.artifacts.metric import JsonMetricWriter
+from .artifacts.metric import JsonMetricFileWriter, JsonMetricRestfulWriter
 
 
-class ComponentMetricsHandler(NoopMetricsHandler):
-    def __init__(self, writer: JsonMetricWriter) -> None:
+class ComponentMetricsFileHandler(InMemoryMetricsHandler):
+    def __init__(self, writer: JsonMetricFileWriter) -> None:
         self._writer = writer
         super().__init__()
 
     def finalize(self):
-        jsonable_metrics = []
-        for k, v in self._metrics.items():
-            jsonable_metrics.append(
-                MetricData(
-                    namespace=".".join(v.namespaces),
-                    name=v.name,
-                    groups=".".join(v.groups),
-                    type=v.type,
-                    data=v.data,
-                ).dict()
-            )
-        self._writer.write(jsonable_metrics)
+        self._writer.write(self.get_metrics())
 
 
-class MetricData(pydantic.BaseModel):
-    namespace: Optional[str] = None
-    name: str
-    type: str
-    groups: str
-    metadata: Dict[str, str] = {}
-    data: Union[List, Dict]
+class ComponentMetricsRestfulHandler(BaseMetricsHandler):
+    def __init__(self, writer: JsonMetricRestfulWriter) -> None:
+        self._writer = writer
+
+    def _log_step_metrics(self, metrics: "StepMetrics"):
+        record = metrics.to_record()
+        self._writer.write(record.dict())
+
+    def _log_one_time_metrics(self, metrics: "OneTimeMetrics"):
+        record = metrics.to_record()
+        self._writer.write(record.dict())
+
+    def finalize(self):
+        self._writer.close()

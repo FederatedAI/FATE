@@ -128,7 +128,7 @@ def _push(
     parties: List[PartyMeta],
     value,
 ):
-    tag = namespace.get_federation_tag()
+    tag = namespace.federation_tag
     _TableRemotePersistentPickler.push(value, federation, name, tag, parties)
 
 
@@ -138,7 +138,7 @@ def _pull(
     namespace: NS,
     parties: List[PartyMeta],
 ):
-    tag = namespace.get_federation_tag()
+    tag = namespace.federation_tag
     raw_values = federation.pull(
         name=name,
         tag=tag,
