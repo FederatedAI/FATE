@@ -17,6 +17,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+FATE_DF = 'fate_df'
+STR_PATH = 'str_path'
+
+
 def _convert_to_numpy_array(data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
     if isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
         return data.to_numpy()
@@ -70,11 +74,17 @@ class NNInput:
         self.train_ids = None
         self.validate_ids = None
         self.test_ids = None
+        self.input_type = None
+
+        # training
+
         if isinstance(train_data, DataFrame):
             self.train_data, self.train_ids, self.schema = self._extract_fate_df(train_data)
+            self.input_type = FATE_DF
         else:
             self.train_data = train_data
             self.train_ids = SampleIDs()
+            self.input_type = STR_PATH
 
         if isinstance(validate_data, DataFrame):
             self.validate_data, self.validate_ids, _ = self._extract_fate_df(validate_data)
@@ -82,11 +92,16 @@ class NNInput:
             self.validate_data = validate_data
             self.validate_ids = SampleIDs()
 
+        # prediction 
+
         if isinstance(test_data, DataFrame):
             self.test_data, self.test_ids, self.schema = self._extract_fate_df(test_data)
+            self.input_type = FATE_DF
+
         else:
             self.test_data = test_data
             self.test_ids = SampleIDs()
+            self.input_type = STR_PATH
 
         self.saved_model_path = saved_model_path
         self.fate_save_path = fate_save_path

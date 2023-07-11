@@ -63,6 +63,12 @@ class LazyBuildInComponentsLoader:
         return homo_nn
 
     @_lazy_cpn
+    def homo_lr(self):
+        from .homo_lr import homo_lr
+        
+        return homo_lr
+
+    @_lazy_cpn
     def dataframe_transformer(self):
         from .dataframe_transformer import dataframe_transformer
 

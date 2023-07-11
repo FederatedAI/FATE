@@ -34,6 +34,7 @@ class Data(object):
         sample_id = schema.sample_id_name
         match_id = schema.match_id_name
         label = schema.label_name
+        logger.info('columns are {} {} {}'.format(sample_id, match_id, label))
         pd_df = df.as_pd_df()
         features = pd_df.drop([sample_id, match_id, label], axis=1)
         sample_ids = pd_df[[sample_id]]
@@ -190,8 +191,8 @@ class DictDataset(Dataset):
 
 class HomoLRClient(HomoModule):
 
-    def __init__(self, max_iter: int=5, batch_size: int=32, optimizer_param=None,
-                learning_rate_param=None,
+    def __init__(self, epochs: int=5, batch_size: int=32, optimizer_param=None,
+                learning_rate_scheduler=None,
                 init_param=None,
                 threshold: float=0.5
                 ) -> None:
@@ -203,10 +204,10 @@ class HomoLRClient(HomoModule):
         self.predict_data = None
 
         # set vars
-        self.max_iter = max_iter
+        self.max_iter = epochs
         self.batch_size = batch_size
         self.optimizer_param = optimizer_param
-        self.learning_rate_param = learning_rate_param
+        self.learning_rate_param = learning_rate_scheduler
         self.init_param = init_param
         self.threshold = threshold
         self.run_ovr = False
@@ -288,7 +289,6 @@ class HomoLRClient(HomoModule):
                                       per_device_train_batch_size=self.batch_size, per_gpu_eval_batch_size=self.batch_size)
         self.trainer = FedAVGCLient(ctx, model=self.model, loss_fn=loss_fn, optimizer=self.optimizer, train_set=train_set, 
                                val_set=validate_set, training_args=train_arg, fed_args=fed_arg, data_collator=default_data_collator)
-        self.trainer.set_local_mode()
         self.trainer.train()
         
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
@@ -305,8 +305,8 @@ class HomoLRClient(HomoModule):
         else:
             trainer = self.trainer
         predict_rs = trainer.predict(predict_set)
-
-        return predict_rs
+        rs = {"predict_score": predict_rs.predictions, 'label': predict_rs.label_ids}
+        return rs
 
     def get_model(self) -> ModelIO:
         param = {}

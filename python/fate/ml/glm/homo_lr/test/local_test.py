@@ -33,7 +33,7 @@ reader = PandasReader(sample_id_name='sample_id', match_id_name="id", label_name
 data = reader.to_frame(ctx, df)
 df = data.as_pd_df()
 
-client = HomoLRClient(50, 800, learning_rate_param=0.01)
+client = HomoLRClient(50, 800, learning_rate_scheduler=0.01)
 client.l2 = 0.01
 client.l1 = 0.01
 client.fit(ctx, data)
