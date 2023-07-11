@@ -21,7 +21,7 @@ import random
 import numpy as np
 import pandas as pd
 
-from fate.interface import Context
+from fate.arch import Context
 from ..abc.module import Module, HeteroModule
 
 logger = logging.getLogger(__name__)
@@ -30,19 +30,27 @@ DEFAULT_METRIC = {"iv": ["iv"], "statistic": ["mean"]}
 
 
 class HeteroSelectionModuleGuest(HeteroModule):
-    def __init__(self, method=None, select_col=None, isometric_model_dict=None,
+    def __init__(self, method=None, select_col=None, input_models=None,
                  iv_param=None, statistic_param=None, manual_param=None,
                  keep_one=True):
         self.method = method
         self.select_col = select_col
-        self.isometric_model_dict = isometric_model_dict
         self.iv_param = iv_param
         self.statistic_param = statistic_param
         self.manual_param = manual_param
         self.keep_one = keep_one
+
         # keep selection history
         self._inner_method = []
         self._selection_obj = []
+
+        isometric_model_dict = {}
+        for model in input_models:
+            model_type = model["meta"].get("model_type")
+            if model_type is None:
+                raise ValueError(f"Missing 'model_type' in input model")
+            isometric_model_dict[model_type] = model
+        self.isometric_model_dict = isometric_model_dict
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         logger.info(f"isometric_model_dict: {self.isometric_model_dict}")
@@ -66,10 +74,10 @@ class HeteroSelectionModuleGuest(HeteroModule):
                                                   param=self.iv_param,
                                                   model=model,
                                                   keep_one=self.keep_one)
-            elif filter_type == "statistic":
-                model = self.isometric_model_dict.get("statistic", None)
+            elif filter_type == "statistics":
+                model = self.isometric_model_dict.get("statistics", None)
                 if model is None:
-                    raise ValueError(f"Cannot find statistic model in input, please check")
+                    raise ValueError(f"Cannot find statistics model in input, please check")
                 selection_obj = StandardSelection(method=filter_type,
                                                   header=header,
                                                   param=self.statistic_param,
@@ -103,15 +111,18 @@ class HeteroSelectionModuleGuest(HeteroModule):
         transformed_data = self._selection_obj[-1].transform(ctx, test_data)
         return transformed_data
 
-    def to_model(self):
+    def get_model(self):
         # all selection obj need to be recorded for display of cascade order
         selection_obj_list = []
         for selection_obj in self._selection_obj:
             selection_obj_list.append(selection_obj.to_model())
-        return {"selection_obj_list": json.dumps(selection_obj_list),
-                "method": self.method,
-                "select_col": self.select_col,
+        data = {"selection_obj_list": json.dumps(selection_obj_list),
                 "inner_method": self._inner_method}
+        meta = {"method": self.method,
+                "select_col": self.select_col,
+                "keep_one": self.keep_one}
+        return {"data": data,
+                "meta": meta}
 
     def restore(self, model):
         selection_obj_list = []
@@ -127,26 +138,33 @@ class HeteroSelectionModuleGuest(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "HeteroSelectionModuleGuest":
-        selection_obj = HeteroSelectionModuleGuest(model["method"], model["select_col"])
-        selection_obj._inner_method = model["inner_method"]
-        selection_obj.restore(model)
+        selection_obj = HeteroSelectionModuleGuest(model["meta"]["method"], model["meta"]["select_col"])
+        selection_obj._inner_method = model["data"]["inner_method"]
+        selection_obj.restore(model["data"])
         return selection_obj
 
 
 class HeteroSelectionModuleHost(HeteroModule):
-    def __init__(self, method=None, select_col=None, isometric_model_dict=None,
+    def __init__(self, method=None, select_col=None, input_models=None,
                  iv_param=None, statistic_param=None, manual_param=None,
                  keep_one=True):
         self.method = method
-        self.isometric_model_dict = isometric_model_dict
         self.iv_param = iv_param
         self.statistic_param = statistic_param
         self.manual_param = manual_param
         self.keep_one = keep_one
         self.select_col = select_col
-        # for display of cascade order
-        self._inner_method = [None] * len(method)
-        self._selection_obj = [None] * len(method)
+        # keep selection history
+        self._inner_method = []
+        self._selection_obj = []
+
+        isometric_model_dict = {}
+        for model in input_models:
+            model_type = model["meta"].get("model_type")
+            if model_type is None:
+                raise ValueError(f"Missing 'model_type' in input model")
+            isometric_model_dict[model_type] = model
+        self.isometric_model_dict = isometric_model_dict
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         if self.select_col is None:
@@ -159,8 +177,6 @@ class HeteroSelectionModuleHost(HeteroModule):
                                                 header=header,
                                                 param=self.manual_param,
                                                 keep_one=self.keep_one)
-                self._selection_obj[i] = selection_obj
-                self._inner_method[i] = "manual"
             elif filter_type == "iv":
                 model = self.isometric_model_dict.get("binning", None)
                 if model is None:
@@ -170,21 +186,20 @@ class HeteroSelectionModuleHost(HeteroModule):
                                                   param=self.iv_param,
                                                   model=model,
                                                   keep_one=self.keep_one)
-                self._selection_obj[i] = selection_obj
-                self._inner_method[i] = "iv"
             elif filter_type == "statistic":
-                model = self.isometric_model_dict.get("statistic", None)
+                model = self.isometric_model_dict.get("statistics", None)
                 if model is None:
-                    raise ValueError(f"Cannot find statistic model in input, please check")
+                    raise ValueError(f"Cannot find statistics model in input, please check")
                 selection_obj = StandardSelection(method=filter_type,
                                                   header=header,
                                                   param=self.statistic_param,
                                                   model=model,
                                                   keep_one=self.keep_one)
-                self._selection_obj[i] = selection_obj
-                self._inner_method[i] = "statistic"
+
             else:
                 raise ValueError(f"{type} selection method not supported, please check")
+            self._selection_obj.append(selection_obj)
+            self._inner_method.append(filter_type)
 
         prev_selection_obj = None
         for method, selection_obj in zip(self._inner_method, self._selection_obj):
@@ -215,15 +230,19 @@ class HeteroSelectionModuleHost(HeteroModule):
         transformed_data = self._selection_obj[-1].transform(ctx, test_data)
         return transformed_data
 
-    def to_model(self):
+    def get_model(self):
         # all selection history need to be recorded for display
         selection_obj_list = []
         for selection_obj in self._selection_obj:
             selection_obj_list.append(selection_obj.to_model())
-        return {"selection_obj_list": json.dumps(selection_obj_list),
-                "method": self.method,
-                "select_col": self.select_col,
+
+        data = {"selection_obj_list": json.dumps(selection_obj_list),
                 "inner_method": self._inner_method}
+        meta = {"method": self.method,
+                "select_col": self.select_col,
+                "keep_one": self.keep_one}
+        return {"data": data,
+                "meta": meta}
 
     def restore(self, model):
         selection_obj_list = []
@@ -239,9 +258,9 @@ class HeteroSelectionModuleHost(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "HeteroSelectionModuleHost":
-        selection_obj = HeteroSelectionModuleHost(model["method"], model["select_col"])
-        selection_obj._inner_method = model["inner_method"]
-        selection_obj.restore(model)
+        selection_obj = HeteroSelectionModuleHost(model["meta"]["method"], model["meta"]["select_col"])
+        selection_obj._inner_method = model["data"]["inner_method"]
+        selection_obj.restore(model["data"])
         return selection_obj
 
 

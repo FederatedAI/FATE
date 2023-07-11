@@ -30,9 +30,9 @@ def train(
         role: Role,
         train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         input_models: cpn.json_model_inputs(roles=[GUEST, HOST]),
-        method: cpn.parameter(type=List[params.string_choice(["manual", "binning", "statistic"])],
+        method: cpn.parameter(type=List[params.string_choice(["manual", "binning", "statistics"])],
                               default=["manual"], optional=False,
-                              desc="selection method, options: {manual, binning, statistic}"),
+                              desc="selection method, options: {manual, binning, statistics}"),
         select_col: cpn.parameter(type=List[str], default=None,
                                   desc="list of column names to be selected, if None, all columns will be considered"),
         iv_param: cpn.parameter(type=params.iv_filter_param(),
@@ -49,7 +49,7 @@ def train(
                                        desc="statistic filter param"),
         manual_param: cpn.parameter(type=params.manual_filter_param(),
                                     default=params.ManualFilterParam(filter_out_col=[], keep_col=[]),
-                                    desc="note that manual filter will always be processed as the last filter"),
+                                    desc="manual filter param"),
         keep_one: cpn.parameter(type=bool,
                                 default=True,
                                 desc="whether to keep at least one feature among `select_col`"),
@@ -62,11 +62,6 @@ def train(
     from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
 
     sub_ctx = ctx.sub_ctx("train")
-    isometric_model_dict = {}
-    for model in input_models:
-        model_type = model.artifact.metadata.metadata
-        model = model.read()
-        isometric_model_dict[model_type] = model
 
     train_data = train_data.read()
     columns = train_data.schema.columns.to_list()
@@ -80,20 +75,20 @@ def train(
         if manual_param.keep_col is not None:
             keep_col = [columns[anonymous_columns.index(col)] for col in manual_param.keep_col]
             manual_param.keep_col = keep_col
-
+    input_models = [model.read() for model in input_models]
     if role.is_guest:
-        selection = HeteroSelectionModuleGuest(method, select_col, isometric_model_dict,
+        selection = HeteroSelectionModuleGuest(method, select_col, input_models,
                                                iv_param, statistic_param, manual_param,
                                                keep_one)
     elif role.is_host:
-        selection = HeteroSelectionModuleHost(method, select_col, isometric_model_dict,
+        selection = HeteroSelectionModuleHost(method, select_col, input_models,
                                               iv_param, statistic_param, manual_param,
                                               keep_one)
     else:
         raise ValueError(f"role: {role} is not valid")
     selection.fit(sub_ctx, train_data)
-    model = selection.to_model()
-    train_output_model.write(model, metadata={"method": method})
+    model = selection.get_model()
+    train_output_model.write(model, metadata={})
 
     sub_ctx = ctx.sub_ctx("predict")
     output_data = train_data
