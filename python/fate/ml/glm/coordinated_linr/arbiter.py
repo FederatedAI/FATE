@@ -15,37 +15,28 @@
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._convergence import converge_func_factory
-from fate.ml.utils._optimizer import separate, Optimizer, LRScheduler
+from fate.ml.utils._optimizer import LRScheduler, Optimizer, separate
 
 logger = logging.getLogger(__name__)
 
 
 class CoordinatedLinRModuleArbiter(HeteroModule):
-    def __init__(
-            self,
-            epochs,
-            early_stop,
-            tol,
-            batch_size,
-            optimizer_param,
-            learning_rate_param
-
-    ):
+    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param):
         self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
-        self.optimizer = Optimizer(optimizer_param["method"],
-                                   optimizer_param["penalty"],
-                                   optimizer_param["alpha"],
-                                   optimizer_param["optimizer_params"])
-        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+        self.optimizer = Optimizer(
+            optimizer_param["method"],
+            optimizer_param["penalty"],
+            optimizer_param["alpha"],
+            optimizer_param["optimizer_params"],
+        )
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"], learning_rate_param["scheduler_params"])
         """self.optimizer = Optimizer(optimizer_param.method,
                                    optimizer_param.penalty,
                                    optimizer_param.alpha,
@@ -58,12 +49,14 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
-        single_estimator = HeteroLinrEstimatorArbiter(epochs=self.epochs,
-                                                      early_stop=self.early_stop,
-                                                      tol=self.tol,
-                                                      batch_size=self.batch_size,
-                                                      optimizer=self.optimizer,
-                                                      learning_rate_scheduler=self.lr_scheduler)
+        single_estimator = HeteroLinrEstimatorArbiter(
+            epochs=self.epochs,
+            early_stop=self.early_stop,
+            tol=self.tol,
+            batch_size=self.batch_size,
+            optimizer=self.optimizer,
+            learning_rate_scheduler=self.lr_scheduler,
+        )
         single_estimator.fit_model(ctx, decryptor)
         self.estimator = single_estimator
 
@@ -82,14 +75,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
 
 class HeteroLinrEstimatorArbiter(HeteroModule):
     def __init__(
-            self,
-            epochs=None,
-            early_stop=None,
-            tol=None,
-            batch_size=None,
-            optimizer=None,
-            learning_rate_scheduler=None
-
+        self, epochs=None, early_stop=None, tol=None, batch_size=None, optimizer=None, learning_rate_scheduler=None
     ):
         self.epochs = epochs
         self.batch_size = batch_size
@@ -160,13 +146,15 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
                     logger.info("Multiple hosts exist, do not compute loss.")
 
             if iter_loss is not None:
-                iter_ctx.metrics.log_loss("linr_loss", iter_loss.tolist(), step=i)
-            if self.early_stop == 'weight_diff':
+                iter_ctx.metrics.log_loss("linr_loss", iter_loss.tolist())
+            if self.early_stop == "weight_diff":
                 self.is_converged = self.converge_func.is_converge(iter_g)
             else:
                 if iter_loss is None:
-                    raise ValueError("Multiple host situation, loss early stop function is not available."
-                                     "You should use 'weight_diff' instead")
+                    raise ValueError(
+                        "Multiple host situation, loss early stop function is not available."
+                        "You should use 'weight_diff' instead"
+                    )
                 self.is_converged = self.converge_func.is_converge(iter_loss)
 
             iter_ctx.hosts.put("converge_flag", self.is_converged)
@@ -186,7 +174,7 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
-            "converged": self.is_converged
+            "converged": self.is_converged,
         }
 
     def restore(self, model):
