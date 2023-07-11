@@ -36,24 +36,26 @@ class CoordinatedLinRModuleGuest(HeteroModule):
     ):
         self.epochs = epochs
         self.batch_size = batch_size
-        self.optimizer = Optimizer(optimizer_param["method"],
-                                   optimizer_param["penalty"],
-                                   optimizer_param["alpha"],
-                                   optimizer_param["optimizer_params"])
-        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
-
+        self.optimizer_param = optimizer_param
+        self.learning_rate_param = learning_rate_param
         self.init_param = init_param
 
         self.estimator = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         with_weight = train_data.weight is not None
-
+        optimizer = Optimizer(
+            self.optimizer_param["method"],
+            self.optimizer_param["penalty"],
+            self.optimizer_param["alpha"],
+            self.optimizer_param["optimizer_params"],
+        )
+        lr_scheduler = LRScheduler(self.learning_rate_param["method"],
+                                   self.learning_rate_param["scheduler_params"])
         estimator = CoordinatedLinREstimatorGuest(epochs=self.epochs,
                                                   batch_size=self.batch_size,
-                                                  optimizer=self.optimizer,
-                                                  learning_rate_scheduler=self.lr_scheduler,
+                                                  optimizer=optimizer,
+                                                  learning_rate_scheduler=lr_scheduler,
                                                   init_param=self.init_param)
         estimator.fit_model(ctx, train_data, validate_data, with_weight=with_weight)
         self.estimator = estimator
@@ -63,15 +65,23 @@ class CoordinatedLinRModuleGuest(HeteroModule):
         return prob
 
     def get_model(self):
-        return {
-            "estimator": self.estimator.get_model(),
-        }
+        return {"data": {"estimator": self.estimator.get_model()},
+                "meta": {"epochs": self.epochs,
+                         "batch_size": self.batch_size,
+                         "learning_rate_param": self.learning_rate_param,
+                         "init_param": self.init_param,
+                         "optimizer_param": self.optimizer_param}
+                }
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLinRModuleGuest":
-        linr = CoordinatedLinRModuleGuest()
+        linr = CoordinatedLinRModuleGuest(optimizer_param=model["meta"]["optimizer_param"],
+                                          learning_rate_param=model["meta"]["learning_rate_param"],
+                                          epochs=model["meta"]["epochs"],
+                                          batch_size=model["meta"]["batch_size"],
+                                          init_param=model["meta"]["init_param"])
         estimator = CoordinatedLinREstimatorGuest()
-        estimator.restore(model["estimator"])
+        estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
 
         return linr
@@ -113,47 +123,47 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         if self.end_epoch >= 0:
             self.start_epoch = self.end_epoch + 1
 
-        # for i, iter_ctx in ctx.ctxs_range(self.start_epoch, self.epochs):
-        # temp code start
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
-            # temp code end
-            logger.info(f"start iter {i}")
-            j = 0
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
+            logger.info(f"self.optimizer set epoch {i}")
+            # todo: if self.with_weight: include weight in batch result
             # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
             for batch_ctx, (X, Y) in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 h = X.shape[0]
-                Xw = torch.matmul(X, w)
+                Xw = torch.matmul(X, w.detach())
                 d = Xw - Y
-                loss = 1 / 2 / h * torch.matmul(d.T, d)
+                loss = 0.5 / h * torch.matmul(d.T, d)
                 if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
                     loss_norm = self.optimizer.loss_norm(w)
                     loss += loss_norm
-                for Xw_h in batch_ctx.hosts.get("Xw_h"):
+                Xw_h_all = batch_ctx.hosts.get("Xw_h")
+                for Xw_h in Xw_h_all:
                     d += Xw_h
                     loss += 1 / h * torch.matmul(Xw.T, Xw_h)
+
                 # if with_weight:
                 #    d = d * weight
-                for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
-                    loss += 1 / 2 / h * Xw2_h
-
                 batch_ctx.hosts.put(d=d)
+
+                for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
+                    loss += 0.5 / h * Xw2_h
                 h_loss_list = batch_ctx.hosts.get("h_loss")
                 for h_loss in h_loss_list:
                     if h_loss is not None:
                         loss += h_loss
-                batch_ctx.arbiter.put(loss=loss)
+
+                if len(Xw_h_all) == 1:
+                    batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = X.T @ d
-                batch_ctx.arbiter.put("g_enc", X.T @ g)
+                g = 1 / h * X.T @ d
+                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
+                batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
 
-                g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 w = self.optimizer.update_weights(w, g, self.init_param.get("fit_intercept"), self.lr_scheduler.lr)
-                logger.info(f"w={w}")
-                j += 1
-            self.is_converged = ctx.arbiter("converge_flag").get()
+                # logger.info(f"w={w}")
+            self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:
                 self.end_epoch = i
                 break
@@ -172,18 +182,29 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         return pred
 
     def get_model(self):
+        w = self.w.tolist()
+        intercept = None
+        if self.init_param.get("fit_intercept"):
+            w = w[:-1]
+            intercept = w[-1]
         return {
-            "w": self.w.tolist(),
+            "w": w,
+            "intercept": intercept,
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
-            "converged": self.is_converged
+            "is_converged": self.is_converged,
+            "fit_intercept": self.init_param.get("fit_intercept")
         }
 
     def restore(self, model):
-
-        self.w = torch.tensor(model["w"])
+        w = model["w"]
+        if model["fit_intercept"]:
+            w.append(model["intercept"])
+        self.w = torch.tensor(w)
+        self.optimizer = Optimizer()
+        self.lr_scheduler = LRScheduler()
         self.optimizer.load_state_dict(model["optimizer"])
-        self.lr_scheduler.load_state_dict(model["lr_scheduler"])
+        self.lr_scheduler.load_state_dict(model["lr_scheduler"], self.optimizer.optimizer)
         self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]

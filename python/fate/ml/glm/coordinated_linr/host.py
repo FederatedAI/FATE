@@ -35,24 +35,28 @@ class CoordinatedLinRModuleHost(HeteroModule):
             init_param
     ):
         self.epochs = epochs
-        self.optimizer = Optimizer(optimizer_param["method"],
-                                   optimizer_param["penalty"],
-                                   optimizer_param["alpha"],
-                                   optimizer_param["optimizer_params"])
-        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+        self.optimizer_param = optimizer_param
+        self.learning_rate_param = learning_rate_param
         self.batch_size = batch_size
-        self.init_param = init_param
+        self.init_param = init_param or {}
         self.init_param["fit_intercept"] = False
 
         self.estimator = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
+        optimizer = Optimizer(
+            self.optimizer_param["method"],
+            self.optimizer_param["penalty"],
+            self.optimizer_param["alpha"],
+            self.optimizer_param["optimizer_params"],
+        )
+        lr_scheduler = LRScheduler(self.learning_rate_param["method"],
+                                   self.learning_rate_param["scheduler_params"])
         estimator = CoordiantedLinREstimatorHost(epochs=self.epochs,
                                                  batch_size=self.batch_size,
-                                                 optimizer=self.optimizer,
-                                                 learning_rate_scheduler=self.lr_scheduler,
+                                                 optimizer=optimizer,
+                                                 learning_rate_scheduler=lr_scheduler,
                                                  init_param=self.init_param)
         estimator.fit_model(ctx, encryptor, train_data, validate_data)
         self.estimator = estimator
@@ -61,15 +65,23 @@ class CoordinatedLinRModuleHost(HeteroModule):
         self.estimator.predict(ctx, test_data)
 
     def get_model(self):
-        return {
-            "estimator": self.estimator.get_model()
-        }
+        return {"data": {"estimator": self.estimator.get_model()},
+                "meta": {"epochs": self.epochs,
+                         "batch_size": self.batch_size,
+                         "learning_rate_param": self.learning_rate_param,
+                         "init_param": self.init_param,
+                         "optimizer_param": self.optimizer_param}
+                }
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLinRModuleHost":
-        linr = CoordinatedLinRModuleHost()
+        linr = CoordinatedLinRModuleHost(optimizer_param=model["meta"]["optimizer_param"],
+                                         learning_rate_param=model["meta"]["learning_rate_param"],
+                                         epochs=model["meta"]["epochs"],
+                                         batch_size=model["meta"]["batch_size"],
+                                         init_param=model["meta"]["init_param"])
         estimator = CoordiantedLinREstimatorHost()
-        estimator.restore(model["estimator"])
+        estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
 
         return linr
@@ -106,36 +118,33 @@ class CoordiantedLinREstimatorHost(HeteroModule):
             self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
         if self.end_epoch >= 0:
             self.start_epoch = self.end_epoch + 1
-        """for i, iter_ctx in ctx.range(self.start_epoch, self.epochs):"""
-        # temp code start
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
-            # temp code end
-            logger.info(f"start iter {i}")
-            j = 0
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
-            for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
-                # h = X.shape[0]
-                logger.info(f"start batch {j}")
-                Xw_h = torch.matmul(X, w)
-                encryptor.encrypt(Xw_h).to(batch_ctx.guest, "Xw_h")
-                encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)).to(batch_ctx.guest, "Xw2_h")
+            logger.info(f"self.optimizer set epoch {i}")
+            # for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
+            # temp code start
+            for batch_ctx, (X, _) in iter_ctx.on_batches.ctxs_zip(batch_loader):
+                # temp code end
+                h = X.shape[0]
+                Xw_h = torch.matmul(X, w.detach())
+                batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
+                batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+
                 loss_norm = self.optimizer.loss_norm(w)
                 if loss_norm is not None:
-                    encryptor.encrypt(loss_norm).to(batch_ctx.guest, "h_loss")
+                    batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
                 else:
                     batch_ctx.guest.put(h_loss=loss_norm)
 
                 d = batch_ctx.guest.get("d")
-                g = self.optimizer.add_regular_to_grad(torch.matmul(X.T, d), w, False)
-                g.to(batch_ctx.arbiter, "g_enc")
-
+                g = 1 / h * torch.matmul(X.T, d)
+                g = self.optimizer.add_regular_to_grad(g, w, False)
+                batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
-                # g = g / h + self.alpha * w
-                #  w -= self.learning_rate * g"
+
                 w = self.optimizer.update_weights(w, g, False, self.lr_scheduler.lr)
                 logger.info(f"w={w}")
-                j += 1
-            self.is_converged = ctx.arbiter("converge_flag").get()
+            self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:
                 self.end_epoch = i
                 break
@@ -157,12 +166,14 @@ class CoordiantedLinREstimatorHost(HeteroModule):
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
-            "converged": self.is_converged
+            "is_converged": self.is_converged
         }
 
     def restore(self, model):
         self.w = torch.tensor(model["w"])
+        self.optimizer = Optimizer()
+        self.lr_scheduler = LRScheduler()
         self.optimizer.load_state_dict(model["optimizer"])
-        self.lr_scheduler.load_state_dict(model["lr_scheduler"])
+        self.lr_scheduler.load_state_dict(model["lr_scheduler"], self.optimizer.optimizer)
         self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]

@@ -102,7 +102,7 @@ class CoordinatedLRModuleHost(HeteroModule):
                 all_estimator[label_idx] = estimator.get_model()
         else:
             all_estimator = self.estimator.get_model()
-        return {"param": {"estimator": all_estimator},
+        return {"data": {"estimator": all_estimator},
                 "meta": {"label_count": self.label_count,
                          "ovr": self.ovr,
                          "epochs": self.epochs,
@@ -122,7 +122,7 @@ class CoordinatedLRModuleHost(HeteroModule):
         lr.label_count = model["meta"]["label_count"]
         lr.ovr = model["meta"]["ovr"]
 
-        all_estimator = model["param"]["estimator"]
+        all_estimator = model["data"]["estimator"]
         if lr.ovr:
             lr.estimator = {label: CoordinatedLREstimatorHost().restore(d) for label, d in all_estimator.items()}
         else:

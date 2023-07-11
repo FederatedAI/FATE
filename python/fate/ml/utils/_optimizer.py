@@ -67,34 +67,34 @@ class Optimizer(object):
         self.prev_model_parameter = None
         self.optimizer = None
 
-    def init_optimizer(self, model_parameter_length=None, model_parameter=None):
+    def init_optimizer(self, model_parameter_length=None, model_parameter=None, dtype=torch.float32):
+        # @todo: allow group in future
         if model_parameter_length is not None:
             model_parameter = torch.nn.parameter.Parameter(torch.zeros((model_parameter_length, 1),
-                                                                       requires_grad=True))
+                                                                       requires_grad=True,
+                                                                       dtype=dtype))
         self.model_parameter = model_parameter
         self.optimizer = optimizer_factory([model_parameter], self.method, self.optim_param)
         # for regularization
         # self.alpha = self.optimizer.state_dict()['param_groups'][0]['alpha']
 
     def step(self, gradient):
-        logger.info(f"before copy, model parameter: {self.model_parameter}")
-        self.prev_model_parameter = torch.nn.parameter.Parameter(self.model_parameter.clone())
+        # logger.info(f"before copy, model parameter: {self.model_parameter}")
+        self.prev_model_parameter = self.model_parameter.data.clone()
         # logger.info(f"gradient shape: {gradient.shape}, parameter shape: {self.model_parameter.shape}")
-        # make sure dtype match
-        self.model_parameter = torch.nn.parameter.Parameter(self.model_parameter.detach().clone().to(gradient.dtype))
+        # self.model_parameter = torch.nn.parameter.Parameter(self.model_parameter.detach().clone().to(gradient.dtype))
         self.model_parameter.grad = gradient
         # update parameter group in optimizer
-        self.optimizer.param_groups[0]['params'] = [self.model_parameter]
-        logger.info(f"before step, model parameter gradient: {self.model_parameter.grad}")
-        logger.info(f"before step, model parameter: {self.model_parameter}")
+        # self.optimizer.param_groups[0]['params'] = [self.model_parameter]
+        # logger.info(f"before step, model parameter gradient: {self.model_parameter.grad}")
         self.optimizer.step()
-        logger.info(f"after step, model parameter: {self.model_parameter}")
+        # logger.info(f"after step, model parameter: {self.model_parameter}")
 
     def get_delta_gradients(self):
         # logger.info(f"gradient: {self.model_parameter.grad}, prev model parameter: {self.prev_model_parameter},"
         #            f"delta grad: {self.model_parameter - self.prev_model_parameter}")
         if self.prev_model_parameter is not None:
-            return self.model_parameter - self.prev_model_parameter
+            return self.model_parameter.data - self.prev_model_parameter
         else:
             raise ValueError(f"No optimization history found, please check.")
 

@@ -84,7 +84,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             single_estimator.fit_single_model(ctx, decryptor)
             self.estimator = single_estimator
 
-    def to_model(self):
+    def get_model(self):
         all_estimator = {}
         if self.ovr:
             for label, estimator in self.estimator.items():
@@ -115,8 +115,6 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             estimator = CoordinatedLREstimatorArbiter()
             estimator.restore(all_estimator)
             lr.estimator = estimator
-        logger.info(f"finish from model")
-
         return lr
 
 
@@ -164,7 +162,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
                     size_list.append(g.size()[0])
                     g_total = torch.hstack((g_total, g.squeeze()))
                 if not optimizer_ready:
-                    self.optimizer.init_optimizer(sum(size_list))
+                    self.optimizer.init_optimizer(model_parameter_length=sum(size_list), dtype=g_total.dtype)
                     self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
                     optimizer_ready = True
                 self.optimizer.step(g_total.unsqueeze(1))
@@ -213,7 +211,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             self.end_epoch = self.epochs
         logger.debug(f"Finish training at {self.end_epoch}th epoch.")
 
-    def to_model(self):
+    def get_model(self):
         return {
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
