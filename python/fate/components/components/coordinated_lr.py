@@ -297,9 +297,11 @@ def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5,
     if is_ovr:
         df = test_data.create_frame(with_label=True, with_weight=False)
         df[["predict_result", "predict_score", "predict_detail", "type"]] = predict_score.apply_row(
-            lambda v: [v.argmax(), v[v.argmax()], json.dumps({label: v[label] for label in labels}), data_type],
-            enable_type_align_checking=False,
-        )
+            lambda v: [labels[v.argmax()],
+                       v[v.argmax()],
+                       json.dumps({str(label): v[i] for i, label in enumerate(labels)}),
+                       data_type],
+            enable_type_align_checking=False)
     else:
         df = test_data.create_frame(with_label=True, with_weight=False)
         pred_res = test_data.create_frame(with_label=False, with_weight=False)
