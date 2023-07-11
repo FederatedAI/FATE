@@ -75,6 +75,11 @@ def train(
         if manual_param.keep_col is not None:
             keep_col = [columns[anonymous_columns.index(col)] for col in manual_param.keep_col]
             manual_param.keep_col = keep_col
+    # temp code start
+    iv_param = iv_param.dict()
+    statistic_param = statistic_param.dict()
+    manual_param = manual_param.dict()
+    # temp code end
     input_models = [model.read() for model in input_models]
     if role.is_guest:
         selection = HeteroSelectionModuleGuest(method, select_col, input_models,
