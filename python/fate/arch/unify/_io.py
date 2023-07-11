@@ -27,14 +27,14 @@ _uri_regex = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*
 class URI:
     def __init__(
         self,
-        schema: str,
+        scheme: str,
         path: str,
         query: Optional[str] = None,
         fragment: Optional[str] = None,
         authority: Optional[str] = None,
         original_uri: Optional[str] = None,
     ):
-        self.schema = schema
+        self.scheme = scheme
         self.path = path
         self.query = query
         self.fragment = fragment
@@ -49,16 +49,16 @@ class URI:
         match = _uri_regex.fullmatch(uri)
         if match is None:
             raise ValueError(f"`{uri}` is not valid uri")
-        _, schema, _, authority, path, _, query, _, fragment = match.groups()
-        return URI(schema=schema, path=path, query=query, fragment=fragment, authority=authority, original_uri=uri)
+        _, scheme, _, authority, path, _, query, _, fragment = match.groups()
+        return URI(scheme=scheme, path=path, query=query, fragment=fragment, authority=authority, original_uri=uri)
 
     def to_string(self) -> str:
         uri = ""
-        if self.schema:
-            uri += f"{self.schema}:"
+        if self.scheme:
+            uri += f"{self.scheme}:"
         if self.authority:
             uri += f"//{self.authority}"
-        elif self.schema:
+        elif self.scheme:
             uri += f"//"
         uri += self.path
         if self.query:

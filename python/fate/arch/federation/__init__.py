@@ -12,6 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._type import FederationDataType, FederationEngine
+from ._type import FederationDataType
 
-__all__ = ["FederationEngine", "FederationDataType"]
+__all__ = ["FederationDataType"]

@@ -116,8 +116,8 @@ def train(
     scaler = FeatureScale(method, scale_col, feature_range, strict_range)
     scaler.fit(sub_ctx, train_data)
 
-    model = scaler.to_model()
-    output_model.write(model, metadata={"model_type": "feature_scale"})
+    model = scaler.get_model()
+    output_model.write(model, metadata={})
 
     sub_ctx = ctx.sub_ctx("predict")
     output_data = scaler.transform(sub_ctx, train_data)

@@ -34,6 +34,9 @@ class Stage:
     def is_default(self):
         return self.name == DEFAULT.name
 
+    def is_cross_validation(self):
+        return self.name == CROSS_VALIDATION.name
+
     @classmethod
     def from_str(cls, stage: str):
         if stage == "train":

@@ -114,21 +114,14 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         logger.debug("running...")
 
         # get correct component_desc/subcomponent handle stage
-        component = load_component(config.component)
-        if not stage.is_default:
-            for stage_component in component.stage_components:
-                if stage_component.name == stage.name:
-                    component = stage_component
-                    break
-            else:
-                raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
+        component = load_component(config.component, stage)
 
         # prepare
         execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
 
         # register metric handler
         metrics_handler = load_metric_handler(execution_io.get_metric_writer())
-        ctx.register_metric_handler(metrics_handler)
+        ctx.set_metric_handler(metrics_handler)
 
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
