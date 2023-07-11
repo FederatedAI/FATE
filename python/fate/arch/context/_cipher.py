@@ -50,4 +50,4 @@ class PHECipher:
     def keygen(self, **kwargs):
         from fate.arch.tensor import phe_keygen
 
-        return phe_keygen(self.device, **kwargs)
+        return phe_keygen(self.kind, **kwargs)
