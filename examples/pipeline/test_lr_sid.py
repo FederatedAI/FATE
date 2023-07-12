@@ -20,16 +20,18 @@ from fate_client.pipeline.interface import DataWarehouseChannel
 pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998")
 
 intersect_0 = Intersection("intersect_0", method="raw")
-intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                                    namespace="experiment"))
-intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host_sid",
-                                                                       namespace="experiment"))
+intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                    namespace="experiment_sid"))
+intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                       namespace="experiment_sid"))
 lr_0 = CoordinatedLR("lr_0",
-                     epochs=10,
+                     epochs=2,
                      batch_size=100,
-                     optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}, "alpha": 0.5},
+                     optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}},
                      init_param={"fit_intercept": True},
                      train_data=intersect_0.outputs["output_data"])
+lr_1 = CoordinatedLR("lr_1", test_data=intersect_0.outputs["output_data"],
+                     input_model=lr_0.outputs["output_model"])
 
 """lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
                                                              namespace="experiment"))
@@ -56,15 +58,15 @@ print(pipeline.get_task_info("lr_0").get_output_metrics())
 print(f"evaluation metrics: ")
 print(pipeline.get_task_info("evaluation_0").get_output_metrics())
 
-pipeline.deploy([lr_0])
+pipeline.deploy([intersect_0, lr_0])
 
 predict_pipeline = FateFlowPipeline()
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
-lr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                            namespace="experiment"))
-lr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host_sid",
-                                                               namespace="experiment"))
+deployed_pipeline.intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                                      namespace="experiment_sid"))
+deployed_pipeline.intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                         namespace="experiment_sid"))
 
 predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.compile()
