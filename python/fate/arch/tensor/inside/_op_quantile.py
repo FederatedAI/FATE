@@ -24,6 +24,6 @@ class GKSummary:
 
     def __iadd__(self, other: torch.Tensor):
         if isinstance(other, torch.Tensor):
-            self._summary.insert_array(ohter.numpy())
+            self._summary.insert_array(other.numpy())
             return self
         return NotImplemented
