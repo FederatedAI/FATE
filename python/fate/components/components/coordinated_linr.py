@@ -95,7 +95,7 @@ def predict(
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, epochs,
                 batch_size, optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated linr guest start train")
-    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleGuest
+    from fate.ml.glm import CoordinatedLinRModuleGuest
     # optimizer = optimizer_factory(optimizer_param)
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
@@ -126,7 +126,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
                optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated linr host start train")
 
-    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleHost
+    from fate.ml.glm import CoordinatedLinRModuleHost
     # optimizer = optimizer_factory(optimizer_param)
 
     sub_ctx = ctx.sub_ctx("train")
@@ -151,7 +151,7 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
                   learning_rate_param, output_model):
     logger.info(f"coordinated linr arbiter start train")
 
-    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleArbiter
+    from fate.ml.glm import CoordinatedLinRModuleArbiter
 
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
@@ -165,7 +165,7 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleGuest
+    from fate.ml.glm import CoordinatedLinRModuleGuest
 
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()
@@ -178,7 +178,7 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.coordinated_linr import CoordinatedLinRModuleHost
+    from fate.ml.glm import CoordinatedLinRModuleHost
 
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()
