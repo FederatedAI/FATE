@@ -71,7 +71,7 @@ impl QuantileSummaryStream {
         }
         Ok(())
     }
-    pub fn quantile(&self, phi: Vec<f64>) -> Vec<f64> {
+    pub fn queries(&self, phi: Vec<f64>) -> Vec<f64> {
         phi.iter()
             .map(|p| self.0.as_ref().unwrap().quantile(*p).0)
             .collect()
