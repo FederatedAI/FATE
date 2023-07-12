@@ -44,13 +44,15 @@ class HeteroSelectionModuleGuest(HeteroModule):
         self._inner_method = []
         self._selection_obj = []
 
-        isometric_model_dict = {}
-        for model in input_models:
-            model_type = model["meta"].get("model_type")
-            if model_type is None:
-                raise ValueError(f"Missing 'model_type' in input model")
-            isometric_model_dict[model_type] = model
-        self.isometric_model_dict = isometric_model_dict
+        self.isometric_model_dict = None
+        if input_models:
+            isometric_model_dict = {}
+            for model in input_models:
+                model_type = model["meta"].get("model_type")
+                if model_type is None:
+                    raise ValueError(f"Missing 'model_type' in input model")
+                isometric_model_dict[model_type] = model
+            self.isometric_model_dict = isometric_model_dict
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         logger.info(f"isometric_model_dict: {self.isometric_model_dict}")
@@ -158,13 +160,15 @@ class HeteroSelectionModuleHost(HeteroModule):
         self._inner_method = []
         self._selection_obj = []
 
-        isometric_model_dict = {}
-        for model in input_models:
-            model_type = model["meta"].get("model_type")
-            if model_type is None:
-                raise ValueError(f"Missing 'model_type' in input model")
-            isometric_model_dict[model_type] = model
-        self.isometric_model_dict = isometric_model_dict
+        self.isometric_model_dict = None
+        if input_models:
+            isometric_model_dict = {}
+            for model in input_models:
+                model_type = model["meta"].get("model_type")
+                if model_type is None:
+                    raise ValueError(f"Missing 'model_type' in input model")
+                isometric_model_dict[model_type] = model
+            self.isometric_model_dict = isometric_model_dict
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         if self.select_col is None:
@@ -273,10 +277,11 @@ class ManualSelection(Module):
         self.keep_one = keep_one
         self._header = header
         self._prev_selected_mask = None
+        self._selected_mask = None
         if header is None:
-            self._selected_mask = None
+            self._prev_selected_mask = None
         else:
-            self._selected_mask = pd.Series(np.ones(len(header)), dtype=bool, index=header)
+            self._prev_selected_mask = pd.Series(np.ones(len(header)), dtype=bool, index=header)
 
     def set_selected_mask(self, mask):
         self._selected_mask = mask
@@ -330,7 +335,7 @@ class ManualSelection(Module):
     def restore(self, model):
         self.method = model["method"]
         self.keep_one = model["keep_one"]
-        self._selected_mask = pd.Series(["selected_mask"], dtype=bool)
+        self._selected_mask = pd.Series(model["selected_mask"], dtype=bool)
 
 
 class StandardSelection(Module):
@@ -570,7 +575,7 @@ class StandardSelection(Module):
     def restore(self, model):
         self.method = model["method"]
         self.keep_one = model["keep_one"]
-        self._selected_mask = pd.Series(["selected_mask"], dtype=bool)
+        self._selected_mask = pd.Series(model["selected_mask"], dtype=bool)
         self._all_selected_mask = pd.DataFrame(model["all_selected_mask"], dtype=bool)
         self._all_metrics = pd.DataFrame(model["all_metrics"])
         self._host_selected_mask = {k: pd.Series(v, dtype=bool) for k, v in model["host_selected_mask"].items()}
