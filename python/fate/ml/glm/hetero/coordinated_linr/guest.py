@@ -155,7 +155,7 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
                     batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = 1 / h * X.T @ d
+                g = 1 / h * torch.matmul(X.T, d)
                 g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")

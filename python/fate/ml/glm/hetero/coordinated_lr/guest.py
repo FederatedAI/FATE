@@ -218,6 +218,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                     loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
                     loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)
                 if weight:
+                    logger.info(f"weight: {weight.tolist()}")
                     d = d * weight
                 batch_ctx.hosts.put(d=d)
 
@@ -232,7 +233,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                     batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = 1 / h * X.T @ d
+                g = 1 / h * torch.matmul(X.T, d)
                 g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
