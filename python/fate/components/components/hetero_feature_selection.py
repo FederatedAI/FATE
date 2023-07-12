@@ -13,10 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 from typing import List
 
 from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
+
+logger = logging.getLogger(__name__)
 
 
 @cpn.component(roles=[GUEST, HOST])
@@ -60,12 +63,14 @@ def train(
         train_output_model: cpn.json_model_output(roles=[GUEST, HOST])
 ):
     from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
+    logger.info(f"start selection train")
 
     sub_ctx = ctx.sub_ctx("train")
 
     train_data = train_data.read()
     columns = train_data.schema.columns.to_list()
     if use_anonymous:
+        logger.debug(f"use anonymous columns")
         anonymous_columns = train_data.schema.anonymous_columns.to_list()
         if select_col is not None:
             select_col = [columns[anonymous_columns.index(col)] for col in select_col]
@@ -82,13 +87,22 @@ def train(
     # temp code end
     input_models = [model.read() for model in input_models]
     if role.is_guest:
-        selection = HeteroSelectionModuleGuest(method, select_col, input_models,
-                                               iv_param, statistic_param, manual_param,
-                                               keep_one)
+        selection = HeteroSelectionModuleGuest(method=method,
+                                               select_col=select_col,
+                                               input_models=input_models,
+                                               iv_param=iv_param,
+                                               statistic_param=statistic_param,
+                                               manual_param=manual_param,
+                                               keep_one=keep_one)
+
     elif role.is_host:
-        selection = HeteroSelectionModuleHost(method, select_col, input_models,
-                                              iv_param, statistic_param, manual_param,
-                                              keep_one)
+        selection = HeteroSelectionModuleHost(method=method,
+                                              select_col=select_col,
+                                              input_models=input_models,
+                                              iv_param=iv_param,
+                                              statistic_param=statistic_param,
+                                              manual_param=manual_param,
+                                              keep_one=keep_one)
     else:
         raise ValueError(f"role: {role} is not valid")
     selection.fit(sub_ctx, train_data)
@@ -111,10 +125,9 @@ def predict(
         test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
-
+    logger.info(f"start selection predict")
     sub_ctx = ctx.sub_ctx("predict")
-    with input_model as model_reader:
-        model = model_reader.read_model()
+    model = input_model.read()
     if role.is_guest:
         selection = HeteroSelectionModuleGuest.from_model(model)
     elif role.is_host:
@@ -122,12 +135,9 @@ def predict(
     else:
         raise ValueError(f"role: {role} is not valid")
 
-    model_meta = model["meta_data"]
-    method = model_meta["method"]
-    selection.method = method
     test_data = test_data.read()
 
     output_data = test_data
-    if method is not None:
+    if selection.method is not None:
         output_data = selection.transform(sub_ctx, test_data)
     test_output_data.write(output_data)

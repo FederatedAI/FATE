@@ -76,15 +76,15 @@ class StatisticFilterParam(StandardFilterParam, Parameter):
 
 class ManualFilterParam(pydantic.BaseModel, Parameter):
     keep_col: List[str] = []
-    left_out_col: List[str] = []
+    filter_out_col: List[str] = []
 
     @pydantic.root_validator(pre=False)
     def no_intersection(cls, values):
-        left_out_col = values.get('left_out_col', [])
+        filter_out_col = values.get('filter_out_col', [])
         keep_col = values.get('keep_col', [])
-        intersection = set(left_out_col).intersection(set(keep_col))
+        intersection = set(filter_out_col).intersection(set(keep_col))
         if intersection:
-            raise ValueError(f"`keep_col` and `left_out_col` share common elements: {intersection}")
+            raise ValueError(f"`keep_col` and `filter_out_col` share common elements: {intersection}")
         return values
 
 
