@@ -103,6 +103,11 @@ class LazyBuildInComponentsLoader:
         return statistics
 
     @_lazy_cpn
+    def toy_example(self):
+        from .toy_example import toy_example
+        return toy_example
+
+    @_lazy_cpn
     def dataframe_io_test(self):
         from .dataframe_io_test import dataframe_io_test
 
