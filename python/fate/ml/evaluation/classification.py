@@ -45,7 +45,7 @@ class MultiAccuracy(Metric):
         predict = self.to_np_format(predict, flatten=False)
         label = self.to_np_format(label).astype(np.int32)
         if predict.shape != label.shape:
-            predict = predict.argmax(axis=-1)
+            predict = predict.argmax(axis=-1).astype(np.int32)
         acc = accuracy_score(label, predict)
         return EvalResult(self.metric_name, acc)
 

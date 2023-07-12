@@ -14,6 +14,8 @@ from torch.nn import functional as F
 import functools
 import tempfile
 from torch.utils.data import Dataset
+from fate.ml.utils.predict_format import std_output_df, add_ids, to_fate_df
+from fate.ml.utils.predict_format import MULTI, BINARY
 
 
 logger = logging.getLogger(__name__)
@@ -28,18 +30,31 @@ class Data(object):
         self.match_ids = match_ids
         self.labels = labels
 
+    def get_match_id_name(self):
+        return self.match_ids.columns[0]
+
+    def get_sample_id_name(self):
+        return self.sample_ids.columns[0]
+    
+    def has_label(self):
+        return self.labels is not None
+
     @staticmethod
     def from_fate_dataframe(df: DataFrame):
         schema = df.schema
         sample_id = schema.sample_id_name
         match_id = schema.match_id_name
         label = schema.label_name
-        logger.info('columns are {} {} {}'.format(sample_id, match_id, label))
         pd_df = df.as_pd_df()
-        features = pd_df.drop([sample_id, match_id, label], axis=1)
+        if label is None:
+            labels = None
+            features = pd_df.drop([sample_id, match_id], axis=1)
+        else:
+            labels = pd_df[[label]]
+            features = pd_df.drop([sample_id, match_id, label], axis=1)
         sample_ids = pd_df[[sample_id]]
         match_ids = pd_df[[match_id]]
-        labels = pd_df[[label]]
+        
         return Data(features, sample_ids, match_ids, labels)
 
 
@@ -178,23 +193,31 @@ class DictDataset(Dataset):
     """
     def __init__(self, data):
         self.X = np.array(data.features.values).astype(np.float32)
-        self.y = np.array(data.labels.values).astype(np.float32)
         self.X_tensor = t.tensor(self.X, dtype=t.float32)
-        self.y_tensor = t.tensor(self.y.reshape((-1, 1)), dtype=t.float32)
-
+        if data.labels is None:
+            self.y = None
+        else:
+            self.y = np.array(data.labels.values).astype(np.float32)
+            self.y_tensor = t.tensor(self.y.reshape((-1, 1)), dtype=t.float32)
+       
     def __getitem__(self, index):
-        return {'x': self.X_tensor[index], 'label': self.y_tensor[index]}
+        if self.y is not None:
+            return {'x': self.X_tensor[index], 'label': self.y_tensor[index]}
+        else:
+            return {'x': self.X_tensor[index]}
 
     def __len__(self):
         return self.X_tensor.shape[0]
-
+    
 
 class HomoLRClient(HomoModule):
 
     def __init__(self, epochs: int=5, batch_size: int=32, optimizer_param=None,
                 learning_rate_scheduler=None,
                 init_param=None,
-                threshold: float=0.5
+                threshold: float=0.5,
+                ovr=False,
+                label_num=None,
                 ) -> None:
         
         super().__init__()
@@ -213,6 +236,12 @@ class HomoLRClient(HomoModule):
         self.run_ovr = False
         self.train_feature_num = None
         self.validate_feature_num = None
+        self.ovr = ovr
+        self.label_num = label_num
+
+        if self.ovr:
+            if self.label_num is None or self.label_num < 2:
+                raise ValueError("label_num must be greater than 2 when ovr is True, but got {}".format(self.label_num))
         
         # models & optimizer & schduler
         self.model = None
@@ -235,17 +264,55 @@ class HomoLRClient(HomoModule):
     
     def _make_dataset(self, data: Data):
         return DictDataset(data)
+    
+    def _make_output_df(self, predict_rs, data: Data, threshold: float):
+        classes = [i for i in range(len(self.model.models))]
+        if len(classes) == 1:  # binary:
+            classes = [0, 1]
+        task_type = BINARY if len(classes) == 2 else MULTI
+        out_df = std_output_df(task_type, predict_rs.predictions, predict_rs.label_ids, threshold=threshold, classes=classes)
+        out_df = add_ids(out_df, data.match_ids, data.sample_ids)
+        return out_df
+    
+    def _check_labels(self, label_set, has_validate=False):
+        
+        dataset_descrb = 'train dataset' if not has_validate else 'train and validate dataset'
+        if not self.ovr and len(label_set) > 2:
+            raise ValueError("please set ovr=True to enable multi-label classification, multiple labels found in {}: {}".format(dataset_descrb, label_set))
+        if not self.ovr and len(label_set) == 2:
+            # 0, 1 is required
+            if 0 not in label_set or 1 not in label_set:
+                # ask for label 0, 1 when running binary classification
+                raise ValueError("when doing binary classification, lables must be 0, 1, but found in {}'s label set is {}".format(label_set, dataset_descrb))
+        if self.ovr:
+            if max(label_set) > self.label_num - 1:
+                # make sure labels start from 0 and not the label indices not exceed the label num parameter
+                raise ValueError("when doing multi-label classification, labels must start from 0 and not exceed the label num parameter, \
+                                 but {}'s label set is {}, while label num is {}".format(label_set, dataset_descrb, self.label_num))
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
 
-        self.train_data = Data.from_fate_dataframe(train_data)
+        # check data, must be fate Dataframe
+        assert isinstance(train_data, DataFrame), "train_data must be a fate DataFrame"
+        if validate_data is not None:
+            assert isinstance(validate_data, DataFrame), "validate_data must be a fate DataFrame"
+
+        self.train_data: Data = Data.from_fate_dataframe(train_data)
+        if not self.train_data.has_label():
+            raise RuntimeError("train data must have label column")
         self.train_feature_num = self.train_data.features.values.shape[1]
+        unique_label_set = set(self.train_data.labels.values.reshape(-1))
+
         if validate_data is not None:
             self.validate_data = Data.from_fate_dataframe(validate_data)
+            if not self.validate_data.has_label():
+                raise RuntimeError("validate data must have label column")
             self.validate_feature_num = self.validate_data.features.values.shape[1]
             assert self.train_feature_num == self.validate_feature_num, "train and validate feature num not match: {} vs {}".format(self.train_feature_num, self.validate_feature_num)
+            unique_label_set = unique_label_set.union(set(self.validate_data.labels.values.reshape(-1)))
 
-        unique_label_set = set(self.train_data.labels.values.reshape(-1))
+        self._check_labels(unique_label_set, validate_data is not None)
+
         if validate_data is not None:
             unique_label_set = unique_label_set.union(set(self.validate_data.labels.values.reshape(-1)))
             logger.info("unique label set updated to: {}".format(unique_label_set))
@@ -271,7 +338,7 @@ class HomoLRClient(HomoModule):
             logger.info('model initialized')
             logger.info('model parameters are {}'.format(list(self.model.parameters())))
         else:
-            logger.info('model is loaded')
+            logger.info('model is loaded, warm start training')
         logger.info('model structure is {}'.format(self.model))
 
         # initialize optimizer
@@ -283,6 +350,7 @@ class HomoLRClient(HomoModule):
             }
             self.optimizer.load_state_dict(optimizer_state_dict)
             logger.info('load warmstart optimizer state dict')
+
         # training
         fed_arg = FedAVGArguments()
         train_arg = TrainingArguments(num_train_epochs=self.max_iter, 
@@ -290,6 +358,8 @@ class HomoLRClient(HomoModule):
         self.trainer = FedAVGCLient(ctx, model=self.model, loss_fn=loss_fn, optimizer=self.optimizer, train_set=train_set, 
                                val_set=validate_set, training_args=train_arg, fed_args=fed_arg, data_collator=default_data_collator)
         self.trainer.train()
+
+        logger.info('training finished')
         
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
         
@@ -305,18 +375,19 @@ class HomoLRClient(HomoModule):
         else:
             trainer = self.trainer
         predict_rs = trainer.predict(predict_set)
-        rs = {"predict_score": predict_rs.predictions, 'label': predict_rs.label_ids}
-        return rs
+        predict_out_df = self._make_output_df(predict_rs, self.predict_data, self.threshold)
+        return to_fate_df(ctx, self.predict_data.get_sample_id_name(), self.predict_data.get_match_id_name(), predict_out_df)
 
     def get_model(self) -> ModelIO:
         param = {}
         if self.model is not None:
             param['model'] = self.model.to_dict()
         if self.optimizer is not None:
-            param['optimizer'] = get_torch_bytes(self.optimizer.state_dict())
+            param['optimizer'] = str(get_torch_bytes(self.optimizer.state_dict()))
         
         meta = {'batch_size': self.batch_size, 'max_iter': self.max_iter, 'threshold': self.threshold, 
-                'optimizer_param': self.optimizer_param, 'learning_rate_param': self.learning_rate_param, 'init_param': self.init_param}
+                'optimizer_param': self.optimizer_param, 'learning_rate_param': self.learning_rate_param, 'init_param': self.init_param, 'ovr': self.ovr, 
+                'label_num': self.label_num}
         export_ = ModelIO(data=param, meta=meta)
 
         return export_
@@ -331,9 +402,11 @@ class HomoLRClient(HomoModule):
         if not 'model' in model_param:
             raise ValueError("param dict must have key 'model' that contains the model parameter and structure info")
         self.model = HomoLRModel.from_dict(model_param['model'])
+        if self.ovr:
+            assert len(self.model.models) == self.label_num, ''
         self.model.l1 = self.l1
         if hasattr(model_param, 'optimizer'):
-            self.optimizer_state_dict = recover_torch_bytes(model_param['optimizer'])
+            self.optimizer_state_dict = recover_torch_bytes(bytes(model_param['optimizer'], 'utf-8'))
         self.loaded_meta = model['meta']
 
 

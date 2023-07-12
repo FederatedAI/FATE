@@ -30,20 +30,16 @@ df = pd.read_csv('./../../../../../../examples/data/breast_homo_guest.csv')
 df['sample_id'] = [i for i in range(len(df))]
 
 reader = PandasReader(sample_id_name='sample_id', match_id_name="id", label_name="y", dtype="object")
+reader_2 = PandasReader(sample_id_name='sample_id', match_id_name="id", dtype="object")
 data = reader.to_frame(ctx, df)
 df = data.as_pd_df()
+data_2 = reader_2.to_frame(ctx, df.drop(columns=['y']))
 
 client = HomoLRClient(50, 800, learning_rate_scheduler=0.01)
 client.l2 = 0.01
 client.l1 = 0.01
-client.fit(ctx, data)
+client.fit(ctx, data, validate_data=data)
 export_model = client.get_model()
 pred = client.predict(ctx, data)
+pred_2 = client.predict(ctx, data_2)
 
-# print('load model and warm-starting')
-# client_2 = HomoLRClient(1, batch_size=800, learning_rate_param=0.001)
-# client_2.from_model(export_model)
-# client_2.fit(ctx, data)
-
-# from fate.components.core.params._learning_rate import LRSchedulerParam
-# from fate.components.core.params._optimizer import OptimizerParam
