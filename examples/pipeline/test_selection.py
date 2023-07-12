@@ -47,9 +47,10 @@ statistics_0 = Statistics("statistics_0", input_data=feature_scale_0.outputs["tr
 
 selection_0 = HeteroFeatureSelection("selection_0",
                                      train_data=feature_scale_0.outputs["train_output_data"],
-                                     method=["statistics"],
+                                     method=["manual", "statistics"],
                                      input_models=[statistics_0.outputs["output_model"]],
-                                     statistic_param={"metrics": ["mean", "max", "kurtosis", "skewness"]})
+                                     statistic_param={"metrics": ["mean", "max", "kurtosis", "skewness"]},
+                                     manual_param={"filter_out_col": ["x0", "x3"]})
 
 pipeline.add_task(feature_scale_0)
 pipeline.add_task(statistics_0)
