@@ -19,6 +19,9 @@ libsm = { workspace = true }
 sha2 = { workspace = true }
 curve25519-dalek = { workspace = true }
 rayon = { workspace = true, optional = true}
+rand_chacha = { workspace = true }
+x25519-dalek = { workspace = true }
+rand_core = { workspace = true }
 quantile = { path = "../quantile" }
 math = { path = "../math" }
 fixedpoint = { path = "../fixedpoint" }
@@ -28,13 +31,13 @@ paillier_tensor = { path = "../paillier_tensor" }
 default = ["rug", "rayon", "std", "u64_backend", "extension-module"]
 rug = []
 rayon = ["dep:rayon", "ndarray/rayon"]
-simd_backend = [ "curve25519-dalek/simd_backend",]
-std = [ "curve25519-dalek/std",]
-nightly = [ "curve25519-dalek/nightly",]
-u64_backend = [ "curve25519-dalek/u64_backend",]
-u32_backend = [ "curve25519-dalek/u32_backend",]
-fiat_u64_backend = [ "curve25519-dalek/fiat_u64_backend",]
-fiat_u32_backend = [ "curve25519-dalek/fiat_u32_backend",]
+simd_backend = ["curve25519-dalek/simd_backend"]
+std = ["curve25519-dalek/std"]
+nightly = ["curve25519-dalek/nightly"]
+u64_backend = ["curve25519-dalek/u64_backend"]
+u32_backend = ["curve25519-dalek/u32_backend"]
+fiat_u64_backend = ["curve25519-dalek/fiat_u64_backend"]
+fiat_u32_backend = ["curve25519-dalek/fiat_u32_backend"]
 extension-module = ["pyo3/extension-module"]
 
 [package.metadata.docs.rs]

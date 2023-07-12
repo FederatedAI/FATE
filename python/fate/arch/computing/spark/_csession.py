@@ -38,7 +38,7 @@ class CSession(CSessionABC):
     def load(self, uri: URI, schema, options: dict = None) -> "Table":
         partitions = options.get("partitions", None)
 
-        if uri.schema == "hdfs":
+        if uri.scheme == "hdfs":
             in_serialized = (options.get("in_serialized", True),)
             id_delimiter = (options.get("id_delimiter", ","),)
             table = from_hdfs(
@@ -47,10 +47,10 @@ class CSession(CSessionABC):
                 in_serialized=in_serialized,
                 id_delimiter=id_delimiter,
             )
-            table.schema = schema
+            table.scheme = schema
             return table
 
-        if uri.schema == "hive":
+        if uri.scheme == "hive":
             try:
                 (path,) = uri.path_splits()
                 database_name, table_name = path.split(".")
@@ -61,10 +61,10 @@ class CSession(CSessionABC):
                 db_name=database_name,
                 partitions=partitions,
             )
-            table.schema = schema
+            table.scheme = schema
             return table
 
-        if uri.schema == "file":
+        if uri.scheme == "file":
             in_serialized = (options.get("in_serialized", True),)
             id_delimiter = (options.get("id_delimiter", ","),)
             table = from_localfs(
@@ -73,7 +73,7 @@ class CSession(CSessionABC):
                 in_serialized=in_serialized,
                 id_delimiter=id_delimiter,
             )
-            table.schema = schema
+            table.scheme = schema
             return table
 
         raise NotImplementedError(f"uri type {uri} not supported with spark backend")

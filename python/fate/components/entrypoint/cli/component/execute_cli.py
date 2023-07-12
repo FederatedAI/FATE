@@ -84,7 +84,8 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
     import logging
     import traceback
 
-    from fate.arch import Context
+    from fate.arch import CipherKit, Context
+    from fate.arch.computing import profile_ends, profile_start
     from fate.components.core import (
         ComponentExecutionIO,
         Role,
@@ -103,10 +104,13 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         device = load_device(config.conf.device)
         computing = load_computing(config.conf.computing)
         federation = load_federation(config.conf.federation, computing)
+        cipher = CipherKit(device=device)
+
         ctx = Context(
             device=device,
             computing=computing,
             federation=federation,
+            cipher=cipher,
         )
         role = Role.from_str(config.role)
         stage = Stage.from_str(config.stage)
@@ -114,21 +118,17 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         logger.debug("running...")
 
         # get correct component_desc/subcomponent handle stage
-        component = load_component(config.component)
-        if not stage.is_default:
-            for stage_component in component.stage_components:
-                if stage_component.name == stage.name:
-                    component = stage_component
-                    break
-            else:
-                raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
+        component = load_component(config.component, stage)
+
+        # enable profiling
+        profile_start()
 
         # prepare
         execution_io = ComponentExecutionIO(ctx, component, role, stage, config)
 
         # register metric handler
         metrics_handler = load_metric_handler(execution_io.get_metric_writer())
-        ctx.register_metric_handler(metrics_handler)
+        ctx.set_metric_handler(metrics_handler)
 
         # execute
         component.execute(ctx, role, **execution_io.get_kwargs())
@@ -143,6 +143,7 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         except Exception as e:
             raise RuntimeError(f"failed to dump execution io meta to `{output_path}`: meta={execution_io_meta}") from e
 
+        profile_ends()
         logger.debug("done without error, waiting signal to terminate")
         logger.debug("terminating, bye~")
 

@@ -15,8 +15,8 @@
 import logging
 
 import pandas as pd
-from fate.arch import Context
 
+from fate.arch import Context
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -39,17 +39,19 @@ class FeatureScale(Module):
     def transform(self, ctx: Context, test_data):
         return self._scaler.transform(ctx, test_data)
 
-    def to_model(self):
+    def get_model(self):
         scaler_info = self._scaler.to_model()
-        return dict(scaler_info=scaler_info, method=self.method)
+        model_data = dict(scaler_info=scaler_info)
+        return {"data": model_data, "meta": {"method": self.method,
+                                             "model_type": "feature_scale"}}
 
     def restore(self, model):
         self._scaler.from_model(model)
 
     @classmethod
     def from_model(cls, model) -> "FeatureScale":
-        scaler = FeatureScale(model["method"])
-        scaler.restore(model["scaler_info"])
+        scaler = FeatureScale(model["meta"]["method"])
+        scaler.restore(model["data"]["scaler_info"])
         return scaler
 
 

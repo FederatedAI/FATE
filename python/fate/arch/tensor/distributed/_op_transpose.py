@@ -6,27 +6,32 @@ from ._tensor import DTensor, Shardings, _ShardingShapes, implements
 @implements(torch.transpose)
 def transpose(input: DTensor, dim0, dim1):
     shapes = transpose_shape(input.shardings.shapes, dim0, dim1)
+    return DTensor(
+        input.shardings.map_shard(lambda x: x.transpose(dim0, dim1).detach(), shapes=shapes.shapes, axis=shapes.axis)
+    )
+
+    # TODO: lazy transpose
 
     # if dim0 and dim1 are not in distributed axis:
     # 1. just transpose local tensor in each partition
     # 2. shapes should be modified.
-    if input.shardings.shapes.axis not in (dim0, dim1):
-        return DTensor(
-            input.shardings.map_shard(lambda x: x.transpose(dim0, dim1), shapes=shapes.shapes, axis=shapes.axis)
-        )
-    # if dim0 and dim1 are in distributed axis:
-    # 1. local tensor in each partition should not be transposed.
-    # 2. only shapes and distributed axis should be modified.
-    else:
-        return DTensor(
-            Shardings(
-                data=input.shardings._data,
-                shapes=shapes.shapes,
-                axis=shapes.axis,
-                dtype=input.shardings._dtype,
-                device=input.shardings._device,
-            )
-        )
+    # if input.shardings.shapes.axis not in (dim0, dim1):
+    #     return DTensor(
+    #         input.shardings.map_shard(lambda x: x.transpose(dim0, dim1), shapes=shapes.shapes, axis=shapes.axis)
+    #     )
+    # # if dim0 and dim1 are in distributed axis:
+    # # 1. local tensor in each partition should not be transposed.
+    # # 2. only shapes and distributed axis should be modified.
+    # else:
+    #     return DTensor(
+    #         Shardings(
+    #             data=input.shardings._data,
+    #             shapes=shapes.shapes,
+    #             axis=shapes.axis,
+    #             dtype=input.shardings._dtype,
+    #             device=input.shardings._device,
+    #         )
+    #     )
 
 
 def transpose_shape(shape: _ShardingShapes, dim0, dim1):

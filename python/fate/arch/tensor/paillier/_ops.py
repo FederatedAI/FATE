@@ -19,13 +19,13 @@ def add(input: PaillierTensor, other):
     if isinstance(other, torch.Tensor):
         output_dtype = torch.promote_types(input.dtype, other.dtype)
         if other.dtype == torch.float64:
-            return PaillierTensor(input._data.add_plaintext_f64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.add_plaintext_f64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.float32:
-            return PaillierTensor(input._data.add_plaintext_f32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.add_plaintext_f32(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int64:
-            return PaillierTensor(input._data.add_plaintext_i64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.add_plaintext_i64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int32:
-            return PaillierTensor(input._data.add_plaintext_i32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.add_plaintext_i32(other.detach().numpy()), output_dtype)
         return NotImplemented
     if isinstance(other, (float, int)):
         if input.dtype == torch.float64:
@@ -53,13 +53,13 @@ def rsub(input, other):
     if isinstance(other, torch.Tensor):
         output_dtype = torch.promote_types(input.dtype, other.dtype)
         if other.dtype == torch.float64:
-            return PaillierTensor(input._data.rsub_plaintext_f64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.rsub_plaintext_f64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.float32:
-            return PaillierTensor(input._data.rsub_plaintext_f32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.rsub_plaintext_f32(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int64:
-            return PaillierTensor(input._data.rsub_plaintext_i64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.rsub_plaintext_i64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int32:
-            return PaillierTensor(input._data.rsub_plaintext_i32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.rsub_plaintext_i32(other.detach().numpy()), output_dtype)
         return NotImplemented
     if isinstance(other, (float, int)):
         if input.dtype == torch.float64:
@@ -87,13 +87,13 @@ def sub(input, other):
     if isinstance(other, torch.Tensor):
         output_dtype = torch.promote_types(input.dtype, other.dtype)
         if other.dtype == torch.float64:
-            return PaillierTensor(input._data.sub_plaintext_f64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.sub_plaintext_f64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.float32:
-            return PaillierTensor(input._data.sub_plaintext_f32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.sub_plaintext_f32(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int64:
-            return PaillierTensor(input._data.sub_plaintext_i64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.sub_plaintext_i64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int32:
-            return PaillierTensor(input._data.sub_plaintext_i32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.sub_plaintext_i32(other.detach().numpy()), output_dtype)
         return NotImplemented
     if isinstance(other, (float, int)):
         if input.dtype == torch.float64:
@@ -121,13 +121,13 @@ def mul(input, other):
     if isinstance(other, torch.Tensor):
         output_dtype = torch.promote_types(input.dtype, other.dtype)
         if other.dtype == torch.float64:
-            return PaillierTensor(input._data.mul_plaintext_f64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.mul_plaintext_f64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.float32:
-            return PaillierTensor(input._data.mul_plaintext_f32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.mul_plaintext_f32(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int64:
-            return PaillierTensor(input._data.mul_plaintext_i64(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.mul_plaintext_i64(other.detach().numpy()), output_dtype)
         if other.dtype == torch.int32:
-            return PaillierTensor(input._data.mul_plaintext_i32(other.numpy()), output_dtype)
+            return PaillierTensor(input._data.mul_plaintext_i32(other.detach().numpy()), output_dtype)
         return NotImplemented
     if isinstance(other, (float, int)):
         if input.dtype == torch.float64:
@@ -152,23 +152,23 @@ def rmatmul_f(input, other):
         output_dtype = torch.promote_types(input.dtype, other.dtype)
         if len(other.shape) == 1:
             if other.dtype == torch.float64:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix1_f64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix1_f64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.float32:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix1_f32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix1_f32(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int64:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix1_i64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix1_i64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int32:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix1_i32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix1_i32(other.detach().numpy()), output_dtype)
             return NotImplemented
         elif len(other.shape) == 2:
             if other.dtype == torch.float64:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix2_f64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix2_f64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.float32:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix2_f32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix2_f32(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int64:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix2_i64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix2_i64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int32:
-                return PaillierTensor(input._data.rmatmul_plaintext_ix2_i32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.rmatmul_plaintext_ix2_i32(other.detach().numpy()), output_dtype)
             return NotImplemented
         else:
             raise ValueError(f"can't matmul `PaillierTensor` with `torch.Tensor` with dim `{len(other.shape)}`")
@@ -187,23 +187,23 @@ def matmul(input, other):
         output_dtype = torch.promote_types(input.dtype, other.dtype)
         if len(other.shape) == 1:
             if other.dtype == torch.float64:
-                return PaillierTensor(input._data.matmul_plaintext_ix1_f64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix1_f64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.float32:
-                return PaillierTensor(input._data.matmul_plaintext_ix1_f32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix1_f32(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int64:
-                return PaillierTensor(input._data.matmul_plaintext_ix1_i64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix1_i64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int32:
-                return PaillierTensor(input._data.matmul_plaintext_ix1_i32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix1_i32(other.detach().numpy()), output_dtype)
             return NotImplemented
         elif len(other.shape) == 2:
             if other.dtype == torch.float64:
-                return PaillierTensor(input._data.matmul_plaintext_ix2_f64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix2_f64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.float32:
-                return PaillierTensor(input._data.matmul_plaintext_ix2_f32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix2_f32(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int64:
-                return PaillierTensor(input._data.matmul_plaintext_ix2_i64(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix2_i64(other.detach().numpy()), output_dtype)
             if other.dtype == torch.int32:
-                return PaillierTensor(input._data.matmul_plaintext_ix2_i32(other.numpy()), output_dtype)
+                return PaillierTensor(input._data.matmul_plaintext_ix2_i32(other.detach().numpy()), output_dtype)
             return NotImplemented
         else:
             raise ValueError(f"can't matmul `PaillierTensor` with `torch.Tensor` with dim `{len(other.shape)}`")

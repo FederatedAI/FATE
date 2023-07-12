@@ -14,7 +14,7 @@
 #  limitations under the License.
 from typing import List, Optional, Protocol
 
-from ._party import Parties, Party, PartyMeta
+from ._party import PartyMeta
 
 
 class GarbageCollector(Protocol):
@@ -46,10 +46,3 @@ class FederationEngine(Protocol):
 
     def destroy(self):
         ...
-
-
-class FederationWrapper(Protocol):
-    guest: Party
-    hosts: Parties
-    arbiter: Party
-    parties: Parties

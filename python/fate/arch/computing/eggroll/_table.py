@@ -52,8 +52,8 @@ class Table(CTableABC):
 
         from ._type import EggRollStoreType
 
-        if uri.schema != "eggroll":
-            raise ValueError(f"uri scheme {uri.schema} not supported with eggroll backend")
+        if uri.scheme != "eggroll":
+            raise ValueError(f"uri scheme {uri.scheme} not supported with eggroll backend")
         try:
             _, namespace, name = uri.path_splits()
         except Exception as e:

@@ -64,8 +64,8 @@ def statistics(
     input_data = input_data[select_cols]
     stat_computer.fit(sub_ctx, input_data)
 
-    model = stat_computer.to_model()
-    output_model.write(model, metadata={"model_type": "statistic"})
+    model = stat_computer.get_model()
+    output_model.write(model, metadata={})
 
 
 def get_to_compute_cols(columns, anonymous_columns, skip_columns, use_anonymous):

@@ -13,6 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .arbiter import HeteroLinRModuleArbiter
-from .guest import HeteroLinRModuleGuest
-from .host import HeteroLinRModuleHost
+from .arbiter import CoordinatedLinRModuleArbiter
+from .guest import CoordinatedLinRModuleGuest
+from .host import CoordinatedLinRModuleHost

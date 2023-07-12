@@ -77,6 +77,7 @@ def artifact_test(
     # # print("dataframe_inputs", dataframe_inputs)
     #
     # ctx.metrics.log_accuracy("aaa", 1, 0)
+    ctx.metrics.log_loss("loss_aa", [1.0, 2.0], 0)
     ctx.metrics.log_metrics(values=[1, 2, 3], name="metric_single", type="custom", metadata={"bbb": 2})
     ctx.sub_ctx("sub_metric").metrics.log_loss("loss", 1.0, 0)
     ctx.sub_ctx("sub_metric").metrics.log_loss("loss", 0.9, 1)
