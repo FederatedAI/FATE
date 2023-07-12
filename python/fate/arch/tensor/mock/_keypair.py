@@ -10,7 +10,7 @@ def keygen(key_length):
 class MockPaillierTensorEncryptor:
     def encrypt(self, tensor: torch.Tensor):
         if isinstance(tensor, torch.Tensor):
-            return MockPaillierTensor(tensor.detach().numpy(), tensor.dtype)
+            return MockPaillierTensor(tensor.detach())
         elif hasattr(tensor, "encrypt"):
             return tensor.encrypt(self)
         raise NotImplementedError(f"`{tensor}` not supported")
@@ -19,7 +19,7 @@ class MockPaillierTensorEncryptor:
 class MockPaillierTensorDecryptor:
     def decrypt(self, tensor: MockPaillierTensor):
         if isinstance(tensor, MockPaillierTensor):
-            return torch.from_numpy(tensor._data)
+            return tensor._data
         elif hasattr(tensor, "decrypt"):
             return tensor.decrypt(self)
         raise NotImplementedError(f"`{tensor}` not supported")

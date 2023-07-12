@@ -17,7 +17,7 @@ def add(input: MockPaillierTensor, other):
     if isinstance(other, MockPaillierTensor):
         return MockPaillierTensor(torch.add(input._data, other._data))
     if isinstance(other, torch.Tensor):
-        return MockPaillierTensor(torch.add(input._data, other.detach().numpy()))
+        return MockPaillierTensor(torch.add(input._data, other.detach()))
     if isinstance(other, (float, int)):
         return MockPaillierTensor(torch.add(input._data, other))
     return NotImplemented
@@ -33,7 +33,7 @@ def rsub(input, other):
         return MockPaillierTensor(torch.rsub(input._data, other._data))
 
     if isinstance(other, torch.Tensor):
-        return MockPaillierTensor(torch.rsub(input._data, other.detach().numpy()))
+        return MockPaillierTensor(torch.rsub(input._data, other.detach()))
 
     if isinstance(other, (float, int)):
         return MockPaillierTensor(torch.rsub(input._data, other))
@@ -50,7 +50,7 @@ def sub(input, other):
         return MockPaillierTensor(torch.sub(input._data, other._data))
 
     if isinstance(other, torch.Tensor):
-        return MockPaillierTensor(torch.sub(input._data, other.detach().numpy()))
+        return MockPaillierTensor(torch.sub(input._data, other.detach()))
     if isinstance(other, (float, int)):
         return MockPaillierTensor(torch.sub(input._data, other))
     return NotImplemented
@@ -66,7 +66,7 @@ def mul(input, other):
         raise ValueError("can't mul `PaillierTensor` with `PaillierTensor`")
 
     if isinstance(other, torch.Tensor):
-        return MockPaillierTensor(torch.mul(input._data, other.detach().numpy()))
+        return MockPaillierTensor(torch.mul(input._data, other.detach()))
     if isinstance(other, (float, int)):
         return MockPaillierTensor(torch.mul(input._data, other))
     return NotImplemented
@@ -78,7 +78,7 @@ def rmatmul_f(input, other):
         return matmul(other, input)
 
     if isinstance(other, torch.Tensor):
-        return MockPaillierTensor(torch.matmul(other.detach().numpy(), input._data))
+        return MockPaillierTensor(torch.matmul(other.detach(), input._data))
     return NotImplemented
 
 
@@ -91,7 +91,7 @@ def matmul(input, other):
         raise ValueError("can't matmul `PaillierTensor` with `PaillierTensor`")
 
     if isinstance(other, torch.Tensor):
-        return MockPaillierTensor(torch.matmul(input._data, other.detach().numpy()))
+        return MockPaillierTensor(torch.matmul(input._data, other.detach()))
     return NotImplemented
 
 

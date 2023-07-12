@@ -63,13 +63,6 @@ class DataLoader(object):
         else:
             raise ValueError(f"batch strategy {self._batch_strategy} is not support")
 
-    def next_batch(self, with_index=True):
-        batch = next(self._batch_generator)
-        if with_index:
-            return batch
-        else:
-            return batch[1:]
-
     @staticmethod
     def batch_num(self):
         return self._batch_generator.batch_num
@@ -154,31 +147,49 @@ class FullBatchDataLoader(object):
     def __next__(self):
         if self._role == "arbiter":
             for batch_id in range(self._batch_num):
-                yield batch_id, batch_id
+                yield BatchEncoding(batch_id=batch_id)
             return
 
-        for batch in self._batch_splits:
+        for bid, batch in enumerate(self._batch_splits):
             if batch.label and batch.weight:
-                yield batch.values.as_tensor(), batch.label.as_tensr(), batch.weight.as_tensor()
+                yield BatchEncoding(x=batch.values.as_tensor(),
+                                    label=batch.label.as_tensor(),
+                                    weight=batch.weight.as_tensor(),
+                                    batch_id=bid)
             elif batch.label:
-                yield batch.values.as_tensor(), batch.label.as_tensor()
+                yield BatchEncoding(x=batch.values.as_tensor(),
+                                    label=batch.label.as_tensor(),
+                                    batch_id=bid)
             else:
-                yield batch.values.as_tensor()
+                yield BatchEncoding(x=batch.values.as_tensor())
 
     def __iter__(self):
-        if self._role == "arbiter":
-            for batch_id in range(self._batch_num):
-                yield batch_id, batch_id
-            return
-
-        for batch in self._batch_splits:
-            if batch.label and batch.weight:
-                yield batch.values.as_tensor(), batch.label.as_tensor(), batch.weight.as_tensor()
-            elif batch.label:
-                yield batch.values.as_tensor(), batch.label.as_tensor()
-            else:
-                yield batch.values.as_tensor()
+        return self.__next__()
 
     @property
     def batch_num(self):
         return self._batch_num
+
+
+class BatchEncoding(object):
+    def __init__(self, x=None, label=None, weight=None, batch_id=None):
+        self._x = x
+        self._label = label
+        self._weight = weight
+        self._batch_id = batch_id
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def label(self):
+        return self._label
+
+    @property
+    def weight(self):
+        return self._weight
+
+    @property
+    def batch_id(self):
+        return self._batch_id
