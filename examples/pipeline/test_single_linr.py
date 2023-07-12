@@ -28,7 +28,7 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
                                input_model=feature_scale_0.outputs["output_model"])"""
 
 linr_0 = CoordinatedLinR("linr_0",
-                         max_iter=10,
+                         epochs=10,
                          batch_size=-1,
                          init_param={"fit_intercept": False})
 
@@ -38,7 +38,7 @@ linr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="motor_he
                                                                   namespace="experiment"))
 
 evaluation_0 = Evaluation("evaluation_0",
-                          runtime_roles="guest",
+                          runtime_roles=["guest"],
                           input_data=linr_0.outputs["train_output_data"])
 
 # pipeline.add_task(feature_scale_0)
