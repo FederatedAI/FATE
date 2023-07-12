@@ -121,7 +121,8 @@ class CoordiantedLinREstimatorHost(HeteroModule):
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
-            for batch_ctx, X in iter_ctx.on_batches.ctxs_zip(batch_loader):
+            for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):
+                X = batch_data.x
                 h = X.shape[0]
                 Xw_h = torch.matmul(X, w.detach())
                 batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))

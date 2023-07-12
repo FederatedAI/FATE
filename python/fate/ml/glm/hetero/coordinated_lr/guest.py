@@ -53,7 +53,6 @@ class CoordinatedLRModuleGuest(HeteroModule):
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
         self.labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
-        with_weight = train_data.weight is not None
         if label_count > 2:
             logger.info(f"OVR data provided, will train OVR models.")
             self.ovr = True
@@ -77,7 +76,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     init_param=self.init_param,
                 )
                 train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
-                single_estimator.fit_single_model(class_ctx, train_data, validate_data, with_weight=with_weight)
+                single_estimator.fit_single_model(class_ctx, train_data, validate_data)
                 self.estimator[i] = single_estimator
         else:
             optimizer = Optimizer(
@@ -95,7 +94,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 learning_rate_scheduler=lr_scheduler,
                 init_param=self.init_param,
             )
-            single_estimator.fit_single_model(ctx, train_data, validate_data, with_weight=with_weight)
+            single_estimator.fit_single_model(ctx, train_data, validate_data)
             self.estimator = single_estimator
         train_data.label = original_label
 
@@ -167,9 +166,8 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.start_epoch = 0
         self.end_epoch = -1
         self.is_converged = False
-        self.with_weight = False
 
-    def fit_single_model(self, ctx: Context, train_data, validate_data=None, with_weight=False):
+    def fit_single_model(self, ctx: Context, train_data, validate_data=None):
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
         ∇l(w) = 1/h * Σ(0.25 * xw - 0.5 * y)x = 1/h * Σdx
@@ -195,14 +193,14 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         )
         if self.end_epoch >= 0:
             self.start_epoch = self.end_epoch + 1
-        """if train_data.weight:
-            self.with_weight = True"""
 
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
-            # todo: if self.with_weight: include weight in batch result
-            for batch_ctx, (X, Y) in iter_ctx.on_batches.ctxs_zip(batch_loader):
+            for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):
+                X = batch_data.x
+                Y = batch_data.label
+                weight = batch_data.weight
                 h = X.shape[0]
                 # logger.info(f"h: {h}")
 
@@ -219,8 +217,8 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                     d += Xw_h
                     loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
                     loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)
-                # if with_weight:
-                #    d = d * weight
+                if weight:
+                    d = d * weight
                 batch_ctx.hosts.put(d=d)
 
                 for Xw2_h in batch_ctx.hosts.get("Xw2_h"):

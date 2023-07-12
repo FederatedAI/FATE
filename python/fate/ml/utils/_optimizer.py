@@ -103,23 +103,33 @@ class Optimizer(object):
         return self.alpha * this_step_size
 
     def state_dict(self):
+        optimizer_state_dict = self.optimizer.state_dict()
+        state_all = optimizer_state_dict['state'].get(0, {})
+        for k, v in state_all.items():
+            if isinstance(v, torch.Tensor):
+                state_all[k] = v.tolist()
         return {
             "l2_penalty": self.l2_penalty,
             "l1_penalty": self.l1_penalty,
             "alpha": self.alpha,
-            "optimizer": self.optimizer.state_dict(),
+            "optimizer": optimizer_state_dict,
             "method": self.method,
             "optim_param": self.optim_param,
             "model_parameter": self.model_parameter.tolist()
         }
 
-    def load_state_dict(self, dict, model_parameter=None):
+    def load_state_dict(self, dict):
         self.l2_penalty = dict["l2_penalty"]
         self.l1_penalty = dict["l1_penalty"]
         self.alpha = dict["alpha"]
         self.method = dict["method"]
         self.optim_param = dict["optim_param"]
         self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(dict["model_parameter"])))
+        state_dict = dict["optimizer"]
+        state_all = state_dict['state'].get(0, {})
+        for k, v in state_all.items():
+            if isinstance(v, list):
+                state_all[k] = torch.tensor(v)
         self.optimizer.load_state_dict(dict["optimizer"])
 
     def set_iters(self, new_iters):

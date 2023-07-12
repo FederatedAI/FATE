@@ -1,2 +1,2 @@
-from .coordinated_linr import CoordinatedLinRModuleHost, CoordinatedLinRModuleGuest, CoordinatedLinRModuleArbiter
-from .coordinated_lr import CoordinatedLRModuleHost, CoordinatedLRModuleGuest, CoordinatedLRModuleArbiter
+from .hetero.coordinated_linr import CoordinatedLinRModuleHost, CoordinatedLinRModuleGuest, CoordinatedLinRModuleArbiter
+from .hetero.coordinated_lr import CoordinatedLRModuleHost, CoordinatedLRModuleGuest, CoordinatedLRModuleArbiter
