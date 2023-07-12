@@ -83,7 +83,7 @@ class Table(CTableABC):
         if options is None:
             options = {}
         partitions = options.get("partitions")
-        if uri.schema == "hdfs":
+        if uri.scheme == "hdfs":
             table = self._rdd.map(lambda x: hdfs_serialize(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
@@ -91,7 +91,7 @@ class Table(CTableABC):
             schema.update(self.schema)
             return
 
-        if uri.schema == "hive":
+        if uri.scheme == "hive":
             table = self._rdd.map(lambda x: hive_to_row(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
@@ -99,7 +99,7 @@ class Table(CTableABC):
             schema.update(self.schema)
             return
 
-        if uri.schema == "file":
+        if uri.scheme == "file":
             table = self._rdd.map(lambda x: hdfs_serialize(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)

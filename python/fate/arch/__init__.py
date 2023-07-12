@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from .context import Context
+from .context import CipherKit, Context
 from .unify import URI, Backend, device
 
-__all__ = ["Backend", "device", "Context", "URI"]
+__all__ = ["Backend", "device", "Context", "URI", "CipherKit"]

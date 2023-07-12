@@ -73,7 +73,9 @@ class BlockType(str, Enum):
         if isinstance(data_type, np.dtype):
             data_type = data_type.name
         if isinstance(data_type, str):
-            if data_type == "str" or data_type == "object":
+            try:
+                data_type = BlockType(data_type)
+            except ValueError:
                 data_type = "np_object"
             return BlockType(data_type)
         elif isinstance(data_type, (bool, np.bool)) or data_type == torch.bool:

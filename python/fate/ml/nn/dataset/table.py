@@ -6,24 +6,20 @@ from torch.utils.data import Dataset
 class TableDataset(Dataset):
 
     """
-     A Table Dataset, load data from a give csv path, or transform FATE DTable
+    A Table Dataset, load data from a give csv path, or transform FATE DTable
 
-     Parameters
-     ----------
-     label_col str, name of label column in csv, if None, will automatically take 'y' or 'label' or 'target' as label
-     feature_dtype dtype of feature, supports int, long, float, double
-     label_dtype: dtype of label, supports int, long, float, double
-     label_shape: list or tuple, the shape of label
-     flatten_label: bool, flatten extracted label column or not, default is False
-     """
+    Parameters
+    ----------
+    label_col str, name of label column in csv, if None, will automatically take 'y' or 'label' or 'target' as label
+    feature_dtype dtype of feature, supports int, long, float, double
+    label_dtype: dtype of label, supports int, long, float, double
+    label_shape: list or tuple, the shape of label
+    flatten_label: bool, flatten extracted label column or not, default is False
+    """
 
     def __init__(
-            self,
-            label_col=None,
-            feature_dtype='float',
-            label_dtype='float',
-            label_shape=None,
-            flatten_label=False):
+        self, label_col=None, feature_dtype="float", label_dtype="float", label_shape=None, flatten_label=False
+    ):
 
         super(TableDataset, self).__init__()
         self.with_label = True
@@ -36,8 +32,9 @@ class TableDataset(Dataset):
         self.f_dtype = self.check_dtype(feature_dtype)
         self.l_dtype = self.check_dtype(label_dtype)
         if label_shape is not None:
-            assert isinstance(label_shape, tuple) or isinstance(
-                label_shape, list), 'label shape is {}'.format(label_shape)
+            assert isinstance(label_shape, tuple) or isinstance(label_shape, list), "label shape is {}".format(
+                label_shape
+            )
         self.label_shape = label_shape
         self.flatten_label = flatten_label
 
@@ -47,22 +44,22 @@ class TableDataset(Dataset):
 
         if self.label_col is not None:
             assert isinstance(self.label_col, str) or isinstance(
-                self.label_col, int), 'label columns parameter must be a str or an int'
+                self.label_col, int
+            ), "label columns parameter must be a str or an int"
 
     @staticmethod
     def check_dtype(dtype):
 
         if dtype is not None:
-            avail = ['long', 'int', 'float', 'double']
-            assert dtype in avail, 'available dtype is {}, but got {}'.format(
-                avail, dtype)
-            if dtype == 'long':
+            avail = ["long", "int", "float", "double"]
+            assert dtype in avail, "available dtype is {}, but got {}".format(avail, dtype)
+            if dtype == "long":
                 return np.int64
-            if dtype == 'int':
+            if dtype == "int":
                 return np.int32
-            if dtype == 'float':
+            if dtype == "float":
                 return np.float32
-            if dtype == 'double':
+            if dtype == "double":
                 return np.float64
         return dtype
 
@@ -89,9 +86,9 @@ class TableDataset(Dataset):
             # if is FATE DTable, collect data and transform to array format
             data_inst = file_path
             self.with_sample_weight = None
-            print('collecting FATE DTable, with sample weight is {}'.format(self.with_sample_weight))
-            header = data_inst.schema["header"]
-            print('input dtable header is {}'.format(header))
+            print("collecting FATE DTable, with sample weight is {}".format(self.with_sample_weight))
+            header = data_inst.scheme["header"]
+            print("input dtable header is {}".format(header))
             data = list(data_inst.collect())
             data_keys = [key for (key, val) in data]
             data_keys_map = dict(zip(sorted(data_keys), range(len(data_keys))))
@@ -115,20 +112,20 @@ class TableDataset(Dataset):
             y_ = np.asarray(y_)
             df = pd.DataFrame(x_)
             df.columns = header
-            df['id'] = sorted(data_keys)
-            df['label'] = y_
+            df["id"] = sorted(data_keys)
+            df["label"] = y_
             # host data has no label, so this columns will all be None
-            if df['label'].isna().all():
-                df = df.drop(columns=['label'])
+            if df["label"].isna().all():
+                df = df.drop(columns=["label"])
 
             self.origin_table = df
             self.sample_weights = np.array(sample_weights)
             self.match_ids = match_ids
 
-        label_col_candidates = ['y', 'label', 'target']
+        label_col_candidates = ["y", "label", "target"]
 
         # automatically set id columns
-        id_col_candidates = ['id', 'sid']
+        id_col_candidates = ["id", "sid"]
         for id_col in id_col_candidates:
             if id_col in self.origin_table:
                 self.sample_ids = self.origin_table[id_col].values.tolist()
@@ -144,12 +141,10 @@ class TableDataset(Dataset):
                     break
             if label is None:
                 self.with_label = False
-                print(
-                    'label default setting is "auto", but found no "y"/"label"/"target" in input table')
+                print('label default setting is "auto", but found no "y"/"label"/"target" in input table')
         else:
             if label not in self.origin_table:
-                raise ValueError(
-                    'label column {} not found in input table'.format(label))
+                raise ValueError("label column {} not found in input table".format(label))
 
         if self.with_label:
             self.label = self.origin_table[label].values
@@ -177,8 +172,7 @@ class TableDataset(Dataset):
         if self.label is not None:
             return np.unique(self.label).tolist()
         else:
-            raise ValueError(
-                'no label found, please check if self.label is set')
+            raise ValueError("no label found, please check if self.label is set")
 
     def get_sample_ids(self):
         return self.sample_ids

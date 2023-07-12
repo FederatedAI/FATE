@@ -19,31 +19,29 @@ from fate_client.pipeline.interface import DataWarehouseChannel
 
 pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998")
 
-"""feature_scale_0 = FeatureScale(name="feature_scale_0",
-                               method="min_max",
-                               train_data=intersection_0.outputs["output_data"])
-
-feature_scale_1 = FeatureScale(name="feature_scale_1",
-                               test_data=intersection_1.outputs["output_data"],
-                               input_model=feature_scale_0.outputs["output_model"])"""
-
 lr_0 = CoordinatedLR("lr_0",
-                     max_iter=10,
-                     batch_size=-1,
-                     init_param={"fit_intercept": False})
+                     epochs=10,
+                     batch_size=100,
+                     optimizer={"method": "sgd", "optimizer_params": {"lr": 0.1}, "alpha": 0.5},
+                     init_param={"fit_intercept": True})
+lr_1 = CoordinatedLR("lr_1", input_model=lr_0.outputs["output_model"],
+                     test_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                    namespace="experiment_64")
+                     )
 
 lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace="experiment"))
-lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace="experiment"))
+                                                             namespace="experiment_64"))
+lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                namespace="experiment_64"))
 
 evaluation_0 = Evaluation("evaluation_0",
-                          runtime_roles="guest",
+                          runtime_roles=["guest"],
                           input_data=lr_0.outputs["train_output_data"])
 
 # pipeline.add_task(feature_scale_0)
 # pipeline.add_task(feature_scale_1)
 pipeline.add_task(lr_0)
+pipeline.add_task(lr_1)
 pipeline.add_task(evaluation_0)
 # pipeline.add_task(hetero_feature_binning_0)
 pipeline.compile()
@@ -52,18 +50,19 @@ pipeline.fit()
 
 # print(pipeline.get_task_info("statistics_0").get_output_model())
 print(pipeline.get_task_info("lr_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_data())
-print(pipeline.get_task_info("evaluation_0").get_output_metrics())
+print(pipeline.get_task_info("lr_0").get_output_metric())
+print(f"evaluation metric: ")
+print(pipeline.get_task_info("evaluation_0").get_output_metric())
 
 pipeline.deploy([lr_0])
 
 predict_pipeline = FateFlowPipeline()
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
-lr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                            namespace="experiment"))
-lr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                               namespace="experiment"))
+deployed_pipeline.lr_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest_data",
+                                                                              namespace="experiment"))
+deployed_pipeline.lr_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest_data",
+                                                                                 namespace="experiment"))
 
 predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.compile()

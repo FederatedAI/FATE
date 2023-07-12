@@ -32,17 +32,19 @@ class FeatureStatistics(Module):
     def fit(self, ctx: Context, input_data, validate_data=None) -> None:
         self.summary.compute_metrics(input_data, self.metrics)
 
-    def to_model(self):
+    def get_model(self):
         model = self.summary.to_model()
-        model["metrics"] = self.metrics
-        return model
+        output_model = {"data": model,
+                        "meta": {"metrics": self.metrics,
+                                 "model_type": "statistics"}}
+        return output_model
 
     def restore(self, model):
         self.summary.restore(model)
 
     def from_model(cls, model) -> "FeatureStatistics":
-        stat = FeatureStatistics(model["metrics"])
-        stat.restore(model)
+        stat = FeatureStatistics(model["meta"]["metrics"])
+        stat.restore(model["data"])
         return stat
 
 

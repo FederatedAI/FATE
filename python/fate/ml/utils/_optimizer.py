@@ -13,14 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import copy
+import logging
 
 import numpy as np
 import torch
 
+logger = logging.getLogger(__name__)
+
 
 class LRScheduler:
-    def __init__(self, method, lr_params, iters=0):
+    def __init__(self, method=None, lr_params=None, iters=0):
         self.method = method
         self.lr_params = lr_params
         self.iters = iters
@@ -38,17 +40,22 @@ class LRScheduler:
         return self.lr_scheduler.get_last_lr()[0]
 
     def state_dict(self):
-        return self.lr_scheduler.state_dict()
+        return {"lr_scheduler": self.lr_scheduler.state_dict(),
+                "method": self.method,
+                "lr_params": self.lr_params}
 
-    def load_state_dict(self, dict):
-        self.lr_scheduler.load_state_dict(dict)
+    def load_state_dict(self, dict, optimizer):
+        self.method = dict["method"]
+        self.lr_params = dict["lr_params"]
+        self.init_scheduler(optimizer)
+        self.lr_scheduler.load_state_dict(dict["lr_scheduler"])
 
     def get_last_lr(self):
         return self.get_last_lr()
 
 
 class Optimizer(object):
-    def __init__(self, method, penalty, alpha, optim_param: dict, iters: int = 0):
+    def __init__(self, method=None, penalty=None, alpha=None, optim_param: dict = None, iters: int = 0):
         self.method = method
         self.optim_param = optim_param
         self.iters = iters
@@ -60,23 +67,34 @@ class Optimizer(object):
         self.prev_model_parameter = None
         self.optimizer = None
 
-    def init_optimizer(self, model_parameter_length=None, model_parameter=None):
+    def init_optimizer(self, model_parameter_length=None, model_parameter=None, dtype=torch.float32):
+        # @todo: allow group in future
         if model_parameter_length is not None:
-            model_parameter = torch.nn.parameter.Parameter(torch.tensor([[0.0]] * model_parameter_length),
-                                                           requires_grad=True)
+            model_parameter = torch.nn.parameter.Parameter(torch.zeros((model_parameter_length, 1),
+                                                                       requires_grad=True,
+                                                                       dtype=dtype))
         self.model_parameter = model_parameter
         self.optimizer = optimizer_factory([model_parameter], self.method, self.optim_param)
         # for regularization
         # self.alpha = self.optimizer.state_dict()['param_groups'][0]['alpha']
 
     def step(self, gradient):
-        self.prev_model_parameter = copy.deepcopy(self.model_parameter)
+        # logger.info(f"before copy, model parameter: {self.model_parameter}")
+        self.prev_model_parameter = self.model_parameter.data.clone()
+        # logger.info(f"gradient shape: {gradient.shape}, parameter shape: {self.model_parameter.shape}")
+        # self.model_parameter = torch.nn.parameter.Parameter(self.model_parameter.detach().clone().to(gradient.dtype))
         self.model_parameter.grad = gradient
+        # update parameter group in optimizer
+        # self.optimizer.param_groups[0]['params'] = [self.model_parameter]
+        # logger.info(f"before step, model parameter gradient: {self.model_parameter.grad}")
         self.optimizer.step()
+        # logger.info(f"after step, model parameter: {self.model_parameter}")
 
     def get_delta_gradients(self):
-        if self.prev_model_parameter:
-            return self.model_parameter - self.prev_model_parameter
+        # logger.info(f"gradient: {self.model_parameter.grad}, prev model parameter: {self.prev_model_parameter},"
+        #            f"delta grad: {self.model_parameter - self.prev_model_parameter}")
+        if self.prev_model_parameter is not None:
+            return self.model_parameter.data - self.prev_model_parameter
         else:
             raise ValueError(f"No optimization history found, please check.")
 
@@ -85,17 +103,33 @@ class Optimizer(object):
         return self.alpha * this_step_size
 
     def state_dict(self):
+        optimizer_state_dict = self.optimizer.state_dict()
+        state_all = optimizer_state_dict['state'].get(0, {})
+        for k, v in state_all.items():
+            if isinstance(v, torch.Tensor):
+                state_all[k] = v.tolist()
         return {
             "l2_penalty": self.l2_penalty,
             "l1_penalty": self.l1_penalty,
             "alpha": self.alpha,
-            "optimizer": self.optimizer.state_dict()
+            "optimizer": optimizer_state_dict,
+            "method": self.method,
+            "optim_param": self.optim_param,
+            "model_parameter": self.model_parameter.tolist()
         }
 
     def load_state_dict(self, dict):
         self.l2_penalty = dict["l2_penalty"]
         self.l1_penalty = dict["l1_penalty"]
         self.alpha = dict["alpha"]
+        self.method = dict["method"]
+        self.optim_param = dict["optim_param"]
+        self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(dict["model_parameter"])))
+        state_dict = dict["optimizer"]
+        state_all = state_dict['state'].get(0, {})
+        for k, v in state_all.items():
+            if isinstance(v, list):
+                state_all[k] = torch.tensor(v)
         self.optimizer.load_state_dict(dict["optimizer"])
 
     def set_iters(self, new_iters):
@@ -121,8 +155,9 @@ class Optimizer(object):
     def add_regular_to_grad(self, grad, model_weights, fit_intercept=False):
         if self.l2_penalty:
             if fit_intercept:
-                weights_dum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
-                new_grad = grad + self.alpha * weights_dum
+                weights_sum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
+                logger.info(f"grad: {grad}, weights sum: {weights_sum}")
+                new_grad = grad + self.alpha * weights_sum
             else:
                 new_grad = grad + self.alpha * model_weights
         else:
@@ -130,8 +165,7 @@ class Optimizer(object):
 
         return new_grad
 
-    def regularization_update(self, model_weights, grad, fit_intercept, lr,
-                              prev_round_weights=None):
+    def regularization_update(self, model_weights, grad, fit_intercept, lr, prev_round_weights=None):
         if self.l1_penalty:
             model_weights = self._l1_updator(model_weights, grad, fit_intercept, lr)
         else:
@@ -218,8 +252,11 @@ class Optimizer(object):
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
         else:"""
+        logger.info(f"before update, model weights: {model_weights}, delta_grad: {grad}")
         delta_grad = grad
         model_weights = self.regularization_update(model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
+        logger.info(f"after update, model weights: {model_weights}")
+
         return model_weights
 
 
@@ -228,17 +265,17 @@ def separate(value, size_list):
     Separate value in order to several set according size_list
     Parameters
     ----------
-    value: tensor, input data
+    value: 2d-tensor, input data
     size_list: list, each set size
     Returns
     ----------
     list
-        set after separate
+        separated 2d-tensors of sizes given in size_list
     """
     separate_res = []
     cur = 0
     for size in size_list:
-        separate_res.append(value[cur:cur + size])
+        separate_res.append(value[cur:cur + size, :])
         cur += size
     return separate_res
 

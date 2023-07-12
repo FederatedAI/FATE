@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 
+from ._profile import enable_profile_remote, profile_ends, profile_start
 from ._type import ComputingEngine
 
 
@@ -23,4 +24,4 @@ def is_table(v):
     return isinstance(v, CTableABC)
 
 
-__all__ = ["is_table", "ComputingEngine"]
+__all__ = ["is_table", "ComputingEngine", "profile_start", "profile_ends"]

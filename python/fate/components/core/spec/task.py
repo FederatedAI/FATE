@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pydantic
 
@@ -52,8 +52,8 @@ class TaskConfigSpec(pydantic.BaseModel):
     party_id: str
     stage: str = "default"
     parameters: Dict[str, Any] = {}
-    input_artifacts: Dict[str, Union[List[ArtifactInputApplySpec], ArtifactInputApplySpec]] = {}
-    output_artifacts: Dict[str, ArtifactOutputApplySpec] = {}
+    input_artifacts: Dict[str, Optional[Union[List[ArtifactInputApplySpec], ArtifactInputApplySpec]]] = {}
+    output_artifacts: Dict[str, Optional[ArtifactOutputApplySpec]] = {}
     conf: TaskConfSpec
 
 

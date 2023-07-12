@@ -1,7 +1,4 @@
-import inspect
-
 import fate_utils
-import numpy as np
 import torch
 
 from ._tensor import PaillierTensor
@@ -19,13 +16,13 @@ class PaillierTensorEncryptor:
     def encrypt(self, tensor: torch.Tensor):
         if isinstance(tensor, torch.Tensor):
             if tensor.dtype == torch.float64:
-                return PaillierTensor(self._key.encrypt_f64(tensor.numpy()), tensor.dtype)
+                return PaillierTensor(self._key.encrypt_f64(tensor.detach().numpy()), tensor.dtype)
             if tensor.dtype == torch.float32:
-                return PaillierTensor(self._key.encrypt_f32(tensor.numpy()), tensor.dtype)
+                return PaillierTensor(self._key.encrypt_f32(tensor.detach().numpy()), tensor.dtype)
             if tensor.dtype == torch.int64:
-                return PaillierTensor(self._key.encrypt_i64(tensor.numpy()), tensor.dtype)
+                return PaillierTensor(self._key.encrypt_i64(tensor.detach().numpy()), tensor.dtype)
             if tensor.dtype == torch.int32:
-                return PaillierTensor(self._key.encrypt_i32(tensor.numpy()), tensor.dtype)
+                return PaillierTensor(self._key.encrypt_i32(tensor.detach().numpy()), tensor.dtype)
         elif hasattr(tensor, "encrypt"):
             return tensor.encrypt(self)
         raise NotImplementedError(f"`{tensor}` not supported")

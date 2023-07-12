@@ -17,6 +17,7 @@ import numpy as np
 from .._dataframe import DataFrame
 from ..manager.block_manager import BlockType
 from ..manager.data_manager import DataManager
+from fate.arch.tensor import DTensor
 
 
 def set_item(df: "DataFrame", keys, items, state):
@@ -87,8 +88,15 @@ def _set_new_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
+    def _append_tensor(l_blocks, r_tensor, bid_list=None, dm: DataManager=None):
+        ret_blocks = [block for block in l_blocks]
+        for offset, bid in enumerate(bid_list):
+            ret_blocks.append(dm.blocks[bid].convert_block(r_tensor[:, offset: offset+1]))
+
+        return ret_blocks
+
     data_manager = df.data_manager
-    if isinstance(items, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool)):
         bids = data_manager.append_columns(keys, BlockType.get_block_type(items))
         _append_func = functools.partial(_append_single, item=items, col_len=len(keys), bid=bids[0], dm=data_manager)
         block_table = df.block_table.mapValues(_append_func)
@@ -115,14 +123,18 @@ def _set_new_item(df: "DataFrame", keys, items):
 
         _append_func = functools.partial(_append_df, r_blocks_loc=operable_blocks_loc)
         block_table = df.block_table.join(items.block_table, _append_func)
+    elif isinstance(items, DTensor):
+        if len(keys) != items.shape[1]:
+            raise ValueError("Setitem with rhs=DTensor must have equal len keys")
+        block_type = BlockType.get_block_type(items.dtype)
+        bids = data_manager.append_columns(keys, block_type)
+        _append_func = functools.partial(_append_tensor, bid_list=bids, dm=data_manager)
+        block_table = df.block_table.join(items.shardings._data, _append_func)
     else:
-        """
-        assume items is distributed tensor, and has an equal shape of keys
-        """
-        # TODO: support if DTensor is ok.
-        block_table = df.block_table
+        raise ValueError(f"Seiitem with rhs_type={type(items)} is not supported")
 
     df.block_table = block_table
+    df.data_manager = data_manager
 
 
 def _set_old_item(df: "DataFrame", keys, items):
@@ -140,7 +152,7 @@ def _set_old_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
-    def _replace_multi(blocks, item_list=None, narrow_loc=None, dst_bids=None, dm: DataManager=None):
+    def _replace_multi(blocks, item_list=None, narrow_loc=None, dst_bids=None, dm: DataManager = None):
         ret_blocks = [block for block in blocks]
         for i in range(len(ret_blocks), dm.block_num):
             ret_blocks.append([])
@@ -167,8 +179,21 @@ def _set_old_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
+    def _replace_tensor(blocks, r_tensor, narrow_loc=None, dst_bids=None, dm: DataManager = None):
+        ret_blocks = [block for block in blocks]
+        for i in range(len(ret_blocks), dm.block_num):
+            ret_blocks.append([])
+
+        for bid, offsets in narrow_loc:
+            ret_blocks[bid] = ret_blocks[bid][:, offsets]
+
+        for offset, dst_bid in enumerate(dst_bids):
+            ret_blocks[dst_bid] = dm.blocks[dst_bid].convert_block(r_tensor[:, offset : offset + 1])
+
+        return ret_blocks
+
     data_manager = df.data_manager
-    if isinstance(items, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool)):
         narrow_blocks, dst_blocks = data_manager.split_columns(keys, BlockType.get_block_type(items))
         replace_func = functools.partial(_replace_single, item=items, narrow_loc=narrow_blocks,
                                          dst_bids=dst_blocks, dm=data_manager)
@@ -198,11 +223,17 @@ def _set_old_item(df: "DataFrame", keys, items):
         replace_func = functools.partial(_replace_df, narrow_loc=narrow_blocks, dst_bids=dst_blocks,
                                          r_blocks_loc=operable_blocks_loc, dm=data_manager)
         block_table = df.block_table.join(items.block_table, replace_func)
+    elif isinstance(items, DTensor):
+        if len(keys) != items.shape[1]:
+            raise ValueError("Setitem with rhs=DTensor must have equal len keys")
+        block_type = BlockType.get_block_type(items.dtype)
+        narrow_blocks, dst_blocks = data_manager.split_columns(keys, block_type)
+        replace_func = functools.partial(_replace_multi, narrow_loc=narrow_blocks,
+                                         dst_bids=dst_blocks, dm=data_manager)
+        block_table = df.block_table.join(items.shardings._data, replace_func)
+
     else:
-        """
-        assume items is distributed tensor, and has an equal shape of keys
-        """
-        # TODO: support if DTensor is ok.
-        block_table = df.block_table
+        raise ValueError(f"Seiitem with rhs_type={type(items)} is not supported")
 
     df.block_table = block_table
+    df.data_manager = data_manager
