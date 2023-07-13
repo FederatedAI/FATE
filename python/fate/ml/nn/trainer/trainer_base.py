@@ -32,8 +32,6 @@ from transformers.trainer_callback import PrinterCallback
 transformers_logging.disable_default_handler()
 transformers_logging.enable_propagation()
 logger = logging.getLogger(__name__)
-# trainer.logger = logging.getLogger("transformers trainer")
-# trainer_callback.logger = logger
 
 
 def time_decorator(descr=""):
