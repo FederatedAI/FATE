@@ -277,6 +277,14 @@ class DataFrame(object):
         from .ops._quantile import quantile
         return quantile(self, q, relative_error)
 
+    def qcut(self, q: int):
+        from .ops._quantile import qcut
+        return qcut(self, q)
+
+    def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
+        from .ops._encoder import bucketize
+        return bucketize(self, boundaries)
+
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
