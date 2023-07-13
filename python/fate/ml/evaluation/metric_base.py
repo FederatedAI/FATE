@@ -111,14 +111,13 @@ class MetricEnsemble(object):
 
     def __call__(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
 
-        metric_result = {}
+        metric_result = []
         
         if eval_rs is not None:
             predict, label, input_ = self._parse_input(eval_rs)
 
         for metric in self._metrics:
             rs = metric(predict, label)
-            logger.info('metric: {}, result: {}'.format(metric.metric_name, rs))
             if isinstance(rs, tuple):
                 new_rs = [r.to_dict() for r in rs]
                 rs = new_rs
@@ -126,7 +125,7 @@ class MetricEnsemble(object):
                 rs = rs.to_dict()
             else:
                 raise ValueError('cannot parse metric result: {}'.format(rs))
-            metric_result[metric.metric_name] = rs
+            metric_result.append(rs)
         return metric_result
 
     def fit(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
