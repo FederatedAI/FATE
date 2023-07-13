@@ -83,7 +83,7 @@ class FullBatchDataLoader(object):
         self._mode = mode
         self._role = role
         self._batch_size = batch_size
-        if self._batch_size < 0 and self._role != "arbiter":
+        if self._batch_size is None and self._role != "arbiter":
             self._batch_size = len(self._dataset)
         self._shuffle = shuffle
         self._random_seed = random_seed
