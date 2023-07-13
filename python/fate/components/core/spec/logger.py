@@ -41,4 +41,4 @@ class LoggerConfig(pydantic.BaseModel):
                 root=dict(handlers=[handler_name], level="DEBUG"),
                 disable_existing_loggers=False,
             )
-            logging.config.dictConfig(self.config)
+        logging.config.dictConfig(self.config)
