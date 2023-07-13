@@ -28,10 +28,16 @@ class TableDataset(Dataset):
     """
 
     def __init__(
-        self, label_col=None, match_id_col=None, sample_id_col=None,
-        feature_dtype="float", label_dtype="float", label_shape=None, flatten_label=False,
-        to_tensor=True, return_dict=False
-    ):
+            self,
+            label_col=None,
+            match_id_col=None,
+            sample_id_col=None,
+            feature_dtype="float",
+            label_dtype="float",
+            label_shape=None,
+            flatten_label=False,
+            to_tensor=True,
+            return_dict=False):
 
         super(TableDataset, self).__init__()
         self.features: np.ndarray = None
@@ -46,13 +52,12 @@ class TableDataset(Dataset):
         self.to_tensor = to_tensor
         self.return_dict = return_dict
         if label_shape is not None:
-            assert isinstance(label_shape, tuple) or isinstance(label_shape, list), "label shape is {}".format(
-                label_shape
-            )
+            assert isinstance(label_shape, tuple) or isinstance(
+                label_shape, list), "label shape is {}".format(label_shape)
         self.label_shape = label_shape
         self.flatten_label = flatten_label
 
-        # sample ids, match ids 
+        # sample ids, match ids
         self.sample_ids = None
         self.match_ids = None
 
@@ -66,7 +71,8 @@ class TableDataset(Dataset):
 
         if dtype is not None:
             avail = ["long", "int", "float", "double"]
-            assert dtype in avail, "available dtype is {}, but got {}".format(avail, dtype)
+            assert dtype in avail, "available dtype is {}, but got {}".format(
+                avail, dtype)
             if dtype == "long":
                 return np.int64
             if dtype == "int":
@@ -110,30 +116,39 @@ class TableDataset(Dataset):
             # automatically set id columns
             if self.match_id_col is not None:
                 if self.match_id_col not in self.origin_table:
-                    raise ValueError("match id column {} not found".format(self.match_id_col))
+                    raise ValueError(
+                        "match id column {} not found".format(
+                            self.match_id_col))
                 else:
                     self.match_ids = self.origin_table[[self.match_id_col]]
-                    self.origin_table = self.origin_table.drop(columns=[self.match_id_col])
+                    self.origin_table = self.origin_table.drop(
+                        columns=[self.match_id_col])
             else:
                 match_id_col_cadidaites = ["id", "sid"]
                 for id_col in match_id_col_cadidaites:
                     if id_col in self.origin_table:
                         self.match_ids = self.origin_table[[id_col]]
-                        self.origin_table = self.origin_table.drop(columns=[id_col])
+                        self.origin_table = self.origin_table.drop(columns=[
+                                                                   id_col])
                         break
                 if self.match_ids is None:
-                    logger.info("match id column not found, no match id will be set")
-                
+                    logger.info(
+                        "match id column not found, no match id will be set")
+
             # generate sample ids
             if self.sample_id_col is not None:
                 if self.sample_id_col not in self.origin_table:
-                    raise ValueError("sample id column {} not found".format(self.sample_id_col))
+                    raise ValueError(
+                        "sample id column {} not found".format(
+                            self.sample_id_col))
                 self.sample_ids = self.origin_table[[self.sample_id_col]]
-                self.origin_table = self.origin_table.drop(columns=[self.sample_id_col])
+                self.origin_table = self.origin_table.drop(
+                    columns=[self.sample_id_col])
             else:
                 self.sample_ids = pd.DataFrame()
                 self.sample_ids["sample_id"] = range(len(self.origin_table))
-                logger.info("sample id column not found, generate sample id from 0 to {}".format(len(self.origin_table)))
+                logger.info("sample id column not found, generate sample id from 0 to {}".format(
+                    len(self.origin_table)))
 
             # infer column name
             label = self.label_col
@@ -144,23 +159,26 @@ class TableDataset(Dataset):
                         break
                 if label is None:
                     self.with_label = False
-                    logger.info('found no "y"/"label"/"target" in input table, no label will be set')
+                    logger.info(
+                        'found no "y"/"label"/"target" in input table, no label will be set')
             else:
                 if label not in self.origin_table:
-                    raise ValueError("label column {} not found in input table".format(label))
-            
+                    raise ValueError(
+                        "label column {} not found in input table".format(label))
+
             if self.label is not None:
                 self.label = self.origin_table[[label]].values
                 self.origin_table = self.origin_table.drop(columns=[label])
             self.features = self.origin_table.values
-        
+
         elif isinstance(data_or_path, DataFrame):
             schema = data_or_path.schema
             sample_id = schema.sample_id_name
             match_id = schema.match_id_name
             label = schema.label_name
             if label is None:
-                logger.info("label column is None, not provided in the uploaded data")
+                logger.info(
+                    "label column is None, not provided in the uploaded data")
             pd_df = data_or_path.as_pd_df()
             if label is None:
                 labels = None
@@ -174,7 +192,6 @@ class TableDataset(Dataset):
             self.sample_ids = sample_ids
             self.match_ids = match_ids
             self.features = features.values
-            
 
         if self.label is not None:
 
@@ -188,7 +205,7 @@ class TableDataset(Dataset):
 
             if self.flatten_label:
                 self.label = self.label.flatten()
-                
+
         else:
             self.label = None
 
@@ -199,25 +216,28 @@ class TableDataset(Dataset):
         if self.label is not None:
             return np.unique(self.label).tolist()
         else:
-            raise ValueError("no label found, please check if self.label is set")
+            raise ValueError(
+                "no label found, please check if self.label is set")
 
     def get_sample_ids(self) -> pd.DataFrame:
         return self.sample_ids
 
     def get_match_ids(self) -> pd.DataFrame:
         return self.match_ids
-    
+
     def get_sample_id_name(self) -> str:
-        if self.sample_ids is not None and isinstance(self.sample_ids, pd.DataFrame):
+        if self.sample_ids is not None and isinstance(
+                self.sample_ids, pd.DataFrame):
             return self.sample_ids.columns[0]
         else:
             raise ValueError('Cannot get sample id name')
-    
+
     def get_match_id_name(self) -> str:
-        if self.match_ids is not None and isinstance(self.match_ids, pd.DataFrame):
+        if self.match_ids is not None and isinstance(
+                self.match_ids, pd.DataFrame):
             return self.match_ids.columns[0]
         else:
             raise ValueError('Cannot get match id name')
-    
+
     def has_label(self) -> bool:
         return self.label is not None

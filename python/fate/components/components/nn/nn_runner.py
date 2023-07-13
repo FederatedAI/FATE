@@ -1,5 +1,5 @@
 import numpy as np
-import torch 
+import torch
 import pandas as pd
 from typing import Union, Optional, Literal
 from fate.components.core import Role
@@ -17,17 +17,18 @@ from fate.ml.utils.predict_tools import to_fate_df, std_output_df, add_ids
 logger = logging.getLogger(__name__)
 
 
-def _convert_to_numpy_array(data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
+def _convert_to_numpy_array(
+        data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
     if isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
         return data.to_numpy()
     elif isinstance(data, torch.Tensor):
         return data.cpu().numpy()
     else:
         return np.array(data)
-    
+
 
 def task_type_infer(predict_result, true_label):
-    
+
     pred_shape = predict_result.shape
 
     if true_label.max() == 1.0 and true_label.min() == 0.0:
@@ -50,7 +51,7 @@ def task_type_infer(predict_result, true_label):
 class NNRunner(object):
 
     def __init__(self) -> None:
-        
+
         self._role = None
         self._party_id = None
         self._ctx: Context = None
@@ -68,14 +69,14 @@ class NNRunner(object):
 
     def is_client(self) -> bool:
         return self._role.is_guest or self._role.is_host
-    
+
     def is_server(self) -> bool:
         return self._role.is_arbiter
-    
+
     def set_party_id(self, party_id: int):
         assert isinstance(self._party_id, int)
         self._party_id = party_id
-    
+
     def get_fateboard_tracker(self):
         pass
 
@@ -92,7 +93,7 @@ class NNRunner(object):
             task_type: Literal['binary', 'multi', 'regression', 'others'] = None,
             threshold: float = 0.5,
             classes: list = None
-    )-> DataFrame:
+    ) -> DataFrame:
         """
         Constructs a FATE DataFrame from predictions and labels. This Dataframe is able to flow through FATE components.
 
@@ -107,15 +108,17 @@ class NNRunner(object):
             dataframe_format (Literal['default', 'fate_std'], optional): Output format of the resulting DataFrame. If 'default', simply combines labels and predictions into a DataFrame.
                                                                          If 'fate_std', organizes output according to the FATE framework's format. Defaults to 'default'.
             task_type (Literal['binary', 'multi', 'regression', 'others'], optional):  This parameter is only needed when dataframe_format is 'fate_std'. Defaults to None.
-                                                                                       The type of machine learning task, which can be 'binary', 'multi', 'regression', or 'others'. 
+                                                                                       The type of machine learning task, which can be 'binary', 'multi', 'regression', or 'others'.
             threshold (float, optional): This parameter is only needed when dataframe_format is 'fate_std' and task_type is 'binary'. Defaults to 0.5.
             classes (list, optional): This parameter is only needed when dataframe_format is 'fate_std'. List of classes.
         Returns:
             DataFrame: A DataFrame that contains the neural network's predictions and the true labels, possibly along with match IDs and sample IDs, formatted according to the specified format.
         """
         # check parameters
-        assert task_type in ['binary', 'multi', 'regression', 'others'], f"task_type {task_type} is not supported"
-        assert dataframe_format in ['default', 'fate_std'], f"dataframe_format {dataframe_format} is not supported"
+        assert task_type in ['binary', 'multi', 'regression',
+                             'others'], f"task_type {task_type} is not supported"
+        assert dataframe_format in [
+            'default', 'fate_std'], f"dataframe_format {dataframe_format} is not supported"
 
         if match_id_name is None:
             match_id_name = 'id'
@@ -129,35 +132,53 @@ class NNRunner(object):
 
         predictions = _convert_to_numpy_array(predictions)
         labels = _convert_to_numpy_array(labels)
-        assert len(predictions) == len(labels), f"predictions length {len(predictions)} != labels length {len(labels)}"
-        
+        assert len(predictions) == len(
+            labels), f"predictions length {len(predictions)} != labels length {len(labels)}"
+
         # check match ids
         if match_ids is not None:
             match_ids = _convert_to_numpy_array(match_ids).flatten()
         else:
-            logger.info("match_ids is not provided, will auto generate match_ids")
-            match_ids = np.array([i for i in range(len(predictions))]).flatten()
-        
+            logger.info(
+                "match_ids is not provided, will auto generate match_ids")
+            match_ids = np.array(
+                [i for i in range(len(predictions))]).flatten()
+
         # check sample ids
         if sample_ids is not None:
             sample_ids = _convert_to_numpy_array(sample_ids).flatten()
         else:
-            logger.info("sample_ids is not provided, will auto generate sample_ids")
-            sample_ids = np.array([i for i in range(len(predictions))]).flatten()
+            logger.info(
+                "sample_ids is not provided, will auto generate sample_ids")
+            sample_ids = np.array(
+                [i for i in range(len(predictions))]).flatten()
 
-        assert len(match_ids) == len(predictions), f"match_ids length {len(match_ids)} != predictions length {len(predictions)}"
-        assert len(sample_ids) == len(predictions), f"sample_ids length {len(sample_ids)} != predictions length {len(predictions)}"
+        assert len(match_ids) == len(
+            predictions), f"match_ids length {len(match_ids)} != predictions length {len(predictions)}"
+        assert len(sample_ids) == len(
+            predictions), f"sample_ids length {len(sample_ids)} != predictions length {len(predictions)}"
 
         # match id name and sample id name must be str
-        assert isinstance(match_id_name, str), f"match_id_name must be str, but got {type(match_id_name)}"
-        assert isinstance(sample_id_name, str), f"sample_id_name must be str, but got {type(sample_id_name)}"
+        assert isinstance(
+            match_id_name, str), f"match_id_name must be str, but got {type(match_id_name)}"
+        assert isinstance(
+            sample_id_name, str), f"sample_id_name must be str, but got {type(sample_id_name)}"
 
-        if dataframe_format == 'default' or (dataframe_format == 'fate_std' and task_type == 'others'):
-            df = pd.DataFrame({'label': labels.to_list(), 'predict': predictions.to_list(), match_id_name: match_ids.to_list(), sample_id_name: sample_ids.to_list()})
+        if dataframe_format == 'default' or (
+                dataframe_format == 'fate_std' and task_type == 'others'):
+            df = pd.DataFrame({'label': labels.to_list(),
+                               'predict': predictions.to_list(),
+                               match_id_name: match_ids.to_list(),
+                               sample_id_name: sample_ids.to_list()})
             df = to_fate_df(ctx, sample_id_name, match_id_name, df)
             return df
         elif dataframe_format == 'fate_std' and task_type in ['binary', 'multi', 'regression']:
-            df = std_output_df(task_type, predictions, labels, threshold, classes)
+            df = std_output_df(
+                task_type,
+                predictions,
+                labels,
+                threshold,
+                classes)
             match_id_df = pd.DataFrame()
             match_id_df[match_id_name] = match_ids
             sample_id_df = pd.DataFrame()
@@ -166,8 +187,13 @@ class NNRunner(object):
             df = to_fate_df(ctx, sample_id_name, match_id_name, df)
             return df
 
-
-    def train(self, train_data: Optional[Union[str, DataFrame]] = None, validate_data: Optional[Union[str, DataFrame]] = None, output_dir: str = None, saved_model_path: str = None) -> None:
+    def train(self,
+              train_data: Optional[Union[str,
+                                         DataFrame]] = None,
+              validate_data: Optional[Union[str,
+                                            DataFrame]] = None,
+              output_dir: str = None,
+              saved_model_path: str = None) -> None:
         """
         Train interface.
 
@@ -179,7 +205,11 @@ class NNRunner(object):
         """
         pass
 
-    def predict(self, test_data: Optional[Union[str, DataFrame]] = None, output_dir: str = None, saved_model_path: str = None) -> DataFrame:
+    def predict(self,
+                test_data: Optional[Union[str,
+                                          DataFrame]] = None,
+                output_dir: str = None,
+                saved_model_path: str = None) -> DataFrame:
         """
         Predict interface.
 
@@ -188,4 +218,3 @@ class NNRunner(object):
             output_dir (str, optional): The path to the directory where the trained model should be saved. If this class is running in the fate pipeline, this path will provided by FATE framework.
             saved_model_path (str, optional): The path to the saved model that should be loaded before training starts.If this class is running in the fate pipeline, this path will provided by FATE framework.
         """
-

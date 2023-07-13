@@ -25,7 +25,6 @@ from fate.arch.dataframe import DataFrame
 logger = logging.getLogger(__name__)
 
 
-
 @cpn.component(roles=[GUEST, HOST, ARBITER])
 def homo_lr(ctx, role):
     ...
@@ -38,27 +37,27 @@ def train(
     train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
     validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
     learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
-                                            default=params.LRSchedulerParam(method="constant",
-                                                                            scheduler_params={"factor": 1.0}),
-                                            desc="learning rate scheduler, "
-                                                "select method from {'step', 'linear', 'constant'}"
+                                           default=params.LRSchedulerParam(method="constant",
+                                                                           scheduler_params={"factor": 1.0}),
+                                           desc="learning rate scheduler, "
+                                           "select method from {'step', 'linear', 'constant'}"
                                                 "for list of configurable arguments, "
                                                 "refer to torch.optim.lr_scheduler"),
     epochs: cpn.parameter(type=params.conint(gt=0), default=20,
-                            desc="max iteration num"),
+                          desc="max iteration num"),
     batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
-                                desc="batch size, "
-                                    "value less or equals to 0 means full batch"),
+                              desc="batch size, "
+                              "value less or equals to 0 means full batch"),
     optimizer: cpn.parameter(type=params.optimizer_param(),
-                                default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
-                                                            optimizer_params={"lr": 1e-2, "weight_decay": 0})),
+                             default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
+                                                           optimizer_params={"lr": 1e-2, "weight_decay": 0})),
     init_param: cpn.parameter(type=params.init_param(),
-                                default=params.InitParam(method='random', fit_intercept=True),
-                                desc="Model param init setting."),
+                              default=params.InitParam(method='random', fit_intercept=True),
+                              desc="Model param init setting."),
     threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5,
-                                desc="predict threshold for binary data"),
+                             desc="predict threshold for binary data"),
     ovr: cpn.parameter(type=bool, default=False,
-                                desc="enable ovr for multi-classifcation"),
+                       desc="enable ovr for multi-classifcation"),
     label_num: cpn.parameter(type=params.conint(ge=2), default=None),
     train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
     train_input_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
@@ -68,13 +67,21 @@ def train(
     sub_ctx = ctx.sub_ctx(consts.TRAIN)
 
     if role.is_guest or role.is_host:  # is client
-        
-        logger.info('homo lr component: client start training')
-        logger.info('optim param {} \n init param {} \n learning rate param {}'.format(optimizer.dict(), init_param.dict(), learning_rate_scheduler.dict()))
 
-        client = HomoLRClient(epochs=epochs, batch_size=batch_size, optimizer_param=optimizer.dict(), init_param=init_param.dict(), 
-                              learning_rate_scheduler=learning_rate_scheduler.dict(), threshold=threshold, ovr=ovr, label_num=label_num)
-        
+        logger.info('homo lr component: client start training')
+        logger.info('optim param {} \n init param {} \n learning rate param {}'.format(
+            optimizer.dict(), init_param.dict(), learning_rate_scheduler.dict()))
+
+        client = HomoLRClient(
+            epochs=epochs,
+            batch_size=batch_size,
+            optimizer_param=optimizer.dict(),
+            init_param=init_param.dict(),
+            learning_rate_scheduler=learning_rate_scheduler.dict(),
+            threshold=threshold,
+            ovr=ovr,
+            label_num=label_num)
+
         if train_input_model is not None:
             model_input = train_input_model.read()
             client.from_model(model_input)
@@ -83,7 +90,7 @@ def train(
         validate_df = validate_data.read() if validate_data else None
         client.fit(sub_ctx, train_df, validate_df)
         model_dict = client.get_model().dict()
-        
+
         train_rs = client.predict(sub_ctx, train_df)
         train_rs = add_dataset_type(train_rs, consts.TRAIN_SET)
         if validate_df:
@@ -108,10 +115,10 @@ def predict(
     role: Role,
     test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
     batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
-                                desc="batch size, "
-                                "value less or equals to 0 means full batch"),
+                              desc="batch size, "
+                              "value less or equals to 0 means full batch"),
     threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5,
-                                desc="predict threshold for binary data"),
+                             desc="predict threshold for binary data"),
     predict_input_model: cpn.json_model_input(roles=[GUEST, HOST]),
     test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):

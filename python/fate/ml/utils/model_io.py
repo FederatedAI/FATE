@@ -23,6 +23,6 @@ class ModelIO:
         else:
             meta = None
         return cls(data, meta)
-    
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(data={self.data}, meta={self.meta})"
