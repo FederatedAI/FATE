@@ -13,15 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
+
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 def initialize_param(coef_len, **kwargs):
     param_len = coef_len
     method = kwargs["method"]
     fit_intercept = kwargs["fit_intercept"]
+    logger.info(f"kwargs: {kwargs}")
     if fit_intercept:
-        param_len = coef_len + 1
+        param_len = param_len + 1
+        logger.info(f"intercept added: param len {param_len}")
     if method == 'zeros':
         return torch.zeros((param_len, 1), requires_grad=True)
     elif method == 'ones':
