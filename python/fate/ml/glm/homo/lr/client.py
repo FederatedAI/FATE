@@ -5,57 +5,19 @@ from fate.ml.abc.module import HomoModule
 from fate.ml.utils.model_io import ModelIO
 from fate.arch import Context
 import logging
-import pandas as pd
 import torch as t
 from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, TrainingArguments, FedAVGArguments
 from transformers import default_data_collator
-import numpy as np
-from torch.nn import functional as F
 import functools
 import tempfile
-from torch.utils.data import Dataset
-from fate.ml.utils.predict_format import std_output_df, add_ids, to_fate_df
-from fate.ml.utils.predict_format import MULTI, BINARY
+from fate.ml.utils.predict_tools import std_output_df, add_ids, to_fate_df
+from fate.ml.utils.predict_tools import MULTI, BINARY
+from fate.ml.nn.dataset.table import TableDataset
+from fate.ml.utils._optimizer import optimizer_factory, lr_scheduler_factory
 
 
 logger = logging.getLogger(__name__)
 
-
-class Data(object):
-
-    def __init__(self, features: pd.DataFrame, sample_ids: pd.DataFrame, match_ids: pd.DataFrame, labels: pd.DataFrame) -> None:
-        # set var
-        self.features = features
-        self.sample_ids = sample_ids
-        self.match_ids = match_ids
-        self.labels = labels
-
-    def get_match_id_name(self):
-        return self.match_ids.columns[0]
-
-    def get_sample_id_name(self):
-        return self.sample_ids.columns[0]
-    
-    def has_label(self):
-        return self.labels is not None
-
-    @staticmethod
-    def from_fate_dataframe(df: DataFrame):
-        schema = df.schema
-        sample_id = schema.sample_id_name
-        match_id = schema.match_id_name
-        label = schema.label_name
-        pd_df = df.as_pd_df()
-        if label is None:
-            labels = None
-            features = pd_df.drop([sample_id, match_id], axis=1)
-        else:
-            labels = pd_df[[label]]
-            features = pd_df.drop([sample_id, match_id, label], axis=1)
-        sample_ids = pd_df[[sample_id]]
-        match_ids = pd_df[[match_id]]
-        
-        return Data(features, sample_ids, match_ids, labels)
 
 
 def homo_lr_loss(pred, labels, dim=1):
@@ -66,10 +28,9 @@ def homo_lr_loss(pred, labels, dim=1):
     
     # initialize the loss
     loss = 0.0
-    if dim == 2:
-        dim -= 1
-
     loss_fn = t.nn.BCELoss()
+    if dim <= 2:
+        return loss_fn(pred[:, 0], labels)
 
     for c in range(dim):
         # get binary labels for this class
@@ -85,7 +46,7 @@ def homo_lr_loss(pred, labels, dim=1):
 
 class HomoLRModel(t.nn.Module):
 
-    def __init__(self, feature_num, label_num=2, l1=0) -> None:
+    def __init__(self, feature_num, label_num=2, l1=0, bias=True) -> None:
         super().__init__()
         assert feature_num >= 2 and isinstance(feature_num, int), "feature_num must be int greater than 2"
         assert label_num >= 1 and isinstance(label_num, int), "label_num must be int greater than 1"
@@ -93,13 +54,13 @@ class HomoLRModel(t.nn.Module):
 
         if 2 >= label_num > 0:
             self.models.append(
-                t.nn.Linear(feature_num, 1)
+                t.nn.Linear(feature_num, 1, bias=bias)
             )
         else:
             # OVR Setting
             for i in range(label_num):
                 self.models.append(
-                    t.nn.Linear(feature_num, 1)
+                    t.nn.Linear(feature_num, 1, bias=bias)
                 )
         self.sigmoid = t.nn.Sigmoid()
         self.softmax = t.nn.Softmax(dim=1)
@@ -148,13 +109,13 @@ class HomoLRModel(t.nn.Module):
         return model
 
 
-def init_model(model, method='random', val=1.0):
+def init_model(model, method='random', fill_val=1.0):
     if method == 'zeros':
         init_fn = nn.init.zeros_
     elif method == 'ones':
         init_fn = nn.init.ones_
     elif method == 'consts':
-        init_fn = lambda x: nn.init.constant_(x, val)
+        init_fn = lambda x: nn.init.constant_(x, fill_val)
     elif method == 'random':
         init_fn = nn.init.normal_
     else:
@@ -188,33 +149,32 @@ def get_torch_bytes(model_dict):
         return model_saved_bytes
 
 
-class DictDataset(Dataset):
-    """TensorDataset with support of transforms.
-    """
-    def __init__(self, data):
-        self.X = np.array(data.features.values).astype(np.float32)
-        self.X_tensor = t.tensor(self.X, dtype=t.float32)
-        if data.labels is None:
-            self.y = None
-        else:
-            self.y = np.array(data.labels.values).astype(np.float32)
-            self.y_tensor = t.tensor(self.y.reshape((-1, 1)), dtype=t.float32)
-       
-    def __getitem__(self, index):
-        if self.y is not None:
-            return {'x': self.X_tensor[index], 'label': self.y_tensor[index]}
-        else:
-            return {'x': self.X_tensor[index]}
+def update_params(new_params, default, name='optimizer'):
+    import copy
+    params = copy.deepcopy(default)
+    if not isinstance(new_params, dict):
+        raise ValueError("{} param dict must be a dict but got {}".format(name, new_params))
+    def _update(default, new):
+        for key in new.keys():
+            if key in default:
+                default[key] = new[key]
 
-    def __len__(self):
-        return self.X_tensor.shape[0]
-    
+    _update(params, new_params)
+
+    return params
+
+
+DEFAULT_OPT_PARAM = {'method': 'sgd', 'penalty': 'l2', 'alpha': 0.0, 'optimizer_params': {'lr': 0.01, 'weight_decay': 0}}
+DEFAULT_INIT_PARAM = {"method": "random", "fill_val": 1.0, "fit_intercept": True}
+DEFAULT_LR_SCHEDULER_PARAM = {'method': 'constant', 'scheduler_params': {'factor': 1.0}}
+
 
 class HomoLRClient(HomoModule):
 
-    def __init__(self, epochs: int=5, batch_size: int=32, optimizer_param=None,
-                learning_rate_scheduler=None,
-                init_param=None,
+    def __init__(self, epochs: int=5, batch_size: int=32, 
+                 optimizer_param={'method': 'sgd', 'optimizer_params': {'lr': 0.01, 'weight_decay': 0}},
+                learning_rate_scheduler={'method': 'constant', 'scheduler_params': {'factor': 1.0}},
+                init_param={"method": "random", "fill_val": 1.0, "fit_intercept": True},
                 threshold: float=0.5,
                 ovr=False,
                 label_num=None,
@@ -222,16 +182,16 @@ class HomoLRClient(HomoModule):
         
         super().__init__()
         self.df_schema = None
-        self.train_data = None
-        self.validate_data = None
-        self.predict_data = None
+        self.train_set = None
+        self.validate_set = None
+        self.predict_set = None
 
         # set vars
         self.max_iter = epochs
         self.batch_size = batch_size
-        self.optimizer_param = optimizer_param
-        self.learning_rate_param = learning_rate_scheduler
-        self.init_param = init_param
+        self.optimizer_param = update_params(optimizer_param, DEFAULT_OPT_PARAM, name='optimizer')
+        self.learning_rate_param = update_params(learning_rate_scheduler, DEFAULT_LR_SCHEDULER_PARAM, name='learning_rate_scheduler')
+        self.init_param = update_params(init_param, DEFAULT_INIT_PARAM, name='init_param')
         self.threshold = threshold
         self.run_ovr = False
         self.train_feature_num = None
@@ -253,25 +213,31 @@ class HomoLRClient(HomoModule):
         # loaded meta
         self.loaded_meta = None
 
-        # l1 & l2
+        # reg
         self.l1 = 0
         self.l2 = 0
 
+        # for testing
+        self.local_mode = False
+
         # checkping param
         assert self.max_iter > 0 and isinstance(self.max_iter, int), "max_iter must be int greater than 0"
-        assert self.batch_size > 0 and isinstance(self.batch_size, int), "batch_size must be int greater than 0"
+        if self.batch_size != -1:
+            assert self.batch_size > 0 and isinstance(self.batch_size, int), "batch_size must be int greater than 0 or -1"
         assert self.threshold > 0 and self.threshold < 1, "threshold must be float between 0 and 1"
     
-    def _make_dataset(self, data: Data):
-        return DictDataset(data)
+    def _make_dataset(self, data) -> TableDataset:
+        ds = TableDataset(return_dict=True, to_tensor=True)
+        ds.load(data)
+        return ds
     
-    def _make_output_df(self, predict_rs, data: Data, threshold: float):
+    def _make_output_df(self, predict_rs, data: TableDataset, threshold: float):
         classes = [i for i in range(len(self.model.models))]
         if len(classes) == 1:  # binary:
             classes = [0, 1]
         task_type = BINARY if len(classes) == 2 else MULTI
         out_df = std_output_df(task_type, predict_rs.predictions, predict_rs.label_ids, threshold=threshold, classes=classes)
-        out_df = add_ids(out_df, data.match_ids, data.sample_ids)
+        out_df = add_ids(out_df, data.get_match_ids(), data.get_sample_ids())
         return out_df
     
     def _check_labels(self, label_set, has_validate=False):
@@ -297,52 +263,50 @@ class HomoLRClient(HomoModule):
         if validate_data is not None:
             assert isinstance(validate_data, DataFrame), "validate_data must be a fate DataFrame"
 
-        self.train_data: Data = Data.from_fate_dataframe(train_data)
-        if not self.train_data.has_label():
+        self.train_set = self._make_dataset(train_data)
+        if not self.train_set.has_label():
             raise RuntimeError("train data must have label column")
-        self.train_feature_num = self.train_data.features.values.shape[1]
-        unique_label_set = set(self.train_data.labels.values.reshape(-1))
+        self.train_feature_num = self.train_set.features.shape[1]
+        unique_label_set = set(self.train_set.get_classes())
 
         if validate_data is not None:
-            self.validate_data = Data.from_fate_dataframe(validate_data)
-            if not self.validate_data.has_label():
+            self.validate_set = self._make_dataset(validate_data)
+            if not self.validate_set.has_label():
                 raise RuntimeError("validate data must have label column")
-            self.validate_feature_num = self.validate_data.features.values.shape[1]
+            self.validate_feature_num = self.validate_set.features.shape[1]
             assert self.train_feature_num == self.validate_feature_num, "train and validate feature num not match: {} vs {}".format(self.train_feature_num, self.validate_feature_num)
-            unique_label_set = unique_label_set.union(set(self.validate_data.labels.values.reshape(-1)))
+            unique_label_set = unique_label_set.union(set(self.validate_set.get_classes()))
 
         self._check_labels(unique_label_set, validate_data is not None)
 
-        if validate_data is not None:
-            unique_label_set = unique_label_set.union(set(self.validate_data.labels.values.reshape(-1)))
-            logger.info("unique label set updated to: {}".format(unique_label_set))
-
-        train_set = self._make_dataset(self.train_data)
-
-        if self.validate_data is not None:
-            validate_set = self._make_dataset(self.validate_data)
-        else:
-            validate_set = None
+        if self.batch_size == -1:
+            self.batch_size = len(self.train_set)
 
         # prepare loss function
         loss_fn = functools.partial(homo_lr_loss, dim=len(unique_label_set))
+        optimizer_params = self.optimizer_param['optimizer_params']
+        opt_method = self.optimizer_param['method']
+        if self.optimizer_param['penalty'] == 'l2':
+            self.l2 = self.optimizer_param['alpha']
+            optimizer_params['weight_decay'] = self.l2
+        elif self.optimizer_param['penalty'] == 'l1':
+            self.l1 = self.optimizer_param['alpha']
 
         # initialize model
         if self.model is None:
-
-            self.model = HomoLRModel(self.train_feature_num, label_num=len(unique_label_set), l1=self.l1)
-
+            fit_intercept = self.init_param["fit_intercept"]
+            self.model = HomoLRModel(self.train_feature_num, label_num=len(unique_label_set), l1=self.l1, bias=fit_intercept)
             # init model here
-            init_model(self.model)
-
+            init_model(self.model, method=self.init_param["method"], fill_val=self.init_param["fill_val"])
             logger.info('model initialized')
             logger.info('model parameters are {}'.format(list(self.model.parameters())))
         else:
             logger.info('model is loaded, warm start training')
         logger.info('model structure is {}'.format(self.model))
 
-        # initialize optimizer
-        self.optimizer = t.optim.SGD(self.model.parameters(), lr=self.learning_rate_param, weight_decay=self.l2)  
+        self.optimizer = optimizer_factory(self.model.parameters(), opt_method, optimizer_params)
+        self.lr_scheduler = lr_scheduler_factory(self.optimizer, self.learning_rate_param['method'], self.learning_rate_param['scheduler_params'])
+
         if self.optimizer_state_dict is not None:
             optimizer_state_dict = {
                 "state": {k: t.tensor(v) for k, v in self.optimizer_state_dict['state'].items()},
@@ -354,9 +318,11 @@ class HomoLRClient(HomoModule):
         # training
         fed_arg = FedAVGArguments()
         train_arg = TrainingArguments(num_train_epochs=self.max_iter, 
-                                      per_device_train_batch_size=self.batch_size, per_gpu_eval_batch_size=self.batch_size)
-        self.trainer = FedAVGCLient(ctx, model=self.model, loss_fn=loss_fn, optimizer=self.optimizer, train_set=train_set, 
-                               val_set=validate_set, training_args=train_arg, fed_args=fed_arg, data_collator=default_data_collator)
+                                      per_device_train_batch_size=self.batch_size, per_device_eval_batch_size=self.batch_size)
+        self.trainer = FedAVGCLient(ctx, model=self.model, loss_fn=loss_fn, optimizer=self.optimizer, train_set=self.train_set, 
+                               val_set=self.validate_set, training_args=train_arg, fed_args=fed_arg, data_collator=default_data_collator, scheduler=self.lr_scheduler)
+        if self.local_mode:  # for debugging
+            self.trainer.set_local_mode()
         self.trainer.train()
 
         logger.info('training finished')
@@ -365,18 +331,20 @@ class HomoLRClient(HomoModule):
         
         if self.model is None:
             raise ValueError("model is not initialized")
-        self.predict_data = Data.from_fate_dataframe(predict_data)
-        predict_set = self._make_dataset(self.predict_data)
+        self.predict_set = self._make_dataset(predict_data)
         if self.trainer is None:
-            train_arg = TrainingArguments(num_train_epochs=self.max_iter, per_device_eval_batch_size=self.batch_size)
-            trainer = FedAVGCLient(ctx, train_set=predict_set, model=self.model, training_args=train_arg, 
+            batch_size = len(self.predict_set) if self.batch_size == -1 else self.batch_size
+            train_arg = TrainingArguments(num_train_epochs=self.max_iter, per_device_eval_batch_size=batch_size)
+            trainer = FedAVGCLient(ctx, train_set=self.predict_set, model=self.model, training_args=train_arg, 
                                         fed_args=FedAVGArguments(), data_collator=default_data_collator)
             trainer.set_local_mode()
         else:
             trainer = self.trainer
-        predict_rs = trainer.predict(predict_set)
-        predict_out_df = self._make_output_df(predict_rs, self.predict_data, self.threshold)
-        return to_fate_df(ctx, self.predict_data.get_sample_id_name(), self.predict_data.get_match_id_name(), predict_out_df)
+        predict_rs = trainer.predict(self.predict_set)
+        predict_out_df = self._make_output_df(predict_rs, self.predict_set, self.threshold)
+        match_id_name = self.predict_set.get_match_ids().columns[0]
+        sample_id_name = self.predict_set.get_sample_ids().columns[0]
+        return to_fate_df(ctx, match_id_name, sample_id_name, predict_out_df)
 
     def get_model(self) -> ModelIO:
         param = {}
