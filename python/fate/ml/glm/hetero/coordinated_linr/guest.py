@@ -108,8 +108,10 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
 
     def fit_model(self, ctx, train_data, validate_data=None):
         coef_count = train_data.shape[1]
+        logger.debug(f"init param: {self.init_param}")
         if self.init_param.get("fit_intercept"):
-            train_data["intercept"] = 1
+            logger.debug(f"add intercept to train data")
+            train_data["intercept"] = 1.0
         w = self.w
         if self.w is None:
             w = initialize_param(coef_count, **self.init_param)
@@ -174,6 +176,8 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         logger.debug(f"Finish training at {self.end_epoch}th epoch.")
 
     def predict(self, ctx, test_data):
+        if self.init_param.get("fit_intercept"):
+            test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):

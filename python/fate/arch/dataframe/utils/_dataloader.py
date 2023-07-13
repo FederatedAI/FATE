@@ -33,7 +33,7 @@ class DataLoader(object):
         self._dataset = dataset
         self._batch_size = batch_size
         if dataset:
-            if batch_size == -1:
+            if batch_size is None:
                 self._batch_size = len(dataset)
             else:
                 self._batch_size = min(batch_size, len(dataset))
