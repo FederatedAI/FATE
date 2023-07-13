@@ -15,6 +15,7 @@ class _Source(object):
 
 SOURCE_FILE = 'source.yaml'
 
+
 def is_path(s):
     return os.path.exists(s)
 
@@ -25,6 +26,7 @@ def load_source():
     with open(script_dir + '/' + SOURCE_FILE, 'r') as f:
         source = yaml.safe_load(f)
     return source
+
 
 class AbstractLoader(ABC):
     @abstractmethod
@@ -49,7 +51,7 @@ class AbstractLoader(ABC):
 
 
 class Loader(AbstractLoader):
-    
+
     def __init__(self, module_name, item_name, source=None, **kwargs):
 
         self.item_name = item_name
@@ -63,7 +65,9 @@ class Loader(AbstractLoader):
             if self.source in source_dict:
                 self.source_path = source_dict[self.source]
             else:
-                raise ValueError('source name {} is not found in the source.yaml file. Please check the source name.'.format(self.source))
+                raise ValueError(
+                    'source name {} is not found in the source.yaml file. Please check the source name.'.format(
+                        self.source))
         elif source is None:
             self.module_name = module_name
 
@@ -93,15 +97,21 @@ class Loader(AbstractLoader):
             suggestion = self._find_similar_module_names()
             print('suggestion is {}'.format(suggestion))
             if suggestion:
-                raise ValueError("Module: {} not found in the import path. Do you mean {}?".format(self.module_name, suggestion))
+                raise ValueError(
+                    "Module: {} not found in the import path. Do you mean {}?".format(
+                        self.module_name, suggestion))
             else:
-                raise ValueError("Module: {} not found in the import path.".format(self.module_name))
+                raise ValueError(
+                    "Module: {} not found in the import path.".format(
+                        self.module_name))
 
         module = importlib.import_module(self.module_name)
-        
+
         item = getattr(module, self.item_name, None)
         if item is None:
-            raise ValueError("Item: {} not found in module: {}.".format(self.item_name, self.module_name))
+            raise ValueError(
+                "Item: {} not found in module: {}.".format(
+                    self.item_name, self.module_name))
 
         if self.source_path is not None:
             sys.path.remove(self.source_path)
@@ -135,8 +145,8 @@ class Loader(AbstractLoader):
 
     @staticmethod
     def from_dict(data_dict):
-        return Loader(module_name=data_dict['module_name'], 
-                      item_name=data_dict['item_name'], 
+        return Loader(module_name=data_dict['module_name'],
+                      item_name=data_dict['item_name'],
                       source=data_dict.get('source', None),
                       **data_dict.get('kwargs', {})
                       )
@@ -145,19 +155,40 @@ class Loader(AbstractLoader):
 class ModelLoader(Loader):
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
-            module_name = f'{_Source.MODEL_ZOO}.{module_name}'  # add prefix for moduele loader
-        super(ModelLoader, self).__init__(module_name, item_name, source, **kwargs)
+            # add prefix for moduele loader
+            module_name = f'{_Source.MODEL_ZOO}.{module_name}'
+        super(
+            ModelLoader,
+            self).__init__(
+            module_name,
+            item_name,
+            source,
+            **kwargs)
 
 
 class DatasetLoader(Loader):
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
-            module_name = f'{_Source.DATASET}.{module_name}'  # add prefix for moduele loader
-        super(DatasetLoader, self).__init__(module_name, item_name, source, **kwargs)
+            # add prefix for moduele loader
+            module_name = f'{_Source.DATASET}.{module_name}'
+        super(
+            DatasetLoader,
+            self).__init__(
+            module_name,
+            item_name,
+            source,
+            **kwargs)
 
 
 class CustFuncLoader(Loader):
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
-            module_name = f'{_Source.CUST_FUNC}.{module_name}'  # add prefix for moduele loader
-        super(CustFuncLoader, self).__init__(module_name, item_name, source, **kwargs)
+            # add prefix for moduele loader
+            module_name = f'{_Source.CUST_FUNC}.{module_name}'
+        super(
+            CustFuncLoader,
+            self).__init__(
+            module_name,
+            item_name,
+            source,
+            **kwargs)

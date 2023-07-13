@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class Multi(nn.Module):
 
     def __init__(self, feat=18, class_num=4) -> None:
@@ -16,4 +17,3 @@ class Multi(nn.Module):
             return self.model(x)
         else:
             return nn.Softmax(dim=-1)(self.model(x))
-        

@@ -20,7 +20,7 @@ class Dataset(Dataset_):
 
     def __len__(self):
         raise NotImplementedError()
-    
+
     def has_label(self) -> bool:
         pass
 
@@ -29,7 +29,7 @@ class Dataset(Dataset_):
 
     def get_match_ids(self) -> pd.DataFrame:
         pass
-    
+
     def get_sample_ids(self) -> pd.DataFrame:
         pass
 

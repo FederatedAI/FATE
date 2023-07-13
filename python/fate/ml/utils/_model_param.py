@@ -27,7 +27,9 @@ def initialize_param(coef_len, **kwargs):
     elif method == 'ones':
         return torch.ones((param_len, 1), requires_grad=True)
     elif method == 'consts':
-        return torch.full((param_len, 1), float(kwargs["fill_val"]), requires_grad=True)
+        return torch.full(
+            (param_len, 1), float(
+                kwargs["fill_val"]), requires_grad=True)
     elif method == 'random':
         return torch.randn((param_len, 1), requires_grad=True)
     else:

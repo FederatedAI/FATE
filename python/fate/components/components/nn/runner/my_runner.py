@@ -7,7 +7,12 @@ from torch.utils.data import TensorDataset
 
 class MyRunner(NNRunner):
 
-    def __init__(self, in_feat=30, epoch=10, learning_rate=0.01, batch_size=32) -> None:
+    def __init__(
+            self,
+            in_feat=30,
+            epoch=10,
+            learning_rate=0.01,
+            batch_size=32) -> None:
         super().__init__()
         self.in_feat = in_feat
         self.epoch = epoch
@@ -15,7 +20,7 @@ class MyRunner(NNRunner):
         self.batch_size = batch_size
 
     def setup(self, df=None):
-        
+
         ctx = self.get_context()
 
         if self.is_client():
@@ -37,16 +42,19 @@ class MyRunner(NNRunner):
 
             optimizer = t.optim.Adam(model.parameters(), lr=self.learning_rate)
 
-            train_arg = TrainingArguments(num_train_epochs=self.epoch, per_device_train_batch_size=self.batch_size, disable_tqdm=False)
+            train_arg = TrainingArguments(
+                num_train_epochs=self.epoch,
+                per_device_train_batch_size=self.batch_size,
+                disable_tqdm=False)
 
             fed_arg = FedAVGArguments()
 
-            return FedAVGCLient(ctx=ctx, model=model, optimizer=optimizer, 
-                                training_args=train_arg, fed_args=fed_arg, train_set=dataset, loss_fn=loss_fn), dataset
+            return FedAVGCLient(ctx=ctx, model=model, optimizer=optimizer, training_args=train_arg,
+                                fed_args=fed_arg, train_set=dataset, loss_fn=loss_fn), dataset
 
         elif self.is_server():
             return FedAVGServer(ctx=ctx)
-    
+
     def train(self, input_data: NNInput = None):
         if self.is_client():
             df = input_data.get('train_data')
@@ -55,7 +63,7 @@ class MyRunner(NNRunner):
             trainer = self.setup()
 
         trainer.train()
-    
+
     def predict(self, input_data: NNInput = None):
 
         if self.is_client():
