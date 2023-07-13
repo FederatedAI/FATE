@@ -45,7 +45,8 @@ def train(
     ),
     epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
     batch_size: cpn.parameter(
-        type=params.conint(ge=-1), default=100, desc="batch size, " "value less or equals to 0 means full batch"
+        type=params.conint(ge=10),
+        default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
     ),
     optimizer: cpn.parameter(
         type=params.optimizer_param(),
@@ -137,7 +138,8 @@ def cross_validation(
         ),
         epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
         batch_size: cpn.parameter(
-            type=params.conint(ge=-1), default=100, desc="batch size, " "value less or equals to 0 means full batch"
+            type=params.conint(ge=10),
+            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
         ),
         optimizer: cpn.parameter(
             type=params.optimizer_param(),
@@ -170,8 +172,8 @@ def cross_validation(
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
     # temp code end
-    i = 0
     if role.is_arbiter:
+        i = 0
         for fold_ctx, _ in ctx.on_cross_validations.ctxs_zip(zip(range(cv_param.n_splits))):
             logger.info(f"enter fold {i}")
             module = CoordinatedLRModuleArbiter(
@@ -183,13 +185,14 @@ def cross_validation(
                 learning_rate_param=learning_rate_scheduler,
             )
             module.fit(fold_ctx)
+            i += 1
+        return
 
     from fate.arch.dataframe import KFold
     kf = KFold(ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state)
     i = 0
     for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
         logger.info(f"enter fold {i}")
-        logger.info(f"train_data schema: {train_data.schema}, columns: {train_data.schema.columns}")
         if role.is_guest:
             module = CoordinatedLRModuleGuest(
                 epochs=epochs,
@@ -382,7 +385,4 @@ def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5,
             lambda v: [int(v[0] > threshold), v[0], json.dumps({1: v[0], 0: 1 - v[0]}), data_type],
             enable_type_align_checking=False,
         )
-    # temp code start
-    df.rename(label_name="label")
-    # temp code end
     return df

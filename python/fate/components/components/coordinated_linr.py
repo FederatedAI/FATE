@@ -19,6 +19,7 @@ import logging
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
+from fate.ml.glm import CoordinatedLinRModuleArbiter, CoordinatedLinRModuleGuest, CoordinatedLinRModuleHost
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,10 @@ def train(
                                                     "refer to torch.optim.lr_scheduler"),
         epochs: cpn.parameter(type=params.conint(gt=0), default=20,
                               desc="max iteration num"),
-        batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
-                                  desc="batch size, "
-                                       "value less or equals to 0 means full batch"),
+        batch_size: cpn.parameter(
+            type=params.conint(ge=10),
+            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
+        ),
         optimizer: cpn.parameter(type=params.optimizer_param(),
                                  default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
                                                                optimizer_params={"lr": 1e-2, "weight_decay": 0})),
@@ -92,11 +94,115 @@ def predict(
         predict_host(ctx, input_model, test_data, test_output_data)
 
 
+@coordinated_linr.cross_validation()
+def cross_validation(
+        ctx: Context,
+        role: Role,
+        cv_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        learning_rate_scheduler: cpn.parameter(
+            type=params.lr_scheduler_param(),
+            default=params.LRSchedulerParam(method="linear", scheduler_params={"start_factor": 1.0}),
+            desc="learning rate scheduler, "
+                 "select method from {'step', 'linear', 'constant'}"
+                 "for list of configurable arguments, "
+                 "refer to torch.optim.lr_scheduler",
+        ),
+        epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
+        batch_size: cpn.parameter(
+            type=params.conint(ge=10),
+            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
+        ),
+        optimizer: cpn.parameter(
+            type=params.optimizer_param(),
+            default=params.OptimizerParam(
+                method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
+            ),
+        ),
+        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+        early_stop: cpn.parameter(
+            type=params.string_choice(["weight_diff", "diff", "abs"]),
+            default="diff",
+            desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
+        ),
+        init_param: cpn.parameter(
+            type=params.init_param(),
+            default=params.InitParam(method="zeros", fit_intercept=True),
+            desc="Model param init setting.",
+        ),
+        cv_param: cpn.parameter(type=params.cv_param(),
+                                default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
+                                desc="cross validation param"),
+        metrics: cpn.parameter(type=params.metrics_param(), default=["mse"]),
+        cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST]),
+):
+    # temp code start
+    optimizer = optimizer.dict()
+    learning_rate_scheduler = learning_rate_scheduler.dict()
+    init_param = init_param.dict()
+    # temp code end
+    if role.is_arbiter:
+        i = 0
+        for fold_ctx, _ in ctx.on_cross_validations.ctxs_zip(zip(range(cv_param.n_splits))):
+            logger.info(f"enter fold {i}")
+            module = CoordinatedLinRModuleArbiter(
+                epochs=epochs,
+                early_stop=early_stop,
+                tol=tol,
+                batch_size=batch_size,
+                optimizer_param=optimizer,
+                learning_rate_param=learning_rate_scheduler,
+            )
+            module.fit(fold_ctx)
+            i += 1
+        return
+
+    from fate.arch.dataframe import KFold
+    kf = KFold(ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state)
+    i = 0
+    for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
+        logger.info(f"enter fold {i}")
+        if role.is_guest:
+            module = CoordinatedLinRModuleGuest(
+                epochs=epochs,
+                batch_size=batch_size,
+                optimizer_param=optimizer,
+                learning_rate_param=learning_rate_scheduler,
+                init_param=init_param
+            )
+            module.fit(fold_ctx, train_data, validate_data)
+            sub_ctx = fold_ctx.sub_ctx("predict_train")
+            predict_score = module.predict(sub_ctx, train_data)
+            train_predict_result = transform_to_predict_result(
+                train_data, predict_score, data_type="train"
+            )
+            sub_ctx = fold_ctx.sub_ctx("predict_validate")
+            predict_score = module.predict(sub_ctx, validate_data)
+            validate_predict_result = transform_to_predict_result(
+                validate_data, predict_score, data_type="predict"
+            )
+            predict_result = DataFrame.vstack([train_predict_result, validate_predict_result])
+            next(cv_output_datas).write(df=predict_result)
+
+            # evaluation = evaluate(predicted)
+        elif role.is_host:
+            module = CoordinatedLinRModuleHost(
+                epochs=epochs,
+                batch_size=batch_size,
+                optimizer_param=optimizer,
+                learning_rate_param=learning_rate_scheduler,
+                init_param=init_param
+            )
+            module.fit(fold_ctx, train_data, validate_data)
+            sub_ctx = fold_ctx.sub_ctx("predict_train")
+            module.predict(sub_ctx, train_data)
+            sub_ctx = fold_ctx.sub_ctx("predict_validate")
+            module.predict(sub_ctx, validate_data)
+        i += 1
+
+
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, epochs,
                 batch_size, optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated linr guest start train")
-    from fate.ml.glm import CoordinatedLinRModuleGuest
-    # optimizer = optimizer_factory(optimizer_param)
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
                                         optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
@@ -125,10 +231,6 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, epochs, batch_size,
                optimizer_param, learning_rate_param, init_param):
     logger.info(f"coordinated linr host start train")
-
-    from fate.ml.glm import CoordinatedLinRModuleHost
-    # optimizer = optimizer_factory(optimizer_param)
-
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLinRModuleHost(epochs=epochs, batch_size=batch_size,
                                        optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
@@ -151,8 +253,6 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
                   learning_rate_param, output_model):
     logger.info(f"coordinated linr arbiter start train")
 
-    from fate.ml.glm import CoordinatedLinRModuleArbiter
-
     sub_ctx = ctx.sub_ctx("train")
     module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
                                           optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
@@ -165,8 +265,6 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm import CoordinatedLinRModuleGuest
-
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()
 
@@ -178,8 +276,6 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm import CoordinatedLinRModuleHost
-
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()
     module = CoordinatedLinRModuleHost.from_model(model)
@@ -196,7 +292,4 @@ def transform_to_predict_result(test_data, predict_score, data_type="test"):
         v[0],
         json.dumps({"label": v[0]}),
         data_type], enable_type_align_checking=False)
-    # temp code start
-    df.rename(label_name="label")
-    # temp code end
     return df
