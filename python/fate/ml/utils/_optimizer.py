@@ -94,7 +94,7 @@ class Optimizer(object):
         # logger.info(f"gradient: {self.model_parameter.grad}, prev model parameter: {self.prev_model_parameter},"
         #            f"delta grad: {self.model_parameter - self.prev_model_parameter}")
         if self.prev_model_parameter is not None:
-            return self.model_parameter.data - self.prev_model_parameter
+            return self.prev_model_parameter - self.model_parameter.data
         else:
             raise ValueError(f"No optimization history found, please check.")
 
