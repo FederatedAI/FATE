@@ -19,13 +19,12 @@ from fate.ml.utils._optimizer import optimizer_factory, lr_scheduler_factory
 logger = logging.getLogger(__name__)
 
 
-
 def homo_lr_loss(pred, labels, dim=1):
     """
     The function assumes that pred has shape (n, num_classes) where each class has its own linear model.
     labels have shape (n,) and the values are integers denoting the class.
     """
-    
+
     # initialize the loss
     loss = 0.0
     loss_fn = t.nn.BCELoss()
@@ -48,8 +47,10 @@ class HomoLRModel(t.nn.Module):
 
     def __init__(self, feature_num, label_num=2, l1=0, bias=True) -> None:
         super().__init__()
-        assert feature_num >= 2 and isinstance(feature_num, int), "feature_num must be int greater than 2"
-        assert label_num >= 1 and isinstance(label_num, int), "label_num must be int greater than 1"
+        assert feature_num >= 2 and isinstance(
+            feature_num, int), "feature_num must be int greater than 2"
+        assert label_num >= 1 and isinstance(
+            label_num, int), "label_num must be int greater than 1"
         self.models = t.nn.ModuleList()
 
         if 2 >= label_num > 0:
@@ -81,7 +82,7 @@ class HomoLRModel(t.nn.Module):
                 linear_out = self.softmax(linear_out)
 
         ret_dict['pred'] = linear_out
-        
+
         if labels is not None:
             loss = homo_lr_loss(linear_out, labels, dim=len(self.models))
             if self.l1 != 0:
@@ -92,19 +93,22 @@ class HomoLRModel(t.nn.Module):
             ret_dict['loss'] = loss
 
         return ret_dict
-        
+
     def to_dict(self):
         model_dict = {
             "feature_num": self.models[0].in_features,
             "label_num": len(self.models),
-            "state_dict": {k: v.tolist() for k, v in self.state_dict().items()}  # convert tensor to list
+            # convert tensor to list
+            "state_dict": {k: v.tolist() for k, v in self.state_dict().items()}
         }
         return model_dict
 
     @classmethod
     def from_dict(cls, model_dict):
         model = cls(model_dict["feature_num"], model_dict["label_num"])
-        model_state_dict = {k: t.tensor(v) for k, v in model_dict["state_dict"].items()}  # convert list back to tensor
+        model_state_dict = {
+            k: t.tensor(v) for k,
+            v in model_dict["state_dict"].items()}  # convert list back to tensor
         model.load_state_dict(model_state_dict)
         return model
 
@@ -115,15 +119,17 @@ def init_model(model, method='random', fill_val=1.0):
     elif method == 'ones':
         init_fn = nn.init.ones_
     elif method == 'consts':
-        init_fn = lambda x: nn.init.constant_(x, fill_val)
+        def init_fn(x): return nn.init.constant_(x, fill_val)
     elif method == 'random':
         init_fn = nn.init.normal_
     else:
-        raise ValueError("Invalid method. Options are: 'zeros', 'ones', 'consts', 'random'")
-    
+        raise ValueError(
+            "Invalid method. Options are: 'zeros', 'ones', 'consts', 'random'")
+
     for name, param in model.named_parameters():
         if 'bias' in name:
-            nn.init.zeros_(param)  # usually it's good practice to initialize biases to zero
+            # usually it's good practice to initialize biases to zero
+            nn.init.zeros_(param)
         else:
             init_fn(param)
 
@@ -153,7 +159,10 @@ def update_params(new_params, default, name='optimizer'):
     import copy
     params = copy.deepcopy(default)
     if not isinstance(new_params, dict):
-        raise ValueError("{} param dict must be a dict but got {}".format(name, new_params))
+        raise ValueError(
+            "{} param dict must be a dict but got {}".format(
+                name, new_params))
+
     def _update(default, new):
         for key in new.keys():
             if key in default:
@@ -164,22 +173,47 @@ def update_params(new_params, default, name='optimizer'):
     return params
 
 
-DEFAULT_OPT_PARAM = {'method': 'sgd', 'penalty': 'l2', 'alpha': 0.0, 'optimizer_params': {'lr': 0.01, 'weight_decay': 0}}
-DEFAULT_INIT_PARAM = {"method": "random", "fill_val": 1.0, "fit_intercept": True}
-DEFAULT_LR_SCHEDULER_PARAM = {'method': 'constant', 'scheduler_params': {'factor': 1.0}}
+DEFAULT_OPT_PARAM = {
+    'method': 'sgd',
+    'penalty': 'l2',
+    'alpha': 0.0,
+    'optimizer_params': {
+        'lr': 0.01,
+        'weight_decay': 0}}
+DEFAULT_INIT_PARAM = {
+    "method": "random",
+    "fill_val": 1.0,
+    "fit_intercept": True}
+DEFAULT_LR_SCHEDULER_PARAM = {
+    'method': 'constant',
+    'scheduler_params': {
+        'factor': 1.0}}
 
 
 class HomoLRClient(HomoModule):
 
-    def __init__(self, epochs: int=5, batch_size: int=32, 
-                 optimizer_param={'method': 'sgd', 'optimizer_params': {'lr': 0.01, 'weight_decay': 0}},
-                learning_rate_scheduler={'method': 'constant', 'scheduler_params': {'factor': 1.0}},
-                init_param={"method": "random", "fill_val": 1.0, "fit_intercept": True},
-                threshold: float=0.5,
-                ovr=False,
-                label_num=None,
-                ) -> None:
-        
+    def __init__(
+            self,
+            epochs: int = 5,
+            batch_size: int = 32,
+            optimizer_param={
+                'method': 'sgd',
+                'optimizer_params': {
+                    'lr': 0.01,
+                    'weight_decay': 0}},
+        learning_rate_scheduler={
+                'method': 'constant',
+                'scheduler_params': {
+                    'factor': 1.0}},
+            init_param={
+                "method": "random",
+                "fill_val": 1.0,
+                "fit_intercept": True},
+            threshold: float = 0.5,
+            ovr=False,
+            label_num=None,
+    ) -> None:
+
         super().__init__()
         self.df_schema = None
         self.train_set = None
@@ -189,9 +223,14 @@ class HomoLRClient(HomoModule):
         # set vars
         self.max_iter = epochs
         self.batch_size = batch_size
-        self.optimizer_param = update_params(optimizer_param, DEFAULT_OPT_PARAM, name='optimizer')
-        self.learning_rate_param = update_params(learning_rate_scheduler, DEFAULT_LR_SCHEDULER_PARAM, name='learning_rate_scheduler')
-        self.init_param = update_params(init_param, DEFAULT_INIT_PARAM, name='init_param')
+        self.optimizer_param = update_params(
+            optimizer_param, DEFAULT_OPT_PARAM, name='optimizer')
+        self.learning_rate_param = update_params(
+            learning_rate_scheduler,
+            DEFAULT_LR_SCHEDULER_PARAM,
+            name='learning_rate_scheduler')
+        self.init_param = update_params(
+            init_param, DEFAULT_INIT_PARAM, name='init_param')
         self.threshold = threshold
         self.run_ovr = False
         self.train_feature_num = None
@@ -201,8 +240,10 @@ class HomoLRClient(HomoModule):
 
         if self.ovr:
             if self.label_num is None or self.label_num < 2:
-                raise ValueError("label_num must be greater than 2 when ovr is True, but got {}".format(self.label_num))
-        
+                raise ValueError(
+                    "label_num must be greater than 2 when ovr is True, but got {}".format(
+                        self.label_num))
+
         # models & optimizer & schduler
         self.model = None
         self.optimizer = None
@@ -221,47 +262,68 @@ class HomoLRClient(HomoModule):
         self.local_mode = False
 
         # checkping param
-        assert self.max_iter > 0 and isinstance(self.max_iter, int), "max_iter must be int greater than 0"
+        assert self.max_iter > 0 and isinstance(
+            self.max_iter, int), "max_iter must be int greater than 0"
         if self.batch_size != -1:
-            assert self.batch_size > 0 and isinstance(self.batch_size, int), "batch_size must be int greater than 0 or -1"
+            assert self.batch_size > 0 and isinstance(
+                self.batch_size, int), "batch_size must be int greater than 0 or -1"
         assert self.threshold > 0 and self.threshold < 1, "threshold must be float between 0 and 1"
-    
+
     def _make_dataset(self, data) -> TableDataset:
         ds = TableDataset(return_dict=True, to_tensor=True)
         ds.load(data)
         return ds
-    
-    def _make_output_df(self, predict_rs, data: TableDataset, threshold: float):
+
+    def _make_output_df(
+            self,
+            predict_rs,
+            data: TableDataset,
+            threshold: float):
         classes = [i for i in range(len(self.model.models))]
         if len(classes) == 1:  # binary:
             classes = [0, 1]
         task_type = BINARY if len(classes) == 2 else MULTI
-        out_df = std_output_df(task_type, predict_rs.predictions, predict_rs.label_ids, threshold=threshold, classes=classes)
+        out_df = std_output_df(
+            task_type,
+            predict_rs.predictions,
+            predict_rs.label_ids,
+            threshold=threshold,
+            classes=classes)
         out_df = add_ids(out_df, data.get_match_ids(), data.get_sample_ids())
         return out_df
-    
+
     def _check_labels(self, label_set, has_validate=False):
-        
+
         dataset_descrb = 'train dataset' if not has_validate else 'train and validate dataset'
         if not self.ovr and len(label_set) > 2:
-            raise ValueError("please set ovr=True to enable multi-label classification, multiple labels found in {}: {}".format(dataset_descrb, label_set))
+            raise ValueError(
+                "please set ovr=True to enable multi-label classification, multiple labels found in {}: {}".format(
+                    dataset_descrb, label_set))
         if not self.ovr and len(label_set) == 2:
             # 0, 1 is required
             if 0 not in label_set or 1 not in label_set:
                 # ask for label 0, 1 when running binary classification
-                raise ValueError("when doing binary classification, lables must be 0, 1, but found in {}'s label set is {}".format(label_set, dataset_descrb))
+                raise ValueError(
+                    "when doing binary classification, lables must be 0, 1, but found in {}'s label set is {}".format(
+                        label_set, dataset_descrb))
         if self.ovr:
             if max(label_set) > self.label_num - 1:
-                # make sure labels start from 0 and not the label indices not exceed the label num parameter
-                raise ValueError("when doing multi-label classification, labels must start from 0 and not exceed the label num parameter, \
-                                 but {}'s label set is {}, while label num is {}".format(label_set, dataset_descrb, self.label_num))
+                # make sure labels start from 0 and not the label indices not
+                # exceed the label num parameter
+                raise ValueError(
+                    "when doing multi-label classification, labels must start from 0 and not exceed the label num parameter, \
+                                 but {}'s label set is {}, while label num is {}".format(
+                        label_set, dataset_descrb, self.label_num))
 
-    def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
+    def fit(self, ctx: Context, train_data: DataFrame,
+            validate_data: DataFrame = None) -> None:
 
         # check data, must be fate Dataframe
-        assert isinstance(train_data, DataFrame), "train_data must be a fate DataFrame"
+        assert isinstance(
+            train_data, DataFrame), "train_data must be a fate DataFrame"
         if validate_data is not None:
-            assert isinstance(validate_data, DataFrame), "validate_data must be a fate DataFrame"
+            assert isinstance(
+                validate_data, DataFrame), "validate_data must be a fate DataFrame"
 
         self.train_set = self._make_dataset(train_data)
         if not self.train_set.has_label():
@@ -274,8 +336,10 @@ class HomoLRClient(HomoModule):
             if not self.validate_set.has_label():
                 raise RuntimeError("validate data must have label column")
             self.validate_feature_num = self.validate_set.features.shape[1]
-            assert self.train_feature_num == self.validate_feature_num, "train and validate feature num not match: {} vs {}".format(self.train_feature_num, self.validate_feature_num)
-            unique_label_set = unique_label_set.union(set(self.validate_set.get_classes()))
+            assert self.train_feature_num == self.validate_feature_num, "train and validate feature num not match: {} vs {}".format(
+                self.train_feature_num, self.validate_feature_num)
+            unique_label_set = unique_label_set.union(
+                set(self.validate_set.get_classes()))
 
         self._check_labels(unique_label_set, validate_data is not None)
 
@@ -295,21 +359,37 @@ class HomoLRClient(HomoModule):
         # initialize model
         if self.model is None:
             fit_intercept = self.init_param["fit_intercept"]
-            self.model = HomoLRModel(self.train_feature_num, label_num=len(unique_label_set), l1=self.l1, bias=fit_intercept)
+            self.model = HomoLRModel(
+                self.train_feature_num,
+                label_num=len(unique_label_set),
+                l1=self.l1,
+                bias=fit_intercept)
             # init model here
-            init_model(self.model, method=self.init_param["method"], fill_val=self.init_param["fill_val"])
+            init_model(
+                self.model,
+                method=self.init_param["method"],
+                fill_val=self.init_param["fill_val"])
             logger.info('model initialized')
-            logger.info('model parameters are {}'.format(list(self.model.parameters())))
+            logger.info(
+                'model parameters are {}'.format(
+                    list(
+                        self.model.parameters())))
         else:
             logger.info('model is loaded, warm start training')
         logger.info('model structure is {}'.format(self.model))
 
-        self.optimizer = optimizer_factory(self.model.parameters(), opt_method, optimizer_params)
-        self.lr_scheduler = lr_scheduler_factory(self.optimizer, self.learning_rate_param['method'], self.learning_rate_param['scheduler_params'])
+        self.optimizer = optimizer_factory(
+            self.model.parameters(), opt_method, optimizer_params)
+        self.lr_scheduler = lr_scheduler_factory(
+            self.optimizer,
+            self.learning_rate_param['method'],
+            self.learning_rate_param['scheduler_params'])
 
         if self.optimizer_state_dict is not None:
             optimizer_state_dict = {
-                "state": {k: t.tensor(v) for k, v in self.optimizer_state_dict['state'].items()},
+                "state": {
+                    k: t.tensor(v) for k,
+                    v in self.optimizer_state_dict['state'].items()},
                 "param_groups": self.optimizer_state_dict['param_groups'],
             }
             self.optimizer.load_state_dict(optimizer_state_dict)
@@ -317,31 +397,51 @@ class HomoLRClient(HomoModule):
 
         # training
         fed_arg = FedAVGArguments()
-        train_arg = TrainingArguments(num_train_epochs=self.max_iter, 
-                                      per_device_train_batch_size=self.batch_size, per_device_eval_batch_size=self.batch_size)
-        self.trainer = FedAVGCLient(ctx, model=self.model, loss_fn=loss_fn, optimizer=self.optimizer, train_set=self.train_set, 
-                               val_set=self.validate_set, training_args=train_arg, fed_args=fed_arg, data_collator=default_data_collator, scheduler=self.lr_scheduler)
+        train_arg = TrainingArguments(
+            num_train_epochs=self.max_iter,
+            per_device_train_batch_size=self.batch_size,
+            per_device_eval_batch_size=self.batch_size)
+        self.trainer = FedAVGCLient(
+            ctx,
+            model=self.model,
+            loss_fn=loss_fn,
+            optimizer=self.optimizer,
+            train_set=self.train_set,
+            val_set=self.validate_set,
+            training_args=train_arg,
+            fed_args=fed_arg,
+            data_collator=default_data_collator,
+            scheduler=self.lr_scheduler)
         if self.local_mode:  # for debugging
             self.trainer.set_local_mode()
         self.trainer.train()
 
         logger.info('training finished')
-        
+
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
-        
+
         if self.model is None:
             raise ValueError("model is not initialized")
         self.predict_set = self._make_dataset(predict_data)
         if self.trainer is None:
-            batch_size = len(self.predict_set) if self.batch_size == -1 else self.batch_size
-            train_arg = TrainingArguments(num_train_epochs=self.max_iter, per_device_eval_batch_size=batch_size)
-            trainer = FedAVGCLient(ctx, train_set=self.predict_set, model=self.model, training_args=train_arg, 
-                                        fed_args=FedAVGArguments(), data_collator=default_data_collator)
+            batch_size = len(
+                self.predict_set) if self.batch_size == -1 else self.batch_size
+            train_arg = TrainingArguments(
+                num_train_epochs=self.max_iter,
+                per_device_eval_batch_size=batch_size)
+            trainer = FedAVGCLient(
+                ctx,
+                train_set=self.predict_set,
+                model=self.model,
+                training_args=train_arg,
+                fed_args=FedAVGArguments(),
+                data_collator=default_data_collator)
             trainer.set_local_mode()
         else:
             trainer = self.trainer
         predict_rs = trainer.predict(self.predict_set)
-        predict_out_df = self._make_output_df(predict_rs, self.predict_set, self.threshold)
+        predict_out_df = self._make_output_df(
+            predict_rs, self.predict_set, self.threshold)
         match_id_name = self.predict_set.get_match_ids().columns[0]
         sample_id_name = self.predict_set.get_sample_ids().columns[0]
         return to_fate_df(ctx, match_id_name, sample_id_name, predict_out_df)
@@ -351,11 +451,19 @@ class HomoLRClient(HomoModule):
         if self.model is not None:
             param['model'] = self.model.to_dict()
         if self.optimizer is not None:
-            param['optimizer'] = str(get_torch_bytes(self.optimizer.state_dict()))
-        
-        meta = {'batch_size': self.batch_size, 'max_iter': self.max_iter, 'threshold': self.threshold, 
-                'optimizer_param': self.optimizer_param, 'learning_rate_param': self.learning_rate_param, 'init_param': self.init_param, 'ovr': self.ovr, 
-                'label_num': self.label_num}
+            param['optimizer'] = str(
+                get_torch_bytes(
+                    self.optimizer.state_dict()))
+
+        meta = {
+            'batch_size': self.batch_size,
+            'max_iter': self.max_iter,
+            'threshold': self.threshold,
+            'optimizer_param': self.optimizer_param,
+            'learning_rate_param': self.learning_rate_param,
+            'init_param': self.init_param,
+            'ovr': self.ovr,
+            'label_num': self.label_num}
         export_ = ModelIO(data=param, meta=meta)
 
         return export_
@@ -363,18 +471,18 @@ class HomoLRClient(HomoModule):
     def from_model(self, model: ModelIO):
 
         model = model.dict()
-        if not 'data' in model:
+        if 'data' not in model:
             raise ('key "data" is not found in the input model dict')
-        
+
         model_param = model['data']
-        if not 'model' in model_param:
-            raise ValueError("param dict must have key 'model' that contains the model parameter and structure info")
+        if 'model' not in model_param:
+            raise ValueError(
+                "param dict must have key 'model' that contains the model parameter and structure info")
         self.model = HomoLRModel.from_dict(model_param['model'])
         if self.ovr:
             assert len(self.model.models) == self.label_num, ''
         self.model.l1 = self.l1
         if hasattr(model_param, 'optimizer'):
-            self.optimizer_state_dict = recover_torch_bytes(bytes(model_param['optimizer'], 'utf-8'))
+            self.optimizer_state_dict = recover_torch_bytes(
+                bytes(model_param['optimizer'], 'utf-8'))
         self.loaded_meta = model['meta']
-
-

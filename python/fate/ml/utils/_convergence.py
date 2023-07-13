@@ -39,7 +39,9 @@ class _DiffConverge(_ConvergeFunction):
         self.pre_loss = None
 
     def is_converge(self, loss):
-        logger.debug("In diff converge function, pre_loss: {}, current_loss: {}".format(self.pre_loss, loss))
+        logger.debug(
+            "In diff converge function, pre_loss: {}, current_loss: {}".format(
+                self.pre_loss, loss))
 
         converge_flag = False
         if self.pre_loss is None:
@@ -99,4 +101,5 @@ def converge_func_factory(early_stop, tol):
     elif early_stop == 'abs':
         return _AbsConverge(tol)
     else:
-        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(early_stop))
+        raise NotImplementedError(
+            "Converge Function method cannot be recognized: {}".format(early_stop))
