@@ -165,7 +165,8 @@ def cross_validation(
                                 default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
                                 desc="cross validation param"),
         metrics: cpn.parameter(type=params.metrics_param(), default=["auc"]),
-        cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST]),
+        output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
+        cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
 ):
     # temp code start
     optimizer = optimizer.dict()
@@ -203,20 +204,21 @@ def cross_validation(
                 threshold=threshold,
             )
             module.fit(fold_ctx, train_data, validate_data)
-            sub_ctx = fold_ctx.sub_ctx("predict_train")
-            predict_score = module.predict(sub_ctx, train_data)
-            train_predict_result = transform_to_predict_result(
-                train_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
-                data_type="train"
-            )
-            sub_ctx = fold_ctx.sub_ctx("predict_validate")
-            predict_score = module.predict(sub_ctx, validate_data)
-            validate_predict_result = transform_to_predict_result(
-                validate_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
-                data_type="predict"
-            )
-            predict_result = DataFrame.vstack([train_predict_result, validate_predict_result])
-            next(cv_output_datas).write(df=predict_result)
+            if output_cv_data:
+                sub_ctx = fold_ctx.sub_ctx("predict_train")
+                predict_score = module.predict(sub_ctx, train_data)
+                train_predict_result = transform_to_predict_result(
+                    train_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
+                    data_type="train"
+                )
+                sub_ctx = fold_ctx.sub_ctx("predict_validate")
+                predict_score = module.predict(sub_ctx, validate_data)
+                validate_predict_result = transform_to_predict_result(
+                    validate_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
+                    data_type="predict"
+                )
+                predict_result = DataFrame.vstack([train_predict_result, validate_predict_result])
+                next(cv_output_datas).write(df=predict_result)
 
             # evaluation = evaluate(predicted)
         elif role.is_host:
@@ -228,10 +230,11 @@ def cross_validation(
                 init_param=init_param,
             )
             module.fit(fold_ctx, train_data, validate_data)
-            sub_ctx = fold_ctx.sub_ctx("predict_train")
-            module.predict(sub_ctx, train_data)
-            sub_ctx = fold_ctx.sub_ctx("predict_validate")
-            module.predict(sub_ctx, validate_data)
+            if output_cv_data:
+                sub_ctx = fold_ctx.sub_ctx("predict_train")
+                module.predict(sub_ctx, train_data)
+                sub_ctx = fold_ctx.sub_ctx("predict_validate")
+                module.predict(sub_ctx, validate_data)
         i += 1
 
 
