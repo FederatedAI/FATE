@@ -175,8 +175,10 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
         """
         coef_count = train_data.shape[1]
+        logger.info(f"coef count: {coef_count}")
         if self.init_param.get("fit_intercept"):
-            train_data["intercept"] = 1.0
+            if "intercept" not in train_data.schema.columns:
+                train_data["intercept"] = 1.0
 
         w = self.w
         if w is None:
@@ -203,7 +205,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 weight = batch_data.weight
                 h = X.shape[0]
                 # logger.info(f"h: {h}")
-
+                logger.info(f"w: {w.detach()}, X shape: {X.shape}")
                 Xw = torch.matmul(X, w.detach())
                 d = 0.25 * Xw - 0.5 * Y
                 loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
