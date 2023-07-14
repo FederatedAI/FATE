@@ -8,10 +8,10 @@ from typing import Optional, Union
 from transformers.trainer_utils import PredictionOutput
 import numpy as np
 from fate.arch.dataframe._dataframe import DataFrame
-from fate.arch.dataframe.manager.schema_manager import Schema
 from fate.components.components.utils import consts
 import logging
-from fate.ml.utils.predict_tools import to_fate_df, std_output_df, add_ids
+from fate.ml.utils.predict_tools import to_fate_df, array_to_predict_df
+from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION, OTHER, LABEL, PREDICT_SCORE
 
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class NNRunner(object):
             self,
             ctx,
             predictions: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput],
-            labels: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput],
+            labels: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput] = None,
             match_ids: Union[pd.DataFrame, np.ndarray] = None,
             sample_ids: Union[pd.DataFrame, np.ndarray] = None,
             match_id_name: str = None,
@@ -115,8 +115,7 @@ class NNRunner(object):
             DataFrame: A DataFrame that contains the neural network's predictions and the true labels, possibly along with match IDs and sample IDs, formatted according to the specified format.
         """
         # check parameters
-        assert task_type in ['binary', 'multi', 'regression',
-                             'others'], f"task_type {task_type} is not supported"
+        assert task_type in [BINARY, MULTI, REGRESSION, OTHER], f"task_type {task_type} is not supported"
         assert dataframe_format in [
             'default', 'fate_std'], f"dataframe_format {dataframe_format} is not supported"
 
@@ -127,13 +126,14 @@ class NNRunner(object):
 
         if isinstance(predictions, PredictionOutput):
             predictions = predictions.predictions
-        if isinstance(labels, PredictionOutput):
-            labels = labels.label_ids
-
-        predictions = _convert_to_numpy_array(predictions)
-        labels = _convert_to_numpy_array(labels)
-        assert len(predictions) == len(
-            labels), f"predictions length {len(predictions)} != labels length {len(labels)}"
+        
+        if labels is not None:
+            if isinstance(labels, PredictionOutput):
+                labels = labels.label_ids
+            predictions = _convert_to_numpy_array(predictions)
+            labels = _convert_to_numpy_array(labels)
+            assert len(predictions) == len(
+                labels), f"predictions length {len(predictions)} != labels length {len(labels)}"
 
         # check match ids
         if match_ids is not None:
@@ -165,26 +165,17 @@ class NNRunner(object):
             sample_id_name, str), f"sample_id_name must be str, but got {type(sample_id_name)}"
 
         if dataframe_format == 'default' or (
-                dataframe_format == 'fate_std' and task_type == 'others'):
-            df = pd.DataFrame({'label': labels.to_list(),
-                               'predict': predictions.to_list(),
-                               match_id_name: match_ids.to_list(),
-                               sample_id_name: sample_ids.to_list()})
+                dataframe_format == 'fate_std' and task_type == OTHER):
+            df = pd.DataFrame()
+            if labels is not None:
+                df[LABEL] = labels.to_list()
+            df[PREDICT_SCORE] = predictions.to_list()
+            df[match_id_name] = match_ids.flatten()
+            df[sample_id_name] = sample_ids.flatten()
             df = to_fate_df(ctx, sample_id_name, match_id_name, df)
             return df
-        elif dataframe_format == 'fate_std' and task_type in ['binary', 'multi', 'regression']:
-            df = std_output_df(
-                task_type,
-                predictions,
-                labels,
-                threshold,
-                classes)
-            match_id_df = pd.DataFrame()
-            match_id_df[match_id_name] = match_ids
-            sample_id_df = pd.DataFrame()
-            sample_id_df[sample_id_name] = sample_ids
-            df = add_ids(df, match_id_df, sample_id_df)
-            df = to_fate_df(ctx, sample_id_name, match_id_name, df)
+        elif dataframe_format == 'fate_std' and task_type in [BINARY, MULTI, REGRESSION]:
+            df = array_to_predict_df(ctx, task_type, predictions, match_ids, sample_ids, match_id_name, sample_id_name, labels, threshold, classes)
             return df
 
     def train(self,

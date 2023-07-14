@@ -219,11 +219,11 @@ class TableDataset(Dataset):
             raise ValueError(
                 "no label found, please check if self.label is set")
 
-    def get_sample_ids(self) -> pd.DataFrame:
-        return self.sample_ids
+    def get_sample_ids(self) -> np.ndarray:
+        return self.sample_ids.values
 
-    def get_match_ids(self) -> pd.DataFrame:
-        return self.match_ids
+    def get_match_ids(self) -> np.ndarray:
+        return self.match_ids.values
 
     def get_sample_id_name(self) -> str:
         if self.sample_ids is not None and isinstance(
