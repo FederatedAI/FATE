@@ -12,6 +12,7 @@ import pandas as pd
 from fate.arch.dataframe import PandasReader
 import logging
 from fate.components.core import GUEST
+from fate.ml.utils.predict_tools import predict_detail_dict_to_str
 
 # Get the root logger
 logger = logging.getLogger()
@@ -35,9 +36,10 @@ df['sample_id'] = [i for i in range(len(df))]
 reader = PandasReader(
     sample_id_name='sample_id',
     match_id_name="id",
-    label_name="y",
+    # label_name="y",
     dtype="object")
 data = reader.to_frame(ctx, df)
+
 
 runner_conf = get_config_of_default_runner(
     algo='fedavg',
