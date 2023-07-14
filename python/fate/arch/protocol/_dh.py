@@ -54,11 +54,14 @@ class SecureAggregatorServer(_SecureAggregatorMeta):
         self.prefix = prefix
         self.ranks = ranks
 
-    def secure_aggregate(self, ctx: Context):
+    def secure_aggregate(self, ctx: Context, ranks: typing.Optional[int] = None):
         mix_aggregator = MixAggregate()
         aggregated_weight = 0.0
         has_weight = False
-        for rank in self.ranks:
+
+        if ranks is None:
+            ranks = self.ranks
+        for rank in ranks:
             mix_arrays, weight = ctx.parties[rank].get(self._get_name(self._send_name))
             mix_aggregator.aggregate(mix_arrays)
             if weight is not None:
@@ -67,5 +70,5 @@ class SecureAggregatorServer(_SecureAggregatorMeta):
         if not has_weight:
             aggregated_weight = None
         aggregated = mix_aggregator.finalize(aggregated_weight)
-        for rank in self.ranks:
+        for rank in ranks:
             ctx.parties[rank].put(self._get_name(self._recv_name), aggregated)
