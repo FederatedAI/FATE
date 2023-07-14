@@ -32,3 +32,22 @@ def initialize_param(coef_len, **kwargs):
         return torch.randn((param_len, 1), requires_grad=True)
     else:
         raise NotImplementedError(f"Unknown initialization method: {method}")
+
+
+def serialize_param(param, fit_intercept=False):
+    dtype = str(param.dtype).split(".", -1)[-1]
+    w = param.tolist()
+    intercept = None
+    if fit_intercept:
+        w = w[:-1]
+        intercept = w[-1]
+    return {"coef_": w, "intercept_": intercept, "dtype": dtype}
+
+
+def deserialize_param(param, fit_intercept=False):
+    w = param["coef_"]
+    if fit_intercept:
+        w.append(param["intercept_"])
+    dtype = param["dtype"]
+    w = torch.tensor(w, dtype=getattr(torch, dtype))
+    return w

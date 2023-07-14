@@ -42,10 +42,40 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
         label_count = ctx.guest("label_count").get()
-        if label_count > 2:
+        if label_count > 2 or self.ovr:
             self.ovr = True
-            self.estimator = {}
+            warm_start = True
+            if self.estimator is None:
+                self.estimator = {}
+                warm_start = False
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(label_count):
+                if not warm_start:
+                    optimizer = Optimizer(
+                        self.optimizer_param["method"],
+                        self.optimizer_param["penalty"],
+                        self.optimizer_param["alpha"],
+                        self.optimizer_param["optimizer_params"],
+                    )
+                    lr_scheduler = LRScheduler(
+                        self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+                    )
+                    single_estimator = CoordinatedLREstimatorArbiter(
+                        epochs=self.epochs,
+                        early_stop=self.early_stop,
+                        tol=self.tol,
+                        batch_size=self.batch_size,
+                        optimizer=optimizer,
+                        learning_rate_scheduler=lr_scheduler,
+                    )
+                else:
+                    logger.info("estimator is not none, will train with warm start")
+                    single_estimator = self.estimator[i]
+                    single_estimator.epochs = self.epochs
+                    single_estimator.batch_size = self.batch_size
+                single_estimator.fit_single_model(class_ctx, decryptor)
+                self.estimator[i] = single_estimator
+        else:
+            if self.estimator is None:
                 optimizer = Optimizer(
                     self.optimizer_param["method"],
                     self.optimizer_param["penalty"],
@@ -63,26 +93,11 @@ class CoordinatedLRModuleArbiter(HeteroModule):
                     optimizer=optimizer,
                     learning_rate_scheduler=lr_scheduler,
                 )
-                single_estimator.fit_single_model(class_ctx, decryptor)
-                self.estimator[i] = single_estimator
-        else:
-            optimizer = Optimizer(
-                self.optimizer_param["method"],
-                self.optimizer_param["penalty"],
-                self.optimizer_param["alpha"],
-                self.optimizer_param["optimizer_params"],
-            )
-            lr_scheduler = LRScheduler(
-                self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
-            )
-            single_estimator = CoordinatedLREstimatorArbiter(
-                epochs=self.epochs,
-                early_stop=self.early_stop,
-                tol=self.tol,
-                batch_size=self.batch_size,
-                optimizer=optimizer,
-                learning_rate_scheduler=lr_scheduler,
-            )
+            else:
+                logger.info("estimator is not none, will train with warm start")
+                single_estimator = self.estimator
+                single_estimator.epochs = self.epochs
+                single_estimator.batch_size = self.batch_size
             single_estimator.fit_single_model(ctx, decryptor)
             self.estimator = single_estimator
 
@@ -106,7 +121,8 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             },
         }
 
-    def from_model(cls, model):
+    @classmethod
+    def from_model(cls, model) -> "CoordinatedLRModuleArbiter":
         lr = CoordinatedLRModuleArbiter(
             epochs=model["meta"]["epochs"],
             early_stop=model["meta"]["early_stop"],
@@ -116,6 +132,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             learning_rate_param=model["meta"]["learning_rate_param"],
         )
         all_estimator = model["data"]["estimator"]
+
         if lr.ovr:
             lr.estimator = {label: CoordinatedLREstimatorArbiter().restore(d) for label, d in all_estimator.items()}
         else:
@@ -136,7 +153,8 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
 
-        self.converge_func = converge_func_factory(early_stop, tol)
+        if early_stop is not None:
+            self.converge_func = converge_func_factory(early_stop, tol)
         self.start_epoch = 0
         self.end_epoch = -1
         self.is_converged = False
@@ -150,14 +168,13 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             optimizer_ready = False
         else:
             optimizer_ready = True
-            self.start_epoch = self.end_epoch + 1
+            # self.start_epoch = self.end_epoch + 1
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, _ in iter_ctx.on_batches.ctxs_zip(batch_loader):
-
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g_guest = decryptor.decrypt(g_guest_enc)
                 size_list = [g_guest.size()[0]]
@@ -223,6 +240,8 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
+            "tol": self.tol,
+            "early_stop": self.early_stop
         }
 
     def restore(self, model):
@@ -232,4 +251,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
         self.lr_scheduler.load_state_dict(model["lr_scheduler"], self.optimizer.optimizer)
         self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]
+        self.tol = model["tol"]
+        self.early_stop = model["early_stop"]
+        self.converge_func = converge_func_factory(self.early_stop, self.tol)
         # self.start_epoch = model["end_epoch"] + 1
