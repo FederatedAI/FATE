@@ -108,6 +108,7 @@ class Optimizer(object):
         for k, v in state_all.items():
             if isinstance(v, torch.Tensor):
                 state_all[k] = v.tolist()
+        dtype = str(self.model_parameter.dtype).split(".", -1)[-1]
         return {
             "l2_penalty": self.l2_penalty,
             "l1_penalty": self.l1_penalty,
@@ -115,22 +116,25 @@ class Optimizer(object):
             "optimizer": optimizer_state_dict,
             "method": self.method,
             "optim_param": self.optim_param,
-            "model_parameter": self.model_parameter.tolist()
+            "model_parameter": self.model_parameter.tolist(),
+            "model_parameter_dtype": dtype
         }
 
-    def load_state_dict(self, dict):
-        self.l2_penalty = dict["l2_penalty"]
-        self.l1_penalty = dict["l1_penalty"]
-        self.alpha = dict["alpha"]
-        self.method = dict["method"]
-        self.optim_param = dict["optim_param"]
-        self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(dict["model_parameter"])))
-        state_dict = dict["optimizer"]
-        state_all = state_dict['state'].get(0, {})
+    def load_state_dict(self, state_dict):
+        self.l2_penalty = state_dict["l2_penalty"]
+        self.l1_penalty = state_dict["l1_penalty"]
+        self.alpha = state_dict["alpha"]
+        self.method = state_dict["method"]
+        self.optim_param = state_dict["optim_param"]
+        dtype = state_dict["model_parameter_dtype"]
+        self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(state_dict["model_parameter"],
+                                                                                      dtype=getattr(torch, dtype))))
+        state = state_dict["optimizer"]
+        state_all = state['state'].get(0, {})
         for k, v in state_all.items():
             if isinstance(v, list):
                 state_all[k] = torch.tensor(v)
-        self.optimizer.load_state_dict(dict["optimizer"])
+        self.optimizer.load_state_dict(state_dict["optimizer"])
 
     def set_iters(self, new_iters):
         self.iters = new_iters

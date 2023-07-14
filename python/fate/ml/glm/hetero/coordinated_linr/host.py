@@ -19,7 +19,7 @@ import torch
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
-from fate.ml.utils._model_param import initialize_param
+from fate.ml.utils._model_param import initialize_param, deserialize_param, serialize_param
 from fate.ml.utils._optimizer import Optimizer, LRScheduler
 
 logger = logging.getLogger(__name__)
@@ -45,21 +45,23 @@ class CoordinatedLinRModuleHost(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
-        optimizer = Optimizer(
-            self.optimizer_param["method"],
-            self.optimizer_param["penalty"],
-            self.optimizer_param["alpha"],
-            self.optimizer_param["optimizer_params"],
-        )
-        lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                   self.learning_rate_param["scheduler_params"])
-        estimator = CoordiantedLinREstimatorHost(epochs=self.epochs,
-                                                 batch_size=self.batch_size,
-                                                 optimizer=optimizer,
-                                                 learning_rate_scheduler=lr_scheduler,
-                                                 init_param=self.init_param)
-        estimator.fit_model(ctx, encryptor, train_data, validate_data)
-        self.estimator = estimator
+        if self.estimator is None:
+            optimizer = Optimizer(
+                self.optimizer_param["method"],
+                self.optimizer_param["penalty"],
+                self.optimizer_param["alpha"],
+                self.optimizer_param["optimizer_params"],
+            )
+            lr_scheduler = LRScheduler(self.learning_rate_param["method"],
+                                       self.learning_rate_param["scheduler_params"])
+            estimator = CoordiantedLinREstimatorHost(epochs=self.epochs,
+                                                     batch_size=self.batch_size,
+                                                     optimizer=optimizer,
+                                                     learning_rate_scheduler=lr_scheduler,
+                                                     init_param=self.init_param)
+            self.estimator = estimator
+
+        self.estimator.fit_model(ctx, encryptor, train_data, validate_data)
 
     def predict(self, ctx, test_data):
         self.estimator.predict(ctx, test_data)
@@ -116,8 +118,8 @@ class CoordiantedLinREstimatorHost(HeteroModule):
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
             self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
-        if self.end_epoch >= 0:
-            self.start_epoch = self.end_epoch + 1
+        # if self.end_epoch >= 0:
+        #    self.start_epoch = self.end_epoch + 1
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
@@ -159,8 +161,16 @@ class CoordiantedLinREstimatorHost(HeteroModule):
         ctx.guest.put("h_pred", output)
 
     def get_model(self):
+        """return {
+                    "w": self.w.tolist(),
+                    "optimizer": self.optimizer.state_dict(),
+                    "lr_scheduler": self.lr_scheduler.state_dict(),
+                    "end_epoch": self.end_epoch,
+                    "is_converged": self.is_converged
+        }"""
+        param = serialize_param(self.w, False)
         return {
-            "w": self.w.tolist(),
+            "param": param,
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
@@ -168,7 +178,8 @@ class CoordiantedLinREstimatorHost(HeteroModule):
         }
 
     def restore(self, model):
-        self.w = torch.tensor(model["w"])
+        # self.w = torch.tensor(model["w"])
+        self.w = deserialize_param(model["param"], False)
         self.optimizer = Optimizer()
         self.lr_scheduler = LRScheduler()
         self.optimizer.load_state_dict(model["optimizer"])
