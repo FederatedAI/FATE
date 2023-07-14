@@ -39,8 +39,7 @@ class Module:
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
         ...
 
-    @classmethod
-    def from_model(cls, model: Union[dict, Model]) -> "Module":
+    def from_model(cls, model: Union[dict, Model]):
         ...
 
     def get_model(self) -> Union[dict, Model]:
