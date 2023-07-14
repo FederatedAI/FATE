@@ -45,9 +45,9 @@ def train(
                                                 "refer to torch.optim.lr_scheduler"),
     epochs: cpn.parameter(type=params.conint(gt=0), default=20,
                           desc="max iteration num"),
-    batch_size: cpn.parameter(type=params.conint(ge=-1), default=100,
-                              desc="batch size, "
-                              "value less or equals to 0 means full batch"),
+    batch_size: cpn.parameter(type=params.conint(ge=0), default=None,
+                              desc="batch size, int > 0, if None means full batch"
+                              "non"),
     optimizer: cpn.parameter(type=params.optimizer_param(),
                              default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
                                                            optimizer_params={"lr": 1e-2, "weight_decay": 0})),

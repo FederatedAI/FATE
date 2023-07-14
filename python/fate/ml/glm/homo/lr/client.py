@@ -195,7 +195,7 @@ class HomoLRClient(HomoModule):
     def __init__(
             self,
             epochs: int = 5,
-            batch_size: int = 32,
+            batch_size: int = None,
             optimizer_param={
                 'method': 'sgd',
                 'optimizer_params': {
@@ -264,9 +264,9 @@ class HomoLRClient(HomoModule):
         # checkping param
         assert self.max_iter > 0 and isinstance(
             self.max_iter, int), "max_iter must be int greater than 0"
-        if self.batch_size != -1:
+        if self.batch_size is not None:
             assert self.batch_size > 0 and isinstance(
-                self.batch_size, int), "batch_size must be int greater than 0 or -1"
+                self.batch_size, int), "batch_size must be int greater than 0 or None"
         assert self.threshold > 0 and self.threshold < 1, "threshold must be float between 0 and 1"
 
     def _make_dataset(self, data) -> TableDataset:
@@ -343,7 +343,7 @@ class HomoLRClient(HomoModule):
 
         self._check_labels(unique_label_set, validate_data is not None)
 
-        if self.batch_size == -1:
+        if self.batch_size is None:
             self.batch_size = len(self.train_set)
 
         # prepare loss function
@@ -425,7 +425,7 @@ class HomoLRClient(HomoModule):
         self.predict_set = self._make_dataset(predict_data)
         if self.trainer is None:
             batch_size = len(
-                self.predict_set) if self.batch_size == -1 else self.batch_size
+                self.predict_set) if self.batch_size is None else self.batch_size
             train_arg = TrainingArguments(
                 num_train_epochs=self.max_iter,
                 per_device_eval_batch_size=batch_size)
