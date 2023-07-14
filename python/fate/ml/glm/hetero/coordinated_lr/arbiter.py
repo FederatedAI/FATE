@@ -38,6 +38,22 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         self.estimator = None
         self.ovr = False
 
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
+        if self.ovr:
+            for estimator in self.estimator.values():
+                estimator.batch_size = batch_size
+        else:
+            self.estimator.batch_size = batch_size
+
+    def set_epochs(self, epochs):
+        self.epochs = epochs
+        if self.ovr:
+            for estimator in self.estimator.values():
+                estimator.epochs = epochs
+        else:
+            self.estimator.epochs = epochs
+
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
@@ -169,7 +185,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
         else:
             optimizer_ready = True
             # self.start_epoch = self.end_epoch + 1
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
