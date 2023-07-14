@@ -51,8 +51,8 @@ def evaluation(
     metrics: cpn.parameter(type=list, default=None, optional=True),
     predict_column_name: cpn.parameter(type=str, default=None, optional=True,
                                         desc="predict data column name, if None(default), will use \
-                                        'predict_score' when use binary and regression default setting, \
-                                        and use 'predict_result' on multi classification default setting"),
+                                        'predict_score' in the input dataframe when the default setting are binary and regression, \
+                                        and use 'predict_result' if default setting is multi"),
     label_column_name: cpn.parameter(type=str, default=None, optional=True, desc="label data column namem if None(default), \
                                      will use 'label' in the input dataframe")
 ):
