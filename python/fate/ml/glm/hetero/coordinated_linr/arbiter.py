@@ -45,6 +45,14 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
 
         self.estimator = None
 
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
+        self.estimator.batch_size = batch_size
+
+    def set_epochs(self, epochs):
+        self.epochs = epochs
+        self.estimator.epochs = epochs
+
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
@@ -126,7 +134,7 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             optimizer_ready = True
             # self.start_epoch = self.end_epoch + 1
 
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             iter_loss = None
             iter_g = None
             self.optimizer.set_iters(i)
@@ -197,7 +205,9 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
-            "converged": self.is_converged
+            "is_converged": self.is_converged,
+            "tol": self.tol,
+            "early_stop": self.early_stop
         }
 
     def restore(self, model):
@@ -207,5 +217,7 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
         self.lr_scheduler.load_state_dict(model["lr_scheduler"], self.optimizer.optimizer)
         self.end_epoch = model["end_epoch"]
         self.is_converged = model["is_converged"]
+        self.tol = model["tol"]
+        self.early_stop = model["early_stop"]
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
         # self.start_epoch = model["end_epoch"] + 1

@@ -46,6 +46,22 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.ovr = False
         self.labels = None
 
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
+        if self.ovr:
+            for estimator in self.estimator.values():
+                estimator.batch_size = batch_size
+        else:
+            self.estimator.batch_size = batch_size
+
+    def set_epochs(self, epochs):
+        self.epochs = epochs
+        if self.ovr:
+            for estimator in self.estimator.values():
+                estimator.epochs = epochs
+        else:
+            self.estimator.epochs = epochs
+
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         original_label = train_data.label
         train_data_binarized_label = train_data.label.get_dummies()
@@ -214,7 +230,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         # if self.end_epoch >= 0:
         #    self.start_epoch = self.end_epoch + 1
 
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):

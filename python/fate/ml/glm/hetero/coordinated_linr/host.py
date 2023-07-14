@@ -43,6 +43,14 @@ class CoordinatedLinRModuleHost(HeteroModule):
 
         self.estimator = None
 
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
+        self.estimator.batch_size = batch_size
+
+    def set_epochs(self, epochs):
+        self.epochs = epochs
+        self.estimator.epochs = epochs
+
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
         if self.estimator is None:
@@ -82,7 +90,9 @@ class CoordinatedLinRModuleHost(HeteroModule):
                                          epochs=model["meta"]["epochs"],
                                          batch_size=model["meta"]["batch_size"],
                                          init_param=model["meta"]["init_param"])
-        estimator = CoordiantedLinREstimatorHost()
+        estimator = CoordiantedLinREstimatorHost(epochs=model["meta"]["epochs"],
+                                                 batch_size=model["meta"]["batch_size"],
+                                                 init_param=model["meta"]["init_param"])
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
 
@@ -120,7 +130,7 @@ class CoordiantedLinREstimatorHost(HeteroModule):
             self.lr_scheduler.init_scheduler(optimizer=self.optimizer.optimizer)
         # if self.end_epoch >= 0:
         #    self.start_epoch = self.end_epoch + 1
-        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):

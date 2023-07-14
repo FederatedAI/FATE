@@ -212,8 +212,8 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         logger.info(f"warm start model provided")
         model = input_model.read()
         module = CoordinatedLinRModuleGuest.from_model(model)
-        module.epochs = epochs
-        module.batch_size = batch_size
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
     else:
         module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
                                             optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
@@ -248,8 +248,8 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         logger.info(f"warm start model provided")
         model = input_model.read()
         module = CoordinatedLinRModuleHost.from_model(model)
-        module.epochs = epochs
-        module.batch_size = batch_size
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
     else:
         module = CoordinatedLinRModuleHost(epochs=epochs, batch_size=batch_size,
                                            optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
@@ -278,8 +278,8 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
         logger.info(f"warm start model provided")
         model = input_model.read()
         module = CoordinatedLinRModuleArbiter.from_model(model)
-        module.epochs = epochs
-        module.batch_size = batch_size
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
     else:
         module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
                                               optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
