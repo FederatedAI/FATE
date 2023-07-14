@@ -285,6 +285,11 @@ class DataFrame(object):
         from .ops._encoder import bucketize
         return bucketize(self, boundaries)
 
+    def hist(self, targets):
+        from .ops._histogram import hist
+
+        return hist(self, targets)
+
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
