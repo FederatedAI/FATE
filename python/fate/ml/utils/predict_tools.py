@@ -96,12 +96,12 @@ def compute_predict_details(
         predict_result = np.array(pred)
         predict_details = [{LABEL: float(pred[i])} for i in range(len(pred))]
 
-    df[PREDICT_RESULT] = predict_result
-    df[PREDICT_DETAIL] = predict_details
+    dataframe[PREDICT_RESULT] = predict_result
+    dataframe[PREDICT_DETAIL] = predict_details
     if task_type == MULTI:
-        df[PREDICT_SCORE] = predict_score
+        dataframe[PREDICT_SCORE] = predict_score
 
-    return df
+    return dataframe
 
 
 def std_output_df(
