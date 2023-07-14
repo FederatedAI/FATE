@@ -44,7 +44,6 @@ class SecureAggregatorClient(_SecureAggregatorMeta):
 
     def secure_aggregate(self, ctx: Context, array: typing.List[numpy.ndarray], weight: typing.Optional[int] = None):
         mixed = self._get_mixer().mix(array, weight)
-        print(mixed)
         ctx.arbiter.put(self._get_name(self._send_name), (mixed, weight))
         return ctx.arbiter.get(self._get_name(self._recv_name))
 
