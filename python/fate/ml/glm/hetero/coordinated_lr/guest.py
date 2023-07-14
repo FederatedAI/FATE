@@ -19,7 +19,7 @@ import torch
 
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
-from fate.ml.utils._model_param import initialize_param
+from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param
 from fate.ml.utils._optimizer import LRScheduler, Optimizer
 
 logger = logging.getLogger(__name__)
@@ -52,14 +52,48 @@ class CoordinatedLRModuleGuest(HeteroModule):
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
-        self.labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
-        if label_count > 2:
+        labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
+        if self.labels is None:
+            self.labels = labels
+        if label_count > 2 or self.ovr:
             logger.info(f"OVR data provided, will train OVR models.")
             self.ovr = True
-            self.estimator = {}
+            warm_start = True
+            if self.estimator is None:
+                self.estimator = {}
+                warm_start = False
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(label_count):
                 logger.info(f"start train for {i}th class")
                 # optimizer = copy.deepcopy(self.optimizer)
+                if not warm_start:
+                    optimizer = Optimizer(
+                        self.optimizer_param["method"],
+                        self.optimizer_param["penalty"],
+                        self.optimizer_param["alpha"],
+                        self.optimizer_param["optimizer_params"],
+                    )
+                    lr_scheduler = LRScheduler(self.learning_rate_param["method"],
+                                               self.learning_rate_param["scheduler_params"])
+                    single_estimator = CoordinatedLREstimatorGuest(
+                        epochs=self.epochs,
+                        batch_size=self.batch_size,
+                        optimizer=optimizer,
+                        learning_rate_scheduler=lr_scheduler,
+                        init_param=self.init_param,
+                    )
+                else:
+                    # warm start
+                    logger.info("estimator is not none, will train with warm start")
+                    # single_estimator = self.estimator[self.labels.index(labels[i])]
+                    single_estimator = self.estimator[i]
+                    single_estimator.epochs = self.epochs
+                    single_estimator.batch_size = self.batch_size
+                train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
+                single_estimator.fit_single_model(class_ctx, train_data, validate_data)
+                self.estimator[i] = single_estimator
+
+        else:
+            if self.estimator is None:
                 optimizer = Optimizer(
                     self.optimizer_param["method"],
                     self.optimizer_param["penalty"],
@@ -75,25 +109,11 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     learning_rate_scheduler=lr_scheduler,
                     init_param=self.init_param,
                 )
-                train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
-                single_estimator.fit_single_model(class_ctx, train_data, validate_data)
-                self.estimator[i] = single_estimator
-        else:
-            optimizer = Optimizer(
-                self.optimizer_param["method"],
-                self.optimizer_param["penalty"],
-                self.optimizer_param["alpha"],
-                self.optimizer_param["optimizer_params"],
-            )
-            lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                       self.learning_rate_param["scheduler_params"])
-            single_estimator = CoordinatedLREstimatorGuest(
-                epochs=self.epochs,
-                batch_size=self.batch_size,
-                optimizer=optimizer,
-                learning_rate_scheduler=lr_scheduler,
-                init_param=self.init_param,
-            )
+            else:
+                logger.info("estimator is not none, will train with warm start")
+                single_estimator = self.estimator
+                single_estimator.epochs = self.epochs
+                single_estimator.batch_size = self.batch_size
             single_estimator.fit_single_model(ctx, train_data, validate_data)
             self.estimator = single_estimator
         train_data.label = original_label
@@ -191,8 +211,8 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
         )
-        if self.end_epoch >= 0:
-            self.start_epoch = self.end_epoch + 1
+        # if self.end_epoch >= 0:
+        #    self.start_epoch = self.end_epoch + 1
 
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.start_epoch, self.epochs):
             self.optimizer.set_iters(i)
@@ -256,6 +276,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         if self.init_param.get("fit_intercept"):
             test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
+        logger.info(f"in predict, w: {self.w}")
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred
@@ -263,14 +284,16 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         return pred
 
     def get_model(self):
-        w = self.w.tolist()
+        """w = self.w.tolist()
         intercept = None
         if self.init_param.get("fit_intercept"):
             w = w[:-1]
-            intercept = w[-1]
+            intercept = w[-1]"""
+        param = serialize_param(self.w, self.init_param.get("fit_intercept"))
         return {
-            "w": w,
-            "intercept": intercept,
+            # "w": w,
+            # "intercept": intercept,
+            "param": param,
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
@@ -279,10 +302,11 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         }
 
     def restore(self, model):
-        w = model["w"]
+        """w = model["w"]
         if model["fit_intercept"]:
             w.append(model["intercept"])
-        self.w = torch.tensor(w)
+        self.w = torch.tensor(w)"""
+        self.w = deserialize_param(model["param"], model["fit_intercept"])
         self.optimizer = Optimizer()
         self.lr_scheduler = LRScheduler()
         self.optimizer.load_state_dict(model["optimizer"])

@@ -59,6 +59,8 @@ def train(
                                   desc="Model param init setting."),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
+        warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True),
+
 ):
     logger.info(f"enter coordinated linr train")
     # temp code start
@@ -69,15 +71,16 @@ def train(
     if role.is_guest:
         train_guest(
             ctx, train_data, validate_data, train_output_data, output_model, epochs,
-            batch_size, optimizer, learning_rate_scheduler, init_param
+            batch_size, optimizer, learning_rate_scheduler, init_param, warm_start_model
         )
     elif role.is_host:
         train_host(
             ctx, train_data, validate_data, train_output_data, output_model, epochs,
-            batch_size, optimizer, learning_rate_scheduler, init_param
+            batch_size, optimizer, learning_rate_scheduler, init_param, warm_start_model
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler, output_model)
+        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler, output_model,
+                      warm_start_model)
 
 
 @coordinated_linr.predict()
@@ -204,12 +207,19 @@ def cross_validation(
 
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, epochs,
-                batch_size, optimizer_param, learning_rate_param, init_param):
+                batch_size, optimizer_param, learning_rate_param, init_param, input_model):
+    if input_model is not None:
+        logger.info(f"warm start model provided")
+        model = input_model.read()
+        module = CoordinatedLinRModuleGuest.from_model(model)
+        module.epochs = epochs
+        module.batch_size = batch_size
+    else:
+        module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
+                                            optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                            init_param=init_param)
     logger.info(f"coordinated linr guest start train")
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
-                                        optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                        init_param=init_param)
     train_data = train_data.read()
     if validate_data is not None:
         validate_data = validate_data.read()
@@ -224,6 +234,7 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     predict_result = transform_to_predict_result(train_data, predict_score,
                                                  data_type="train")
     if validate_data is not None:
+        sub_ctx = ctx.sub_ctx("validate_predict")
         predict_score = module.predict(sub_ctx, validate_data)
         validate_predict_result = transform_to_predict_result(validate_data, predict_score,
                                                               data_type="validate")
@@ -232,12 +243,20 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 
 
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, epochs, batch_size,
-               optimizer_param, learning_rate_param, init_param):
+               optimizer_param, learning_rate_param, init_param, input_model):
+    if input_model is not None:
+        logger.info(f"warm start model provided")
+        model = input_model.read()
+        module = CoordinatedLinRModuleHost.from_model(model)
+        module.epochs = epochs
+        module.batch_size = batch_size
+    else:
+        module = CoordinatedLinRModuleHost(epochs=epochs, batch_size=batch_size,
+                                           optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                           init_param=init_param)
     logger.info(f"coordinated linr host start train")
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLinRModuleHost(epochs=epochs, batch_size=batch_size,
-                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                       init_param=init_param)
+
     train_data = train_data.read()
     if validate_data is not None:
         validate_data = validate_data.read()
@@ -249,17 +268,25 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
     sub_ctx = ctx.sub_ctx("predict")
     module.predict(sub_ctx, train_data)
     if validate_data is not None:
+        sub_ctx = ctx.sub_ctx("validate_predict")
         module.predict(sub_ctx, validate_data)
 
 
 def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
-                  learning_rate_param, output_model):
+                  learning_rate_param, output_model, input_model):
+    if input_model is not None:
+        logger.info(f"warm start model provided")
+        model = input_model.read()
+        module = CoordinatedLinRModuleArbiter.from_model(model)
+        module.epochs = epochs
+        module.batch_size = batch_size
+    else:
+        module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
+                                              optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                              )
     logger.info(f"coordinated linr arbiter start train")
 
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
-                                          optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                          )
     module.fit(sub_ctx)
 
     model = module.get_model()
