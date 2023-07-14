@@ -56,3 +56,19 @@ def quantile(df: DataFrame, q, relative_error: float):
     quantile_df = pd.DataFrame(quantile_rets, index=q)
 
     return quantile_df
+
+
+def qcut(df: DataFrame, q: int):
+    assert isinstance(q, int), f"to use qcut, {q} should be positive integer"
+    max_ret = df.max()
+    min_ret = df.min()
+
+    dist = (max_ret - min_ret) / q
+
+    cut_ret = []
+    for i in range(1, q):
+        cut_ret.append(min_ret + i * dist)
+
+    cut_ret.append(max_ret)
+
+    return pd.DataFrame(cut_ret, index=range(1, q + 1, 1))

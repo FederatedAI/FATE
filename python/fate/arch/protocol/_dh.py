@@ -17,9 +17,16 @@ class _SecureAggregatorMeta:
 
 
 class SecureAggregatorClient(_SecureAggregatorMeta):
-    def __init__(self, prefix: typing.Optional[str] = None):
+    def __init__(self, prefix: typing.Optional[str] = None, is_mock: bool = False):
+        """
+        secure aggregation client
+        Args:
+            prefix: unique prefix for this aggregator
+            is_mock: mock the aggregator, do not perform secure aggregation, for test only
+        """
         self.prefix = prefix
         self._mixer = None
+        self._is_mock = is_mock
 
     def _get_mixer(self):
         if self._mixer is None:
@@ -27,6 +34,8 @@ class SecureAggregatorClient(_SecureAggregatorMeta):
         return self._mixer
 
     def dh_exchange(self, ctx: Context, ranks: typing.List[int]):
+        if self._is_mock:
+            return
         local_rank = ctx.local.rank
         dh = {}
         seeds = {}
@@ -43,29 +52,65 @@ class SecureAggregatorClient(_SecureAggregatorMeta):
         self._mixer = RandomMix(seeds, local_rank)
 
     def secure_aggregate(self, ctx: Context, array: typing.List[numpy.ndarray], weight: typing.Optional[int] = None):
-        mixed = self._get_mixer().mix(array, weight)
-        print(mixed)
-        ctx.arbiter.put(self._get_name(self._send_name), (mixed, weight))
-        return ctx.arbiter.get(self._get_name(self._recv_name))
+        if self._is_mock:
+            ctx.arbiter.put(self._get_name(self._send_name), (array, weight))
+            return ctx.arbiter.get(self._get_name(self._recv_name))
+        else:
+            mixed = self._get_mixer().mix(array, weight)
+            ctx.arbiter.put(self._get_name(self._send_name), (mixed, weight))
+            return ctx.arbiter.get(self._get_name(self._recv_name))
 
 
 class SecureAggregatorServer(_SecureAggregatorMeta):
-    def __init__(self, ranks, prefix: typing.Optional[str] = None):
+    def __init__(self, ranks, prefix: typing.Optional[str] = None, is_mock: bool = False):
+        """
+        secure aggregation server
+        Args:
+            ranks: all ranks
+            prefix: unique prefix for this aggregator
+            is_mock: mock the aggregator, do not perform secure aggregation, for test only
+        """
         self.prefix = prefix
         self.ranks = ranks
+        self._is_mock = is_mock
 
-    def secure_aggregate(self, ctx: Context):
-        mix_aggregator = MixAggregate()
+    def secure_aggregate(self, ctx: Context, ranks: typing.Optional[int] = None):
+        """
+        perform secure aggregate once
+        Args:
+            ctx: Context to use
+            ranks: ranks to aggregate, if None, use all ranks
+        """
+        if ranks is None:
+            ranks = self.ranks
         aggregated_weight = 0.0
         has_weight = False
-        for rank in self.ranks:
-            mix_arrays, weight = ctx.parties[rank].get(self._get_name(self._send_name))
-            mix_aggregator.aggregate(mix_arrays)
-            if weight is not None:
-                has_weight = True
-                aggregated_weight += weight
-        if not has_weight:
-            aggregated_weight = None
-        aggregated = mix_aggregator.finalize(aggregated_weight)
-        for rank in self.ranks:
+
+        if self._is_mock:
+            aggregated = []
+            for rank in ranks:
+                arrays, weight = ctx.parties[rank].get(self._get_name(self._send_name))
+                for i in range(len(arrays)):
+                    if len(aggregated) <= i:
+                        aggregated.append(arrays[i])
+                    else:
+                        aggregated[i] += arrays[i]
+                if weight is not None:
+                    has_weight = True
+                    aggregated_weight += weight
+            if has_weight:
+                aggregated = [x / aggregated_weight for x in aggregated]
+        else:
+            mix_aggregator = MixAggregate()
+            for rank in ranks:
+                mix_arrays, weight = ctx.parties[rank].get(self._get_name(self._send_name))
+                mix_aggregator.aggregate(mix_arrays)
+                if weight is not None:
+                    has_weight = True
+                    aggregated_weight += weight
+            if not has_weight:
+                aggregated_weight = None
+            aggregated = mix_aggregator.finalize(aggregated_weight)
+
+        for rank in ranks:
             ctx.parties[rank].put(self._get_name(self._recv_name), aggregated)
