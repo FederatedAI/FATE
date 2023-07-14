@@ -272,10 +272,18 @@ class DataFrame(object):
     def quantile(
         self,
         q,
-        axis=0,
-        method="quantile",
+        relative_error: float = 1e-4
     ):
-        ...
+        from .ops._quantile import quantile
+        return quantile(self, q, relative_error)
+
+    def qcut(self, q: int):
+        from .ops._quantile import qcut
+        return qcut(self, q)
+
+    def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
+        from .ops._encoder import bucketize
+        return bucketize(self, boundaries)
 
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
@@ -519,7 +527,7 @@ class DataFrame(object):
             block_table = transform_list_block_to_frame_block(block_table, self._data_manager)
 
         partition_order_mappings = get_partition_order_mappings(block_table)
-        return DataFrame(self._ctx, block_table, partition_order_mappings, self._data_manager)
+        return DataFrame(self._ctx, block_table, partition_order_mappings, self._data_manager.duplicate())
 
     def iloc(self, indexes):
         ...

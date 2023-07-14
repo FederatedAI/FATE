@@ -24,7 +24,8 @@ class ParameterDescribe:
             raise ComponentParameterDuplicateError(
                 f"parameter {p.name} declare multiple times with different optional: `{self.optional}` vs `{p.optional}`"
             )
-        if str(self.type) != str(p.type) or self.type.__dict__ != p.type.__dict__:
+        # if str(self.type) != str(p.type) or self.type.__dict__ != p.type.__dict__:
+        if str(self.type) != str(p.type):
             raise ComponentParameterDuplicateError(
                 f"parameter {p.name} declare multiple times with different type: `{self.type}({self.type.__dict__})` vs `{self.type}({self.type.__dict__})`"
             )

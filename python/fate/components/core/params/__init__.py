@@ -15,6 +15,7 @@
 #
 
 from ._cipher import CipherParamType, PaillierCipherParam
+from ._cv_param import cv_param, CVParam
 from ._fields import confloat, conint, jsonschema, parse, string_choice, Parameter
 from ._init_param import InitParam, init_param
 from ._init_param import InitParam, init_param

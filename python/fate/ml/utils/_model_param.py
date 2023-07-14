@@ -21,7 +21,7 @@ def initialize_param(coef_len, **kwargs):
     method = kwargs["method"]
     fit_intercept = kwargs["fit_intercept"]
     if fit_intercept:
-        param_len = coef_len + 1
+        param_len = param_len + 1
     if method == 'zeros':
         return torch.zeros((param_len, 1), requires_grad=True)
     elif method == 'ones':
