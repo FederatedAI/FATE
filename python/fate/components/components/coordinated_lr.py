@@ -267,8 +267,9 @@ def train_guest(
         logger.info(f"warm start model provided")
         model = input_model.read()
         module = CoordinatedLRModuleGuest.from_model(model)
-        module.epochs = epochs
-        module.batch_size = batch_size
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
+
     else:
         module = CoordinatedLRModuleGuest(
             epochs=epochs,
@@ -329,8 +330,8 @@ def train_host(
         logger.info(f"warm start model provided")
         model = input_model.read()
         module = CoordinatedLRModuleHost.from_model(model)
-        module.epochs = epochs
-        module.batch_size = batch_size
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
     else:
         module = CoordinatedLRModuleHost(
             epochs=epochs,
@@ -363,8 +364,8 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, lea
         logger.info(f"warm start model provided")
         model = input_model.read()
         module = CoordinatedLRModuleArbiter.from_model(model)
-        module.epochs = epochs
-        module.batch_size = batch_size
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
     else:
         module = CoordinatedLRModuleArbiter(
             epochs=epochs,
