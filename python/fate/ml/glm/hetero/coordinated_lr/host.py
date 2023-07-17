@@ -155,10 +155,20 @@ class CoordinatedLRModuleHost(HeteroModule):
         lr.ovr = model["meta"]["ovr"]
 
         all_estimator = model["data"]["estimator"]
+        lr.estimator = {}
+
         if lr.ovr:
-            lr.estimator = {label: CoordinatedLREstimatorHost().restore(d) for label, d in all_estimator.items()}
+            lr.estimator = {}
+            for label, d in all_estimator.items():
+                estimator = CoordinatedLREstimatorHost(epochs=model["meta"]["epochs"],
+                                                       batch_size=model["meta"]["batch_size"],
+                                                       init_param=model["meta"]["init_param"])
+                estimator.restore(d)
+                lr.estimator[int(label)] = estimator
         else:
-            estimator = CoordinatedLREstimatorHost()
+            estimator = CoordinatedLREstimatorHost(epochs=model["meta"]["epochs"],
+                                                   batch_size=model["meta"]["batch_size"],
+                                                   init_param=model["meta"]["init_param"])
             estimator.restore(all_estimator)
             lr.estimator = estimator
         logger.info(f"finish from model")

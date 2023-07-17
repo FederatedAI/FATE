@@ -192,11 +192,14 @@ class CoordinatedLRModuleGuest(HeteroModule):
         lr.labels = model["meta"]["labels"]
 
         all_estimator = model["data"]["estimator"]
+        lr.estimator = {}
         if lr.ovr:
-            lr.estimator = {label: CoordinatedLREstimatorGuest(epochs=model["meta"]["epochs"],
-                                                               batch_size=model["meta"]["batch_size"],
-                                                               init_param=model["meta"]["init_param"]). \
-                restore(d) for label, d in all_estimator.items()}
+            for label, d in all_estimator.items():
+                estimator = CoordinatedLREstimatorGuest(epochs=model["meta"]["epochs"],
+                                                        batch_size=model["meta"]["batch_size"],
+                                                        init_param=model["meta"]["init_param"])
+                estimator.restore(d)
+                lr.estimator[int(label)] = estimator
         else:
             estimator = CoordinatedLREstimatorGuest(epochs=model["meta"]["epochs"],
                                                     batch_size=model["meta"]["batch_size"],
