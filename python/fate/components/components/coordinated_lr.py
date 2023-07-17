@@ -13,11 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import json
 import logging
 
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
+from fate.components.components.utils import consts, tools
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 from fate.ml.glm import CoordinatedLRModuleGuest, CoordinatedLRModuleHost, CoordinatedLRModuleArbiter
 
@@ -60,16 +60,17 @@ def train(
         default="diff",
         desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
     ),
-    init_param: cpn.parameter(
-        type=params.init_param(),
-        default=params.InitParam(method="zeros", fit_intercept=True),
-        desc="Model param init setting.",
-    ),
-    threshold: cpn.parameter(
-        type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
-    ),
-    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-    output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
+        init_param: cpn.parameter(
+            type=params.init_param(),
+            default=params.InitParam(method="zeros", fit_intercept=True),
+            desc="Model param init setting.",
+        ),
+        threshold: cpn.parameter(
+            type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
+        ),
+        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+        output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
+        warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True),
 ):
     logger.info(f"enter coordinated lr train")
     # temp code start
@@ -77,6 +78,7 @@ def train(
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
     # temp code end
+
     if role.is_guest:
         train_guest(
             ctx,
@@ -90,6 +92,7 @@ def train(
             learning_rate_scheduler,
             init_param,
             threshold,
+            warm_start_model
         )
     elif role.is_host:
         train_host(
@@ -103,9 +106,17 @@ def train(
             optimizer,
             learning_rate_scheduler,
             init_param,
+            warm_start_model
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler, output_model)
+        train_arbiter(ctx,
+                      epochs,
+                      early_stop,
+                      tol, batch_size,
+                      optimizer,
+                      learning_rate_scheduler,
+                      output_model,
+                      warm_start_model)
 
 
 @coordinated_lr.predict()
@@ -206,17 +217,19 @@ def cross_validation(
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
                 sub_ctx = fold_ctx.sub_ctx("predict_train")
-                predict_score = module.predict(sub_ctx, train_data)
-                train_predict_result = transform_to_predict_result(
+                predict_df = module.predict(sub_ctx, train_data)
+                """train_predict_result = transform_to_predict_result(
                     train_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
                     data_type="train"
-                )
+                )"""
+                train_predict_result = tools.add_dataset_type(predict_df, consts.TRAIN_SET)
                 sub_ctx = fold_ctx.sub_ctx("predict_validate")
-                predict_score = module.predict(sub_ctx, validate_data)
-                validate_predict_result = transform_to_predict_result(
+                predict_df = module.predict(sub_ctx, validate_data)
+                """validate_predict_result = transform_to_predict_result(
                     validate_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
                     data_type="predict"
-                )
+                )"""
+                validate_predict_result = tools.add_dataset_type(predict_df, consts.VALIDATE_SET)
                 predict_result = DataFrame.vstack([train_predict_result, validate_predict_result])
                 next(cv_output_datas).write(df=predict_result)
 
@@ -242,28 +255,35 @@ def train_guest(
     ctx,
     train_data,
     validate_data,
-    train_output_data,
-    output_model,
-    epochs,
-    batch_size,
-    optimizer_param,
-    learning_rate_param,
-    init_param,
-    threshold,
+        train_output_data,
+        output_model,
+        epochs,
+        batch_size,
+        optimizer_param,
+        learning_rate_param,
+        init_param,
+        threshold,
+        input_model
 ):
-    from fate.arch.dataframe import DataFrame
+    if input_model is not None:
+        logger.info(f"warm start model provided")
+        model = input_model.read()
+        module = CoordinatedLRModuleGuest.from_model(model)
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
 
+    else:
+        module = CoordinatedLRModuleGuest(
+            epochs=epochs,
+            batch_size=batch_size,
+            optimizer_param=optimizer_param,
+            learning_rate_param=learning_rate_param,
+            init_param=init_param,
+            threshold=threshold,
+        )
     # optimizer = optimizer_factory(optimizer_param)
     logger.info(f"coordinated lr guest start train")
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLRModuleGuest(
-        epochs=epochs,
-        batch_size=batch_size,
-        optimizer_param=optimizer_param,
-        learning_rate_param=learning_rate_param,
-        init_param=init_param,
-        threshold=threshold,
-    )
     train_data = train_data.read()
 
     if validate_data is not None:
@@ -276,20 +296,23 @@ def train_guest(
 
     sub_ctx = ctx.sub_ctx("predict")
 
-    predict_score = module.predict(sub_ctx, train_data)
-    predict_result = transform_to_predict_result(
+    predict_df = module.predict(sub_ctx, train_data)
+    """predict_result = transform_to_predict_result(
         train_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr, data_type="train"
-    )
+    )"""
+    predict_result = tools.add_dataset_type(predict_df, consts.TRAIN_SET)
     if validate_data is not None:
-        predict_score = module.predict(sub_ctx, validate_data)
-        validate_predict_result = transform_to_predict_result(
+        sub_ctx = ctx.sub_ctx("validate_predict")
+        predict_df = module.predict(sub_ctx, validate_data)
+        """validate_predict_result = transform_to_predict_result(
             validate_data,
             predict_score,
             module.labels,
             threshold=module.threshold,
             is_ovr=module.ovr,
             data_type="validate",
-        )
+        )"""
+        validate_predict_result = tools.add_dataset_type(predict_df, consts.VALIDATE_SET)
         predict_result = DataFrame.vstack([predict_result, validate_predict_result])
     train_output_data.write(predict_result)
 
@@ -297,24 +320,32 @@ def train_guest(
 def train_host(
     ctx,
     train_data,
-    validate_data,
-    train_output_data,
-    output_model,
-    epochs,
-    batch_size,
-    optimizer_param,
-    learning_rate_param,
-    init_param,
+        validate_data,
+        train_output_data,
+        output_model,
+        epochs,
+        batch_size,
+        optimizer_param,
+        learning_rate_param,
+        init_param,
+        input_model
 ):
+    if input_model is not None:
+        logger.info(f"warm start model provided")
+        model = input_model.read()
+        module = CoordinatedLRModuleHost.from_model(model)
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
+    else:
+        module = CoordinatedLRModuleHost(
+            epochs=epochs,
+            batch_size=batch_size,
+            optimizer_param=optimizer_param,
+            learning_rate_param=learning_rate_param,
+            init_param=init_param,
+        )
     logger.info(f"coordinated lr host start train")
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLRModuleHost(
-        epochs=epochs,
-        batch_size=batch_size,
-        optimizer_param=optimizer_param,
-        learning_rate_param=learning_rate_param,
-        init_param=init_param,
-    )
     train_data = train_data.read()
 
     if validate_data is not None:
@@ -327,20 +358,29 @@ def train_host(
     sub_ctx = ctx.sub_ctx("predict")
     module.predict(sub_ctx, train_data)
     if validate_data is not None:
+        sub_ctx = ctx.sub_ctx("validate_predict")
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, output_model):
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, output_model,
+                  input_model):
+    if input_model is not None:
+        logger.info(f"warm start model provided")
+        model = input_model.read()
+        module = CoordinatedLRModuleArbiter.from_model(model)
+        module.set_epochs(epochs)
+        module.set_batch_size(batch_size)
+    else:
+        module = CoordinatedLRModuleArbiter(
+            epochs=epochs,
+            early_stop=early_stop,
+            tol=tol,
+            batch_size=batch_size,
+            optimizer_param=optimizer_param,
+            learning_rate_param=learning_rate_scheduler,
+        )
     logger.info(f"coordinated lr arbiter start train")
     sub_ctx = ctx.sub_ctx("train")
-    module = CoordinatedLRModuleArbiter(
-        epochs=epochs,
-        early_stop=early_stop,
-        tol=tol,
-        batch_size=batch_size,
-        optimizer_param=optimizer_param,
-        learning_rate_param=learning_rate_scheduler,
-    )
     module.fit(sub_ctx)
     model = module.get_model()
     output_model.write(model, metadata={})
@@ -354,10 +394,11 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
     # if module.threshold != 0.5:
     #    module.threshold = threshold
     test_data = test_data.read()
-    predict_score = module.predict(sub_ctx, test_data)
-    predict_result = transform_to_predict_result(
+    predict_df = module.predict(sub_ctx, test_data)
+    """predict_result = transform_to_predict_result(
         test_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr, data_type="test"
-    )
+    )"""
+    predict_result = tools.add_dataset_type(predict_df, consts.TEST_SET)
     test_output_data.write(predict_result)
 
 
@@ -370,7 +411,7 @@ def predict_host(ctx, input_model, test_data, test_output_data):
     module.predict(sub_ctx, test_data)
 
 
-def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):
+"""def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):
     if is_ovr:
         df = test_data.create_frame(with_label=True, with_weight=False)
         df[["predict_result", "predict_score", "predict_detail", "type"]] = predict_score.apply_row(
@@ -388,4 +429,4 @@ def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5,
             lambda v: [int(v[0] > threshold), v[0], json.dumps({1: v[0], 0: 1 - v[0]}), data_type],
             enable_type_align_checking=False,
         )
-    return df
+    return df"""

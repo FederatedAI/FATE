@@ -20,6 +20,8 @@ import logging
 import os
 import pickle as c_pickle
 import shutil
+import signal
+import threading
 import time
 import uuid
 from collections.abc import Iterable
@@ -58,6 +60,31 @@ else:
         )
     )
     LOGGER.debug(f"env STANDALONE_DATA_PATH is not set, using {_data_dir} as data dir")
+
+
+def _watch_thread_react_to_parent_die(ppid):
+    """
+    this function is used to watch parent process, if parent process is dead, then kill self
+    the trick is to use os.kill(ppid, 0) to check if parent process is alive periodically
+    and if parent process is dead, then kill self
+
+    Note: this trick is modified from the answer by aaron: https://stackoverflow.com/a/71369760/14697733
+    Args:
+        ppid: parent process id
+
+    """
+    pid = os.getpid()
+
+    def f():
+        while True:
+            try:
+                os.kill(ppid, 0)
+            except OSError:
+                os.kill(pid, signal.SIGTERM)
+            time.sleep(1)
+
+    thread = threading.Thread(target=f, daemon=True)
+    thread.start()
 
 
 # noinspection PyPep8Naming
@@ -359,7 +386,9 @@ class Table(object):
 class Session(object):
     def __init__(self, session_id, max_workers=None):
         self.session_id = session_id
-        self._pool = Executor(max_workers=max_workers)
+        self._pool = Executor(
+            max_workers=max_workers, initializer=_watch_thread_react_to_parent_die, initargs=(os.getpid(),)
+        )
 
     def __getstate__(self):
         # session won't be pickled
