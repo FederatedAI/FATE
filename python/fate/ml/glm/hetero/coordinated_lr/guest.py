@@ -19,6 +19,7 @@ import torch
 
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
+from fate.ml.utils import predict_tools
 from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param
 from fate.ml.utils._optimizer import LRScheduler, Optimizer
 
@@ -104,8 +105,12 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     single_estimator = self.estimator[i]
                     single_estimator.epochs = self.epochs
                     single_estimator.batch_size = self.batch_size
-                train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
-                single_estimator.fit_single_model(class_ctx, train_data, validate_data)
+                class_train_data = train_data.copy()
+                class_validate_data = validate_data
+                if validate_data:
+                    class_validate_data = validate_data.copy()
+                class_train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
+                single_estimator.fit_single_model(class_ctx, class_train_data, class_validate_data)
                 self.estimator[i] = single_estimator
 
         else:
@@ -136,14 +141,26 @@ class CoordinatedLRModuleGuest(HeteroModule):
 
     def predict(self, ctx, test_data):
         if self.ovr:
-            predict_score = test_data.create_frame(with_label=False, with_weight=False)
+            pred_score = test_data.create_frame(with_label=False, with_weight=False)
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
                 pred = estimator.predict(class_ctx, test_data)
-                predict_score[self.labels[i]] = pred
+                pred_score[self.labels[i]] = pred
+            pred_df = test_data.create_frame(with_label=True, with_weight=False)
+            pred_df[predict_tools.PREDICT_SCORE] = pred_score.apply_row(lambda v: [list(v)])
+            predict_result = predict_tools.compute_predict_details(pred_df,
+                                                                   task_type=predict_tools.MULTI,
+                                                                   classes=self.labels)
         else:
             predict_score = self.estimator.predict(ctx, test_data)
-        return predict_score
+            pred_df = test_data.create_frame(with_label=True, with_weight=False)
+            pred_df[predict_tools.PREDICT_SCORE] = predict_score
+            predict_result = predict_tools.compute_predict_details(pred_df,
+                                                                   task_type=predict_tools.BINARY,
+                                                                   classes=self.labels,
+                                                                   threshold=self.threshold)
+
+        return predict_result
 
     def get_model(self):
         all_estimator = {}
@@ -292,7 +309,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         if self.init_param.get("fit_intercept"):
             test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
-        logger.info(f"in predict, w: {self.w}")
+        # logger.info(f"in predict, w: {self.w}")
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred

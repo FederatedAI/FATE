@@ -19,6 +19,7 @@ import torch
 
 from fate.arch import dataframe, Context
 from fate.ml.abc.module import HeteroModule
+from fate.ml.utils import predict_tools
 from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param
 from fate.ml.utils._optimizer import Optimizer, LRScheduler
 
@@ -192,7 +193,10 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred
-        return pred
+        pred_df = test_data.create_frame(with_label=True, with_weight=False)
+        pred_df[predict_tools.PREDICT_SCORE] = pred
+        predict_result = predict_tools.compute_predict_details(pred_df, task_type=predict_tools.REGRESSION)
+        return predict_result
 
     def get_model(self):
         """w = self.w.tolist()

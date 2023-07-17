@@ -61,7 +61,7 @@ class CoordinatedLRModuleHost(HeteroModule):
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
         label_count = ctx.guest("label_count").get()
-        if self.label_count > 2 or self.ovr:
+        if label_count > 2 or self.ovr:
             self.ovr = True
             self.label_count = label_count
             warm_start = True
