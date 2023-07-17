@@ -10,7 +10,7 @@ from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, TrainingArguments, FedAVGA
 from transformers import default_data_collator
 import functools
 import tempfile
-from fate.ml.utils.predict_tools import std_output_df, add_ids, to_fate_df
+from fate.ml.utils.predict_tools import array_to_predict_df
 from fate.ml.utils.predict_tools import MULTI, BINARY
 from fate.ml.nn.dataset.table import TableDataset
 from fate.ml.utils._optimizer import optimizer_factory, lr_scheduler_factory
@@ -276,6 +276,7 @@ class HomoLRClient(HomoModule):
 
     def _make_output_df(
             self,
+            ctx,
             predict_rs,
             data: TableDataset,
             threshold: float):
@@ -283,13 +284,20 @@ class HomoLRClient(HomoModule):
         if len(classes) == 1:  # binary:
             classes = [0, 1]
         task_type = BINARY if len(classes) == 2 else MULTI
-        out_df = std_output_df(
+
+        out_df = array_to_predict_df(
+            ctx,
             task_type,
             predict_rs.predictions,
-            predict_rs.label_ids,
+            match_ids=data.get_match_ids(),
+            sample_ids=data.get_sample_ids(),
+            match_id_name=data.get_match_id_name(),
+            sample_id_name=data.get_sample_id_name(),
+            label=predict_rs.label_ids,
             threshold=threshold,
-            classes=classes)
-        out_df = add_ids(out_df, data.get_match_ids(), data.get_sample_ids())
+            classes=classes
+        )
+        
         return out_df
 
     def _check_labels(self, label_set, has_validate=False):
@@ -441,10 +449,8 @@ class HomoLRClient(HomoModule):
             trainer = self.trainer
         predict_rs = trainer.predict(self.predict_set)
         predict_out_df = self._make_output_df(
-            predict_rs, self.predict_set, self.threshold)
-        match_id_name = self.predict_set.get_match_ids().columns[0]
-        sample_id_name = self.predict_set.get_sample_ids().columns[0]
-        return to_fate_df(ctx, match_id_name, sample_id_name, predict_out_df)
+            ctx, predict_rs, self.predict_set, self.threshold)
+        return predict_out_df
 
     def get_model(self) -> ModelIO:
         param = {}

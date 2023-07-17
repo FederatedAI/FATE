@@ -237,6 +237,7 @@ class DefaultRunner(NNRunner):
         if output_dir is None:
             output_dir = './'
 
+        resume_path = None
         if saved_model is not None:
             model_dict = load_model_dict_from_path(saved_model)
             model.load_state_dict(model_dict)
@@ -245,9 +246,6 @@ class DefaultRunner(NNRunner):
                 resume_path = saved_model
                 logger.info(
                     f"checkpoint detected, resume_path set to {resume_path}")
-        else:
-            resume_path = None
-
         # load optimizer
         optimizer_loader = Loader.from_dict(self.optimizer_conf)
         optimizer_ = optimizer_loader.load_item()
@@ -369,7 +367,7 @@ class DefaultRunner(NNRunner):
             rs_df = self.get_nn_output_dataframe(
                 self.get_context(),
                 pred_rs.predictions,
-                pred_rs.label_ids,
+                pred_rs.label_ids if hasattr(pred_rs, 'label_ids') else None,
                 match_ids,
                 sample_ids,
                 match_id_name=match_id_name,
