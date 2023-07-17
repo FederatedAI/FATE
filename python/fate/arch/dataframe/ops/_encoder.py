@@ -20,6 +20,7 @@ import numpy as np
 import torch
 from sklearn.preprocessing import OneHotEncoder
 from typing import Union
+from ._compress_block import compress_blocks
 from .._dataframe import DataFrame
 from ..manager import BlockType, DataManager
 
@@ -165,6 +166,15 @@ def bucketize(df: DataFrame, boundaries: Union[pd.DataFrame, dict]):
                                          dm=data_manager)
 
     block_table = df.block_table.mapValues(bucketize_mapper)
+
+    block_indexes = data_manager.infer_operable_blocks()
+    if len(block_indexes) > 1:
+        to_promote_types = []
+        for bid in block_indexes:
+            to_promote_types.append((bid, BlockType.get_block_type(BUCKETIZE_RESULT_TYPE)))
+
+        data_manager.promote_types(to_promote_types)
+        block_table, data_manager = compress_blocks(block_table, data_manager)
 
     return DataFrame(
         df._ctx,

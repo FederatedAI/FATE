@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 import operator
 from typing import List, Union
 
@@ -285,6 +286,11 @@ class DataFrame(object):
         from .ops._encoder import bucketize
         return bucketize(self, boundaries)
 
+    def hist(self, targets):
+        from .ops._histogram import hist
+
+        return hist(self, targets)
+
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
@@ -531,6 +537,14 @@ class DataFrame(object):
 
     def iloc(self, indexes):
         ...
+
+    def copy(self) -> "DataFrame":
+        return DataFrame(
+            self._ctx,
+            self._block_table.mapValues(lambda v: v),
+            copy.deepcopy(self.partition_order_mappings),
+            self._data_manager.duplicate()
+        )
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
