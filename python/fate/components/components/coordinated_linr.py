@@ -13,11 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import json
 import logging
 
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
+from fate.components.components.utils import consts, tools
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 from fate.ml.glm import CoordinatedLinRModuleArbiter, CoordinatedLinRModuleGuest, CoordinatedLinRModuleHost
 
@@ -176,15 +176,18 @@ def cross_validation(
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
                 sub_ctx = fold_ctx.sub_ctx("predict_train")
-                predict_score = module.predict(sub_ctx, train_data)
-                train_predict_result = transform_to_predict_result(
+                train_predict_df = module.predict(sub_ctx, train_data)
+                """train_predict_result = transform_to_predict_result(
                     train_data, predict_score, data_type="train"
-                )
+                )"""
+                train_predict_result = tools.add_dataset_type(train_predict_df, consts.TRAIN_SET)
                 sub_ctx = fold_ctx.sub_ctx("predict_validate")
-                predict_score = module.predict(sub_ctx, validate_data)
-                validate_predict_result = transform_to_predict_result(
+                validate_predict_df = module.predict(sub_ctx, validate_data)
+                validate_predict_result = tools.add_dataset_type(validate_predict_df, consts.VALIDATE_SET)
+                """validate_predict_result = transform_to_predict_result(
                     validate_data, predict_score, data_type="predict"
                 )
+                """
                 predict_result = DataFrame.vstack([train_predict_result, validate_predict_result])
                 next(cv_output_datas).write(df=predict_result)
 
@@ -230,14 +233,18 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 
     sub_ctx = ctx.sub_ctx("predict")
 
-    predict_score = module.predict(sub_ctx, train_data)
-    predict_result = transform_to_predict_result(train_data, predict_score,
-                                                 data_type="train")
+    predict_df = module.predict(sub_ctx, train_data)
+    """predict_result = transform_to_predict_result(train_data, predict_score,
+                                                 data_type="train")"""
+    predict_result = tools.add_dataset_type(predict_df, consts.TRAIN_SET)
     if validate_data is not None:
         sub_ctx = ctx.sub_ctx("validate_predict")
-        predict_score = module.predict(sub_ctx, validate_data)
-        validate_predict_result = transform_to_predict_result(validate_data, predict_score,
+        predict_df = module.predict(sub_ctx, validate_data)
+        validate_predict_result = tools.add_dataset_type(predict_df, consts.VALIDATE_SET)
+
+        """validate_predict_result = transform_to_predict_result(validate_data, predict_score,
                                                               data_type="validate")
+                                                              """
         predict_result = DataFrame.vstack([predict_result, validate_predict_result])
     train_output_data.write(predict_result)
 
@@ -300,8 +307,9 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
 
     module = CoordinatedLinRModuleGuest.from_model(model)
     test_data = test_data.read()
-    predict_score = module.predict(sub_ctx, test_data)
-    predict_result = transform_to_predict_result(test_data, predict_score, data_type="predict")
+    predict_result = module.predict(sub_ctx, test_data)
+    predict_result = tools.add_dataset_type(predict_result, consts.TEST_SET)
+    # predict_result = transform_to_predict_result(test_data, predict_score, data_type="predict")
     test_output_data.write(predict_result)
 
 
@@ -313,7 +321,7 @@ def predict_host(ctx, input_model, test_data, test_output_data):
     module.predict(sub_ctx, test_data)
 
 
-def transform_to_predict_result(test_data, predict_score, data_type="test"):
+"""def transform_to_predict_result(test_data, predict_score, data_type="test"):
     df = test_data.create_frame(with_label=True, with_weight=False)
     pred_res = test_data.create_frame(with_label=False, with_weight=False)
     pred_res["predict_result"] = predict_score
@@ -322,4 +330,4 @@ def transform_to_predict_result(test_data, predict_score, data_type="test"):
         v[0],
         json.dumps({"label": v[0]}),
         data_type], enable_type_align_checking=False)
-    return df
+    return df"""
