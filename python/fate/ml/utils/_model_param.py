@@ -41,8 +41,8 @@ def serialize_param(param, fit_intercept=False):
     w = param.tolist()
     intercept = None
     if fit_intercept:
-        w = w[:-1]
         intercept = w[-1]
+        w = w[:-1]
     return {"coef_": w, "intercept_": intercept, "dtype": dtype}
 
 
