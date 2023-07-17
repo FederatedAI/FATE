@@ -148,9 +148,13 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             learning_rate_param=model["meta"]["learning_rate_param"],
         )
         all_estimator = model["data"]["estimator"]
-
+        lr.estimator = {}
         if lr.ovr:
-            lr.estimator = {label: CoordinatedLREstimatorArbiter().restore(d) for label, d in all_estimator.items()}
+            for label, d in all_estimator.items():
+                estimator = CoordinatedLREstimatorArbiter(epochs=model["meta"]["epochs"],
+                                                          batch_size=model["meta"]["batch_size"])
+                estimator.restore(d)
+                lr.estimator[int(label)] = estimator
         else:
             estimator = CoordinatedLREstimatorArbiter()
             estimator.restore(all_estimator)
