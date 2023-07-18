@@ -128,9 +128,10 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             }
             String resource = TransferUtil.buildResource(produceRequest);
 
-            ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
-            ServiceContainer.flowCounterManager.pass(resource, dataSize);
+
             if (transferQueue != null) {
+                ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
+                ServiceContainer.flowCounterManager.pass(resource, dataSize);
                 context.putData(Dict.TRANSFER_QUEUE, transferQueue);
                 String msgCode = produceRequest.getMetadataMap().get(Osx.Metadata.MessageCode.name());
                 String retryCountString = produceRequest.getMetadataMap().get(Osx.Metadata.RetryCount.name());

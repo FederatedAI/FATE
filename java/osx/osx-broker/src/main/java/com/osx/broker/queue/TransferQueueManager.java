@@ -54,6 +54,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TransferQueueManager {
@@ -337,6 +338,7 @@ public class TransferQueueManager {
         }
         return result;
     }
+    ConcurrentHashMap<String, Lock>  clusterApplyLockMap  = new ConcurrentHashMap();
 
 
     public synchronized TransferQueueApplyInfo handleClusterApply(String transferId,
@@ -406,7 +408,6 @@ public class TransferQueueManager {
                          */
                     }
                 }
-
                 Osx.Outbound applyTopicResponse = this.applyFromMaster(transferId, sessionId, MetaInfo.INSTANCE_ID);
                 logger.info("apply topic response {}", applyTopicResponse);
 

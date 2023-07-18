@@ -162,9 +162,9 @@ public class QueueTest {
 
                     FateContext  fateContext= new FateContext();
                     RouterInfo  routerInfo= new RouterInfo();
-                    routerInfo.setHost("172.16.153.70");
-                    routerInfo.setPort(8080);
-                    System.err.println(routerInfo);
+                    routerInfo.setHost("localhost");
+                    routerInfo.setPort(9370);
+                   // System.err.println(routerInfo);
                     Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
 
 

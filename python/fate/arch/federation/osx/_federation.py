@@ -143,16 +143,17 @@ class OSXFederation(FederationBase):
 
     @nretry
     def _query_receive_topic(self, channel_info):
-        LOGGER.debug(f"_query_receive_topic, channel_info={channel_info}")
+
         topic = channel_info._receive_topic
+        LOGGER.debug(f"_query_receive_topic, topic {topic} channel_info={channel_info}")
         if topic not in self._topic_ip_map:
-            LOGGER.info("query topic miss cache")
+            LOGGER.info(f"query topic {topic} miss cache")
             response = channel_info.query()
             if response.code == "0":
                 topic_info = osx_pb2.TopicInfo()
                 topic_info.ParseFromString(response.payload)
                 self._topic_ip_map[topic] = (topic_info.ip, topic_info.port)
-                LOGGER.info(f"query result {topic} {topic_info}")
+                LOGGER.info(f"query result {topic} result {topic_info}")
             else:
                 raise LookupError(f"{response}")
         host, port = self._topic_ip_map[topic]

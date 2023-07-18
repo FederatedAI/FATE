@@ -48,6 +48,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Metadata> responseObserver) {
         try {
             FateContext context = ContextUtil.buildFateContext(Protocol.grpc);
+            context.setNeedPrintFlowLog(false);
             InboundPackage<StreamObserver> data = new InboundPackage<>();
             data.setBody(responseObserver);
             OutboundPackage<StreamObserver> outboundPackage = pushService.service(context, data);

@@ -459,28 +459,39 @@ public class TransferUtil {
     }
 
 
-    public static Osx.Outbound buildResponse(String code, String msgReturn, TransferQueue.TransferQueueConsumeResult messageWraper) {
-        // FireworkTransfer.ConsumeResponse.Builder  consumeResponseBuilder = FireworkTransfer.ConsumeResponse.newBuilder();
-        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
+    public static  Osx.Outbound.Builder buildResponseInner(String code, String msgReturn, byte[] content) {
 
+        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
         builder.setCode(code);
         builder.setMessage(msgReturn);
+        if(content!=null) {
+            builder.setPayload(ByteString.copyFrom(content));
+        }
+        return builder;
+    }
+
+
+
+
+
+
+
+    public static Osx.Outbound buildResponse(String code, String msgReturn, TransferQueue.TransferQueueConsumeResult messageWraper) {
+
+        byte[] content = null;
         if (messageWraper != null) {
             Osx.Message message = null;
             try {
                 message = Osx.Message.parseFrom(messageWraper.getMessage().getBody());
             } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
+                logger.error("parse message error",e);
             }
-            builder.setPayload(message.toByteString());
-            builder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(messageWraper.getRequestIndex()));
-//                FireworkTransfer.Message msg = produceRequest.getMessage();
-//                consumeResponseBuilder.setTransferId(produceRequest.getTransferId());
-//                consumeResponseBuilder.setMessage(msg);
-//                consumeResponseBuilder.setStartOffset(messageWraper.getRequestIndex());
-//                consumeResponseBuilder.setTotalOffset(messageWraper.getLogicIndexTotal());
+            content = message.toByteArray();
         }
-
+        Osx.Outbound.Builder  builder =buildResponseInner(code,msgReturn,content);
+        if(messageWraper!=null){
+            builder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(messageWraper.getRequestIndex()));
+        }
         return builder.build();
     }
 

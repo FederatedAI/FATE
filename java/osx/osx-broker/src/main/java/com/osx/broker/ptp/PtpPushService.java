@@ -34,11 +34,10 @@ import org.slf4j.LoggerFactory;
 public class PtpPushService extends AbstractServiceAdaptor<FateContext,StreamObserver, StreamObserver> {
     Logger  logger = LoggerFactory.getLogger(PtpPushService.class);
 
-
-
     @Override
     protected StreamObserver doService(FateContext context, InboundPackage<StreamObserver> data) {
         StreamObserver responseStreamObserver = data.getBody();
+        context.setNeedPrintFlowLog(false);
         return  new StreamObserver<Osx.Inbound>() {
             Logger logger = LoggerFactory.getLogger(PtpPushService.class);
             QueuePushReqStreamObserver queuePushReqStreamObserver = new  QueuePushReqStreamObserver(context,ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER),

@@ -51,9 +51,6 @@ public class Bootstrap {
             }
 
         } catch (Exception ex) {
-
-            System.err.println("xxxxxxxxxxxxxxxx");
-
             logger.error("broker start failed ",ex);
             ex.printStackTrace();
             System.exit(1);

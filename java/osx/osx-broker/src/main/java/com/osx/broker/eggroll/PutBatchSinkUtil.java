@@ -40,18 +40,4 @@ public class PutBatchSinkUtil {
                            }
                     );
 
-
-//    object PutBatchSinkUtils {
-//        val sessionCache: LoadingCache[String, ErSession] = CacheBuilder.newBuilder
-//                .maximumSize(2000)
-//                .expireAfterWrite(10, TimeUnit.MINUTES)
-//                .concurrencyLevel(100)
-//                .recordStats
-//                .softValues
-//                .build(new CacheLoader[String, ErSession]() {
-//            override def load(key: String): ErSession = {
-//                    new ErSession(sessionId = key, createIfNotExists = false)
-//            }
-//        })
-//    }
 }

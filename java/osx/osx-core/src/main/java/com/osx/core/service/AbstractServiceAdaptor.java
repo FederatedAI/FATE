@@ -21,6 +21,7 @@ import com.google.common.collect.Maps;
 import com.osx.api.context.Context;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.StatusCode;
+import com.osx.core.context.FateContext;
 import com.osx.core.exceptions.ErrorMessageUtil;
 import com.osx.core.exceptions.ExceptionInfo;
 import com.osx.core.utils.FlowLogUtil;
@@ -43,7 +44,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
 
     static public AtomicInteger requestInHandle = new AtomicInteger(0);
     public static boolean isOpen = true;
-    protected Logger flowLogger = LoggerFactory.getLogger("flow");
+//    protected Logger flowLogger = LoggerFactory.getLogger("flow");
     protected String serviceName;
     Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     ServiceAdaptor<ctx, req, resp> serviceAdaptor;
@@ -147,7 +148,16 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
                     outboundPackage = this.serviceFail(context, data, exceptions);
                 }
             } finally {
-                FlowLogUtil.printFlowLog(context);
+                if(context instanceof FateContext )
+                {
+                    FateContext fateContext =(FateContext )context;
+                    if(fateContext.needPrintFlowLog()){
+                        FlowLogUtil.printFlowLog(context);
+                    }
+                }else {
+
+                    FlowLogUtil.printFlowLog(context);
+                }
             }
             //  int returnCode = context.getReturnCode();
 

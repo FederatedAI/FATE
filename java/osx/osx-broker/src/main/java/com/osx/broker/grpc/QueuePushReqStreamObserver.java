@@ -198,7 +198,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             logger.error("get session error ", e);
         }
         if (!SessionStatus.ACTIVE.name().equals(session.getErSessionMeta().getStatus())) {
-            IllegalStateException error = new IllegalStateException("session=${sessionId} with illegal status. expected=${SessionStatus.ACTIVE}, actual=${session.sessionMeta.status}");
+            SessionInitException error = new SessionInitException("eggroll session "+sessionId+" invalid status : "+session.getErSessionMeta().getStatus());
             onError(error);
             throw error;
         }

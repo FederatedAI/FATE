@@ -141,9 +141,8 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     public RouterInfo route(String srcPartyId, String srcRole, String dstPartyId, String desRole) {
         // logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
         RouterInfo routerInfo = null;
-        Map<String, List<Map>> partyIdMap = this.endPointMap.get(dstPartyId);
+        Map<String, List<Map>> partyIdMap = this.endPointMap.containsKey(dstPartyId)?this.endPointMap.get(dstPartyId):this.endPointMap.get(DEFAULT);
         if (partyIdMap != null) {
-
             if (StringUtils.isNotEmpty(desRole) && partyIdMap.get(desRole) != null) {
                 List<Map> ips = partyIdMap.getOrDefault(desRole, null);
                 if (ips != null && ips.size() > 0) {
