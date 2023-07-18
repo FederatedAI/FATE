@@ -32,7 +32,7 @@ if __name__ == "__main__":
         import numpy as np
 
         ctx = create_ctx(guest)
-        client = SecureAggregatorClient()
+        client = SecureAggregatorClient(is_mock=True)
         client.dh_exchange(ctx, [ctx.guest.rank, *ctx.hosts.ranks])
         print('ranks are {}'.format([ctx.guest.rank, *ctx.hosts.ranks]))
         print(client.secure_aggregate(ctx, [np.zeros((3, 4)), np.ones((2, 3))]))
@@ -41,12 +41,12 @@ if __name__ == "__main__":
         import numpy as np
 
         ctx = create_ctx(host)
-        client = SecureAggregatorClient()
+        client = SecureAggregatorClient(is_mock=True)
         client.dh_exchange(ctx, [ctx.guest.rank, *ctx.hosts.ranks])
         print(client.secure_aggregate(ctx, [np.zeros((3, 4)), np.ones((2, 3))]))
     else:
         from fate.arch.protocol import SecureAggregatorServer
 
         ctx = create_ctx(arbiter)
-        server = SecureAggregatorServer([ctx.guest.rank, *ctx.hosts.ranks])
+        server = SecureAggregatorServer([ctx.guest.rank, *ctx.hosts.ranks], is_mock=True)
         server.secure_aggregate(ctx)
