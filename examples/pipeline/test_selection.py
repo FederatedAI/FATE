@@ -15,19 +15,20 @@
 import json
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import FeatureScale
+from fate_client.pipeline.components.fate import Intersection, HeteroFeatureBinning
 from fate_client.pipeline.components.fate import Statistics, HeteroFeatureSelection
 from fate_client.pipeline.interface import DataWarehouseChannel
 
 pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998")
 
-"""intersection_0 = Intersection("intersection_0",
+intersection_0 = Intersection("intersection_0",
                               method="raw")
 intersection_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                       namespace="experiment_64"))
-intersection_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                          namespace="experiment_64"))
+                                                                       namespace="experiment_sid"))
+intersection_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                          namespace="experiment_sid"))
 
+"""
 intersection_1 = Intersection("intersection_1",
                               method="raw")
 intersection_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
@@ -35,24 +36,24 @@ intersection_1.guest.component_setting(input_data=DataWarehouseChannel(name="bre
 intersection_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                           namespace="experiment_64"))
 """
-feature_scale_0 = FeatureScale("feature_scale_0",
-                               method="standard")
-feature_scale_0.guest.component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                        namespace="experiment"))
-feature_scale_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                           namespace="experiment"))
 
-statistics_0 = Statistics("statistics_0", input_data=feature_scale_0.outputs["train_output_data"],
+statistics_0 = Statistics("statistics_0", input_data=intersection_0.outputs["output_data"],
                           metrics=["mean", "max", "std", "var", "kurtosis", "skewness"])
+binning_0 = HeteroFeatureBinning("binning_0", train_data=intersection_0.outputs["output_data"],
+                                 method="binning", n_bins=5, bin_col=None, category_col=None,
+                                 skip_metrics=False, transform_method="woe")
 
 selection_0 = HeteroFeatureSelection("selection_0",
-                                     train_data=feature_scale_0.outputs["train_output_data"],
-                                     method=["manual", "statistics"],
-                                     input_models=[statistics_0.outputs["output_model"]],
+                                     train_data=intersection_0.outputs["output_data"],
+                                     method=["iv", "statistics"],
+                                     input_models=[binning_0.outputs["output_model"],
+                                                   statistics_0.outputs["output_model"]],
+                                     iv_param={"select_feaderated": False},
                                      statistic_param={"metrics": ["mean", "max", "kurtosis", "skewness"]},
                                      manual_param={"filter_out_col": ["x0", "x3"]})
 
-pipeline.add_task(feature_scale_0)
+pipeline.add_task(intersection_0)
+pipeline.add_task(binning_0)
 pipeline.add_task(statistics_0)
 pipeline.add_task(selection_0)
 pipeline.compile()
@@ -62,7 +63,7 @@ print(json.dumps(pipeline.get_task_info("statistics_0").get_output_model(), inde
 print(json.dumps(pipeline.get_task_info("selection_0").get_output_model(), indent=4))
 
 predict_pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998")
-pipeline.deploy([feature_scale_0, selection_0])
+pipeline.deploy([binning_0, selection_0])
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
 
