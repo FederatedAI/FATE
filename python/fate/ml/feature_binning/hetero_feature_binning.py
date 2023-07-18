@@ -193,7 +193,7 @@ class StandardBinning(Module):
         self._metrics_summary = None
         self._host_metrics_summary = None
         self._train_metrics_summary = None
-        self._host_train_metrics_summary = None
+        self._train_host_metrics_summary = None
 
     def set_host_metrics(self, host, metrics_summary):
         self._host_metrics_summary[host] = metrics_summary
@@ -344,7 +344,7 @@ class StandardBinning(Module):
             method=self.method,
             split_pt_dict=self._split_pt_dict.to_dict(),
             bin_idx_dict=self._bin_idx_dict,
-            bin_count=self._bin_count,
+            bin_count_dict=self._bin_count_dict,
             metrics_summary=self._metrics_summary,
             train_metrics_summary=self._train_metrics_summary,
             host_metrics_summary=self._host_metrics_summary,
@@ -360,7 +360,7 @@ class StandardBinning(Module):
         # self.transform_method = model["transform_method"]
         self._split_pt_dict = pd.DataFrame.from_dict(model["split_pt_dict"])
         self._bin_idx_dict = model["bin_idx_dict"]
-        self._bin_count = model["bin_count"]
+        self._bin_count_dict = model["bin_count_dict"]
         # load predict model
         if model["train_metrics_summary"]:
             self._metrics_summary = model["metrics_summary"]
