@@ -335,6 +335,8 @@ def optimizer_factory(model_parameter, optimizer_type, optim_params):
         return torch.optim.RAdam(model_parameter, **optimizer_params)
     elif optimizer_type == 'rmsprop':
         return torch.optim.RMSprop(model_parameter, **optimizer_params)
+    elif optimizer_type == "rprop":
+        return torch.optim.Rprop(model_parameter, **optimizer_params)
     elif optimizer_type == 'sgd':
         return torch.optim.SGD(model_parameter, **optimizer_params)
     else:
