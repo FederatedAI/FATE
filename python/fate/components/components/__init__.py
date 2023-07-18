@@ -115,6 +115,12 @@ class LazyBuildInComponentsLoader:
         return hetero_feature_selection
 
     @_lazy_cpn
+    def sample(self):
+        from .sample import sample
+
+        return sample
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
         return toy_example
