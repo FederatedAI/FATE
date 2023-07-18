@@ -10,7 +10,7 @@ class Hist:
         shape_x, shape_y = features.shape
         for i in range(shape_x):
             for j in range(shape_y):
-                v = features[i, j]
+                v = features[i, j].item()
                 if j not in self.data:
                     self.data[j] = {}
                 if v not in self.data[j]:
