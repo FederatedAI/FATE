@@ -40,7 +40,7 @@ intersection_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="
 statistics_0 = Statistics("statistics_0", input_data=intersection_0.outputs["output_data"],
                           metrics=["mean", "max", "std", "var", "kurtosis", "skewness"])
 binning_0 = HeteroFeatureBinning("binning_0", train_data=intersection_0.outputs["output_data"],
-                                 method="binning", n_bins=5, bin_col=None, category_col=None,
+                                 method="quantile", n_bins=5, bin_col=None, category_col=None,
                                  skip_metrics=False, transform_method="woe")
 
 selection_0 = HeteroFeatureSelection("selection_0",
@@ -68,9 +68,9 @@ pipeline.deploy([binning_0, selection_0])
 deployed_pipeline = pipeline.get_deployed_pipeline()
 
 deployed_pipeline.feature_scale_0.guest.component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                         namespace="experiment"))
-deployed_pipeline.feature_scale_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                            namespace="experiment"))
+                                                                                         namespace="experiment_sid"))
+deployed_pipeline.feature_scale_0.hosts[0].component_setting(test_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                            namespace="experiment_sid"))
 
 predict_pipeline.add_task(deployed_pipeline)
 
