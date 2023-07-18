@@ -1,20 +1,16 @@
-use core::f32;
-use curve25519_dalek::edwards::EdwardsPoint;
-use curve25519_dalek::montgomery::MontgomeryPoint;
-use curve25519_dalek::scalar::Scalar;
+use std::collections::HashMap;
+
 use ndarray;
 use ndarray::prelude::*;
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyArrayDyn, PyReadonlyArray1, PyReadonlyArrayDyn};
+use numpy::{IntoPyArray, PyArrayDyn, PyReadonlyArrayDyn};
 use pyo3::exceptions::{PyIndexError, PyTypeError};
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes};
-use pyo3::wrap_pyfunction;
+use pyo3::types::PyBytes;
 use rand::distributions::Uniform;
-use rand::SeedableRng;
-use rand_core::OsRng;
 use rand::Rng;
+use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
-use std::collections::HashMap;
+use rand_core::OsRng;
 use x25519_dalek::{EphemeralSecret, PublicKey};
 
 #[pyclass]
@@ -111,11 +107,9 @@ impl RandomMix {
             }
         };
         let range = Uniform::new(-1e7f64, 1e7f64);
-        input.as_array()
-            .iter()
-            .zip(output_decimal_array.iter_mut())
+        output_decimal_array.iter_mut()
             .zip(output_integer_array.iter_mut())
-            .for_each(|((input, output_decimal), output_integer)| {
+            .for_each(|(output_decimal, output_integer)| {
                 for state in self.states.iter_mut() {
                     let rand = state.random_state.sample(range);
                     state.index += 1;
