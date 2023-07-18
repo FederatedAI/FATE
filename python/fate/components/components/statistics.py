@@ -13,74 +13,59 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Union, List
+from typing import List, Union
 
-from fate.components import (
-    GUEST,
-    HOST,
-    DatasetArtifact,
-    Input,
-    ModelArtifact,
-    Output,
-    Role,
-    cpn,
-    params
-)
+from fate.arch import Context
+from fate.components.core import GUEST, HOST, Role, cpn, params
 
 
 @cpn.component(roles=[GUEST, HOST])
-def statistics(ctx, role):
-    ...
-
-
-@statistics.train()
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.parameter("metrics",
-               type=Union[List[params.statistic_metrics_param()], params.statistic_metrics_param()],
-               default=['mean', 'std', 'min', 'max'],
-               desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']")
-@cpn.parameter("ddof", type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1")
-@cpn.parameter("bias", type=bool, default=True,
-               desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.")
-@cpn.parameter("skip_col", type=List[str], default=None, optional=True,
-               desc="columns to be skipped, default None; if None, statistics will be computed over all columns")
-@cpn.parameter("use_anonymous", type=bool, default=False,
-               desc="bool, whether interpret `skip_col` as anonymous column names")
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
-def statistics_train(
-        ctx,
+def statistics(
+        ctx: Context,
         role: Role,
-        train_data,
-        metrics,
-        ddof,
-        bias,
-        skip_col,
-        use_anonymous,
-        output_model,
+        input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        metrics: cpn.parameter(
+            type=Union[List[params.statistic_metrics_param()], params.statistic_metrics_param()],
+            default=["mean", "std", "min", "max"],
+            desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']",
+        ),
+        ddof: cpn.parameter(
+            type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1"
+        ),
+        bias: cpn.parameter(
+            type=bool,
+            default=True,
+            desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.",
+        ),
+        skip_col: cpn.parameter(
+            type=List[str],
+            default=None,
+            optional=True,
+            desc="columns to be skipped, default None; if None, statistics will be computed over all columns",
+        ),
+        use_anonymous: cpn.parameter(
+            type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
+        ),
+        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
-    train(ctx, train_data, output_model, metrics, ddof, bias, skip_col, use_anonymous)
-
-
-def train(ctx, train_data, output_model, metrics, ddof, bias, skip_col, use_anonymous):
     from fate.ml.statistics.statistics import FeatureStatistics
+    sub_ctx = ctx.sub_ctx("train")
+    input_data = input_data.read()
+    select_cols = get_to_compute_cols(
+        input_data.schema.columns, input_data.schema.anonymous_columns, skip_col, use_anonymous
+    )
+    if isinstance(metrics, str):
+        metrics = [metrics]
+    if len(metrics) > 1:
+        for metric in metrics:
+            if metric == "describe":
+                raise ValueError(f"'describe' should not be combined with additional metric names.")
+    stat_computer = FeatureStatistics(list(set(metrics)), ddof, bias)
+    input_data = input_data[select_cols]
+    stat_computer.fit(sub_ctx, input_data)
 
-    with ctx.sub_ctx("train") as sub_ctx:
-        train_data = sub_ctx.reader(train_data).read_dataframe().data
-        select_cols = get_to_compute_cols(train_data.schema.columns, train_data.schema.anonymous_columns,
-                                          skip_col, use_anonymous)
-        if isinstance(metrics, str):
-            metrics = [metrics]
-        if len(metrics) > 1:
-            for metric in metrics:
-                if metric == "describe":
-                    raise ValueError(f"'describe' should not be combined with additional metric names.")
-        stat_computer = FeatureStatistics(list(set(metrics)), ddof, bias)
-        train_data = train_data[select_cols]
-        stat_computer.fit(sub_ctx, train_data)
-
-        model = stat_computer.to_model()
-        with output_model as model_writer:
-            model_writer.write_model("statistics", model, metadata={"model_type": "statistic"})
+    model = stat_computer.get_model()
+    output_model.write(model, metadata={})
 
 
 def get_to_compute_cols(columns, anonymous_columns, skip_columns, use_anonymous):

@@ -21,7 +21,7 @@ import uuid
 from itertools import chain
 
 import pyspark
-from fate.interface import CTableABC
+from fate.arch.abc import CTableABC
 from pyspark.rddsampler import RDDSamplerBase
 from scipy.stats import hypergeom
 
@@ -30,7 +30,6 @@ from .._type import ComputingEngine
 from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
-
 
 _HDFS_DELIMITER = "\t"
 
@@ -80,33 +79,35 @@ class Table(CTableABC):
         return Table(_map_value(self._rdd, lambda x: x))
 
     @computing_profile
-    def save(self, address, partitions, schema, **kwargs):
-        from .._address import HDFSAddress
-
-        if isinstance(address, HDFSAddress):
-            self._rdd.map(lambda x: hdfs_serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
-                f"{address.name_node}/{address.path}"
-            )
+    def save(self, uri, schema: dict, options: dict = None):
+        if options is None:
+            options = {}
+        partitions = options.get("partitions")
+        if uri.scheme == "hdfs":
+            table = self._rdd.map(lambda x: hdfs_serialize(x[0], x[1]))
+            if partitions:
+                table = table.repartition(partitions)
+            table.saveAsTextFile(uri.original_uri)
             schema.update(self.schema)
             return
 
-        from .._address import HiveAddress, LinkisHiveAddress
-
-        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
-            LOGGER.debug(f"partitions: {partitions}")
-            _repartition = self._rdd.map(lambda x: hive_to_row(x[0], x[1])).repartition(partitions)
-            _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
+        if uri.scheme == "hive":
+            table = self._rdd.map(lambda x: hive_to_row(x[0], x[1]))
+            if partitions:
+                table = table.repartition(partitions)
+            table.toDF().write.saveAsTable(uri.original_uri)
             schema.update(self.schema)
             return
 
-        from .._address import LocalFSAddress
-
-        if isinstance(address, LocalFSAddress):
-            self._rdd.map(lambda x: hdfs_serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(address.path)
+        if uri.scheme == "file":
+            table = self._rdd.map(lambda x: hdfs_serialize(x[0], x[1]))
+            if partitions:
+                table = table.repartition(partitions)
+            table.saveAsTextFile(uri.path)
             schema.update(self.schema)
             return
 
-        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
+        raise NotImplementedError(f"uri type {uri} not supported with spark backend")
 
     @property
     def partitions(self):
@@ -216,7 +217,10 @@ def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
 
     sc = SparkContext.getOrCreate()
     fun = hdfs_deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
-    rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
+    rdd = sc.textFile(paths, partitions).map(fun)
+    if partitions is not None:
+        rdd = rdd.repartition(partitions)
+    rdd = materialize(rdd)
     return Table(rdd=rdd)
 
 

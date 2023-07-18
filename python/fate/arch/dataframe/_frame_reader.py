@@ -22,28 +22,50 @@ from ._dataframe import DataFrame
 from .manager import DataManager
 
 
-class RawTableReader(object):
+class TableReader(object):
     def __init__(
         self,
-        delimiter: str = ",",
-        match_id_name = None,
+        sample_id_name: str =None,
+        match_id_name: str = None,
+        match_id_list: list = None,
+        match_id_range: int = 0,
         label_name: Union[None, str] = None,
         label_type: str = "int",
         weight_name: Union[None, str] = None,
         weight_type: str = "float32",
+        header: str = None,
+        delimiter: str = ",",
         dtype: Union[str, dict] = "float32",
-        na_values: Union[None, str, int, float, dict] = None,
+        anonymous_role: str = None,
+        anonymous_party_id: str = None,
+        na_values: Union[str, list, dict] = None,
         input_format: str = "dense",
+        tag_with_value: bool = False,
+        tag_value_delimiter: str = ":"
     ):
-        self._delimiter = delimiter
+        self._sample_id_name = sample_id_name
         self._match_id_name = match_id_name
+        self._match_id_list = match_id_list
+        self._match_id_range = match_id_range
         self._label_name = label_name
         self._label_type = label_type
         self._weight_name = weight_name
         self._weight_type = weight_type
+        self._delimiter = delimiter
+        self._header = header
         self._dtype = dtype
+        self._anonymous_role = anonymous_role
+        self._anonymous_party_id = anonymous_party_id
         self._na_values = na_values
         self._input_format = input_format
+        self._tag_with_value = tag_with_value
+        self._tag_value_delimiter = tag_value_delimiter
+
+        self.check_params()
+
+    def check_params(self):
+        if not self._sample_id_name:
+            raise ValueError("Please provide sample_id_name")
 
     def to_frame(self, ctx, table):
         if self._input_format != "dense":
@@ -52,29 +74,25 @@ class RawTableReader(object):
         return self._dense_format_to_frame(ctx, table)
 
     def _dense_format_to_frame(self, ctx, table):
-        """
-        流程：schema-manager初始化得到每列的schema
-             block-manager初始化得到可合并的列类型，其中注意的是，index列\weight\label不合并
-             block-manager维护映射表：每列被映射的block_index，根据的是列索引id
-                                    block的属性：同类型是否可以合并
-        """
         data_manager = DataManager()
-        retrieval_index_dict = data_manager.init_from_table_schema(
-            table.schema, delimiter=self._delimiter, match_id_name=self._match_id_name,
-            label_name=self._label_name, weight_name=self._weight_name,
+        columns = self._header.split(self._delimiter, -1)
+        columns.remove(self._sample_id_name)
+        retrieval_index_dict = data_manager.init_from_local_file(
+            sample_id_name=self._sample_id_name, columns=columns, match_id_list=self._match_id_list,
+            match_id_name=self._match_id_name, label_name=self._label_name, weight_name=self._weight_name,
             label_type=self._label_type, weight_type=self._weight_type,
             dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
 
         from .ops._indexer import get_partition_order_by_raw_table
         partition_order_mappings = get_partition_order_by_raw_table(table)
         # partition_order_mappings = _get_partition_order(table)
-        functools.partial(_to_blocks,
-                          data_manager=data_manager,
-                          index_dict=retrieval_index_dict,
-                          partition_order_mappings=partition_order_mappings,
-                          na_values=self._na_values)
+        table = table.mapValues(lambda value: value.split(self._delimiter, -1))
+        to_block_func = functools.partial(_to_blocks,
+                                          data_manager=data_manager,
+                                          retrieval_index_dict=retrieval_index_dict,
+                                          partition_order_mappings=partition_order_mappings)
         block_table = table.mapPartitions(
-            _to_blocks,
+            to_block_func,
             use_previous_behavior=False
         )
 

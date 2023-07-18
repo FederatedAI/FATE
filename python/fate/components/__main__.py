@@ -15,16 +15,15 @@
 #
 
 """
-execute with python -m fate.components --execution_id xxx --config xxx
+execute with python -m fate.components --config xxx
 """
-
 
 if __name__ == "__main__":
     import click
-    from fate.components.entrypoint.clean_cli import clean
-    from fate.components.entrypoint.component_cli import component
+    from fate.components.entrypoint.cli.component.__main__ import component
+    from fate.components.entrypoint.cli.test.__main__ import test
 
     cli = click.Group()
     cli.add_command(component)
-    cli.add_command(clean)
+    cli.add_command(test)
     cli(prog_name="python -m fate.components")

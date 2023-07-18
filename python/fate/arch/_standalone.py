@@ -20,6 +20,8 @@ import logging
 import os
 import pickle as c_pickle
 import shutil
+import signal
+import threading
 import time
 import uuid
 from collections.abc import Iterable
@@ -34,7 +36,7 @@ from typing import List, Tuple
 import cloudpickle as f_pickle
 import lmdb
 import numpy as np
-from fate.interface import PartyMeta
+from fate.arch.abc import PartyMeta
 
 from .federation import FederationDataType
 
@@ -48,6 +50,7 @@ DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 if (STANDALONE_DATA_PATH := os.getenv("STANDALONE_DATA_PATH")) is not None:
     _data_dir = Path(STANDALONE_DATA_PATH)
+    LOGGER.debug(f"env STANDALONE_DATA_PATH is set to {STANDALONE_DATA_PATH}, using {_data_dir} as data dir")
 else:
     _data_dir = Path(
         os.path.abspath(
@@ -56,6 +59,32 @@ else:
             )
         )
     )
+    LOGGER.debug(f"env STANDALONE_DATA_PATH is not set, using {_data_dir} as data dir")
+
+
+def _watch_thread_react_to_parent_die(ppid):
+    """
+    this function is used to watch parent process, if parent process is dead, then kill self
+    the trick is to use os.kill(ppid, 0) to check if parent process is alive periodically
+    and if parent process is dead, then kill self
+
+    Note: this trick is modified from the answer by aaron: https://stackoverflow.com/a/71369760/14697733
+    Args:
+        ppid: parent process id
+
+    """
+    pid = os.getpid()
+
+    def f():
+        while True:
+            try:
+                os.kill(ppid, 0)
+            except OSError:
+                os.kill(pid, signal.SIGTERM)
+            time.sleep(1)
+
+    thread = threading.Thread(target=f, daemon=True)
+    thread.start()
 
 
 # noinspection PyPep8Naming
@@ -105,7 +134,7 @@ class Table(object):
                 db = env.open_db()
                 with env.begin(write=True) as txn:
                     txn.drop(db)
-        _TableMetaManager.destory_table(self._namespace, self._name)
+        _TableMetaManager.destroy_table(self._namespace, self._name)
 
     def take(self, n, **kwargs):
         if n <= 0:
@@ -357,7 +386,9 @@ class Table(object):
 class Session(object):
     def __init__(self, session_id, max_workers=None):
         self.session_id = session_id
-        self._pool = Executor(max_workers=max_workers)
+        self._pool = Executor(
+            max_workers=max_workers, initializer=_watch_thread_react_to_parent_die, initargs=(os.getpid(),)
+        )
 
     def __getstate__(self):
         # session won't be pickled
@@ -457,7 +488,10 @@ class Session(object):
             left = _Operand(namespace, name, p, partitions)
             right = _Operand(other_namespace, other_name, p, partitions)
             futures.append(self._pool.submit(do_func, _BinaryProcess(task_info, left, right)))
-        results = [r.result() for r in futures]
+        results = []
+        for f in futures:
+            r = f.result()
+            results.append(r)
         return results
 
 
@@ -493,7 +527,7 @@ class Federation(object):
         self._session.cleanup(namespace=self._session_id, name="*")
 
     # noinspection PyUnusedLocal
-    def remote(self, v, name: str, tag: str, parties: List[Tuple[str, str]]):
+    def remote(self, v, name: str, tag: str, parties: List[PartyMeta]):
         log_str = f"federation.standalone.remote.{name}.{tag}"
 
         if v is None:
@@ -1007,7 +1041,10 @@ def _do_join(p: _BinaryProcess):
                 continue
             v1 = deserialize(v1_bytes)
             v2 = deserialize(v2_bytes)
-            v3 = p.get_func()(v1, v2)
+            try:
+                v3 = p.get_func()(v1, v2)
+            except Exception as e:
+                raise RuntimeError(f"Error when joining {v1} and {v2}: {e}") from e
             dst_txn.put(k_bytes, serialize(v3))
     return rtn
 
@@ -1147,7 +1184,7 @@ class _TableMetaManager:
             return old_value_bytes
 
     @classmethod
-    def destory_table(cls, namespace: str, name: str):
+    def destroy_table(cls, namespace: str, name: str):
         k_bytes, env = cls._get_meta_env(namespace, name)
         with env.begin(write=True) as txn:
             txn.delete(k_bytes)

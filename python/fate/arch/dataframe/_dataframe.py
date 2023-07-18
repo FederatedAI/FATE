@@ -13,17 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import numpy as np
+import copy
 import operator
-import pandas as pd
-
 from typing import List, Union
 
-from .ops import (
-    aggregate_indexer,
-    get_partition_order_mappings
-)
+import numpy as np
+import pandas as pd
+
 from .manager import DataManager, Schema
+from .ops import aggregate_indexer, get_partition_order_mappings
 
 
 class DataFrame(object):
@@ -50,19 +48,17 @@ class DataFrame(object):
     @property
     def sample_id(self):
         if self._sample_id is None:
-            self._sample_id = self.__extract_fields(with_sample_id=True,
-                                                    with_match_id=False,
-                                                    with_label=False,
-                                                    with_weight=False)
+            self._sample_id = self.__extract_fields(
+                with_sample_id=True, with_match_id=False, with_label=False, with_weight=False
+            )
         return self._sample_id
 
     @property
     def match_id(self):
         if self._match_id is None:
-            self._match_id = self.__extract_fields(with_sample_id=True,
-                                                   with_match_id=True,
-                                                   with_label=False,
-                                                   with_weight=False)
+            self._match_id = self.__extract_fields(
+                with_sample_id=True, with_match_id=True, with_label=False, with_weight=False
+            )
 
         return self._match_id
 
@@ -75,11 +71,7 @@ class DataFrame(object):
             return None
 
         return self.__extract_fields(
-            with_sample_id=True,
-            with_match_id=True,
-            with_label=False,
-            with_weight=False,
-            columns=self.columns.tolist()
+            with_sample_id=True, with_match_id=True, with_label=False, with_weight=False, columns=self.columns.tolist()
         )
 
     @property
@@ -89,10 +81,7 @@ class DataFrame(object):
 
         if self._label is None:
             self._label = self.__extract_fields(
-                with_sample_id=True,
-                with_match_id=True,
-                with_label=True,
-                with_weight=False
+                with_sample_id=True, with_match_id=True, with_label=True, with_weight=False
             )
 
         return self._label
@@ -104,10 +93,7 @@ class DataFrame(object):
 
         if self._weight is None:
             self._weight = self.__extract_fields(
-                with_sample_id=True,
-                with_match_id=True,
-                with_label=False,
-                with_weight=False
+                with_sample_id=True, with_match_id=True, with_label=False, with_weight=False
             )
 
         return self._weight
@@ -121,7 +107,8 @@ class DataFrame(object):
                 items = self._match_id_indexer.count()
             else:
                 items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
-                    lambda size1, size2: size1 + size2)
+                    lambda size1, size2: size1 + size2
+                )
             self.__count = items
 
         return self.__count, len(self._data_manager.schema.columns)
@@ -161,52 +148,54 @@ class DataFrame(object):
         df.values.as_tensor()
         """
         from .ops._transformer import transform_to_tensor
+
         return transform_to_tensor(self._block_table, self._data_manager, dtype)
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
-        return transform_to_pandas_dataframe(
-            self._block_table,
-            self._data_manager
-        )
 
-    def apply_row(self, func, columns=None, with_label=False,
-                  with_weight=False, enable_type_align_checking=True):
+        return transform_to_pandas_dataframe(self._block_table, self._data_manager)
+
+    def apply_row(self, func, columns=None, with_label=False, with_weight=False, enable_type_align_checking=True):
         from .ops._apply_row import apply_row
+
         return apply_row(
             self,
             func,
             columns=columns,
             with_label=with_label,
             with_weight=with_weight,
-            enable_type_align_checking=enable_type_align_checking
+            enable_type_align_checking=enable_type_align_checking,
         )
 
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
-        return self.__extract_fields(with_sample_id=True,
-                                     with_match_id=True,
-                                     with_label=with_label,
-                                     with_weight=with_weight,
-                                     columns=columns)
+        return self.__extract_fields(
+            with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
+        )
 
     def drop(self, index) -> "DataFrame":
         from .ops._dimension_scaling import drop
+
         return drop(self, index)
 
     def fillna(self, value):
         from .ops._fillna import fillna
+
         return fillna(self, value)
 
     def get_dummies(self, dtype="int32"):
         from .ops._encoder import get_dummies
+
         return get_dummies(self, dtype=dtype)
 
     def isna(self):
         from .ops._missing import isna
+
         return isna(self)
 
     def isin(self, values):
         from .ops._isin import isin
+
         return isin(self, values)
 
     def na_count(self):
@@ -214,53 +203,93 @@ class DataFrame(object):
 
     def max(self) -> "pd.Series":
         from .ops._stat import max
+
         return max(self)
 
     def min(self, *args, **kwargs) -> "pd.Series":
         from .ops._stat import min
+
         return min(self)
 
     def mean(self, *args, **kwargs) -> "pd.Series":
         from .ops._stat import mean
+
         return mean(self)
 
     def sum(self, *args, **kwargs) -> "pd.Series":
         from .ops._stat import sum
+
         return sum(self)
 
     def std(self, ddof=1, **kwargs) -> "pd.Series":
         from .ops._stat import std
+
         return std(self, ddof=ddof)
 
     def var(self, ddof=1, **kwargs):
         from .ops._stat import var
+
         return var(self, ddof=ddof)
 
     def variation(self, ddof=1):
         from .ops._stat import variation
+
         return variation(self, ddof=ddof)
 
     def skew(self, unbiased=False):
         from .ops._stat import skew
+
         return skew(self, unbiased=unbiased)
 
     def kurt(self, unbiased=False):
         from .ops._stat import kurt
+
         return kurt(self, unbiased=unbiased)
 
     def sigmoid(self) -> "DataFrame":
         from .ops._activation import sigmoid
+
         return sigmoid(self)
+
+    def rename(self, sample_id_name: str = None,
+               match_id_name: str = None,
+               label_name: str = None,
+               weight_name: str = None,
+               columns: dict = None):
+        self._data_manager.rename(sample_id_name=sample_id_name,
+                                  match_id_name=match_id_name,
+                                  label_name=label_name,
+                                  weight_name=weight_name,
+                                  columns=columns)
 
     def count(self) -> "int":
         return self.shape[0]
 
     def describe(self, ddof=1, unbiased=False):
         from .ops._stat import describe
+
         return describe(self, ddof=ddof, unbiased=unbiased)
 
-    def quantile(self, q, axis=0, method="quantile", ):
-        ...
+    def quantile(
+        self,
+        q,
+        relative_error: float = 1e-4
+    ):
+        from .ops._quantile import quantile
+        return quantile(self, q, relative_error)
+
+    def qcut(self, q: int):
+        from .ops._quantile import qcut
+        return qcut(self, q)
+
+    def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
+        from .ops._encoder import bucketize
+        return bucketize(self, boundaries)
+
+    def hist(self, targets):
+        from .ops._histogram import hist
+
+        return hist(self, targets)
 
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
@@ -300,6 +329,7 @@ class DataFrame(object):
 
     def __invert__(self):
         from .ops._unary_operator import invert
+
         return invert(self)
 
     def __arithmetic_operate(self, op, other) -> "DataFrame":
@@ -312,10 +342,12 @@ class DataFrame(object):
         需要注意的是：int/float可能会统一上升成float，所以涉及到block类型的变化和压缩
         """
         from .ops._arithmetic import arith_operate
+
         return arith_operate(self, other, op)
 
     def __cmp_operate(self, op, other) -> "DataFrame":
         from .ops._cmp import cmp_operate
+
         return cmp_operate(self, other, op)
 
     def __getattr__(self, attr):
@@ -325,8 +357,7 @@ class DataFrame(object):
         return self.__getitem__(attr)
 
     def __setattr__(self, key, value):
-        property_attr_mapping = dict(block_table="_block_table",
-                                     data_manager="_data_manager")
+        property_attr_mapping = dict(block_table="_block_table", data_manager="_data_manager")
         if key not in ["label", "weight"] and key not in property_attr_mapping:
             self.__dict__[key] = value
             return
@@ -339,16 +370,19 @@ class DataFrame(object):
             if self._label is not None:
                 self.__dict__["_label"] = None
             from .ops._set_item import set_label_or_weight
+
             set_label_or_weight(self, value, key_type=key)
         else:
             if self._weight is not None:
                 self.__dict__["_weight"] = None
             from .ops._set_item import set_label_or_weight
+
             set_label_or_weight(self, value, key_type=key)
 
     def __getitem__(self, items) -> "DataFrame":
         if isinstance(items, DataFrame):
             from .ops._where import where
+
             return where(self, items)
 
         if isinstance(items, pd.Index):
@@ -433,12 +467,14 @@ class DataFrame(object):
         agg_indexer = aggregate_indexer(indexer)
 
         if not preserve_order:
+
             def _convert_block(blocks, retrieval_indexes):
                 row_indexes = [retrieval_index[0] for retrieval_index in retrieval_indexes]
                 return [block[row_indexes] for block in blocks]
 
             block_table = self._block_table.join(agg_indexer, _convert_block)
         else:
+
             def _convert_to_block(kvs):
                 ret_dict = {}
                 for block_id, (blocks, block_indexer) in kvs:
@@ -449,8 +485,12 @@ class DataFrame(object):
                         if dst_block_id not in ret_dict:
                             ret_dict[dst_block_id] = []
 
-                        ret_dict[dst_block_id].append([block[src_row_id] if isinstance(block, pd.Index)
-                                                       else block[src_row_id].tolist() for block in blocks])
+                        ret_dict[dst_block_id].append(
+                            [
+                                block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
+                                for block in blocks
+                            ]
+                        )
 
                 return list(ret_dict.items())
 
@@ -487,40 +527,54 @@ class DataFrame(object):
                 return ret
 
             from .ops._transformer import transform_list_block_to_frame_block
+
             block_table = self._block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
             block_table = block_table.mapReducePartitions(_convert_to_block, _merge_list)
-            block_table = transform_list_block_to_frame_block(block_table,
-                                                              self._data_manager)
+            block_table = transform_list_block_to_frame_block(block_table, self._data_manager)
 
         partition_order_mappings = get_partition_order_mappings(block_table)
-        return DataFrame(self._ctx,
-                         block_table,
-                         partition_order_mappings,
-                         self._data_manager)
+        return DataFrame(self._ctx, block_table, partition_order_mappings, self._data_manager.duplicate())
 
     def iloc(self, indexes):
         ...
 
+    def copy(self) -> "DataFrame":
+        return DataFrame(
+            self._ctx,
+            self._block_table.mapValues(lambda v: v),
+            copy.deepcopy(self.partition_order_mappings),
+            self._data_manager.duplicate()
+        )
+
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
         from .ops._dimension_scaling import hstack
+
         return hstack(stacks)
 
     @classmethod
     def vstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
         from .ops._dimension_scaling import vstack
+
         return vstack(stacks)
 
-    def __extract_fields(self, with_sample_id=True, with_match_id=True,
-                         with_label=True, with_weight=True, columns: Union[str, list]=None) -> "DataFrame":
+    def __extract_fields(
+        self,
+        with_sample_id=True,
+        with_match_id=True,
+        with_label=True,
+        with_weight=True,
+        columns: Union[str, list] = None,
+    ) -> "DataFrame":
         from .ops._field_extract import field_extract
+
         return field_extract(
             self,
             with_sample_id=with_sample_id,
             with_match_id=with_match_id,
             with_label=with_label,
             with_weight=with_weight,
-            columns=columns
+            columns=columns,
         )
 
     def __convert_to_table(self, target_name):
@@ -528,4 +582,9 @@ class DataFrame(object):
         assert block_loc[1] == 0, "support only one indexer in current version"
 
         from .ops._indexer import transform_to_table
+
         return transform_to_table(self._block_table, block_loc[0], self._partition_order_mappings)
+
+    def data_overview(self, num=100):
+        from .ops._data_overview import collect_data
+        return collect_data(self, num=100)

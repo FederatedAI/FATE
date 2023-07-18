@@ -13,78 +13,63 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from contextlib import contextmanager
-from typing import Generator, overload
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+_NS_FEDERATION_SPLIT = "."
 
-class Namespace:
-    """
-    Summary, Metrics may be namespace awared:
-    ```
-    namespace = Namespace()
-    ctx = Context(...summary=XXXSummary(namespace))
-    ```
-    """
 
-    def __init__(self, namespaces=None) -> None:
-        if namespaces is None:
-            namespaces = []
-        self.namespaces = namespaces
+class NS:
+    def __init__(self, name, deep, parent: Optional["NS"] = None) -> None:
+        self.name = name
+        self.deep = deep
+        self.parent = parent
 
-    @contextmanager
-    def into_subnamespace(self, subnamespace: str):
-        self.namespaces.append(subnamespace)
-        try:
-            yield self
-        finally:
-            self.namespaces.pop()
+        if self.parent is None:
+            self._federation_tag = self.get_name()
+            self._metric_groups = []
+        else:
+            self._federation_tag = f"{self.parent._federation_tag}{_NS_FEDERATION_SPLIT}{self.get_name()}"
+            self._metric_groups = [*self.parent._metric_groups, self.parent.get_group()]
 
     @property
-    def namespace(self):
-        return ".".join(self.namespaces)
+    def federation_tag(self):
+        return self._federation_tag
 
-    def fedeation_tag(self) -> str:
-        return ".".join(self.namespaces)
+    @property
+    def metric_groups(self) -> List[Tuple[str, Optional[int]]]:
+        return self._metric_groups
 
-    def sub_namespace(self, namespace):
-        return Namespace([*self.namespaces, namespace])
+    def get_name(self):
+        return self.name
 
-    @overload
-    @contextmanager
-    def iter_namespaces(
-        self, start: int, stop: int, *, prefix_name=""
-    ) -> Generator[Generator["Namespace", None, None], None, None]:
-        ...
+    def get_group(self):
+        return self.name, None
 
-    @overload
-    @contextmanager
-    def iter_namespaces(
-        self, stop: int, *, prefix_name=""
-    ) -> Generator[Generator["Namespace", None, None], None, None]:
-        ...
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(name={self.name}, deep={self.deep}"
 
-    @contextmanager
-    def iter_namespaces(self, *args, prefix_name=""):
-        assert 0 < len(args) <= 2, "position argument should be 1 or 2"
-        if len(args) == 1:
-            start, stop = 0, args[0]
-        if len(args) == 2:
-            start, stop = args[0], args[1]
+    def indexed_ns(self, index: int):
+        return IndexedNS(index=index, name=self.name, deep=self.deep, parent=self.parent)
 
-        prev_namespace_state = self._namespace_state
+    def sub_ns(self, name: str, is_special=False):
+        return NS(name=name, deep=self.deep + 1, parent=self)
 
-        def _state_iterator() -> Generator["Namespace", None, None]:
-            for i in range(start, stop):
-                # the tags in the iteration need to be distinguishable
-                template_formated = f"{prefix_name}iter_{i}"
-                self._namespace_state = IterationState(prev_namespace_state.sub_namespace(template_formated))
-                yield self
 
-        # with context returns iterator of Contexts
-        # namespaec state inside context is changed alone with iterator comsued
-        yield _state_iterator()
+class IndexedNS(NS):
+    def __init__(self, index, name: str, deep: int, parent: Optional["NS"] = None) -> None:
+        self.index = index
+        super().__init__(name=name, deep=deep, parent=parent)
 
-        # restore namespace state when leaving with context
-        self._namespace_state = prev_namespace_state
+    def get_name(self):
+        return f"{self.name}-{self.index}"
+
+    def get_group(self):
+        return self.name, self.index
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(index={self.index}, name={self.name}, deep={self.deep})"
+
+
+default_ns = NS(name="default", deep=0)

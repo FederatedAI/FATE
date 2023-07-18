@@ -15,13 +15,6 @@
 #
 
 
-class FederationEngine(object):
-    EGGROLL = "EGGROLL"
-    RABBITMQ = "RABBITMQ"
-    STANDALONE = "STANDALONE"
-    PULSAR = "PULSAR"
-
-
 class FederationDataType(object):
     OBJECT = "obj"
     TABLE = "Table"
