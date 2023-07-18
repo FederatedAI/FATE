@@ -12,12 +12,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._cipher import phe_keygen
+from ._cipher import PHEKit, phe_keygen
 from ._custom_ops import *
 from .distributed import DTensor
 from .paillier import PaillierTensor
 
 __all__ = [
+    "PHEKit",
     "phe_keygen",
     "DTensor",
     "PaillierTensor",

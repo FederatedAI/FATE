@@ -47,7 +47,12 @@ class PHECipher:
     def __init__(self, kind) -> None:
         self.kind = kind
 
-    def keygen(self, **kwargs):
+    def keygen(self, options, **kwargs):
         from fate.arch.tensor import phe_keygen
 
-        return phe_keygen(self.kind, **kwargs)
+        return phe_keygen(self.kind, options)
+
+    def setup(self, key_length):
+        from fate.arch.tensor import PHEKit
+
+        return PHEKit(self.kind, key_length)

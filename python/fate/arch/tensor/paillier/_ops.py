@@ -213,3 +213,8 @@ def matmul(input, other):
 @implements(_custom_ops.to_local_f)
 def to_local_f(input):
     return input
+
+
+@implements(_custom_ops.histogram_f)
+def histogram_f(histogram, index, src):
+    raise NotImplementedError("histogram is not implemented")

@@ -48,7 +48,7 @@ impl QuantileSummaryStream {
                 .unwrap()
                 .extract::<f64>()
                 .map_err(|e| PyTypeError::new_err(e.to_string())) // convert error to pyerr
-                .map(|epsion| QuantileSummaryStream::new(Some(epsion))),
+                .map(|epsilon| QuantileSummaryStream::new(Some(epsilon))),
             _ => Err(PyTypeError::new_err("accept zero or one positional args")),
         }
     }
