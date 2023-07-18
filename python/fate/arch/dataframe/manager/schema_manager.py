@@ -166,6 +166,38 @@ class SchemaManager(object):
     def schema(self, schema):
         self._schema = schema
 
+    def rename(self, sample_id_name=None, match_id_name=None, label_name=None, weight_name=None, columns: dict = None):
+        attr_dict = {
+            "sample_id_name": sample_id_name,
+            "match_id_name": match_id_name,
+            "label_name": label_name,
+            "weight_name": weight_name
+        }
+
+        for attr, value in attr_dict.items():
+            if not value:
+                continue
+            o_name = getattr(self._schema, attr)
+            setattr(self._schema, attr, value)
+            self._rename_single_column(o_name, value)
+
+        if columns:
+            for o_name, n_name in columns.items():
+                self._rename_single_column(o_name, n_name)
+
+            o_columns = self._schema.columns.tolist()
+            n_columns = [o_name if o_name not in columns else columns[o_name] for o_name in o_columns]
+            self._schema.columns = pd.Index(n_columns)
+
+    def _rename_single_column(self, src, dst):
+        self._type_mapping[dst] = self._type_mapping[src]
+        self._type_mapping.pop(src)
+
+        self._name_offset_mapping[dst] = self._name_offset_mapping[src]
+        offset = self._name_offset_mapping.pop(src)
+
+        self._offset_name_mapping[offset] = dst
+
     def add_label_or_weight(self, key_type, name, block_type):
         self._type_mapping[name] = block_type.value
 

@@ -17,8 +17,9 @@ import itertools
 import logging
 import typing
 
-from fate.interface import CTableABC
+from fate.arch.abc import CTableABC
 
+from ...unify import URI
 from .._profile import computing_profile
 from .._type import ComputingEngine
 
@@ -47,20 +48,23 @@ class Table(CTableABC):
         return Table(self._table.mapValues(lambda x: x))
 
     @computing_profile
-    def save(self, address, partitions, schema, **kwargs):
-        from .._address import StandaloneAddress
+    def save(self, uri: URI, schema, options: dict = None):
+        if options is None:
+            options = {}
 
-        if isinstance(address, StandaloneAddress):
-            self._table.save_as(
-                name=address.name,
-                namespace=address.namespace,
-                partition=partitions,
-                need_cleanup=False,
-            )
-            schema.update(self.schema)
-            return
-
-        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
+        if uri.scheme != "standalone":
+            raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
+        try:
+            *database, namespace, name = uri.path_splits()
+        except Exception as e:
+            raise ValueError(f"uri `{uri}` not supported with standalone backend") from e
+        self._table.save_as(
+            name=name,
+            namespace=namespace,
+            partition=options.get("partitions", self.partitions),
+            need_cleanup=False,
+        )
+        schema.update(self.schema)
 
     @computing_profile
     def count(self) -> int:

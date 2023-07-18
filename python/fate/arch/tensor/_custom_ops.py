@@ -3,7 +3,7 @@ import torch
 
 def encrypt_f(tensor, encryptor):
     if isinstance(tensor, torch.Tensor):
-        return encryptor.encrypt(tensor)
+        return encryptor.encrypt(tensor.detach())
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):
@@ -12,8 +12,8 @@ def encrypt_f(tensor, encryptor):
 
 
 def decrypt_f(tensor, decryptor):
-    if isinstance(tensor, torch.Tensor):
-        return decryptor.encrypt(tensor)
+    if isinstance(tensor, torch.Tensor.detach):
+        return decryptor.encrypt(tensor.detach())
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):

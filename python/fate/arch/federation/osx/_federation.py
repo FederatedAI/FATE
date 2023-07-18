@@ -17,8 +17,8 @@ import json
 import typing
 from logging import getLogger
 
+from fate.arch.abc import PartyMeta
 from fate.arch.federation.osx import osx_pb2
-from fate.interface import PartyMeta
 
 from .._federation import FederationBase
 from .._nretry import nretry

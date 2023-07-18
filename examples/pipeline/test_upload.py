@@ -14,27 +14,46 @@
 #  limitations under the License.
 from fate_client.pipeline import FateFlowPipeline
 
-pipeline = FateFlowPipeline()
-pipeline.upload(file="${abs_path_of_data_guest}",
-                # file="/data/projects/fate/examples/data/breast_hetero_guest.csv",
-                head=1,
-                partitions=4,
-                namespace="experiment",
-                name="breast_hetero_guest",
-                meta={
-                    "label_name": "y",
-                    "label_type": "float32",
-                    "dtype": "float32"
-                })
+pipeline = FateFlowPipeline().set_roles(
+    local="0")
+pipeline.set_site_role("local")
+pipeline.set_site_party_id("0")
+meta = {'delimiter': ',',
+        'dtype': 'float32',
+        'input_format': 'dense',
+        'label_type': 'int32',
+        'label_name': 'y',
+        'match_id_name': 'id',
+        'match_id_range': 0,
+        'sample_id_name': 'id',
+        'tag_value_delimiter': ':',
+        'tag_with_value': False,
+        'weight_type': 'float32'}
 
-pipeline = FateFlowPipeline()
-pipeline.upload(file="${abs_path_of_data_host}",
-                # file="/data/projects/fate/examples/data/breast_hetero_host.csv",
-                head=1,
-                partitions=4,
-                namespace="experiment",
-                name="breast_hetero_host",
-                meta={
-                    "label_name": None,
-                    "dtype": "float32"
-                })
+pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
+    file="/Users/yuwu/PycharmProjects/FATE/examples/data/breast_hetero_guest.csv",
+    meta=meta, head=True,
+    namespace="experiment",
+    name="breast_hetero_guest")
+
+meta = {'delimiter': ',',
+        'dtype': 'float32',
+        'input_format': 'dense',
+        'label_type': 'int',
+        'match_id_name': 'id',
+        'match_id_range': 0,
+        'sample_id_name': 'id',
+        'tag_value_delimiter': ':',
+        'tag_with_value': False,
+        'weight_type': 'float32'}
+
+pipeline = FateFlowPipeline().set_roles(
+    local="0")
+pipeline.set_site_role("local")
+pipeline.set_site_party_id("0")
+
+pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_host}",
+    file="/Users/yuwu/PycharmProjects/FATE/examples/data/breast_hetero_host.csv",
+    meta=meta, head=True,
+    namespace="experiment",
+    name="breast_hetero_host")

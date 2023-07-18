@@ -2,12 +2,12 @@ use bincode::{deserialize, serialize};
 use ndarray::prelude::*;
 use ndarray::{Array, ArrayView1, Axis};
 use numpy::{IntoPyArray, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use pyo3::types::PyTuple;
 use quantile::greenwald_khanna;
 use serde::{Deserialize, Serialize};
-use pyo3::types::PyTuple;
-use pyo3::exceptions::PyTypeError;
 
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Serialize, Deserialize)]
 struct Ordf64(f64);
@@ -71,7 +71,7 @@ impl QuantileSummaryStream {
         }
         Ok(())
     }
-    pub fn quantile(&self, phi: Vec<f64>) -> Vec<f64> {
+    pub fn queries(&self, phi: Vec<f64>) -> Vec<f64> {
         phi.iter()
             .map(|p| self.0.as_ref().unwrap().quantile(*p).0)
             .collect()

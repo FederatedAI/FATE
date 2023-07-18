@@ -73,7 +73,9 @@ class BlockType(str, Enum):
         if isinstance(data_type, np.dtype):
             data_type = data_type.name
         if isinstance(data_type, str):
-            if data_type == "str" or data_type == "object":
+            try:
+                data_type = BlockType(data_type)
+            except ValueError:
                 data_type = "np_object"
             return BlockType(data_type)
         elif isinstance(data_type, (bool, np.bool)) or data_type == torch.bool:
@@ -88,6 +90,14 @@ class BlockType(str, Enum):
             return BlockType.float32
         else:
             return BlockType.np_object
+
+    @staticmethod
+    def is_tensor(block_type):
+        return block_type in [BlockType.bool, BlockType.int32, BlockType.int64, BlockType.float32, BlockType.float64]
+
+    @staticmethod
+    def is_float(block_type):
+        return block_type in [BlockType.float32, BlockType.float64]
 
 
 class Block(object):
@@ -220,7 +230,10 @@ class Int32Block(Block):
 
     @staticmethod
     def convert_block(block):
-        return  torch.tensor(block, dtype=torch.int32)
+        try:
+            return torch.tensor(block, dtype=torch.int32)
+        except ValueError:
+            return torch.tensor(np.array(block, dtype="int32"), dtype=torch.int32)
 
 
 class Int64Block(Block):
@@ -230,7 +243,10 @@ class Int64Block(Block):
 
     @staticmethod
     def convert_block(block):
-        return  torch.tensor(block, dtype=torch.int64)
+        try:
+            return torch.tensor(block, dtype=torch.int64)
+        except ValueError:
+            return torch.tensor(np.array(block, dtype="int64"), dtype=torch.int64)
 
 
 class Float32Block(Block):
@@ -240,7 +256,10 @@ class Float32Block(Block):
 
     @staticmethod
     def convert_block(block):
-        return torch.tensor(block, dtype=torch.float32)
+        try:
+            return torch.tensor(block, dtype=torch.float32)
+        except ValueError:
+            return torch.tensor(np.array(block, dtype="float32"), dtype=torch.float32)
 
 
 class Float64Block(Block):
@@ -250,7 +269,10 @@ class Float64Block(Block):
 
     @staticmethod
     def convert_block(block):
-        return torch.tensor(block, dtype=torch.float64)
+        try:
+            return torch.tensor(block, dtype=torch.float64)
+        except ValueError:
+            return torch.tensor(np.array(block, dtype="float64"), dtype=torch.float64)
 
 
 class BoolBlock(Block):
@@ -260,7 +282,10 @@ class BoolBlock(Block):
 
     @staticmethod
     def convert_block(block):
-        return  torch.tensor(block, dtype=torch.bool)
+        try:
+            return torch.tensor(block, dtype=torch.bool)
+        except ValueError:
+            return torch.tensor(np.array(block, dtype="bool"), dtype=torch.bool)
 
 
 class IndexBlock(Block):

@@ -14,8 +14,6 @@
 #  limitations under the License.
 import random
 
-from fate.arch.context.io.data import df
-
 
 class DataLoader(object):
     def __init__(
@@ -35,7 +33,7 @@ class DataLoader(object):
         self._dataset = dataset
         self._batch_size = batch_size
         if dataset:
-            if batch_size == -1:
+            if batch_size is None:
                 self._batch_size = len(dataset)
             else:
                 self._batch_size = min(batch_size, len(dataset))
@@ -50,9 +48,6 @@ class DataLoader(object):
         self._init_settings()
 
     def _init_settings(self):
-        if isinstance(self._dataset, df.Dataframe):
-            self._dataset = self._dataset.data
-
         if self._batch_strategy == "full":
             self._batch_generator = FullBatchDataLoader(
                 self._dataset,
@@ -67,13 +62,6 @@ class DataLoader(object):
             )
         else:
             raise ValueError(f"batch strategy {self._batch_strategy} is not support")
-
-    def next_batch(self, with_index=True):
-        batch = next(self._batch_generator)
-        if with_index:
-            return batch
-        else:
-            return batch[1:]
 
     @staticmethod
     def batch_num(self):
@@ -95,7 +83,7 @@ class FullBatchDataLoader(object):
         self._mode = mode
         self._role = role
         self._batch_size = batch_size
-        if self._batch_size < 0 and self._role != "arbiter":
+        if self._batch_size is None and self._role != "arbiter":
             self._batch_size = len(self._dataset)
         self._shuffle = shuffle
         self._random_seed = random_seed
@@ -138,7 +126,7 @@ class FullBatchDataLoader(object):
                     random.seed = self._random_seed
                 random.shuffle(indexer)
 
-                for i, iter_ctx in self._ctx.range(self._batch_num):
+                for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]
                     batch_indexer = self._ctx.computing.parallelize(batch_indexer,
                                                                     include_key=True,
@@ -151,7 +139,7 @@ class FullBatchDataLoader(object):
 
                     self._batch_splits.append(sub_frame)
             elif self._mode == "hetero" and self._role == "host":
-                for i, iter_ctx in self._ctx.range(self._batch_num):
+                for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")
                     sub_frame = self._dataset.loc(batch_indexes, preserve_order=True)
                     self._batch_splits.append(sub_frame)
@@ -159,31 +147,49 @@ class FullBatchDataLoader(object):
     def __next__(self):
         if self._role == "arbiter":
             for batch_id in range(self._batch_num):
-                yield batch_id, batch_id
+                yield BatchEncoding(batch_id=batch_id)
             return
 
-        for batch in self._batch_splits:
+        for bid, batch in enumerate(self._batch_splits):
             if batch.label and batch.weight:
-                yield batch.values, batch.label, batch.weight
+                yield BatchEncoding(x=batch.values.as_tensor(),
+                                    label=batch.label.as_tensor(),
+                                    weight=batch.weight.as_tensor(),
+                                    batch_id=bid)
             elif batch.label:
-                yield batch.values, batch.label
+                yield BatchEncoding(x=batch.values.as_tensor(),
+                                    label=batch.label.as_tensor(),
+                                    batch_id=bid)
             else:
-                yield batch.values
+                yield BatchEncoding(x=batch.values.as_tensor())
 
     def __iter__(self):
-        if self._role == "arbiter":
-            for batch_id in range(self._batch_num):
-                yield batch_id, batch_id
-            return
-
-        for batch in self._batch_splits:
-            if batch.label and batch.weight:
-                yield batch.values, batch.label, batch.weight
-            elif batch.label:
-                yield batch.values, batch.label
-            else:
-                yield batch.values
+        return self.__next__()
 
     @property
     def batch_num(self):
         return self._batch_num
+
+
+class BatchEncoding(object):
+    def __init__(self, x=None, label=None, weight=None, batch_id=None):
+        self._x = x
+        self._label = label
+        self._weight = weight
+        self._batch_id = batch_id
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def label(self):
+        return self._label
+
+    @property
+    def weight(self):
+        return self._weight
+
+    @property
+    def batch_id(self):
+        return self._batch_id

@@ -15,10 +15,10 @@
 
 import functools
 import typing
-from typing import List, Optional, Tuple, TypeVar, Union, cast
+from typing import List, Optional, Tuple, TypeVar, cast
 
 import torch
-from fate.arch.computing import CTableABC
+from fate.arch.abc import CTableABC
 from fate.arch.context import Context
 
 _HANDLED_FUNCTIONS = {}
@@ -44,8 +44,60 @@ class DTensor:
             return NotImplemented
         return _HANDLED_FUNCTIONS[func](*args, **kwargs)
 
+    @property
+    def T(self):
+        return torch.transpose(self, 0, 1)
+
     def __init__(self, shardings: "Shardings") -> None:
         self.shardings = shardings
+
+    def __add__(self, other):
+        try:
+            return torch.add(self, other)
+        except Exception as e:
+            raise RuntimeError(f"Failed to add {self} and {other}") from e
+
+    def __radd__(self, other):
+        return torch.add(other, self)
+
+    def __sub__(self, other):
+        return torch.sub(self, other)
+
+    def __rsub__(self, other):
+        return torch.rsub(self, other)
+
+    def __mul__(self, other):
+        return torch.mul(self, other)
+
+    def __rmul__(self, other):
+        return torch.mul(other, self)
+
+    def __truediv__(self, other):
+        return torch.div(self, other)
+
+    def __rtruediv__(self, other):
+        return torch.div(other, self)
+
+    def __matmul__(self, other):
+        return torch.matmul(self, other)
+
+    def __rmatmul__(self, other):
+        return torch.matmul(other, self)
+
+    def encrypt(self, encryptor):
+        return torch.encrypt_f(self, encryptor)
+
+    def exp(self):
+        return torch.exp(self)
+
+    def log(self):
+        return torch.log(self)
+
+    def square(self):
+        return torch.square(self)
+
+    def sigmoid(self):
+        return torch.sigmoid(self)
 
     @property
     def shape(self):
@@ -123,7 +175,7 @@ class Shardings:
         self._shapes = _ShardingShapes(_shapes, axis)
 
         if dtype is None or device is None:
-            first_shard = self._data.first()
+            first_shard = self._data.first()[1]
             shard_dtype = cast(torch.dtype, first_shard.dtype)
             shard_device = cast(torch.device, first_shard.device)
             if dtype is not None:
@@ -263,6 +315,9 @@ class _ShardingShapes:
     def __str__(self) -> str:
         return f"<ShardingShape(shapes={self.shapes}, axis={self.axis})>"
 
+    def __repr__(self):
+        return self.__str__()
+
     def bc_shapes(self, other: "_ShardingShapes") -> "_ShardingShapes":
         if isinstance(other, _ShardingShapes):
             assert len(self.shapes) == len(other.shapes), f"sharding num mismatch: {self.shapes} vs {other.shapes}"
@@ -284,7 +339,7 @@ class _ShardingShapes:
                     assert other[other_align_axis] == 1, f"shape in distributed axis should be 1: {self} vs {other}"
             self_axis = len(_bc_shapes[0]) - len(self.shapes[0]) + self.axis
 
-            return _ShardingShapes(_bc_shapes, self.axis)
+            return _ShardingShapes(_bc_shapes, self_axis)
         else:
             raise NotImplementedError(f"type `{other}`")
 

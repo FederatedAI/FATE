@@ -18,7 +18,7 @@ from typing import List
 
 import pandas as pd
 
-from fate.interface import Context
+from fate.arch import Context
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -29,30 +29,32 @@ class FeatureStatistics(Module):
         self.metrics = metrics
         self.summary = StatisticsSummary(ddof, bias)
 
-    def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        self.summary.compute_metrics(train_data, self.metrics)
+    def fit(self, ctx: Context, input_data, validate_data=None) -> None:
+        self.summary.compute_metrics(input_data, self.metrics)
 
-    def to_model(self):
+    def get_model(self):
         model = self.summary.to_model()
-        model["metrics"] = self.metrics
-        return model
+        output_model = {"data": model,
+                        "meta": {"metrics": self.metrics,
+                                 "model_type": "statistics"}}
+        return output_model
 
     def restore(self, model):
         self.summary.restore(model)
 
     def from_model(cls, model) -> "FeatureStatistics":
-        stat = FeatureStatistics(model["metrics"])
-        stat.restore(model)
+        stat = FeatureStatistics(model["meta"]["metrics"])
+        stat.restore(model["data"])
         return stat
 
 
 class StatisticsSummary(Module):
     def __init__(self, ddof=1, bias=True):
         """if metrics is not None:
-            if len(metrics) == 1 and metrics[0] == "describe":
-                self.inner_metric_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
-            else:
-                self.inner_metric_names = metrics"""
+        if len(metrics) == 1 and metrics[0] == "describe":
+            self.inner_metric_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
+        else:
+            self.inner_metric_names = metrics"""
         self.ddof = ddof
         self.bias = bias
         self.inner_metric_names = []
@@ -106,14 +108,14 @@ class StatisticsSummary(Module):
         has_nan = res.isnull().any()
         if has_nan.any():
             nan_cols = res.columns[has_nan].to_list()
-            logger.warning(f"NaN value(s) found in statistics over columns: {nan_cols}; "
-                           f"this may lead to unexpected behavior.")
+            logger.warning(
+                f"NaN value(s) found in statistics over columns: {nan_cols}; " f"this may lead to unexpected behavior."
+            )
         self.metrics_summary = res
         self.inner_metric_names = list(res.index)
 
     def to_model(self):
-        return {"inner_metric_names": self.inner_metric_names,
-                "metrics_summary": self.metrics_summary.to_dict()}
+        return {"inner_metric_names": self.inner_metric_names, "metrics_summary": self.metrics_summary.to_dict()}
 
     def restore(self, model):
         self.inner_metric_names = model["inner_metric_names"]

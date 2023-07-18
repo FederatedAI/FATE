@@ -18,8 +18,9 @@
 import logging
 import typing
 
-from fate.interface import CTableABC
+from fate.arch.abc import CTableABC
 
+from ...unify import URI
 from .._profile import computing_profile
 from .._type import ComputingEngine
 
@@ -45,23 +46,31 @@ class Table(CTableABC):
         return Table(self._rp.map_values(lambda x: x))
 
     @computing_profile
-    def save(self, address, partitions, schema: dict, **kwargs):
-        options = kwargs.get("options", {})
-        from .._address import EggRollAddress
+    def save(self, uri: URI, schema: dict, options: dict = None):
+        if options is None:
+            options = {}
+
         from ._type import EggRollStoreType
 
-        if isinstance(address, EggRollAddress):
-            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
-            self._rp.save_as(
-                name=address.name,
-                namespace=address.namespace,
-                partition=partitions,
-                options=options,
-            )
-            schema.update(self.schema)
-            return
+        if uri.scheme != "eggroll":
+            raise ValueError(f"uri scheme {uri.scheme} not supported with eggroll backend")
+        try:
+            _, namespace, name = uri.path_splits()
+        except Exception as e:
+            raise ValueError(f"uri {uri} not supported with eggroll backend") from e
 
-        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
+        if "store_type" not in options:
+            options["store_type"] = EggRollStoreType.ROLLPAIR_LMDB
+
+        partitions = options.get("partitions", self.partitions)
+        self._rp.save_as(
+            name=name,
+            namespace=namespace,
+            partition=partitions,
+            options=options,
+        )
+        schema.update(self.schema)
+        return
 
     @computing_profile
     def collect(self, **kwargs) -> list:

@@ -16,3 +16,8 @@ def log(input: DTensor):
 @implements(torch.square)
 def square(input: DTensor):
     return DTensor(input.shardings.map_shard(torch.square))
+
+
+@implements(torch.sigmoid)
+def sigmoid(input: DTensor):
+    return DTensor(input.shardings.map_shard(torch.sigmoid))
