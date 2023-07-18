@@ -287,7 +287,11 @@ class StandardBinning(Module):
 
     def compute_all_col_metrics(self, event_count_hist, non_event_count_hist):
         # pd.DataFrame ver
-        total_event_count, total_non_event_count = event_count_hist.sum(), non_event_count_hist.sum()
+        event_count_dict = event_count_hist.to_dict()
+        logger.info(f"event_count dict: {event_count_dict}")
+        non_event_count_dict = non_event_count_hist.to_dict()
+        logger.info(f"non_event_count dict: {non_event_count_dict}")
+        total_event_count, total_non_event_count = event_count_hist.cumsum(), non_event_count_hist.cumsum()
         total_non_event_count[total_event_count < 1] = 1
         total_non_event_count[total_non_event_count < 1] = 1
         event_rate = (event_count_hist == 0) * self.adjustment_factor + event_count_hist / total_event_count
