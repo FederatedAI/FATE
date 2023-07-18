@@ -62,7 +62,7 @@ class HeteroBinningModuleGuest(HeteroModule):
         logger.info(f"Start computing federated metrics.")
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         label_tensor = binned_data.label.as_tensor()
-        encryptor.encrypt(label_tensor).to(ctx.hosts, "enc_y")
+        ctx.hosts.put("enc_y", encryptor.encrypt(label_tensor))
         host_col_bin = ctx.hosts.get("anonymous_col_bin")
         host_event_non_event_count = ctx.hosts.get("event_non_event_count")
         for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):
@@ -137,9 +137,12 @@ class HeteroBinningModuleHost(HeteroModule):
         # event count:
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
-        event_count_hist = to_compute_data.hist(target=encrypt_y)
+        event_count_hist = to_compute_data.hist(targets=encrypt_y)
         # bin count(entries per bin):
-        bin_count = to_compute_data.hist(target=torch.tensor([1] * binned_data.count()))
+        to_compute_data["targets_binning"] = 1
+        targets = to_compute_data["targets_binning"]
+        to_compute_data = binned_data[to_compute_col].as_tensor()
+        bin_count = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count - event_count_hist
         ctx.guest.put("event_non_event_count", (event_count_hist, non_event_count_hist))
 
@@ -311,8 +314,11 @@ class StandardBinning(Module):
     def compute_metrics(self, binned_data, label_col):
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
-        event_count_hist = to_compute_data.hist(target=label_col)
-        bin_count_hist = to_compute_data.hist(target=torch.tensor([[1]] * binned_data.count()))
+        event_count_hist = to_compute_data.hist(targets=label_col)
+        to_compute_data["targets_binning"] = 1
+        targets = to_compute_data["targets_binning"].as_tensor()
+        to_compute_data = binned_data[to_compute_col]
+        bin_count_hist = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count_hist - event_count_hist
         self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_count_hist,
                                                                              non_event_count_hist)
