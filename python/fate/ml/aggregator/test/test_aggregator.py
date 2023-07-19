@@ -44,8 +44,9 @@ if __name__ == "__main__":
             t.nn.Sigmoid()
         )
 
-        for i in range(epoch):
-            client.model_aggregation(model)
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(epoch):
+            client.model_aggregation(iter_ctx, model)
+
     elif sys.argv[1] == "host":
         from fate.ml.aggregator.plaintext_aggregator import PlainTextAggregatorClient
 
@@ -58,8 +59,8 @@ if __name__ == "__main__":
             t.nn.Sigmoid()
         )
 
-        for i in range(epoch):
-            client.model_aggregation(model)
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(epoch):
+            client.model_aggregation(iter_ctx, model)
 
     else:
 
@@ -67,6 +68,6 @@ if __name__ == "__main__":
         ctx = create_ctx(arbiter)
         server = PlainTextAggregatorServer(ctx)
 
-        for i in range(epoch):
-            server.model_aggregation()
+        for i, iter_ctx in ctx.on_iterations.ctxs_range(epoch):
+            server.model_aggregation(iter_ctx)
 

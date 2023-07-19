@@ -1,22 +1,14 @@
 from fate.arch import Context
+from fate.ml.aggregator.base import BaseAggregatorClient, BaseAggregatorServer
 
 
-class SecureAggregatorClient(object):
+class SecureAggregatorClient(BaseAggregatorClient):
 
-    def __init__(self, ctx: Context, aggregate_type='weighted_mean', aggregate_weight=1.0) -> None:
-        self.aggregate_type = aggregate_type
-        self.aggregate_weight = aggregate_weight
-        self.ctx = ctx
-
-    def aggregate(self):
-        pass
+    def __init__(self, ctx: Context, aggregator_name: str = None, aggregate_type='mean', sample_num=1) -> None:
+        super().__init__(ctx, aggregator_name, aggregate_type, sample_num, is_mock=False)
 
 
-class SecureAggregatorServer(object):
+class SecureAggregatorServer(BaseAggregatorServer):
 
-    def __init__(self, ctx: Context) -> None:
-        pass
-
-    def aggregate(self):
-        pass
-    
+    def __init__(self, ctx: Context, aggregator_name: str = None) -> None:
+        super().__init__(ctx, aggregator_name, is_mock=False)
