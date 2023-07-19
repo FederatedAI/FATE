@@ -315,7 +315,6 @@ def optimizer_factory(model_parameter, optimizer_type, optim_params):
 
 def lr_scheduler_factory(optimizer, method, scheduler_param):
     scheduler_method = method
-
     if scheduler_method == 'constant':
         return torch.optim.lr_scheduler.ConstantLR(optimizer, **scheduler_param)
     elif scheduler_method == 'step':

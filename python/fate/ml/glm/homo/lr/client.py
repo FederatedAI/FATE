@@ -424,7 +424,7 @@ class HomoLRClient(HomoModule):
             self.trainer.set_local_mode()
         self.trainer.train()
 
-        logger.info('training finished')
+        logger.info('homo lr fit done')
 
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
 
