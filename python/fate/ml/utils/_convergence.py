@@ -78,7 +78,10 @@ class _WeightDiffConverge(_ConvergeFunction):
     def is_converge(self, delta_weight, weight=None):
         weight_diff = torch.linalg.norm(delta_weight, 2)
         if weight is None:
-            return weight_diff < self.eps
+            # avoid tensor[bool]
+            if weight_diff < self.eps:
+                return True
+            return False
         if self.pre_weight is None:
             self.pre_weight = weight
             return False
