@@ -17,15 +17,11 @@ from typing import Union, Mapping
 
 from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
+from fate.ml.model_selection.sample import SampleModuleGuest, SampleModuleHost
 
 
-@cpn.component(roles=[GUEST, HOST])
-def sample(ctx, role):
-    ...
-
-
-@sample.train()
-def train(
+@cpn.component(roles=[GUEST, HOST], provider="fate")
+def sample(
         ctx: Context,
         role: Role,
         input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
@@ -62,13 +58,6 @@ def train(
         raise ValueError(f"replace has to be set to True when sampling frac greater than 1.")
     if n is None and frac is None:
         frac = 1.0
-    sample_train(
-        ctx, role, input_data, output_data, mode, replace, frac, n, random_state, ctx_mode
-    )
-
-
-def sample_train(ctx, role, input_data, output_data, mode, replace, frac, n, random_state, ctx_mode):
-    from fate.ml.model_selection.sample import SampleModuleGuest, SampleModuleHost
 
     sub_ctx = ctx.sub_ctx("train")
     if role.is_guest:
