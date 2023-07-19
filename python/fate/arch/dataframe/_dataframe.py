@@ -558,6 +558,10 @@ class DataFrame(object):
 
         return vstack(stacks)
 
+    def sample(self, n: int=None, frac: float=None, random_state=None) -> "DataFrame":
+        from .ops._dimension_scaling import sample
+        return sample(self, n, frac, random_state)
+
     def __extract_fields(
         self,
         with_sample_id=True,
