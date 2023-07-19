@@ -22,7 +22,7 @@ from fate.components.core import GUEST, HOST, Role, cpn, params
 logger = logging.getLogger(__name__)
 
 
-@cpn.component(roles=[GUEST, HOST])
+@cpn.component(roles=[GUEST, HOST], provider="fate")
 def hetero_feature_selection(ctx, role):
     ...
 

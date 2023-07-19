@@ -24,7 +24,7 @@ from fate.ml.glm import CoordinatedLRModuleGuest, CoordinatedLRModuleHost, Coord
 logger = logging.getLogger(__name__)
 
 
-@cpn.component(roles=[GUEST, HOST, ARBITER])
+@cpn.component(roles=[GUEST, HOST, ARBITER], provider="fate")
 def coordinated_lr(ctx, role):
     ...
 

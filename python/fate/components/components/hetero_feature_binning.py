@@ -23,7 +23,7 @@ from fate.ml.feature_binning import HeteroBinningModuleHost, HeteroBinningModule
 logger = logging.getLogger(__name__)
 
 
-@cpn.component(roles=[GUEST, HOST])
+@cpn.component(roles=[GUEST, HOST], provider="fate")
 def hetero_feature_binning(ctx, role):
     ...
 

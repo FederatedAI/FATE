@@ -17,31 +17,22 @@ from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
 
 
-@cpn.component(roles=[GUEST, HOST])
-def feature_union(ctx, role):
-    ...
-
-
-@feature_union.train()
-def union_train(
+@cpn.component(roles=[GUEST, HOST], provider="fate")
+def feature_union(
         ctx: Context,
         role: Role,
-        train_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
+        input_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
         axis: cpn.parameter(type=params.conint(strict=True, ge=0, le=1), default=0, optional=False,
                             desc="axis along which concatenation is performed, 0 for row-wise, 1 for column-wise"),
-        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
+        output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
-    train(ctx, train_data_list, train_output_data, axis)
-
-
-def train(ctx, train_data_list, train_output_data, axis):
     from fate.ml.preprocessing import FeatureUnion
     data_list = []
-    for data in train_data_list:
+    for data in input_data_list:
         data = data.read()
         data_list.append(data)
 
     sub_ctx = ctx.sub_ctx("train")
     union_obj = FeatureUnion(axis)
-    output_data = union_obj.fit(sub_ctx, data_list)
-    train_output_data.write(output_data)
+    output_df = union_obj.fit(sub_ctx, data_list)
+    output_data.write(output_df)
