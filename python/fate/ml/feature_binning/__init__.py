@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,5 +13,4 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .feature_scale import FeatureScale
-from .feature_union import FeatureUnion
+from .hetero_feature_binning import HeteroBinningModuleGuest, HeteroBinningModuleHost
