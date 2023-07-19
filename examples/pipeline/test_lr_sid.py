@@ -20,7 +20,7 @@ from fate_client.pipeline.interface import DataWarehouseChannel
 pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998")
 
 intersect_0 = Intersection("intersect_0", method="raw")
-intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest_multi",
+intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                     namespace="experiment_sid"))
 intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                        namespace="experiment_sid"))
@@ -41,7 +41,7 @@ lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_het
 evaluation_0 = Evaluation("evaluation_0",
                           label_column_name="y",
                           runtime_roles=["guest"],
-                          default_eval_setting="multi",
+                          default_eval_setting="binary",
                           input_data=lr_0.outputs["train_output_data"])
 
 # pipeline.add_task(feature_scale_0)
@@ -65,7 +65,7 @@ pipeline.deploy([intersect_0, lr_0])
 predict_pipeline = FateFlowPipeline()
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
-deployed_pipeline.intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest_multi",
+deployed_pipeline.intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                                       namespace="experiment_sid"))
 deployed_pipeline.intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                                          namespace="experiment_sid"))
