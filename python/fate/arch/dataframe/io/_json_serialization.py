@@ -77,9 +77,14 @@ def serialize(ctx, data):
 
 
 def deserialize(ctx, data):
-    fields, partition_order_mappings = parse_schema(data.schema)
+    schema_meta, partition_order_mappings = parse_schema(data.schema)
 
-    data_manager = DataManager.deserialize(fields)
+    data_manager = DataManager.deserialize(schema_meta)
+
+    role = ctx.local.party[0]
+    party_id = ctx.local.party[1]
+    data_manager.fill_anonymous_role_and_party_id(role, party_id)
+
     from ..ops._transformer import transform_list_to_block_table
 
     block_table = transform_list_to_block_table(data, data_manager)
