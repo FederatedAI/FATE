@@ -61,18 +61,18 @@ public class PtpConsumeService extends AbstractPtpServiceAdaptor {
                 if (MetaInfo.isCluster()) {
                     TransferQueueApplyInfo transferQueueApplyInfo = ServiceContainer.transferQueueManager.queryGlobleQueue(topic);
                     if (transferQueueApplyInfo == null) {
-                        //throw new TransferQueueNotExistException("topic "+topic );
-                        CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, context.getSessionId(), false);
-                        if (createQueueResult.getTransferQueue() == null) {
-                            //重定向
-                            Osx.TopicInfo topicInfo = Osx.TopicInfo.newBuilder()
-                                    .setTopic(topic)
-                                    .setCreateTimestamp(System.currentTimeMillis())
-                                    .setIp(createQueueResult.getRedirectIp())
-                                    .setPort(createQueueResult.getPort())
-                                    .build();
-                            return TransferUtil.buildResponseInner(StatusCode.TRANSFER_QUEUE_REDIRECT,"NEED REDIRECT",topicInfo.toByteArray()).build();
-                        }
+                        throw new TransferQueueNotExistException("topic  "+topic+" not found" );
+//                        CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, context.getSessionId(), false);
+//                        if (createQueueResult.getTransferQueue() == null) {
+//                            //重定向
+//                            Osx.TopicInfo topicInfo = Osx.TopicInfo.newBuilder()
+//                                    .setTopic(topic)
+//                                    .setCreateTimestamp(System.currentTimeMillis())
+//                                    .setIp(createQueueResult.getRedirectIp())
+//                                    .setPort(createQueueResult.getPort())
+//                                    .build();
+//                            return TransferUtil.buildResponseInner(StatusCode.TRANSFER_QUEUE_REDIRECT,"NEED REDIRECT",topicInfo.toByteArray()).build();
+//                        }
                     } else {
                         String[] args = transferQueueApplyInfo.getInstanceId().split(":");
                         String ip = args[0];

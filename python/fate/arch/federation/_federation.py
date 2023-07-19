@@ -463,6 +463,7 @@ class FederationBase(FederationEngine):
         return channel_info
 
     def _receive_obj(self, channel_info, name, tag):
+        LOGGER.debug(f"_receive_obj,  channel_info={channel_info}")
         party_id = channel_info._dst_party_id
         role = channel_info._dst_role
 

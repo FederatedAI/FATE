@@ -52,7 +52,7 @@ class MQChannel(object):
         LOGGER.debug(f"consume, offset={offset}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
-            MessageTopic=self._send_topic,
+            MessageTopic=self._receive_topic,
             TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
@@ -94,7 +94,7 @@ class MQChannel(object):
         LOGGER.debug(f"produce body={body}, properties={properties}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
-            MessageTopic=self._receive_topic,
+            MessageTopic=self._send_topic,
             TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
@@ -119,7 +119,7 @@ class MQChannel(object):
         LOGGER.debug(f"ack offset={offset}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
-            MessageTopic=self._send_topic,
+            MessageTopic=self._receive_topic,
             TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
