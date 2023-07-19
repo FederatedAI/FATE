@@ -101,8 +101,11 @@ class Context:
     def federation(self) -> "FederationEngine":
         return self._get_federation()
 
-    def sub_ctx(self, name: str, is_special=False) -> "Context":
-        return self.with_namespace(self._namespace.sub_ns(name=name, is_special=is_special))
+    def sub_ctx(self, name: str) -> "Context":
+        return self.with_namespace(self._namespace.sub_ns(name=name))
+
+    def indexed_ctx(self, index: int) -> "Context":
+        return self.with_namespace(self._namespace.indexed_ns(index))
 
     @property
     def on_iterations(self) -> "Context":
