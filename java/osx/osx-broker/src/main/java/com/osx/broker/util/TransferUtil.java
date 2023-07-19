@@ -37,6 +37,7 @@ import com.osx.core.exceptions.*;
 import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.ptp.SourceMethod;
 import com.osx.core.utils.AssertUtil;
+import com.osx.core.utils.JsonUtil;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
@@ -48,10 +49,12 @@ import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.MBeanServer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.util.Map;
 
 public class TransferUtil {
@@ -195,7 +198,7 @@ public class TransferUtil {
         if (rollSiteHeader != null) {
             sessionId = String.join("_", rollSiteHeader.getRollSiteSessionId(), desRole, dstPartyId);
         }
-        if(metadata.getDst()!=null){
+        if (metadata.getDst() != null) {
             transferMeta.setTopic(metadata.getDst().getName());
         }
 
@@ -234,7 +237,6 @@ public class TransferUtil {
         context.setSrcPartyId(sourcePartyId);
         context.setTopic(topic);
         context.setJobId(jobId);
-
 
 
         if (context instanceof FateContext) {
@@ -398,8 +400,8 @@ public class TransferUtil {
     }
 
     static public Osx.Outbound redirect(FateContext context, Osx.Inbound
-            produceRequest, RouterInfo routerInfo,boolean usePooled) {
-        AssertUtil.notNull(routerInfo, context.getDesPartyId()!=null?"des partyId "+context.getDesPartyId()+" router info is null":" error router info");
+            produceRequest, RouterInfo routerInfo, boolean usePooled) {
+        AssertUtil.notNull(routerInfo, context.getDesPartyId() != null ? "des partyId " + context.getDesPartyId() + " router info is null" : " error router info");
         Osx.Outbound result = null;
         context.setDataSize(produceRequest.getSerializedSize());
         if (routerInfo.isCycle()) {
@@ -439,8 +441,10 @@ public class TransferUtil {
         } else {
             String url = routerInfo.getUrl();
             Map header = parseHttpHeader(produceRequest);
+            long startTime = System.currentTimeMillis();
             try {
                 if (routerInfo.getProtocol().equals(Protocol.http)) {
+
                     if (routerInfo.isUseSSL()) {
                         result = HttpsClientPool.sendPtpPost(url, produceRequest.getPayload().toByteArray(), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
                     } else {
@@ -450,7 +454,8 @@ public class TransferUtil {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                logger.error("sendPtpPost failed : ", e);
+                logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n"
+                        , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), JsonUtil.object2Json(produceRequest.getPayload()), e);
                 ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
                 result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
             }
@@ -459,21 +464,16 @@ public class TransferUtil {
     }
 
 
-    public static  Osx.Outbound.Builder buildResponseInner(String code, String msgReturn, byte[] content) {
+    public static Osx.Outbound.Builder buildResponseInner(String code, String msgReturn, byte[] content) {
 
         Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
         builder.setCode(code);
         builder.setMessage(msgReturn);
-        if(content!=null) {
+        if (content != null) {
             builder.setPayload(ByteString.copyFrom(content));
         }
         return builder;
     }
-
-
-
-
-
 
 
     public static Osx.Outbound buildResponse(String code, String msgReturn, TransferQueue.TransferQueueConsumeResult messageWraper) {
@@ -484,12 +484,12 @@ public class TransferUtil {
             try {
                 message = Osx.Message.parseFrom(messageWraper.getMessage().getBody());
             } catch (InvalidProtocolBufferException e) {
-                logger.error("parse message error",e);
+                logger.error("parse message error", e);
             }
             content = message.toByteArray();
         }
-        Osx.Outbound.Builder  builder =buildResponseInner(code,msgReturn,content);
-        if(messageWraper!=null){
+        Osx.Outbound.Builder builder = buildResponseInner(code, msgReturn, content);
+        if (messageWraper != null) {
             builder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(messageWraper.getRequestIndex()));
         }
         return builder.build();
@@ -500,7 +500,7 @@ public class TransferUtil {
             String code = outbound.getCode();
             String message = outbound.getMessage();
             if (!StatusCode.SUCCESS.equals(code)) {
-                logger.error("================== xxxxxx  {}",outbound);
+                logger.error("================== xxxxxx  {}", outbound);
                 throw new RemoteRpcException("remote code : " + code + " remote msg: " + message);
             }
         } else {
@@ -526,13 +526,26 @@ public class TransferUtil {
 
 
     public static void main(String[] args) {
-        TransferUtil a = new TransferUtil();
-        a.testHttps();
+
+        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
+
+        if (platformMBeanServer instanceof com.sun.management.OperatingSystemMXBean) {
+            com.sun.management.OperatingSystemMXBean osBean = (com.sun.management.OperatingSystemMXBean) platformMBeanServer;
+
+            // 获取连接数
+            int connectionCount = osBean.getAvailableProcessors();
+            System.out.println("HTTP 连接数: " + connectionCount);
+        } else {
+            System.out.println("当前平台不支持获取 HTTP 连接数");
+        }
+
+//        TransferUtil a = new TransferUtil();
+//        a.testHttps();
     }
 
-    public void testHttps(){
+    public void testHttps() {
         try {
-            new Thread(()->{
+            new Thread(() -> {
                 Osx.Outbound outbound = null;
                 try {
                     Thread.sleep(3000);
