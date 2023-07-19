@@ -16,7 +16,7 @@ class Hist:
                 if v not in self.data[j]:
                     self.data[j][v] = labels[i]
                 else:
-                    self.data[j][v] += labels[i]
+                    self.data[j][v] = self.data[j][v] + labels[i]
 
     def merge(self, hist):
         for k in hist.data:
@@ -27,7 +27,7 @@ class Hist:
                     if kk not in self.data[k]:
                         self.data[k][kk] = hist.data[k][kk]
                     else:
-                        self.data[k][kk] += hist.data[k][kk]
+                        self.data[k][kk] = self.data[k][kk] + hist.data[k][kk]
         return self
 
     def cumsum(self):
