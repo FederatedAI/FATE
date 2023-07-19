@@ -16,6 +16,7 @@ import functools
 from typing import List
 import pandas as pd
 import torch
+from sklearn.utils import resample
 from .._dataframe import DataFrame
 from ..manager.data_manager import DataManager
 from ._compress_block import compress_blocks
@@ -124,7 +125,7 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
     )
 
 
-def drop(df: "DataFrame", index: "DataFrame"=None) -> "DataFrame":
+def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
     data_manager = df.data_manager.duplicate()
     l_flatten_func = functools.partial(
         _flatten_partition,
@@ -156,11 +157,35 @@ def drop(df: "DataFrame", index: "DataFrame"=None) -> "DataFrame":
     )
 
 
-def sample(df: "DataFrame", n=None, frac=None, **kwargs):
+def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "DataFrame":
     """
-    下采样：
+    only support down sample, n should <= df.shape, or fact = 1
     """
-    ...
+
+    if n is not None and frac is not None:
+        raise ValueError("sample's parameters n and frac should not be set in the same time.")
+
+    if frac is not None:
+        if frac > 1:
+            raise ValueError(f"sample's parameter frac={frac} should <= 1.0")
+        n = max(1, int(df.shape[0] * frac))
+
+    if n > df.shape[0]:
+        raise ValueError(f"sample's parameter n={n} > data size={df.shape[0]}")
+
+    if n == 0:
+        raise ValueError(f"sample's parameter n={n} should >= 1")
+
+    indexer = list(df.get_indexer(target="sample_id").collect())
+    sample_indexer = resample(indexer, replace=False, n_samples=n, random_state=random_state)
+
+    sample_indexer = df._ctx.computing.parallelize(sample_indexer,
+                                                   include_key=True,
+                                                   partition=df.block_table.partitions)
+
+    sample_frame = df.loc(sample_indexer)
+
+    return sample_frame
 
 
 def _flatten_partition(kvs, block_num=0):
