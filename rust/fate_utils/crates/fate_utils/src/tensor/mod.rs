@@ -18,6 +18,7 @@ pub struct Cipherblock(Option<block::Cipherblock>);
 pub struct PK {
     pk: Option<fixedpoint::PK>,
 }
+
 impl PK {
     fn new(pk: fixedpoint::PK) -> Self {
         Self { pk: Some(pk) }
@@ -327,6 +328,10 @@ impl Cipherblock {
     }
     pub fn mean(&self) -> Cipherblock {
         self.sum_cb()
+    }
+
+    pub fn slice0(&self, i: usize) -> Cipherblock {
+        Cipherblock(Some(self.0.as_ref().unwrap().slice0(i)))
     }
 }
 
