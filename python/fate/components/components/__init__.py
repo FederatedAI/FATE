@@ -133,6 +133,12 @@ class LazyBuildInComponentsLoader:
         return sample
 
     @_lazy_cpn
+    def data_split(self):
+        from .data_split import data_split
+
+        return data_split
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
         return toy_example
