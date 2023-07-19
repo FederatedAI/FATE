@@ -17,7 +17,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-import torch
 
 from fate.arch import Context
 from ..abc.module import Module, HeteroModule
@@ -206,7 +205,6 @@ class StandardBinning(Module):
 
         if self.method == "quantile":
             q = np.arange(0, 1, 1 / self.n_bins)
-            logger.info(f"q: {q}, relative_error: {self.relative_error}")
             split_pt_df = select_data.quantile(q=q,
                                                relative_error=self.relative_error)
             """split_pt_dict = {}
@@ -253,37 +251,14 @@ class StandardBinning(Module):
         binned_df = train_data.bucketize(boundaries=self._split_pt_dict)
         return binned_df
 
-    """@staticmethod
-    def is_monotonic(woe):
-        # Check the woe is monotonic or not
-
-        if len(woe) <= 1:
-            return torch.tensor([True])
-
-        is_increasing = torch.all(woe[1:] > woe[:-1])
-        is_decreasing = torch.all(woe[1:] < woe[:-1])
-        return is_increasing or is_decreasing"""
-
-    @staticmethod
-    def is_monotonic(woe):
-        """
-        Check the woe is monotonic or not
-        """
-        if len(woe) <= 1:
-            return True
-
-        is_increasing = all(woe[1:] > woe[:-1])
-        is_decreasing = all(woe[1:] < woe[:-1])
-        return is_increasing or is_decreasing
-
-    def compute_metrics_from_count(self, event_count_array, non_event_count_array,
+    """def compute_metrics_from_count(self, event_count_array, non_event_count_array,
                                    total_event_count, total_non_event_count):
         event_rate = (event_count_array == 0) * self.adjustment_factor + event_count_array / total_event_count
         non_event_rate = (non_event_count_array == 0) * self.adjustment_factor + non_event_count_array \
                          / total_non_event_count
         bin_woe = torch.log(event_rate / non_event_rate)
         bin_iv = (event_rate - non_event_rate) * bin_woe
-        return event_rate, non_event_rate, bin_woe, bin_iv
+        return event_rate, non_event_rate, bin_woe, bin_iv"""
 
     def compute_all_col_metrics(self, event_count_hist, non_event_count_hist):
         # pd.DataFrame ver
@@ -291,29 +266,53 @@ class StandardBinning(Module):
         logger.info(f"event_count dict: {event_count_dict}")
         non_event_count_dict = non_event_count_hist.to_dict()
         logger.info(f"non_event_count dict: {non_event_count_dict}")
-        total_event_count, total_non_event_count = event_count_hist.cumsum(), non_event_count_hist.cumsum()
-        total_non_event_count[total_event_count < 1] = 1
+
+        event_rate, non_event_rate = {}, {}
+        bin_woe, bin_iv, is_monotonic, iv = {}, {}, {}, {}
+        total_event_count, total_non_event_count = None, None
+        for col_name in event_count_dict.keys():
+            col_event_count = pd.Series({bin_num: bin_count.tolist()[0] for
+                                         bin_num, bin_count in event_count_dict[col_name].items()})
+            col_non_event_count = pd.Series({bin_num: bin_count.tolist()[0] for
+                                             bin_num, bin_count in non_event_count_dict[col_name].items()})
+            if total_event_count is None:
+                total_event_count = col_event_count.sum() or 1
+                total_non_event_count = col_non_event_count.sum() or 1
+            col_event_rate = (col_event_count == 0) * self.adjustment_factor + \
+                             col_event_count / total_event_count
+            col_non_event_rate = (col_non_event_count == 0) * self.adjustment_factor + \
+                                 col_non_event_count / total_non_event_count
+            col_rate_ratio = col_event_rate / col_non_event_rate
+            col_bin_woe = col_rate_ratio.apply(lambda v: np.log(v))
+            col_bin_iv = (col_event_rate - col_non_event_rate) * col_bin_woe
+
+            event_rate[col_name] = col_event_rate.to_dict()
+            non_event_rate[col_name] = col_non_event_rate.to_dict()
+            bin_woe[col_name] = col_bin_woe.to_dict()
+            bin_iv[col_name] = col_bin_iv.to_dict()
+            is_monotonic[col_name] = col_bin_woe.is_monotonic
+            iv[col_name] = col_bin_iv.sum()
+
+        """total_non_event_count[total_event_count < 1] = 1
         total_non_event_count[total_non_event_count < 1] = 1
         event_rate = (event_count_hist == 0) * self.adjustment_factor + event_count_hist / total_event_count
         non_event_rate = (non_event_count_hist == 0) * self.adjustment_factor + non_event_count_hist \
                          / total_non_event_count
         rate_ratio = event_rate / non_event_rate
         bin_woe = rate_ratio.apply(lambda v: np.log(v))
-        bin_iv = (event_rate - non_event_rate) * bin_woe
+        bin_iv = (event_rate - non_event_rate) * bin_woe"""
 
         metrics_summary = {}
 
-        metrics_summary["event_count"] = event_count_hist.to_dict()
-        metrics_summary["non_event_count"] = non_event_count_hist.to_dict()
-        metrics_summary["event_rate"] = event_rate.to_dict()
-        metrics_summary["non_event_rate"] = non_event_rate.to_dictt()
-        metrics_summary["woe"] = bin_woe.to_dict()
-        metrics_summary["iv_array"] = bin_iv.to_dict()
-        metrics_summary["is_monotonic"] = bin_woe.apply(StandardBinning.is_monotonic, axis=0).to_dict()
-        metrics_summary["iv"] = bin_iv.sum().to_dict()
-        # @todo: maybe convert to {col_name: List[woe_0, woe_1]}
-        woe_dict = bin_woe.to_dict()
-        return metrics_summary, woe_dict
+        metrics_summary["event_count"] = event_count_dict
+        metrics_summary["non_event_count"] = non_event_count_dict
+        metrics_summary["event_rate"] = event_rate
+        metrics_summary["non_event_rate"] = non_event_rate
+        metrics_summary["woe"] = bin_woe
+        metrics_summary["iv_array"] = bin_iv
+        metrics_summary["is_monotonic"] = is_monotonic
+        metrics_summary["iv"] = iv
+        return metrics_summary, bin_woe
 
     def compute_metrics(self, binned_data, label_col):
         to_compute_col = self.bin_col + self.category_col
