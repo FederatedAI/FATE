@@ -24,19 +24,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class FedAVGArguments(FedArguments):
-
-    """
-    The arguemnt for FedAVG algorithm, used in FedAVGClient and FedAVGServer.
-
-    Attributes:
-        weighted_aggregate: bool
-            Whether to use weighted aggregation or not.
-        secure_aggregate: bool
-            Whether to use secure aggregation or not.
-    """
-
-    weighted_aggregate: bool = field(default=True)
-    secure_aggregate: bool = field(default=False)
+    pass
 
 
 class FedAVGCLient(FedTrainerClient):

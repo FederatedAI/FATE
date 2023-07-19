@@ -45,14 +45,14 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "guest":
         ctx = create_ctx(guest)
-        fed_args = FedArguments(aggregate_strategy='epochs', aggregate_freq=1, aggregator='secure_aggrefgate')
+        fed_args = FedArguments(aggregate_strategy='epochs', aggregate_freq=1, aggregator='secure_aggregate')
         args = TrainingArguments(num_train_epochs=5, per_device_train_batch_size=16, logging_strategy='steps', logging_steps=5)
         trainer = FedAVGCLient(ctx=ctx, model=model, fed_args=fed_args, training_args=args, loss_fn=t.nn.BCELoss(), optimizer=t.optim.SGD(model.parameters(), lr=0.01), train_set=ds)
         trainer.train()
 
     elif sys.argv[1] == "host":
         ctx = create_ctx(host)
-        fed_args = FedArguments(aggregate_strategy='epochs', aggregate_freq=1, aggregator='plaintext')
+        fed_args = FedArguments(aggregate_strategy='epochs', aggregate_freq=1, aggregator='secure_aggregate')
         args = TrainingArguments(num_train_epochs=5, per_device_train_batch_size=16)
         trainer = FedAVGCLient(ctx=ctx, model=model, fed_args=fed_args, training_args=args, loss_fn=t.nn.BCELoss(), optimizer=t.optim.SGD(model.parameters(), lr=0.01), train_set=ds)
         trainer.train()
