@@ -14,9 +14,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-error_exit ()
-{
+error_exit (){
     echo "ERROR: $1 !!"
     exit 1
 }
@@ -92,7 +90,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid |grep 'com.osx' | grep -v "grep" | wc -l)
+    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       rm ./bin/broker.pid
       unset pid
