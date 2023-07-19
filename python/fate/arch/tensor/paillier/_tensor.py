@@ -16,6 +16,12 @@ class PaillierTensor:
     def __str__(self) -> str:
         return self.__repr__()
 
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._data.slice0(item)
+        else:
+            raise NotImplementedError(f"item {item} not supported")
+
     @property
     def shape(self):
         return torch.Size(self._data.shape)
