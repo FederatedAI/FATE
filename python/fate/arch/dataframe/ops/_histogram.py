@@ -16,19 +16,21 @@
 import functools
 
 from fate.arch.tensor.inside import Hist
-from ._compress_block import compress_blocks
+
 from .._dataframe import DataFrame
 from ..manager import BlockType, DataManager
+from ._compress_block import compress_blocks
 
 
 def hist(df: DataFrame, targets):
     data_manager = df.data_manager
+    column_names = data_manager.infer_operable_field_names()
 
     block_table, data_manager = _try_to_compress_table(df.block_table, data_manager)
     block_id = data_manager.infer_operable_blocks()[0]
 
     def _mapper(blocks, target, bid: int = None):
-        histogram = Hist()
+        histogram = Hist(column_names)
         histogram.update(blocks[bid], target)
 
         return histogram

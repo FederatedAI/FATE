@@ -29,7 +29,7 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
 
 linr_0 = CoordinatedLinR("linr_0",
                          epochs=10,
-                         batch_size=-1,
+                         batch_size=None,
                          init_param={"fit_intercept": False})
 
 linr_0.guest.component_setting(train_data=DataWarehouseChannel(name="motor_hetero_guest",

@@ -1,12 +1,16 @@
+import typing
+
+
 class Hist:
-    def __init__(self):
-        self.data = {}
+    def __init__(self, feature_names):
+        self.feature_names = feature_names
+        self.data: typing.Dict[int, typing.Dict[int, typing.Any]] = {}
 
     def update(self, features, labels):
         shape_x, shape_y = features.shape
         for i in range(shape_x):
             for j in range(shape_y):
-                v = features[i, j]
+                v = features[i, j].item()
                 if j not in self.data:
                     self.data[j] = {}
                 if v not in self.data[j]:
@@ -34,6 +38,20 @@ class Hist:
                 self.data[k][kk] = s
         return self
 
+    def __sub__(self, other: "Hist"):
+        out = Hist(self.feature_names)
+        for j in self.data:
+            out.data[j] = {}
+            for v in self.data[j]:
+                if v not in other.data[j]:
+                    out.data[j][v] = self.data[j][v]
+                else:
+                    out.data[j][v] = self.data[j][v] - other.data[j][v]
+        return out
+
+    def to_dict(self):
+        return {name: self.data[i] for i, name in enumerate(self.feature_names)}
+
 
 if __name__ == "__main__":
     import numpy as np
@@ -42,4 +60,4 @@ if __name__ == "__main__":
     features = np.array([[1, 0], [0, 1], [2, 1], [2, 0]])
     labels = np.array([0, 1, 0, 0])
     hist.update(features, labels)
-    print(hist.data)
+    print((hist - hist).data)
