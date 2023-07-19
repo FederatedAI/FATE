@@ -23,9 +23,9 @@ import logging
 from transformers import logging as transformers_logging
 from transformers.trainer_callback import TrainerCallback, TrainerControl, TrainerState
 from typing import Optional
-import time
 from dataclasses import dataclass, field, fields
 from transformers.trainer_callback import PrinterCallback
+from fate.ml.aggregator import AggregatorType
 
 
 # Reset the logger to redirect logs output
@@ -33,17 +33,6 @@ transformers_logging.disable_default_handler()
 transformers_logging.enable_propagation()
 logger = logging.getLogger(__name__)
 
-
-def time_decorator(descr=""):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            start_time = time.time()
-            result = func(*args, **kwargs)
-            end_time = time.time()
-            logger.info(f"{descr} takes {end_time - start_time:.2f} seconds.")
-            return result
-        return wrapper
-    return decorator
 
 
 def get_ith_checkpoint(directory, i):
@@ -78,8 +67,9 @@ Fed Arguments
 
 
 class AggregateStrategy(Enum):
-    EPOCH = "epoch"
-    STEP = "step"
+    EPOCH = "epochs"
+    STEP = "steps"
+
 
 
 @dataclass
@@ -90,6 +80,7 @@ class FedArguments(object):
     aggregate_strategy: AggregateStrategy = field(
         default=AggregateStrategy.EPOCH.value)
     aggregate_freq: int = field(default=1)
+    aggregator: str = field(default=AggregatorType.SECURE_AGGREGATE.value)
 
     def to_dict(self):
         """
@@ -287,7 +278,7 @@ class FedCallbackInterface(object):
             **kwargs):
         pass
 
-    def init_aggregator(self):
+    def init_aggregator(self, fed_arg: FedArguments):
         raise NotImplementedError(
             'init_aggregator() must be implemented in subclass, init aggregator here')
 
@@ -333,7 +324,7 @@ def compute_max_aggregation(
     elif fed_args.aggregate_strategy == AggregateStrategy.STEP.value:
         max_aggregation = int((max_steps - steps_trained) / aggregate_freq)
     else:
-        raise ValueError('aggregate_strategy must be either "epoch" or "step"')
+        raise ValueError('aggregate_strategy must be either "epochs" or "steps"')
 
     return max_aggregation, aggregate_freq
 
@@ -379,17 +370,17 @@ class AggregationChecker:
         if strategy == AggregateStrategy.EPOCH.value:
             if cur_epoch > self.epochs_trained and (
                     cur_epoch - self.epochs_trained) % self.aggregate_freq == 0:
-                self.aggregation_count += 1
-                self.report()
                 return True
         elif strategy == AggregateStrategy.STEP.value:
             if cur_step > self.steps_trained and (
                     cur_step - self.steps_trained) % self.aggregate_freq == 0:
-                self.aggregation_count += 1
-                self.report()
                 return True
 
         return False
+    
+    def inc_aggregation_count(self):
+        self.aggregation_count += 1
+        self.report()
 
 
 class FedParameterAlignCallback(TrainerCallback):
@@ -568,7 +559,8 @@ class CallbackWrapper(TrainerCallback):
         self.wrapped_trainer = wrapped_trainer
         self.fed_arg = self.wrapped_trainer._fed_args
 
-    def _call_wrapped(self, event_name: str, **kwargs):
+    def _call_wrapped(self, ctx, aggregator, fed_arg, event_name: str, **kwargs):
+
         event = getattr(self.wrapped_trainer, event_name)
         kwargs['scheduler'] = kwargs.pop('lr_scheduler', None)
 
@@ -577,13 +569,13 @@ class CallbackWrapper(TrainerCallback):
         dataloaders = tuple(filter(None, (train_dataloader, eval_dataloader)))
         kwargs['dataloader'] = dataloaders
         return event(
-            self.ctx,
-            self.wrapped_trainer.aggregator,
-            self.fed_arg,
+            ctx,
+            aggregator,
+            fed_arg,
             **kwargs)
 
 
-class FedCallbackWrapper(CallbackWrapper):
+class WrappedFedCallback(CallbackWrapper):
 
     def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         super().__init__(ctx, wrapped_trainer)
@@ -601,7 +593,7 @@ class FedCallbackWrapper(CallbackWrapper):
             logger.info(
                 'local mode, skip federation aggregator initialization, aggregator will be None')
         else:
-            self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator()
+            self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator(self.ctx, self.fed_arg)
 
     def on_epoch_end(
             self,
@@ -615,12 +607,19 @@ class FedCallbackWrapper(CallbackWrapper):
             if self.wrapped_trainer.aggregation_checker.should_aggregate(
                     state):
                 logger.info('aggregation on epoch end')
-                return self._call_wrapped(
+                agg_round = self.wrapped_trainer.aggregation_checker.aggregation_count
+                sub_ctx = self.ctx.sub_ctx('aggregation').indexed_ctx(agg_round)
+                ret = self._call_wrapped(
+                    sub_ctx,
+                    self.wrapped_trainer.aggregator,
+                    self.fed_arg,
                     'on_federation',
                     args=args,
                     state=state,
                     control=control,
                     **kwargs)
+                self.wrapped_trainer.aggregation_checker.inc_aggregation_count()
+                return ret
 
     def on_step_end(
             self,
@@ -633,16 +632,25 @@ class FedCallbackWrapper(CallbackWrapper):
         if self.fed_arg.aggregate_strategy == AggregateStrategy.STEP.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(
                     state):
+
+                logger.info('state is {}'.format(state))
                 logger.info('aggregation on step end')
-                return self._call_wrapped(
+                agg_round = self.wrapped_trainer.aggregation_checker.aggregation_count
+                sub_ctx = self.ctx.sub_ctx('aggregation').indexed_ctx(agg_round)
+                ret = self._call_wrapped(
+                    sub_ctx,
+                    self.wrapped_trainer.aggregator,
+                    self.fed_arg,
                     'on_federation',
                     args=args,
                     state=state,
                     control=control,
                     **kwargs)
+                self.wrapped_trainer.aggregation_checker.inc_aggregation_count()
+                return ret
 
 
-class ShortcutCallbackWrapper(CallbackWrapper):
+class WrappedShortcutCallback(CallbackWrapper):
 
     def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         super().__init__(ctx, wrapped_trainer)
@@ -654,6 +662,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_init_end',
             args=args,
             state=state,
@@ -667,6 +678,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_train_begin',
             args=args,
             state=state,
@@ -680,6 +694,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_train_end',
             args=args,
             state=state,
@@ -693,6 +710,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_epoch_begin',
             args=args,
             state=state,
@@ -706,6 +726,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_epoch_end',
             args=args,
             state=state,
@@ -719,6 +742,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_step_begin',
             args=args,
             state=state,
@@ -732,6 +758,9 @@ class ShortcutCallbackWrapper(CallbackWrapper):
             control: TrainerControl,
             **kwargs):
         return self._call_wrapped(
+            self.ctx,
+            self.wrapped_trainer.aggregator,
+            self.fed_arg,
             'on_step_end',
             args=args,
             state=state,
@@ -747,7 +776,7 @@ Mixin Class For Federation Trainer
 """
 
 
-class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
+class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
 
     def __init__(self,
                  ctx: Context,
@@ -763,8 +792,7 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-                 local_mode: bool = False,
-                 parameter_alignment=True
+                 local_mode: bool = False
                  ):
 
         assert isinstance(
@@ -773,7 +801,6 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
 
         self.ctx: Context = ctx
         self.local_mode = local_mode
-        self.parameter_alignment = parameter_alignment
         self._callbacks = callbacks
         self._args = training_args
         self._fed_args = fed_args
@@ -822,20 +849,16 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
                 new_callback_list.append(i)
         new_callback_list.append(FatePrinterCallback())
         callback_handler.callbacks = new_callback_list
-        callback_handler.callbacks.append(FedCallbackWrapper(self.ctx, self))
-        if self.parameter_alignment:
-            callback_handler.callbacks.append(
-                FedParameterAlignCallback(
-                    self,
-                    self.ctx,
-                    fed_args=self._fed_args,
-                    training_args=self._args,
-                    is_server=False))
-        else:
-            logger.warning(
-                'Parameter alignment is disabled, this may cause fed-training failure')
+        callback_handler.callbacks.append(WrappedFedCallback(self.ctx, self))
         callback_handler.callbacks.append(
-            ShortcutCallbackWrapper(self.ctx, self))
+            FedParameterAlignCallback(
+                self,
+                self.ctx,
+                fed_args=self._fed_args,
+                training_args=self._args,
+                is_server=False))
+            
+        callback_handler.callbacks.append(WrappedShortcutCallback(self.ctx, self))
 
     def _remove_fed_callback(self, callback_class):
         self.callback_handler.callbacks = [
@@ -889,8 +912,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-                 local_mode: bool = False,
-                 parameter_alignment=True
+                 local_mode: bool = False
                  ):
 
         # in case you forget to set evaluation_strategy
@@ -911,8 +933,8 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
             callbacks=callbacks,
             use_hf_default_behavior=use_hf_default_behavior,
             compute_metrics=compute_metrics,
-            local_mode=local_mode,
-            parameter_alignment=parameter_alignment)
+            local_mode=local_mode
+            )
 
         if data_collator is None:
             data_collator = _utils.collate.default_collate
@@ -939,7 +961,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
 
         self._add_fate_callback(self.callback_handler)
 
-    def init_aggregator(self):
+    def init_aggregator(self, ctx: Context, fed_arg: FedArguments):
         return None
 
     def compute_loss(self, model, inputs, **kwargs):
@@ -990,17 +1012,11 @@ class FedTrainerServer(object):
 
     def __init__(self,
                  ctx: Context,
-                 training_args: TrainingArguments = None,
-                 fed_args: FedArguments = None,
-                 parameter_alignment: bool = True,
                  local_mode: bool = False
                  ) -> None:
 
         self.ctx = ctx
-        self.parameter_alignment = parameter_alignment
         self.local_mode = local_mode
-        self._args = training_args
-        self._fed_args = fed_args
         self._max_steps = None
         self._parameter_check_callback = FedParameterAlignCallback(
             self, self.ctx, None, None, is_server=True)
@@ -1019,39 +1035,31 @@ class FedTrainerServer(object):
         self.local_mode = False
         logger.info('trainer set to federated mode')
 
-    def init_aggregator(self):
+    def init_aggregator(self, ctx: Context):
         return None
 
     def on_train_end(
             self,
             ctx: Context,
-            aggregator: Aggregator,
-            fed_args: FedArguments,
-            args: TrainingArguments):
+            aggregator: Aggregator):
         pass
 
     def on_train_begin(
             self,
             ctx: Context,
-            aggregator: Aggregator,
-            fed_args: FedArguments,
-            args: TrainingArguments):
+            aggregator: Aggregator):
         pass
 
     def on_init_end(
             self,
             ctx: Context,
-            aggregator: Aggregator,
-            fed_args: FedArguments,
-            args: TrainingArguments):
+            aggregator: Aggregator):
         pass
 
     def on_federation(
             self,
             ctx: Context,
-            aggregator: Aggregator,
-            fed_args: FedArguments,
-            args: TrainingArguments):
+            aggregator: Aggregator):
         pass
 
     def train(self):
@@ -1061,42 +1069,32 @@ class FedTrainerServer(object):
                 'Local model is set, skip initializing fed setting & aggregator')
             return
 
-        self.aggregator: Aggregator = self.init_aggregator()
+        self.aggregator: Aggregator = self.init_aggregator(self.ctx)
         logger.info('Initialized aggregator Done: {}'.format(self.aggregator))
-        if self.parameter_alignment:
-            self._parameter_check_callback.on_train_begin(
-                None, None, None)  # only get parameters from clients and align
-            parameters = self._parameter_check_callback.get_parameters()
-            self._max_aggregation = parameters['max_aggregation']
-            logger.info('checked parameters are {}'.format(parameters))
-        else:
-            logger.warn(
-                'If you choose not to use parameter alignment, please make sure that the sever aggregation round matches clients\'')
-            self._max_aggregation, _ = compute_max_aggregation(
-                self._fed_args, self._args.num_train_epochs, self._args.max_steps, 0, 0)
+        self._parameter_check_callback.on_train_begin(
+            None, None, None)  # only get parameters from clients and align
+        parameters = self._parameter_check_callback.get_parameters()
+        self._max_aggregation = parameters['max_aggregation']
+        logger.info('checked parameters are {}'.format(parameters))
+    
 
         self.on_init_end(
             self.ctx,
-            aggregator=self.aggregator,
-            args=self._args,
-            fed_args=self._fed_args)
+            aggregator=self.aggregator)
         self.on_train_begin(
             self.ctx,
-            aggregator=self.aggregator,
-            args=self._args,
-            fed_args=self._fed_args)
+            aggregator=self.aggregator)
+        
+        ctx = self.ctx
         for i in range(self._max_aggregation):
+            sub_ctx = ctx.sub_ctx('aggregation').indexed_ctx(i)
             self.on_federation(
-                self.ctx,
-                aggregator=self.aggregator,
-                args=self._args,
-                fed_args=self._fed_args)
+                sub_ctx,
+                aggregator=self.aggregator)
+            
         self.on_train_end(
             self.ctx,
-            aggregator=self.aggregator,
-            args=self._args,
-            fed_args=self._fed_args)
+            aggregator=self.aggregator)
 
     def predict(self):
-        # server does not need to predict
         pass

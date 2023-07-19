@@ -156,9 +156,9 @@ class TableDataset(Dataset):
                 for i in label_col_candidates:
                     if i in self.origin_table:
                         label = i
+                        logger.info('use "{}" as label column'.format(label))
                         break
                 if label is None:
-                    self.with_label = False
                     logger.info(
                         'found no "y"/"label"/"target" in input table, no label will be set')
             else:
@@ -166,9 +166,8 @@ class TableDataset(Dataset):
                     raise ValueError(
                         "label column {} not found in input table".format(label))
 
-            if self.label is not None:
-                self.label = self.origin_table[[label]].values
-                self.origin_table = self.origin_table.drop(columns=[label])
+            self.label = self.origin_table[[label]].values
+            self.origin_table = self.origin_table.drop(columns=[label])
             self.features = self.origin_table.values
 
         elif isinstance(data_or_path, DataFrame):

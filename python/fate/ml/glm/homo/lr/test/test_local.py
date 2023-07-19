@@ -24,7 +24,7 @@ ctx = Context("guest", computing=computing, federation=StandaloneFederation(
     computing, "fed", ("guest", 10000), [("host", 9999)]), )
 
 df = pd.read_csv(
-    '/home/cwj/FATE/FATE-2.0-pure/FATE/examples/data/breast_homo_guest.csv')
+    '../../../../../../../examples/data/breast_homo_guest.csv')
 df['sample_id'] = [i for i in range(len(df))]
 
 reader = PandasReader(
@@ -42,6 +42,7 @@ data = reader.to_frame(ctx, df)
 data_2 = reader_2.to_frame(ctx, df.drop(columns=['y']))
 ds = TableDataset(return_dict=True, to_tensor=True)
 ds.load(data)
+
 
 client = HomoLRClient(
     50, 800, optimizer_param={
