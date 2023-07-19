@@ -167,7 +167,7 @@ public class PushEventHandler extends GrpcEventHandler {
             context.putData(Dict.BLOCKING_STUB,backBlockingStub);
         }
 
-        logger.info("===== desPartyId {}===desRole==={}==srcPartyId=={}==srcRole=={}",desPartyId,desRole,srcPartyId,srcRole);
+
         ErSession session = null;
         try {
             session = PutBatchSinkUtil.sessionCache.get(sessionId);
@@ -175,7 +175,8 @@ public class PushEventHandler extends GrpcEventHandler {
             logger.error("get session error ", e);
         }
         if (!SessionStatus.ACTIVE.name().equals(session.getErSessionMeta().getStatus())) {
-            IllegalStateException error = new IllegalStateException("session=${sessionId} with illegal status. expected=${SessionStatus.ACTIVE}, actual=${session.sessionMeta.status}");
+            logger.error("");
+            IllegalStateException error = new IllegalStateException("eggroll  session "+sessionId+" status is "+session.getErSessionMeta().getStatus());
         //    onError(error);
             throw error;
         }
