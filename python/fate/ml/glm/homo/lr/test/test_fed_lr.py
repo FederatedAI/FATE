@@ -50,11 +50,17 @@ if __name__ == "__main__":
             dtype="object")
         
         data = reader.to_frame(ctx, df)
+        client = HomoLRClient(
+            50, 800, optimizer_param={
+                'method': 'adam', 'penalty': 'l1', 'aplha': 0.1, 'optimizer_para': {
+                    'lr': 0.1}}, init_param={
+                        'method': 'random', 'fill_val': 1.0})
 
+        client.fit(ctx, data)
 
     elif sys.argv[1] == "host":
 
-        ctx = create_ctx(guest)
+        ctx = create_ctx(host)
         df = pd.read_csv(
         '../../../../../../../examples/data/breast_homo_host.csv')
         df['sample_id'] = [i for i in range(len(df))]
@@ -66,6 +72,15 @@ if __name__ == "__main__":
             dtype="object")
 
         data = reader.to_frame(ctx, df)
-
+        client = HomoLRClient(
+            50, 800, optimizer_param={
+                'method': 'adam', 'penalty': 'l1', 'aplha': 0.1, 'optimizer_para': {
+                    'lr': 0.1}}, init_param={
+                        'method': 'random', 'fill_val': 1.0})
+        
+        client.fit(ctx, data)
     else:
+
         ctx = create_ctx(arbiter)
+        server = HomoLRServer()
+        server.fit(ctx)
