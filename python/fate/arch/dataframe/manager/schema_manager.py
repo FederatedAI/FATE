@@ -542,15 +542,16 @@ class SchemaManager(object):
                 columns = [columns]
 
             column_set = set(columns)
-            new_columns = []
-            new_anonymous_columns = []
+            derived_columns = []
+            derived_anonymous_columns = []
             for column, anonymous_column in zip(self._schema.columns, self._schema.anonymous_columns):
                 if column not in column_set:
                     continue
-                new_columns.append(column)
-                new_anonymous_columns.append(anonymous_column)
-            derived_schema.columns = self._schema.columns[self._schema.columns.get_indexer(columns)]
-            derived_schema.anonymous_columns = self._schema.columns[self._schema.anonymous_columns.get_indexer(columns)]
+                derived_columns.append(column)
+                derived_anonymous_columns.append(anonymous_column)
+
+            derived_schema.columns = pd.Index(derived_columns)
+            derived_schema.anonymous_columns = pd.Index(derived_anonymous_columns)
 
         derived_schema_manager.schema = derived_schema
         derived_schema_manager.init_name_mapping()
