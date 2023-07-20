@@ -16,6 +16,7 @@
 package com.osx.broker.http;
 
 import com.osx.broker.ServiceContainer;
+import com.osx.broker.util.DebugUtil;
 import com.osx.core.constant.PtpHttpHeader;
 import com.osx.core.provider.TechProvider;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,7 @@ public class DispatchServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         //处理get请求
+        DebugUtil.printHttpParams(req);
         String protocol = req.getProtocol();
         if (!protocol.endsWith("1.1")) {
             resp.sendError(405, "http.method_get_not_supported");
@@ -56,6 +58,7 @@ public class DispatchServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         //处理post请求
+        DebugUtil.printHttpParams(req);
         String requestUri = req.getRequestURI();
         //logger.info("receive request uri  {}",requestUri);
         String protocol = req.getProtocol();
