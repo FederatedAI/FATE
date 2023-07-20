@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import functools
+
 
 def aggregate_indexer(indexer):
     """
@@ -88,3 +90,27 @@ def get_partition_order_by_raw_table(table):
         block_id += 1
 
     return block_order_mappings
+
+
+def regenerated_sample_id(block_table, regenerated_sample_id_table, data_manager):
+    """
+    regenerated_sample_id_table: (sample_id, ([new_id_list]))
+    """
+    from ._dimension_scaling import _flatten_partition
+
+    _flatten_func = functools.partial(_flatten_partition, block_num=data_manager.block_num)
+    raw_table = block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
+    regenerated_table = raw_table.join(regenerated_sample_id_table, lambda lhs, rhs: (lhs, rhs))
+
+    def _flat_id(key, value):
+        content, id_list = value
+        flat_ret = []
+        for _id in id_list:
+            flat_ret.append((_id, content))
+
+        return flat_ret
+
+    _flat_id_func = functools.partial(_flat_id)
+    regenerated_table = regenerated_table.flatMap(_flat_id_func)
+
+    return regenerated_table

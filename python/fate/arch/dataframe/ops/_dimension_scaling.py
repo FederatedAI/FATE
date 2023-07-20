@@ -111,7 +111,7 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
         #  but data in every partition may be unbalance, so we use a more slow way by flatten data first
 
     partition_order_mappings = get_partition_order_by_raw_table(l_flatten)
-    _convert_to_block_func = functools.partial(_to_blocks,
+    _convert_to_block_func = functools.partial(to_blocks,
                                                dm=data_manager,
                                                partition_mappings=partition_order_mappings)
 
@@ -142,7 +142,7 @@ def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
     drop_flatten = l_flatten_table.subtractByKey(r_flatten_table)
     partition_order_mappings = get_partition_order_by_raw_table(drop_flatten) if drop_flatten.count() else dict()
 
-    _convert_to_block_func = functools.partial(_to_blocks,
+    _convert_to_block_func = functools.partial(to_blocks,
                                                dm=data_manager,
                                                partition_mappings=partition_order_mappings)
 
@@ -206,7 +206,7 @@ def _flatten_partition(kvs, block_num=0):
     return _flattens
 
 
-def _to_blocks(kvs, dm: DataManager=None, partition_mappings: dict=None):
+def to_blocks(kvs, dm: DataManager=None, partition_mappings: dict=None):
     ret_blocks = [[] for i in range(dm.block_num)]
 
     partition_id = None

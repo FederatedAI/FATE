@@ -15,3 +15,4 @@
 from ._dataloader import DataLoader
 from ._dataloader import BatchEncoding
 from ._k_fold import KFold
+from ._sample import federated_sample

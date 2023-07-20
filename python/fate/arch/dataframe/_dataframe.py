@@ -291,6 +291,10 @@ class DataFrame(object):
 
         return hist(self, targets)
 
+    def replace(self, to_replace=None) -> "DataFrame":
+        from .ops._replace import replace
+        return replace(self, to_replace)
+
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
@@ -326,6 +330,9 @@ class DataFrame(object):
 
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
+
+    def __eq__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.eq, other)
 
     def __invert__(self):
         from .ops._unary_operator import invert
