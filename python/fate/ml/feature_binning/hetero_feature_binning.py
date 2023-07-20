@@ -53,6 +53,8 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def compute_metrics(self, ctx: Context, binned_data):
         label_tensor = binned_data.label.as_tensor()
+        logger.info(f"label tensor shape: {label_tensor.shape}")
+
         self._bin_obj.compute_metrics(binned_data, label_tensor)
         if not self.local_only:
             self.compute_federated_metrics(ctx, binned_data)
@@ -65,8 +67,8 @@ class HeteroBinningModuleGuest(HeteroModule):
         host_col_bin = ctx.hosts.get("anonymous_col_bin")
         host_event_non_event_count = ctx.hosts.get("event_non_event_count")
         for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):
-            host_event_count_hist = en_host_count_res[0].decrypt()
-            host_non_event_count_hist = en_host_count_res[1].decrypt()
+            host_event_count_hist = en_host_count_res[0].decrypt(decryptor)
+            host_non_event_count_hist = en_host_count_res[1].decrypt(decryptor)
             summary_metrics, _ = self._bin_obj.compute_all_col_metrics(host_event_count_hist,
                                                                        host_non_event_count_hist)
             self._bin_obj.set_host_metrics(ctx.hosts[i], summary_metrics)
@@ -137,10 +139,12 @@ class HeteroBinningModuleHost(HeteroModule):
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
         event_count_hist = to_compute_data.hist(targets=encrypt_y)
+        logger.info(f"encrypt y shape: {encrypt_y.shape}")
         # bin count(entries per bin):
         to_compute_data["targets_binning"] = 1
-        targets = to_compute_data["targets_binning"]
-        to_compute_data = binned_data[to_compute_col].as_tensor()
+        targets = to_compute_data["targets_binning"].as_tensor()
+        logger.info(f"target binning shape: {targets.shape}")
+        to_compute_data = binned_data[to_compute_col]
         bin_count = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count - event_count_hist
         ctx.guest.put("event_non_event_count", (event_count_hist, non_event_count_hist))
@@ -195,7 +199,9 @@ class StandardBinning(Module):
         self._train_host_metrics_summary = None
 
     def set_host_metrics(self, host, metrics_summary):
-        self._host_metrics_summary[host] = metrics_summary
+        if self._host_metrics_summary is None:
+            self._host_metrics_summary = {}
+        self._host_metrics_summary[host.party_id] = metrics_summary
 
     def fit(self, ctx: Context, train_data, validate_data=None, skip_none=False):
         # only bin given `col_bin` cols
@@ -207,19 +213,10 @@ class StandardBinning(Module):
             q = np.arange(0, 1, 1 / self.n_bins)
             split_pt_df = select_data.quantile(q=q,
                                                relative_error=self.relative_error)
-            """split_pt_dict = {}
-            for col in split_pt_df.schema.columns:
-                split_pt_dict[col] = list(split_pt_df[col])
-            self._split_pt_dict = split_pt_dict"""
             # pd.DataFrame
             # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "bucket":
             split_pt_df = select_data.qcut(q=self.n_bins)
-
-            """split_pt_dict = {}
-            for col in split_pt_df.schema.columns:
-                split_pt_dict[col] = split_pt_df[col]
-            self._split_pt_dict = split_pt_dict"""
             # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "manual":
             # self._split_pt_dict = self._manual_split_pt_dict
@@ -262,10 +259,11 @@ class StandardBinning(Module):
     def compute_all_col_metrics(self, event_count_hist, non_event_count_hist):
         # pd.DataFrame ver
         event_count_dict = event_count_hist.to_dict()
-        logger.info(f"event_count dict: {event_count_dict}")
+        # logger.debug(f"event_count dict: {event_count_dict}")
         non_event_count_dict = non_event_count_hist.to_dict()
-        logger.info(f"non_event_count dict: {non_event_count_dict}")
+        #logger.debug(f"non_event_count dict: {non_event_count_dict}")
 
+        event_count, non_event_count = {}, {}
         event_rate, non_event_rate = {}, {}
         bin_woe, bin_iv, is_monotonic, iv = {}, {}, {}, {}
         total_event_count, total_non_event_count = None, None
@@ -285,6 +283,8 @@ class StandardBinning(Module):
             col_bin_woe = col_rate_ratio.apply(lambda v: np.log(v))
             col_bin_iv = (col_event_rate - col_non_event_rate) * col_bin_woe
 
+            event_count[col_name] = col_event_count.to_dict()
+            non_event_count[col_name] = col_non_event_count.to_dict()
             event_rate[col_name] = col_event_rate.to_dict()
             non_event_rate[col_name] = col_non_event_rate.to_dict()
             bin_woe[col_name] = col_bin_woe.to_dict()
@@ -303,14 +303,15 @@ class StandardBinning(Module):
 
         metrics_summary = {}
 
-        metrics_summary["event_count"] = event_count_dict
-        metrics_summary["non_event_count"] = non_event_count_dict
+        metrics_summary["event_count"] = event_count
+        metrics_summary["non_event_count"] = non_event_count
         metrics_summary["event_rate"] = event_rate
         metrics_summary["non_event_rate"] = non_event_rate
         metrics_summary["woe"] = bin_woe
         metrics_summary["iv_array"] = bin_iv
         metrics_summary["is_monotonic"] = is_monotonic
         metrics_summary["iv"] = iv
+        logger.info(f"bin_woe: {bin_woe}")
         return metrics_summary, bin_woe
 
     def compute_metrics(self, binned_data, label_col):
@@ -331,11 +332,14 @@ class StandardBinning(Module):
             return binned_data
         elif self.transform_method == "woe":
             # predict: replace with woe from train phase
+            to_transform_data = binned_data[self.bin_col]
             if self._train_woe_dict:
                 logger.debug(f"`train_woe_dict` provided, will transform to woe values from training phase.")
-                return binned_data.replace(self._train_woe_dict, self.bin_col)
+                binned_data[self.bin_col] = to_transform_data.replace(self._train_woe_dict)
+                # return binned_data.replace(self._train_woe_dict, self.bin_col)
             elif self._woe_dict:
-                return binned_data.replace(self._woe_dict, self.bin_col)
+                binned_data[self.bin_col] = to_transform_data.replace(self._woe_dict)
+                #return binned_data.replace(self._woe_dict, self.bin_col)
         else:
             logger.warning(f"to transform type {self.transform_method} encountered, but no bin tag dict provided. "
                            f"Please check")

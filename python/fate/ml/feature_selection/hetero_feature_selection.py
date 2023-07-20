@@ -106,7 +106,7 @@ class HeteroSelectionModuleGuest(HeteroModule):
     def sync_select_federated(ctx: Context, selection_obj):
         logger.info(f"Sync federated selection.")
         for i, host in enumerate(ctx.hosts):
-            federated_mask = selection_obj._host_selected_mask[host]
+            federated_mask = selection_obj._host_selected_mask[host.party_id]
             ctx.hosts[i].put(f"selected_mask_{selection_obj.method}", federated_mask)
 
     def transform(self, ctx: Context, test_data):
@@ -438,7 +438,8 @@ class StandardSelection(Module):
                 return
             model_data = self.model.get("data", {})
             iv_metrics = pd.Series(model_data["metrics_summary"]["iv"])
-            metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
+            # metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
+            metrics_all = StandardSelection.convert_series_metric_to_dataframe("iv", iv_metrics)
             self._all_metrics = metrics_all
             # works for multiple iv filters
             """mask_all = metrics_all.apply(lambda r: StandardSelection.filter_multiple_metrics(r,
@@ -458,7 +459,8 @@ class StandardSelection(Module):
                 host_metrics_summary = self.model["host_train_metrics_summary"]
                 for host, host_metrics in host_metrics_summary.items():
                     iv_metrics = pd.Series(host_metrics["iv"])
-                    metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
+                    # metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
+                    metrics_all = StandardSelection.convert_series_metric_to_dataframe("iv", iv_metrics)
                     self._all_host_metrics[host] = metrics_all
                     """host_mask_all = metrics_all.apply(lambda r:
                                                  StandardSelection.filter_multiple_metrics(r,
