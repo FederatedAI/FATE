@@ -30,7 +30,7 @@ def replace(df: "DataFrame", to_replace: dict):
     _to_replace_list = []
     for name, (_bid, _) in zip(field_names, blocks_loc):
         block_type = data_manager.get_block(_bid).block_type
-        for _, v in to_replace[name].items():
+        for k, v in to_replace[name].items():
             v_type = BlockType.get_block_type(type(v))
 
             if block_type < v_type:
