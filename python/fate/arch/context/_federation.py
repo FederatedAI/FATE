@@ -24,6 +24,8 @@ from ._namespace import NS
 
 T = TypeVar("T")
 
+import struct
+
 
 class GC:
     def __init__(self) -> None:
@@ -64,6 +66,14 @@ class Party:
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
 
+    @property
+    def role(self) -> str:
+        return self.party[1]
+
+    @property
+    def party_id(self) -> str:
+        return self.party[0]
+
     def put(self, *args, **kwargs):
         if args:
             assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
@@ -77,6 +87,9 @@ class Party:
 
     def get(self, name: str):
         return _pull(self.federation, name, self.namespace, [self.party])[0]
+
+    def get_int(self, name: str):
+        ...
 
 
 class Parties:
@@ -130,6 +143,48 @@ def _push(
 ):
     tag = namespace.federation_tag
     _TableRemotePersistentPickler.push(value, federation, name, tag, parties)
+
+
+class Serde:
+    @classmethod
+    def encode_int(cls, value: int) -> bytes:
+        return struct.pack("!q", value)  # '!q' is for long long (8 bytes)
+
+    @classmethod
+    def decode_int(cls, value: bytes) -> int:
+        return struct.unpack("!q", value)[0]
+
+    @classmethod
+    def encode_str(cls, value: str) -> bytes:
+        utf8_str = value.encode("utf-8")
+        return struct.pack("!I", len(utf8_str)) + utf8_str  # prepend length of string
+
+    @classmethod
+    def decode_str(cls, value: bytes) -> str:
+        length = struct.unpack("!I", value[:4])[0]  # get length of string
+        return value[4 : 4 + length].decode("utf-8")  # decode string
+
+    @classmethod
+    def encode_bytes(cls, value: bytes) -> bytes:
+        return struct.pack("!I", len(value)) + value  # prepend length of bytes
+
+    @classmethod
+    def decode_bytes(cls, value: bytes) -> bytes:
+        length = struct.unpack("!I", value[:4])[0]  # get length of bytes
+        return value[4 : 4 + length]  # extract bytes
+
+    @classmethod
+    def encode_float(cls, value: float) -> bytes:
+        return struct.pack("!d", value)
+
+    @classmethod
+    def decode_float(cls, value: bytes) -> float:
+        return struct.unpack("!d", value)[0]
+
+
+def _push_int(federation: FederationEngine, name: str, namespace: NS, parties: List[PartyMeta], value: int):
+    tag = namespace.federation_tag
+    federation.push(v=f.getvalue(), name=name, tag=tag, parties=parties)
 
 
 def _pull(
