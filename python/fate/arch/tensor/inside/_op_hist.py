@@ -54,12 +54,30 @@ class Hist:
     def to_dict(self):
         return {name: self.data[i] for i, name in enumerate(self.feature_names)}
 
+    def decrypt(self, pri):
+        for j in self.data:
+            for v in self.data[j]:
+                self.data[j][v] = pri.decrypt(self.data[j][v])
+        return self
+
+    def encrypt(self, pub):
+        for j in self.data:
+            for v in self.data[j]:
+                self.data[j][v] = pub.encrypt(self.data[j][v])
+        return self
+
 
 if __name__ == "__main__":
     import numpy as np
+    from fate.arch import Context
 
-    hist = Hist()
+    ctx = Context()
+
+    pub, pri = ctx.cipher.phe.keygen(options={"key_length": 1024})
+    hist = Hist(["a", "b"])
     features = np.array([[1, 0], [0, 1], [2, 1], [2, 0]])
-    labels = np.array([0, 1, 0, 0])
+    labels = torch.tensor(np.array([0, 1, 0, 0]))
     hist.update(features, labels)
+    hist.encrypt(pub)
+    hist.decrypt(pri)
     print((hist - hist).data)
