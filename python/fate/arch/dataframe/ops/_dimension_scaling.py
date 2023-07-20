@@ -22,6 +22,7 @@ from ..manager.data_manager import DataManager
 from ._compress_block import compress_blocks
 from ._indexer import get_partition_order_by_raw_table
 from ._set_item import set_item
+from fate.arch.tensor import DTensor
 
 
 def hstack(data_frames: List["DataFrame"]) -> "DataFrame":
@@ -186,6 +187,35 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
     sample_frame = df.loc(sample_indexer)
 
     return sample_frame
+
+
+def retrieval_row(df: "DataFrame", indexer: "DTensor"):
+    if indexer.shape[1] != 1:
+        raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
+
+    def _retrieval(blocks, t: torch.Tensor):
+        index = t.reshape(-1).tolist()
+        ret_blocks = [block[index] for block in blocks]
+
+        return ret_blocks
+
+    _retrieval_func = functools.partial(_retrieval)
+    retrieval_block_table = df.block_table.join(indexer.shardings._data, _retrieval_func)
+
+    _flatten_func = functools.partial(_flatten_partition, block_num=df.data_manager.block_num)
+    retrieval_raw_table = retrieval_block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
+
+    partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table)
+    to_blocks_func = functools.partial(to_blocks, dm=df.data_manager, partition_mappings=partition_order_mappings)
+
+    block_table = retrieval_raw_table.mapPartitions(to_blocks_func, use_previous_behavior=False)
+
+    return DataFrame(
+        df._ctx,
+        block_table,
+        partition_order_mappings,
+        df.data_manager
+    )
 
 
 def _flatten_partition(kvs, block_num=0):

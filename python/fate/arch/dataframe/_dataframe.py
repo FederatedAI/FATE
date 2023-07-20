@@ -22,6 +22,7 @@ import pandas as pd
 
 from .manager import DataManager, Schema
 from .ops import aggregate_indexer, get_partition_order_mappings
+from fate.arch.tensor import DTensor
 
 
 class DataFrame(object):
@@ -391,6 +392,10 @@ class DataFrame(object):
             from .ops._where import where
 
             return where(self, items)
+
+        if isinstance(items, DTensor):
+            from .ops._dimension_scaling import retrieval_row
+            return retrieval_row(self, items)
 
         if isinstance(items, pd.Index):
             items = items.tolist()
