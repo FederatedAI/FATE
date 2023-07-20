@@ -22,7 +22,8 @@
 # =============================================================================
 import numpy as np
 import functools
-from fate.interface import Context, Dataframe
+from fate.arch import Context
+from fate.arch.dataframe import DataFrame
 
 
 class FeatureImportance(object):
@@ -155,7 +156,7 @@ class DecisionTree(object):
         # convert tree node to array
         pass
 
-    def _init_sample_pos(self, train_data: Dataframe):
+    def _init_sample_pos(self, train_data: DataFrame):
         sample_pos = train_data.create_frame()
         sample_pos['node_idx'] = 0  # position of current sample
         sample_pos['dir'] = True  # direction to next layer, use True to initalize all
@@ -180,7 +181,7 @@ class DecisionTree(object):
 
         return root_node
 
-    def fit(self, ctx: Context, train_data: Dataframe, grad_and_hess: Dataframe, encryptor):
+    def fit(self, ctx: Context, train_data: DataFrame, grad_and_hess: DataFrame, encryptor):
         raise NotImplementedError("This method should be implemented by subclass")
 
     def get_feature_importance(self):
