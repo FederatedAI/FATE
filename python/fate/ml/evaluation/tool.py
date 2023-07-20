@@ -18,6 +18,10 @@ def get_metric_names(modules):
     return result
 
 
+def all_available_metrics():
+    return get_metric_names([classi, reg])
+
+
 def get_single_val_binary_metrics(threshold=0.5):
 
     binary_ensembles = MetricEnsemble()
