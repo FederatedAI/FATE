@@ -1,5 +1,7 @@
 import typing
 
+import torch
+
 
 class Hist:
     def __init__(self, feature_names):
@@ -16,7 +18,7 @@ class Hist:
                 if v not in self.data[j]:
                     self.data[j][v] = labels[i]
                 else:
-                    self.data[j][v] = self.data[j][v] + labels[i]
+                    self.data[j][v] = torch.add(self.data[j][v], labels[i])
 
     def merge(self, hist):
         for k in hist.data:
@@ -27,14 +29,14 @@ class Hist:
                     if kk not in self.data[k]:
                         self.data[k][kk] = hist.data[k][kk]
                     else:
-                        self.data[k][kk] = self.data[k][kk] + hist.data[k][kk]
+                        self.data[k][kk] = torch.add(self.data[k][kk], hist.data[k][kk])
         return self
 
     def cumsum(self):
         for k in self.data:
             s = 0
             for kk in sorted(self.data[k].keys()):
-                s += self.data[k][kk]
+                s = torch.add(s, self.data[k][kk])
                 self.data[k][kk] = s
         return self
 
@@ -46,7 +48,7 @@ class Hist:
                 if v not in other.data[j]:
                     out.data[j][v] = self.data[j][v]
                 else:
-                    out.data[j][v] = self.data[j][v] - other.data[j][v]
+                    out.data[j][v] = torch.sub(self.data[j][v], other.data[j][v])
         return out
 
     def to_dict(self):
