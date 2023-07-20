@@ -614,6 +614,7 @@ public class TransferQueueManager {
 
 
     private void destroy(String topic) {
+        logger.info("start clear topic queue , topic = {}",topic);
         Preconditions.checkArgument(StringUtils.isNotEmpty(topic));
         ReentrantLock transferIdLock = this.transferIdLockMap.get(topic);
         if (transferIdLock != null) {

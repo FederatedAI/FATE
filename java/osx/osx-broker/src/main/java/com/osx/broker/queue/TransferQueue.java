@@ -71,6 +71,16 @@ public class TransferQueue {
     IndexQueue indexQueue;
     TransferQueueManager transferQueueManager;
 
+    public boolean isHasEventMsgDestoryCallback() {
+        return hasEventMsgDestoryCallback;
+    }
+
+    public void setHasEventMsgDestoryCallback(boolean hasEventMsgDestoryCallback) {
+        this.hasEventMsgDestoryCallback = hasEventMsgDestoryCallback;
+    }
+
+    boolean hasEventMsgDestoryCallback = false;
+
     public TransferQueue(String transferId, TransferQueueManager transferQueueManager, String path) {
         this.transferId = transferId;
         this.transferQueueManager = transferQueueManager;
@@ -123,7 +133,7 @@ public class TransferQueue {
         return false;
     }
 
-    public synchronized PutMessageResult putMessage(final MessageExtBrokerInner msg) {
+    public synchronized PutMessageResult putMessage(final MessageExtBrokerInner msg)  {
 
         if (transferStatus == TransferStatus.TRANSFERING) {
             String msgId = msg.getMsgId();
@@ -136,11 +146,17 @@ public class TransferQueue {
                 long beginWriteOffset = putMessageResult.getAppendMessageResult().getWroteOffset();
                 int size = putMessageResult.getAppendMessageResult().getWroteBytes();
                 putMessageResult.setMsgLogicOffset(indexQueue.putMessagePositionInfoWrapper(beginWriteOffset, size));
-
+                //todo 这里需要修改，用另外的队列类型来做，就不再需要持久化
                 if (this.msgCallbacks.size() > 0) {
-                    this.msgCallbacks.forEach(msgCallback -> {
-                        msgCallback.callback(this, msg);
-                    });
+                    try {
+                        for (MsgEventCallback msgCallback : this.msgCallbacks) {
+                            msgCallback.callback(this, msg);
+                        }
+                    }catch(Exception  e){
+                        e.printStackTrace();
+                        logger.error("topic {} callback error",msg.getTopic(),e);
+                        throw new PutMessageException("topic " + msg.getTopic() + " callback error");
+                    }
                 }
             } else {
                 logger.info("topic {} put msg error",transferId);

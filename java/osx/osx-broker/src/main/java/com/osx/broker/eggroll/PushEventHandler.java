@@ -88,7 +88,7 @@ public class PushEventHandler extends GrpcEventHandler {
     }
 
     @Override
-    protected void handleInit(MessageEvent event) {
+    protected void handleInit(MessageExt event) {
 
     }
 

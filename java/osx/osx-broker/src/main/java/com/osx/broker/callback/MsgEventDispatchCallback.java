@@ -11,19 +11,30 @@ import com.osx.core.constant.Dict;
 import javax.xml.ws.Service;
 
 public class MsgEventDispatchCallback implements MsgEventCallback{
+
+
+
     @Override
-    public void callback(TransferQueue transferQueue, MessageExt message) {
+    public void callback(TransferQueue transferQueue, MessageExt message) throws Exception {
+
         String topic = transferQueue.getTransferId();
         EventDrivenConsumer  eventDrivenConsumer = ServiceContainer.consumerManager.getEventDrivenConsumer(topic);
         if(eventDrivenConsumer!=null){
-            MessageEvent  messageEvent = new MessageEvent();
-            messageEvent.setTopic(topic);
-            messageEvent.setDesComponent(message.getProperty(Dict.DES_COMPONENT));
-            messageEvent.setSrcComponent(message.getProperty(Dict.SOURCE_COMPONENT));
-            messageEvent.setSrcPartyId(message.getSrcPartyId());
-            messageEvent.setDesPartyId(message.getDesPartyId());
-            messageEvent.setSessionId(message.getProperty(Dict.SESSION_ID));
-            eventDrivenConsumer.fireEvent(messageEvent);
+            if(!transferQueue.isHasEventMsgDestoryCallback()) {
+                transferQueue.registerDestoryCallback(() -> {
+                    ServiceContainer.consumerManager.onComplete(topic);
+                });
+                transferQueue.setHasEventMsgDestoryCallback(true);
+            }
+//            MessageEvent  messageEvent = new MessageEvent();
+//            messageEvent.setTopic(topic);
+//
+//            messageEvent.setDesComponent(message.getProperty(Dict.DES_COMPONENT));
+//            messageEvent.setSrcComponent(message.getProperty(Dict.SOURCE_COMPONENT));
+//            messageEvent.setSrcPartyId(message.getSrcPartyId());
+//            messageEvent.setDesPartyId(message.getDesPartyId());
+//            messageEvent.setSessionId(message.getProperty(Dict.SESSION_ID));
+            eventDrivenConsumer.fireEvent(message);
         }
     }
 }

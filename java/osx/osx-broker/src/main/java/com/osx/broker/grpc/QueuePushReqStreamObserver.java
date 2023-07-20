@@ -290,8 +290,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                     forwardPushReqSO.onNext(value);
                 }
             }
-
-
         } catch (Exception e) {
             logger.error("push error", e);
             ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);

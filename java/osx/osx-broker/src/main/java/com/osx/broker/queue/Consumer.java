@@ -17,8 +17,9 @@ package com.osx.broker.queue;
 
 
 import com.osx.api.context.Context;
+import com.osx.core.frame.Lifecycle;
 
-public interface Consumer<T> {
+public interface Consumer<T> extends Lifecycle {
 
     public T consume(Context context, long offset);
 

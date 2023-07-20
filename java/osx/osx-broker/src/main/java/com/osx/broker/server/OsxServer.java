@@ -20,10 +20,9 @@ import com.osx.broker.grpc.PcpGrpcService;
 import com.osx.broker.grpc.ProxyGrpcService;
 import com.osx.broker.grpc.ServiceExceptionHandler;
 import com.osx.broker.http.DispatchServlet;
-import com.osx.broker.http.HttpsClientPool;
+import com.osx.core.config.MetaInfo;
 import com.osx.core.utils.OSXCertUtils;
 import com.osx.core.utils.OsxX509TrustManager;
-import com.osx.core.config.MetaInfo;
 import io.grpc.ServerInterceptors;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
@@ -152,6 +151,16 @@ public class OsxServer {
             connector.setAcceptedReceiveBufferSize(MetaInfo.PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE);
             server.addConnector(connector);
             server.setHandler(buildServlet());
+//            new Thread(()->{
+//                while (true){
+//                    try {
+//                        logger.info("========================= http连接数 = {}",server.getConnectors().length);
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }).start();
             return server;
         } catch (Exception e) {
             logger.error("build https server error = {}", e.getMessage());

@@ -103,6 +103,7 @@ public class FateTechProvider implements TechProvider {
             System.arraycopy(buffer, 0, data, 0, length);
             inboundBuilder.setPayload(ByteString.copyFrom(data));
         } catch (Exception e) {
+            logger.error("processHttpInvoke error :" , e);
             ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
             this.writeHttpRespose(response, exceptionInfo.getCode(), exceptionInfo.getMessage(), null);
             context.setReturnCode(exceptionInfo.getCode());

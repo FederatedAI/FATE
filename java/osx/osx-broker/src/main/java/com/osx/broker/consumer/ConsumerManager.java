@@ -118,7 +118,7 @@ public class ConsumerManager   implements Lifecycle {
 
     }
 
-    public EventDrivenConsumer  createEventDrivenConsumer(String topic, EventHandler  eventHandler){
+    public EventDrivenConsumer  createEventDrivenConsumer(String topic, GrpcEventHandler  eventHandler){
         logger.info("create event driven consumer , {}",topic);
         if (eventDrivenConsumerMap.get(topic) == null) {
             EventDrivenConsumer  eventDrivenConsumer =
@@ -142,7 +142,15 @@ public class ConsumerManager   implements Lifecycle {
     }
 
     public void onComplete(String transferId) {
-        this.unaryConsumerMap.remove(transferId);
+        if(this.unaryConsumerMap.contains(transferId)) {
+            this.unaryConsumerMap.get(transferId).destroy();
+            this.unaryConsumerMap.remove(transferId);
+        }
+        if(this.eventDrivenConsumerMap.contains(transferId)){
+            this.eventDrivenConsumerMap.get(transferId).destroy();
+           // this.eventDrivenConsumerMap.remove(transferId);
+        }
+
         logger.info("remove consumer {}", transferId);
     }
 

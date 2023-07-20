@@ -1,6 +1,6 @@
 package com.osx.broker.consumer;
 
-import com.lmax.disruptor.EventHandler;
+
 import com.osx.api.context.Context;
 import com.osx.api.router.RouterInfo;
 import com.osx.broker.ServiceContainer;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
-public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
+public abstract class GrpcEventHandler  {
 
     Logger logger = LoggerFactory.getLogger(GrpcEventHandler.class);
     public  GrpcEventHandler(String provider){
@@ -73,24 +73,30 @@ public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
         }
     }
 
-    protected void init(MessageEvent event){
+    protected void init(MessageExt message){
 
         if(transferStatus==TransferStatus.INIT){
             try {
+
+//                messageEvent.setDesComponent(message.getProperty(Dict.DES_COMPONENT));
+//                messageEvent.setSrcComponent(message.getProperty(Dict.SOURCE_COMPONENT));
+//                messageEvent.setSrcPartyId(message.getSrcPartyId());
+//                messageEvent.setDesPartyId(message.getDesPartyId());
+//                messageEvent.setSessionId(message.getProperty(Dict.SESSION_ID));
                 context =  new FateContext();
-                topic = event.getTopic();
-                desComponent = event.getDesComponent();
-                srcComponent = event.getSrcComponent();
-                srcPartyId = event.getSrcPartyId();
-                desPartyId = event.getDesPartyId();
-                sessionId = event.getSessionId();
+                topic = message.getTopic();
+                desComponent = message.getProperty(Dict.DES_COMPONENT);
+                srcComponent = message.getProperty(Dict.SOURCE_COMPONENT);
+                srcPartyId = message.getSrcPartyId();
+                desPartyId = message.getDesPartyId();
+                sessionId = message.getProperty(Dict.SESSION_ID);
                 if (topic.startsWith(Dict.STREAM_SEND_TOPIC_PREFIX)) {
                     backTopic = topic.replaceAll(Dict.STREAM_SEND_TOPIC_PREFIX, Dict.STREAM_BACK_TOPIC_PREFIX);
                 } else if (topic.startsWith(Dict.STREAM_BACK_TOPIC_PREFIX)) {
                     backTopic = topic.replaceAll(Dict.STREAM_BACK_TOPIC_PREFIX, Dict.STREAM_SEND_TOPIC_PREFIX);
                 }
                 backRouterInfo = ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,"",srcPartyId,"");
-                handleInit(event);
+                handleInit(message);
                 transferStatus = TransferStatus.TRANSFERING;
             }catch(Throwable e){
                 logger.error("grpc event handler init error",e);
@@ -102,22 +108,29 @@ public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
     }
 
 
-    @Override
-    public void onEvent(MessageEvent event, long l, boolean b) throws Exception {
 
-        String  topic =  event.getTopic();
+    public void onEvent(MessageExt messageExt) throws Exception {
+
+     //   String  topic =  event.getTopic();
+
+//        messageEvent.setDesComponent(message.getProperty(Dict.DES_COMPONENT));
+//        messageEvent.setSrcComponent(message.getProperty(Dict.SOURCE_COMPONENT));
+//        messageEvent.setSrcPartyId(message.getSrcPartyId());
+//        messageEvent.setDesPartyId(message.getDesPartyId());
+//        messageEvent.setSessionId(message.getProperty(Dict.SESSION_ID));
+
        // logger.info("======event {}",event);
-        init(event);
+        init(messageExt);
         if(transferStatus==TransferStatus.TRANSFERING) {
-            EventDrivenConsumer consumer = ServiceContainer.consumerManager.getEventDrivenConsumer(topic);
-            TransferQueue.TransferQueueConsumeResult transferQueueConsumeResult = consumer.consume(new FateContext(), -1);
-
-            if (transferQueueConsumeResult.getCode().equals(StatusCode.SUCCESS)) {
-                long index = transferQueueConsumeResult.getRequestIndex();
-                //ack 的位置需要调整
-                consumer.ack(index);
-                MessageExt messageExt = transferQueueConsumeResult.getMessage();
-
+//            EventDrivenConsumer consumer = ServiceContainer.consumerManager.getEventDrivenConsumer(topic);
+//            TransferQueue.TransferQueueConsumeResult transferQueueConsumeResult = consumer.consume(new FateContext(), -1);
+//
+//            if (transferQueueConsumeResult.getCode().equals(StatusCode.SUCCESS)) {
+//                long index = transferQueueConsumeResult.getRequestIndex();
+//                //ack 的位置需要调整
+//                consumer.ack(index);
+//                MessageExt messageExt = transferQueueConsumeResult.getMessage();
+//
                 int flag = messageExt.getFlag();
               //  logger.info("message flag {}", flag);
                 switch (flag) {
@@ -136,15 +149,15 @@ public abstract class GrpcEventHandler implements EventHandler<MessageEvent> {
                     default:
                         ;
                 }
-            } else {
-                logger.warn("consume error {}", transferQueueConsumeResult);
-            }
+//            } else {
+//             //   logger.warn("consume error {}", transferQueueConsumeResult);
+//            }
         }
     }
 
     protected abstract void  handleMessage(MessageExt message);
     protected abstract void  handleError(MessageExt message);
     protected abstract void  handleComplete(MessageExt message);
-    protected abstract  void  handleInit(MessageEvent event);
+    protected abstract  void  handleInit(MessageExt message);
 
 }

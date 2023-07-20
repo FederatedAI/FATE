@@ -1,11 +1,11 @@
 package com.osx.broker.consumer;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.EventTranslatorOneArg;
+
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import com.lmax.disruptor.util.DaemonThreadFactory;
+import com.osx.broker.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,34 +13,45 @@ import org.slf4j.LoggerFactory;
 public  class EventDrivenConsumer extends LocalQueueConsumer  {
 
     Logger logger = LoggerFactory.getLogger(EventDrivenConsumer.class);
-    EventHandler  eventHandler;
-    Disruptor  disruptor;
+    GrpcEventHandler  eventHandler;
+  //  Disruptor  disruptor;
 
-    public EventDrivenConsumer(long consumerId, String topic,EventHandler eventHandler){
+    public EventDrivenConsumer(long consumerId, String topic,GrpcEventHandler eventHandler){
 
         super(consumerId,topic);
         this.eventHandler = eventHandler;
-        disruptor = new Disruptor(() -> new MessageEvent(),
-                2048, DaemonThreadFactory.INSTANCE,
-                ProducerType.SINGLE, new BlockingWaitStrategy());
-        disruptor.handleEventsWith(eventHandler);
-        disruptor.start();
+//        disruptor = new Disruptor(() -> new MessageEvent(),
+//                16, DaemonThreadFactory.INSTANCE,
+//                ProducerType.SINGLE, new BlockingWaitStrategy());
+//        disruptor.handleEventsWith(eventHandler);
+//        disruptor.start();
+
         logger.info("new EventDrivenConsumer {}",topic);
 
     }
-    public static final EventTranslatorOneArg<MessageEvent,MessageEvent> TRANSLATOR =
-            (event, sequence, arg) -> {
-                event.setTopic(arg.getTopic());
-                event.setDesPartyId(arg.getDesPartyId());
-                event.setSrcComponent(arg.getSrcComponent());
-                event.setSrcPartyId(arg.getSrcPartyId());
-                event.setDesComponent(arg.getDesComponent());
-                event.setSessionId(arg.getSessionId());
-            };
+//    public static final EventTranslatorOneArg<MessageEvent,MessageEvent> TRANSLATOR =
+//            (event, sequence, arg) -> {
+//                event.setTopic(arg.getTopic());
+//                event.setDesPartyId(arg.getDesPartyId());
+//                event.setSrcComponent(arg.getSrcComponent());
+//                event.setSrcPartyId(arg.getSrcPartyId());
+//                event.setDesComponent(arg.getDesComponent());
+//                event.setSessionId(arg.getSessionId());
+//            };
 
-    public  void  fireEvent(MessageEvent event){
-        disruptor.publishEvent((EventTranslatorOneArg) TRANSLATOR,event);
+    public  void  fireEvent(MessageExt msg) throws Exception {
+        //disruptor.publishEvent((EventTranslatorOneArg) TRANSLATOR,event);
+        eventHandler.onEvent(msg);
     }
+
+
+    @Override
+    public void destroy() {
+
+
+       // this.disruptor.shutdown();
+    }
+
 
     public  static void main(String[] args){
 //        MessageEvent  messageEvent = new MessageEvent();

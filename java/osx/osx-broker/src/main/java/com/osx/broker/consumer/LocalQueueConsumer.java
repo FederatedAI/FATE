@@ -125,4 +125,18 @@ public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueC
 
     }
 
+    @Override
+    public void init() {
+
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void destroy() {
+
+    }
 }

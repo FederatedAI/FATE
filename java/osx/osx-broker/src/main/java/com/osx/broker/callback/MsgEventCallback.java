@@ -6,5 +6,5 @@ import com.osx.broker.queue.TransferQueue;
 
 @FunctionalInterface
 public interface MsgEventCallback {
-    void callback(TransferQueue transferQueue , MessageExt message);
+    void callback(TransferQueue transferQueue , MessageExt message) throws Exception;
 }

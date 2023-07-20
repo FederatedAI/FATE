@@ -71,8 +71,8 @@ public class QueueStreamBuilder {
         int  temp = count.addAndGet(1);
         long  now = System.currentTimeMillis();
         //srcPartyId+"_"+desPartyId
-        String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX +"_"+now+ "_"+sessionId+"_"+temp;
-        String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX +"_"+now+"_"+"sessionId"+"_"+temp;
+        String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX +now+ "_"+sessionId+"_"+temp;
+        String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX +now+"_"+sessionId+"_"+temp;
         context.setTopic(sendTopic);
         context.setActionType(ActionType.MSG_REDIRECT.getAlias());
         CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(backTopic, sessionId, true);

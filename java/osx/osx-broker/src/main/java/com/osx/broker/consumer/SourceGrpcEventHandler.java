@@ -59,7 +59,7 @@ public class SourceGrpcEventHandler extends GrpcEventHandler{
     }
 
     @Override
-    protected void handleInit(MessageEvent event) {
+    protected void handleInit(MessageExt message) {
 
     }
 }
