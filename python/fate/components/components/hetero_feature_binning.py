@@ -40,7 +40,7 @@ def feature_binning_train(
         ctx: Context,
         role: Role,
         train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        method: cpn.parameter(type=params.string_choice(["quantile", "bucket"]),
+        method: cpn.parameter(type=params.string_choice(["quantile", "bucket", "manual"]),
                               default="quantile", optional=False,
                               desc="binning method, options: {quantile, bucket, manual}"),
         n_bins: cpn.parameter(type=params.conint(gt=1), default=10,
@@ -120,6 +120,8 @@ def train(ctx, train_data, train_output_data, output_model, role, method, n_bins
         split_pt_dict = {columns[anonymous_columns.index(col)]: split_pt_dict[col] for col in split_pt_dict.keys()}
     to_bin_cols, merged_category_col = get_to_bin_cols(columns, anonymous_columns,
                                                        bin_col, bin_idx, category_col, category_idx)
+    if split_pt_dict:
+        to_bin_cols = list(set(to_bin_cols).intersection(split_pt_dict.keys()))
 
     if role.is_guest:
         binning = HeteroBinningModuleGuest(method, n_bins, split_pt_dict, to_bin_cols, transform_method,
