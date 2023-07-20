@@ -151,6 +151,16 @@ public class OsxServer {
             connector.setAcceptedReceiveBufferSize(MetaInfo.PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE);
             server.addConnector(connector);
             server.setHandler(buildServlet());
+//            new Thread(()->{
+//                while (true){
+//                    try {
+//                        logger.info("========================= http连接数 = {}",server.getConnectors().length);
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }).start();
             return server;
         } catch (Exception e) {
             logger.error("build https server error = {}", e.getMessage());
