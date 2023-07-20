@@ -121,15 +121,15 @@ class HeteroBinningModuleHost(HeteroModule):
 
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
-        """
+
         columns = binned_data.schema.columns.to_list()
-        anonymous_col_bin = [binned_data.schema.anonymous_header[columns.index(col)]
+        anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)]
                              for col in self.bin_col]
-        """
+
         # temp code start
         # logger.info(f"self.bin_col: {self.bin_col}")
         # logger.info(f"binned columns: {binned_data.schema.columns}")
-        anonymous_col_bin = binned_data.schema.columns.to_list()
+        # anonymous_col_bin = binned_data.schema.columns.to_list()
         # temp code end
         ctx.guest.put("anonymous_col_bin", anonymous_col_bin)
         encrypt_y = ctx.guest.get("enc_y")
@@ -212,7 +212,6 @@ class StandardBinning(Module):
                 split_pt_dict[col] = list(split_pt_df[col])
             self._split_pt_dict = split_pt_dict"""
             # pd.DataFrame
-            # @todo: maybe convert to format {col_name: List[split_pt0, split_pt1]}
             # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "bucket":
             split_pt_df = select_data.qcut(q=self.n_bins)
