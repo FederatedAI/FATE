@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 package com.osx.broker.grpc;
+
 import com.osx.broker.ServiceContainer;
+import com.osx.broker.util.DebugUtil;
 import com.osx.core.exceptions.SysException;
 import com.osx.core.provider.TechProvider;
 import io.grpc.stub.StreamObserver;
@@ -46,7 +48,7 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
     public void invoke(Osx.Inbound request,
                        io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver) {
 
-
+        DebugUtil.printGrpcParams(request);
         Map<String, String> metaDataMap = request.getMetadataMap();
         String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
         TechProvider techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
@@ -76,6 +78,7 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
             String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
             techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
             if (techProvider != null) {
+                DebugUtil.printGrpcParams(inbound);
                 requestObserver = techProvider.processGrpcTransport(inbound, responseObserver);
             } else {
                 //抛出异常

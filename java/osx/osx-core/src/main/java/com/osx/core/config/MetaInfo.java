@@ -249,6 +249,9 @@ public class MetaInfo {
     public static String PROPERTY_TOKEN_GENERATOR_CONFIG_PATH;
     public static String PROPERTY_CONFIG_DIR;
 
+    @Config(confKey = "protocol.params.print", pattern = Dict.BOOLEAN_PATTERN)
+    public static Boolean PROTOCOL_PARAMS_PRINT = false;
+
 
     public static boolean isCluster() {
         return PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name());
