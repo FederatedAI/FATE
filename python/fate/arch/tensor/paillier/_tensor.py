@@ -18,7 +18,7 @@ class PaillierTensor:
 
     def __getitem__(self, item):
         if isinstance(item, int):
-            return self._data.slice0(item)
+            return PaillierTensor(self._data.slice0(item), self._dtype)
         else:
             raise NotImplementedError(f"item {item} not supported")
 
