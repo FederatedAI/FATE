@@ -15,6 +15,7 @@ import com.osx.core.constant.Dict;
 import com.osx.core.constant.StatusCode;
 
 import com.osx.core.context.FateContext;
+import com.osx.core.exceptions.ErrorMessageUtil;
 import com.osx.core.exceptions.ExceptionInfo;
 import com.osx.core.exceptions.RemoteRpcException;
 
@@ -85,36 +86,49 @@ public class QueueStreamBuilder {
 
             @Override
             public void onNext(AbstractMessage message) {
-                context.setMessageFlag(MessageFlag.SENDMSG.name());
-                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(), sendTopic,MessageFlag.SENDMSG,sessionId,message.toByteArray());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
-                TransferUtil.checkResponse(outbound);
+                try {
+                    context.setMessageFlag(MessageFlag.SENDMSG.name());
+                    Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER, srcPartyId, desPartyId, TargetMethod.PRODUCE_MSG.name(), sendTopic, MessageFlag.SENDMSG, sessionId, message.toByteArray());
+                    Osx.Outbound outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
+                    TransferUtil.checkResponse(outbound);
+                }catch(Exception e){
+                    throw ErrorMessageUtil.toGrpcRuntimeException(e);
+                }
             }
 
             @Override
             public void onError(Throwable throwable) {
-                context.setMessageFlag(MessageFlag.ERROR.name());
-                ExceptionInfo exceptionInfo = new ExceptionInfo();
-                exceptionInfo.setMessage(throwable.getMessage());
-                String errorData = JsonUtil.object2Json(exceptionInfo);
-                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
-                                sendTopic,MessageFlag.ERROR,sessionId,errorData.getBytes(StandardCharsets.UTF_8))
-                        .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
-                TransferUtil.checkResponse(outbound);
-                countDownLatch.countDown();
+                try {
+                    context.setMessageFlag(MessageFlag.ERROR.name());
+                    ExceptionInfo exceptionInfo = new ExceptionInfo();
+                    exceptionInfo.setMessage(throwable.getMessage());
+                    String errorData = JsonUtil.object2Json(exceptionInfo);
+                    Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER, srcPartyId, desPartyId, TargetMethod.PRODUCE_MSG.name(),
+                                    sendTopic, MessageFlag.ERROR, sessionId, errorData.getBytes(StandardCharsets.UTF_8))
+                            .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
+                    Osx.Outbound outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
+                    TransferUtil.checkResponse(outbound);
+                    countDownLatch.countDown();
+                }catch (Exception e){
+                    throw ErrorMessageUtil.toGrpcRuntimeException(e);
+                }
             }
 
             @Override
             public void onCompleted() {
-                context.setMessageFlag(MessageFlag.COMPELETED.name());
-                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
-                                sendTopic,MessageFlag.COMPELETED,sessionId,"completed".getBytes(StandardCharsets.UTF_8))
-                        .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
+                try {
+                    context.setMessageFlag(MessageFlag.COMPELETED.name());
+                    Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER, srcPartyId, desPartyId, TargetMethod.PRODUCE_MSG.name(),
+                                    sendTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8))
+                            .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
+                    Osx.Outbound outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
 
-                TransferUtil.checkResponse(outbound);
-                countDownLatch.countDown();
+                    TransferUtil.checkResponse(outbound);
+                    countDownLatch.countDown();
+
+                } catch (Exception e) {
+                    throw ErrorMessageUtil.toGrpcRuntimeException(e);
+                }
             }
         };
         return forwardPushReqSO;

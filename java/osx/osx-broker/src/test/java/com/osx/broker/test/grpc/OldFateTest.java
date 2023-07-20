@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 public class OldFateTest {
 
-    static int port = 9371;//9371
+    static int port = 9370;//9371
    static String ip = "localhost";
 
 
@@ -129,7 +129,7 @@ public class OldFateTest {
 
             @Override
             public void onError(Throwable t) {
-                logger.error("on Error", t);
+                logger.error("on Error {}", t.getMessage());
                 t.printStackTrace();
             }
 
@@ -148,8 +148,8 @@ public class OldFateTest {
 //            }
 //            for (int t = 0; t < 1; t++) {
 
-        String  srcPartyId =  "10000";
-        String  desPartyId =  "9999";
+        String  srcPartyId =  "9999";
+        String  desPartyId =  "10000";
 
 //                new Thread(() -> {
             StreamObserver<Proxy.Packet> requestOb = stub.push(responseOb);
@@ -193,8 +193,8 @@ public class OldFateTest {
 
     public static void main(String[] args) {
         System.err.println("===============");
-        //testPush();
-        testUnaryCall();
+        testPush();
+        //testUnaryCall();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         try {
             countDownLatch.await();

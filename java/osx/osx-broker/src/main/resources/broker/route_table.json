@@ -1,9 +1,8 @@
 {
   "route_table":
   {
-    "20008":
+    "9999":
     {
-
       "fateflow":[
         {
           "port": 9360,
@@ -11,29 +10,12 @@
         }
       ]
     },
-    "10008":{
-      "default":[{
-        "protocol":"grpc",
-        "url": "https://127.0.0.1:8088/osx/inbound",
-        "certChainFile": "D:/22/174_x.crt",
-        "privateKeyFile": "D:/22/174_x.key",
-        "caFile": "D:/22/ca_x.crt",
-        "negotiationType": "TLS",
-        "useSSL": true,
-        "port": 9883,
-        "ip": "127.0.0.1"
-      }]
-    },
-    "10001":{
+    "10000":{
       "default":[{
         "protocol":"http",
-        "url": "http://localhost:8222/osx/inbound"
-      }]
-    },
-    "9999":{
-      "default":[{
-        "port": 9360,
-        "ip": "127.0.0.1"
+        "url": "http://10.42.0.1:8087/osx/inbound",
+        "ip": "10.42.0.1",
+        "port": 9370
       }]
     }
   },

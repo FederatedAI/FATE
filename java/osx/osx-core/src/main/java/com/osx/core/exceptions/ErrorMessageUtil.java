@@ -23,6 +23,7 @@ import com.osx.core.constant.StatusCode;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +69,21 @@ public class ErrorMessageUtil {
         return status.asRuntimeException();
     }
 
+    public static StatusRuntimeException toGrpcRuntimeException(Throwable throwable) {
+        StatusRuntimeException result = null;
+
+        if (throwable instanceof StatusRuntimeException) {
+            result = (StatusRuntimeException) throwable;
+        } else {
+            result = Status.INTERNAL
+                    .withCause(throwable)
+                   // .withDescription(throwable.getMessage())
+                    .withDescription(throwable.getMessage()+ ": " + ExceptionUtils.getStackTrace(throwable))
+                    .asRuntimeException();
+        }
+
+        return result;
+    }
 
     public static ExceptionInfo handleExceptionExceptionInfo(Context context, Throwable e) {
         ExceptionInfo exceptionInfo = new ExceptionInfo();
@@ -90,6 +106,8 @@ public class ErrorMessageUtil {
 //        if (context.needAssembleException()) {
 //            exceptionInfo.setThrowable(throwableToException(context, e));
 //        }
+
+
         return exceptionInfo;
     }
 

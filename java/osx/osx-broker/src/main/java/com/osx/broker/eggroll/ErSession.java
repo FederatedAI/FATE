@@ -17,6 +17,7 @@ package com.osx.broker.eggroll;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,42 +48,26 @@ public class ErSession {
         this.createIfNotExists = createIfNotExists;
         clusterManagerClient = new ClusterManagerClient(new CommandClient(new ErEndpoint(PROPERTY_EGGROLL_CLUSTER_MANANGER_IP, PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT.intValue())));
         ErSessionMeta erSessionMetaArgs = new ErSessionMeta();
-
         erSessionMetaArgs.setId(sessionId);
         erSessionMetaArgs.setName(name);
         erSessionMetaArgs.setStatus(status.name());
         erSessionMetaArgs.setTag(tag);
         erSessionMetaArgs.setProcessors(this.processors);
         erSessionMetaArgs.setOptions(options);
-        logger.info("create ErSession ============{}", erSessionMetaArgs);
+
         if (createIfNotExists) {
             if (processors.isEmpty()) {
                 erSessionMeta = clusterManagerClient.getOrCreateSession(erSessionMetaArgs);
             } else {
-
-
                 erSessionMeta = clusterManagerClient.registerSession(erSessionMetaArgs);
             }
         } else {
             erSessionMeta = clusterManagerClient.getSession(erSessionMetaArgs);
-
         }
-
-        logger.info("===============dddddd=============={} ", erSessionMeta);
-
         processors = erSessionMeta.getProcessors();
-        status = SessionStatus.valueOf(erSessionMeta.getStatus());
-        //            processors.foreach(p => {
-//        val processorType = p.processorType
-//        if (processorType.toLowerCase().startsWith("egg_")) {
-//            eggs_buffer.getOrElseUpdate(p.serverNodeId, ArrayBuffer[ErProcessor]()) += p
-//        } else if (processorType.toLowerCase().startsWith("roll_")) {
-//            rolls_buffer += p
-//        } else {
-//            throw new IllegalArgumentException(s"processor type ${processorType} not supported in roll pair")
-//        }
-//    })
-
+        if(StringUtils.isNotEmpty(erSessionMeta.getStatus())) {
+            status = SessionStatus.valueOf(erSessionMeta.getStatus());
+        }
         processors.forEach((processor -> {
             if (processor.getProcessorType().toLowerCase().startsWith("egg_")) {
 

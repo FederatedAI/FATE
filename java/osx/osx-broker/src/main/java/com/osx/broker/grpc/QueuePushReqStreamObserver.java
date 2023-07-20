@@ -42,6 +42,7 @@ import com.webank.eggroll.core.meta.Meta;
 import com.webank.eggroll.core.transfer.Transfer;
 import com.webank.eggroll.core.transfer.TransferServiceGrpc;
 import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
 import org.ppc.ptp.Osx;
@@ -291,11 +292,12 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                 }
             }
         } catch (Exception e) {
-            logger.error("push error", e);
+            logger.error("push error1", e);
             ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
             context.setException(e);
             context.setReturnCode(exceptionInfo.getCode());
-            throw new BaseException(exceptionInfo.getCode(), exceptionInfo.getMessage());
+            throw ErrorMessageUtil.toGrpcRuntimeException(e);
+
         } finally {
             FlowLogUtil.printFlowLog(context);
         }

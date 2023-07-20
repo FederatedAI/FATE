@@ -500,7 +500,7 @@ public class TransferUtil {
             String code = outbound.getCode();
             String message = outbound.getMessage();
             if (!StatusCode.SUCCESS.equals(code)) {
-                logger.error("================== xxxxxx  {}", outbound);
+//                logger.error("================== xxxxxx  {}", outbound);
                 throw new RemoteRpcException("remote code : " + code + " remote msg: " + message);
             }
         } else {
