@@ -44,7 +44,7 @@ impl Cipherblock {
         Cipherblock {
             pk: self.pk.clone(),
             data: self.data[start..end].to_vec(),
-            shape: vec![1, self.shape[1]],
+            shape: self.shape[1..].to_vec(),
         }
     }
     pub fn map<F>(&self, func: F) -> Cipherblock
