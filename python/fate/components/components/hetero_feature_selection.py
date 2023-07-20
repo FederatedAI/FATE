@@ -33,7 +33,7 @@ def train(
         role: Role,
         train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         input_models: cpn.json_model_inputs(roles=[GUEST, HOST]),
-        method: cpn.parameter(type=List[params.string_choice(["manual", "binning", "statistics"])],
+        method: cpn.parameter(type=List[params.string_choice(["manual", "iv", "statistics"])],
                               default=["manual"], optional=False,
                               desc="selection method, options: {manual, binning, statistics}"),
         select_col: cpn.parameter(type=List[str], default=None,
@@ -85,11 +85,14 @@ def train(
     statistic_param = statistic_param.dict()
     manual_param = manual_param.dict()
     # temp code end
-    input_models = [model.read() for model in input_models]
+    logger.info(f"input_models: {input_models}, len: {len(input_models)}")
+
+    input_iso_models = [model.read() for model in input_models]
+    logger.info(f"read in input_models len: {len(input_iso_models)}; \n read in input models: {input_iso_models}")
     if role.is_guest:
         selection = HeteroSelectionModuleGuest(method=method,
                                                select_col=select_col,
-                                               input_models=input_models,
+                                               input_models=input_iso_models,
                                                iv_param=iv_param,
                                                statistic_param=statistic_param,
                                                manual_param=manual_param,
@@ -98,7 +101,7 @@ def train(
     elif role.is_host:
         selection = HeteroSelectionModuleHost(method=method,
                                               select_col=select_col,
-                                              input_models=input_models,
+                                              input_models=input_iso_models,
                                               iv_param=iv_param,
                                               statistic_param=statistic_param,
                                               manual_param=manual_param,

@@ -53,8 +53,6 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def compute_metrics(self, ctx: Context, binned_data):
         label_tensor = binned_data.label.as_tensor()
-        logger.info(f"label tensor shape: {label_tensor.shape}")
-
         self._bin_obj.compute_metrics(binned_data, label_tensor)
         if not self.local_only:
             self.compute_federated_metrics(ctx, binned_data)
@@ -107,7 +105,6 @@ class HeteroBinningModuleHost(HeteroModule):
                                             category_col, error_rate, adjustment_factor)
         self.local_only = local_only
         self.bin_col = bin_col
-        logger.info(f"in init bin col is: {self.bin_col}")
         self.category_col = category_col
 
     def set_transform_method(self, new_transform_method):
@@ -128,22 +125,15 @@ class HeteroBinningModuleHost(HeteroModule):
         anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)]
                              for col in self.bin_col]
 
-        # temp code start
-        # logger.info(f"self.bin_col: {self.bin_col}")
-        # logger.info(f"binned columns: {binned_data.schema.columns}")
-        # anonymous_col_bin = binned_data.schema.columns.to_list()
-        # temp code end
         ctx.guest.put("anonymous_col_bin", anonymous_col_bin)
         encrypt_y = ctx.guest.get("enc_y")
         # event count:
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
         event_count_hist = to_compute_data.hist(targets=encrypt_y)
-        logger.info(f"encrypt y shape: {encrypt_y.shape}")
         # bin count(entries per bin):
         to_compute_data["targets_binning"] = 1
         targets = to_compute_data["targets_binning"].as_tensor()
-        logger.info(f"target binning shape: {targets.shape}")
         to_compute_data = binned_data[to_compute_col]
         bin_count = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count - event_count_hist
@@ -225,7 +215,6 @@ class StandardBinning(Module):
             raise ValueError(f"Unknown binning method {self.method} encountered. Please check")
         # self._split_pt_dict = split_pt_df.to_dict()
         self._split_pt_dict = split_pt_df
-        logger.info(f"split_pt_df: {split_pt_df}")
 
         def __get_col_bin_count(col):
             count = len(col.unique())
@@ -234,27 +223,10 @@ class StandardBinning(Module):
         bin_count = split_pt_df.apply(__get_col_bin_count, axis=0)
         self._bin_count_dict = bin_count.to_dict()
 
-        """self._split_pt_dict = split_pt_df.to_dict()
-        for col_name in self.bin_col:
-            bin_count = len(self._split_pt_dict[col_name])
-            self._bin_idx_dict[col_name] = list(range(bin_count))
-            if not skip_none:
-                if train_data[col_name].nan_count() > 0:
-                    bin_count += 1
-            self._bin_count_dict[col_name] = bin_count"""
-
     def bucketize_data(self, train_data):
+        logger.info(f"split pt dict: {self._split_pt_dict}")
         binned_df = train_data.bucketize(boundaries=self._split_pt_dict)
         return binned_df
-
-    """def compute_metrics_from_count(self, event_count_array, non_event_count_array,
-                                   total_event_count, total_non_event_count):
-        event_rate = (event_count_array == 0) * self.adjustment_factor + event_count_array / total_event_count
-        non_event_rate = (non_event_count_array == 0) * self.adjustment_factor + non_event_count_array \
-                         / total_non_event_count
-        bin_woe = torch.log(event_rate / non_event_rate)
-        bin_iv = (event_rate - non_event_rate) * bin_woe
-        return event_rate, non_event_rate, bin_woe, bin_iv"""
 
     def compute_all_col_metrics(self, event_count_hist, non_event_count_hist):
         # pd.DataFrame ver
@@ -292,15 +264,6 @@ class StandardBinning(Module):
             is_monotonic[col_name] = col_bin_woe.is_monotonic
             iv[col_name] = col_bin_iv.sum()
 
-        """total_non_event_count[total_event_count < 1] = 1
-        total_non_event_count[total_non_event_count < 1] = 1
-        event_rate = (event_count_hist == 0) * self.adjustment_factor + event_count_hist / total_event_count
-        non_event_rate = (non_event_count_hist == 0) * self.adjustment_factor + non_event_count_hist \
-                         / total_non_event_count
-        rate_ratio = event_rate / non_event_rate
-        bin_woe = rate_ratio.apply(lambda v: np.log(v))
-        bin_iv = (event_rate - non_event_rate) * bin_woe"""
-
         metrics_summary = {}
 
         metrics_summary["event_count"] = event_count
@@ -311,7 +274,6 @@ class StandardBinning(Module):
         metrics_summary["iv_array"] = bin_iv
         metrics_summary["is_monotonic"] = is_monotonic
         metrics_summary["iv"] = iv
-        logger.info(f"bin_woe: {bin_woe}")
         return metrics_summary, bin_woe
 
     def compute_metrics(self, binned_data, label_col):
