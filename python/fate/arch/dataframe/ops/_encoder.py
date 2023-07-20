@@ -170,8 +170,8 @@ def bucketize(df: DataFrame, boundaries: Union[pd.DataFrame, dict]):
     block_indexes = data_manager.infer_operable_blocks()
     if len(block_indexes) > 1:
         to_promote_types = []
-        for bid in block_indexes:
-            to_promote_types.append((bid, BlockType.get_block_type(BUCKETIZE_RESULT_TYPE)))
+        for _bid in block_indexes:
+            to_promote_types.append((_bid, data_manager.get_block(_bid).block_type))
 
         data_manager.promote_types(to_promote_types)
         block_table, data_manager = compress_blocks(block_table, data_manager)
