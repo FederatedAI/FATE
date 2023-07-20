@@ -154,7 +154,7 @@ def sample_per_label(train_data, label_count=None, random_state=None):
     labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
     sampled_data_df = []
     for label in labels:
-        label_data = train_data.loc_row(train_data.label == label)
+        label_data = train_data[(train_data.label == label).as_tensor()]
         label_sampled_data = sample_data(df=label_data, n=label_count, random_state=random_state)
         if label_sampled_data is not None:
             sampled_data_df.append(label_sampled_data)
