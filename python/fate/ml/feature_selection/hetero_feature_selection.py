@@ -93,12 +93,12 @@ class HeteroSelectionModuleGuest(HeteroModule):
         prev_selection_obj = None
         for method, selection_obj in zip(self._inner_method, self._selection_obj):
             if prev_selection_obj:
-                selection_obj.set_prev_selected_mask(copy.deepcopy(prev_selection_obj._selected_mask))
+                selection_obj.set_prev_selected_mask(copy.deepcopy(prev_selection_obj.selected_mask))
                 if isinstance(selection_obj, StandardSelection) and isinstance(prev_selection_obj, StandardSelection):
                     selection_obj.set_host_prev_selected_mask(copy.deepcopy(prev_selection_obj._host_selected_mask))
             selection_obj.fit(ctx, select_data)
-            if method == "binning":
-                if self.iv_param.select_federated:
+            if method == "iv":
+                if self.iv_param.get("select_federated"):
                     HeteroSelectionModuleGuest.sync_select_federated(ctx, selection_obj)
             prev_selection_obj = selection_obj
 
@@ -208,18 +208,20 @@ class HeteroSelectionModuleHost(HeteroModule):
         prev_selection_obj = None
         for method, selection_obj in zip(self._inner_method, self._selection_obj):
             if prev_selection_obj:
-                selection_obj.set_prev_selected_mask(copy.deepcopy(prev_selection_obj._selected_mask))
+                selection_obj.set_prev_selected_mask(copy.deepcopy(prev_selection_obj.selected_mask))
             selection_obj.fit(ctx, train_data, validate_data)
             if method == "iv":
-                if self.iv_param.select_federated:
+                if self.iv_param.get("select_federated"):
                     HeteroSelectionModuleHost.sync_select_federated(ctx, selection_obj, train_data)
             prev_selection_obj = selection_obj
 
     @staticmethod
     def sync_select_federated(ctx: Context, selection_obj, data):
         cur_selected_mask = ctx.guest.get(f"selected_mask_{selection_obj.method}")
+        # logger.info(f"cur_selected_mask: {cur_selected_mask}")
         columns, anonymous_columns = data.schema.columns, data.schema.anonymous_columns
-        new_index = [columns[anonymous_columns.index(col)] for col in cur_selected_mask.index]
+        # logger.info(f"anonymous columns: {data.schema.anonymous_columns}")
+        new_index = [columns[anonymous_columns.get_loc(col)] for col in cur_selected_mask.index]
         cur_selected_mask.index = new_index
         prev_selected_mask = selection_obj._prev_selected_mask[selection_obj._prev_selected_mask]
         missing_col = set(prev_selected_mask.index).difference(set(new_index))
@@ -282,6 +284,10 @@ class ManualSelection(Module):
             self._prev_selected_mask = None
         else:
             self._prev_selected_mask = pd.Series(np.ones(len(header)), dtype=bool, index=header)
+
+    @property
+    def selected_mask(self):
+        return self._selected_mask
 
     def set_selected_mask(self, mask):
         self._selected_mask = mask
@@ -388,6 +394,13 @@ class StandardSelection(Module):
     def convert_model(input_model):
         return input_model
 
+    @property
+    def selected_mask(self):
+        return self._selected_mask
+
+    def set_selected_mask(self, mask):
+        self._selected_mask = mask
+
     def set_host_prev_selected_mask(self, mask):
         self._host_prev_selected_mask = mask
 
@@ -434,12 +447,12 @@ class StandardSelection(Module):
         # federated selection possible
         elif self.method == "iv":
             # host does not perform local iv selection
-            if ctx.local[0] == "host":
+            if ctx.is_on_host:
                 return
             model_data = self.model.get("data", {})
             iv_metrics = pd.Series(model_data["metrics_summary"]["iv"])
             # metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
-            metrics_all = StandardSelection.convert_series_metric_to_dataframe("iv", iv_metrics)
+            metrics_all = StandardSelection.convert_series_metric_to_dataframe(iv_metrics, "iv")
             self._all_metrics = metrics_all
             # works for multiple iv filters
             """mask_all = metrics_all.apply(lambda r: StandardSelection.filter_multiple_metrics(r,
@@ -456,11 +469,14 @@ class StandardSelection(Module):
             if self.keep_one:
                 self._keep_one(self._selected_mask, self._prev_selected_mask, self._header)
             if self.param.get("select_federated", True):
-                host_metrics_summary = self.model["host_train_metrics_summary"]
+                host_metrics_summary = self.model.get("data", {}).get("host_metrics_summary")
+                logger.info(f"host metrics summary: {host_metrics_summary}")
+                if host_metrics_summary is None:
+                    raise ValueError(f"Host metrics not found in provided model, please check.")
                 for host, host_metrics in host_metrics_summary.items():
                     iv_metrics = pd.Series(host_metrics["iv"])
                     # metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
-                    metrics_all = StandardSelection.convert_series_metric_to_dataframe("iv", iv_metrics)
+                    metrics_all = StandardSelection.convert_series_metric_to_dataframe(iv_metrics, "iv")
                     self._all_host_metrics[host] = metrics_all
                     """host_mask_all = metrics_all.apply(lambda r:
                                                  StandardSelection.filter_multiple_metrics(r,
@@ -498,6 +514,7 @@ class StandardSelection(Module):
 
     @staticmethod
     def convert_series_metric_to_dataframe(metrics, metric_name):
+        # logger.info(f"metrics: {metrics}")
         return pd.DataFrame(metrics).T.rename({0: metric_name}, axis=0)
 
     @staticmethod
@@ -566,12 +583,15 @@ class StandardSelection(Module):
         return dict(
             method=self.method,
             keep_one=self.keep_one,
-            all_selected_mask=self._all_selected_mask.to_dict(),
-            all_metrics=self._all_metrics.to_dict(),
-            all_host_metrics={k: v.to_dict() for k, v in self._all_host_metrics.items()},
+            all_selected_mask=self._all_selected_mask.to_dict() if self._all_selected_mask is not None else None,
+            all_metrics=self._all_metrics.to_dict() if self._all_metrics is not None else None,
+            all_host_metrics={k: v.to_dict() for k, v in self._all_host_metrics.items()}
+            if self._all_host_metrics is not None else None,
             selected_mask=self._selected_mask.to_dict(),
-            host_selected_mask={k: v.to_dict() for k, v in self._host_selected_mask.items()},
-            all_host_selected_mask={k: v.to_dict() for k, v in self._all_host_selected_mask.items()},
+            host_selected_mask={k: v.to_dict() for k, v in self._host_selected_mask.items()}
+            if self._host_selected_mask is not None else None,
+            all_host_selected_mask={k: v.to_dict() for k, v in self._all_host_selected_mask.items()}
+            if self._all_host_selected_mask is not None else None,
         )
 
     def restore(self, model):

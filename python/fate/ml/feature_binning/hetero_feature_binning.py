@@ -28,6 +28,8 @@ class HeteroBinningModuleGuest(HeteroModule):
     def __init__(self, method="quantile", n_bins=10, split_pt_dict=None, bin_col=None, transform_method=None,
                  category_col=None, local_only=False, error_rate=1e-3, adjustment_factor=0.5):
         self.method = method
+        self.bin_col = bin_col
+        self.category_col = category_col
         self._federation_bin_obj = None
         # param check
         if self.method in ["quantile", "bucket", "manual"]:
@@ -81,7 +83,10 @@ class HeteroBinningModuleGuest(HeteroModule):
                  "meta": {"method": self.method,
                           "metrics": ["iv"] if model_info.get("metrics_summary") else [],
                           "local_only": self.local_only,
-                          "model_type": "binning"}
+                          "bin_col": self.bin_col,
+                          "category_col": self.category_col,
+                          "model_type": "binning"
+                          }
                  }
         return model
 
@@ -90,7 +95,9 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "HeteroBinningModuleGuest":
-        bin_obj = HeteroBinningModuleGuest(model["meta"]["method"])
+        bin_obj = HeteroBinningModuleGuest(method=model["meta"]["method"],
+                                           bin_col=model["meta"]["bin_col"],
+                                           category_col=model["meta"]["category_col"])
         bin_obj.restore(model["data"])
         return bin_obj
 
@@ -122,6 +129,7 @@ class HeteroBinningModuleHost(HeteroModule):
         logger.info(f"Start computing federated metrics.")
 
         columns = binned_data.schema.columns.to_list()
+        # logger.info(f"self.bin_col: {self.bin_col}")
         anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)]
                              for col in self.bin_col]
 
@@ -130,11 +138,15 @@ class HeteroBinningModuleHost(HeteroModule):
         # event count:
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
+        to_compute_data.rename(columns=dict(zip(to_compute_data.schema.columns,
+                                                to_compute_data.schema.anonymous_columns)))
         event_count_hist = to_compute_data.hist(targets=encrypt_y)
         # bin count(entries per bin):
         to_compute_data["targets_binning"] = 1
         targets = to_compute_data["targets_binning"].as_tensor()
         to_compute_data = binned_data[to_compute_col]
+        to_compute_data.rename(columns=dict(zip(to_compute_data.schema.columns,
+                                                to_compute_data.schema.anonymous_columns)))
         bin_count = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count - event_count_hist
         ctx.guest.put("event_non_event_count", (event_count_hist, non_event_count_hist))
@@ -146,7 +158,10 @@ class HeteroBinningModuleHost(HeteroModule):
         model_info = self._bin_obj.to_model()
         model = {"data": model_info,
                  "meta": {"method": self.method,
-                          "model_type": "binning"}
+                          "bin_col": self.bin_col,
+                          "category_col": self.category_col,
+                          "model_type": "binning"
+                          }
                  }
         return model
 
@@ -155,7 +170,9 @@ class HeteroBinningModuleHost(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "HeteroBinningModuleHost":
-        bin_obj = HeteroBinningModuleHost(method=model["meta"]["method"])
+        bin_obj = HeteroBinningModuleHost(method=model["meta"]["method"],
+                                          bin_col=model["meta"]["bin_col"],
+                                          category_col=model["meta"]["category_col"])
         bin_obj.restore(model["data"])
         return bin_obj
 
@@ -224,7 +241,7 @@ class StandardBinning(Module):
         self._bin_count_dict = bin_count.to_dict()
 
     def bucketize_data(self, train_data):
-        logger.info(f"split pt dict: {self._split_pt_dict}")
+        logger.debug(f"split pt dict: {self._split_pt_dict}")
         binned_df = train_data.bucketize(boundaries=self._split_pt_dict)
         return binned_df
 
@@ -310,6 +327,7 @@ class StandardBinning(Module):
     def to_model(self):
         return dict(
             method=self.method,
+            bin_col=self.bin_col,
             split_pt_dict=self._split_pt_dict.to_dict(),
             bin_idx_dict=self._bin_idx_dict,
             bin_count_dict=self._bin_count_dict,
@@ -319,28 +337,29 @@ class StandardBinning(Module):
             train_host_metrics_summary=self._train_host_metrics_summary,
             woe_dict=self._woe_dict,
             category_col=self.category_col,
-            adjustment_factor=self.adjustment_factor,
+            adjustment_factor=self.adjustment_factor
             # transform_method = self.transform_method,
         )
 
     def restore(self, model):
         self.method = model["method"]
+        self.bin_col = model["bin_col"]
         # self.transform_method = model["transform_method"]
         self._split_pt_dict = pd.DataFrame.from_dict(model["split_pt_dict"])
         self._bin_idx_dict = model["bin_idx_dict"]
         self._bin_count_dict = model["bin_count_dict"]
         # load predict model
-        if model["train_metrics_summary"]:
+        if model.get("train_metrics_summary"):
             self._metrics_summary = model["metrics_summary"]
             self._train_metrics_summary = model["train_metrics_summary"]
         else:
             self._train_metrics_summary = model["metrics_summary"]
-        if model["train_host_metrics_summary"]:
+        if model.get("train_host_metrics_summary"):
             self._host_metrics_summary = model["host_metrics_summary"]
             self._train_host_metrics_summary = model["train_host_metrics_summary"]
         else:
             self._train_host_metrics_summary = model["host_metrics_summary"]
-        if model["train_woe_dict"]:
+        if model.get("train_woe_dict"):
             self._woe_dict = model["woe_dict"]
             self._train_woe_dict = model["train_woe_dict"]
         else:

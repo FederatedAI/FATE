@@ -17,10 +17,9 @@ import pickle
 from typing import Any, List, Tuple, TypeVar, Union
 
 from fate.arch.abc import FederationEngine, PartyMeta
-
+from ._namespace import NS
 from ..computing import is_table
 from ..federation._gc import IterationGC
-from ._namespace import NS
 
 T = TypeVar("T")
 
@@ -68,11 +67,11 @@ class Party:
 
     @property
     def role(self) -> str:
-        return self.party[1]
+        return self.party[0]
 
     @property
     def party_id(self) -> str:
-        return self.party[0]
+        return self.party[1]
 
     def put(self, *args, **kwargs):
         if args:

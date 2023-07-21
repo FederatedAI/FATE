@@ -85,10 +85,10 @@ def train(
     statistic_param = statistic_param.dict()
     manual_param = manual_param.dict()
     # temp code end
-    logger.info(f"input_models: {input_models}, len: {len(input_models)}")
+    # logger.info(f"input_models: {input_models}, len: {len(input_models)}")
 
     input_iso_models = [model.read() for model in input_models]
-    logger.info(f"read in input_models len: {len(input_iso_models)}; \n read in input models: {input_iso_models}")
+    # logger.info(f"read in input_models len: {len(input_iso_models)}; \n read in input models: {input_iso_models}")
     if role.is_guest:
         selection = HeteroSelectionModuleGuest(method=method,
                                                select_col=select_col,
