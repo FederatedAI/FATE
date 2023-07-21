@@ -1,5 +1,6 @@
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SklearnHistBuilder
+from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import SklearnSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 import numpy as np
@@ -20,7 +21,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         bin_len = {}
         
         for column, values in result_dict.items():
-            bin_num = len(values) + 1
+            bin_num = len(values)
             bin_len[column] = bin_num 
         
         max_max_value = max(bin_len.values())
@@ -55,7 +56,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # init histogram builder
         self.hist_builder = self.get_sklearn_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin)
         # init splitter
-        self.splitter = None
+        self.splitter = SklearnSplitter(bining_dict)
 
         self.cur_layer_node = [root_node]
         for cur_depth in range(self.max_depth):
@@ -65,7 +66,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # compute histogram
             hist = self.hist_builder.compute_hist(self.cur_layer_node, grad_and_hess)
             # compute best splits
-
             # update tree with best splits
 
             # update sample position
@@ -74,7 +74,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             break
 
 
-        return root_node, feat_max_bin, max_bin, hist
+        return root_node, feat_max_bin, max_bin, hist, self.splitter
 
     def fit(self, ctx: Context, train_data: DataFrame):
         pass
