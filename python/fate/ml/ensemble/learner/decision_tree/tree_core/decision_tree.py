@@ -85,7 +85,7 @@ class Node(object):
     def __init__(self, nid=None, sitename=None, fid=None,
                  fval=None, weight=0, is_leaf=False, grad=None,
                  hess=None, l=-1, r=-1,
-                 missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None):
+                 missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None, inst_indices=None):
         
         self.nid = nid
         self.sitename = sitename
@@ -102,12 +102,17 @@ class Node(object):
         self.is_left_node = is_left_node
         self.sibling_nodeid = sibling_nodeid
         self.parent_nodeid = parent_nodeid
+        self.inst_indices = inst_indices
+
+    def set_inst_indices(self, inst_indices):
+        self.inst_indices = inst_indices
+        self.inst_indices = self.inst_indices.astype(np.uint32)
 
     def __repr__(self):
         """
         Returns a string representation of the node.
         """
-        return "(node_id {}: left {}, right {}, is_leaf {}, sample_count {}, weight {}, g {}, h {})".format(self.nid, \
+        return "(node_id {}: left {}, right {}, is_leaf {}, sample_count {},  g {}, h {})".format(self.nid, \
                  self.l, self.r, self.is_leaf, self.sample_num, self.grad, self.hess)
 
 
@@ -173,11 +178,14 @@ class DecisionTree(object):
     def _convert_bin_idx_to_split_val(self):
         pass
 
-    def _initialize_root_node(self, g_tensor, h_tensor, sitename):
+    def _compute_best_splits(self):
+        pass
 
-        sum_g = g_tensor.sum()
-        sum_h = h_tensor.sum()
-        root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(g_tensor))
+    def _initialize_root_node(self, gh: DataFrame, sitename):
+
+        sum_g = gh['g'].sum()
+        sum_h = gh['h'].sum()
+        root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(gh))
 
         return root_node
 

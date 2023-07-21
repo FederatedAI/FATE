@@ -69,6 +69,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
+        encryptor = ctx.arbiter("encryptor").get()
         labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
         if self.labels is None:
             self.labels = labels
@@ -110,7 +111,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 if validate_data:
                     class_validate_data = validate_data.copy()
                 class_train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
-                single_estimator.fit_single_model(class_ctx, class_train_data, class_validate_data)
+                single_estimator.fit_single_model(class_ctx, encryptor, class_train_data, class_validate_data)
                 self.estimator[i] = single_estimator
 
         else:
@@ -135,7 +136,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 single_estimator = self.estimator
                 single_estimator.epochs = self.epochs
                 single_estimator.batch_size = self.batch_size
-            single_estimator.fit_single_model(ctx, train_data, validate_data)
+            single_estimator.fit_single_model(ctx, encryptor, train_data, validate_data)
             self.estimator = single_estimator
         train_data.label = original_label
 
@@ -223,7 +224,79 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.end_epoch = -1
         self.is_converged = False
 
-    def fit_single_model(self, ctx: Context, train_data, validate_data=None):
+    def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X, Y, weight):
+        h = X.shape[0]
+        # logger.info(f"h: {h}")
+        Xw = torch.matmul(X, w.detach())
+        half_d = 0.25 * Xw - 0.5 * Y
+        if weight:
+            half_d = half_d * weight
+        batch_ctx.hosts.put("half_d", encryptor.encrypt(half_d))
+        half_g = torch.matmul(X.T, half_d)
+
+        Xw_h = batch_ctx.hosts.get("Xw_h")[0]
+        if weight:
+            Xw_h = Xw_h * weight
+        host_half_g = torch.matmul(X.T, Xw_h)
+
+        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
+
+        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
+            loss_norm = self.optimizer.loss_norm(w)
+            loss += loss_norm
+
+        loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
+
+        for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
+            loss += 0.125 / h * Xw2_h
+        h_loss_list = batch_ctx.hosts.get("h_loss")
+        for h_loss in h_loss_list:
+            if h_loss is not None:
+                loss += h_loss
+
+        batch_ctx.arbiter.put(loss=loss)
+        # gradient
+        g = 1 / h * (half_g + host_half_g)
+        return g
+
+    def centralized_compute_gradient(self, batch_ctx, w, X, Y, weight):
+        h = X.shape[0]
+        # logger.info(f"h: {h}")
+        Xw = torch.matmul(X, w.detach())
+        d = 0.25 * Xw - 0.5 * Y
+        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
+
+        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
+            loss_norm = self.optimizer.loss_norm(w)
+            loss += loss_norm
+
+        Xw_h_all = batch_ctx.hosts.get("Xw_h")
+
+        for Xw_h in Xw_h_all:
+            d += Xw_h
+            """loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
+            loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)"""
+            loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
+        if weight:
+            # logger.info(f"weight: {weight.tolist()}")
+            d = d * weight
+        batch_ctx.hosts.put("d", d)
+
+        for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
+            loss += 0.125 / h * Xw2_h
+        h_loss_list = batch_ctx.hosts.get("h_loss")
+        for h_loss in h_loss_list:
+            if h_loss is not None:
+                loss += h_loss
+
+        if len(Xw_h_all) == 1:
+            batch_ctx.arbiter.put(loss=loss)
+
+        # gradient
+        g = 1 / h * torch.matmul(X.T, d)
+        return g
+
+    def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None):
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
         ∇l(w) = 1/h * Σ(0.25 * xw - 0.5 * y)x = 1/h * Σdx
@@ -250,6 +323,8 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         # if self.end_epoch >= 0:
         #    self.start_epoch = self.end_epoch + 1
 
+        is_centralized = len(ctx.hosts) > 1
+
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch {i}")
@@ -257,7 +332,12 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 X = batch_data.x
                 Y = batch_data.label
                 weight = batch_data.weight
-                h = X.shape[0]
+                if is_centralized:
+                    g = self.centralized_compute_gradient(batch_ctx, w, X, Y, weight)
+                else:
+                    g = self.asynchronous_compute_gradient(batch_ctx, encryptor, w, X, Y, weight)
+
+                """h = X.shape[0]
                 # logger.info(f"h: {h}")
                 Xw = torch.matmul(X, w.detach())
                 d = 0.25 * Xw - 0.5 * Y
@@ -268,14 +348,16 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                     loss += loss_norm
 
                 Xw_h_all = batch_ctx.hosts.get("Xw_h")
+
                 for Xw_h in Xw_h_all:
                     d += Xw_h
-                    loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
-                    loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)
+                    #loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
+                    # loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)
+                    loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
                 if weight:
                     # logger.info(f"weight: {weight.tolist()}")
                     d = d * weight
-                batch_ctx.hosts.put(d=d)
+                batch_ctx.hosts.put("d", d)
 
                 for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
                     loss += 0.125 / h * Xw2_h
@@ -288,7 +370,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                     batch_ctx.arbiter.put(loss=loss)
 
                 # gradient
-                g = 1 / h * torch.matmul(X.T, d)
+                g = 1 / h * torch.matmul(X.T, d)"""
                 g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")

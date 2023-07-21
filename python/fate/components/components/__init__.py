@@ -75,7 +75,7 @@ class LazyBuildInComponentsLoader:
     @_lazy_cpn
     def homo_lr(self):
         from .homo_lr import homo_lr
-
+        
         return homo_lr
 
     @_lazy_cpn
@@ -125,6 +125,18 @@ class LazyBuildInComponentsLoader:
         from .feature_union import feature_union
 
         return feature_union
+
+    @_lazy_cpn
+    def sample(self):
+        from .sample import sample
+
+        return sample
+
+    @_lazy_cpn
+    def data_split(self):
+        from .data_split import data_split
+
+        return data_split
 
     @_lazy_cpn
     def toy_example(self):

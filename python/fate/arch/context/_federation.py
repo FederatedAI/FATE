@@ -17,9 +17,10 @@ import pickle
 from typing import Any, List, Tuple, TypeVar, Union
 
 from fate.arch.abc import FederationEngine, PartyMeta
-from ._namespace import NS
+
 from ..computing import is_table
 from ..federation._gc import IterationGC
+from ._namespace import NS
 
 T = TypeVar("T")
 

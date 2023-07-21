@@ -14,16 +14,16 @@
 #  limitations under the License.
 #
 import functools
-from typing import Union
 
-import numpy as np
 import pandas as pd
+import numpy as np
 import torch
 from sklearn.preprocessing import OneHotEncoder
-
+from typing import Union
+from ._compress_block import compress_blocks
 from .._dataframe import DataFrame
 from ..manager import BlockType, DataManager
-from ._compress_block import compress_blocks
+
 
 BUCKETIZE_RESULT_TYPE = "int32"
 
@@ -45,7 +45,10 @@ def get_dummies(df: "DataFrame", dtype="int32"):
     block_table = _one_hot_encode(df.block_table, block_indexes, dst_data_manager, [[categories]], dtype=dtype)
 
     return DataFrame(
-        df._ctx, block_table, partition_order_mappings=df.partition_order_mappings, data_manager=dst_data_manager
+        df._ctx,
+        block_table,
+        partition_order_mappings=df.partition_order_mappings,
+        data_manager=dst_data_manager
     )
 
 

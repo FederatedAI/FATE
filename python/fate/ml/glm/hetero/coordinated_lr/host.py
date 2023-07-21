@@ -189,6 +189,41 @@ class CoordinatedLREstimatorHost(HeteroModule):
         self.end_epoch = -1
         self.is_converged = False
 
+    def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
+        h = X.shape[0]
+        Xw_h = 0.25 * torch.matmul(X, w.detach())
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
+        half_g = torch.matmul(X.T, Xw_h)
+
+        guest_half_d = batch_ctx.guest.get("half_d")
+        guest_half_g = torch.matmul(X.T, guest_half_d)
+
+        batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+        loss_norm = self.optimizer.loss_norm(w)
+        if loss_norm is not None:
+            batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+        else:
+            batch_ctx.guest.put(h_loss=loss_norm)
+
+        g = 1 / h * (half_g + guest_half_g)
+        return g
+
+    def centralized_compute_gradient(self, batch_ctx, encryptor, w, X):
+        h = X.shape[0]
+        Xw_h = 0.25 * torch.matmul(X, w.detach())
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
+        batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+
+        loss_norm = self.optimizer.loss_norm(w)
+        if loss_norm is not None:
+            batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+        else:
+            batch_ctx.guest.put(h_loss=loss_norm)
+
+        d = batch_ctx.guest.get("d")
+        g = 1 / h * torch.matmul(X.T, d)
+        return g
+
     def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None) -> None:
         coef_count = train_data.shape[1]
         w = self.w
@@ -199,11 +234,13 @@ class CoordinatedLREstimatorHost(HeteroModule):
         batch_loader = DataLoader(train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
         # if self.end_epoch >= 0:
         #    self.start_epoch = self.end_epoch + 1
+        is_centralized = len(ctx.hosts) > 1
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch{i}")
             for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 X = batch_data.x
+                """
                 h = X.shape[0]
                 Xw_h = 0.25 * torch.matmul(X, w.detach())
                 batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
@@ -216,7 +253,12 @@ class CoordinatedLREstimatorHost(HeteroModule):
                     batch_ctx.guest.put(h_loss=loss_norm)
 
                 d = batch_ctx.guest.get("d")
-                g = 1 / h * torch.matmul(X.T, d)
+                g = 1 / h * torch.matmul(X.T, d)"""
+                if is_centralized:
+                    g = self.centralized_compute_gradient(batch_ctx, encryptor, w, X)
+                else:
+                    g = self.asynchronous_compute_gradient(batch_ctx, encryptor, w, X)
+
                 g = self.optimizer.add_regular_to_grad(g, w, False)
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")

@@ -53,7 +53,13 @@ class LRScheduler:
 
 
 class Optimizer(object):
-    def __init__(self, method=None, penalty=None, alpha=None, optim_param: dict = None, iters: int = 0):
+    def __init__(
+            self,
+            method=None,
+            penalty=None,
+            alpha=None,
+            optim_param: dict = None,
+            iters: int = 0):
         self.method = method
         self.optim_param = optim_param
         self.iters = iters
@@ -65,14 +71,18 @@ class Optimizer(object):
         self.prev_model_parameter = None
         self.optimizer = None
 
-    def init_optimizer(self, model_parameter_length=None, model_parameter=None, dtype=torch.float32):
+    def init_optimizer(
+            self,
+            model_parameter_length=None,
+            model_parameter=None,
+            dtype=torch.float32):
         # @todo: allow group in future
         if model_parameter_length is not None:
-            model_parameter = torch.nn.parameter.Parameter(
-                torch.zeros((model_parameter_length, 1), requires_grad=True, dtype=dtype)
-            )
+            model_parameter = torch.nn.parameter.Parameter(torch.zeros(
+                (model_parameter_length, 1), requires_grad=True, dtype=dtype))
         self.model_parameter = model_parameter
-        self.optimizer = optimizer_factory([model_parameter], self.method, self.optim_param)
+        self.optimizer = optimizer_factory(
+            [model_parameter], self.method, self.optim_param)
         # for regularization
         # self.alpha = self.optimizer.state_dict()['param_groups'][0]['alpha']
 
@@ -90,7 +100,7 @@ class Optimizer(object):
 
     def get_delta_gradients(self):
         # logger.info(f"gradient: {self.model_parameter.grad}, prev model parameter: {self.prev_model_parameter},"
-        #            f"delta grad: {self.model_parameter - self.prev_model_parameter}")
+        # f"delta grad: {self.model_parameter - self.prev_model_parameter}")
         if self.prev_model_parameter is not None:
             return self.prev_model_parameter - self.model_parameter.data
         else:
@@ -171,9 +181,16 @@ class Optimizer(object):
 
         return new_grad
 
-    def regularization_update(self, model_weights, grad, fit_intercept, lr, prev_round_weights=None):
+    def regularization_update(
+            self,
+            model_weights,
+            grad,
+            fit_intercept,
+            lr,
+            prev_round_weights=None):
         if self.l1_penalty:
-            model_weights = self._l1_updator(model_weights, grad, fit_intercept, lr)
+            model_weights = self._l1_updator(
+                model_weights, grad, fit_intercept, lr)
         else:
             model_weights = model_weights - grad
         """elif self.l2_penalty:
@@ -204,7 +221,8 @@ class Optimizer(object):
         return loss_norm
 
     def __l2_loss_norm(self, model_weights):
-        loss_norm = 0.5 * self.alpha * torch.matmul(model_weights.T, model_weights)
+        loss_norm = 0.5 * self.alpha * \
+            torch.matmul(model_weights.T, model_weights)
         return loss_norm
 
     """def __add_proximal(self, model_weights, prev_round_weights):
@@ -251,15 +269,23 @@ class Optimizer(object):
                                       raise_overflow_error=delta_s.raise_overflow_error)
     """
 
-    def update_weights(self, model_weights, grad, fit_intercept, lr, prev_round_weights=None, has_applied=True):
-
+    def update_weights(
+            self,
+            model_weights,
+            grad,
+            fit_intercept,
+            lr,
+            prev_round_weights=None,
+            has_applied=True):
         """if not has_applied:
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
         else:"""
-        logger.info(f"before update, model weights: {model_weights}, delta_grad: {grad}")
+        logger.info(
+            f"before update, model weights: {model_weights}, delta_grad: {grad}")
         delta_grad = grad
-        model_weights = self.regularization_update(model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
+        model_weights = self.regularization_update(
+            model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
         logger.info(f"after update, model weights: {model_weights}")
 
         return model_weights
@@ -311,7 +337,8 @@ def optimizer_factory(model_parameter, optimizer_type, optim_params):
     elif optimizer_type == "sgd":
         return torch.optim.SGD(model_parameter, **optimizer_params)
     else:
-        raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))
+        raise NotImplementedError(
+            "Optimize method cannot be recognized: {}".format(optimizer_type))
 
 
 def lr_scheduler_factory(optimizer, method, scheduler_param):
@@ -323,4 +350,5 @@ def lr_scheduler_factory(optimizer, method, scheduler_param):
     elif scheduler_method == "linear":
         return torch.optim.lr_scheduler.LinearLR(optimizer, **scheduler_param)
     else:
-        raise NotImplementedError(f"Learning rate method cannot be recognized: {scheduler_method}")
+        raise NotImplementedError(
+            f"Learning rate method cannot be recognized: {scheduler_method}")
