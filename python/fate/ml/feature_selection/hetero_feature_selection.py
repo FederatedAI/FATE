@@ -20,9 +20,9 @@ import random
 
 import numpy as np
 import pandas as pd
-
 from fate.arch import Context
-from ..abc.module import Module, HeteroModule
+
+from ..abc.module import HeteroModule, Module
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +30,16 @@ DEFAULT_METRIC = {"iv": ["iv"], "statistics": ["mean"]}
 
 
 class HeteroSelectionModuleGuest(HeteroModule):
-    def __init__(self, method=None, select_col=None, input_models=None,
-                 iv_param=None, statistic_param=None, manual_param=None,
-                 keep_one=True):
+    def __init__(
+        self,
+        method=None,
+        select_col=None,
+        input_models=None,
+        iv_param=None,
+        statistic_param=None,
+        manual_param=None,
+        keep_one=True,
+    ):
         self.method = method
         self.select_col = select_col
         self.iv_param = iv_param
@@ -63,28 +70,23 @@ class HeteroSelectionModuleGuest(HeteroModule):
         header = select_data.schema.columns.to_list()
         for i, filter_type in enumerate(self.method):
             if filter_type == "manual":
-                selection_obj = ManualSelection(method=filter_type,
-                                                header=header,
-                                                param=self.manual_param,
-                                                keep_one=self.keep_one)
+                selection_obj = ManualSelection(
+                    method=filter_type, header=header, param=self.manual_param, keep_one=self.keep_one
+                )
             elif filter_type == "iv":
                 model = self.isometric_model_dict.get("binning", None)
                 if model is None:
                     raise ValueError(f"Cannot find binning model in input, please check")
-                selection_obj = StandardSelection(method=filter_type,
-                                                  header=header,
-                                                  param=self.iv_param,
-                                                  model=model,
-                                                  keep_one=self.keep_one)
+                selection_obj = StandardSelection(
+                    method=filter_type, header=header, param=self.iv_param, model=model, keep_one=self.keep_one
+                )
             elif filter_type == "statistics":
                 model = self.isometric_model_dict.get("statistics", None)
                 if model is None:
                     raise ValueError(f"Cannot find statistics model in input, please check")
-                selection_obj = StandardSelection(method=filter_type,
-                                                  header=header,
-                                                  param=self.statistic_param,
-                                                  model=model,
-                                                  keep_one=self.keep_one)
+                selection_obj = StandardSelection(
+                    method=filter_type, header=header, param=self.statistic_param, model=model, keep_one=self.keep_one
+                )
             else:
                 raise ValueError(f"{filter_type} selection method not supported, please check")
             self._selection_obj.append(selection_obj)
@@ -118,13 +120,9 @@ class HeteroSelectionModuleGuest(HeteroModule):
         selection_obj_list = []
         for selection_obj in self._selection_obj:
             selection_obj_list.append(selection_obj.to_model())
-        data = {"selection_obj_list": json.dumps(selection_obj_list),
-                "inner_method": self._inner_method}
-        meta = {"method": self.method,
-                "select_col": self.select_col,
-                "keep_one": self.keep_one}
-        return {"data": data,
-                "meta": meta}
+        data = {"selection_obj_list": json.dumps(selection_obj_list), "inner_method": self._inner_method}
+        meta = {"method": self.method, "select_col": self.select_col, "keep_one": self.keep_one}
+        return {"data": data, "meta": meta}
 
     def restore(self, model):
         selection_obj_list = []
@@ -147,9 +145,16 @@ class HeteroSelectionModuleGuest(HeteroModule):
 
 
 class HeteroSelectionModuleHost(HeteroModule):
-    def __init__(self, method=None, select_col=None, input_models=None,
-                 iv_param=None, statistic_param=None, manual_param=None,
-                 keep_one=True):
+    def __init__(
+        self,
+        method=None,
+        select_col=None,
+        input_models=None,
+        iv_param=None,
+        statistic_param=None,
+        manual_param=None,
+        keep_one=True,
+    ):
         self.method = method
         self.iv_param = iv_param
         self.statistic_param = statistic_param
@@ -177,28 +182,23 @@ class HeteroSelectionModuleHost(HeteroModule):
         header = select_data.schema.columns.to_list()
         for i, filter_type in enumerate(self.method):
             if filter_type == "manual":
-                selection_obj = ManualSelection(method=filter_type,
-                                                header=header,
-                                                param=self.manual_param,
-                                                keep_one=self.keep_one)
+                selection_obj = ManualSelection(
+                    method=filter_type, header=header, param=self.manual_param, keep_one=self.keep_one
+                )
             elif filter_type == "iv":
                 model = self.isometric_model_dict.get("binning", None)
                 if model is None:
                     raise ValueError(f"Cannot find binning model in input, please check")
-                selection_obj = StandardSelection(method=filter_type,
-                                                  header=header,
-                                                  param=self.iv_param,
-                                                  model=model,
-                                                  keep_one=self.keep_one)
+                selection_obj = StandardSelection(
+                    method=filter_type, header=header, param=self.iv_param, model=model, keep_one=self.keep_one
+                )
             elif filter_type == "statistics":
                 model = self.isometric_model_dict.get("statistics", None)
                 if model is None:
                     raise ValueError(f"Cannot find statistics model in input, please check")
-                selection_obj = StandardSelection(method=filter_type,
-                                                  header=header,
-                                                  param=self.statistic_param,
-                                                  model=model,
-                                                  keep_one=self.keep_one)
+                selection_obj = StandardSelection(
+                    method=filter_type, header=header, param=self.statistic_param, model=model, keep_one=self.keep_one
+                )
 
             else:
                 raise ValueError(f"{type} selection method not supported, please check")
@@ -226,8 +226,7 @@ class HeteroSelectionModuleHost(HeteroModule):
         prev_selected_mask = selection_obj._prev_selected_mask[selection_obj._prev_selected_mask]
         missing_col = set(prev_selected_mask.index).difference(set(new_index))
         if missing_col:
-            raise ValueError(
-                f"results for columns: {missing_col} not found in received selection result.")
+            raise ValueError(f"results for columns: {missing_col} not found in received selection result.")
         cur_selected_mask = [cur_selected_mask.get(col, False) for col in selection_obj._header]
         selected_mask = selection_obj._prev_selected_mask & cur_selected_mask
         selection_obj.set_selected_mask(selected_mask)
@@ -242,13 +241,9 @@ class HeteroSelectionModuleHost(HeteroModule):
         for selection_obj in self._selection_obj:
             selection_obj_list.append(selection_obj.to_model())
 
-        data = {"selection_obj_list": json.dumps(selection_obj_list),
-                "inner_method": self._inner_method}
-        meta = {"method": self.method,
-                "select_col": self.select_col,
-                "keep_one": self.keep_one}
-        return {"data": data,
-                "meta": meta}
+        data = {"selection_obj_list": json.dumps(selection_obj_list), "inner_method": self._inner_method}
+        meta = {"method": self.method, "select_col": self.select_col, "keep_one": self.keep_one}
+        return {"data": data, "meta": meta}
 
     def restore(self, model):
         selection_obj_list = []
@@ -311,13 +306,14 @@ class ManualSelection(Module):
             raise ValueError("`filter_out_col` should not be all columns")
         filter_out_col = set(filter_out_col)
         keep_col = set(keep_col)
-        missing_col = (filter_out_col.union(keep_col)). \
-            difference(set(self._prev_selected_mask.index))
+        missing_col = (filter_out_col.union(keep_col)).difference(set(self._prev_selected_mask.index))
         if missing_col:
-            raise ValueError(f"columns {missing_col} given in `filter_out_col` & `keep_col` "
-                             f"not found in `select_col` or header")
-        filter_out_mask = pd.Series([False if col in filter_out_col else True for col in self._header],
-                                    index=self._header)
+            raise ValueError(
+                f"columns {missing_col} given in `filter_out_col` & `keep_col` " f"not found in `select_col` or header"
+            )
+        filter_out_mask = pd.Series(
+            [False if col in filter_out_col else True for col in self._header], index=self._header
+        )
         # keep_mask = [True if col in keep_col else False for col in self._header]
         selected_mask = self._prev_selected_mask & filter_out_mask
         selected_mask.loc[keep_col] = True
@@ -332,11 +328,7 @@ class ManualSelection(Module):
         return transform_data[select_cols]
 
     def to_model(self):
-        return dict(
-            method=self.method,
-            keep_one=self.keep_one,
-            selected_mask=self._selected_mask.to_dict()
-        )
+        return dict(method=self.method, keep_one=self.keep_one, selected_mask=self._selected_mask.to_dict())
 
     def restore(self, model):
         self.method = model["method"]
@@ -352,10 +344,11 @@ class StandardSelection(Module):
 
         if param is not None:
             for metric_name, filter_type, threshold, take_high in zip(
-                    self.param.get("metrics", DEFAULT_METRIC.get(method)),
-                    self.param.get("filter_type", ['threshold']),
-                    self.param.get("threshold", [1.0]),
-                    self.param.get("take_high", [True])):
+                self.param.get("metrics", DEFAULT_METRIC.get(method)),
+                self.param.get("filter_type", ["threshold"]),
+                self.param.get("threshold", [1.0]),
+                self.param.get("take_high", [True]),
+            ):
                 metric_conf = self.filter_conf.get(metric_name, {})
                 metric_conf["filter_type"] = metric_conf.get("filter_type", []) + [filter_type]
                 metric_conf["threshold"] = metric_conf.get("threshold", []) + [threshold]
@@ -421,16 +414,20 @@ class StandardSelection(Module):
         if self.method in ["statistics"]:
             for metric_name in metric_names:
                 if metric_name not in self.model.get("meta", {}).get("metrics", {}):
-                    raise ValueError(f"metric {metric_name} not found in given statistic model with metrics: "
-                                     f"{self.model.get('metrics', {})}, please check")
+                    raise ValueError(
+                        f"metric {metric_name} not found in given statistic model with metrics: "
+                        f"{self.model.get('metrics', {})}, please check"
+                    )
             model_data = self.model.get("data", {})
             metrics_all = pd.DataFrame(model_data.get("metrics_summary", {})).loc[metric_names]
             self._all_metrics = metrics_all
-            missing_col = set(self._prev_selected_mask[self._prev_selected_mask].index). \
-                difference(set(metrics_all.columns))
+            missing_col = set(self._prev_selected_mask[self._prev_selected_mask].index).difference(
+                set(metrics_all.columns)
+            )
             if missing_col:
                 raise ValueError(
-                    f"metrics for columns {missing_col} from `select_col` or header not found in given model.")
+                    f"metrics for columns {missing_col} from `select_col` or header not found in given model."
+                )
 
             """ mask_all = metrics_all.apply(lambda r: StandardSelection.filter_multiple_metrics(r,
                                                                                              self.param.filter_type,
@@ -485,8 +482,7 @@ class StandardSelection(Module):
                                                                                                      self.param.take_high,
                                                                                                      metric_names), axis=1)
                     """
-                    host_mask_all = self.apply_filter(metrics_all,
-                                                      self.filter_conf)
+                    host_mask_all = self.apply_filter(metrics_all, self.filter_conf)
                     self._all_host_selected_mask[host] = host_mask_all
                     """host_prev_selected_mask = self._host_prev_selected_mask.get(host)
                     if host_prev_selected_mask is None:
@@ -519,10 +515,7 @@ class StandardSelection(Module):
 
     @staticmethod
     def apply_filter(metrics_all, filter_conf):
-        return metrics_all.apply(lambda r:
-                                 StandardSelection.filter_multiple_metrics(r,
-                                                                           filter_conf[r.name]),
-                                 axis=1)
+        return metrics_all.apply(lambda r: StandardSelection.filter_multiple_metrics(r, filter_conf[r.name]), axis=1)
 
     @staticmethod
     def filter_multiple_metrics(metrics, metric_conf):
@@ -531,10 +524,9 @@ class StandardSelection(Module):
         take_high_list = metric_conf["take_high"]
         result = pd.Series(np.ones(len(metrics.index)), index=metrics.index, dtype=bool)
         for idx in range(len(filter_type_list)):
-            result &= StandardSelection.filter_metrics(metrics,
-                                                       filter_type_list[idx],
-                                                       threshold_list[idx],
-                                                       take_high_list[idx])
+            result &= StandardSelection.filter_metrics(
+                metrics, filter_type_list[idx], threshold_list[idx], take_high_list[idx]
+            )
         return result
 
     @staticmethod
@@ -586,12 +578,15 @@ class StandardSelection(Module):
             all_selected_mask=self._all_selected_mask.to_dict() if self._all_selected_mask is not None else None,
             all_metrics=self._all_metrics.to_dict() if self._all_metrics is not None else None,
             all_host_metrics={k: v.to_dict() for k, v in self._all_host_metrics.items()}
-            if self._all_host_metrics is not None else None,
+            if self._all_host_metrics is not None
+            else None,
             selected_mask=self._selected_mask.to_dict(),
             host_selected_mask={k: v.to_dict() for k, v in self._host_selected_mask.items()}
-            if self._host_selected_mask is not None else None,
+            if self._host_selected_mask is not None
+            else None,
             all_host_selected_mask={k: v.to_dict() for k, v in self._all_host_selected_mask.items()}
-            if self._all_host_selected_mask is not None else None,
+            if self._all_host_selected_mask is not None
+            else None,
         )
 
     def restore(self, model):
@@ -601,6 +596,7 @@ class StandardSelection(Module):
         self._all_selected_mask = pd.DataFrame(model["all_selected_mask"], dtype=bool)
         self._all_metrics = pd.DataFrame(model["all_metrics"])
         self._host_selected_mask = {k: pd.Series(v, dtype=bool) for k, v in model["host_selected_mask"].items()}
-        self._all_host_selected_mask = {k: pd.DataFrame(v, dtype=bool) for
-                                        k, v in model["all_host_selected_mask"].items()}
+        self._all_host_selected_mask = {
+            k: pd.DataFrame(v, dtype=bool) for k, v in model["all_host_selected_mask"].items()
+        }
         self._all_host_metrics = {k: pd.DataFrame(v) for k, v in model["all_host_metrics"].items()}

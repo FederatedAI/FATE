@@ -29,40 +29,58 @@ def hetero_feature_selection(ctx, role):
 
 @hetero_feature_selection.train()
 def train(
-        ctx: Context,
-        role: Role,
-        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        input_models: cpn.json_model_inputs(roles=[GUEST, HOST]),
-        method: cpn.parameter(type=List[params.string_choice(["manual", "iv", "statistics"])],
-                              default=["manual"], optional=False,
-                              desc="selection method, options: {manual, binning, statistics}"),
-        select_col: cpn.parameter(type=List[str], default=None,
-                                  desc="list of column names to be selected, if None, all columns will be considered"),
-        iv_param: cpn.parameter(type=params.iv_filter_param(),
-                                default=params.IVFilterParam(metrics="iv", take_high=True,
-                                                             threshold=1, filter_type="threshold", host_thresholds=1,
-                                                             host_take_high=True,
-                                                             select_federated=True),
-                                desc="iv filter param"),
-        statistic_param: cpn.parameter(type=params.statistic_filter_param(),
-                                       default=params.StatisticFilterParam(metrics="mean",
-                                                                           threshold=1,
-                                                                           filter_type="threshold",
-                                                                           take_high=True),
-                                       desc="statistic filter param"),
-        manual_param: cpn.parameter(type=params.manual_filter_param(),
-                                    default=params.ManualFilterParam(filter_out_col=[], keep_col=[]),
-                                    desc="manual filter param"),
-        keep_one: cpn.parameter(type=bool,
-                                default=True,
-                                desc="whether to keep at least one feature among `select_col`"),
-        use_anonymous: cpn.parameter(type=bool, default=False,
-                                     desc="bool, whether interpret `select_col` & `filter_out_col` & `keep_col` "
-                                          "as anonymous column names"),
-        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        train_output_model: cpn.json_model_output(roles=[GUEST, HOST])
+    ctx: Context,
+    role: Role,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_models: cpn.json_model_inputs(roles=[GUEST, HOST]),
+    method: cpn.parameter(
+        type=List[params.string_choice(["manual", "iv", "statistics"])],
+        default=["manual"],
+        optional=False,
+        desc="selection method, options: {manual, binning, statistics}",
+    ),
+    select_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        desc="list of column names to be selected, if None, all columns will be considered",
+    ),
+    iv_param: cpn.parameter(
+        type=params.iv_filter_param(),
+        default=params.IVFilterParam(
+            metrics="iv",
+            take_high=True,
+            threshold=1,
+            filter_type="threshold",
+            host_thresholds=1,
+            host_take_high=True,
+            select_federated=True,
+        ),
+        desc="iv filter param",
+    ),
+    statistic_param: cpn.parameter(
+        type=params.statistic_filter_param(),
+        default=params.StatisticFilterParam(metrics="mean", threshold=1, filter_type="threshold", take_high=True),
+        desc="statistic filter param",
+    ),
+    manual_param: cpn.parameter(
+        type=params.manual_filter_param(),
+        default=params.ManualFilterParam(filter_out_col=[], keep_col=[]),
+        desc="manual filter param",
+    ),
+    keep_one: cpn.parameter(type=bool, default=True, desc="whether to keep at least one feature among `select_col`"),
+    use_anonymous: cpn.parameter(
+        type=bool,
+        default=False,
+        desc="bool, whether interpret `select_col` & `filter_out_col` & `keep_col` " "as anonymous column names",
+    ),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    train_output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
-    from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
+    from fate.ml.feature_selection import (
+        HeteroSelectionModuleGuest,
+        HeteroSelectionModuleHost,
+    )
+
     logger.info(f"start selection train")
 
     sub_ctx = ctx.sub_ctx("train")
@@ -90,22 +108,26 @@ def train(
     input_iso_models = [model.read() for model in input_models]
     # logger.info(f"read in input_models len: {len(input_iso_models)}; \n read in input models: {input_iso_models}")
     if role.is_guest:
-        selection = HeteroSelectionModuleGuest(method=method,
-                                               select_col=select_col,
-                                               input_models=input_iso_models,
-                                               iv_param=iv_param,
-                                               statistic_param=statistic_param,
-                                               manual_param=manual_param,
-                                               keep_one=keep_one)
+        selection = HeteroSelectionModuleGuest(
+            method=method,
+            select_col=select_col,
+            input_models=input_iso_models,
+            iv_param=iv_param,
+            statistic_param=statistic_param,
+            manual_param=manual_param,
+            keep_one=keep_one,
+        )
 
     elif role.is_host:
-        selection = HeteroSelectionModuleHost(method=method,
-                                              select_col=select_col,
-                                              input_models=input_iso_models,
-                                              iv_param=iv_param,
-                                              statistic_param=statistic_param,
-                                              manual_param=manual_param,
-                                              keep_one=keep_one)
+        selection = HeteroSelectionModuleHost(
+            method=method,
+            select_col=select_col,
+            input_models=input_iso_models,
+            iv_param=iv_param,
+            statistic_param=statistic_param,
+            manual_param=manual_param,
+            keep_one=keep_one,
+        )
     else:
         raise ValueError(f"role: {role} is not valid")
     selection.fit(sub_ctx, train_data)
@@ -121,13 +143,17 @@ def train(
 
 @hetero_feature_selection.predict()
 def predict(
-        ctx: Context,
-        role: Role,
-        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
+    ctx: Context,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
-    from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
+    from fate.ml.feature_selection import (
+        HeteroSelectionModuleGuest,
+        HeteroSelectionModuleHost,
+    )
+
     logger.info(f"start selection predict")
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()

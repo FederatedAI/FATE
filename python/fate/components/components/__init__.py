@@ -75,7 +75,7 @@ class LazyBuildInComponentsLoader:
     @_lazy_cpn
     def homo_lr(self):
         from .homo_lr import homo_lr
-        
+
         return homo_lr
 
     @_lazy_cpn
@@ -129,6 +129,7 @@ class LazyBuildInComponentsLoader:
     @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
+
         return toy_example
 
     @_lazy_cpn
