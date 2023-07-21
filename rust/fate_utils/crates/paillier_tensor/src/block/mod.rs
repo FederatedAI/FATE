@@ -5,6 +5,7 @@ use fixedpoint::CouldCode;
 use ndarray::{ArrayD, ArrayViewD};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+
 mod matmul;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -22,6 +23,7 @@ impl Index<(usize, usize)> for Cipherblock {
         &self.data[index.0 * self.shape[1] + index.1]
     }
 }
+
 impl Cipherblock {
     pub fn reshape(&self, shape: Vec<usize>) -> Cipherblock {
         let s1: usize = self.shape.iter().product();
@@ -35,9 +37,19 @@ impl Cipherblock {
             shape,
         }
     }
+    pub fn slice0(&self, index: usize) -> Cipherblock {
+        let stride:usize = self.shape[1..].iter().product();
+        let start = index * stride;
+        let end = start + stride;
+        Cipherblock {
+            pk: self.pk.clone(),
+            data: self.data[start..end].to_vec(),
+            shape: self.shape[1..].to_vec(),
+        }
+    }
     pub fn map<F>(&self, func: F) -> Cipherblock
-    where
-        F: Fn(&fixedpoint::CT) -> fixedpoint::CT,
+        where
+            F: Fn(&fixedpoint::CT) -> fixedpoint::CT,
     {
         Cipherblock {
             pk: self.pk.clone(),
@@ -46,8 +58,8 @@ impl Cipherblock {
         }
     }
     pub fn agg<F, T>(&self, init: T, f: F) -> T
-    where
-        F: Fn(T, &fixedpoint::CT) -> T,
+        where
+            F: Fn(T, &fixedpoint::CT) -> T,
     {
         self.data.iter().fold(init, f)
     }
@@ -56,8 +68,8 @@ impl Cipherblock {
         rhs: &Cipherblock,
         func: F,
     ) -> Cipherblock
-    where
-        F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT,
+        where
+            F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT,
     {
         assert_eq!(lhs.shape, rhs.shape);
         assert_eq!(lhs.pk, rhs.pk);
@@ -78,9 +90,9 @@ impl Cipherblock {
         rhs: ArrayViewD<T>,
         func: F,
     ) -> Cipherblock
-    where
-        F: Fn(&fixedpoint::CT, &fixedpoint::PT, &fixedpoint::PK) -> fixedpoint::CT,
-        T: CouldCode,
+        where
+            F: Fn(&fixedpoint::CT, &fixedpoint::PT, &fixedpoint::PK) -> fixedpoint::CT,
+            T: CouldCode,
     {
         assert_eq!(lhs.shape, rhs.shape().to_vec());
         let lhs_iter = lhs.data.iter();
@@ -98,8 +110,8 @@ impl Cipherblock {
 }
 
 pub fn encrypt_array<T>(pk: &fixedpoint::PK, array: ArrayViewD<T>) -> Cipherblock
-where
-    T: CouldCode,
+    where
+        T: CouldCode,
 {
     let shape = array.shape().to_vec();
     let data: Vec<fixedpoint::CT> = array
@@ -114,8 +126,8 @@ where
 }
 
 pub fn decrypt_array<T>(sk: &fixedpoint::SK, array: &Cipherblock) -> ArrayD<T>
-where
-    T: CouldCode,
+    where
+        T: CouldCode,
 {
     let shape = array.shape.as_slice();
     let data = array
@@ -128,11 +140,11 @@ where
 
 impl Cipherblock {
     pub fn agg_par<F, T, ID, OP>(&self, identity: ID, f: F, op: OP) -> T
-    where
-        F: Fn(T, &fixedpoint::CT) -> T + Send + Sync,
-        ID: Fn() -> T + Send + Sync,
-        OP: Fn(T, T) -> T + Send + Sync,
-        T: Send,
+        where
+            F: Fn(T, &fixedpoint::CT) -> T + Send + Sync,
+            ID: Fn() -> T + Send + Sync,
+            OP: Fn(T, T) -> T + Send + Sync,
+            T: Send,
     {
         self.data
             .par_iter()
@@ -140,8 +152,8 @@ impl Cipherblock {
             .reduce(&identity, op)
     }
     pub fn map_par<F>(&self, func: F) -> Cipherblock
-    where
-        F: Fn(&fixedpoint::CT) -> fixedpoint::CT + Sync + Send,
+        where
+            F: Fn(&fixedpoint::CT) -> fixedpoint::CT + Sync + Send,
     {
         Cipherblock {
             pk: self.pk.clone(),
@@ -154,8 +166,8 @@ impl Cipherblock {
         rhs: &Cipherblock,
         func: F,
     ) -> Cipherblock
-    where
-        F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
+        where
+            F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
     {
         assert_eq!(lhs.shape, rhs.shape);
         assert_eq!(lhs.pk, rhs.pk);
@@ -176,9 +188,9 @@ impl Cipherblock {
         rhs: ArrayViewD<T>,
         func: F,
     ) -> Cipherblock
-    where
-        F: Fn(&fixedpoint::CT, &fixedpoint::PT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
-        T: CouldCode + Sync + Send,
+        where
+            F: Fn(&fixedpoint::CT, &fixedpoint::PT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
+            T: CouldCode + Sync + Send,
     {
         assert_eq!(lhs.shape, rhs.shape().to_vec());
         let lhs_iter = lhs.data.par_iter();

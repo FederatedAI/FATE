@@ -99,6 +99,10 @@ class BlockType(str, Enum):
     def is_float(block_type):
         return block_type in [BlockType.float32, BlockType.float64]
 
+    @staticmethod
+    def is_integer(block_type):
+        return block_type in [BlockType.int32, BlockType.int64]
+
 
 class Block(object):
     def __init__(self, field_indexes, block_type=None, should_compress=True):
@@ -514,7 +518,7 @@ class BlockManager(object):
             compressible_blocks[block.block_type].append((block_id, block))
 
         if not has_compressed:
-            return self._blocks, []
+            return self._blocks, [], []
 
         new_blocks, to_compress_block_loc = [], []
         non_compressed_block_changes = dict()

@@ -12,6 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+import time
+import random
+import hashlib
 
-from .feature_scale import FeatureScale
-from .feature_union import FeatureUnion
+
+def generate_sample_id(n, prefix):
+    return [hashlib.sha256(bytes(prefix + str(i), encoding='utf-8')).hexdigest() for i in range(n)]
+
+
+def generate_sample_id_prefix():
+    return str(time.time()) + str(random.randint(1000000, 9999999))

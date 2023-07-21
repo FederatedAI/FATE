@@ -70,36 +70,18 @@ class DataManager(object):
             self._block_manager.duplicate()
         )
 
-    def init_from_table_schema(self, schema, delimiter, match_id_name, label_name, weight_name,
-                               label_type, weight_type, dtype, default_type=types.DEFAULT_DATA_TYPE):
-        schema_manager = SchemaManager()
-        retrieval_index_dict = schema_manager.parse_table_schema(
-            schema=schema,
-            delimiter=delimiter,
-            match_id_name=match_id_name,
-            label_name=label_name,
-            weight_name=weight_name
-        )
-
-        schema_manager.init_field_types(label_type, weight_type, dtype,
-                                        default_type=default_type)
-        block_manager = BlockManager()
-        block_manager.initialize_blocks(schema_manager)
-
-        self._schema_manager = schema_manager
-        self._block_manager = block_manager
-
-        return retrieval_index_dict
-
     def init_from_local_file(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name,
-                             label_type, weight_type, dtype, default_type=types.DEFAULT_DATA_TYPE):
+                             label_type, weight_type, dtype, default_type=types.DEFAULT_DATA_TYPE,
+                             anonymous_role=None, anonymous_party_id=None):
         schema_manager = SchemaManager()
         retrieval_index_dict = schema_manager.parse_local_file_schema(sample_id_name,
                                                                       columns,
                                                                       match_id_list,
                                                                       match_id_name,
                                                                       label_name,
-                                                                      weight_name)
+                                                                      weight_name,
+                                                                      anonymous_role=anonymous_role,
+                                                                      anonymous_party_id=anonymous_party_id)
         schema_manager.init_field_types(label_type, weight_type, dtype,
                                         default_type=default_type)
         block_manager = BlockManager()
@@ -142,6 +124,9 @@ class DataManager(object):
                 loc_ret.append(self._block_manager.loc_block(field_index, with_offset))
 
             return loc_ret
+
+    def fill_anonymous_role_and_party_id(self, role, party_id):
+        self._schema_manager.fill_anonymous_role_and_party_id(role, party_id)
 
     def get_fields_loc(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
         field_block_mapping = self._block_manager.field_block_mapping
@@ -247,18 +232,20 @@ class DataManager(object):
                                     columns=columns)
 
     def serialize(self):
-        fields = self._schema_manager.serialize()
+        schema_serialization = self._schema_manager.serialize()
+        fields = schema_serialization["fields"]
         for col_id, field in enumerate(fields):
             block_id = self._block_manager.loc_block(col_id, with_offset=False)
             should_compress = self._block_manager.blocks[block_id].should_compress
             field["should_compress"] = should_compress
 
-        return fields
+        schema_serialization["fields"] = fields
+        return schema_serialization
 
     @classmethod
-    def deserialize(cls, fields):
+    def deserialize(cls, schema_meta):
         data_manager = DataManager()
-        data_manager._schema_manager = SchemaManager.deserialize(fields)
+        data_manager._schema_manager = SchemaManager.deserialize(schema_meta)
         data_manager._block_manager = BlockManager()
         data_manager._block_manager.initialize_blocks(data_manager._schema_manager)
 

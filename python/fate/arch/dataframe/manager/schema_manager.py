@@ -16,6 +16,7 @@
 import copy
 from typing import List, Union
 import pandas as pd
+from .utils import AnonymousGenerator
 
 
 DEFAULT_LABEL_NAME = "label"
@@ -30,14 +31,20 @@ class Schema(object):
         weight_name=None,
         label_name=None,
         columns: Union[list, pd.Index] = None,
-        anonymous_columns: Union[list, pd.Index] = None
+        anonymous_label_name=None,
+        anonymous_weight_name=None,
+        anonymous_columns: Union[list, pd.Index] = None,
+        anonymous_summary: dict = None
     ):
         self._sample_id_name = sample_id_name
         self._match_id_name = match_id_name
         self._weight_name = weight_name
         self._label_name = label_name
         self._columns = pd.Index(columns) if columns else pd.Index([])
+        self._anonymous_label_name = anonymous_label_name
+        self._anonymous_weight_name = anonymous_weight_name
         self._anonymous_columns = pd.Index(anonymous_columns) if anonymous_columns else pd.Index([])
+        self._anonymous_summary = anonymous_summary if anonymous_summary else dict()
 
     @property
     def sample_id_name(self):
@@ -63,6 +70,20 @@ class Schema(object):
     def weight_name(self, weight_name: str):
         self._weight_name = weight_name
 
+        if self.anonymous_weight_name is None:
+            anonymous_generator = AnonymousGenerator(role=self._anonymous_summary["role"],
+                                                     party_id=self._anonymous_summary["party_id"])
+
+            self._anonymous_weight_name = anonymous_generator.add_anonymous_weight()
+
+    @property
+    def anonymous_weight_name(self):
+        return self._anonymous_weight_name
+
+    @anonymous_weight_name.setter
+    def anonymous_weight_name(self, anonymous_weight_name: str):
+        self._anonymous_weight_name = anonymous_weight_name
+
     @property
     def label_name(self):
         return self._label_name
@@ -70,6 +91,19 @@ class Schema(object):
     @label_name.setter
     def label_name(self, label_name: str):
         self._label_name = label_name
+
+        if self._anonymous_label_name is None:
+            anonymous_generator = AnonymousGenerator(role=self._anonymous_summary["role"],
+                                                     party_id=self._anonymous_summary["party_id"])
+            self._anonymous_label_name = anonymous_generator.add_anonymous_label()
+
+    @property
+    def anonymous_label_name(self):
+        return self._anonymous_label_name
+
+    @anonymous_label_name.setter
+    def anonymous_label_name(self, anonymous_label_name):
+        self._anonymous_label_name = anonymous_label_name
 
     @property
     def columns(self) -> pd.Index:
@@ -83,16 +117,60 @@ class Schema(object):
     def anonymous_columns(self) -> pd.Index:
         return self._anonymous_columns
 
+    @anonymous_columns.setter
+    def anonymous_columns(self, anonymous_columns: pd.Index):
+        self._anonymous_columns = anonymous_columns
+
+    @property
+    def anonymous_summary(self) -> dict:
+        return self._anonymous_summary
+
+    @anonymous_summary.setter
+    def anonymous_summary(self, anonymous_summary):
+        self._anonymous_summary = anonymous_summary
+
     def append_columns(self, names):
         self._columns = self._columns.append(pd.Index(names))
         # TODO: extend anonymous column
+        anonymous_generator = AnonymousGenerator(role=self._anonymous_summary["role"],
+                                                 party_id=self._anonymous_summary["party_id"])
+
+        anonymous_columns, anonymous_summary = anonymous_generator.add_anonymous_columns(names, self._anonymous_summary)
+        self._anonymous_columns = self._anonymous_columns.append(pd.Index(anonymous_columns))
+        self._anonymous_summary = anonymous_summary
+
+    def init_anonymous_names(self, anonymous_role, anonymous_party_id):
+        anonymous_generator = AnonymousGenerator(anonymous_role, anonymous_party_id)
+        anonymous_ret_dict = anonymous_generator.generate_anonymous_names(self)
+        self._set_anonymous_info_by_dict(anonymous_ret_dict)
+
+    def fill_anonymous_role_and_party_id(self, anonymous_role, anonymous_party_id):
+        anonymous_generator = AnonymousGenerator(anonymous_role, anonymous_party_id)
+        anonymous_ret_dict = anonymous_generator.fill_role_and_party_id(
+            anonymous_label_name=self.anonymous_label_name,
+            anonymous_weight_name=self._anonymous_weight_name,
+            anonymous_columns=self._anonymous_columns,
+            anonymous_summary=self._anonymous_summary
+        )
+
+        self._set_anonymous_info_by_dict(anonymous_ret_dict)
+
+    def _set_anonymous_info_by_dict(self, anonymous_ret_dict):
+        if self._label_name:
+            self._anonymous_label_name = anonymous_ret_dict["anonymous_label_name"]
+        if self._weight_name:
+            self._anonymous_weight_name = anonymous_ret_dict["anonymous_weight_name"]
+        if self._columns is not None:
+            self._anonymous_columns = anonymous_ret_dict["anonymous_columns"]
+
+        self._anonymous_summary = anonymous_ret_dict["anonymous_summary"]
 
     def pop_columns(self, names):
         names = set(names)
         if self._label_name in names:
             names.remove(self._label_name)
             self._label_name = None
-        if self._weight_name  in names:
+        if self._weight_name in names:
             names.remove(self._weight_name)
             self._weight_name = None
 
@@ -125,30 +203,26 @@ class Schema(object):
         if self._label_name:
             s_obj.append(
                 dict(name=self._label_name,
+                     anonymous_name=self._anonymous_label_name,
                      property="label")
             )
         if self._weight_name:
             s_obj.append(
                 dict(name=self._weight_name,
+                     anonymous_name=self._anonymous_weight_name,
                      property="weight")
             )
 
         if len(self._columns):
-            if len(self._anonymous_columns):
-                for name, anonymous_name in zip(self._columns, self._anonymous_columns):
-                    s_obj.append(
-                        dict(name=name,
-                             anonymous_name=anonymous_name,
-                             property="column")
-                    )
-            else:
-                for name in self._columns:
-                    s_obj.append(
-                        dict(name=name,
-                             property="column")
+            for name, anonymous_name in zip(self._columns, self._anonymous_columns):
+                s_obj.append(
+                    dict(name=name,
+                         anonymous_name=anonymous_name,
+                         property="column")
                     )
 
-        return s_obj
+        return dict(fields=s_obj,
+                    anonymous_summary=self._anonymous_summary)
 
 
 class SchemaManager(object):
@@ -290,26 +364,8 @@ class SchemaManager(object):
     def get_all_keys(self):
         return list(self._name_offset_mapping.keys())
 
-    def parse_table_schema(self,
-                           schema,
-                           delimiter,
-                           match_id_name,
-                           label_name,
-                           weight_name):
-        sample_id_name = schema["sample_id_name"]
-        columns = schema["header"].split(delimiter, -1)
-        match_id_list = schema.get("match_id_list", [])
-
-        return self.parse_local_file_schema(
-            sample_id_name=sample_id_name,
-            columns=columns,
-            match_id_list=match_id_list,
-            match_id_name=match_id_name,
-            label_name=label_name,
-            weight_name=weight_name
-        )
-
-    def parse_local_file_schema(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name):
+    def parse_local_file_schema(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name,
+                                anonymous_role=None, anonymous_party_id=None):
         column_indexes = list(range(len(columns)))
 
         match_id_index, label_index, weight_index = None, None, None
@@ -344,6 +400,7 @@ class SchemaManager(object):
             columns=columns
         )
 
+        self._schema.init_anonymous_names(anonymous_role, anonymous_party_id)
         self.init_name_mapping()
 
         return dict(
@@ -352,6 +409,9 @@ class SchemaManager(object):
             weight_index=weight_index,
             column_indexes=column_indexes
         )
+
+    def fill_anonymous_role_and_party_id(self, anonymous_role, anonymous_party_id):
+        self._schema.fill_anonymous_role_and_party_id(anonymous_role, anonymous_party_id)
 
     @staticmethod
     def extract_column_index_by_name(columns, column_indexes, name, drop=True):
@@ -456,12 +516,13 @@ class SchemaManager(object):
         self._type_mapping[name] = field_type
 
     def derive_new_schema_manager(self, with_sample_id=True, with_match_id=True,
-                                  with_label=True, with_weight=True, columns : Union[str, list] = None):
+                                  with_label=True, with_weight=True, columns: Union[str, list] = None):
         derived_schema_manager = SchemaManager()
         derived_schema = Schema()
 
         indexes = []
 
+        derived_schema.anonymous_summary = self._schema.anonymous_summary
         if with_sample_id:
             derived_schema.sample_id_name = self._schema.sample_id_name
 
@@ -470,14 +531,27 @@ class SchemaManager(object):
 
         if with_label:
             derived_schema.label_name = self._schema.label_name
+            derived_schema.anonymous_label_name = self._schema.anonymous_label_name
 
         if with_weight:
             derived_schema.weight_name = self._schema.weight_name
+            derived_schema.anonymous_weight_name = self._schema.anonymous_weight_name
 
         if columns:
             if isinstance(columns, str):
                 columns = [columns]
-            derived_schema.columns = self._schema.columns[self._schema.columns.get_indexer(columns)]
+
+            column_set = set(columns)
+            derived_columns = []
+            derived_anonymous_columns = []
+            for column, anonymous_column in zip(self._schema.columns, self._schema.anonymous_columns):
+                if column not in column_set:
+                    continue
+                derived_columns.append(column)
+                derived_anonymous_columns.append(anonymous_column)
+
+            derived_schema.columns = pd.Index(derived_columns)
+            derived_schema.anonymous_columns = pd.Index(derived_anonymous_columns)
 
         derived_schema_manager.schema = derived_schema
         derived_schema_manager.init_name_mapping()
@@ -537,27 +611,31 @@ class SchemaManager(object):
         schema_serialization = self._schema.serialize()
 
         schema_serialization_with_type = []
-        for field in schema_serialization:
+        for field in schema_serialization["fields"]:
             field["dtype"] = self._type_mapping[field["name"]]
             schema_serialization_with_type.append(field)
 
-        return schema_serialization_with_type
+        schema_serialization["fields"] = schema_serialization_with_type
+        return schema_serialization
 
     @classmethod
-    def deserialize(cls, fields: List[dict]):
+    def deserialize(cls, schema_meta: dict):
         schema_manager = SchemaManager()
 
         schema_dict = dict(
             columns=[],
-            anonymous_columns=[]
+            anonymous_columns=[],
+            anonymous_summary=schema_meta["anonymous_summary"]
         )
         type_dict = {}
-        for field in fields:
+        for field in schema_meta["fields"]:
             p = field["property"]
             name = field["name"]
             if field["property"] in ["sample_id", "match_id", "weight", "label"]:
                 schema_dict[f"{p}_name"] = name
                 type_dict[f"{p}_type"] = field["dtype"]
+                if p in ["label", "weight"]:
+                    schema_dict[f"anonymous_{p}_name"] = field["anonymous_name"]
             else:
                 schema_dict["columns"].append(name)
 
