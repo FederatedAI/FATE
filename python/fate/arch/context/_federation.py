@@ -68,11 +68,11 @@ class Party:
 
     @property
     def role(self) -> str:
-        return self.party[1]
+        return self.party[0]
 
     @property
     def party_id(self) -> str:
-        return self.party[0]
+        return self.party[1]
 
     def put(self, *args, **kwargs):
         if args:

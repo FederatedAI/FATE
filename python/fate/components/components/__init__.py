@@ -141,6 +141,7 @@ class LazyBuildInComponentsLoader:
     @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
+
         return toy_example
 
     @_lazy_cpn

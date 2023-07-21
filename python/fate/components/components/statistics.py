@@ -19,7 +19,7 @@ from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
 
 
-@cpn.component(roles=[GUEST, HOST])
+@cpn.component(roles=[GUEST, HOST], provider="fate")
 def statistics(
         ctx: Context,
         role: Role,

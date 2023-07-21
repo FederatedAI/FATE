@@ -29,8 +29,7 @@ class LRScheduler:
         self.lr_scheduler = None
 
     def init_scheduler(self, optimizer):
-        self.lr_scheduler = lr_scheduler_factory(
-            optimizer, self.method, self.lr_params)
+        self.lr_scheduler = lr_scheduler_factory(optimizer, self.method, self.lr_params)
 
     def step(self):
         self.lr_scheduler.step()
@@ -41,9 +40,7 @@ class LRScheduler:
         return self.lr_scheduler.get_last_lr()[0]
 
     def state_dict(self):
-        return {"lr_scheduler": self.lr_scheduler.state_dict(),
-                "method": self.method,
-                "lr_params": self.lr_params}
+        return {"lr_scheduler": self.lr_scheduler.state_dict(), "method": self.method, "lr_params": self.lr_params}
 
     def load_state_dict(self, dict, optimizer):
         self.method = dict["method"]
@@ -115,7 +112,7 @@ class Optimizer(object):
 
     def state_dict(self):
         optimizer_state_dict = self.optimizer.state_dict()
-        state_all = optimizer_state_dict['state'].get(0, {})
+        state_all = optimizer_state_dict["state"].get(0, {})
         for k, v in state_all.items():
             if isinstance(v, torch.Tensor):
                 state_all[k] = v.tolist()
@@ -128,7 +125,7 @@ class Optimizer(object):
             "method": self.method,
             "optim_param": self.optim_param,
             "model_parameter": self.model_parameter.tolist(),
-            "model_parameter_dtype": dtype
+            "model_parameter_dtype": dtype,
         }
 
     def load_state_dict(self, state_dict):
@@ -138,10 +135,13 @@ class Optimizer(object):
         self.method = state_dict["method"]
         self.optim_param = state_dict["optim_param"]
         dtype = state_dict["model_parameter_dtype"]
-        self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(state_dict["model_parameter"],
-                                                                                      dtype=getattr(torch, dtype))))
+        self.init_optimizer(
+            model_parameter=torch.nn.parameter.Parameter(
+                torch.tensor(state_dict["model_parameter"], dtype=getattr(torch, dtype))
+            )
+        )
         state = state_dict["optimizer"]
-        state_all = state['state'].get(0, {})
+        state_all = state["state"].get(0, {})
         for k, v in state_all.items():
             if isinstance(v, list):
                 state_all[k] = torch.tensor(v)
@@ -158,11 +158,9 @@ class Optimizer(object):
             gradient_without_intercept = gradient
             coef_ = model_weights
 
-        new_weights = torch.sign(
-            coef_ - gradient_without_intercept) * torch.maximum(
-            torch.tensor(
-                [0]), torch.abs(
-                coef_ - gradient_without_intercept) - self.shrinkage_val(lr))
+        new_weights = torch.sign(coef_ - gradient_without_intercept) * torch.maximum(
+            torch.tensor([0]), torch.abs(coef_ - gradient_without_intercept) - self.shrinkage_val(lr)
+        )
 
         if fit_intercept:
             new_weights = torch.concat((new_weights, model_weights.intercept_))
@@ -173,8 +171,7 @@ class Optimizer(object):
     def add_regular_to_grad(self, grad, model_weights, fit_intercept=False):
         if self.l2_penalty:
             if fit_intercept:
-                weights_sum = torch.concat(
-                    (model_weights[:-1], torch.tensor([[0]])))
+                weights_sum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
                 logger.info(f"grad: {grad}, weights sum: {weights_sum}")
                 new_grad = grad + self.alpha * weights_sum
             else:
@@ -309,7 +306,7 @@ def separate(value, size_list):
     separate_res = []
     cur = 0
     for size in size_list:
-        separate_res.append(value[cur:cur + size, :])
+        separate_res.append(value[cur : cur + size, :])
         cur += size
     return separate_res
 
@@ -317,27 +314,27 @@ def separate(value, size_list):
 def optimizer_factory(model_parameter, optimizer_type, optim_params):
     optimizer_params = optim_params
 
-    if optimizer_type == 'adadelta':
+    if optimizer_type == "adadelta":
         return torch.optim.Adadelta(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adagrad':
+    elif optimizer_type == "adagrad":
         return torch.optim.Adagrad(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adam':
+    elif optimizer_type == "adam":
         return torch.optim.Adam(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adamw':
+    elif optimizer_type == "adamw":
         return torch.optim.AdamW(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adamax':
+    elif optimizer_type == "adamax":
         return torch.optim.Adamax(model_parameter, **optimizer_params)
-    elif optimizer_type == 'asgd':
+    elif optimizer_type == "asgd":
         return torch.optim.ASGD(model_parameter, **optimizer_params)
-    elif optimizer_type == 'nadam':
+    elif optimizer_type == "nadam":
         return torch.optim.NAdam(model_parameter, **optimizer_params)
-    elif optimizer_type == 'radam':
+    elif optimizer_type == "radam":
         return torch.optim.RAdam(model_parameter, **optimizer_params)
-    elif optimizer_type == 'rmsprop':
+    elif optimizer_type == "rmsprop":
         return torch.optim.RMSprop(model_parameter, **optimizer_params)
     elif optimizer_type == "rprop":
         return torch.optim.Rprop(model_parameter, **optimizer_params)
-    elif optimizer_type == 'sgd':
+    elif optimizer_type == "sgd":
         return torch.optim.SGD(model_parameter, **optimizer_params)
     else:
         raise NotImplementedError(
@@ -346,12 +343,11 @@ def optimizer_factory(model_parameter, optimizer_type, optim_params):
 
 def lr_scheduler_factory(optimizer, method, scheduler_param):
     scheduler_method = method
-    if scheduler_method == 'constant':
-        return torch.optim.lr_scheduler.ConstantLR(
-            optimizer, **scheduler_param)
-    elif scheduler_method == 'step':
+    if scheduler_method == "constant":
+        return torch.optim.lr_scheduler.ConstantLR(optimizer, **scheduler_param)
+    elif scheduler_method == "step":
         return torch.optim.lr_scheduler.StepLR(optimizer, **scheduler_param)
-    elif scheduler_method == 'linear':
+    elif scheduler_method == "linear":
         return torch.optim.lr_scheduler.LinearLR(optimizer, **scheduler_param)
     else:
         raise NotImplementedError(
