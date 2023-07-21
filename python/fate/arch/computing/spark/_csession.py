@@ -36,6 +36,8 @@ class CSession(CSessionABC):
         self._session_id = session_id
 
     def load(self, uri: URI, schema, options: dict = None) -> "Table":
+        if not options:
+            options = {}
         partitions = options.get("partitions", None)
 
         if uri.scheme == "hdfs":
@@ -47,7 +49,7 @@ class CSession(CSessionABC):
                 in_serialized=in_serialized,
                 id_delimiter=id_delimiter,
             )
-            table.scheme = schema
+            table.schema = schema
             return table
 
         if uri.scheme == "hive":
@@ -61,7 +63,7 @@ class CSession(CSessionABC):
                 db_name=database_name,
                 partitions=partitions,
             )
-            table.scheme = schema
+            table.schema = schema
             return table
 
         if uri.scheme == "file":
