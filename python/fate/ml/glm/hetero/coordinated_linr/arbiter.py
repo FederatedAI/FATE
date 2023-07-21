@@ -56,6 +56,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
+        ctx.guest("encryptor").put(encryptor)
         if self.estimator is None:
             optimizer = Optimizer(
                 self.optimizer_param["method"],
@@ -65,7 +66,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
             )
             lr_scheduler = LRScheduler(self.learning_rate_param["method"],
                                        self.learning_rate_param["scheduler_params"])
-            single_estimator = HeteroLinrEstimatorArbiter(epochs=self.epochs,
+            single_estimator = HeteroLinREstimatorArbiter(epochs=self.epochs,
                                                           early_stop=self.early_stop,
                                                           tol=self.tol,
                                                           batch_size=self.batch_size,
@@ -93,13 +94,13 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
                                             model["meta"]["batch_size"],
                                             model["meta"]["optimizer_param"],
                                             model["meta"]["learning_rate_param"])
-        estimator = HeteroLinrEstimatorArbiter()
+        estimator = HeteroLinREstimatorArbiter()
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
         return linr
 
 
-class HeteroLinrEstimatorArbiter(HeteroModule):
+class HeteroLinREstimatorArbiter(HeteroModule):
     def __init__(
             self,
             epochs=None,

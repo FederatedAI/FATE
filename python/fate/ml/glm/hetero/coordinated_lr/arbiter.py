@@ -57,6 +57,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
+        ctx.guest("encryptor").put(encryptor)
         label_count = ctx.guest("label_count").get()
         if label_count > 2 or self.ovr:
             self.ovr = True
