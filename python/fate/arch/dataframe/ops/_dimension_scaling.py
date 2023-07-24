@@ -219,6 +219,9 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
     _flatten_func = functools.partial(_flatten_partition, block_num=df.data_manager.block_num)
     retrieval_raw_table = retrieval_block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
 
+    if retrieval_raw_table.count() == 0:
+        return df.empty_frame()
+
     partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table)
     to_blocks_func = functools.partial(to_blocks, dm=df.data_manager, partition_mappings=partition_order_mappings)
 

@@ -101,15 +101,18 @@ class DataFrame(object):
 
     @property
     def shape(self) -> "tuple":
-        if not self.__count:
+        if self.__count is None:
             if self._sample_id_indexer:
                 items = self._sample_id_indexer.count()
             elif self._match_id_indexer:
                 items = self._match_id_indexer.count()
             else:
-                items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
-                    lambda size1, size2: size1 + size2
-                )
+                if self._block_table.count() == 0:
+                    items = 0
+                else:
+                    items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
+                        lambda size1, size2: size1 + size2
+                    )
             self.__count = items
 
         return self.__count, len(self._data_manager.schema.columns)
