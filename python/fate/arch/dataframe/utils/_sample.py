@@ -26,6 +26,17 @@ SAMPLE_INDEX_TAG = "sample_index"
 REGENERATED_IDS = "regenerated_ids"
 
 
+def local_sample(
+    ctx,
+    df: DataFrame,
+    n: int=None,
+    frac: Union[float, Dict[Any, float]] = None,
+    replace: bool = True,
+    random_state=None
+):
+    return _sample_guest(ctx, df, n, frac, replace, random_state, sync=False)
+
+
 def federated_sample(
         ctx,
         df: DataFrame,
@@ -35,36 +46,37 @@ def federated_sample(
         random_state=None,
         role: str = "guest"):
     if role == "guest":
-        return _federated_sample_guest(ctx, df, n, frac, replace, random_state)
+        return _sample_guest(ctx, df, n, frac, replace, random_state, sync=True)
     else:
         return _federated_sample_host(ctx, df)
 
 
-def _federated_sample_guest(
+def _sample_guest(
     ctx,
     df: DataFrame,
     n: int = None,
     frac: Union[float, Dict[Any, float]] = None,
     replace: bool = True,
-    random_state=None
+    random_state=None,
+    sync=True,
 ):
     if n is not None and frac is not None:
-        raise ValueError("federated_sample's parameters n and frac should not be set in the same time.")
+        raise ValueError("sample's parameters n and frac should not be set in the same time.")
 
     if frac is not None:
         if isinstance(frac, float):
             if frac > 1:
-                raise ValueError(f"federated_sample's parameter frac={frac} should <= 1.0")
+                raise ValueError(f"sample's parameter frac={frac} should <= 1.0")
             n = max(1, int(frac * df.shape[0]))
         else:
             for k, f in frac.items():
                 if f > 1 and replace is False:
-                    raise ValueError(f"federated_sample's parameter frac's label={k}, fraction={f} "
+                    raise ValueError(f"sample's parameter frac's label={k}, fraction={f} "
                                      f"should <= 1.0 if replace=False")
 
     if n is not None:
         if n > df.shape[0] and replace is False:
-            raise ValueError(f"federated_sample's parameter n={n} should <= data_size={df.shape[0]} if replace=False")
+            raise ValueError(f"sample's parameter n={n} should <= data_size={df.shape[0]} if replace=False")
 
         if replace:
             choices = resample(list(range(df.shape[0])), replace=True, n_samples=n, random_state=random_state)
@@ -77,19 +89,22 @@ def _federated_sample_guest(
                                                        regenerated_ids,
                                                        df.block_table.partitions)
 
-            ctx.hosts.put(REGENERATED_TAG, True)
-            ctx.hosts.put(REGENERATED_IDS, choice_with_regenerated_ids)
+            if sync:
+                ctx.hosts.put(REGENERATED_TAG, True)
+                ctx.hosts.put(REGENERATED_IDS, choice_with_regenerated_ids)
 
             regenerated_raw_table = _regenerated_sample_ids(df, choice_with_regenerated_ids)
             sample_df = _convert_raw_table_to_df(df._ctx, regenerated_raw_table, df.data_manager)
-            sample_indexer = sample_df.get_indexer(target="sample_id")
-            ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
+            if sync:
+                sample_indexer = sample_df.get_indexer(target="sample_id")
+                ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
 
         else:
             sample_df = df.sample(n=n, random_state=random_state)
-            sample_indexer = sample_df.get_indexer(target="sample_id")
-            ctx.hosts.put(REGENERATED_TAG, False)
-            ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
+            if sync:
+                sample_indexer = sample_df.get_indexer(target="sample_id")
+                ctx.hosts.put(REGENERATED_TAG, False)
+                ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
     else:
         up_sample = False
         for label, f in frac.items():
@@ -113,12 +128,14 @@ def _federated_sample_guest(
                 else:
                     choice_with_regenerated_ids = choice_with_regenerated_ids.union(label_choice_with_regenerated_ids)
 
-            ctx.hosts.put(REGENERATED_TAG, True)
-            ctx.hosts.put(REGENERATED_IDS, choice_with_regenerated_ids)
+            if sync:
+                ctx.hosts.put(REGENERATED_TAG, True)
+                ctx.hosts.put(REGENERATED_IDS, choice_with_regenerated_ids)
             regenerated_raw_table = _regenerated_sample_ids(df, choice_with_regenerated_ids)
             sample_df = _convert_raw_table_to_df(df._ctx, regenerated_raw_table, df.data_manager)
-            sample_indexer = sample_df.get_indexer(target="sample_id")
-            ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
+            if sync:
+                sample_indexer = sample_df.get_indexer(target="sample_id")
+                ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
         else:
             sample_df = None
             for label, f in frac.items():
@@ -131,9 +148,10 @@ def _federated_sample_guest(
                 else:
                     DataFrame.hstack([sample_df, sample_label_df])
 
-            sample_indexer = sample_df.get_indexer(target="sample_id")
-            ctx.hosts.put(REGENERATED_IDS, False)
-            ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
+            if sync:
+                sample_indexer = sample_df.get_indexer(target="sample_id")
+                ctx.hosts.put(REGENERATED_IDS, False)
+                ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
 
     return sample_df
 
