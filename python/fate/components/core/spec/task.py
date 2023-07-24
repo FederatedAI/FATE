@@ -27,7 +27,7 @@ from .federation import (
     RollSiteFederationSpec,
     StandaloneFederationSpec,
 )
-from .logger import CustomLogger, FlowLogger, PipelineLogger
+from .logger import LoggerConfig
 
 
 class TaskConfigSpec(pydantic.BaseModel):
@@ -41,7 +41,7 @@ class TaskConfigSpec(pydantic.BaseModel):
             PulsarFederationSpec,
             OSXFederationSpec,
         ]
-        logger: Union[PipelineLogger, FlowLogger, CustomLogger]
+        logger: LoggerConfig
         task_final_meta_path: pydantic.FilePath = pydantic.Field(default_factory=lambda: os.path.abspath(os.getcwd()))
 
     task_id: str
