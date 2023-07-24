@@ -174,6 +174,14 @@ class DataFrame(object):
             with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
         )
 
+    def empty_frame(self) -> "DataFrame":
+        return DataFrame(
+            self._ctx,
+            self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions),
+            partition_order_mappings=dict(),
+            data_manager=self._data_manager.duplicate()
+        )
+
     def drop(self, index) -> "DataFrame":
         from .ops._dimension_scaling import drop
 
@@ -252,21 +260,16 @@ class DataFrame(object):
 
         return sigmoid(self)
 
-    def rename(
-        self,
-        sample_id_name: str = None,
-        match_id_name: str = None,
-        label_name: str = None,
-        weight_name: str = None,
-        columns: dict = None,
-    ):
-        self._data_manager.rename(
-            sample_id_name=sample_id_name,
-            match_id_name=match_id_name,
-            label_name=label_name,
-            weight_name=weight_name,
-            columns=columns,
-        )
+    def rename(self, sample_id_name: str = None,
+               match_id_name: str = None,
+               label_name: str = None,
+               weight_name: str = None,
+               columns: dict = None):
+        self._data_manager.rename(sample_id_name=sample_id_name,
+                                  match_id_name=match_id_name,
+                                  label_name=label_name,
+                                  weight_name=weight_name,
+                                  columns=columns)
 
     def count(self) -> "int":
         return self.shape[0]
@@ -276,19 +279,20 @@ class DataFrame(object):
 
         return describe(self, ddof=ddof, unbiased=unbiased)
 
-    def quantile(self, q, relative_error: float = 1e-4):
+    def quantile(
+        self,
+        q,
+        relative_error: float = 1e-4
+    ):
         from .ops._quantile import quantile
-
         return quantile(self, q, relative_error)
 
     def qcut(self, q: int):
         from .ops._quantile import qcut
-
         return qcut(self, q)
 
     def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
         from .ops._encoder import bucketize
-
         return bucketize(self, boundaries)
 
     def hist(self, targets):
@@ -298,7 +302,6 @@ class DataFrame(object):
 
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace
-
         return replace(self, to_replace)
 
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
@@ -339,6 +342,9 @@ class DataFrame(object):
 
     def __eq__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.eq, other)
+
+    def __ne__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.ne, other)
 
     def __invert__(self):
         from .ops._unary_operator import invert
@@ -465,6 +471,9 @@ class DataFrame(object):
         if target not in ["sample_id", "match_id"]:
             raise ValueError(f"Target should be sample_id or match_id, but {target} found")
 
+        if self.shape[0] == 0:
+            return self._ctx.computing.parallelize([], include_key=False, partitions=self._block_table.partitions)
+
         target_name = getattr(self.schema, f"{target}_name")
         indexer = self.__convert_to_table(target_name)
         if target == "sample_id":
@@ -480,6 +489,9 @@ class DataFrame(object):
             indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, rhs))
         else:
             indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, lhs))
+
+        if indexer.count() == 0:
+            return self.empty_frame()
 
         agg_indexer = aggregate_indexer(indexer)
 
@@ -560,7 +572,7 @@ class DataFrame(object):
             self._ctx,
             self._block_table.mapValues(lambda v: v),
             copy.deepcopy(self.partition_order_mappings),
-            self._data_manager.duplicate(),
+            self._data_manager.duplicate()
         )
 
     @classmethod
@@ -575,9 +587,8 @@ class DataFrame(object):
 
         return vstack(stacks)
 
-    def sample(self, n: int = None, frac: float = None, random_state=None) -> "DataFrame":
+    def sample(self, n: int=None, frac: float=None, random_state=None) -> "DataFrame":
         from .ops._dimension_scaling import sample
-
         return sample(self, n, frac, random_state)
 
     def __extract_fields(
@@ -609,5 +620,4 @@ class DataFrame(object):
 
     def data_overview(self, num=100):
         from .ops._data_overview import collect_data
-
         return collect_data(self, num=100)
