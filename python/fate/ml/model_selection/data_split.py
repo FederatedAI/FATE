@@ -31,14 +31,14 @@ class DataSplitModuleGuest(Module):
             test_size=0.0,
             stratified=False,
             random_state=None,
-            ctx_mode="hetero"
+            federated_sample=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
         self.test_size = test_size
         self.stratified = stratified
         self.random_state = random_state
-        self.ctx_mode = ctx_mode
+        self.federated_sample = federated_sample
 
     def fit(self, ctx: Context, train_data, validate_data=None):
         data_count = train_data.shape[0]
@@ -72,7 +72,7 @@ class DataSplitModuleGuest(Module):
             test_data_set = validate_test_data_set
             test_sid = None
 
-        if self.ctx_mode == "hetero":
+        if self.federated_sample:
             ctx.hosts.put("train_data_sid", train_sid)
             ctx.hosts.put("validate_data_sid", validate_sid)
             ctx.hosts.put("test_data_sid", test_sid)
@@ -98,7 +98,7 @@ class DataSplitModuleHost(Module):
         self.ctx_mode = ctx_mode
 
     def fit(self, ctx: Context, train_data, validate_data=None):
-        if self.ctx_mode == "hetero":
+        if self.federated_sample:
             train_data_sid = ctx.guest.get("train_data_sid")
             validate_data_sid = ctx.guest.get("validate_data_sid")
             test_data_sid = ctx.guest.get("test_data_sid")
@@ -109,7 +109,7 @@ class DataSplitModuleHost(Module):
                 validate_data_set = train_data.loc(validate_data_sid, preserve_order=True)
             if test_data_sid:
                 test_data_set = train_data.loc(test_data_sid, preserve_order=True)
-        elif self.ctx_mode in ["homo", "local"]:
+        else:
             data_count = train_data.shape[0]
             train_size, validate_size, test_size = get_split_data_size(self.train_size,
                                                                        self.validate_size,
@@ -137,8 +137,7 @@ class DataSplitModuleHost(Module):
                 test_data_set = validate_test_data_set.drop(validate_sid)
             else:
                 test_data_set = validate_test_data_set
-        else:
-            raise ValueError(f"Unknown ctx_mode: {self.ctx_mode}")
+
         return train_data_set, validate_data_set, test_data_set
 
 

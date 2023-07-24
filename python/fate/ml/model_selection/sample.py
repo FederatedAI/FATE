@@ -17,7 +17,7 @@
 import logging
 
 from fate.arch import Context
-from fate.arch.dataframe import DataFrame
+from fate.arch.dataframe import utils
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -31,55 +31,48 @@ class SampleModuleGuest(Module):
             frac=1.0,
             n=None,
             random_state=None,
-            ctx_mode="hetero"
+            federated_sample=True
     ):
         self.mode = mode
         self.replace = replace
         self.frac = frac
         self.n = n
         self.random_state = random_state
-        self.ctx_mode = ctx_mode
+        self.federated_sample = federated_sample
 
         self._sample_obj = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        if self.mode == "stratified":
-            # labels = train_data.label.unique()
-            train_data_binarized_label = train_data.label.get_dummies()
-            labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
-            if self.n is not None:
-                label_count_dict = self.n
-                if not isinstance(self.n, dict):
-                    label_count_dict = {label: self.n for label in labels}
-                sampled_data = sample_per_label(train_data, label_count_dict=label_count_dict)
-            else:
-                label_frac_dict = self.frac
-                if not isinstance(self.frac, dict):
-                    label_frac_dict = {label: self.frac for label in labels}
-                sampled_data = sample_per_label(train_data, label_frac_dict=label_frac_dict)
-        elif self.mode == "random":
-            if self.n is not None:
-                sampled_data = train_data.sample(n=self.n, replace=self.replace, random_state=self.random_state)
-            else:
-                sampled_data = train_data.sample(frac=self.frac, replace=self.replace, random_state=self.random_state)
-        elif self.mode == "weight":
-            if self.n is not None:
-                sampled_data = train_data.sample(n=self.n,
-                                                 replace=self.replace,
-                                                 weight=train_data.weight,
-                                                 random_state=self.random_state)
-            else:
-                sampled_data = train_data.sample(frac=self.frac,
-                                                 replace=self.replace,
-                                                 weight=train_data.weight,
-                                                 random_state=self.random_state)
-
+        allow_replace = False
+        if self.frac:
+            if isinstance(self.frac, float) or isinstance(self.frac, int):
+                if self.frac > 1.0:
+                    allow_replace = True
+            elif isinstance(self.frac, dict):
+                for frac in self.frac.values():
+                    if frac > 1.0:
+                        allow_replace = True
+        if self.n:
+            data_count = train_data.shape[0]
+            if isinstance(self.n, int):
+                if self.n > train_data:
+                    allow_replace = True
+        if self.federated_sample:
+            sampled_data = utils.federated_sample(ctx,
+                                                  train_data,
+                                                  n=self.n,
+                                                  frac=self.frac,
+                                                  replace=allow_replace,
+                                                  role=ctx.local.role,
+                                                  random_state=self.random_state)
         else:
-            raise ValueError(f"Unknown sample mode: {self.mode}")
-
-        if self.ctx_mode == "hetero":
-            sampled_mid = sampled_data.match_id
-            ctx.hosts.put("sampled_mid", sampled_mid)
+            # local sample
+            sampled_data = utils.local_sample(ctx,
+                                              train_data,
+                                              n=self.n,
+                                              frac=self.frac,
+                                              replace=allow_replace,
+                                              random_state=self.random_state)
 
         return sampled_data
 
@@ -92,41 +85,38 @@ class SampleModuleHost(Module):
             frac=1.0,
             n=None,
             random_state=None,
-            ctx_mode="hetero"
+            federated_sample=True
     ):
         self.mode = mode
         self.replace = replace
         self.frac = frac
         self.n = n
         self.random_state = random_state
-        self.ctx_mode = ctx_mode
+        self.federated_sample = federated_sample
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        if self.ctx_mode == "hetero":
-            sampled_mid = ctx.guest.get("sampled_mid")
-            # maybe other api?
-            sampled_data = train_data.join(sampled_mid, how="inner")
-        elif self.ctx_mode in ["homo", "local"]:
-            if self.mode == "stratified":
-                labels = train_data.label.unique()
-                if self.n is not None:
-                    label_count_dict = self.n
-                    if not isinstance(self.n, dict):
-                        label_count_dict = {label: self.n for label in labels}
-                    sampled_data = sample_per_label(train_data, label_count_dict=label_count_dict)
-                else:
-                    label_frac_dict = self.frac
-                    if not isinstance(self.frac, dict):
-                        label_frac_dict = {label: self.frac for label in labels}
-                    sampled_data = sample_per_label(train_data, label_frac_dict=label_frac_dict)
-            elif self.mode == "random":
-                if self.n is not None:
-                    sampled_data = train_data.sample(n=self.n, replace=self.replace, random_state=self.random_state)
-                else:
-                    sampled_data = train_data.sample(frac=self.frac,
-                                                     replace=self.replace,
-                                                     random_state=self.random_state)
-            elif self.mode == "weight":
+        if self.federated_sample:
+            sampled_data = utils.federated_sample(ctx,
+                                                  train_data,
+                                                  role=ctx.local.role)
+        else:
+            # local sample
+            allow_replace = False
+            if self.frac:
+                if isinstance(self.frac, float) or isinstance(self.frac, int):
+                    if self.frac > 1.0:
+                        allow_replace = True
+                elif isinstance(self.frac, dict):
+                    for frac in self.frac.values():
+                        if frac > 1.0:
+                            allow_replace = True
+            sampled_data = utils.local_sample(ctx,
+                                              train_data,
+                                              n=self.n,
+                                              frac=self.frac,
+                                              replace=allow_replace,
+                                              random_state=self.random_state)
+            """elif self.mode == "weight":
                 if self.n is not None:
                     sampled_data = train_data.sample(n=self.n,
                                                      replace=self.replace,
@@ -136,15 +126,12 @@ class SampleModuleHost(Module):
                     sampled_data = train_data.sample(frac=self.frac,
                                                      relace=self.replace,
                                                      weight=train_data.weight,
-                                                     random_state=self.random_state)
-            else:
-                raise ValueError(f"Unknown sample mode: {self.mode}")
-        else:
-            raise ValueError(f"Unknown ctx mode: {self.ctx_mode}")
+                                                     random_state=self.random_state)"""
 
         return sampled_data
 
 
+"""
 def sample_per_label(train_data, label_frac_dict=None, label_count_dict=None, replace=False, random_state=None):
     sampled_data_df = []
     if label_frac_dict is not None:
@@ -165,3 +152,4 @@ def sample_per_label(train_data, label_frac_dict=None, label_count_dict=None, re
         raise ValueError("label_frac_dict and label_count_dict can not be None at the same time")
     sampled_data = DataFrame.vstack(sampled_data_df)
     return sampled_data
+"""

@@ -35,8 +35,9 @@ def data_split(
                                   desc="whether sample with stratification, "
                                        "should not use this for data with continuous label values"),
         random_state: cpn.parameter(type=params.conint(ge=0), default=None, desc="random state"),
-        ctx_mode: cpn.parameter(type=params.string_choice(["hetero", "homo", "local"]), default="hetero",
-                                desc="sampling mode, 'homo' & 'local' will both sample locally"),
+        federated_sample: cpn.parameter(type=bool, default=True,
+                                        desc="sampling mode, 'homo' & 'local' scenario should sample locally, "
+                                             "default True for hetero scenario"),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
         validate_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
         test_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
@@ -51,9 +52,9 @@ def data_split(
 
     sub_ctx = ctx.sub_ctx("train")
     if role.is_guest:
-        module = DataSplitModuleGuest(train_size, validate_size, test_size, stratified, random_state, ctx_mode)
+        module = DataSplitModuleGuest(train_size, validate_size, test_size, stratified, random_state, federated_sample)
     elif role.is_host:
-        module = DataSplitModuleHost(train_size, validate_size, test_size, stratified, random_state, ctx_mode)
+        module = DataSplitModuleHost(train_size, validate_size, test_size, stratified, random_state, federated_sample)
     input_data = input_data.read()
 
     train_data_set, validate_data_set, test_data_set = module.fit(sub_ctx, input_data)

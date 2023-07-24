@@ -46,8 +46,9 @@ def sample(
                               "default: None, cannot be used with frac"),
         random_state: cpn.parameter(type=params.conint(ge=0), default=None,
                                     desc="random state"),
-        ctx_mode: cpn.parameter(type=params.string_choice(["hetero", "homo", "local"]), default="hetero",
-                                desc="sampling mode, 'homo' & 'local' will both sample locally"),
+        federated_sample: cpn.parameter(type=bool, default=True,
+                                        desc="sampling mode, 'homo' & 'local' scenario should sample locally,"
+                                             "default True for 'hetero' federation scenario"),
         output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     if frac is not None and n is not None:
@@ -62,10 +63,10 @@ def sample(
     sub_ctx = ctx.sub_ctx("train")
     if role.is_guest:
         module = SampleModuleGuest(mode=mode, replace=replace, frac=frac, n=n,
-                                   random_state=random_state, ctx_mode=ctx_mode)
+                                   random_state=random_state, federated_sample=federated_sample)
     elif role.is_host:
         module = SampleModuleHost(mode=mode, replace=replace, frac=frac, n=n,
-                                  random_state=random_state, ctx_mode=ctx_mode)
+                                  random_state=random_state, federated_sample=federated_sample)
     else:
         raise ValueError(f"unknown role")
     input_data = input_data.read()
