@@ -31,14 +31,14 @@ class DataSplitModuleGuest(Module):
             test_size=0.0,
             stratified=False,
             random_state=None,
-            ctx_mode="hetero"
+            federated_sample=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
         self.test_size = test_size
         self.stratified = stratified
         self.random_state = random_state
-        self.ctx_mode = ctx_mode
+        self.federated_sample = federated_sample
 
     def fit(self, ctx: Context, train_data, validate_data=None):
         data_count = train_data.shape[0]
@@ -46,33 +46,32 @@ class DataSplitModuleGuest(Module):
                                                                    self.validate_size,
                                                                    self.test_size,
                                                                    data_count)
-
         if self.stratified:
-            train_data_set = sample_per_label(train_data, label_count=train_size, random_state=self.random_state)
+            train_data_set = sample_per_label(train_data, sample_count=train_size, random_state=self.random_state)
         else:
             train_data_set = sample_data(df=train_data, n=train_size, random_state=self.random_state)
         if train_data_set is not None:
             train_sid = train_data_set.get_indexer(target="sample_id")
-            validate_test_data_set = train_data.drop(train_sid)
+            validate_test_data_set = train_data.drop(train_data_set)
         else:
             train_sid = None
             validate_test_data_set = train_data
 
         if self.stratified:
-            validate_data_set = sample_per_label(validate_test_data_set, label_count=train_size,
+            validate_data_set = sample_per_label(validate_test_data_set, sample_count=validate_size,
                                                  random_state=self.random_state)
         else:
             validate_data_set = sample_data(df=validate_test_data_set, n=validate_size, random_state=self.random_state)
         if validate_data_set is not None:
             validate_sid = validate_data_set.get_indexer(target="sample_id")
-            test_data_set = validate_test_data_set.drop(validate_sid)
+            test_data_set = validate_test_data_set.drop(validate_data_set)
             test_sid = test_data_set.get_indexer(target="sample_id")
         else:
             validate_sid = None
             test_data_set = validate_test_data_set
             test_sid = None
 
-        if self.ctx_mode == "hetero":
+        if self.federated_sample:
             ctx.hosts.put("train_data_sid", train_sid)
             ctx.hosts.put("validate_data_sid", validate_sid)
             ctx.hosts.put("test_data_sid", test_sid)
@@ -88,17 +87,17 @@ class DataSplitModuleHost(Module):
             test_size=0.0,
             stratified=False,
             random_state=None,
-            ctx_mode="hetero"
+            federated_sample=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
         self.test_size = test_size
         self.stratified = stratified
         self.random_state = random_state
-        self.ctx_mode = ctx_mode
+        self.federated_sample = federated_sample
 
     def fit(self, ctx: Context, train_data, validate_data=None):
-        if self.ctx_mode == "hetero":
+        if self.federated_sample:
             train_data_sid = ctx.guest.get("train_data_sid")
             validate_data_sid = ctx.guest.get("validate_data_sid")
             test_data_sid = ctx.guest.get("test_data_sid")
@@ -109,7 +108,7 @@ class DataSplitModuleHost(Module):
                 validate_data_set = train_data.loc(validate_data_sid, preserve_order=True)
             if test_data_sid:
                 test_data_set = train_data.loc(test_data_sid, preserve_order=True)
-        elif self.ctx_mode in ["homo", "local"]:
+        else:
             data_count = train_data.shape[0]
             train_size, validate_size, test_size = get_split_data_size(self.train_size,
                                                                        self.validate_size,
@@ -117,28 +116,27 @@ class DataSplitModuleHost(Module):
                                                                        data_count)
 
             if self.stratified:
-                train_data_set = sample_per_label(train_data, label_count=train_size, random_state=self.random_state)
+                train_data_set = sample_per_label(train_data, sample_count=train_size, random_state=self.random_state)
             else:
                 train_data_set = sample_data(df=train_data, n=train_size, random_state=self.random_state)
             if train_data_set is not None:
-                train_sid = train_data_set.get_indexer(target="sample_id")
-                validate_test_data_set = train_data.drop(train_sid)
+                # train_sid = train_data_set.get_indexer(target="sample_id")
+                validate_test_data_set = train_data.drop(train_data_set)
             else:
                 validate_test_data_set = train_data
 
             if self.stratified:
-                validate_data_set = sample_per_label(validate_test_data_set, label_count=train_size,
+                validate_data_set = sample_per_label(validate_test_data_set, sample_count=validate_size,
                                                      random_state=self.random_state)
             else:
                 validate_data_set = sample_data(df=validate_test_data_set, n=validate_size,
                                                 random_state=self.random_state)
             if validate_data_set is not None:
-                validate_sid = validate_data_set.get_indexer(target="sample_id")
-                test_data_set = validate_test_data_set.drop(validate_sid)
+                # validate_sid = validate_data_set.get_indexer(target="sample_id")
+                test_data_set = validate_test_data_set.drop(validate_data_set)
             else:
                 test_data_set = validate_test_data_set
-        else:
-            raise ValueError(f"Unknown ctx_mode: {self.ctx_mode}")
+
         return train_data_set, validate_data_set, test_data_set
 
 
@@ -149,15 +147,23 @@ def sample_data(df, n, random_state):
         return df.sample(n=n, random_state=random_state)
 
 
-def sample_per_label(train_data, label_count=None, random_state=None):
+def sample_per_label(train_data, sample_count=None, random_state=None):
     train_data_binarized_label = train_data.label.get_dummies()
     labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
     sampled_data_df = []
-    for label in labels:
+    sampled_n = 0
+    data_n = train_data.shape[0]
+    for i, label in enumerate(labels):
         label_data = train_data[(train_data.label == label).as_tensor()]
-        label_sampled_data = sample_data(df=label_data, n=label_count, random_state=random_state)
+        if i == len(labels) - 1:
+            # last label:
+            to_sample_n = sample_count - sampled_n
+        else:
+            to_sample_n = round(label_data.shape[0] / data_n * sample_count)
+        label_sampled_data = sample_data(df=label_data, n=to_sample_n, random_state=random_state)
         if label_sampled_data is not None:
             sampled_data_df.append(label_sampled_data)
+            sampled_n += label_sampled_data.shape[0]
     sampled_data = None
     if sampled_data_df:
         sampled_data = DataFrame.vstack(sampled_data_df)
