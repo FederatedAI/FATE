@@ -15,7 +15,7 @@
 #  limitations under the License.
 #
 set -e
-source /data/projects/osx/bin/common.sh
+source ./bin/common.sh
 #export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 #export PATH=$PATH:$JAVA_HOME/bin
 
