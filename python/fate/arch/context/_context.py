@@ -117,7 +117,7 @@ class Context:
 
     @property
     def on_cross_validations(self) -> "Context":
-        return self.sub_ctx("cross_validations", is_special=True)
+        return self.sub_ctx("cross_validations")
 
     @overload
     def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:
