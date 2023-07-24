@@ -136,6 +136,11 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 }
             } catch (Exception e) {
                 logger.error("topic {} answer long pulling error ",transferId,e);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException interruptedException) {
+                    logger.error("interruptedException : ",interruptedException);
+                }
             }
         }
         if (reputList != null) {

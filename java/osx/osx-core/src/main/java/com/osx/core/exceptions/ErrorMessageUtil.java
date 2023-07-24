@@ -99,6 +99,7 @@ public class ErrorMessageUtil {
             BaseException baseException = (BaseException) e;
             exceptionInfo.setCode(baseException.getRetcode());
         } else {
+            logger.error("SYSTEM_ERROR ==> " ,e);
             exceptionInfo.setCode(StatusCode.SYSTEM_ERROR);
         }
         exceptionInfo.setMessage(message);
