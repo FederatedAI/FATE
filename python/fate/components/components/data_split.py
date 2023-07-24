@@ -13,11 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 from typing import Union
 
 from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
 from fate.ml.model_selection.data_split import DataSplitModuleGuest, DataSplitModuleHost
+
+logger = logging.getLogger(__name__)
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
@@ -25,12 +28,15 @@ def data_split(
         ctx: Context,
         role: Role,
         input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        train_size: cpn.parameter(type=Union[params.conint(ge=0), params.confloat(ge=0.0)], default=None,
-                                  desc="size of output training data, should be either int for exact sample size or float for fraction"),
-        validate_size: cpn.parameter(type=Union[params.conint(ge=0), params.confloat(ge=0.0)], default=None,
-                                     desc="size of output validation data, should be either int for exact sample size or float for fraction"),
-        test_size: cpn.parameter(type=Union[params.conint(ge=0), params.confloat(ge=0.0)], default=None,
-                                 desc="size of output test data, should be either int for exact sample size or float for fraction"),
+        train_size: cpn.parameter(type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)], default=None,
+                                  desc="size of output training data, "
+                                       "should be either int for exact sample size or float for fraction"),
+        validate_size: cpn.parameter(type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)], default=None,
+                                     desc="size of output validation data, "
+                                          "should be either int for exact sample size or float for fraction"),
+        test_size: cpn.parameter(type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)], default=None,
+                                 desc="size of output test data, "
+                                      "should be either int for exact sample size or float for fraction"),
         stratified: cpn.parameter(type=bool, default=False,
                                   desc="whether sample with stratification, "
                                        "should not use this for data with continuous label values"),
@@ -42,13 +48,15 @@ def data_split(
         validate_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
         test_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
 ):
-    if isinstance(train_size, float) or isinstance(validate_size, float) or isinstance(test_size, float):
-        if train_size + validate_size + test_size > 1:
-            raise ValueError("(train_size + validate_size + test_size) should be less than or equal to 1.0")
     if train_size is None and validate_size is None and test_size is None:
         train_size = 0.8
         validate_size = 0.2
         test_size = 0.0
+
+    # logger.info(f"in cpn received train_size: {train_size}, validate_size: {validate_size}, test_size: {test_size}")
+    # check if local but federated sample
+    if federated_sample and len(ctx.parties.ranks) < 2:
+        raise ValueError(f"federated sample can only be called when both 'guest' and 'host' present. Please check")
 
     sub_ctx = ctx.sub_ctx("train")
     if role.is_guest:

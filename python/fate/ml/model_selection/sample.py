@@ -43,26 +43,12 @@ class SampleModuleGuest(Module):
         self._sample_obj = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        allow_replace = False
-        if self.frac:
-            if isinstance(self.frac, float) or isinstance(self.frac, int):
-                if self.frac > 1.0:
-                    allow_replace = True
-            elif isinstance(self.frac, dict):
-                for frac in self.frac.values():
-                    if frac > 1.0:
-                        allow_replace = True
-        if self.n:
-            data_count = train_data.shape[0]
-            if isinstance(self.n, int):
-                if self.n > train_data:
-                    allow_replace = True
         if self.federated_sample:
             sampled_data = utils.federated_sample(ctx,
                                                   train_data,
                                                   n=self.n,
                                                   frac=self.frac,
-                                                  replace=allow_replace,
+                                                  replace=self.replace,
                                                   role=ctx.local.role,
                                                   random_state=self.random_state)
         else:
@@ -71,7 +57,7 @@ class SampleModuleGuest(Module):
                                               train_data,
                                               n=self.n,
                                               frac=self.frac,
-                                              replace=allow_replace,
+                                              replace=self.replace,
                                               random_state=self.random_state)
 
         return sampled_data
@@ -101,20 +87,11 @@ class SampleModuleHost(Module):
                                                   role=ctx.local.role)
         else:
             # local sample
-            allow_replace = False
-            if self.frac:
-                if isinstance(self.frac, float) or isinstance(self.frac, int):
-                    if self.frac > 1.0:
-                        allow_replace = True
-                elif isinstance(self.frac, dict):
-                    for frac in self.frac.values():
-                        if frac > 1.0:
-                            allow_replace = True
             sampled_data = utils.local_sample(ctx,
                                               train_data,
                                               n=self.n,
                                               frac=self.frac,
-                                              replace=allow_replace,
+                                              replace=self.replace,
                                               random_state=self.random_state)
             """elif self.mode == "weight":
                 if self.n is not None:
