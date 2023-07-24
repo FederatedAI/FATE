@@ -191,12 +191,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
         nodes = self._nodes
         def print_node(node, prefix=""):
             if node is not None:
-                info_str = "(id: " + str(node.nid)
+                info_str = "("
                 if node.is_leaf:
-                    info_str += ", weight: " + str(node.weight)
+                    info_str += "weight: " + str(node.weight)
                     info_str += " leaf)"
                 else:
-                    info_str += ", fid {}, split {}".format(node.fid, node.bid)
+                    info_str += "fid {}, split {}".format(node.fid, node.bid)
                     info_str += ")"
                 
                 if not node.is_leaf:
@@ -204,7 +204,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 
                 if not show_path:
                     prefix = " " * len(prefix)
-                print(f"{prefix}id: {node.nid}", info_str)
+                print(f"{prefix}id:{node.nid}", info_str)
 
                 if not node.is_leaf:
                     print_node(next((n for n in nodes if n.nid == node.l), None), prefix + "--L--> ")
