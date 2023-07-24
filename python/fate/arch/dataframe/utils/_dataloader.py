@@ -118,7 +118,7 @@ class FullBatchDataLoader(object):
             return
 
         if self._batch_size == len(self._dataset):
-            self._batch_splits.append(self._dataset)
+            self._batch_splits.append(BatchEncoding(self._dataset, batch_id=0))
         else:
             if self._mode in ["homo", "local"] or self._role == "guest":
                 indexer = list(self._dataset.get_indexer(target="sample_id").collect())
@@ -137,12 +137,12 @@ class FullBatchDataLoader(object):
                     if self._role == "guest":
                         iter_ctx.hosts.put("batch_indexes", batch_indexer)
 
-                    self._batch_splits.append(sub_frame)
+                    self._batch_splits.append(BatchEncoding(sub_frame, batch_id=i))
             elif self._mode == "hetero" and self._role == "host":
                 for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")
                     sub_frame = self._dataset.loc(batch_indexes, preserve_order=True)
-                    self._batch_splits.append(sub_frame)
+                    self._batch_splits.append(BatchEncoding(sub_frame, batch_id=i))
 
     def __next__(self):
         if self._role == "arbiter":
@@ -150,18 +150,8 @@ class FullBatchDataLoader(object):
                 yield BatchEncoding(batch_id=batch_id)
             return
 
-        for bid, batch in enumerate(self._batch_splits):
-            if batch.label and batch.weight:
-                yield BatchEncoding(x=batch.values.as_tensor(),
-                                    label=batch.label.as_tensor(),
-                                    weight=batch.weight.as_tensor(),
-                                    batch_id=bid)
-            elif batch.label:
-                yield BatchEncoding(x=batch.values.as_tensor(),
-                                    label=batch.label.as_tensor(),
-                                    batch_id=bid)
-            else:
-                yield BatchEncoding(x=batch.values.as_tensor())
+        for batch in self._batch_splits:
+            yield batch
 
     def __iter__(self):
         return self.__next__()
@@ -172,10 +162,16 @@ class FullBatchDataLoader(object):
 
 
 class BatchEncoding(object):
-    def __init__(self, x=None, label=None, weight=None, batch_id=None):
-        self._x = x
-        self._label = label
-        self._weight = weight
+    def __init__(self, batch_df=None, batch_id=None):
+        if batch_df:
+            self._x = batch_df.values.as_tensor()
+            self._label = batch_df.label.as_tensor() if batch_df.label else None
+            self._weight = batch_df.weight.as_tensor() if batch_df.weight else None
+        else:
+            self._x = None
+            self._label = None
+            self._weight = None
+
         self._batch_id = batch_id
 
     @property
