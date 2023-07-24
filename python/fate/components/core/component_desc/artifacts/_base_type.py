@@ -82,7 +82,7 @@ class _ArtifactsType(Generic[MM]):
         return self.__str__()
 
     def dict(self):
-        return [artifact.dict() for artifact in self.artifacts if artifact.is_consumed]
+        return [artifact.dict() for artifact in self.artifacts]
 
 
 AT = TypeVar("AT")
