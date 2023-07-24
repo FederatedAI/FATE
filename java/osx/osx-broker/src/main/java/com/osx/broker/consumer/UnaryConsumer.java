@@ -78,14 +78,15 @@ public class UnaryConsumer extends LocalQueueConsumer {
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
         List<LongPullingHold> reputList = null;
         while (this.longPullingQueue.size() > 0) {
+            LongPullingHold longPullingHold = this.longPullingQueue.poll();
             try {
 
 //                long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
-                LongPullingHold longPullingHold = this.longPullingQueue.poll();
+
                 long current= System.currentTimeMillis();
                 long needOffset = longPullingHold.getNeedOffset();
                 if(transferQueue==null){
-                    // TODO: 2023/7/24  这里需要通知阻塞的客户端
+                    // TODO: 2023/7/24  这里需要通知阻塞的客户端,最好是由队列清理时主动通知客户端
                     longPullingHold.throwException(new TransferQueueNotExistException());
                     continue;
                 }
@@ -136,11 +137,19 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 }
             } catch (Exception e) {
                 logger.error("topic {} answer long pulling error ",transferId,e);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException interruptedException) {
-                    logger.error("interruptedException : ",interruptedException);
-                }
+
+                longPullingHold.throwException(e);
+//                try {
+//                    Thread.sleep(1000git ggi
+
+
+
+
+
+
+//                } catch (InterruptedException interruptedException) {
+//                    logger.error("interruptedException : ",interruptedException);
+//                }
             }
         }
         if (reputList != null) {
@@ -167,6 +176,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
             logger.info("============ answer long pulling========");
 
             if(streamObserver!=null) {
+
                 streamObserver.onNext(consumeResponse);
                 streamObserver.onCompleted();
             }else if(httpServletResponse!=null){
