@@ -15,6 +15,7 @@ from .._base_type import (
 
 class DataDirectoryWriter(_ArtifactTypeWriter[DataDirectoryArtifactType]):
     def get_directory(self) -> Path:
+        self.artifact.consumed()
         path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
         return path
@@ -29,6 +30,7 @@ class DataDirectoryWriter(_ArtifactTypeWriter[DataDirectoryArtifactType]):
 
 class DataDirectoryReader(_ArtifactTypeReader):
     def get_directory(self) -> Path:
+        self.artifact.consumed()
         path = Path(self.artifact.uri.path)
         return path
 

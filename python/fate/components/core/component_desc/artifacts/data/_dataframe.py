@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class DataframeWriter(_ArtifactTypeWriter[DataOutputMetadata]):
     def write(self, df: "DataFrame", name=None, namespace=None):
+        self.artifact.consumed()
         logger.debug(f"start writing dataframe to artifact: {self.artifact}, name={name}, namespace={namespace}")
         from fate.arch import dataframe
 
@@ -49,6 +50,7 @@ class DataframeWriter(_ArtifactTypeWriter[DataOutputMetadata]):
 
 class DataframeReader(_ArtifactTypeReader):
     def read(self) -> "DataFrame":
+        self.artifact.consumed()
         logger.debug(f"start reading dataframe from artifact: {self.artifact}")
         # if self.artifact.uri.scheme == "file":
         #     import inspect
