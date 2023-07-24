@@ -62,14 +62,14 @@ data_reg = reader.to_frame(ctx, df_reg)
 data_multi = reader.to_frame(ctx, df_multi)
 
 # test loss here
-# loss_bce = BCELoss()
-# label = data.label
-# init_score = loss_bce.initialize(label)
-# predict = loss_bce.predict(init_score)
-# loss = loss_bce.compute_loss(label, predict)
-# empty_gh = data.create_frame()
-# loss_bce.compute_grad(empty_gh, label, predict)
-# loss_bce.compute_hess(empty_gh, label, predict)
+loss_bce = BCELoss()
+label = data.label
+init_score = loss_bce.initialize(label)
+predict = loss_bce.predict(init_score)
+loss = loss_bce.compute_loss(label, predict)
+empty_gh = data.create_frame()
+loss_bce.compute_grad(empty_gh, label, predict)
+loss_bce.compute_hess(empty_gh, label, predict)
 
 # loss_l2 = L2Loss()
 # label = data_reg.label
@@ -81,10 +81,10 @@ data_multi = reader.to_frame(ctx, df_multi)
 # loss_l2.compute_hess(empty_gh, label, predict)
 
 
-loss = CELoss()
-label = data_multi.label
-init_score = loss.initialize(label, class_num=4)
-predict = loss.predict(init_score)
+# loss = CELoss()
+# label = data_multi.label
+# init_score = loss.initialize(label, class_num=4)
+# predict = loss.predict(init_score)
 # loss = loss.compute_loss(label, predict)
 # empty_gh = data_reg.create_frame()
 # loss.compute_grad(empty_gh, label, predict)
