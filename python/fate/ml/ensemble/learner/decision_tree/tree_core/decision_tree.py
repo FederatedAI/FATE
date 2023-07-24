@@ -26,6 +26,9 @@ from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 
 
+FLOAT_ZERO = 1e-8
+
+
 class FeatureImportance(object):
 
     def __init__(self, gain=0, split=0):
@@ -58,7 +61,7 @@ class Node(object):
             Name of the site that the node belongs to.
         fid : int, optional
             ID of the feature that the node splits on.
-        fval : float or int, optional
+        bid : float or int, optional
             Feature value that the node splits on.
         weight : float, optional
             Weight of the node.
@@ -83,14 +86,14 @@ class Node(object):
     """
 
     def __init__(self, nid=None, sitename=None, fid=None,
-                 fval=None, weight=0, is_leaf=False, grad=None,
+                 bid=None, weight=0, is_leaf=False, grad=None,
                  hess=None, l=-1, r=-1,
                  missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None, inst_indices=None):
         
         self.nid = nid
         self.sitename = sitename
         self.fid = fid
-        self.fval = fval
+        self.bid = bid
         self.weight = weight
         self.is_leaf = is_leaf
         self.grad = grad
@@ -112,8 +115,8 @@ class Node(object):
         """
         Returns a string representation of the node.
         """
-        return "(node_id {}: left {}, right {}, is_leaf {}, sample_count {},  g {}, h {})".format(self.nid, \
-                 self.l, self.r, self.is_leaf, self.sample_num, self.grad, self.hess)
+        return "(node_id {}: left {}, right {}, is_leaf {}, sample_count {},  g {}, h {}, weight {})".format(self.nid, \
+                 self.l, self.r, self.is_leaf, self.sample_num, self.grad, self.hess, self.weight)
 
 
 class DecisionTree(object):
@@ -164,7 +167,6 @@ class DecisionTree(object):
     def _init_sample_pos(self, train_data: DataFrame):
         sample_pos = train_data.create_frame()
         sample_pos['node_idx'] = 0  # position of current sample
-        sample_pos['dir'] = True  # direction to next layer, use True to initalize all
         return sample_pos
 
     def _get_leaf_node_map(self):
@@ -183,8 +185,8 @@ class DecisionTree(object):
 
     def _initialize_root_node(self, gh: DataFrame, sitename):
 
-        sum_g = gh['g'].sum()
-        sum_h = gh['h'].sum()
+        sum_g = float(gh['g'].sum())
+        sum_h = float(gh['h'].sum())
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(gh))
 
         return root_node

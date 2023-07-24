@@ -2,7 +2,6 @@ import copy
 import numpy as np
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -62,8 +61,12 @@ class SklearnSplitter(Splitter):
             h[h == 0] = np.nan
         score = g * g / (h + self.l2)
         return score
+    
+    def node_weight(self, sum_grad, sum_hess):
+        weight = -(sum_grad / (sum_hess + self.l2))
+        return weight
 
-    def find_node_best_split(self, node_hist):
+    def find_node_best_split(self, node_hist, debug=False):
 
         l_g, l_h, l_cnt = node_hist
         cnt_sum = l_cnt[::, -1][0]
@@ -92,6 +95,9 @@ class SklearnSplitter(Splitter):
             self.node_gain(r_g, r_h) - \
             self.node_gain(g_sum, h_sum)
         
+        if debug:
+            return rs
+
         rs[np.isnan(rs)] = -np.inf
         rs[rs < self.min_impurity_split] = -np.inf
         rs[mask] = -np.inf
@@ -100,6 +106,7 @@ class SklearnSplitter(Splitter):
         feat_best_split = rs.argmax(axis=1)
         feat_best_gain = rs.max(axis=1)
 
+        print('best gain', feat_best_gain)
         # best split
         best_split_idx = feat_best_gain.argmax()
         best_gain = feat_best_gain.max()
@@ -123,10 +130,12 @@ class SklearnSplitter(Splitter):
         
         return split_info
     
-    def split(self, histogram: list):
+    def split(self, histogram: list,  cur_layer_node):
         
         splits = []
+        logger.info('got {} hist'.format(len(histogram)))
         for node_hist in histogram:
             split_info = self.find_node_best_split(node_hist)
             splits.append(split_info)
+        logger.info('split info len is {}'.format(len(splits)))
         return splits
