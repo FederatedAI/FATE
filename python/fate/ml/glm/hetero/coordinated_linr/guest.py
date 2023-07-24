@@ -154,18 +154,21 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         h = X.shape[0]
         Xw = torch.matmul(X, w.detach())
         d = Xw - Y
-        loss = 0.5 / h * torch.matmul(d.T, d)
-        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-            loss_norm = self.optimizer.loss_norm(w)
-            loss += loss_norm
+
         Xw_h_all = batch_ctx.hosts.get("Xw_h")
         for Xw_h in Xw_h_all:
             d += Xw_h
-            loss += 1 / h * torch.matmul(Xw.T, Xw_h)
 
         if weight:
             d = d * weight
         batch_ctx.hosts.put(d=d)
+
+        loss = 0.5 / h * torch.matmul(d.T, d)
+        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
+            loss_norm = self.optimizer.loss_norm(w)
+            loss += loss_norm
+        for Xw_h in Xw_h_all:
+            loss += 1 / h * torch.matmul(Xw.T, Xw_h)
 
         for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
             loss += 0.5 / h * Xw2_h
