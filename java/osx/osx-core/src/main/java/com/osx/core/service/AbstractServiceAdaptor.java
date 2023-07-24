@@ -26,6 +26,7 @@ import com.osx.core.exceptions.ErrorMessageUtil;
 import com.osx.core.exceptions.ExceptionInfo;
 import com.osx.core.utils.FlowLogUtil;
 import io.grpc.stub.AbstractStub;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,7 +136,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
             } catch (Throwable e) {
                 exceptions.add(e);
                 e.printStackTrace();
-                logger.error("do service fail, cause by: {}", e.getMessage());
+                logger.error("do service fail, {} ", ExceptionUtils.getStackTrace(e));
             }
             outboundPackage.setData(result);
         } catch (Throwable e) {

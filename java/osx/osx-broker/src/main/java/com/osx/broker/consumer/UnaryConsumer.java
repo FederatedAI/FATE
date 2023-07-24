@@ -21,9 +21,13 @@ import com.osx.broker.util.TransferUtil;
 import com.osx.core.constant.ActionType;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.FateContext;
+import com.osx.core.exceptions.ErrorMessageUtil;
+import com.osx.core.exceptions.TransferQueueNotExistException;
 import com.osx.core.utils.FlowLogUtil;
+import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,10 +80,15 @@ public class UnaryConsumer extends LocalQueueConsumer {
         while (this.longPullingQueue.size() > 0) {
             try {
 
-                long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
+//                long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
                 LongPullingHold longPullingHold = this.longPullingQueue.poll();
                 long current= System.currentTimeMillis();
                 long needOffset = longPullingHold.getNeedOffset();
+                if(transferQueue==null){
+                    // TODO: 2023/7/24  这里需要通知阻塞的客户端
+                    longPullingHold.throwException(new TransferQueueNotExistException());
+                    continue;
+                }
 
                 if( longPullingHold.getExpireTimestamp()>0&&current>longPullingHold.getExpireTimestamp()){
                     handleExpire(longPullingHold);
@@ -159,6 +168,23 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 TransferUtil.writeHttpRespose(httpServletResponse,consumeResponse.getCode(),consumeResponse.getMessage(),consumeResponse.getPayload()!=null?consumeResponse.getPayload().toByteArray():null);
             }
         }
+        public  void  throwException(Throwable  throwable){
+            logger.info("============ answer throw exception========");
+            try {
+                if (streamObserver != null) {
+                    streamObserver.onError(ErrorMessageUtil.toGrpcRuntimeException(throwable));
+                    streamObserver.onCompleted();
+                } else if (httpServletResponse != null) {
+
+                    // TODO: 2023/7/24  http 处理未添加
+                    //  TransferUtil.writeHttpRespose(httpServletResponse,consumeResponse.getCode(),consumeResponse.getMessage(),consumeResponse.getPayload()!=null?consumeResponse.getPayload().toByteArray():null);
+                }
+            }catch(Exception e){
+                logger.error("send error back to consumer , occury error",e);
+            }
+        }
+
+
     }
 
 }

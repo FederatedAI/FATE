@@ -13,8 +13,8 @@
     "10000":{
       "default":[{
         "protocol":"http",
-        "url": "http://10.42.0.1:8087/osx/inbound",
-        "ip": "10.42.0.1",
+        "url": "http://127.0.0.1:8087/osx/inbound",
+        "ip": "127.0.0.1",
         "port": 9370
       }]
     }
