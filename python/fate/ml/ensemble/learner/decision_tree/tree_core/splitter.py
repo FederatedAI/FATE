@@ -1,6 +1,9 @@
 import copy
 import numpy as np
 import logging
+from fate.arch.dataframe import DataFrame
+from fate.arch import Context
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,13 @@ class SklearnSplitter(Splitter):
         weight = -(sum_grad / (sum_hess + self.l2))
         return weight
 
+    def _compute_min_leaf_mask(self, l_cnt, r_cnt):
+
+        min_leaf_node_mask_l = l_cnt < self.min_leaf_node
+        min_leaf_node_mask_r = r_cnt < self.min_leaf_node
+        union_mask_0 = np.logical_or(min_leaf_node_mask_l, min_leaf_node_mask_r)
+        return union_mask_0
+
     def find_node_best_split(self, node_hist, debug=False):
 
         l_g, l_h, l_cnt = node_hist
@@ -81,9 +91,7 @@ class SklearnSplitter(Splitter):
         
         # filter split
         # leaf count
-        min_leaf_node_mask_l = l_cnt < self.min_leaf_node
-        min_leaf_node_mask_r = r_cnt < self.min_leaf_node
-        union_mask_0 = np.logical_or(min_leaf_node_mask_l, min_leaf_node_mask_r)
+        union_mask_0 = self._compute_min_leaf_mask(l_cnt, r_cnt)
         # min child weight
         min_child_weight_mask_l = l_h < self.min_child_weight
         min_child_weight_mask_r = r_h < self.min_child_weight
@@ -130,12 +138,68 @@ class SklearnSplitter(Splitter):
         
         return split_info
     
-    def split(self, histogram: list,  cur_layer_node):
-        
+    def _split(self, histogram: list, cur_layer_node):
+            
         splits = []
         logger.info('got {} hist'.format(len(histogram)))
         for node_hist in histogram:
             split_info = self.find_node_best_split(node_hist)
             splits.append(split_info)
-        logger.info('split info len is {}'.format(len(splits)))
+        logger.info('split info is {}'.format(split_info))
+        assert len(splits) == len(cur_layer_node), 'split info length {} != node length {}'.format(len(splits), len(cur_layer_node))
         return splits
+    
+    def split(self, ctx, histogram: list,  cur_layer_node):
+        return self._split(histogram, cur_layer_node)
+
+
+class FedSklearnSplitter(SklearnSplitter):
+
+    def __init__(self, feature_binning_dict, min_impurity_split=1e-2, min_sample_split=2,
+                 min_leaf_node=1, min_child_weight=1, l1=0, l2=0, valid_features=None, random_seed=42) -> None:
+        super().__init__(feature_binning_dict, min_impurity_split, min_sample_split, min_leaf_node, min_child_weight, l1, l2, valid_features)
+        self.random_seed = random_seed
+        np.random.seed(self.random_seed)
+
+    def _get_host_splits(self, ctx, histogram, cur_layer_node):
+        pass
+
+    def _guest_split(self, ctx, histogram, cur_layer_node):
+        
+        guest_best_splits = self._split(ctx, histogram, cur_layer_node)
+        host_best_splits = self._get_host_splits(ctx, histogram, cur_layer_node)
+
+    def _host_prepare(self, histogram):
+        to_send_hist = []
+        pos_map = []
+        # prepare host split points
+        for node_hist in histogram:
+            g, h, cnt = node_hist
+            shape = g.shape
+            pos_map_ = {}
+            g[self.hist_mask] = np.nan
+            h[self.hist_mask] = np.nan
+            # cnt is int, cannot use np.nan as mask
+            g, h, cnt = g.flatten(), h.flatten(), cnt.flatten()
+            random_shuffle_idx = np.random.permutation(len(g))
+            g = g[random_shuffle_idx]
+            h = h[random_shuffle_idx]
+            cnt = cnt[random_shuffle_idx]
+            to_send_hist.append([g, h, cnt])
+            for i in random_shuffle_idx:
+                pos_map_[i] = (i // shape[0], i % shape[1])
+            pos_map.append(pos_map_)
+        return to_send_hist, pos_map
+
+    def _host_split(self, ctx, histogram, cur_layer_node):
+        to_send_hist, pos_map = self._host_prepare(histogram)
+        return to_send_hist, pos_map
+
+    def split(self, ctx: Context, histogram, cur_layer_node):
+        
+        if ctx.is_on_guest:
+            return self._guest_split(ctx, histogram, cur_layer_node)
+        elif ctx.is_on_host:
+            return self._host_split(ctx, histogram, cur_layer_node)
+        else:
+            raise ValueError('illegal role {}'.format(ctx.role))

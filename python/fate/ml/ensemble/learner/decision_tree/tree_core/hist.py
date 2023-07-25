@@ -2,8 +2,11 @@ from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
 from typing import List
 import numpy as np
+import pandas as pd
 from fate.arch.dataframe import DataFrame
 
+
+HIST_TYPE = ['distributed', 'sklearn']
 
 class SklearnHistBuilder(object):
 
@@ -39,3 +42,34 @@ class SklearnHistBuilder(object):
             idx += 1
 
         return hists
+    
+
+def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, hist_type='distributed'):
+    
+    assert hist_type in HIST_TYPE, 'hist_type should be in {}'.format(HIST_TYPE)
+
+    if hist_type == 'sklearn':
+
+        if isinstance(bin_train_data, DataFrame):
+            data = bin_train_data.as_pd_df()
+        elif isinstance(bin_train_data, pd.DataFrame):
+            data = bin_train_data
+
+        if isinstance(grad_and_hess, DataFrame):
+            gh = grad_and_hess.as_pd_df()
+        elif isinstance(grad_and_hess, pd.DataFrame):
+            gh = grad_and_hess
+
+        data['sample_id'] = data['sample_id'].astype(np.uint32)
+        gh['sample_id'] = gh['sample_id'].astype(np.uint32)
+        collect_data = data.sort_values(by='sample_id')
+        collect_gh = gh.sort_values(by='sample_id')
+        root_node.set_inst_indices(collect_gh['sample_id'].values)
+        if bin_train_data.schema.label_name is None:
+            feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.match_id_name]).values
+        else:
+            feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.label_name, bin_train_data.schema.match_id_name]).values
+        g = collect_gh['g'].values
+        h = collect_gh['h'].values
+        feat_arr = np.asfortranarray(feat_arr.astype(np.uint8))
+        return SklearnHistBuilder(feat_arr, max_bin, g, h)
