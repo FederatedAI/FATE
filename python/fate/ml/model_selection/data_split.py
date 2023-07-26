@@ -31,14 +31,14 @@ class DataSplitModuleGuest(Module):
             test_size=0.0,
             stratified=False,
             random_state=None,
-            federated_sample=True
+            hetero_sync=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
         self.test_size = test_size
         self.stratified = stratified
         self.random_state = random_state
-        self.federated_sample = federated_sample
+        self.hetero_sync = hetero_sync
 
     def fit(self, ctx: Context, train_data, validate_data=None):
         data_count = train_data.shape[0]
@@ -65,13 +65,17 @@ class DataSplitModuleGuest(Module):
         if validate_data_set is not None:
             validate_sid = validate_data_set.get_indexer(target="sample_id")
             test_data_set = validate_test_data_set.drop(validate_data_set)
-            test_sid = test_data_set.get_indexer(target="sample_id")
+            if test_data_set.shape[0] == 0:
+                test_sid = None
+                test_data_set = None
+            else:
+                test_sid = test_data_set.get_indexer(target="sample_id")
         else:
             validate_sid = None
             test_data_set = validate_test_data_set
             test_sid = None
 
-        if self.federated_sample:
+        if self.hetero_sync:
             ctx.hosts.put("train_data_sid", train_sid)
             ctx.hosts.put("validate_data_sid", validate_sid)
             ctx.hosts.put("test_data_sid", test_sid)
@@ -87,17 +91,17 @@ class DataSplitModuleHost(Module):
             test_size=0.0,
             stratified=False,
             random_state=None,
-            federated_sample=True
+            hetero_sync=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
         self.test_size = test_size
         self.stratified = stratified
         self.random_state = random_state
-        self.federated_sample = federated_sample
+        self.hetero_sync = hetero_sync
 
     def fit(self, ctx: Context, train_data, validate_data=None):
-        if self.federated_sample:
+        if self.hetero_sync:
             train_data_sid = ctx.guest.get("train_data_sid")
             validate_data_sid = ctx.guest.get("validate_data_sid")
             test_data_sid = ctx.guest.get("test_data_sid")
@@ -134,6 +138,8 @@ class DataSplitModuleHost(Module):
             if validate_data_set is not None:
                 # validate_sid = validate_data_set.get_indexer(target="sample_id")
                 test_data_set = validate_test_data_set.drop(validate_data_set)
+                if test_data_set.shape[0] == 0:
+                    test_data_set = None
             else:
                 test_data_set = validate_test_data_set
 

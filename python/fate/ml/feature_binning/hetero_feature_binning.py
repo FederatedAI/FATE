@@ -310,6 +310,8 @@ class StandardBinning(Module):
         if self.transform_method == "bin_idx" and self._bin_idx_dict:
             return binned_data
         elif self.transform_method == "woe":
+            if ctx.is_on_host:
+                raise ValueError(f"host does not support 'woe' transform method, please use 'bin_idx'.")
             # predict: replace with woe from train phase
             to_transform_data = binned_data[self.bin_col]
             if self._train_woe_dict:
@@ -318,7 +320,7 @@ class StandardBinning(Module):
                 # return binned_data.replace(self._train_woe_dict, self.bin_col)
             elif self._woe_dict:
                 binned_data[self.bin_col] = to_transform_data.replace(self._woe_dict)
-                #return binned_data.replace(self._woe_dict, self.bin_col)
+                # return binned_data.replace(self._woe_dict, self.bin_col)
         else:
             logger.warning(f"to transform type {self.transform_method} encountered, but no bin tag dict provided. "
                            f"Please check")
