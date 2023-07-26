@@ -21,29 +21,29 @@ pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998")
 
 intersection_0 = Intersection("intersection_0",
                               method="raw")
-intersection_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                                       namespace="experiment"))
-intersection_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host_sid",
-                                                                          namespace="experiment"))
+intersection_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                       namespace="experiment_sid"))
+intersection_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                          namespace="experiment_sid"))
 
 intersection_1 = Intersection("intersection_1",
                               method="raw")
-intersection_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                                       namespace="experiment"))
-intersection_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host_sid",
-                                                                          namespace="experiment"))
+intersection_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                       namespace="experiment_sid"))
+intersection_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                          namespace="experiment_sid"))
 
 sample_0 = Sample("sample_0",
                   frac=0.5,
                   replace=False,
-                  federated_sample=False,
+                  hetero_sync=False,
                   input_data=intersection_0.outputs["output_data"])
 
 sample_1 = Sample("sample_1",
                   runtime_roles=["guest"],
                   n=1000,
                   replace=True,
-                  federated_sample=False,
+                  hetero_sync=False,
                   input_data=intersection_0.outputs["output_data"]
                   )
 

@@ -31,19 +31,19 @@ class SampleModuleGuest(Module):
             frac=1.0,
             n=None,
             random_state=None,
-            federated_sample=True
+            hetero_sync=True
     ):
         self.mode = mode
         self.replace = replace
         self.frac = frac
         self.n = n
         self.random_state = random_state
-        self.federated_sample = federated_sample
+        self.hetero_sync = hetero_sync
 
         self._sample_obj = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        if self.federated_sample:
+        if self.hetero_sync:
             sampled_data = utils.federated_sample(ctx,
                                                   train_data,
                                                   n=self.n,
@@ -71,17 +71,17 @@ class SampleModuleHost(Module):
             frac=1.0,
             n=None,
             random_state=None,
-            federated_sample=True
+            hetero_sync=True
     ):
         self.mode = mode
         self.replace = replace
         self.frac = frac
         self.n = n
         self.random_state = random_state
-        self.federated_sample = federated_sample
+        self.hetero_sync = hetero_sync
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        if self.federated_sample:
+        if self.hetero_sync:
             sampled_data = utils.federated_sample(ctx,
                                                   train_data,
                                                   role=ctx.local.role)
