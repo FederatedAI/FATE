@@ -31,10 +31,10 @@ meta = {'delimiter': ',',
         'tag_with_value': False,
         'weight_type': 'float64'}
 
-pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
-    meta=meta, head=True, extend_sid=False,
-    namespace="experiment",
-    name="breast_hetero_guest_sid")
+pipeline.transform_local_file_to_dataframe("/Users/yuwu/PycharmProjects/FATE/examples/data/breast_hetero_guest_sid.csv",
+                                           meta=meta, head=True, extend_sid=False,
+                                           namespace="experiment_sid",
+                                           name="breast_hetero_guest")
 
 meta = {'delimiter': ',',
         'dtype': 'float64',
@@ -47,7 +47,7 @@ meta = {'delimiter': ',',
         'tag_with_value': False,
         'weight_type': 'float64'}
 
-pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
-    meta=meta, head=True, extend_sid=False,
-    namespace="experiment",
-    name="breast_hetero_host_sid")
+pipeline.transform_local_file_to_dataframe("/Users/yuwu/PycharmProjects/FATE/examples/data/breast_hetero_host_sid.csv",
+                                           meta=meta, head=True, extend_sid=False,
+                                           namespace="experiment_sid",
+                                           name="breast_hetero_host")
