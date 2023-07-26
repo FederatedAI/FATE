@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import copy
 import functools
 from typing import List
 import pandas as pd
@@ -56,10 +57,15 @@ def hstack(data_frames: List["DataFrame"]) -> "DataFrame":
 
 
 def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
+    frame_0 = data_frames[0]
+    data_frames = list(filter(lambda df: df.shape[0], data_frames))
+    if not data_frames:
+        return frame_0
+
     if len(data_frames[0]) == 1:
         return data_frames[0]
 
-    def _align_blocks(blocks, src_fields_loc=None, src_dm: DataManager=None, dst_dm: DataManager=None):
+    def _align_blocks(blocks, src_fields_loc=None, src_dm: DataManager = None, dst_dm: DataManager = None):
         ret_blocks = []
         lines = None
         for dst_bid, block in enumerate(dst_dm.blocks):
@@ -127,6 +133,17 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
 
 
 def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
+    if index.shape[0] == 0:
+        return DataFrame(
+            df._ctx,
+            block_table=df.block_table,
+            partition_order_mappings=copy.deepcopy(df.partition_order_mappings),
+            data_manager=df.data_manager.duplicate()
+        )
+
+    if index.shape[0] == df.shape[0]:
+        return df.empty_frame()
+
     data_manager = df.data_manager.duplicate()
     l_flatten_func = functools.partial(
         _flatten_partition,
@@ -204,6 +221,9 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
 
     _flatten_func = functools.partial(_flatten_partition, block_num=df.data_manager.block_num)
     retrieval_raw_table = retrieval_block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
+
+    if retrieval_raw_table.count() == 0:
+        return df.empty_frame()
 
     partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table)
     to_blocks_func = functools.partial(to_blocks, dm=df.data_manager, partition_mappings=partition_order_mappings)
