@@ -43,9 +43,10 @@ def sample(
                               "default: None, cannot be used with frac"),
         random_state: cpn.parameter(type=params.conint(ge=0), default=None,
                                     desc="random state"),
-        federated_sample: cpn.parameter(type=bool, default=True,
-                                        desc="sampling mode, 'homo' & 'local' scenario should sample locally,"
-                                             "default True for 'hetero' federation scenario"),
+        hetero_sync: cpn.parameter(type=bool, default=True,
+                                   desc="whether guest sync sampled data sids with host, "
+                                        "default True for hetero scenario, "
+                                        "should set to False for local and homo scenario"),
         output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     if frac is not None and n is not None:
@@ -57,15 +58,15 @@ def sample(
     if n is None and frac is None:
         frac = 1.0
     # check if local but federated sample
-    if federated_sample and len(ctx.parties.ranks) < 2:
+    if hetero_sync and len(ctx.parties.ranks) < 2:
         raise ValueError(f"federated sample can only be called when both 'guest' and 'host' present. Please check")
     sub_ctx = ctx.sub_ctx("train")
     if role.is_guest:
         module = SampleModuleGuest(mode=mode, replace=replace, frac=frac, n=n,
-                                   random_state=random_state, federated_sample=federated_sample)
+                                   random_state=random_state, hetero_sync=hetero_sync)
     elif role.is_host:
         module = SampleModuleHost(mode=mode, replace=replace, frac=frac, n=n,
-                                  random_state=random_state, federated_sample=federated_sample)
+                                  random_state=random_state, hetero_sync=hetero_sync)
     else:
         raise ValueError(f"unknown role")
     input_data = input_data.read()
