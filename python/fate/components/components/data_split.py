@@ -68,6 +68,9 @@ def data_split(
 
     train_data_set, validate_data_set, test_data_set = module.fit(sub_ctx, input_data)
     # train_data_set, validate_data_set, test_data_set = module.split_data(train_data)
+    logger.info(f"output train size: {train_data_set.shape if train_data_set else None}, "
+                f"validate size: {validate_data_set.shape if validate_data_set else None},"
+                f"test size: {test_data_set.shape if test_data_set else None}")
     if train_data_set:
         train_output_data.write(train_data_set)
     if validate_data_set:
