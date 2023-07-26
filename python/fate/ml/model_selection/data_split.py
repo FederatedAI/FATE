@@ -65,7 +65,11 @@ class DataSplitModuleGuest(Module):
         if validate_data_set is not None:
             validate_sid = validate_data_set.get_indexer(target="sample_id")
             test_data_set = validate_test_data_set.drop(validate_data_set)
-            test_sid = test_data_set.get_indexer(target="sample_id")
+            if test_data_set.shape[0] == 0:
+                test_sid = None
+                test_data_set = None
+            else:
+                test_sid = test_data_set.get_indexer(target="sample_id")
         else:
             validate_sid = None
             test_data_set = validate_test_data_set
@@ -134,6 +138,8 @@ class DataSplitModuleHost(Module):
             if validate_data_set is not None:
                 # validate_sid = validate_data_set.get_indexer(target="sample_id")
                 test_data_set = validate_test_data_set.drop(validate_data_set)
+                if test_data_set.shape[0] == 0:
+                    test_data_set = None
             else:
                 test_data_set = validate_test_data_set
 

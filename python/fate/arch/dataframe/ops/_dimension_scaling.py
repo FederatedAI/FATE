@@ -141,6 +141,9 @@ def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
             data_manager=df.data_manager.duplicate()
         )
 
+    if index.shape[0] == df.shape[0]:
+        return df.empty_frame()
+
     data_manager = df.data_manager.duplicate()
     l_flatten_func = functools.partial(
         _flatten_partition,
