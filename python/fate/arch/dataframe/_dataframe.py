@@ -342,7 +342,7 @@ class DataFrame(object):
 
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
-
+    
     def __eq__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.eq, other)
 

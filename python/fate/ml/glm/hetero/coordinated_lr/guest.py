@@ -264,26 +264,27 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         # logger.info(f"h: {h}")
         Xw = torch.matmul(X, w.detach())
         d = 0.25 * Xw - 0.5 * Y
-        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
-
-        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-            loss_norm = self.optimizer.loss_norm(w)
-            loss += loss_norm
 
         Xw_h_all = batch_ctx.hosts.get("Xw_h")
 
         for Xw_h in Xw_h_all:
             d += Xw_h
-            """loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
-            loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)"""
-            loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
+
         if weight:
             # logger.info(f"weight: {weight.tolist()}")
             d = d * weight
         batch_ctx.hosts.put("d", d)
 
+        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
+        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
+            loss_norm = self.optimizer.loss_norm(w)
+            loss += loss_norm
+        for Xw_h in Xw_h_all:
+            loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
+
         for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
             loss += 0.125 / h * Xw2_h
+
         h_loss_list = batch_ctx.hosts.get("h_loss")
         for h_loss in h_loss_list:
             if h_loss is not None:

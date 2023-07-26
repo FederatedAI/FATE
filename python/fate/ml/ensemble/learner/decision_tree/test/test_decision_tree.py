@@ -5,16 +5,7 @@ import logging
 from fate.ml.ensemble.learner.decision_tree.tree_core.loss import BCELoss
 from fate.arch import Context
 
-# Get the root logger
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
 
-logger.addHandler(ch)
 arbiter = ("arbiter", "10000")
 guest = ("guest", "10000")
 host = ("host", "9999")
@@ -39,33 +30,34 @@ def create_ctx(local):
     return Context(computing=computing,
                    federation=StandaloneFederation(computing, name, local, [guest, host, arbiter]))
 
-ctx = create_ctx(guest)
+if __name__ == '__main__':
 
-df = pd.read_csv(
-    './../../../../../../../examples/data/breast_hetero_guest.csv')
-df['sample_id'] = [i for i in range(len(df))]
+    ctx = create_ctx(guest)
 
-reader = PandasReader(
-    sample_id_name='sample_id',
-    match_id_name="id",
-    label_name="y",
-    dtype="float32")
+    df = pd.read_csv(
+        './../../../../../../../examples/data/breast_hetero_guest.csv')
+    df['sample_id'] = [i for i in range(len(df))]
 
-data = reader.to_frame(ctx, df)
+    reader = PandasReader(
+        sample_id_name='sample_id',
+        match_id_name="id",
+        label_name="y",
+        dtype="float32")
 
-from fate.ml.ensemble.utils.binning import binning
-a = binning(data, max_bin=32)
-bin_data = data.bucketize(boundaries=a)
+    data = reader.to_frame(ctx, df)
+
+    from fate.ml.ensemble.utils.binning import binning
+    a = binning(data, max_bin=32)
+    bin_data = data.bucketize(boundaries=a)
+
+    loss_bce = BCELoss()
+    label = data.label
+    init_score = loss_bce.initialize(label)
+    predict = loss_bce.predict(init_score)
+    empty_gh = data.create_frame()
+    loss_bce.compute_grad(empty_gh, label, predict)
+    loss_bce.compute_hess(empty_gh, label, predict)
 
 
-loss_bce = BCELoss()
-label = data.label
-init_score = loss_bce.initialize(label)
-predict = loss_bce.predict(init_score)
-empty_gh = data.create_frame()
-loss_bce.compute_grad(empty_gh, label, predict)
-loss_bce.compute_hess(empty_gh, label, predict)
-
-
-tree = HeteroDecisionTreeGuest(3)
-ret = tree.booster_fit(ctx, bin_data, empty_gh, a)
+    tree = HeteroDecisionTreeGuest(3)
+    ret = tree.booster_fit(ctx, bin_data, empty_gh, a)

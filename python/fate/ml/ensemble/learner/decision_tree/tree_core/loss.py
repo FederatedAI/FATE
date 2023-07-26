@@ -5,7 +5,7 @@ from fate.arch.dataframe import DataFrame
 from scipy.special import expit as sigmoid
 
 
-FLOAT_ZERO = 1e-8
+
 
 
 def apply_weight(loss: DataFrame, weight: DataFrame):
