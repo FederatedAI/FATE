@@ -16,7 +16,6 @@
 package com.osx.broker.consumer;
 
 import com.google.common.collect.Maps;
-import com.lmax.disruptor.EventHandler;
 import com.osx.core.frame.Lifecycle;
 import com.osx.core.frame.ServiceThread;
 import org.slf4j.Logger;
@@ -66,7 +65,14 @@ public class ConsumerManager   implements Lifecycle {
                     longPullingWaitingSize.set(0);
                     answerCount.set(0);
                     unaryConsumerMap.forEach((transferId, unaryConsumer) -> {
+
                         try {
+                            //TODO 当transferId 对应的grpc连接断开之后从unaryConsumerMap中移除该transferId
+//                            if(context.getGprcContext().isCancelled()){
+//                                unaryConsumerMap.remove(transferId);
+//                                return;
+//                            }
+
                             answerCount.addAndGet(unaryConsumer.answerLongPulling());
                             longPullingWaitingSize.addAndGet(unaryConsumer.getLongPullingQueueSize());
                         } catch (Exception igore) {
