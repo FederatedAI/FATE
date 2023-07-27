@@ -71,12 +71,12 @@ class FLOWClient(object):
         except Exception as e:
             raise RuntimeError(f"delete data failed") from e
 
-    def output_data_table(self, job_id, role, party_id, component_name):
+    """def output_data_table(self, job_id, role, party_id, component_name):
         result = self._output_data_table(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
-        return result
+        return result"""
 
-    def table_info(self, table_name, namespace):
-        result = self._table_info(table_name=table_name, namespace=namespace)
+    def table_query(self, table_name, namespace):
+        result = self._table_query(table_name=table_name, namespace=namespace)
         return result
 
     def add_notes(self, job_id, role, party_id, notes):
@@ -126,7 +126,7 @@ class FLOWClient(object):
                                             partitions=data.partitions)
         return response
 
-    def _table_info(self, table_name, namespace):
+    """def _table_info(self, table_name, namespace):
         param = {
             'table_name': table_name,
             'namespace': namespace
@@ -140,17 +140,25 @@ class FLOWClient(object):
             'namespace': namespace
         }
         response = self.flow_client(request='table/delete', param=param)
+        return response"""
+
+    def _table_query(self, table_name, namespace):
+        response = self._client.table.query(namespace=namespace, table_name=table_name)
         return response
 
-    def _submit_job(self, conf, dsl):
+    def _delete_data(self, table_name, namespace):
+        response = self._client.table.delete(namespace=namespace, table_name=table_name)
+        return response
+
+    """def _submit_job(self, conf, dsl):
         param = {
             'job_dsl': self._save_json(dsl, 'submit_dsl.json'),
             'job_runtime_conf': self._save_json(conf, 'submit_conf.json')
         }
         response = SubmitJobResponse(self.flow_client(request='job/submit', param=param))
-        return response
+        return response"""
 
-    def _deploy_model(self, model_id, model_version, dsl=None):
+    """def _deploy_model(self, model_id, model_version, dsl=None):
         post_data = {'model_id': model_id,
                      'model_version': model_version,
                      'predict_dsl': dsl}
@@ -166,9 +174,9 @@ class FLOWClient(object):
         except Exception as e:
             raise RuntimeError(f"deploy model error: {response}") from e
 
-        return result
+        return result"""
 
-    def _output_data_table(self, job_id, role, party_id, component_name):
+    """def _output_data_table(self, job_id, role, party_id, component_name):
         post_data = {'job_id': job_id,
                      'role': role,
                      'party_id': party_id,
@@ -201,7 +209,7 @@ class FLOWClient(object):
             result["summary_dir"] = retmsg  # 获取summary文件位置
         except Exception as e:
             raise RuntimeError(f"output data table error: {response}") from e
-        return result
+        return result"""
 
     """def _query_job(self, job_id, role):
         param = {
@@ -269,7 +277,7 @@ class Status(object):
         return self.__str__()
 
 
-"""class QueryJobResponse(object):
+class QueryJobResponse(object):
     def __init__(self, response: dict):
         try:
             status = Status(response.get('data')[0]["f_status"])
@@ -277,7 +285,7 @@ class Status(object):
         except Exception as e:
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
-        self.progress = progress"""
+        self.progress = progress
 
 
 class UploadDataResponse(object):

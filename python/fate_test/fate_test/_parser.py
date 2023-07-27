@@ -14,16 +14,16 @@
 #  limitations under the License.
 #
 
-import json
 import typing
 from collections import deque
 from pathlib import Path
 
-import click
 import prettytable
 from fate_test._config import Parties, Config
 from fate_test._io import echo
 from fate_test.utils import TxtStyle
+# import json
+from ruamel import yaml
 
 from fate_test import _config
 
@@ -113,7 +113,8 @@ class JobConf(object):
     @staticmethod
     def load(path: Path):
         with path.open("r") as f:
-            kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
+            # kwargs = json.load(f, object_hook=CONF_JSON_HOOK.hook)
+            kwargs = yaml.safe_load(f)
         return JobConf(**kwargs)
 
     @property
@@ -215,7 +216,8 @@ class JobDSL(object):
     @staticmethod
     def load(path: Path, provider):
         with path.open("r") as f:
-            kwargs = json.load(f, object_hook=DSL_JSON_HOOK.hook)
+            # kwargs = json.load(f, object_hook=DSL_JSON_HOOK.hook)
+            kwargs = yaml.safe_load(f)
             if provider is not None:
                 kwargs["provider"] = provider
         return JobDSL(**kwargs)
@@ -275,16 +277,16 @@ class Job(object):
             job_name=job_name, job_conf=job_conf, job_dsl=job_dsl, pre_works=pre_works
         )
 
-    @property
+    """@property
     def submit_params(self):
         return dict(
             conf=self.job_conf.as_dict(),
             dsl=self.job_dsl.as_dict() if self.job_dsl else None,
-        )
+        )"""
 
-    def set_pre_work(self, name, **kwargs):
+    """def set_pre_work(self, name, **kwargs):
         self.job_conf.update_job_common_parameters(**kwargs)
-        self.job_conf.update_job_type("predict")
+        self.job_conf.update_job_type("predict")"""
 
     def set_input_data(self, hierarchys, table_info):
         for table_name, hierarchy in zip(table_info, hierarchys):
@@ -337,7 +339,8 @@ class Testsuite(object):
     @staticmethod
     def load(path: Path, provider):
         with path.open("r") as f:
-            testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+            # testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+            testsuite_config = yaml.safe_load(f)
 
         dataset = []
         for d in testsuite_config.get("data"):
@@ -403,13 +406,13 @@ class Testsuite(object):
     def model_in_dep(self, name):
         return name in self._dependency
 
-    def get_dependent_jobs(self, name):
-        return self._dependency[name]
+    """def get_dependent_jobs(self, name):
+        return self._dependency[name]"""
 
     def remove_dependency(self, name):
         del self._dependency[name]
 
-    def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
+    """def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
         if model_info is not None:
             job.set_pre_work(name, **model_info)
         if table_info is not None:
@@ -421,7 +424,7 @@ class Testsuite(object):
         if name in job.pre_works:
             job.pre_works.remove(name)
         if job.is_submit_ready():
-            self._ready_jobs.appendleft(job)
+            self._ready_jobs.appendleft(job)"""
 
     def reflash_configs(self, config: Config):
         failed = []
@@ -492,7 +495,8 @@ class BenchmarkSuite(object):
     @staticmethod
     def load(path: Path):
         with path.open("r") as f:
-            testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+            # testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+            testsuite_config = yaml.safe_load(f)
 
         dataset = []
         for d in testsuite_config.get("data"):
@@ -574,7 +578,7 @@ def _replace_hook(mapping: dict):
     return _hook
 
 
-class JsonParamType(click.ParamType):
+"""class JsonParamType(click.ParamType):
     name = "json_string"
 
     def convert(self, value, param, ctx):
@@ -584,4 +588,4 @@ class JsonParamType(click.ParamType):
             self.fail(f"{value} is not a valid json string", param, ctx)
 
 
-JSON_STRING = JsonParamType()
+JSON_STRING = JsonParamType()"""

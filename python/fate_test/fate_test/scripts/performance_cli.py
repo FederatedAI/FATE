@@ -23,9 +23,9 @@ from datetime import timedelta
 import click
 from fate_test._client import Clients
 from fate_test._config import Config
-from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
+from fate_test._flow_client import JobProgress, QueryJobResponse
 from fate_test._io import LOGGER, echo
-from fate_test._parser import JSON_STRING, Testsuite
+from fate_test._parser import Testsuite
 from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
     _add_replace_hook
@@ -40,8 +40,6 @@ from fate_test import _config
               help="Select the job type, you can also set through include")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
-@click.option('-r', '--replace', default="{}", type=JSON_STRING,
-              help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-m', '--timeout', type=int, default=3600,
               help="maximun running time of job")
 @click.option('-e', '--max-iter', type=int, help="When the algorithm model is LR, the number of iterations is set")
@@ -49,10 +47,6 @@ from fate_test import _config
               help="When the algorithm model is SecureBoost, set the number of model layers")
 @click.option('-nt', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
 @click.option('-p', '--task-cores', type=int, help="processors per node")
-@click.option('-uj', '--update-job-parameters', default="{}", type=JSON_STRING,
-              help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('-uc', '--update-component-parameters', default="{}", type=JSON_STRING,
-              help="a json string represents mapping for replacing fields in conf.component_parameters")
 @click.option('-s', '--storage-tag', type=str,
               help="tag for storing performance time consuming, for future comparison")
 @click.option('-v', '--history-tag', type=str, multiple=True,
@@ -187,11 +181,11 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             update_bar(1)
 
-            def _call_back(resp: SubmitJobResponse):
-                if isinstance(resp, SubmitJobResponse):
+            def _call_back(resp):
+                """if isinstance(resp, SubmitJobResponse):
                     job_progress.submitted(resp.job_id)
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
-                    suite.update_status(job_name=job.job_name, job_id=resp.job_id)
+                    suite.update_status(job_name=job.job_name, job_id=resp.job_id)"""
 
                 if isinstance(resp, QueryJobResponse):
                     job_progress.running(resp.status, resp.progress)

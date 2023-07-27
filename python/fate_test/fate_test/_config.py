@@ -49,9 +49,6 @@ fate_base: path(FATE)/fate
 # whether to delete data in suites after all jobs done
 clean_data: true
 
-# work mode: 0 for standalone, 1 for cluster
-work_mode: 0
-
 # participating parties' id and correponding flow service ip & port information
 parties:
   guest: [9999]
@@ -184,14 +181,15 @@ class Config(object):
         self.tunnel_id_to_tunnel = {}
         self.extend_sid = None
         self.auto_increasing_sid = None
-        self.work_mode = config.get("work_mode", 0)
+        # self.work_mode = config.get("work_mode", 0)
 
         tunnel_id = 0
         service_id = 0
         os.makedirs(os.path.dirname(self.cache_directory), exist_ok=True)
         for service_config in config["services"]:
             flow_services = service_config["flow_services"]
-            if service_config.get("ssh_tunnel", {}).get("enable", False):
+            # @todo: rm ssh tunnel; add host flow services
+            """if service_config.get("ssh_tunnel", {}).get("enable", False):
                 tunnel_id += 1
                 services_address = []
                 for index, flow_service in enumerate(flow_services):
@@ -209,13 +207,13 @@ class Config(object):
                                                                   tunnel_config["ssh_password"],
                                                                   tunnel_config["ssh_priv_key"],
                                                                   services_address)
-            else:
-                for flow_service in flow_services:
-                    service_id += 1
-                    address = flow_service["address"]
-                    self.service_id_to_service[service_id] = self.service(address)
-                    for party in flow_service["parties"]:
-                        self.party_to_service_id[party] = service_id
+            else:"""
+            for flow_service in flow_services:
+                service_id += 1
+                address = flow_service["address"]
+                self.service_id_to_service[service_id] = self.service(address)
+                for party in flow_service["parties"]:
+                    self.party_to_service_id[party] = service_id
 
     @staticmethod
     def load(path: typing.Union[str, Path], **kwargs):
