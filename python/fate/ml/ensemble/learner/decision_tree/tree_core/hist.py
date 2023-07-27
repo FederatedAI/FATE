@@ -27,6 +27,8 @@ class SklearnHistBuilder(object):
         grouped = sample_pos.as_pd_df().groupby('node_idx')['sample_id'].apply(np.array).apply(np.uint32)
         data_indices = [None for i in range(len(nodes))]
         inverse_node_map = {v: k for k, v in node_map.items()}
+        print('grouped is {}'.format(grouped.keys()))
+        print('node map is {}'.format(node_map))
         for idx, node in enumerate(nodes):
             data_indices[idx] = grouped[inverse_node_map[idx]]
        

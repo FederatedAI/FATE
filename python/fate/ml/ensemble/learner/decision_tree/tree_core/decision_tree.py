@@ -94,7 +94,7 @@ class Node(object):
     def __init__(self, nid=None, sitename=None, fid=None,
                  bid=None, weight=0, is_leaf=False, grad=None,
                  hess=None, l=-1, r=-1,
-                 missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None, inst_indices=None):
+                 missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None, inst_indices=None, split_id=None):
         
         self.nid = nid
         self.sitename = sitename
@@ -112,6 +112,7 @@ class Node(object):
         self.sibling_nodeid = sibling_nodeid
         self.parent_nodeid = parent_nodeid
         self.inst_indices = inst_indices
+        self.split_id = split_id
 
     def set_inst_indices(self, inst_indices):
         self.inst_indices = inst_indices
@@ -121,9 +122,8 @@ class Node(object):
         """
         Returns a string representation of the node.
         """
-        return "(node_id {}: left {}, right {}, is_leaf {}, sample_count {},  g {}, h {}, weight {}, sitename {})".format(self.nid, \
-                 self.l, self.r, self.is_leaf, self.sample_num, self.grad, self.hess, self.weight, self.sitename)
-
+        return "(node_id {}: left {}, right {}, pid {}, is_leaf {}, sample_count {},  g {}, h {}, weight {}, sitename {})".format(self.nid, \
+                 self.l, self.r, self.parent_nodeid, self.is_leaf, self.sample_num, self.grad, self.hess, self.weight, self.sitename)
 
 
 def _make_decision(feat_val, bid, missing_dir=None, use_missing=None, zero_as_missing=None, zero_val=0):
@@ -219,34 +219,46 @@ class DecisionTree(object):
     def _compute_best_splits(self):
         pass
 
-    def _initialize_root_node(self, gh: DataFrame, sitename):
-
+    def _initialize_root_node(self, ctx: Context, gh: DataFrame):
+        
+        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         sum_g = float(gh['g'].sum())
         sum_h = float(gh['h'].sum())
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(gh))
 
         return root_node
+
+    def _init_sitename(self, ctx: Context):
+        guest_sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]
+        host_sitenames = [ctx.hosts[i].party[0] + '_' + ctx.hosts[i].party[1] for i in range(len(ctx.hosts))]
+        return guest_sitename, host_sitenames
     
-    def update_tree(self, cur_to_split: List[Node], split_info: List[SplitInfo]):
+    def update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo]):
         
-        assert len(cur_to_split) == len(split_info), 'node num not match split info num, got {} node vs {} split info'.format(len(cur_to_split), len(split_info))
+        assert len(cur_layer_nodes) == len(split_info), 'node num not match split info num, got {} node vs {} split info'.format(len(cur_layer_nodes), len(split_info))
 
         next_layer_node = []
 
         for idx in range(len(split_info)):
 
-            node: Node = cur_to_split[idx]
+            node: Node = cur_layer_nodes[idx]
 
             if split_info[idx] is None:
                 node.is_leaf = True
+                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]  # leaf always belong to guest
                 self._nodes.append(node)
+                logger.info('set node {} to leaf'.format(node))
                 continue
 
             sum_grad = node.grad
             sum_hess = node.hess
+            sum_cnt = node.sample_num
+
             node.fid = split_info[idx].best_fid
             node.bid = split_info[idx].best_bid
             node.missing_dir = split_info[idx].missing_dir
+            node.sitename = split_info[idx].sitename
+            node.split_id = split_info[idx].split_id  # if not a local node, has split id
 
             p_id = node.nid
             l_id, r_id = self._tree_node_num + 1, self._tree_node_num + 2
@@ -254,24 +266,34 @@ class DecisionTree(object):
             node.l, node.r = l_id, r_id
 
             l_g, l_h = split_info[idx].sum_grad, split_info[idx].sum_hess
+            l_cnt = split_info[idx].sample_count
+
+            logger.info('splitting node {}, split info is {}'.format(node, split_info[idx]))
 
             # create new left node and new right node
             left_node = Node(nid=l_id,
-                             sitename=self.sitename,
                              grad=float(l_g),
                              hess=float(l_h),
                              weight=float(self.splitter.node_weight(l_g, l_h)),
                              parent_nodeid=p_id,
                              sibling_nodeid=r_id,
-                             is_left_node=True
+                             is_left_node=True,
+                             sample_num=l_cnt
                              )
+            
+            # not gonna happen
+            assert sum_cnt > l_cnt, 'sum cnt {} not greater than l cnt {}'.format(sum_cnt, l_cnt)
+
+            r_g = float(sum_grad - l_g)
+            r_h = float(sum_hess - l_h)
+            r_cnt = sum_cnt - l_cnt
             right_node = Node(nid=r_id,
-                              sitename=self.sitename,
-                              grad=float(sum_grad - l_g),
-                              hess=float(sum_hess - l_h),
+                              grad=r_g,
+                              hess=r_h,
                               weight=float(self.splitter.node_weight(sum_grad - l_g, sum_hess - l_h)),
                               parent_nodeid=p_id,
                               sibling_nodeid=l_id,
+                              sample_num=r_cnt,
                               is_left_node=False)
             next_layer_node.append(left_node)
             next_layer_node.append(right_node)
@@ -315,7 +337,7 @@ class DecisionTree(object):
         anytree_nodes = {}
         for node in nodes:
             if not node.is_leaf:
-                anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: fid {node.fid}, bid {node.bid}')
+                anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: fid {node.fid}, bid {node.bid}, on {node.sitename}')
             else:
                 anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: weight {node.weight}, leaf')
         for node in nodes:

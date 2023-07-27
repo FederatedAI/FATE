@@ -35,7 +35,7 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 3
+    max_depth = 10
     if party == 'guest':
         ctx = create_ctx(guest)
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         loss_bce.compute_grad(empty_gh, label, predict)
         loss_bce.compute_hess(empty_gh, label, predict)
 
-        tree = HeteroDecisionTreeGuest(max_depth, sitename='guest:10000')
+        tree = HeteroDecisionTreeGuest(max_depth)
         ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
         
     elif party == 'host':
@@ -84,5 +84,5 @@ if __name__ == '__main__':
         bin_info = binning(data_host, max_bin=32)
         bin_data = data_host.bucketize(boundaries=bin_info)
 
-        tree = HeteroDecisionTreeHost(max_depth, sitename='host:9999')
+        tree = HeteroDecisionTreeHost(max_depth)
         ret = tree.booster_fit(ctx, bin_data, bin_info)
