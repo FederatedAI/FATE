@@ -32,10 +32,10 @@ def main(config="./config.yaml", namespace=""):
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
 
     intersect_0 = Intersection("intersect_0", method="raw")
-    intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                                        namespace=f"{namespace}experiment"))
-    intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host_sid",
-                                                                           namespace=f"{namespace}experiment"))
+    intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                        namespace=f"experiment{namespace}"))
+    intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                           namespace=f"experiment{namespace}"))
     lr_0 = CoordinatedLR("lr_0",
                          epochs=4,
                          batch_size=None,

@@ -183,31 +183,10 @@ class Config(object):
         self.auto_increasing_sid = None
         # self.work_mode = config.get("work_mode", 0)
 
-        tunnel_id = 0
         service_id = 0
         os.makedirs(os.path.dirname(self.cache_directory), exist_ok=True)
         for service_config in config["services"]:
             flow_services = service_config["flow_services"]
-            # @todo: rm ssh tunnel; add host flow services
-            """if service_config.get("ssh_tunnel", {}).get("enable", False):
-                tunnel_id += 1
-                services_address = []
-                for index, flow_service in enumerate(flow_services):
-                    service_id += 1
-                    address_host, address_port = flow_service["address"].split(":")
-                    address_port = int(address_port)
-                    services_address.append((address_host, address_port))
-                    self.service_id_to_service[service_id] = self.tunnel_service(tunnel_id, index)
-                    for party in flow_service["parties"]:
-                        self.party_to_service_id[party] = service_id
-                tunnel_config = service_config["ssh_tunnel"]
-                ssh_address_host, ssh_address_port = tunnel_config["ssh_address"].split(":")
-                self.tunnel_id_to_tunnel[tunnel_id] = self.tunnel((ssh_address_host, int(ssh_address_port)),
-                                                                  tunnel_config["ssh_username"],
-                                                                  tunnel_config["ssh_password"],
-                                                                  tunnel_config["ssh_priv_key"],
-                                                                  services_address)
-            else:"""
             for flow_service in flow_services:
                 service_id += 1
                 address = flow_service["address"]

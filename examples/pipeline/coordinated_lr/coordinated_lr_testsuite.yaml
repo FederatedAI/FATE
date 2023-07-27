@@ -30,7 +30,7 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: breast_hetero_host_sid
+    table_name: breast_hetero_host
     namespace: experiment
     role: host_0
 tasks:

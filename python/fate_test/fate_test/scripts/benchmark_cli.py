@@ -66,34 +66,34 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
         echo.echo(f"\tdataset({len(suite.dataset)}) benchmark groups({len(suite.pairs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
-    with Clients(config_inst) as client:
-        fate_version = client["guest_0"].get_version()
-        for i, suite in enumerate(suites):
-            # noinspection PyBroadException
-            try:
-                start = time.time()
-                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                if not skip_data:
-                    try:
-                        _upload_data(client, suite, config_inst)
-                    except Exception as e:
-                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+    client = Clients(config_inst)
+    fate_version = client["guest_0"].get_version()
+    for i, suite in enumerate(suites):
+        # noinspection PyBroadException
+        try:
+            start = time.time()
+            echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+            if not skip_data:
                 try:
-                    _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling, storage_tag,
-                                         history_tag, fate_version, match_details)
+                    _upload_data(client, suite, config_inst)
                 except Exception as e:
-                    raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
+                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+            try:
+                _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling, storage_tag,
+                                     history_tag, fate_version, match_details)
+            except Exception as e:
+                raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
 
-                if not skip_data and clean_data:
-                    _delete_data(client, suite)
-                echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+            if not skip_data and clean_data:
+                _delete_data(client, suite)
+            echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
 
-            except Exception:
-                exception_id = uuid.uuid1()
-                echo.echo(f"exception in {suite.path}, exception_id={exception_id}", err=True, fg='red')
-                LOGGER.exception(f"exception id: {exception_id}")
-            finally:
-                echo.stdout_newline()
+        except Exception:
+            exception_id = uuid.uuid1()
+            echo.echo(f"exception in {suite.path}, exception_id={exception_id}", err=True, fg='red')
+            LOGGER.exception(f"exception id: {exception_id}")
+        finally:
+            echo.stdout_newline()
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 

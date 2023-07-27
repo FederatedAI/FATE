@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import json
 import os
 import time
 import typing
@@ -30,24 +31,27 @@ class FLOWClient(object):
     def __init__(self,
                  address: typing.Optional[str],
                  data_base_dir: typing.Optional[Path],
-                 cache_directory: typing.Optional[Path],
-                 role: str,
-                 party_id: int):
+                 cache_directory: typing.Optional[Path]):
         self.address = address
-        self.version = "2.0.0-beta"
+        self.version = "v2"
         self._client = FlowClient(self.address.split(':')[0], self.address.split(':')[1], self.version)
         self._data_base_dir = data_base_dir
         self._cache_directory = cache_directory
         self.data_size = 0
-        self.role = role
-        self.party_id = party_id
 
     def set_address(self, address):
         self.address = address
 
+    def transform_local_file_to_dataframe(self, data: Data, callback=None, output_path=None):
+        data_warehouse = self.upload_data(data, callback, output_path)
+        status = self.transform_to_dataframe(data.namespace, data.table_name, data_warehouse, callback)
+        return status
+
     def upload_data(self, data: Data, callback=None, output_path=None):
-        response = self._upload_data(data, output_path=output_path)
+        response, file_path = self._upload_data(data, output_path=output_path)
         try:
+            if callback is not None:
+                callback(response)
             code = response["code"]
             if code != 0:
                 raise ValueError(f"Return code {code}!=0")
@@ -57,23 +61,44 @@ class FLOWClient(object):
             job_id = response["job_id"]
         except BaseException:
             raise ValueError(f"Upload data fails, response={response}")
-
         # self.monitor_status(job_id, role=self.role, party_id=self.party_id)
-        self._awaiting(job_id, self.role, self.party_id, )
+        self._awaiting(job_id, "local", 0)
+
         return dict(namespace=namespace, name=name)
 
+    def transform_to_dataframe(self, namespace, table_name, data_warehouse, callback=None):
+        response = self._client.data.dataframe_transformer(namespace=namespace,
+                                                           name=table_name,
+                                                           data_warehouse=data_warehouse)
+
+        """try:
+            code = response["code"]
+            if code != 0:
+                raise ValueError(f"Return code {code}!=0")
+            job_id = response["job_id"]
+        except BaseException:
+            raise ValueError(f"Transform data fails, response={response}")"""
+        try:
+            if callback is not None:
+                callback(response)
+                status = self._awaiting(response["job_id"], "local", 0)
+                status = str(status).lower()
+            else:
+                status = response["retmsg"]
+
+        except Exception as e:
+            raise RuntimeError(f"upload data failed") from e
+        job_id = response["job_id"]
+        self._awaiting(job_id, "local", 0)
+        return status
+
     def delete_data(self, data: Data):
-        # @todo: use client.table.delete(table=, namespace=)
         try:
             table_name = data.config['table_name'] if data.config.get(
                 'table_name', None) is not None else data.config.get('name')
-            self._delete_data(table_name=table_name, namespace=data.config['namespace'])
+            self._client.table.delete(table_name=table_name, namespace=data.config['namespace'])
         except Exception as e:
             raise RuntimeError(f"delete data failed") from e
-
-    """def output_data_table(self, job_id, role, party_id, component_name):
-        result = self._output_data_table(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
-        return result"""
 
     def table_query(self, table_name, namespace):
         result = self._table_query(table_name=table_name, namespace=namespace)
@@ -106,7 +131,7 @@ class FLOWClient(object):
             time.sleep(1)
 
     def _upload_data(self, data, output_path=None, verbose=0, destroy=1):
-        conf = data.conf
+        conf = data.config
         # if conf.get("engine", {}) != "PATH":
         if output_path is not None:
             conf['file'] = os.path.join(os.path.abspath(output_path), os.path.basename(conf.get('file')))
@@ -119,12 +144,12 @@ class FLOWClient(object):
         if not path.exists():
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             f'please check the path: {path}')
-        response = self._client.data.upload(file=data.file,
+        response = self._client.data.upload(file=str(path),
                                             head=data.head,
                                             meta=data.meta,
                                             extend_sid=data.extend_sid,
                                             partitions=data.partitions)
-        return response
+        return response, conf["file"]
 
     """def _table_info(self, table_name, namespace):
         param = {
@@ -221,7 +246,7 @@ class FLOWClient(object):
 
     def _query_job(self, job_id, role, party_id):
         response = self._client.job.query(job_id, role, party_id)
-        try:
+        """try:
             code = response["code"]
             if code != 0:
                 raise ValueError(f"Return code {code}!=0")
@@ -229,9 +254,10 @@ class FLOWClient(object):
             data = response["data"][0]
             return data
         except BaseException:
-            raise ValueError(f"query job is failed, response={response}")
+            raise ValueError(f"query job is failed, response={response}")"""
+        return QueryJobResponse(response)
 
-    def get_version(self):
+    """def get_version(self):
         response = self._post(url='version/get', json={"module": "FATE"})
         try:
             retcode = response['retcode']
@@ -241,7 +267,7 @@ class FLOWClient(object):
             fate_version = response["data"]["FATE"]
         except Exception as e:
             raise RuntimeError(f"get version error: {response}") from e
-        return fate_version
+        return fate_version"""
 
     def _add_notes(self, job_id, role, party_id, notes):
         data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
@@ -280,10 +306,10 @@ class Status(object):
 class QueryJobResponse(object):
     def __init__(self, response: dict):
         try:
-            status = Status(response.get('data')[0]["f_status"])
-            progress = response.get('data')[0]['f_progress']
+            status = Status(response.get('data')[0]["status"])
+            progress = response.get('data')[0]['progress']
         except Exception as e:
-            raise RuntimeError(f"query job error, response: {response}") from e
+            raise RuntimeError(f"query job error, response: {json.dumps(response, indent=4)}") from e
         self.status = status
         self.progress = progress
 

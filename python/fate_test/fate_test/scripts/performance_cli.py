@@ -96,44 +96,44 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
         return
 
     echo.stdout_newline()
-    with Clients(config_inst) as client:
+    client = Clients(config_inst)
 
-        for i, suite in enumerate(suites):
-            # noinspection PyBroadException
+    for i, suite in enumerate(suites):
+        # noinspection PyBroadException
+        try:
+            start = time.time()
+            echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+
+            if not skip_data:
+                try:
+                    _upload_data(client, suite, config_inst)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+
+            echo.stdout_newline()
             try:
-                start = time.time()
-                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+                time_consuming = _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
+                                             storage_tag, history_tag, update_component_parameters, max_iter,
+                                             max_depth, num_trees, task_cores)
+            except Exception as e:
+                raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
-                if not skip_data:
-                    try:
-                        _upload_data(client, suite, config_inst)
-                    except Exception as e:
-                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+            try:
+                _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
+            except Exception as e:
+                raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
-                echo.stdout_newline()
-                try:
-                    time_consuming = _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                                 storage_tag, history_tag, update_component_parameters, max_iter,
-                                                 max_depth, num_trees, task_cores)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
+            echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+            if not skip_data and clean_data:
+                _delete_data(client, suite)
+            echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
 
-                try:
-                    _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
-
-                echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                if not skip_data and clean_data:
-                    _delete_data(client, suite)
-                echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
-
-            except Exception:
-                exception_id = uuid.uuid1()
-                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
-                LOGGER.exception(f"exception id: {exception_id}")
-            finally:
-                echo.stdout_newline()
+        except Exception:
+            exception_id = uuid.uuid1()
+            echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+            LOGGER.exception(f"exception id: {exception_id}")
+        finally:
+            echo.stdout_newline()
 
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')

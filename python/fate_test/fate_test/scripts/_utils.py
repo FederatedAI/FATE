@@ -12,8 +12,6 @@ from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobRes
 from fate_test._io import echo, LOGGER, set_logger
 from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK
 
-from fate_test import _config
-
 
 def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
                    config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path, parallelize):
@@ -45,7 +43,7 @@ def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num,
                                                 match_rate, sparsity, force, split_host, output_path, parallelize)
 
 
-def _load_testsuites(includes, excludes, glob, provider=None, suffix="testsuite.json", suite_type="testsuite"):
+def _load_testsuites(includes, excludes, glob, provider=None, suffix="testsuite.yaml", suite_type="testsuite"):
     def _find_testsuite_files(path):
         if isinstance(path, str):
             path = Path(path)
@@ -102,9 +100,7 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
                            width=24) as bar:
         for i, data in enumerate(suite.dataset):
             data.update(config)
-            table_name = data.config['table_name'] if data.config.get(
-                'table_name', None) is not None else data.config.get('name')
-            data_progress = DataProgress(f"{data.role_str}<-{data.config['namespace']}.{table_name}")
+            data_progress = DataProgress(f"{data.role_str}<-{data.namespace}.{data.table_name}")
 
             def update_bar(n_step):
                 bar.item_show_func = lambda x: data_progress.show()
@@ -121,16 +117,21 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
 
             try:
                 echo.stdout_newline()
-                status, data_path = clients[data.role_str].upload_data(data, _call_back, output_path)
+                # role, idx = data.role_str.lower().split("_")
+                # party_id = config.role[role][int(idx)]
+                status = clients[data.role_str].transform_local_file_to_dataframe(data,
+                                                                                  _call_back,
+                                                                                  output_path)
                 time.sleep(1)
                 data_progress.update()
                 if status != 'success':
                     raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {status}")
                 bar.update(1)
-                if _config.data_switch:
+
+                """if _config.data_switch:
                     from fate_test.scripts import generate_mock_data
 
-                    generate_mock_data.remove_file(data_path)
+                    generate_mock_data.remove_file(data_path)"""
             except Exception:
                 exception_id = str(uuid.uuid1())
                 echo.file(f"exception({exception_id})")

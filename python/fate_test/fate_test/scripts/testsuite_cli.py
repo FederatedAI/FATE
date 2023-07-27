@@ -87,39 +87,41 @@ def run_suite(ctx, include, exclude, glob,
         return
 
     echo.stdout_newline()
-    with Clients(config_inst) as client:
-        for i, suite in enumerate(suites):
-            # noinspection PyBroadException
-            try:
-                start = time.time()
-                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                if not skip_data and config_inst.work_mode:
-                    try:
-                        _upload_data(client, suite, config_inst)
-                    except Exception as e:
-                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
-                if data_only:
-                    continue
+    # with Clients(config_inst) as client:
+    client = Clients(config_inst)
 
-                if not skip_jobs:
-                    try:
-                        time_consuming = _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
-                    except Exception as e:
-                        raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
+    for i, suite in enumerate(suites):
+        # noinspection PyBroadException
+        try:
+            start = time.time()
+            echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+            if not skip_data:
+                try:
+                    _upload_data(client, suite, config_inst)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+            if data_only:
+                continue
 
-                if not skip_data and clean_data and config_inst.work_mode:
-                    _delete_data(client, suite)
-                echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
-                if not skip_jobs:
-                    suite_file = str(suite.path).split("/")[-1]
-                    echo.echo(suite.pretty_final_summary(time_consuming, suite_file))
+            if not skip_jobs:
+                try:
+                    time_consuming = _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
-            except Exception:
-                exception_id = uuid.uuid1()
-                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
-                LOGGER.exception(f"exception id: {exception_id}")
-            finally:
-                echo.stdout_newline()
+            if not skip_data and clean_data:
+                _delete_data(client, suite)
+            echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+            if not skip_jobs:
+                suite_file = str(suite.path).split("/")[-1]
+                echo.echo(suite.pretty_final_summary(time_consuming, suite_file))
+
+        except Exception:
+            exception_id = uuid.uuid1()
+            echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+            LOGGER.exception(f"exception id: {exception_id}")
+        finally:
+            echo.stdout_newline()
     non_success_summary()
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
