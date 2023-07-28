@@ -30,15 +30,24 @@ import java.util.concurrent.TimeUnit;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QueueTest {
     Logger logger = LoggerFactory.getLogger(QueueTest.class);
-    String ip = "localhost";
+    static String ip = "localhost";
     //int port = 8250;//nginx
-    int port = 9370;//nginx
-    String desPartyId = "9999";
-    String desRole = "";
-    String srcPartyId = "10000";
-    String srcRole = "";
-    String transferId = "testTransferId";
-    String sessionId = "testSessionId";
+    static int port = 9370;//nginx
+    static String desPartyId = "9999";
+    static String desRole = "";
+    static String srcPartyId = "10000";
+    static String srcRole = "";
+    static String transferId = "testTransferId";
+    static String sessionId = "testSessionId";
+    static FateContext  fateContext= new FateContext();
+    static RouterInfo  routerInfo= new RouterInfo();
+    static {
+        routerInfo.setHost(ip);
+        routerInfo.setPort(port);
+    }
+
+
+
 
     //4359615
 
@@ -97,10 +106,7 @@ public class QueueTest {
         inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
         inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
         inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
-        FateContext  fateContext= new FateContext();
-        RouterInfo  routerInfo= new RouterInfo();
-        routerInfo.setHost("localhost");
-        routerInfo.setPort(9370);
+
         Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
        // Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
         Osx.TopicInfo topicInfo = null;
@@ -156,15 +162,9 @@ public class QueueTest {
                     //inboundBuilder.getMetadataMap().put(Pcp.Metadata.MessageOffSet.name(),);
                     Osx.Message.Builder messageBuilder = Osx.Message.newBuilder();
                     //4359615
-                    messageBuilder.setBody(ByteString.copyFrom(createBigArray(10359615)));
-                    //messageBuilder.setHead(ByteString.copyFrom(("test head " + i).getBytes()));
+                    //messageBuilder.setBody(ByteString.copyFrom(createBigArray(10359615)));
+                    messageBuilder.setHead(ByteString.copyFrom(("test head " + i).getBytes()));
                     inboundBuilder.setPayload(messageBuilder.build().toByteString());
-
-                    FateContext  fateContext= new FateContext();
-                    RouterInfo  routerInfo= new RouterInfo();
-                    routerInfo.setHost("localhost");
-                    routerInfo.setPort(9370);
-                   // System.err.println(routerInfo);
                     Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
 
 
@@ -196,23 +196,7 @@ public class QueueTest {
         inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic0001");
         inboundBuilder.putMetadata(Osx.Metadata.InstanceId.name(),"localhost:9999" );
         inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionId");
-
-
-//        TopicApplyRequest  topicApplyRequest = new TopicApplyRequest();
-//        topicApplyRequest.setTopic("testTopic0001");
-//        topicApplyRequest.setInstanceId("localhost:9999");
-//        topicApplyRequest.setSessionId("testSessionId");
-      //  inboundBuilder.setPayload(ByteString.copyFrom(JsonUtil.object2Json(topicApplyRequest).getBytes(StandardCharsets.UTF_8)));
-//        RouterInfo routerInfo = new  RouterInfo();
-//        routerInfo.setHost("localhost");
-//        routerInfo.setPort(9370);
-//        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-        // FireworkServiceGrpc.FireworkServiceBlockingStub stub = FireworkServiceGrpc.newBlockingStub(managedChannel);
-        //PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub  stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-        Osx.Outbound  outbound = blockingStub.invoke(inboundBuilder.build());
-
-        //TopicApplyResponse  topicApplyResponse = JsonUtil.json2Object(outbound.getPayload().toByteArray(),TopicApplyResponse.class);
-
+        Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
         System.err.println(outbound);
 
     }
@@ -233,7 +217,7 @@ public class QueueTest {
         inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
         inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
         inboundBuilder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(index));
-        Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
+        Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
         System.err.println("ack response:" + outbound);
     }
 
@@ -259,7 +243,13 @@ public class QueueTest {
             inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
             inboundBuilder.putMetadata(Osx.Metadata.MessageOffSet.name(), "-1");
             inboundBuilder.putMetadata(Osx.Metadata.Timeout.name(),"100000");
-            consumeResponse = blockingStub.invoke(inboundBuilder.build());
+
+
+            // System.err.println(routerInfo);
+             consumeResponse =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
+
+
+            //consumeResponse = blockingStub.invoke(inboundBuilder.build());
             System.err.println("response : "+consumeResponse);
 
             String indexString = consumeResponse.getMetadataMap().get(Osx.Metadata.MessageOffSet.name());

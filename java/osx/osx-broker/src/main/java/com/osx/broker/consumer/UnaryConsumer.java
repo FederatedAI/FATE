@@ -67,8 +67,6 @@ public class UnaryConsumer extends LocalQueueConsumer {
     }
 
     public synchronized int answerLongPulling() {
-
-
         /*
          * 这里需要改为ack  后才加1  ，要不然这里会丢消息
          */
@@ -78,9 +76,13 @@ public class UnaryConsumer extends LocalQueueConsumer {
         while (this.longPullingQueue.size() > 0) {
             LongPullingHold longPullingHold = this.longPullingQueue.poll();
             try {
-
-//                long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
-
+                io.grpc.Context  grpcContext = longPullingHold.getGrpcContext();
+                if(grpcContext!=null){
+                    if(grpcContext.isCancelled()){
+                        logger.error("topic {} consumer grpc context is cancelled",transferId);
+                        continue;
+                    }
+                }
                 long current= System.currentTimeMillis();
                 long needOffset = longPullingHold.getNeedOffset();
                 if(transferQueue==null){
@@ -135,19 +137,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 }
             } catch (Exception e) {
                 logger.error("topic {} answer long pulling error ",transferId,e);
-
                 longPullingHold.throwException(e);
-//                try {
-//                    Thread.sleep(1000git ggi
-
-
-
-
-
-
-//                } catch (InterruptedException interruptedException) {
-//                    logger.error("interruptedException : ",interruptedException);
-//                }
             }
         }
         if (reputList != null) {
@@ -165,6 +155,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
     public static class LongPullingHold {
         Logger logger = LoggerFactory.getLogger(LongPullingHold.class);
         FateContext context;
+        io.grpc.Context   grpcContext;
         StreamObserver streamObserver;
         HttpServletResponse httpServletResponse;
         long expireTimestamp;

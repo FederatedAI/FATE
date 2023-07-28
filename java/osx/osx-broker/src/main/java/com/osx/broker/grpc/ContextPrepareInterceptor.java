@@ -12,6 +12,7 @@ public class ContextPrepareInterceptor implements ServerInterceptor {
         String[] remoteAddrSplited = remoteAddr.split(":");
         String remoteIp = remoteAddrSplited[0].replaceAll("\\/", "");
         Context context = Context.current().withValue(sourceIp, remoteIp);
+
         return Contexts.interceptCall(context, call, headers, next);
     }
 

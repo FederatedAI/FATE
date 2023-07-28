@@ -20,6 +20,7 @@ import com.osx.api.context.Context;
 import com.osx.api.router.RouterInfo;
 import com.osx.broker.ServiceContainer;
 import com.osx.broker.consumer.UnaryConsumer;
+import com.osx.broker.grpc.ContextPrepareInterceptor;
 import com.osx.broker.queue.CreateQueueResult;
 import com.osx.broker.queue.TransferQueue;
 import com.osx.broker.queue.TransferQueueApplyInfo;
@@ -110,6 +111,8 @@ public class PtpConsumeService extends AbstractPtpServiceAdaptor {
                 if (offset < 0) {
 
                     UnaryConsumer.LongPullingHold longPullingHold = new UnaryConsumer.LongPullingHold();
+
+                    longPullingHold.setGrpcContext(io.grpc.Context.current());
                     longPullingHold.setNeedOffset(offset);
                     longPullingHold.setStreamObserver(streamObserver);
                     longPullingHold.setContext(context.subContext());
