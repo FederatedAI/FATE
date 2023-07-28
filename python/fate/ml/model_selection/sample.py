@@ -26,14 +26,12 @@ logger = logging.getLogger(__name__)
 class SampleModuleGuest(Module):
     def __init__(
             self,
-            mode="random",
             replace=False,
             frac=1.0,
             n=None,
             random_state=None,
             hetero_sync=True
     ):
-        self.mode = mode
         self.replace = replace
         self.frac = frac
         self.n = n
@@ -43,7 +41,11 @@ class SampleModuleGuest(Module):
         self._sample_obj = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
+        logger.info(f"enter sample fit")
         if self.hetero_sync:
+            logger.info(f"hetero sync")
+            logger.info(f"role: {ctx.local.role}")
+
             sampled_data = utils.federated_sample(ctx,
                                                   train_data,
                                                   n=self.n,
@@ -52,6 +54,7 @@ class SampleModuleGuest(Module):
                                                   role=ctx.local.role,
                                                   random_state=self.random_state)
         else:
+            logger.info(f"local sample")
             # local sample
             sampled_data = utils.local_sample(ctx,
                                               train_data,
@@ -66,14 +69,12 @@ class SampleModuleGuest(Module):
 class SampleModuleHost(Module):
     def __init__(
             self,
-            mode="random",
             replace=False,
             frac=1.0,
             n=None,
             random_state=None,
             hetero_sync=True
     ):
-        self.mode = mode
         self.replace = replace
         self.frac = frac
         self.n = n
@@ -81,12 +82,17 @@ class SampleModuleHost(Module):
         self.hetero_sync = hetero_sync
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
+        logger.info(f"enter sample fit")
         if self.hetero_sync:
+            logger.info(f"hetero sync")
+            logger.info(f"role: {ctx.local.role}")
+
             sampled_data = utils.federated_sample(ctx,
                                                   train_data,
                                                   role=ctx.local.role)
         else:
             # local sample
+            logger.info(f"local sample")
             sampled_data = utils.local_sample(ctx,
                                               train_data,
                                               n=self.n,
@@ -106,27 +112,3 @@ class SampleModuleHost(Module):
                                                      random_state=self.random_state)"""
 
         return sampled_data
-
-
-"""
-def sample_per_label(train_data, label_frac_dict=None, label_count_dict=None, replace=False, random_state=None):
-    sampled_data_df = []
-    if label_frac_dict is not None:
-        labels = label_frac_dict.keys()
-        for label in labels:
-            label_frac = label_frac_dict[label]
-            label_data = train_data[train_data[train_data.schema.label_name] == label]
-            label_sampled_data = label_data.sample(frac=label_frac, replace=replace, random_state=random_state)
-            sampled_data_df.append(label_sampled_data)
-    elif label_count_dict is not None:
-        labels = label_count_dict.keys()
-        for label in labels:
-            label_count = label_count_dict[label]
-            label_data = train_data[train_data[train_data.schema.label_name] == label]
-            label_sampled_data = label_data.sample(n=label_count, reaplce=replace, random_state=random_state)
-            sampled_data_df.append(label_sampled_data)
-    else:
-        raise ValueError("label_frac_dict and label_count_dict can not be None at the same time")
-    sampled_data = DataFrame.vstack(sampled_data_df)
-    return sampled_data
-"""
