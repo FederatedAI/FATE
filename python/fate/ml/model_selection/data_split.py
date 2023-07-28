@@ -72,8 +72,12 @@ class DataSplitModuleGuest(Module):
                 test_sid = test_data_set.get_indexer(target="sample_id")
         else:
             validate_sid = None
-            test_data_set = validate_test_data_set
-            test_sid = None
+            if validate_test_data_set.shape[0] == 0:
+                test_data_set = None
+                test_sid = None
+            else:
+                test_data_set = validate_test_data_set
+                test_sid = validate_test_data_set.get_indexer(target="sample_id")
 
         if self.hetero_sync:
             ctx.hosts.put("train_data_sid", train_sid)
@@ -141,7 +145,10 @@ class DataSplitModuleHost(Module):
                 if test_data_set.shape[0] == 0:
                     test_data_set = None
             else:
-                test_data_set = validate_test_data_set
+                if validate_test_data_set.shape[0] == 0:
+                    test_data_set = None
+                else:
+                    test_data_set = validate_test_data_set
 
         return train_data_set, validate_data_set, test_data_set
 
@@ -160,7 +167,7 @@ def sample_per_label(train_data, sample_count=None, random_state=None):
     sampled_n = 0
     data_n = train_data.shape[0]
     for i, label in enumerate(labels):
-        label_data = train_data[(train_data.label == label).as_tensor()]
+        label_data = train_data[(train_data.label == int(label)).as_tensor()]
         if i == len(labels) - 1:
             # last label:
             to_sample_n = sample_count - sampled_n
