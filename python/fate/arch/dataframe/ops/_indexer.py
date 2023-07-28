@@ -37,7 +37,7 @@ def aggregate_indexer(indexer):
         return list(aggregate_ret.items())
 
     agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
-    agg_indexer = agg_indexer.mapValues(lambda v: sorted(v))
+    agg_indexer = agg_indexer.mapValues(lambda v: sorted(v, key=lambda x: x[1]))
 
     return agg_indexer
 
