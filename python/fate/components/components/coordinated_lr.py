@@ -54,12 +54,12 @@ def train(
             method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
         ),
     ),
-    tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
-    early_stop: cpn.parameter(
-        type=params.string_choice(["weight_diff", "diff", "abs"]),
-        default="diff",
-        desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
-    ),
+        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+        early_stop: cpn.parameter(
+            type=params.string_choice(["weight_diff", "diff", "abs"]),
+            default="diff",
+            desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
+        ),
         init_param: cpn.parameter(
             type=params.init_param(),
             default=params.InitParam(method="zeros", fit_intercept=True),
