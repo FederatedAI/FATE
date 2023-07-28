@@ -34,9 +34,9 @@ intersection_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="
                                                                           namespace="experiment_sid"))
 
 sample_0 = Sample("sample_0",
-                  frac=0.5,
+                  frac={0: 0.5},
                   replace=False,
-                  hetero_sync=False,
+                  hetero_sync=True,
                   input_data=intersection_0.outputs["output_data"])
 
 sample_1 = Sample("sample_1",
