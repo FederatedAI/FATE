@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import json
+
 import math
 import os
 
@@ -21,6 +21,7 @@ import numpy as np
 from colorama import init, deinit, Fore, Style
 from fate_test._io import echo
 from prettytable import PrettyTable, ORGMODE
+from ruamel import yaml
 
 SCRIPT_METRICS = "script_metrics"
 DISTRIBUTION_METRICS = "distribution_metrics"
@@ -253,10 +254,10 @@ def comparison_quality(group_name, history_tags, cache_directory, abs_tol, rel_t
         return metric
 
     history_info_dir = "/".join([os.path.join(os.path.abspath(cache_directory), 'benchmark_history',
-                                              "benchmark_quality.json")])
+                                              "benchmark_quality.yaml")])
     assert os.path.exists(history_info_dir), f"Please check the {history_info_dir} Is it deleted"
     with open(history_info_dir, 'r') as f:
-        benchmark_quality = json.load(f, object_hook=dict)
+        benchmark_quality = yaml.safe_load(f)
     regression_metric = {}
     regression_quality = {}
     class_quality = {}
@@ -299,11 +300,11 @@ def metric_compare(abs_tol, rel_tol, match_details, **metric_results):
 
 
 def _save_quality(storage_tag, cache_directory, **results):
-    save_dir = "/".join([os.path.join(os.path.abspath(cache_directory), 'benchmark_history', "benchmark_quality.json")])
+    save_dir = "/".join([os.path.join(os.path.abspath(cache_directory), 'benchmark_history', "benchmark_quality.yaml")])
     os.makedirs(os.path.dirname(save_dir), exist_ok=True)
     if os.path.exists(save_dir):
         with open(save_dir, 'r') as f:
-            benchmark_quality = json.load(f, object_hook=dict)
+            benchmark_quality = yaml.safe_load(f, object_hook=dict)
     else:
         benchmark_quality = {}
     if storage_tag in benchmark_quality:
@@ -311,7 +312,7 @@ def _save_quality(storage_tag, cache_directory, **results):
     benchmark_quality.update({storage_tag: results})
     try:
         with open(save_dir, 'w') as fp:
-            json.dump(benchmark_quality, fp, indent=2)
+            yaml.dump(benchmark_quality, fp)
         print("Storage success, please check: ", save_dir)
     except Exception:
         print("Storage failed, please check: ", save_dir)
