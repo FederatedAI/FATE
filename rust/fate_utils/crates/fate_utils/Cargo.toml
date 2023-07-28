@@ -26,6 +26,7 @@ quantile = { path = "../quantile" }
 math = { path = "../math" }
 fixedpoint = { path = "../fixedpoint" }
 paillier_tensor = { path = "../paillier_tensor" }
+paillier = { path = "../paillier" }
 
 [features]
 default = ["rug", "rayon", "std", "u64_backend", "extension-module"]
