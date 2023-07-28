@@ -69,7 +69,8 @@ def feature_binning_train(
         use_anonymous: cpn.parameter(type=bool, default=False,
                                      desc="bool, whether interpret `bin_col` & `category_col` "
                                           "as anonymous column names"),
-        transform_method: cpn.parameter(type=str, default=None,  # may support user-provided dict in future release
+        transform_method: cpn.parameter(type=params.string_choice(['woe', 'bin_idx']),
+                                        default=None,  # may support user-provided dict in future release
                                         desc="str, values to which binned data will be transformed, "
                                              "select from {'woe', 'bin_idx'}; "
                                              "note that host will not transform features "
@@ -95,7 +96,8 @@ def feature_binning_predict(
         role: Role,
         test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-        transform_method: cpn.parameter(type=str, default=None,  # may support user-provided dict in future release
+        transform_method: cpn.parameter(type=params.string_choice(['woe', 'bin_idx']),
+                                        default=None,  # may support user-provided dict in future release
                                         desc="str, values to which binned data will be transformed, "
                                              "select from {'woe', 'bin_idx'}; "
                                              "note that host will not transform features "
