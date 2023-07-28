@@ -10,7 +10,7 @@ from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobResponse
 from fate_test._io import echo, LOGGER, set_logger
-from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK
+from fate_test._parser import Testsuite, BenchmarkSuite, DATA_LOAD_HOOK, CONF_LOAD_HOOK, DSL_LOAD_HOOK
 
 
 def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
@@ -179,11 +179,11 @@ def _set_namespace(data_namespace_mangling, namespace):
 
     if data_namespace_mangling:
         echo.echo(f"add data_namespace_mangling: _{namespace}")
-        DATA_JSON_HOOK.add_extend_namespace_hook(namespace)
-        CONF_JSON_HOOK.add_extend_namespace_hook(namespace)
+        DATA_LOAD_HOOK.add_extend_namespace_hook(namespace)
+        CONF_LOAD_HOOK.add_extend_namespace_hook(namespace)
 
 
 def _add_replace_hook(replace):
-    DATA_JSON_HOOK.add_replace_hook(replace)
-    CONF_JSON_HOOK.add_replace_hook(replace)
-    DSL_JSON_HOOK.add_replace_hook(replace)
+    DATA_LOAD_HOOK.add_replace_hook(replace)
+    CONF_LOAD_HOOK.add_replace_hook(replace)
+    DSL_LOAD_HOOK.add_replace_hook(replace)

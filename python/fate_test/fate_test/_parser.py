@@ -55,9 +55,9 @@ class chain_hook(object):
         return d
 
 
-DATA_JSON_HOOK = chain_hook()
-CONF_JSON_HOOK = chain_hook()
-DSL_JSON_HOOK = chain_hook()
+DATA_LOAD_HOOK = chain_hook()
+CONF_LOAD_HOOK = chain_hook()
+DSL_LOAD_HOOK = chain_hook()
 
 
 class Data(object):
@@ -131,13 +131,13 @@ class Testsuite(object):
     @staticmethod
     def load(path: Path, provider):
         with path.open("r") as f:
-            # testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+            # testsuite_config = json.load(f, object_hook=DATA_LOAD_HOOK.hook)
             testsuite_config = yaml.safe_load(f)
-            # testsuite_config = DATA_JSON_HOOK.hook(testsuite_config)
+            # testsuite_config = DATA_LOAD_HOOK.hook(testsuite_config)
 
         dataset = []
         for d in testsuite_config.get("data"):
-            d = DATA_JSON_HOOK.hook(d)
+            d = DATA_LOAD_HOOK.hook(d)
             """if "use_local_data" not in d:
                 d.update({"use_local_data": _config.use_local_data})"""
             dataset.append(Data.load(d, path))
@@ -290,7 +290,7 @@ class BenchmarkSuite(object):
 
         dataset = []
         for d in testsuite_config.get("data"):
-            d = DATA_JSON_HOOK.hook(d)
+            d = DATA_LOAD_HOOK.hook(d)
             dataset.append(Data.load(d, path))
 
         pairs = []
@@ -367,16 +367,3 @@ def _replace_hook(mapping: dict):
         return d
 
     return _hook
-
-
-"""class JsonParamType(click.ParamType):
-    name = "json_string"
-
-    def convert(self, value, param, ctx):
-        try:
-            return json.loads(value)
-        except ValueError:
-            self.fail(f"{value} is not a valid json string", param, ctx)
-
-
-JSON_STRING = JsonParamType()"""
