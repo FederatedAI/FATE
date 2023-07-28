@@ -11,7 +11,7 @@ const BASE: u32 = 16;
 const MAX_INT_FRACTION: u8 = 2;
 
 /// fixedpoint encoder
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FixedpointCoder {
     pub n: BInt,
     pub max_int: BInt,
