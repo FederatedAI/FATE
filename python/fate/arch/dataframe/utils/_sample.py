@@ -14,12 +14,12 @@
 #  limitations under the License.
 #
 import functools
+from typing import Union, Dict, Any
 
 from sklearn.utils import resample
-from typing import Union, Dict, Any
-from .._dataframe import DataFrame
-from ._id_generator import generate_sample_id, generate_sample_id_prefix
 
+from ._id_generator import generate_sample_id, generate_sample_id_prefix
+from .._dataframe import DataFrame
 
 REGENERATED_TAG = "regenerated_index"
 SAMPLE_INDEX_TAG = "sample_index"
@@ -146,11 +146,11 @@ def _sample_guest(
                 if sample_df is None:
                     sample_df = sample_label_df
                 else:
-                    DataFrame.hstack([sample_df, sample_label_df])
+                    sample_df = DataFrame.vstack([sample_df, sample_label_df])
 
             if sync:
                 sample_indexer = sample_df.get_indexer(target="sample_id")
-                ctx.hosts.put(REGENERATED_IDS, False)
+                ctx.hosts.put(REGENERATED_TAG, False)
                 ctx.hosts.put(SAMPLE_INDEX_TAG, sample_indexer)
 
     return sample_df
