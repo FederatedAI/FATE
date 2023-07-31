@@ -6,7 +6,7 @@ from fate.arch.protocol.histogram import Histogram
 
 ctx = Context()
 kit = ctx.cipher.phe.setup(options={"kind": "paillier_vector_based", "key_length": 1024})
-sk, pk, coder = kit.sk, kit.pk, kit.coder
+sk, pk, coder, evaluator = kit.sk, kit.pk, kit.coder, kit.evaluator
 
 
 def test_plain():
@@ -32,7 +32,7 @@ def test_plain():
 def test_tensor():
     # paillier
     hist = Histogram(1, [3, 2])
-    hist.set_value_schema({"c0": {"type": "paillier", "stride": 2, "pk": pk}})
+    hist.set_value_schema({"c0": {"type": "paillier", "stride": 2, "pk": pk, "evaluator": evaluator}})
     print(f"created:\n {hist}")
     hist.update(
         [0, 0, 0, 0],
@@ -57,8 +57,8 @@ def create_mixed_hist():
     hist = Histogram(1, [3, 2])
     hist.set_value_schema(
         {
-            "g": {"type": "paillier", "stride": 1, "pk": pk},
-            "h": {"type": "paillier", "stride": 2, "pk": pk},
+            "g": {"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
+            "h": {"type": "paillier", "stride": 2, "pk": pk, "evaluator": evaluator},
             "1": {"type": "tensor", "stride": 2, "dtype": torch.int64},
         }
     )

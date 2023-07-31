@@ -57,31 +57,40 @@ class PHECipherBuilder:
 
             pk, sk = fate_utils.tensor.keygen(key_length)
             tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, None, sk)
-            return PHECipher(pk, sk, None, tensor_cipher)
+            return PHECipher(pk, sk, None, None, tensor_cipher)
 
         if kind == "paillier_vector_based":
-            from fate.arch.protocol.paillier import keygen
-            from fate.arch.tensor.paillier_vertor_based import PaillierTensorCipher
+            from fate.arch.protocol.paillier import evaluator, keygen
+            from fate.arch.tensor.phe_vertor_based import PaillierTensorCipher
 
             sk, pk, coder = keygen(key_length)
-            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, coder, sk)
-            return PHECipher(pk, sk, coder, tensor_cipher)
+            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+            return PHECipher(pk, sk, evaluator, coder, tensor_cipher)
+
+        if kind == "heu":
+            from fate.arch.protocol.heu import evaluator, keygen
+            from fate.arch.tensor.phe_vertor_based import PaillierTensorCipher
+
+            sk, pk, coder = keygen(key_length)
+            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+            return PHECipher(pk, sk, evaluator, coder, tensor_cipher)
 
         elif kind == "mock":
             from fate.arch.tensor.mock import PaillierTensorCipher
 
             tensor_cipher = PaillierTensorCipher(**options)
-            return PHECipher(None, None, None, tensor_cipher)
+            return PHECipher(None, None, None, None, tensor_cipher)
 
         else:
             raise ValueError(f"Unknown PHE keygen kind: {self.kind}")
 
 
 class PHECipher:
-    def __init__(self, pk, sk, coder, tensor_cipher) -> None:
+    def __init__(self, pk, sk, evaluator, coder, tensor_cipher) -> None:
         self._pk = pk
         self._sk = sk
         self._coder = coder
+        self._evaluator = evaluator
         self._tensor_cipher = tensor_cipher
 
     def get_tensor_encryptor(self):
@@ -104,3 +113,7 @@ class PHECipher:
     @property
     def sk(self):
         return self._sk
+
+    @property
+    def evaluator(self):
+        return self._evaluator

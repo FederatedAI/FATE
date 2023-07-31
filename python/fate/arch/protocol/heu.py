@@ -1,39 +1,39 @@
 from typing import List, Optional, Tuple
 
 import torch
-from fate_utils.histogram import PK as _PK
-from fate_utils.histogram import SK as _SK
-from fate_utils.histogram import Coders as _Coder
-from fate_utils.histogram import FixedpointPaillierVector, FixedpointVector
-from fate_utils.histogram import keygen as _keygen
+from heu import numpy as hnp
+from heu import phe
 
 V = torch.Tensor
-EV = FixedpointPaillierVector
-FV = FixedpointVector
+EV = "FixedpointPaillierVector"
+FV = "FixedpointVector"
 
 
 class SK:
-    def __init__(self, sk: _SK):
-        self.sk = sk
+    def __init__(self, sk: hnp.HeKit) -> None:
+        self.sk = sk.decryptor()
 
     def decrypt_to_encoded(self, vec: EV) -> FV:
-        return self.sk.decrypt_to_encoded(vec)
+        return self.sk.decrypt(vec)
 
 
 class PK:
-    def __init__(self, pk: _PK):
-        self.pk = pk
+    def __init__(self, kit: hnp.HeKit):
+        self.kit = kit
+        self.encryptor = kit.encryptor()
 
     def encrypt_encoded(self, vec: FV, obfuscate: bool) -> EV:
-        return self.pk.encrypt_encoded(vec, obfuscate)
+        return self.encryptor.encrypt(vec)
 
-    def encrypt_encoded_scalar(self, val, obfuscate) -> FixedpointPaillierVector:
-        return self.pk.encrypt_encoded_scalar(val, obfuscate)
+    def encrypt_encoded_scalar(self, val, obfuscate) -> EV:
+        return self.kit.encrypt_encoded_scalar(val, obfuscate)
 
 
 class Coder:
-    def __init__(self, coder: _Coder):
-        self.coder = coder
+    def __init__(self, kit: hnp.HeKit):
+        self.kit = kit
+        self.float_encoder = kit.float_encoder()
+        self.int_encoder = kit.integer_encoder()
 
     def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
         if dtype is None:
@@ -100,7 +100,7 @@ class Coder:
         return self.coder.decode_i32(val)
 
     def encode_f64_vec(self, vec: torch.Tensor):
-        return self.coder.encode_f64_vec(vec.detach().numpy())
+        return self.kit.array(vec.detach().numpy(), self.float_encoder)
 
     def decode_f64_vec(self, vec):
         return torch.tensor(self.coder.decode_f64_vec(vec))
@@ -112,10 +112,10 @@ class Coder:
         return torch.tensor(self.coder.decode_i64_vec(vec))
 
     def encode_f32_vec(self, vec: torch.Tensor):
-        return self.coder.encode_f32_vec(vec.detach().numpy())
+        return self.kit.array(vec.detach().numpy(), self.float_encoder)
 
     def decode_f32_vec(self, vec):
-        return torch.tensor(self.coder.decode_f32_vec(vec))
+        return torch.tensor(vec.to_numpy(self.float_encoder)).type(torch.float32)
 
     def encode_i32_vec(self, vec: torch.Tensor):
         return self.coder.encode_i32_vec(vec.detach().numpy())
@@ -125,14 +125,16 @@ class Coder:
 
 
 def keygen(key_size):
-    sk, pk, coder = _keygen(key_size)
-    return SK(sk), PK(pk), Coder(coder)
+    phe_kit = phe.setup(phe.SchemaType.ZPaillier, key_size)
+    kit = hnp.HeKit(phe_kit)
+    pub_kit = hnp.setup(kit.public_key())
+    return SK(kit), PK(pub_kit), Coder(pub_kit)
 
 
 class evaluator:
     @staticmethod
     def add(a: EV, b: EV, pk: PK):
-        return a.add(pk.pk, b)
+        return pk.kit.evaluator().add(a, b)
 
     @staticmethod
     def add_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
@@ -140,7 +142,7 @@ class evaluator:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
-        return a.add(pk.pk, encrypted)
+        return pk.kit.evaluator().add(a, encrypted)
 
     @staticmethod
     def add_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):

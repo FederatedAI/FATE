@@ -3,8 +3,6 @@ import typing
 import numpy as np
 import torch
 
-from .paillier import PK, SK, Coder, ops
-
 
 class HistogramIndexer:
     def __init__(self, feature_bin_sizes):
@@ -17,10 +15,6 @@ class HistogramIndexer:
 
 
 class HistogramValues:
-    @classmethod
-    def zeros(cls, pk, size: int, stride: int = 1):
-        raise NotImplementedError
-
     def iadd_slice(self, index, value):
         raise NotImplementedError
 
@@ -44,33 +38,34 @@ class HistogramValues:
 
 
 class HistogramEncryptedValues(HistogramValues):
-    def __init__(self, pk: PK, data, stride=1):
+    def __init__(self, pk: "PK", evaluator, data, stride=1):
         self.stride = stride
         self.data = data
         self.pk = pk
+        self.evaluator = evaluator
 
     @classmethod
-    def zeros(cls, pk, size: int, stride: int = 1):
-        return cls(pk, ops.zeros(size * stride), stride)
+    def zeros(cls, pk, evaluator, size: int, stride: int = 1):
+        return cls(pk, evaluator, evaluator.zeros(size * stride), stride)
 
     def iadd_slice(self, index, value):
-        ops.i_add(self.pk, self.data, value, index * self.stride)
+        self.evaluator.i_add(self.pk, self.data, value, index * self.stride)
         return self
 
     def iadd(self, other):
-        ops.i_add(self.pk, self.data, other.data)
+        self.evaluator.i_add(self.pk, self.data, other.data)
         return self
 
     def get_stride(self, index):
-        return ops.slice(self.data, index * self.stride, self.stride)
+        return self.evaluator.slice(self.data, index * self.stride, self.stride)
 
     def chunking_sum(self, intervals: typing.List[typing.Tuple[int, int]]):
         """
         sum bins in the given logical intervals
         """
         intervals = [(start * self.stride, end * self.stride) for start, end in intervals]
-        data = ops.intervals_sum_with_step(self.pk, self.data, intervals, self.stride)
-        return HistogramEncryptedValues(self.pk, data, self.stride)
+        data = self.evaluator.intervals_sum_with_step(self.pk, self.data, intervals, self.stride)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.stride)
 
     def decrypt(self, sk: "SK"):
         data = sk.decrypt_to_encoded(self.data)
@@ -78,7 +73,7 @@ class HistogramEncryptedValues(HistogramValues):
 
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         chunk_sizes = [num * self.stride for num in chunk_sizes]
-        ops.chunking_cumsum_with_step(self.pk, self.data, chunk_sizes, self.stride)
+        self.evaluator.chunking_cumsum_with_step(self.pk, self.data, chunk_sizes, self.stride)
         return self
 
     def __str__(self):
@@ -170,7 +165,8 @@ class Histogram:
             stride = items.get("stride", 1)
             if items["type"] == "paillier":
                 pk = items["pk"]
-                self._values_mapping[name] = HistogramEncryptedValues.zeros(pk, self._num_data_unit, stride)
+                evaluator = items["evaluator"]
+                self._values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, self._num_data_unit, stride)
             elif items["type"] == "tensor":
                 dtype = items.get("dtype", torch.float64)
                 self._values_mapping[name] = HistogramPlainValues.zeros(
