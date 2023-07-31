@@ -48,6 +48,8 @@ class Union(Module):
                     data_cols = set(data.schema.columns)
             result_data = DataFrame.vstack(train_data_list)
         elif self.axis == 1:
+            if sum([data.label is not None for data in train_data_list]) > 1:
+                raise ValueError(f"At most on input data set may contain label.")
             col_set = set()
             for data in train_data_list:
                 data_cols = set(data.schema.columns)
