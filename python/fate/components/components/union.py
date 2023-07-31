@@ -18,7 +18,7 @@ from fate.components.core import GUEST, HOST, Role, cpn, params
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
-def feature_union(
+def union(
         ctx: Context,
         role: Role,
         input_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
@@ -26,13 +26,13 @@ def feature_union(
                             desc="axis along which concatenation is performed, 0 for row-wise, 1 for column-wise"),
         output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
-    from fate.ml.preprocessing import FeatureUnion
+    from fate.ml.preprocessing import Union
     data_list = []
     for data in input_data_list:
         data = data.read()
         data_list.append(data)
 
     sub_ctx = ctx.sub_ctx("train")
-    union_obj = FeatureUnion(axis)
+    union_obj = Union(axis)
     output_df = union_obj.fit(sub_ctx, data_list)
     output_data.write(output_df)
