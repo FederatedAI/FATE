@@ -105,9 +105,7 @@ impl SK {
     }
 
     fn __getstate__(&self) -> PyResult<Vec<u8>> {
-        Err(PyRuntimeError::new_err(
-            "SK cannot be serialized, why do you need to serialize a private key?",
-        ))
+        Ok(bincode::serialize(&self.sk).unwrap())
     }
 
     fn __setstate__(&mut self, state: Vec<u8>) -> PyResult<()> {
@@ -118,6 +116,18 @@ impl SK {
 
 #[pymethods]
 impl Coders {
+    #[new]
+    fn __new__() -> PyResult<Self> {
+        Ok(Coders::default())
+    }
+    fn __getstate__(&self) -> PyResult<Vec<u8>> {
+        Ok(bincode::serialize(&self.coder).unwrap())
+    }
+
+    fn __setstate__(&mut self, state: Vec<u8>) -> PyResult<()> {
+        self.coder = bincode::deserialize(&state).unwrap();
+        Ok(())
+    }
     fn encode_f64(&self, data: f64) -> FixedpointEncoded {
         FixedpointEncoded {
             data: self.coder.encode_f64(data),
@@ -142,7 +152,7 @@ impl Coders {
                 .map(|x| self.coder.decode_f64(x))
                 .collect::<Vec<f64>>(),
         )
-        .into_pyarray(py)
+            .into_pyarray(py)
     }
     fn encode_f32(&self, data: f32) -> FixedpointEncoded {
         FixedpointEncoded {
@@ -167,7 +177,7 @@ impl Coders {
                 .map(|x| self.coder.decode_f32(x))
                 .collect::<Vec<f32>>(),
         )
-        .into_pyarray(py)
+            .into_pyarray(py)
     }
     fn encode_i64(&self, data: i64) -> FixedpointEncoded {
         FixedpointEncoded {
