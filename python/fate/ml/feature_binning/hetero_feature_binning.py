@@ -17,24 +17,35 @@ import logging
 
 import numpy as np
 import pandas as pd
-
 from fate.arch import Context
-from ..abc.module import Module, HeteroModule
+
+from ..abc.module import HeteroModule, Module
 
 logger = logging.getLogger(__name__)
 
 
 class HeteroBinningModuleGuest(HeteroModule):
-    def __init__(self, method="quantile", n_bins=10, split_pt_dict=None, bin_col=None, transform_method=None,
-                 category_col=None, local_only=False, error_rate=1e-3, adjustment_factor=0.5):
+    def __init__(
+        self,
+        method="quantile",
+        n_bins=10,
+        split_pt_dict=None,
+        bin_col=None,
+        transform_method=None,
+        category_col=None,
+        local_only=False,
+        error_rate=1e-3,
+        adjustment_factor=0.5,
+    ):
         self.method = method
         self.bin_col = bin_col
         self.category_col = category_col
         self._federation_bin_obj = None
         # param check
         if self.method in ["quantile", "bucket", "manual"]:
-            self._bin_obj = StandardBinning(method, n_bins, split_pt_dict, bin_col, transform_method,
-                                            category_col, error_rate, adjustment_factor)
+            self._bin_obj = StandardBinning(
+                method, n_bins, split_pt_dict, bin_col, transform_method, category_col, error_rate, adjustment_factor
+            )
         else:
             raise ValueError(f"{self.method} binning method not supported, please check")
         self.local_only = local_only
@@ -48,8 +59,10 @@ class HeteroBinningModuleGuest(HeteroModule):
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         if label_count > 2:
-            raise ValueError(f"More than 2 classes found in label column. "
-                             f"HeteroBinning currently only supports binary data. Please check.")
+            raise ValueError(
+                f"More than 2 classes found in label column. "
+                f"HeteroBinning currently only supports binary data. Please check."
+            )
 
         self._bin_obj.fit(ctx, train_data)
 
@@ -61,7 +74,9 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
-        encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        encryptor = kit.pk
+        decryptor = kit.sk
         label_tensor = binned_data.label.as_tensor()
         ctx.hosts.put("enc_y", encryptor.encrypt(label_tensor))
         host_col_bin = ctx.hosts.get("anonymous_col_bin")
@@ -69,8 +84,9 @@ class HeteroBinningModuleGuest(HeteroModule):
         for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):
             host_event_count_hist = en_host_count_res[0].decrypt(decryptor)
             host_non_event_count_hist = en_host_count_res[1].decrypt(decryptor)
-            summary_metrics, _ = self._bin_obj.compute_all_col_metrics(host_event_count_hist,
-                                                                       host_non_event_count_hist)
+            summary_metrics, _ = self._bin_obj.compute_all_col_metrics(
+                host_event_count_hist, host_non_event_count_hist
+            )
             self._bin_obj.set_host_metrics(ctx.hosts[i], summary_metrics)
 
     def transform(self, ctx: Context, test_data):
@@ -79,15 +95,17 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def get_model(self):
         model_info = self._bin_obj.to_model()
-        model = {"data": model_info,
-                 "meta": {"method": self.method,
-                          "metrics": ["iv"] if model_info.get("metrics_summary") else [],
-                          "local_only": self.local_only,
-                          "bin_col": self.bin_col,
-                          "category_col": self.category_col,
-                          "model_type": "binning"
-                          }
-                 }
+        model = {
+            "data": model_info,
+            "meta": {
+                "method": self.method,
+                "metrics": ["iv"] if model_info.get("metrics_summary") else [],
+                "local_only": self.local_only,
+                "bin_col": self.bin_col,
+                "category_col": self.category_col,
+                "model_type": "binning",
+            },
+        }
         return model
 
     def restore(self, model):
@@ -95,21 +113,34 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "HeteroBinningModuleGuest":
-        bin_obj = HeteroBinningModuleGuest(method=model["meta"]["method"],
-                                           bin_col=model["meta"]["bin_col"],
-                                           category_col=model["meta"]["category_col"])
+        bin_obj = HeteroBinningModuleGuest(
+            method=model["meta"]["method"],
+            bin_col=model["meta"]["bin_col"],
+            category_col=model["meta"]["category_col"],
+        )
         bin_obj.restore(model["data"])
         return bin_obj
 
 
 class HeteroBinningModuleHost(HeteroModule):
-    def __init__(self, method="quantile", n_bins=10, split_pt_dict=None, bin_col=None, transform_method=None,
-                 category_col=None, local_only=False, error_rate=1e-3, adjustment_factor=0.5):
+    def __init__(
+        self,
+        method="quantile",
+        n_bins=10,
+        split_pt_dict=None,
+        bin_col=None,
+        transform_method=None,
+        category_col=None,
+        local_only=False,
+        error_rate=1e-3,
+        adjustment_factor=0.5,
+    ):
         self.method = method
         self._federation_bin_obj = None
         if self.method in ["quantile", "bucket", "manual"]:
-            self._bin_obj = StandardBinning(method, n_bins, split_pt_dict, bin_col, transform_method,
-                                            category_col, error_rate, adjustment_factor)
+            self._bin_obj = StandardBinning(
+                method, n_bins, split_pt_dict, bin_col, transform_method, category_col, error_rate, adjustment_factor
+            )
         self.local_only = local_only
         self.bin_col = bin_col
         self.category_col = category_col
@@ -130,23 +161,24 @@ class HeteroBinningModuleHost(HeteroModule):
 
         columns = binned_data.schema.columns.to_list()
         # logger.info(f"self.bin_col: {self.bin_col}")
-        anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)]
-                             for col in self.bin_col]
+        anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)] for col in self.bin_col]
 
         ctx.guest.put("anonymous_col_bin", anonymous_col_bin)
         encrypt_y = ctx.guest.get("enc_y")
         # event count:
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
-        to_compute_data.rename(columns=dict(zip(to_compute_data.schema.columns,
-                                                to_compute_data.schema.anonymous_columns)))
+        to_compute_data.rename(
+            columns=dict(zip(to_compute_data.schema.columns, to_compute_data.schema.anonymous_columns))
+        )
         event_count_hist = to_compute_data.hist(targets=encrypt_y)
         # bin count(entries per bin):
         to_compute_data["targets_binning"] = 1
         targets = to_compute_data["targets_binning"].as_tensor()
         to_compute_data = binned_data[to_compute_col]
-        to_compute_data.rename(columns=dict(zip(to_compute_data.schema.columns,
-                                                to_compute_data.schema.anonymous_columns)))
+        to_compute_data.rename(
+            columns=dict(zip(to_compute_data.schema.columns, to_compute_data.schema.anonymous_columns))
+        )
         bin_count = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count - event_count_hist
         ctx.guest.put("event_non_event_count", (event_count_hist, non_event_count_hist))
@@ -156,13 +188,15 @@ class HeteroBinningModuleHost(HeteroModule):
 
     def get_model(self):
         model_info = self._bin_obj.to_model()
-        model = {"data": model_info,
-                 "meta": {"method": self.method,
-                          "bin_col": self.bin_col,
-                          "category_col": self.category_col,
-                          "model_type": "binning"
-                          }
-                 }
+        model = {
+            "data": model_info,
+            "meta": {
+                "method": self.method,
+                "bin_col": self.bin_col,
+                "category_col": self.category_col,
+                "model_type": "binning",
+            },
+        }
         return model
 
     def restore(self, model):
@@ -170,16 +204,19 @@ class HeteroBinningModuleHost(HeteroModule):
 
     @classmethod
     def from_model(cls, model) -> "HeteroBinningModuleHost":
-        bin_obj = HeteroBinningModuleHost(method=model["meta"]["method"],
-                                          bin_col=model["meta"]["bin_col"],
-                                          category_col=model["meta"]["category_col"])
+        bin_obj = HeteroBinningModuleHost(
+            method=model["meta"]["method"],
+            bin_col=model["meta"]["bin_col"],
+            category_col=model["meta"]["category_col"],
+        )
         bin_obj.restore(model["data"])
         return bin_obj
 
 
 class StandardBinning(Module):
-    def __init__(self, method, n_bins, split_pt_dict, bin_col, transform_method,
-                 category_col, error_rate, adjustment_factor):
+    def __init__(
+        self, method, n_bins, split_pt_dict, bin_col, transform_method, category_col, error_rate, adjustment_factor
+    ):
         self.method = method
         self.n_bins = n_bins
         # cols to be binned
@@ -218,8 +255,7 @@ class StandardBinning(Module):
 
         if self.method == "quantile":
             q = np.arange(0, 1, 1 / self.n_bins)
-            split_pt_df = select_data.quantile(q=q,
-                                               relative_error=self.relative_error)
+            split_pt_df = select_data.quantile(q=q, relative_error=self.relative_error)
             # pd.DataFrame
             # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "bucket":
@@ -250,24 +286,26 @@ class StandardBinning(Module):
         event_count_dict = event_count_hist.to_dict()
         # logger.debug(f"event_count dict: {event_count_dict}")
         non_event_count_dict = non_event_count_hist.to_dict()
-        #logger.debug(f"non_event_count dict: {non_event_count_dict}")
+        # logger.debug(f"non_event_count dict: {non_event_count_dict}")
 
         event_count, non_event_count = {}, {}
         event_rate, non_event_rate = {}, {}
         bin_woe, bin_iv, is_monotonic, iv = {}, {}, {}, {}
         total_event_count, total_non_event_count = None, None
         for col_name in event_count_dict.keys():
-            col_event_count = pd.Series({bin_num: bin_count.tolist()[0] for
-                                         bin_num, bin_count in event_count_dict[col_name].items()})
-            col_non_event_count = pd.Series({bin_num: bin_count.tolist()[0] for
-                                             bin_num, bin_count in non_event_count_dict[col_name].items()})
+            col_event_count = pd.Series(
+                {bin_num: bin_count.tolist()[0] for bin_num, bin_count in event_count_dict[col_name].items()}
+            )
+            col_non_event_count = pd.Series(
+                {bin_num: bin_count.tolist()[0] for bin_num, bin_count in non_event_count_dict[col_name].items()}
+            )
             if total_event_count is None:
                 total_event_count = col_event_count.sum() or 1
                 total_non_event_count = col_non_event_count.sum() or 1
-            col_event_rate = (col_event_count == 0) * self.adjustment_factor + \
-                             col_event_count / total_event_count
-            col_non_event_rate = (col_non_event_count == 0) * self.adjustment_factor + \
-                                 col_non_event_count / total_non_event_count
+            col_event_rate = (col_event_count == 0) * self.adjustment_factor + col_event_count / total_event_count
+            col_non_event_rate = (
+                col_non_event_count == 0
+            ) * self.adjustment_factor + col_non_event_count / total_non_event_count
             col_rate_ratio = col_event_rate / col_non_event_rate
             col_bin_woe = col_rate_ratio.apply(lambda v: np.log(v))
             col_bin_iv = (col_event_rate - col_non_event_rate) * col_bin_woe
@@ -302,8 +340,7 @@ class StandardBinning(Module):
         to_compute_data = binned_data[to_compute_col]
         bin_count_hist = to_compute_data.hist(targets=targets)
         non_event_count_hist = bin_count_hist - event_count_hist
-        self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_count_hist,
-                                                                             non_event_count_hist)
+        self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_count_hist, non_event_count_hist)
 
     def transform(self, ctx: Context, binned_data):
         logger.debug(f"Given transform method: {self.transform_method}.")
@@ -322,8 +359,10 @@ class StandardBinning(Module):
                 binned_data[self.bin_col] = to_transform_data.replace(self._woe_dict)
                 # return binned_data.replace(self._woe_dict, self.bin_col)
         else:
-            logger.warning(f"to transform type {self.transform_method} encountered, but no bin tag dict provided. "
-                           f"Please check")
+            logger.warning(
+                f"to transform type {self.transform_method} encountered, but no bin tag dict provided. "
+                f"Please check"
+            )
         return binned_data
 
     def to_model(self):

@@ -73,11 +73,11 @@ if __name__ == "__main__":
 
     ctx = Context()
 
-    pub, pri = ctx.cipher.phe.keygen(options={"key_length": 1024})
+    kit = ctx.cipher.phe.setup(options={"key_length": 1024})
     hist = Hist(["a", "b"])
     features = np.array([[1, 0], [0, 1], [2, 1], [2, 0]])
     labels = torch.tensor(np.array([0, 1, 0, 0]))
     hist.update(features, labels)
-    hist.encrypt(pub)
-    hist.decrypt(pri)
+    hist.encrypt(kit.pk)
+    hist.decrypt(kit.sk)
     print((hist - hist).data)
