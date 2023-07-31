@@ -68,6 +68,12 @@ class BlockType(str, Enum):
 
         return False
 
+    def __gt__(self, other):
+        if self == other:
+            return False
+
+        return other < self
+
     @staticmethod
     def get_block_type(data_type):
         if isinstance(data_type, np.dtype):
@@ -406,7 +412,7 @@ class BlockManager(object):
         for block_id, field_with_offset_list in block_field_maps.items():
             if len(self._blocks[block_id].field_indexes) == len(field_with_offset_list):
                 if len(field_with_offset_list) == 1:
-                    self._blocks[block_id] = Block.get_block_by_type(block_types)(
+                    self._blocks[block_id] = Block.get_block_by_type(block_type)(
                         self._blocks[block_id].field_indexes,
                         should_compress=self._blocks[block_id].should_compress
                     )
