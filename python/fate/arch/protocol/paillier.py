@@ -7,31 +7,35 @@ from fate_utils.histogram import Coders as _Coder
 from fate_utils.histogram import FixedpointPaillierVector, FixedpointVector
 from fate_utils.histogram import keygen as _keygen
 
+V = torch.Tensor
+EV = FixedpointPaillierVector
+FV = FixedpointVector
+
 
 class SK:
     def __init__(self, sk: _SK):
         self.sk = sk
 
-    def decrypt_vec(self, vec: FixedpointPaillierVector) -> FixedpointVector:
-        return self.sk.decrypt_vec(vec)
+    def decrypt_to_encoded(self, vec: EV) -> FV:
+        return self.sk.decrypt_to_encoded(vec)
 
 
 class PK:
     def __init__(self, pk: _PK):
         self.pk = pk
 
-    def encrypt_vec(self, vec, obfuscate) -> FixedpointPaillierVector:
-        return self.pk.encrypt_vec(vec, obfuscate)
+    def encrypt_encoded(self, vec: FV, obfuscate: bool) -> EV:
+        return self.pk.encrypt_encoded(vec, obfuscate)
 
-    def encrypt(self, val, obfuscate) -> FixedpointPaillierVector:
-        return self.pk.encrypt(val, obfuscate)
+    def encrypt_encoded_scalar(self, val, obfuscate) -> FixedpointPaillierVector:
+        return self.pk.encrypt_encoded_scalar(val, obfuscate)
 
 
 class Coder:
     def __init__(self, coder: _Coder):
         self.coder = coder
 
-    def encode_vec(self, vec: torch.Tensor, dtype: torch.dtype = None) -> FixedpointVector:
+    def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
         if dtype is None:
             dtype = vec.dtype
         if dtype == torch.float64:
@@ -44,7 +48,7 @@ class Coder:
             return self.encode_i32_vec(vec)
         raise NotImplementedError(f"{vec.dtype} not supported")
 
-    def decode_vec(self, vec: FixedpointVector, dtype: torch.dtype) -> torch.Tensor:
+    def decode_vec(self, vec: FV, dtype: torch.dtype) -> V:
         if dtype == torch.float64:
             return self.decode_f64_vec(vec)
         if dtype == torch.float32:
@@ -55,7 +59,7 @@ class Coder:
             return self.decode_i32_vec(vec)
         raise NotImplementedError(f"{dtype} not supported")
 
-    def encode(self, val, dtype=None) -> FixedpointVector:
+    def encode(self, val, dtype=None) -> FV:
         if isinstance(val, torch.Tensor):
             assert val.ndim == 0, "only scalar supported"
             if dtype is None:
@@ -127,99 +131,119 @@ def keygen(key_size):
 
 class ops:
     @staticmethod
-    def add(a, b, pk: PK):
+    def add(a: EV, b: EV, pk: PK):
         return a.add(pk.pk, b)
 
     @staticmethod
-    def add_vec(a, b: torch.Tensor, pk: PK, coder: Coder, output_dtype=None):
+    def add_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
-        encrypted = pk.encrypt_vec(encoded, obfuscate=False)
+        encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
         return a.add(pk.pk, encrypted)
 
     @staticmethod
-    def add_scalar(a, b, pk: PK, coder: Coder, output_dtype):
+    def add_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
-        encrypted = pk.encrypt(encoded, obfuscate=False)
+        encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
         return a.add_scalar(pk.pk, encrypted)
 
     @staticmethod
-    def rsub(a, b, pk: PK):
-        return a.rsub(pk.pk, b)
-
-    @staticmethod
-    def rsub_vec(a, b: torch.Tensor, pk: PK, coder: Coder, output_dtype=None):
-        if output_dtype is None:
-            output_dtype = b.dtype
-        encoded = coder.encode_vec(b, dtype=output_dtype)
-        encrypted = pk.encrypt_vec(encoded, obfuscate=False)
-        return a.rsub(pk.pk, encrypted)
-
-    @staticmethod
-    def rsub_scalar(a, b, pk: PK, coder: Coder, output_dtype):
-        encoded = coder.encode(b, dtype=output_dtype)
-        encrypted = pk.encrypt(encoded, obfuscate=False)
-        return a.rsub_scalar(pk.pk, encrypted)
-
-    @staticmethod
-    def sub(a, b, pk: PK):
+    def sub(a: EV, b: EV, pk: PK):
         return a.sub(pk.pk, b)
 
     @staticmethod
-    def sub_vec(a, b: torch.Tensor, pk: PK, coder: Coder, output_dtype=None):
+    def sub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
-        encrypted = pk.encrypt_vec(encoded, obfuscate=False)
+        encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
         return a.sub(pk.pk, encrypted)
 
     @staticmethod
-    def sub_scalar(a, b, pk: PK, coder: Coder, output_dtype):
+    def sub_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
-        encrypted = pk.encrypt(encoded, obfuscate=False)
+        encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
         return a.sub_scalar(pk.pk, encrypted)
 
     @staticmethod
-    def mul_vec(a, b: torch.Tensor, pk: PK, coder: Coder, output_dtype=None):
+    def rsub(a: EV, b: EV, pk: PK):
+        return a.rsub(pk.pk, b)
+
+    @staticmethod
+    def rsub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
+        if output_dtype is None:
+            output_dtype = b.dtype
+        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
+        return a.rsub(pk.pk, encrypted)
+
+    @staticmethod
+    def rsub_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
+        encoded = coder.encode(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
+        return a.rsub_scalar(pk.pk, encrypted)
+
+    @staticmethod
+    def mul_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
         return a.mul(pk.pk, encoded)
 
     @staticmethod
-    def mul_scalar(a, b, pk: PK, coder: Coder, output_dtype):
+    def mul_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
         return a.mul_scalar(pk.pk, encoded)
 
     @staticmethod
-    def matmul(a, b: torch.Tensor, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
+    def matmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode_vec(b, dtype=output_dtype)
         # TODO: move this to python side so other protocols can use it without matmul support?
         return a.matmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
-    def rmatmul(a, b: torch.Tensor, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
+    def rmatmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode_vec(b, dtype=output_dtype)
         return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
-    def zeros(size):
+    def zeros(size) -> EV:
         return FixedpointPaillierVector.zeros(size)
 
     @staticmethod
-    def i_add_vec(pk: PK, a, b, sa=0, sb=0, size: Optional[int] = None):
+    def i_add(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
+        """
+        inplace add, a[sa:sa+size] += b[sb:sb+size], if size is None, then size = min(a.size - sa, b.size - sb)
+        Args:
+            pk: the public key
+            a: the vector to add to
+            b: the vector to add
+            sa: the start index of a
+            sb: the start index of b
+            size: the size to add
+        """
         if a is b:
             a.iadd_vec_self(sa, sb, size, pk.pk)
         else:
             a.iadd_vec(b, sa, sb, size, pk.pk)
 
     @staticmethod
-    def slice(a, start, size):
+    def slice(a: EV, start: int, size: int) -> EV:
+        """
+        slice a[start:start+size]
+        Args:
+            a: the vector to slice
+            start: the start index
+            size: the size to slice
+
+        Returns:
+            the sliced vector
+        """
         return a.slice(start, size)
 
     @staticmethod
-    def intervals_sum_with_step(pk: PK, a, intervals: List[Tuple[int, int]], step: int):
+    def intervals_sum_with_step(pk: PK, a: EV, intervals: List[Tuple[int, int]], step: int):
         """
         sum in the given intervals, with step size
 
@@ -230,7 +254,7 @@ class ops:
         return a.intervals_sum_with_step(pk.pk, intervals, step)
 
     @staticmethod
-    def chunking_cumsum_with_step(pk: PK, a, chunk_sizes: List[int], step: int):
+    def chunking_cumsum_with_step(pk: PK, a: EV, chunk_sizes: List[int], step: int):
         """
         chunking cumsum with step size
 

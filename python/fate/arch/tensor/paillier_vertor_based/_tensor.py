@@ -28,8 +28,10 @@ class PaillierTensor:
         return self.__repr__()
 
     def __getitem__(self, item):
+        from ._ops import slice_f
+
         if isinstance(item, int):
-            return PaillierTensor(self._data.slice0(item), self._dtype)
+            return slice_f(self, item)
         else:
             raise NotImplementedError(f"item {item} not supported")
 

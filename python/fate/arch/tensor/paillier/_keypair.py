@@ -3,19 +3,15 @@ import torch
 from ._tensor import PaillierTensor, PaillierTensorEncoded
 
 
-class PaillierCipher:
+class PaillierTensorCipher:
     def __init__(self, pk, coder, sk) -> None:
         self._pk = pk
         self._coder = coder
         self._sk = sk
 
     @classmethod
-    def keygen(cls, key_length):
-        import fate_utils
-
-        encryptor, decryptor = fate_utils.tensor.keygen(key_length)
-
-        return cls(encryptor, None, decryptor)
+    def from_raw_cipher(cls, pk, coder, sk):
+        return cls(pk, coder, sk)
 
     @property
     def pk(self):
@@ -62,7 +58,7 @@ class PaillierTensorEncryptor:
     def __init__(self, key) -> None:
         self._key = key
 
-    def encrypt(self, tensor: torch.Tensor):
+    def encrypt_tensor(self, tensor: torch.Tensor):
         if isinstance(tensor, torch.Tensor):
             if tensor.dtype == torch.float64:
                 return PaillierTensor(self._key.encrypt_f64(tensor.detach().numpy()), tensor.dtype)
@@ -113,7 +109,7 @@ class PaillierTensorDecryptor:
             return tensor.decrypt_encoded(self)
         raise NotImplementedError(f"`{tensor}` not supported")
 
-    def decrypt(self, tensor: PaillierTensor):
+    def decrypt_tensor(self, tensor: PaillierTensor):
         if isinstance(tensor, PaillierTensor):
             if tensor.dtype == torch.float64:
                 return torch.from_numpy(self._key.decrypt_f64(tensor._data))

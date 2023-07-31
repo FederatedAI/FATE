@@ -7,7 +7,7 @@ from ._tensor import PaillierTensor, implements
 
 @implements(_custom_ops.decrypt_f)
 def decrypt(input, decryptor):
-    return decryptor.decrypt(input)
+    return decryptor.decrypt_tensor(input)
 
 
 @implements(torch.add)
@@ -29,18 +29,18 @@ def add(input: PaillierTensor, other):
         # TODO: support broadcast
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.add_vec(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = ops.add_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.add_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
+            data = ops.add_plain_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         else:
             raise NotImplementedError(f"broadcast not supported")
 
     elif isinstance(other, (float, int)):
         output_dtype = torch.promote_types(dtype, torch.get_default_dtype())
-        data = ops.add_scalar(input.data, other, pk, coder, output_dtype)
+        data = ops.add_plain_scalar(input.data, other, pk, coder, output_dtype)
         return input.with_template(data, dtype=output_dtype)
     else:
         return NotImplemented
@@ -65,18 +65,18 @@ def rsub(input, other):
     elif isinstance(other, torch.Tensor):
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.rsub_vec(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = ops.rsub_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.rsub_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
+            data = ops.rsub_plain_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         else:
             raise NotImplementedError(f"broadcast not supported")
 
     elif isinstance(other, (float, int)):
         output_dtype = torch.promote_types(dtype, torch.get_default_dtype())
-        data = ops.rsub_scalar(input.data, other, pk, coder, output_dtype)
+        data = ops.rsub_plain_scalar(input.data, other, pk, coder, output_dtype)
         return input.with_template(data, dtype=output_dtype)
 
     else:
@@ -102,18 +102,18 @@ def sub(input, other):
     elif isinstance(other, torch.Tensor):
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.sub_vec(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = ops.sub_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.sub_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
+            data = ops.sub_plain_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         else:
             raise NotImplementedError(f"broadcast not supported")
 
     elif isinstance(other, (float, int)):
         output_dtype = torch.promote_types(dtype, torch.get_default_dtype())
-        data = ops.sub_scalar(input.data, other, pk, coder, output_dtype)
+        data = ops.sub_plain_scalar(input.data, other, pk, coder, output_dtype)
         return input.with_template(data, dtype=output_dtype)
 
     else:
@@ -138,18 +138,18 @@ def mul(input, other):
     elif isinstance(other, torch.Tensor):
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.mul_vec(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = ops.mul_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = ops.mul_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
+            data = ops.mul_plain_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         else:
             raise NotImplementedError(f"broadcast not supported")
 
     elif isinstance(other, (float, int)):
         output_dtype = torch.promote_types(dtype, torch.get_default_dtype())
-        data = ops.mul_scalar(input.data, other, pk, coder, output_dtype)
+        data = ops.mul_plain_scalar(input.data, other, pk, coder, output_dtype)
         return input.with_template(data, dtype=output_dtype)
 
     else:
@@ -204,6 +204,11 @@ def matmul(input, other):
     output_shape = torch.matmul(torch.rand(*shape, device="meta"), torch.rand(*other_shape, device="meta")).shape
     data = ops.matmul(input.data, other.flatten().detach(), shape, other_shape, pk, coder, output_dtype)
     return PaillierTensor(pk, coder, output_shape, data, output_dtype)
+
+
+@implements(_custom_ops.slice_f)
+def slice_f(input):
+    return input
 
 
 @implements(_custom_ops.to_local_f)

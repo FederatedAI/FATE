@@ -29,10 +29,10 @@ class CipherKit:
     def phe(self):
         if self._cipher_mapping is None:
             if self._device == device.CPU:
-                return PHECipher("paillier")
+                return PHECipherBuilder("paillier")
             else:
                 logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
-                return PHECipher("paillier")
+                return PHECipherBuilder("paillier")
 
         if "phe" not in self._cipher_mapping:
             raise ValueError("phe is not set")
@@ -40,15 +40,67 @@ class CipherKit:
         if self._device not in self._cipher_mapping["phe"]:
             raise ValueError(f"phe is not set for device {self._device}")
 
-        return PHECipher(self._cipher_mapping["phe"][self._device])
+        return PHECipherBuilder(self._cipher_mapping["phe"][self._device])
 
 
-class PHECipher:
+class PHECipherBuilder:
     def __init__(self, kind) -> None:
         self.kind = kind
 
-    def setup(self, **kwargs):
-        # override default params set in kit
-        from fate.arch.tensor import phe_keygen
+    def setup(self, options):
+        kind = options.get("kind", self.kind)
+        key_length = options.get("key_length", 1024)
 
-        return phe_keygen(self.kind, **kwargs)
+        if kind == "paillier":
+            import fate_utils
+            from fate.arch.tensor.paillier import PaillierTensorCipher
+
+            pk, sk = fate_utils.tensor.keygen(key_length)
+            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, None, sk)
+            return PHECipher(pk, sk, None, tensor_cipher)
+
+        if kind == "paillier_vector_based":
+            from fate.arch.protocol.paillier import keygen
+            from fate.arch.tensor.paillier_vertor_based import PaillierTensorCipher
+
+            sk, pk, coder = keygen(key_length)
+            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, coder, sk)
+            return PHECipher(pk, sk, coder, tensor_cipher)
+
+        elif kind == "mock":
+            from fate.arch.tensor.mock import PaillierTensorCipher
+
+            tensor_cipher = PaillierTensorCipher(**options)
+            return PHECipher(None, None, None, tensor_cipher)
+
+        else:
+            raise ValueError(f"Unknown PHE keygen kind: {self.kind}")
+
+
+class PHECipher:
+    def __init__(self, pk, sk, coder, tensor_cipher) -> None:
+        self._pk = pk
+        self._sk = sk
+        self._coder = coder
+        self._tensor_cipher = tensor_cipher
+
+    def get_tensor_encryptor(self):
+        return self._tensor_cipher.pk
+
+    def get_tensor_coder(self):
+        return self._tensor_cipher.coder
+
+    def get_tensor_decryptor(self):
+        return self._tensor_cipher.sk
+
+    @property
+    def pk(self):
+        return self._pk
+
+    @property
+    def coder(self):
+        return self._coder
+
+    @property
+    def sk(self):
+        return self._sk

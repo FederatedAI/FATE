@@ -3,7 +3,7 @@ import typing
 import numpy as np
 import torch
 
-from .paillier import PK, SK, ops
+from .paillier import PK, SK, Coder, ops
 
 
 class HistogramIndexer:
@@ -16,11 +16,34 @@ class HistogramIndexer:
         return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
 
 
-class HistogramValueContainer:
-    ...
+class HistogramValues:
+    @classmethod
+    def zeros(cls, pk, size: int, stride: int = 1):
+        raise NotImplementedError
+
+    def iadd_slice(self, index, value):
+        raise NotImplementedError
+
+    def iadd(self, other):
+        raise NotImplementedError
+
+    def get_stride(self, index):
+        raise NotImplementedError
+
+    def chunking_sum(self, intervals: typing.List[typing.Tuple[int, int]]):
+        raise NotImplementedError
+
+    def decrypt(self, sk):
+        raise NotImplementedError
+
+    def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
+        raise NotImplementedError
+
+    def decode(self, coder, dtype):
+        raise NotImplementedError
 
 
-class HistogramPaillierValueContainer(HistogramValueContainer):
+class HistogramEncryptedValues(HistogramValues):
     def __init__(self, pk: PK, data, stride=1):
         self.stride = stride
         self.data = data
@@ -31,11 +54,11 @@ class HistogramPaillierValueContainer(HistogramValueContainer):
         return cls(pk, ops.zeros(size * stride), stride)
 
     def iadd_slice(self, index, value):
-        ops.i_add_vec(self.pk, self.data, value, index * self.stride)
+        ops.i_add(self.pk, self.data, value, index * self.stride)
         return self
 
     def iadd(self, other):
-        ops.i_add_vec(self.pk, self.data, other.data)
+        ops.i_add(self.pk, self.data, other.data)
         return self
 
     def get_stride(self, index):
@@ -47,11 +70,11 @@ class HistogramPaillierValueContainer(HistogramValueContainer):
         """
         intervals = [(start * self.stride, end * self.stride) for start, end in intervals]
         data = ops.intervals_sum_with_step(self.pk, self.data, intervals, self.stride)
-        return HistogramPaillierValueContainer(self.pk, data, self.stride)
+        return HistogramEncryptedValues(self.pk, data, self.stride)
 
-    def decrypt(self, sk: SK):
-        data = sk.decrypt_vec(self.data)
-        return HistogramFixedpointValueContainer(data, self.stride)
+    def decrypt(self, sk: "SK"):
+        data = sk.decrypt_to_encoded(self.data)
+        return HistogramEncodedValues(data, self.stride)
 
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         chunk_sizes = [num * self.stride for num in chunk_sizes]
@@ -62,24 +85,24 @@ class HistogramPaillierValueContainer(HistogramValueContainer):
         return str(self.data)
 
 
-class HistogramFixedpointValueContainer(HistogramValueContainer):
+class HistogramEncodedValues(HistogramValues):
     def __init__(self, data, stride=1):
         self.data = data
         self.stride = stride
 
-    def decode_f64(self, coder):
-        return HistogramTensorValueContainer(coder.decode_f64_vec(self.data), self.stride)
+    def decode_f64(self, coder: "Coder"):
+        return HistogramPlainValues(coder.decode_f64_vec(self.data), self.stride)
 
-    def decode_i64(self, coder):
-        return HistogramTensorValueContainer(coder.decode_i64_vec(self.data), self.stride)
+    def decode_i64(self, coder: "Coder"):
+        return HistogramPlainValues(coder.decode_i64_vec(self.data), self.stride)
 
-    def decode_f32(self, coder):
-        return HistogramTensorValueContainer(coder.decode_f32_vec(self.data), self.stride)
+    def decode_f32(self, coder: "Coder"):
+        return HistogramPlainValues(coder.decode_f32_vec(self.data), self.stride)
 
-    def decode_i32(self, coder):
-        return HistogramTensorValueContainer(coder.decode_i32_vec(self.data), self.stride)
+    def decode_i32(self, coder: "Coder"):
+        return HistogramPlainValues(coder.decode_i32_vec(self.data), self.stride)
 
-    def decode(self, coder, dtype):
+    def decode(self, coder: "Coder", dtype):
         if dtype == torch.float64:
             return self.decode_f64(coder)
         elif dtype == torch.float32:
@@ -95,7 +118,7 @@ class HistogramFixedpointValueContainer(HistogramValueContainer):
         return self.data.get_stride(index, self.stride)
 
 
-class HistogramTensorValueContainer(HistogramValueContainer):
+class HistogramPlainValues(HistogramValues):
     def __init__(self, data, stride=1):
         self.data = data
         self.stride = stride
@@ -127,7 +150,7 @@ class HistogramTensorValueContainer(HistogramValueContainer):
         data_view = self.data.view(-1, self.stride)
         for i, (start, end) in enumerate(intervals):
             result[i * self.stride : (i + 1) * self.stride] = data_view[start:end, :].sum(dim=0)
-        return HistogramTensorValueContainer(result, self.stride)
+        return HistogramPlainValues(result, self.stride)
 
     def __str__(self):
         return str(self.data)
@@ -140,17 +163,17 @@ class Histogram:
         self._indexer = HistogramIndexer(feature_bin_sizes)
         self._num_data_unit = self.node_size * self._indexer.node_axis_stride
 
-        self._value_containers: typing.MutableMapping[str, HistogramValueContainer] = {}
+        self._values_mapping: typing.MutableMapping[str, HistogramValues] = {}
 
-    def add_containers(self, schema: dict):
+    def set_value_schema(self, schema: dict):
         for name, items in schema.items():
             stride = items.get("stride", 1)
             if items["type"] == "paillier":
                 pk = items["pk"]
-                self._value_containers[name] = HistogramPaillierValueContainer.zeros(pk, self._num_data_unit, stride)
+                self._values_mapping[name] = HistogramEncryptedValues.zeros(pk, self._num_data_unit, stride)
             elif items["type"] == "tensor":
                 dtype = items.get("dtype", torch.float64)
-                self._value_containers[name] = HistogramTensorValueContainer.zeros(
+                self._values_mapping[name] = HistogramPlainValues.zeros(
                     self._num_data_unit, stride=stride, dtype=dtype
                 )
             else:
@@ -161,34 +184,34 @@ class Histogram:
             for fid, bid in enumerate(bins):
                 index = self._indexer.get_position(nid, fid, bid)
                 for name, value in target.items():
-                    self._value_containers[name].iadd_slice(index, value)
+                    self._values_mapping[name].iadd_slice(index, value)
         return self
 
     def merge(self, hist: "Histogram"):
-        for name, value_container in hist._value_containers.items():
-            if name in self._value_containers:
-                self._value_containers[name].iadd(value_container)
+        for name, value_container in hist._values_mapping.items():
+            if name in self._values_mapping:
+                self._values_mapping[name].iadd(value_container)
             else:
-                self._value_containers[name] = value_container
+                self._values_mapping[name] = value_container
         return self
 
     def decrypt(self, sk_map: dict):
         result = Histogram(self.node_size, self.feature_bin_sizes)
-        for name, value_container in self._value_containers.items():
+        for name, value_container in self._values_mapping.items():
             if name in sk_map:
-                result._value_containers[name] = value_container.decrypt(sk_map[name])
+                result._values_mapping[name] = value_container.decrypt(sk_map[name])
             else:
-                result._value_containers[name] = value_container
+                result._values_mapping[name] = value_container
         return result
 
     def decode(self, coder_map: dict):
         result = Histogram(self.node_size, self.feature_bin_sizes)
-        for name, value_container in self._value_containers.items():
+        for name, value_container in self._values_mapping.items():
             if name in coder_map:
                 coder, dtype = coder_map[name]
-                result._value_containers[name] = value_container.decode(coder, dtype)
+                result._values_mapping[name] = value_container.decode(coder, dtype)
             else:
-                result._value_containers[name] = value_container
+                result._values_mapping[name] = value_container
         return result
 
     def __str__(self):
@@ -198,7 +221,7 @@ class Histogram:
             for fid in range(len(self.feature_bin_sizes)):
                 result += f"\tfeature-{fid}:\n"
                 for bid in range(self.feature_bin_sizes[fid]):
-                    for name, value_container in self._value_containers.items():
+                    for name, value_container in self._values_mapping.items():
                         values = value_container.get_stride(self._indexer.get_position(nid, fid, bid))
                         result += f"\t\t{name}: {values}\t"
                     result += "\n"
@@ -213,15 +236,15 @@ class Histogram:
         :return:
         """
         result = Histogram(self.node_size, [sum(self.feature_bin_sizes)])
-        for name, value_container in self._value_containers.items():
-            result._value_containers[name] = value_container
+        for name, value_container in self._values_mapping.items():
+            result._values_mapping[name] = value_container
         return result
 
     def cumsum_bins(self):
         feature_bin_nums = []
         for nid in range(self.node_size):
             feature_bin_nums.extend(self.feature_bin_sizes)
-        for name, value_container in self._value_containers.items():
+        for name, value_container in self._values_mapping.items():
             value_container.i_chunking_cumsum(feature_bin_nums)
 
     def sum_bins(self):
@@ -235,6 +258,6 @@ class Histogram:
                         self._indexer.get_position(nid, fid, self.feature_bin_sizes[fid]),
                     )
                 )
-        for name, value_container in self._value_containers.items():
-            result._value_containers[name] = value_container.chunking_sum(intervals)
+        for name, value_container in self._values_mapping.items():
+            result._values_mapping[name] = value_container.chunking_sum(intervals)
         return result

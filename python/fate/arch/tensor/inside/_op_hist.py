@@ -57,13 +57,13 @@ class Hist:
     def decrypt(self, pri):
         for j in self.data:
             for v in self.data[j]:
-                self.data[j][v] = pri.decrypt(self.data[j][v])
+                self.data[j][v] = pri.decrypt_tensor(self.data[j][v])
         return self
 
     def encrypt(self, pub):
         for j in self.data:
             for v in self.data[j]:
-                self.data[j][v] = pub.encrypt(self.data[j][v])
+                self.data[j][v] = pub.encrypt_tensor(self.data[j][v])
         return self
 
 
@@ -78,6 +78,6 @@ if __name__ == "__main__":
     features = np.array([[1, 0], [0, 1], [2, 1], [2, 0]])
     labels = torch.tensor(np.array([0, 1, 0, 0]))
     hist.update(features, labels)
-    hist.encrypt(kit.pk)
-    hist.decrypt(kit.sk)
+    hist.encrypt(kit.get_tensor_encryptor())
+    hist.decrypt(kit.get_tensor_decryptor())
     print((hist - hist).data)
