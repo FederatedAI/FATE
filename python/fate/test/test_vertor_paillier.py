@@ -11,9 +11,9 @@ sk = kit.get_tensor_decryptor()
 def test_add():
     encrypted = pk.encrypt_tensor(torch.tensor([[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, -8.0]]))
     double_encrypted = torch.add(encrypted, encrypted)
-    # double_encrypted = torch.add(double_encrypted, 1)
+    double_encrypted = torch.add(double_encrypted, 1)
     double_encrypted = torch.add(double_encrypted, torch.rand(2, 4))
-    # double_encrypted = torch.add(double_encrypted, torch.tensor(0.3))
+    double_encrypted = torch.add(double_encrypted, torch.tensor(0.3))
     decrypted = sk.decrypt_tensor(double_encrypted)
     print(decrypted)
 

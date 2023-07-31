@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 
+import numpy as np
 import torch
 from heu import numpy as hnp
 from heu import phe
@@ -26,7 +27,7 @@ class PK:
         return self.encryptor.encrypt(vec)
 
     def encrypt_encoded_scalar(self, val, obfuscate) -> EV:
-        return self.kit.encrypt_encoded_scalar(val, obfuscate)
+        return self.encryptor.encrypt(val)
 
 
 class Coder:
@@ -76,40 +77,40 @@ class Coder:
         raise NotImplementedError(f"{dtype} not supported")
 
     def encode_f64(self, val: float):
-        return self.coder.encode_f64(val)
+        return self.kit.array(val, self.float_encoder)
 
     def decode_f64(self, val):
-        return self.coder.decode_f64(val)
+        return torch.tensor(val.to_numpy(self.float_encoder)).type(torch.float64)
 
     def encode_i64(self, val: int):
-        return self.coder.encode_i64(val)
+        return self.kit.array(val, self.float_encoder)
 
     def decode_i64(self, val):
-        return self.coder.decode_i64(val)
+        return torch.tensor(val.to_numpy(self.float_encoder)).type(torch.int64)
 
     def encode_f32(self, val: float):
-        return self.coder.encode_f32(val)
+        return self.kit.array(val, self.float_encoder)
 
     def decode_f32(self, val):
-        return self.coder.decode_f32(val)
+        return torch.tensor(val.to_numpy(self.float_encoder)).type(torch.float32)
 
     def encode_i32(self, val: int):
-        return self.coder.encode_i32(val)
+        return self.kit.array(val, self.int_encoder)
 
     def decode_i32(self, val):
-        return self.coder.decode_i32(val)
+        return torch.tensor(val.to_numpy(self.int_encoder)).type(torch.int32)
 
     def encode_f64_vec(self, vec: torch.Tensor):
         return self.kit.array(vec.detach().numpy(), self.float_encoder)
 
     def decode_f64_vec(self, vec):
-        return torch.tensor(self.coder.decode_f64_vec(vec))
+        return torch.tensor(vec.to_numpy(self.float_encoder)).type(torch.float64)
 
     def encode_i64_vec(self, vec: torch.Tensor):
-        return self.coder.encode_i64_vec(vec.detach().numpy())
+        return self.kit.array(vec.detach().numpy(), self.int_encoder)
 
     def decode_i64_vec(self, vec):
-        return torch.tensor(self.coder.decode_i64_vec(vec))
+        return torch.tensor(vec.to_numpy(self.int_encoder)).type(torch.int64)
 
     def encode_f32_vec(self, vec: torch.Tensor):
         return self.kit.array(vec.detach().numpy(), self.float_encoder)
@@ -118,10 +119,10 @@ class Coder:
         return torch.tensor(vec.to_numpy(self.float_encoder)).type(torch.float32)
 
     def encode_i32_vec(self, vec: torch.Tensor):
-        return self.coder.encode_i32_vec(vec.detach().numpy())
+        return self.kit.array(vec.detach().numpy(), self.int_encoder)
 
     def decode_i32_vec(self, vec):
-        return torch.tensor(self.coder.decode_i32_vec(vec))
+        return torch.tensor(vec.to_numpy(self.int_encoder)).type(torch.int32)
 
 
 def keygen(key_size):
@@ -148,11 +149,11 @@ class evaluator:
     def add_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
-        return a.add_scalar(pk.pk, encrypted)
+        return pk.kit.evaluator().add(a, encrypted)
 
     @staticmethod
     def sub(a: EV, b: EV, pk: PK):
-        return a.sub(pk.pk, b)
+        return pk.kit.evaluator().sub(a, b)
 
     @staticmethod
     def sub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
@@ -160,17 +161,17 @@ class evaluator:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
-        return a.sub(pk.pk, encrypted)
+        return pk.kit.evaluator().sub(a, encrypted)
 
     @staticmethod
     def sub_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
-        return a.sub_scalar(pk.pk, encrypted)
+        return pk.kit.evaluator().sub(a, encrypted)
 
     @staticmethod
     def rsub(a: EV, b: EV, pk: PK):
-        return a.rsub(pk.pk, b)
+        return evaluator.sub(b, a, pk)
 
     @staticmethod
     def rsub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
@@ -178,31 +179,31 @@ class evaluator:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
-        return a.rsub(pk.pk, encrypted)
+        return evaluator.rsub(a, encrypted, pk)
 
     @staticmethod
     def rsub_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
-        return a.rsub_scalar(pk.pk, encrypted)
+        return evaluator.rsub(a, encrypted, pk)
 
     @staticmethod
     def mul_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
         encoded = coder.encode_vec(b, dtype=output_dtype)
-        return a.mul(pk.pk, encoded)
+        return pk.kit.evaluator().mul(a, encoded)
 
     @staticmethod
     def mul_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode(b, dtype=output_dtype)
-        return a.mul_scalar(pk.pk, encoded)
+        return pk.kit.evaluator().mul(a, encoded)
 
     @staticmethod
     def matmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_vec(b.reshape(b_shape), dtype=output_dtype)
         # TODO: move this to python side so other protocols can use it without matmul support?
-        return a.matmul(pk.pk, encoded, a_shape, b_shape)
+        return pk.kit.evaluator().matmul(a, encoded)
 
     @staticmethod
     def rmatmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
@@ -210,8 +211,8 @@ class evaluator:
         return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
-    def zeros(size) -> EV:
-        return FixedpointPaillierVector.zeros(size)
+    def zeros(pk: PK, size) -> EV:
+        return pk.encryptor.encrypt(pk.kit.array(np.zeros(size, np.int), pk.kit.integer_encoder()))
 
     @staticmethod
     def i_add(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
