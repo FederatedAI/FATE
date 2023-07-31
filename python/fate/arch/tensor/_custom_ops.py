@@ -12,7 +12,7 @@ def encrypt_f(tensor, encryptor):
 
 
 def decrypt_f(tensor, decryptor):
-    if isinstance(tensor, torch.Tensor.detach):
+    if isinstance(tensor, torch.Tensor):
         return decryptor.encrypt_tensor(tensor.detach())
     else:
         # torch tensor-like
