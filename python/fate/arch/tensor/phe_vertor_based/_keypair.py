@@ -3,7 +3,7 @@ import typing
 import torch
 
 if typing.TYPE_CHECKING:
-    from fate.arch.protocol.paillier import PK, SK, Coder
+    from fate.arch.protocol.phe.paillier import PK, SK, Coder
 
     from ._tensor import PaillierTensor, PaillierTensorEncoded
 

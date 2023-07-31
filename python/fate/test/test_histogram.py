@@ -2,7 +2,7 @@ import pickle
 
 import torch
 from fate.arch import Context
-from fate.arch.protocol.histogram import Histogram
+from fate.arch.histogram.histogram import Histogram
 
 ctx = Context()
 kit = ctx.cipher.phe.setup(options={"kind": "paillier_vector_based", "key_length": 1024})
