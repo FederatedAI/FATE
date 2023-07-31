@@ -13,23 +13,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import FeatureUnion
+from fate_client.pipeline.components.fate import Union
 from fate_client.pipeline.interface import DataWarehouseChannel
 
 pipeline = FateFlowPipeline().set_roles(guest="9999")
 
-feature_union_0 = FeatureUnion("feature_union_0",
-                               runtime_roles=["guest"],
-                               input_data_list=[DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                                     namespace="experiment"),
-                                                DataWarehouseChannel(name="breast_hetero_guest_sid",
-                                                                     namespace="experiment")],
-                               axis=0)
+union_0 = Union("union_0",
+                runtime_roles=["guest"],
+                input_data_list=[DataWarehouseChannel(name="breast_hetero_guest",
+                                                      namespace="experiment_sid"),
+                                 DataWarehouseChannel(name="breast_hetero_guest",
+                                                      namespace="experiment_sid")],
+                axis=0)
 
-pipeline.add_task(feature_union_0)
+pipeline.add_task(union_0)
 
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
 
-print(pipeline.get_task_info("feature_union_0").get_output_data())
+print(pipeline.get_task_info("union_0").get_output_data())
