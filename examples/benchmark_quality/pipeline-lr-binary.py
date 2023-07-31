@@ -22,7 +22,6 @@ from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 from fate_test.utils import extract_data, parse_summary_result
-from federatedml.evaluation.metrics import classification_metric
 
 
 def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
@@ -109,13 +108,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     lr_1_label = extract_data(lr_1_data, "label")
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
     lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
-    result_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
-    metric_lr = {
-        "score_diversity_ratio": classification_metric.Distribution.compute(lr_0_score_label, lr_1_score_label),
-        "ks_2samp": classification_metric.KSTest.compute(lr_0_score, lr_1_score),
-        "mAP_D_value": classification_metric.AveragePrecisionScore().compute(lr_0_score, lr_1_score, lr_0_label,
-                                                                             lr_1_label)}
-    result_summary["distribution_metrics"] = {"hetero_lr": metric_lr}
+    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_metric())
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

@@ -304,7 +304,7 @@ def _save_quality(storage_tag, cache_directory, **results):
     os.makedirs(os.path.dirname(save_dir), exist_ok=True)
     if os.path.exists(save_dir):
         with open(save_dir, 'r') as f:
-            benchmark_quality = yaml.safe_load(f, object_hook=dict)
+            benchmark_quality = yaml.safe_load(f)
     else:
         benchmark_quality = {}
     if storage_tag in benchmark_quality:
