@@ -26,20 +26,21 @@ class Union(Module):
         self.axis = axis
 
     def fit(self, ctx: Context, train_data_list):
-        sample_id_name, match_id_name = None, None
+        label_name_list = [data.schema.label_name for data in train_data_list]
+        if sum([name != label_name_list[0] for name in label_name_list]):
+            raise ValueError(f"Data sets should all have the same label_name for union.")
+
+        sample_id_name_list = [data.schema.sample_id_name for data in train_data_list]
+        if sum([name != sample_id_name_list[0] for name in sample_id_name_list]):
+            raise ValueError(f"Data sets should all have the same sample_id_name for union.")
+
+        match_id_name_list = [data.schema.match_id_name for data in train_data_list]
+        if sum([name != match_id_name_list[0] for name in match_id_name_list]):
+            raise ValueError(f"Data sets should all have the same match_id_name for union.")
+
         if self.axis == 0:
             data_cols = set()
             for data in train_data_list:
-                if sample_id_name:
-                    if data.schema.sample_id_name != sample_id_name:
-                        raise ValueError(f"Data sets should all have the same sample_id_name for union.")
-                else:
-                    sample_id_name = data.schema.sample_id_name
-                if match_id_name:
-                    if data.schema.match_id_name != match_id_name:
-                        raise ValueError(f"Data sets should all have the same match_id_name for union.")
-                else:
-                    match_id_name = data.schema.match_id_name
                 if data_cols:
                     if set(data.schema.columns) != data_cols:
                         raise ValueError(f"Data sets should all have the same columns for union on 0 axis.")
@@ -49,16 +50,6 @@ class Union(Module):
         elif self.axis == 1:
             col_set = set()
             for data in train_data_list:
-                if sample_id_name:
-                    if data.schema.sample_id_name != sample_id_name:
-                        raise ValueError(f"Data sets should all have the same sample_id_name for union.")
-                else:
-                    sample_id_name = data.schema.sample_id_name
-                if match_id_name:
-                    if data.schema.match_id_name != match_id_name:
-                        raise ValueError(f"Data sets should all have the same match_id_name for union.")
-                else:
-                    match_id_name = data.schema.match_id_name
                 data_cols = set(data.schema.columns)
                 if col_set.intersection(data_cols):
                     raise ValueError(f"column name conflict: {col_set.intersection(data_cols)}. "
