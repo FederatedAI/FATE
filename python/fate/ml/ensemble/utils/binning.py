@@ -17,7 +17,7 @@ def _process_dataframe(df):
 
 def binning(data: DataFrame, max_bin=32):
 
-    quantile = [i / max_bin for i in range(1, max_bin)]
+    quantile = [i / max_bin for i in range(0, max_bin)]
     quantile_values = data.quantile(quantile)
     result_dict = _process_dataframe(quantile_values)
 

@@ -23,12 +23,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.hist_builder = None
         self.splitter = None
 
-        self.hist = []
-        self.data_indices = []
-        self.update_func = []
-        self.map_rs = []
-        self.updated_samples = []
-
     def _get_column_max_bin(self, result_dict):
         bin_len = {}
         
@@ -57,8 +51,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
             map_rs = local_samples.apply_row(update_func)
             updated_sample_pos["node_idx"] = map_rs # local_samples.apply_row(update_func)
-            self.map_rs.append(map_rs)
-            self.updated_samples.append(updated_sample_pos)
 
         # synchronize sample pos
         host_update_sample_pos = ctx.hosts.get('updated_data')
@@ -150,8 +142,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
             hist, indices = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map, debug=True)
-            self.data_indices.append(indices)
-            self.hist.append(hist)
             # compute best splits
             split_info = self.splitter.split(sub_ctx, hist, cur_layer_node)
             # update tree with best splits

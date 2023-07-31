@@ -65,9 +65,6 @@ if __name__ == '__main__':
 
         tree = HeteroDecisionTreeGuest(max_depth)
         ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
-
-        test_df = bin_data.as_pd_df()
-        left = test_df[test_df['x2'] <= 20]
         
     elif party == 'host':
         ctx = create_ctx(host)
