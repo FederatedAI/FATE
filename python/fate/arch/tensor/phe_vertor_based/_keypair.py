@@ -10,18 +10,19 @@ if typing.TYPE_CHECKING:
 
 class PaillierTensorCipher:
     def __init__(
-        self, pk: "PaillierTensorEncryptor", coder: "PaillierTensorCoder", sk: "PaillierTensorDecryptor"
+        self, pk: "PaillierTensorEncryptor", coder: "PaillierTensorCoder", sk: "PaillierTensorDecryptor", evaluator
     ) -> None:
         self._pk = pk
         self._coder = coder
         self._sk = sk
+        self._evaluator = evaluator
 
     @classmethod
-    def from_raw_cipher(cls, pk: "PK", coder: "Coder", sk: "SK"):
+    def from_raw_cipher(cls, pk: "PK", coder: "Coder", sk: "SK", evaluator):
         coder = PaillierTensorCoder(coder)
-        encryptor = PaillierTensorEncryptor(pk, coder)
+        encryptor = PaillierTensorEncryptor(pk, coder, evaluator)
         decryptor = PaillierTensorDecryptor(sk, coder)
-        return cls(encryptor, coder, decryptor)
+        return cls(encryptor, coder, decryptor, evaluator)
 
     @property
     def pk(self):
@@ -74,16 +75,17 @@ class PaillierTensorCoder:
 
 
 class PaillierTensorEncryptor:
-    def __init__(self, pk: "PK", coder: "PaillierTensorCoder") -> None:
+    def __init__(self, pk: "PK", coder: "PaillierTensorCoder", evaluator) -> None:
         self._pk = pk
         self._coder = coder
+        self._evaluator = evaluator
 
     def encrypt_encoded(self, tensor: "PaillierTensorEncoded", obfuscate=False):
         from ._tensor import PaillierTensor, PaillierTensorEncoded
 
         if isinstance(tensor, PaillierTensorEncoded):
             data = self._pk.encrypt_encoded(tensor.data, obfuscate)
-            return PaillierTensor(self._pk, tensor.coder, tensor.shape, data, tensor.dtype)
+            return PaillierTensor(self._pk, self._evaluator, tensor.coder, tensor.shape, data, tensor.dtype)
         elif hasattr(tensor, "encrypt_encoded"):
             return tensor.encrypt_encoded(self)
         raise NotImplementedError(f"`{tensor}` not supported")

@@ -6,8 +6,7 @@ _HANDLED_FUNCTIONS = {}
 
 
 class PaillierTensorEncoded:
-    def __init__(self, coder, shape: torch.Size, data, dtype) -> None:
-        self.coder = coder
+    def __init__(self, shape: torch.Size, data, dtype) -> None:
         self.data = data
         self.shape = shape
         self.dtype = dtype
