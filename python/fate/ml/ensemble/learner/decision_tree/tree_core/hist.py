@@ -69,7 +69,6 @@ def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, hist_typ
         gh['sample_id'] = gh['sample_id'].astype(np.uint32)
         collect_data = data.sort_values(by='sample_id')
         collect_gh = gh.sort_values(by='sample_id')
-        root_node.set_inst_indices(collect_gh['sample_id'].values)
         if bin_train_data.schema.label_name is None:
             feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.match_id_name]).values
         else:

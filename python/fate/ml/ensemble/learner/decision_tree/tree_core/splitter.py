@@ -281,7 +281,7 @@ class FedSklearnSplitter(SklearnSplitter):
     def _host_split(self, ctx, histogram, cur_layer_node):
         to_send_hist, pos_map = self._host_prepare(histogram)
         ctx.guest.put('host_splits', to_send_hist)
-        return to_send_hist, pos_map
+        return pos_map
     
     def split(self, ctx: Context, histogram, cur_layer_node):
         

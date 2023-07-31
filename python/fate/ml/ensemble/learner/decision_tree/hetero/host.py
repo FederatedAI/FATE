@@ -1,4 +1,4 @@
-from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos, FeatureImportance
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import get_hist_builder
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSklearnSplitter
 from fate.arch import Context
@@ -14,13 +14,14 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeHost(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024):
-        super().__init__(max_depth, use_missing=False, zero_as_missing=False, valid_features=valid_features)
+    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, use_missing=False, zero_as_missing=False):
+        super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.max_split_nodes = max_split_nodes
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
         self.node_fid_bid = {}
+        self._valid_features = valid_features
 
     def _convert_split_id_and_record(self, ctx: Context, cur_layer_nodes: List[Node], map_dict: List[dict], record_dict: dict):
 
@@ -32,6 +33,16 @@ class HeteroDecisionTreeHost(DecisionTree):
                 record_dict[n.nid] = (fid, bid)
                 n.fid = fid
                 n.bid = bid
+
+    def _update_host_feature_importance(self, ctx: Context, nodes: List[Node]):
+        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        for n in nodes:
+            if sitename == n.sitename:
+                fid = n.fid
+                if fid not in self._feature_importance:
+                    self._feature_importance[fid] = FeatureImportance()
+                else:
+                    self._feature_importance[fid] = self._feature_importance[fid] + FeatureImportance()
 
     def _update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
 
@@ -98,22 +109,44 @@ class HeteroDecisionTreeHost(DecisionTree):
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
             hist = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
-            _, split_id_map = self.splitter.split(sub_ctx, hist, cur_layer_node)
+            split_id_map = self.splitter.split(sub_ctx, hist, cur_layer_node)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
             self._convert_split_id_and_record(sub_ctx, cur_layer_node, split_id_map, self.node_fid_bid)
+            self._update_host_feature_importance(sub_ctx, cur_layer_node)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
             train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
+            self._nodes += cur_layer_node
             cur_layer_node = next_layer_nodes
             logger.info('layer {} done: next layer will split {} nodes, active samples num {}'.format(cur_depth, len(cur_layer_node), len(sample_pos)))
 
-        # convert bid to split value
-        # self._nodes = self._convert_bin_idx_to_split_val(self._nodes, bining_dict)
+        # sync complete tree
+        if len(cur_layer_node) != 0:
+            for node in cur_layer_node:
+                node.is_leaf = True
+                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]
+                self._nodes.append(node)
 
+        # convert bid to split value
+        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
 
     def fit(self, ctx: Context, train_data: DataFrame):
         pass
 
     def predict(self, ctx: Context, data_inst: DataFrame):
         pass
+
+    def get_hyper_param(self):
+        param = {
+            'max_depth': self.max_depth,
+            'valid_features': self._valid_features,
+            'max_split_nodes': self.max_split_nodes,
+            'use_missing': self.use_missing,
+            'zero_as_missing': self.zero_as_missing
+        }
+        return param
+    
+    @staticmethod
+    def from_model(model_dict):
+        return HeteroDecisionTreeHost._from_model(model_dict, HeteroDecisionTreeHost)
     

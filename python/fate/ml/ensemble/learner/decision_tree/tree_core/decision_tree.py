@@ -37,10 +37,9 @@ logger = logging.getLogger(__name__)
 
 class FeatureImportance(object):
 
-    def __init__(self, gain=0, split=0):
-
+    def __init__(self, gain=0):
         self.gain = gain
-        self.split = split
+        self.split = 1
 
     def add_gain(self, val):
         self.gain += val
@@ -49,11 +48,22 @@ class FeatureImportance(object):
         self.split += val
 
     def __repr__(self):
-        return 'gain: {}, split {}'.format(self.importance, self.importance_2)
+        return 'gain: {}, split {}'.format(self.gain, self.split)
 
     def __add__(self, other):
-        new_importance = FeatureImportance(gain=self.gain + other.gain, split=self.split + other.split)
+        new_importance = FeatureImportance(gain=self.gain + other.gain)
+        new_importance.split = self.split + other.split
         return new_importance
+    
+    def to_dict(self):
+        return {'gain': self.gain, 'split': self.split}
+    
+    @staticmethod
+    def from_dict(dict_):
+        importance = FeatureImportance()
+        importance.gain = dict_['gain']
+        importance.split = dict_['split']
+        return importance
 
 
 class Node(object):
@@ -94,7 +104,7 @@ class Node(object):
     def __init__(self, nid=None, sitename=None, fid=None,
                  bid=None, weight=0, is_leaf=False, grad=None,
                  hess=None, l=-1, r=-1,
-                 missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None, inst_indices=None, split_id=None):
+                 missing_dir=1, sample_num=0, is_left_node=False, sibling_nodeid=None, parent_nodeid=None, split_id=None):
         
         self.nid = nid
         self.sitename = sitename
@@ -111,12 +121,26 @@ class Node(object):
         self.is_left_node = is_left_node
         self.sibling_nodeid = sibling_nodeid
         self.parent_nodeid = parent_nodeid
-        self.inst_indices = inst_indices
         self.split_id = split_id
 
-    def set_inst_indices(self, inst_indices):
-        self.inst_indices = inst_indices
-        self.inst_indices = self.inst_indices.astype(np.uint32)
+    def to_dict(self):
+            
+        return {'nid': self.nid,
+                'sitename': self.sitename,
+                'fid': self.fid,
+                'bid': self.bid,
+                'weight': self.weight,
+                'is_leaf': self.is_leaf,
+                'grad': self.grad,
+                'hess': self.hess,
+                'l': self.l,
+                'r': self.r,
+                'missing_dir': self.missing_dir,
+                'sample_num': self.sample_num,
+                'is_left_node': self.is_left_node,
+                'sibling_nodeid': self.sibling_nodeid,
+                'parent_nodeid': self.parent_nodeid,
+                'split_id': self.split_id}
 
     def __repr__(self):
         """
@@ -173,7 +197,7 @@ def _convert_sample_pos_to_score(s: pd.Series, tree_nodes: List[Node]):
 class DecisionTree(object):
     
 
-    def __init__(self, max_depth=3, use_missing=False, zero_as_missing=False, feature_importance_type='split', valid_features=None):
+    def __init__(self, max_depth=3, use_missing=False, zero_as_missing=False, valid_features=None):
         """
         Initialize a DecisionTree instance.
 
@@ -185,20 +209,12 @@ class DecisionTree(object):
             Whether or not to use missing values (default is False).
         zero_as_missing : bool, optional
             Whether to treat zero as a missing value (default is False).
-        feature_importance_type : str, optional
-            if is 'split', feature_importances calculate by feature split times,
-            if is 'gain', feature_importances calculate by feature split gain.
-            default: 'split'
-            Due to the safety concern, we adjust training strategy of Hetero-SBT in FATE-1.8,
-            When running Hetero-SBT, this parameter is now abandoned, guest side will compute split, gain of local features,
-            and receive anonymous feature importance results from hosts. Hosts will compute split importance of local features.
         valid_features: list of boolean, optional
             Valid features for training, default is None, which means all features are valid.
         """
         self.max_depth = max_depth
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
-        self.feature_importance_type = feature_importance_type
 
         # runtime variables
         self._nodes = []
@@ -230,7 +246,7 @@ class DecisionTree(object):
         import functools
         map_func = functools.partial(_convert_sample_pos_to_score, tree_nodes=tree_nodes)
         sample_weight = sample_pos.create_frame()
-        sample_weight['weight'] = sample_pos.apply_row(map_func)
+        sample_weight['score'] = sample_pos.apply_row(map_func)
         return sample_weight
 
     def _convert_bin_idx_to_split_val(self, ctx: Context, tree_nodes: List[Node], binning_dict: dict, schema):
@@ -257,6 +273,16 @@ class DecisionTree(object):
 
         return root_node
     
+    def _update_feature_importance(self, ctx: Context, split_info: List[SplitInfo]):
+        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        for info in split_info:
+            if info is not None and info.sitename == sitename:
+                fid = info.best_fid
+                if fid not in self._feature_importance:
+                    self._feature_importance[fid] = FeatureImportance(gain=info.gain)
+                else:
+                    self._feature_importance[fid] = self._feature_importance[fid] + FeatureImportance(gain=info.gain)
+    
     def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo]):
         
         assert len(cur_layer_nodes) == len(split_info), 'node num not match split info num, got {} node vs {} split info'.format(len(cur_layer_nodes), len(split_info))
@@ -269,7 +295,7 @@ class DecisionTree(object):
 
             if split_info[idx] is None:
                 node.is_leaf = True
-                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]  # leaf always belong to guest
+                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]  # leaf always belongs to guest
                 self._nodes.append(node)
                 logger.info('set node {} to leaf'.format(node))
                 continue
@@ -379,8 +405,51 @@ class DecisionTree(object):
         for pre, _, node in RenderTree(anytree_nodes[0]):
             print("%s%s" % (pre, node.name))
 
-    def from_model(self):
-        pass
+    @staticmethod
+    def _recover_nodes(model_dict):
+        nodes = []
+        for node_dict in model_dict['nodes']:
+            node = Node(**node_dict)
+            nodes.append(node)
+        return nodes
+
+    @staticmethod
+    def _recover_feature_importance(model_dict):
+        feature_importance = {}
+        for k, v in model_dict['feature_importance'].items():
+            feature_importance[k] = FeatureImportance.from_dict(v)
+        return feature_importance
+
+    @staticmethod
+    def _from_model(model_dict, tree_class):
+        nodes = DecisionTree._recover_nodes(model_dict)
+        feature_importance = DecisionTree._recover_feature_importance(model_dict)
+        param = model_dict['hyper_param']
+        tree = tree_class(**param)
+        tree._nodes = nodes
+        tree._feature_importance = feature_importance
+        return tree
+    
+    def get_hyper_param(self):
+        param = {
+            'max_depth': self.max_depth,
+            'use_missing': self.use_missing,
+            'zero_as_missing': self.zero_as_missing
+        }
+        return param
+    
+    @staticmethod
+    def from_model(model_dict):
+        return DecisionTree._from_model(model_dict, DecisionTree)
 
     def get_model(self):
-        pass
+        
+        model_dict = {}
+        nodes = [n.to_dict() for n in self._nodes]
+        feat_importance = {int(k): v.to_dict() for k, v in self._feature_importance.items()}
+        param = self.get_hyper_param()
+        model_dict['nodes'] = nodes
+        model_dict['feature_importance'] = feat_importance
+        model_dict['hyper_param'] = param
+        
+        return model_dict

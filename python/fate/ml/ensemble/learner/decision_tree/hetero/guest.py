@@ -15,13 +15,16 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeGuest(DecisionTree):
 
-    def __init__(self, max_depth=3, feature_importance_type='split', valid_features=None, max_split_nodes=1024):
-        super().__init__(max_depth, use_missing=False, zero_as_missing=False, feature_importance_type=feature_importance_type, valid_features=valid_features)
+    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, l1=0.1, l2=0, use_missing=False, zero_as_missing=False):
+        super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
         self.max_split_nodes = max_split_nodes
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
+        self.l1 = l1
+        self.l2 = l2
+        self._valid_features = valid_features
 
     def _get_column_max_bin(self, result_dict):
         bin_len = {}
@@ -40,7 +43,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
         local_sample_idx = data_with_pos.apply_row(map_func)
-        # local_sample_idx = data_with_pos.apply_row(map_func).values.as_tensor()
         local_samples = data_with_pos.loc(local_sample_idx.get_indexer(target="sample_id"), preserve_order=True)[local_sample_idx.values.as_tensor()]
         logger.info('{}/{} samples on local nodes'.format(len(local_samples), len(data)))
 
@@ -74,7 +76,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             new_sample_pos = new_sample_pos  # all samples are on host
 
        # share new sample position with all hosts
-        print('new sample pos {}'.format(new_sample_pos.as_pd_df()))
         ctx.hosts.put('new_sample_pos', (new_sample_pos.as_tensor(), new_sample_pos.get_indexer(target='sample_id')))
         return new_sample_pos
 
@@ -145,7 +146,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # compute best splits
             split_info = self.splitter.split(sub_ctx, hist, cur_layer_node)
             # update tree with best splits
-            next_layer_nodes = self._update_tree(ctx, cur_layer_node, split_info)
+            next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info)
+            # update feature importance
+            self._update_feature_importance(sub_ctx, split_info)
             # sync nodes
             self._sync_nodes(sub_ctx, cur_layer_node, next_layer_nodes)
             # update sample positions
@@ -163,7 +166,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         if len(cur_layer_node) != 0:
             for node in cur_layer_node:
                 node.is_leaf = True
-                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]
+                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1] # leaf always on guest
                 self._nodes.append(node)
                 self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_pos])
 
@@ -172,11 +175,26 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # convert sample pos to weights
         self._sample_weights = self._convert_sample_pos_to_weight(self._sample_on_leaves, self._nodes)
         # convert bid to split value
-        # self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
+        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
 
     def fit(self, ctx: Context, train_data: DataFrame):
         pass
 
     def predict(self, ctx: Context, data_inst: DataFrame):
         pass
+
+    def get_hyper_param(self):
+        param = {
+            'max_depth': self.max_depth,
+            'valid_features': self._valid_features,
+            'max_split_nodes': self.max_split_nodes,
+            'l1': self.l1,
+            'l2': self.l2,
+            'use_missing': self.use_missing
+        }
+        return param
+    
+    @staticmethod
+    def from_model(model_dict):
+        return HeteroDecisionTreeGuest._from_model(model_dict, HeteroDecisionTreeGuest)
     
