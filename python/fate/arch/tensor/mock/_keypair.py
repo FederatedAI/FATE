@@ -3,13 +3,9 @@ import torch
 from ._tensor import MockPaillierTensor
 
 
-class PaillierCipher:
+class PaillierTensorCipher:
     def __init__(self, **kwargs) -> None:
         ...
-
-    @classmethod
-    def keygen(cls, key_length):
-        return cls()
 
     @property
     def pk(self):

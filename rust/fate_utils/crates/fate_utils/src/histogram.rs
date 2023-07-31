@@ -54,7 +54,7 @@ pub struct FixedpointVector {
 
 #[pymethods]
 impl PK {
-    fn encrypt_vec(
+    fn encrypt_encoded(
         &self,
         fixedpoint: &FixedpointVector,
         obfuscate: bool,
@@ -66,7 +66,7 @@ impl PK {
             .collect();
         FixedpointPaillierVector { data }
     }
-    fn encrypt(&self, fixedpoint: &FixedpointEncoded, obfuscate: bool) -> PyCT {
+    fn encrypt_encoded_scalar(&self, fixedpoint: &FixedpointEncoded, obfuscate: bool) -> PyCT {
         PyCT {
             ct: self.pk.encrypt(&fixedpoint.data, obfuscate),
         }
@@ -89,11 +89,11 @@ impl PK {
 
 #[pymethods]
 impl SK {
-    fn decrypt_vec(&self, data: &FixedpointPaillierVector) -> FixedpointVector {
+    fn decrypt_to_encoded(&self, data: &FixedpointPaillierVector) -> FixedpointVector {
         let data = data.data.iter().map(|x| self.sk.decrypt(x)).collect();
         FixedpointVector { data }
     }
-    fn decrypt(&self, data: &PyCT) -> FixedpointEncoded {
+    fn decrypt_to_encoded_scalar(&self, data: &PyCT) -> FixedpointEncoded {
         FixedpointEncoded {
             data: self.sk.decrypt(&data.ct),
         }

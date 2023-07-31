@@ -75,10 +75,10 @@ class HeteroBinningModuleGuest(HeteroModule):
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
         kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
-        encryptor = kit.pk
-        decryptor = kit.sk
+        encryptor = kit.get_tensor_encryptor()
+        decryptor = kit.get_tensor_decryptor()
         label_tensor = binned_data.label.as_tensor()
-        ctx.hosts.put("enc_y", encryptor.encrypt(label_tensor))
+        ctx.hosts.put("enc_y", encryptor.encrypt_tensor(label_tensor))
         host_col_bin = ctx.hosts.get("anonymous_col_bin")
         host_event_non_event_count = ctx.hosts.get("event_non_event_count")
         for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):

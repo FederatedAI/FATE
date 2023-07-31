@@ -1,16 +1,18 @@
 import pickle
 
 import torch
+from fate.arch import Context
 from fate.arch.protocol.histogram import Histogram
-from fate.arch.protocol.paillier import keygen
 
-sk, pk, coder = keygen(1024)
+ctx = Context()
+kit = ctx.cipher.phe.setup(options={"kind": "paillier_vector_based", "key_length": 1024})
+sk, pk, coder = kit.sk, kit.pk, kit.coder
 
 
 def test_plain():
     # plain
     hist = Histogram(1, [3, 2])
-    hist.add_containers({"c0": {"type": "tensor", "stride": 2}})
+    hist.set_value_schema({"c0": {"type": "tensor", "stride": 2}})
     print(f"created:\n {hist}")
     hist.update(
         [0, 0, 0, 0],
@@ -30,16 +32,16 @@ def test_plain():
 def test_tensor():
     # paillier
     hist = Histogram(1, [3, 2])
-    hist.add_containers({"c0": {"type": "paillier", "stride": 2, "pk": pk}})
+    hist.set_value_schema({"c0": {"type": "paillier", "stride": 2, "pk": pk}})
     print(f"created:\n {hist}")
     hist.update(
         [0, 0, 0, 0],
         [[1, 0], [0, 1], [2, 1], [2, 0]],
         [
-            {"c0": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0, 1.0])), False)},
-            {"c0": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([1.0, 0.0])), False)},
-            {"c0": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0, 1.0])), False)},
-            {"c0": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0, 1.0])), False)},
+            {"c0": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0, 1.0])), False)},
+            {"c0": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([1.0, 0.0])), False)},
+            {"c0": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0, 1.0])), False)},
+            {"c0": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0, 1.0])), False)},
         ],
     )
     print(f"update: \n: {hist}")
@@ -53,7 +55,7 @@ def test_tensor():
 
 def create_mixed_hist():
     hist = Histogram(1, [3, 2])
-    hist.add_containers(
+    hist.set_value_schema(
         {
             "g": {"type": "paillier", "stride": 1, "pk": pk},
             "h": {"type": "paillier", "stride": 2, "pk": pk},
@@ -66,23 +68,23 @@ def create_mixed_hist():
         [[1, 0], [0, 1], [2, 1], [2, 0]],
         [
             {
-                "g": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0])), False),
-                "h": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([1.0, -1.0])), False),
+                "g": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0])), False),
+                "h": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([1.0, -1.0])), False),
                 "1": torch.tensor([1, -1]),
             },
             {
-                "g": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([1.0])), False),
-                "h": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0, -0.0])), False),
+                "g": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([1.0])), False),
+                "h": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0, -0.0])), False),
                 "1": torch.tensor([1, -1]),
             },
             {
-                "g": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0])), False),
-                "h": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([1.0, -1.0])), False),
+                "g": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0])), False),
+                "h": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([1.0, -1.0])), False),
                 "1": torch.tensor([1, -1]),
             },
             {
-                "g": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([0.0])), False),
-                "h": pk.encrypt_vec(coder.encode_f32_vec(torch.tensor([1.0, -1.0])), False),
+                "g": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([0.0])), False),
+                "h": pk.encrypt_encoded(coder.encode_f32_vec(torch.tensor([1.0, -1.0])), False),
                 "1": torch.tensor([1, -1]),
             },
         ],
