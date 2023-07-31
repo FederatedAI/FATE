@@ -14,4 +14,4 @@
 #  limitations under the License.
 
 from .feature_scale import FeatureScale
-from .feature_union import FeatureUnion
+from .union import Union
