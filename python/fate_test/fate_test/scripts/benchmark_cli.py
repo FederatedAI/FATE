@@ -50,8 +50,9 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
     config_inst = ctx.obj["config"]
     if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
-    if ctx.obj["auto_increasing_sid"] is not None:
-        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+
+    """if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
     if clean_data is None:
         clean_data = config_inst.clean_data
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -61,13 +62,15 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
-                              suffix="benchmark.json", suite_type="benchmark")
+                              suffix="benchmark.yaml", suite_type="benchmark")
     for suite in suites:
         echo.echo(f"\tdataset({len(suite.dataset)}) benchmark groups({len(suite.pairs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
     client = Clients(config_inst)
-    fate_version = client["guest_0"].get_version()
+    # @todo: get version
+    # fate_version = client["guest_0"].get_version()
+    fate_version = "2.0.0-beta"
     for i, suite in enumerate(suites):
         # noinspection PyBroadException
         try:

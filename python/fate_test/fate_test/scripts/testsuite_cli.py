@@ -64,9 +64,9 @@ def run_suite(ctx, include, exclude, glob,
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
-    """if ctx.obj["extend_sid"] is not None:
+    if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
-    if ctx.obj["auto_increasing_sid"] is not None:
+    """if ctx.obj["auto_increasing_sid"] is not None:
         config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
     if clean_data is None:
         clean_data = config_inst.clean_data

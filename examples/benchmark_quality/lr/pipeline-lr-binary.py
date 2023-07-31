@@ -37,10 +37,20 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         param = test_utils.JobConfig.load_from_file(param)
 
     assert isinstance(param, dict)
+
     data_set = param.get("data_guest").split('/')[-1]
-    if data_set == "vehicle_scale_hetero_guest.csv":
-        guest_data_table = 'vehicle_scale_hetero_guest'
-        host_data_table = 'vehicle_scale_hetero_host'
+    if data_set == "default_credit_hetero_guest.csv":
+        guest_data_table = 'default_credit_hetero_guest'
+        host_data_table = 'default_credit_hetero_host'
+    elif data_set == 'breast_hetero_guest.csv':
+        guest_data_table = 'breast_hetero_guest'
+        host_data_table = 'breast_hetero_host'
+    elif data_set == 'give_credit_hetero_guest.csv':
+        guest_data_table = 'give_credit_hetero_guest'
+        host_data_table = 'give_credit_hetero_host'
+    elif data_set == 'epsilon_5k_hetero_guest.csv':
+        guest_data_table = 'epsilon_5k_hetero_guest'
+        host_data_table = 'epsilon_5k_hetero_host'
     else:
         raise ValueError(f"Cannot recognized data_set: {data_set}")
 
@@ -58,14 +68,13 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     }
 
     config_param = {
-        "penalty": param["penalty"],
         "epochs": param["epochs"],
         "learning_rate_scheduler": param["learning_rate_scheduler"],
         "optimizer": param["optimizer"],
         "batch_size": param["batch_size"],
-        "early_stop": "diff",
-        "tol": 1e-5,
-        "init_param": param.get("init_method", {"method": "zeros"})
+        "early_stop": param["early_stop"],
+        "init_param": param["init_param"],
+        "tol": 1e-5
     }
     lr_param.update(config_param)
     lr_0 = CoordinatedLR("lr_0",
@@ -73,9 +82,14 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
                          **config_param)
     lr_1 = CoordinatedLR("lr_1",
                          test_data=intersect_0.outputs["output_data"],
-                         input_model=lr_0.outputs["train_output_model"])
+                         input_model=lr_0.outputs["output_model"])
 
-    evaluation_0 = Evaluation('evaluation_0', default_eval_setting="multi")
+    evaluation_0 = Evaluation("evaluation_0",
+                              label_column_name="y",
+                              runtime_roles=["guest"],
+                              default_eval_setting="binary",
+                              input_data=lr_0.outputs["train_output_data"])
+
     pipeline.add_task(intersect_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(lr_1)
@@ -87,14 +101,19 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     lr_0_data = pipeline.get_component("lr_0").get_output_data()
     lr_1_data = pipeline.get_component("lr_1").get_output_data()
-
-    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_metric())
+    lr_0_score = extract_data(lr_0_data, "predict_result")
+    lr_0_label = extract_data(lr_0_data, "label")
+    lr_1_score = extract_data(lr_1_data, "predict_result")
+    lr_1_label = extract_data(lr_1_data, "label")
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
     lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_metric())
+    print(f"result_summary")
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
+
     return data_summary, result_summary
 
 
@@ -103,10 +122,6 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", type=str,
                         help="config file", default="../../config.yaml")
     parser.add_argument("-p", "--param", type=str,
-                        help="config file for params", default="./vehicle_config.yaml")
-
+                        help="config file for params", default="./breast_config.yaml")
     args = parser.parse_args()
-    if args.config is not None:
-        main(args.config, args.param)
-    else:
-        main()
+    main(args.config, args.param)
