@@ -40,10 +40,6 @@ class PaillierTensorCoder:
     def __init__(self, coder: "Coder") -> None:
         self._coder = coder
 
-    @property
-    def raw_coder(self):
-        return self._coder
-
     def encode(self, tensor: torch.Tensor):
         if isinstance(tensor, torch.Tensor):
             from ._tensor import PaillierTensorEncoded
@@ -82,10 +78,6 @@ class PaillierTensorEncryptor:
         self._pk = pk
         self._coder = coder
 
-    @property
-    def raw_pk(self):
-        return self._pk
-
     def encrypt_encoded(self, tensor: "PaillierTensorEncoded", obfuscate=False):
         from ._tensor import PaillierTensor, PaillierTensorEncoded
 
@@ -104,10 +96,6 @@ class PaillierTensorDecryptor:
     def __init__(self, sk: "SK", coder: "PaillierTensorCoder") -> None:
         self._sk = sk
         self._coder = coder
-
-    @property
-    def raw_sk(self):
-        return self._sk
 
     def decrypt_encoded(self, tensor: "PaillierTensor"):
         from ._tensor import PaillierTensor, PaillierTensorEncoded
