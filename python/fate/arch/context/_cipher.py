@@ -60,7 +60,7 @@ class PHECipherBuilder:
             return PHECipher(pk, sk, None, None, tensor_cipher)
 
         if kind == "paillier_vector_based":
-            from fate.arch.protocol.paillier import evaluator, keygen
+            from fate.arch.protocol.phe.paillier import evaluator, keygen
             from fate.arch.tensor.phe_vertor_based import PaillierTensorCipher
 
             sk, pk, coder = keygen(key_length)
@@ -68,7 +68,7 @@ class PHECipherBuilder:
             return PHECipher(pk, sk, evaluator, coder, tensor_cipher)
 
         if kind == "heu":
-            from fate.arch.protocol.heu import evaluator, keygen
+            from fate.arch.protocol.phe.heu import evaluator, keygen
             from fate.arch.tensor.phe_vertor_based import PaillierTensorCipher
 
             sk, pk, coder = keygen(key_length)
