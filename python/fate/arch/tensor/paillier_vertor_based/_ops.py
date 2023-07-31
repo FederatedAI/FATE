@@ -207,8 +207,11 @@ def matmul(input, other):
 
 
 @implements(_custom_ops.slice_f)
-def slice_f(input):
-    return input
+def slice_f(input, item):
+    stride = input.shape[1]
+    start = stride * item
+    data = ops.slice(input, start, stride)
+    return PaillierTensor(input.pk, input.coder, torch.Size([*input.shape[1:]]), data, input.dtype)
 
 
 @implements(_custom_ops.to_local_f)
