@@ -15,7 +15,6 @@
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -55,7 +54,9 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             self.estimator.epochs = epochs
 
     def fit(self, ctx: Context) -> None:
-        encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        encryptor = kit.pk
+        decryptor = kit.sk
         ctx.hosts("encryptor").put(encryptor)
         ctx.guest("encryptor").put(encryptor)
         label_count = ctx.guest("label_count").get()
@@ -152,8 +153,9 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         lr.estimator = {}
         if lr.ovr:
             for label, d in all_estimator.items():
-                estimator = CoordinatedLREstimatorArbiter(epochs=model["meta"]["epochs"],
-                                                          batch_size=model["meta"]["batch_size"])
+                estimator = CoordinatedLREstimatorArbiter(
+                    epochs=model["meta"]["epochs"], batch_size=model["meta"]["batch_size"]
+                )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
         else:
@@ -262,7 +264,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
             "tol": self.tol,
-            "early_stop": self.early_stop
+            "early_stop": self.early_stop,
         }
 
     def restore(self, model):

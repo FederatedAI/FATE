@@ -72,31 +72,39 @@ class PaillierTensorCoder:
 
 
 class PaillierTensorEncryptor:
-    def __init__(self, pk: "PK") -> None:
+    def __init__(self, pk: "PK", coder: "PaillierTensorCoder") -> None:
         self._pk = pk
+        self._coder = coder
 
-    def encrypt(self, tensor: "PaillierTensorEncoded", obfuscate=False):
+    def encrypt_encoded(self, tensor: "PaillierTensorEncoded", obfuscate=False):
         from ._tensor import PaillierTensor, PaillierTensorEncoded
 
         if isinstance(tensor, PaillierTensorEncoded):
             data = self._pk.encrypt_vec(tensor.data, obfuscate)
             return PaillierTensor(self._pk, tensor.coder, tensor.shape, data, tensor.dtype)
-        elif hasattr(tensor, "encrypt"):
-            return tensor.encrypt(self)
+        elif hasattr(tensor, "encrypt_encoded"):
+            return tensor.encrypt_encoded(self)
         raise NotImplementedError(f"`{tensor}` not supported")
+
+    def encrypt(self, tensor: torch.Tensor, obfuscate=False):
+        self.encrypt_encoded(self._coder.encode(tensor), obfuscate)
 
 
 class PaillierTensorDecryptor:
-    def __init__(self, sk: "SK") -> None:
+    def __init__(self, sk: "SK", coder: "PaillierTensorCoder") -> None:
         self._sk = sk
+        self._coder = coder
 
-    def decrypt(self, tensor: "PaillierTensor"):
+    def decrypt_encoded(self, tensor: "PaillierTensor"):
         from ._tensor import PaillierTensor, PaillierTensorEncoded
 
         if isinstance(tensor, PaillierTensor):
             data = self._sk.decrypt_vec(tensor.data)
             return PaillierTensorEncoded(tensor.coder, tensor.shape, data, tensor.dtype)
 
-        elif hasattr(tensor, "decrypt"):
-            return tensor.decrypt(self)
+        elif hasattr(tensor, "decrypt_encoded"):
+            return tensor.decrypt_encoded(self)
         raise NotImplementedError(f"`{tensor}` not supported")
+
+    def decrypt(self, tensor: "PaillierTensor"):
+        return self._coder.decode(self.decrypt_encoded(tensor))
