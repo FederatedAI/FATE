@@ -35,7 +35,7 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 10
+    max_depth = 2
     if party == 'guest':
         ctx = create_ctx(guest)
 
@@ -65,6 +65,9 @@ if __name__ == '__main__':
 
         tree = HeteroDecisionTreeGuest(max_depth)
         ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
+
+        test_df = bin_data.as_pd_df()
+        left = test_df[test_df['x2'] <= 20]
         
     elif party == 'host':
         ctx = create_ctx(host)

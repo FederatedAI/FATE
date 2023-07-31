@@ -22,7 +22,7 @@ class SklearnHistBuilder(object):
         self.hist_builder = hist_builder
 
     
-    def compute_hist(self, nodes: List[Node], bin_train_data=None, gh=None, sample_pos: DataFrame = None, node_map={}):
+    def compute_hist(self, nodes: List[Node], bin_train_data=None, gh=None, sample_pos: DataFrame = None, node_map={}, debug=False):
         
         grouped = sample_pos.as_pd_df().groupby('node_idx')['sample_id'].apply(np.array).apply(np.uint32)
         data_indices = [None for i in range(len(nodes))]
@@ -43,7 +43,10 @@ class SklearnHistBuilder(object):
             hists.append([g, h, count])
             idx += 1
 
-        return hists
+        if debug:
+            return hists, data_indices
+        else:
+            return hists
     
 
 def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, hist_type='distributed'):

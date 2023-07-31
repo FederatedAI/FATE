@@ -139,7 +139,7 @@ def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict,
     node_id = s[-1]
     node = cur_layer_node[node_map[node_id]]
     if node.is_leaf:
-        return -1  # reach leaf
+        return -(node.nid + 1)  # use negative index to represent leaves, + 1 to avoid root node 0
     feat_val = s[node.fid]
     bid = node.bid
     
@@ -157,6 +157,17 @@ def _get_sample_on_local_nodes(s: pd.Series, cur_layer_node: List[Node], node_ma
     node = cur_layer_node[node_map[node_id]]
     on_local_node = (node.sitename == sitename)
     return on_local_node
+
+
+def _convert_sample_pos_to_score(s: pd.Series, tree_nodes: List[Node]):
+    
+    node_idx = s[0]
+    if node_idx < 0:
+        node_idx = -(node_idx + 1)
+    target_node = tree_nodes[node_idx]
+    if not target_node.is_leaf:
+        raise ValueError('this sample is not on a leaf node')
+    return target_node.weight
 
 
 class DecisionTree(object):
@@ -199,25 +210,43 @@ class DecisionTree(object):
         self._sample_pos = None
         self._leaf_node_map = {}
         self._valid_feature = valid_features
+        self._sample_on_leaves = None
+        self._sample_weights = None
 
     def _init_sample_pos(self, train_data: DataFrame):
         sample_pos = train_data.create_frame()
         sample_pos['node_idx'] = 0  # position of current sample
         return sample_pos
 
+    def _init_leaves_sample_table(self, sample_pos: DataFrame):
+        return sample_pos.empty_frame()
+
     def _get_leaf_node_map(self):
         if len(self._nodes) >= len(self._leaf_node_map):
             for n in self._nodes:
                 self._leaf_node_map[n.nid] = n.is_leaf
 
-    def _assign_sample_position(self, ):
-        pass
+    def _convert_sample_pos_to_weight(self, sample_pos: DataFrame, tree_nodes: List[Node]):
+        import functools
+        map_func = functools.partial(_convert_sample_pos_to_score, tree_nodes=tree_nodes)
+        sample_weight = sample_pos.create_frame()
+        sample_weight['weight'] = sample_pos.apply_row(map_func)
+        return sample_weight
 
-    def _convert_bin_idx_to_split_val(self):
-        pass
+    def _convert_bin_idx_to_split_val(self, ctx: Context, tree_nodes: List[Node], binning_dict: dict, schema):
+        
+        columns = schema.columns
+        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        for node in tree_nodes:
+            if node.sitename == sitename:
+                if not node.is_leaf:
+                    feat_name = columns[node.fid]
+                    split_val = binning_dict[feat_name][node.bid]
+                    node.bid = split_val
+            else:
+                continue
 
-    def _compute_best_splits(self):
-        pass
+        return tree_nodes
 
     def _initialize_root_node(self, ctx: Context, gh: DataFrame):
         
@@ -227,13 +256,8 @@ class DecisionTree(object):
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(gh))
 
         return root_node
-
-    def _init_sitename(self, ctx: Context):
-        guest_sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]
-        host_sitenames = [ctx.hosts[i].party[0] + '_' + ctx.hosts[i].party[1] for i in range(len(ctx.hosts))]
-        return guest_sitename, host_sitenames
     
-    def update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo]):
+    def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo]):
         
         assert len(cur_layer_nodes) == len(split_info), 'node num not match split info num, got {} node vs {} split info'.format(len(cur_layer_nodes), len(split_info))
 
@@ -301,17 +325,23 @@ class DecisionTree(object):
  
         return next_layer_node
     
-    def drop_leaf_samples(self, new_sample_pos: DataFrame, data: DataFrame):
+    def _drop_samples_on_leaves(self, new_sample_pos: DataFrame, data: DataFrame):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
 
-        x = (new_sample_pos != LEAF_IDX)
+        x = (new_sample_pos >= 0)
         indexer = x.get_indexer('sample_id')
         update_pos = new_sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]
         new_data = data.loc(indexer, preserve_order=True)[x.as_tensor()]
         logger.info('drop leaf samples, new sample count is {}, {} samples dropped'.format(len(new_sample_pos), len(data) - len(new_data)))
         return new_data, update_pos
+        
+    def _get_samples_on_leaves(self, sample_pos: DataFrame):
+        x = (sample_pos < 0)
+        indexer = x.get_indexer('sample_id')
+        samples_on_leaves = sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]
+        return samples_on_leaves
 
-    def get_column_max_bin(self, result_dict):
+    def _get_column_max_bin(self, result_dict):
         bin_len = {}
         for column, values in result_dict.items():
             bin_num = len(values)
@@ -326,7 +356,7 @@ class DecisionTree(object):
         return self._feature_importance
     
     def get_sample_predict_weights(self):
-        pass
+        return self._sample_weights
 
     def get_nodes(self):
         return self._nodes
@@ -337,9 +367,9 @@ class DecisionTree(object):
         anytree_nodes = {}
         for node in nodes:
             if not node.is_leaf:
-                anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: fid {node.fid}, bid {node.bid}, on {node.sitename}')
+                anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: fid {node.fid}, bid {node.bid}, sample num {node.sample_num}, on {node.sitename}')
             else:
-                anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: weight {node.weight}, leaf')
+                anytree_nodes[node.nid] = AnyNode(name=f'{node.nid}: weight {node.weight}, sample num {node.sample_num}, leaf')
         for node in nodes:
             if node.l != -1:
                 anytree_nodes[node.l].parent = anytree_nodes[node.nid]

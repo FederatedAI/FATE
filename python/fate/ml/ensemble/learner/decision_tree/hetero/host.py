@@ -20,11 +20,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
-        self.to_send_hist = []
-        self.map_dict = []
         self.node_fid_bid = {}
 
-    def convert_split_id_and_record(self, ctx: Context, cur_layer_nodes: List[Node], map_dict: List[dict], record_dict: dict):
+    def _convert_split_id_and_record(self, ctx: Context, cur_layer_nodes: List[Node], map_dict: List[dict], record_dict: dict):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         for idx, n in enumerate(cur_layer_nodes):
@@ -35,7 +33,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                 n.fid = fid
                 n.bid = bid
 
-    def update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
+    def _update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         data_with_pos = DataFrame.hstack([data, sample_pos])
@@ -66,12 +64,12 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         return new_sample_pos
     
-    def get_gh(self, ctx: Context):
+    def _get_gh(self, ctx: Context):
         grad_and_hess = ctx.guest.get('en_gh')
         
         return grad_and_hess
     
-    def sync_nodes(self, ctx: Context):
+    def _sync_nodes(self, ctx: Context):
         
         nodes = ctx.guest.get('sync_nodes')
         cur_layer_nodes, next_layer_nodes = nodes
@@ -79,13 +77,14 @@ class HeteroDecisionTreeHost(DecisionTree):
     
     def booster_fit(self, ctx: Context, bin_train_data: DataFrame, bining_dict: dict):
         
-        feat_max_bin, max_bin = self.get_column_max_bin(bining_dict)
-        sample_pos = self._init_sample_pos(bin_train_data)
+        train_df = bin_train_data
+        feat_max_bin, max_bin = self._get_column_max_bin(bining_dict)
+        sample_pos = self._init_sample_pos(train_df)
 
         # Get Encrypted Grad And Hess
         grad_and_hess = ctx.guest.get('en_gh')
         root_node = self._initialize_root_node(ctx, grad_and_hess)
-        self.hist_builder = get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, hist_type='sklearn')
+        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, hist_type='sklearn')
         self.splitter = FedSklearnSplitter(bining_dict)
 
         node_map = {}
@@ -98,17 +97,18 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
-            hist = self.hist_builder.compute_hist(cur_layer_node, bin_train_data, grad_and_hess, sample_pos, node_map)
-            to_send_hist, split_id_map = self.splitter.split(sub_ctx, hist, cur_layer_node)
-            self.to_send_hist.append(to_send_hist)
-            self.map_dict.append(split_id_map)
-            cur_layer_node, next_layer_nodes = self.sync_nodes(sub_ctx)
-            self.convert_split_id_and_record(sub_ctx, cur_layer_node, split_id_map, self.node_fid_bid)
+            hist = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
+            _, split_id_map = self.splitter.split(sub_ctx, hist, cur_layer_node)
+            cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
+            self._convert_split_id_and_record(sub_ctx, cur_layer_node, split_id_map, self.node_fid_bid)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
-            sample_pos = self.update_sample_pos(sub_ctx, cur_layer_node, sample_pos, bin_train_data, node_map)
-            bin_train_data, sample_pos = self.drop_leaf_samples(sample_pos, bin_train_data)
+            sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
+            train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
             cur_layer_node = next_layer_nodes
             logger.info('layer {} done: next layer will split {} nodes, active samples num {}'.format(cur_depth, len(cur_layer_node), len(sample_pos)))
+
+        # convert bid to split value
+        # self._nodes = self._convert_bin_idx_to_split_val(self._nodes, bining_dict)
 
 
     def fit(self, ctx: Context, train_data: DataFrame):
