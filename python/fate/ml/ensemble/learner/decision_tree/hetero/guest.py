@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeGuest(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, l1=0.1, l2=0, use_missing=False, zero_as_missing=False):
+    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, l1=0.1, l2=0, use_missing=False, zero_as_missing=False, goss=False):
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
         self.max_split_nodes = max_split_nodes
@@ -24,6 +24,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.splitter = None
         self.l1 = l1
         self.l2 = l2
+        self.goss = goss
         self._valid_features = valid_features
 
     def _get_column_max_bin(self, result_dict):
@@ -45,7 +46,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         local_sample_idx = data_with_pos.apply_row(map_func)
         local_samples = data_with_pos.loc(local_sample_idx.get_indexer(target="sample_id"), preserve_order=True)[local_sample_idx.values.as_tensor()]
         logger.info('{}/{} samples on local nodes'.format(len(local_samples), len(data)))
-
         if len(local_samples) == 0:
             updated_sample_pos = None
         else:
@@ -77,6 +77,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
        # share new sample position with all hosts
         ctx.hosts.put('new_sample_pos', (new_sample_pos.as_tensor(), new_sample_pos.get_indexer(target='sample_id')))
+        self.sample_pos = new_sample_pos
+
         return new_sample_pos
 
     def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
@@ -175,7 +177,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # convert sample pos to weights
         self._sample_weights = self._convert_sample_pos_to_weight(self._sample_on_leaves, self._nodes)
         # convert bid to split value
-        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
+        # self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
 
     def fit(self, ctx: Context, train_data: DataFrame):
         pass

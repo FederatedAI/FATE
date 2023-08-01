@@ -146,7 +146,7 @@ class Node(object):
         """
         Returns a string representation of the node.
         """
-        return "(node_id {}: left {}, right {}, pid {}, is_leaf {}, sample_count {},  g {}, h {}, weight {}, sitename {})".format(self.nid, \
+        return "(node_id {}: fid {} bid {} left {}, right {}, pid {}, is_leaf {}, sample_count {},  g {}, h {}, weight {}, sitename {})".format(self.nid, self.fid, self.bid,\
                  self.l, self.r, self.parent_nodeid, self.is_leaf, self.sample_num, self.grad, self.hess, self.weight, self.sitename)
 
 
@@ -166,7 +166,6 @@ def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict,
         return -(node.nid + 1)  # use negative index to represent leaves, + 1 to avoid root node 0
     feat_val = s[node.fid]
     bid = node.bid
-    
     dir_ = _make_decision(feat_val, bid)
     if dir_:  # go left
         ret_node = node.l

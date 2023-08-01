@@ -38,7 +38,7 @@ class BCELoss(object):
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
-        gh['g'] = label - predict_score['predict']
+        gh['g'] = predict_score['predict'] - label
 
     @staticmethod
     def compute_hess(gh: DataFrame, label: DataFrame, predict_score: DataFrame):

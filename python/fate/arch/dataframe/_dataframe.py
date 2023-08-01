@@ -518,13 +518,15 @@ class DataFrame(object):
                             ret_dict[dst_block_id] = []
 
                         ret_dict[dst_block_id].append(
-                            [
-                                block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
-                                for block in blocks
-                            ]
+                            (dst_row_id,
+                                [
+                                    block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
+                                    for block in blocks
+                                ]
+                             )
                         )
-
-                return list(ret_dict.items())
+                for dst_block_id, value_list in ret_dict.items():
+                    yield dst_block_id, sorted(value_list)
 
             def _merge_list(lhs, rhs):
                 if not lhs:
@@ -562,6 +564,7 @@ class DataFrame(object):
 
             block_table = self._block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
             block_table = block_table.mapReducePartitions(_convert_to_block, _merge_list)
+            block_table = block_table.mapValues(lambda values: [v[1] for v in values])
             block_table = transform_list_block_to_frame_block(block_table, self._data_manager)
 
         partition_order_mappings = get_partition_order_mappings(block_table)

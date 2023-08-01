@@ -1,3 +1,5 @@
+from typing import Union
+from fate.ml.abc.module import Model
 from fate.ml.ensemble.learner.decision_tree.hetero.host import HeteroDecisionTreeHost
 from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
 from fate.arch import Context
@@ -20,7 +22,6 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
         self.max_bin = max_bin
         self.colsample = colsample
 
-
     def get_tree(self, idx):
         return self._trees[idx]
 
@@ -40,4 +41,10 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
             logger.info('fitting host decision tree {} done'.format(tree_idx))
 
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
+        pass
+
+    def get_model(self) -> dict:
+        pass
+
+    def from_model(cls, model: dict):
         pass
