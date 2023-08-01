@@ -110,7 +110,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     """print(f"evaluation result: {pipeline.get_task_info('evaluation_0').get_output_metric()};"
           f"result type: {type(pipeline.get_task_info('evaluation_0').get_output_metric())}")
     """
-    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric())
+    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
     print(f"result_summary")
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},

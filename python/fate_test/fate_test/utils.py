@@ -321,10 +321,32 @@ def _save_quality(storage_tag, cache_directory, **results):
 def parse_summary_result(rs_dict):
     for model_key in rs_dict:
         rs_content = rs_dict[model_key]
-        if 'validate' in rs_content:
-            return rs_content['validate']
+        if 'test_set' in rs_content:
+            metric_result = rs_content['test_set']
+        if 'validate_set' in rs_content:
+            metric_result = rs_content['validate_set']
         else:
-            return rs_content['train']
+            metric_result = rs_content['train_set']
+        return extract_and_flatten_summary_metric(metric_result)
+
+
+def extract_and_flatten_summary_metric(metric_dict_list):
+    flatten_metric_summary = {}
+    for metric_group in metric_dict_list:
+        if isinstance(metric_group, dict):
+            metric_name = metric_group['metric']
+            metric_val = metric_group['val']
+            if isinstance(metric_val, float) or isinstance(metric_val, int):
+                flatten_metric_summary[metric_name] = metric_val
+        elif isinstance(metric_group, list):
+            for metric_subset in metric_group:
+                metric_name = metric_subset['metric']
+                metric_val = metric_subset['val']
+                if isinstance(metric_val, float) or isinstance(metric_val, int):
+                    flatten_metric_summary[metric_name] = metric_val
+        else:
+            raise ValueError(f"Invalid metric group: {metric_group}")
+    return flatten_metric_summary
 
 
 def extract_data(df, col_name, convert_float=True, keep_id=False):

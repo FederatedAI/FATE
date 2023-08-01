@@ -130,7 +130,7 @@ hetero_lr-binary-1:
     conf: "./default_credit_config.yaml"
   FATE-hetero-lr:
     script: "./pipeline-lr-binary.py"
-    conf: "./default_credit_config.yaml"
+    conf: "./default_credit_sklearn_config.yaml"
   compare_setting:
     relative_tol: 0.01
 hetero_lr-binary-2:
