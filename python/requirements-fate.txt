@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-click>=7.1.2,<8.0.0
+click
 scikit-learn==1.0.1
 pandas==1.1.5
 protobuf==3.19.6
@@ -17,3 +17,4 @@ grpcio==1.46.3
 ml_metadata
 beautifultable
 rust_paillier
+transformers
