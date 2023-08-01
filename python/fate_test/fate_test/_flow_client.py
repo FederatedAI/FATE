@@ -269,6 +269,18 @@ class FLOWClient(object):
             raise RuntimeError(f"get version error: {response}") from e
         return fate_version"""
 
+    def get_version(self):
+        response = self._client.provider.query(name="fate")
+        try:
+            retcode = response['code']
+            retmsg = response['message']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"get version error: {response}")
+            fate_version = response["data"]["provider_name"]
+        except Exception as e:
+            raise RuntimeError(f"get version error: {response}") from e
+        return fate_version
+
     def _add_notes(self, job_id, role, party_id, notes):
         data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
         response = AddNotesResponse(self._post(url='job/update', json=data))

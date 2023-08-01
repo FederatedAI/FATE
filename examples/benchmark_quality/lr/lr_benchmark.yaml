@@ -118,7 +118,7 @@ data:
 hetero_lr-binary-0:
   local:
     script: "./sklearn-lr-binary.py"
-    conf: "./breast_config.yaml"
+    conf: "./breast_lr_sklearn_config.yaml"
   FATE-hetero-lr:
     script: "./pipeline-lr-binary.py"
     conf: "./breast_config.yaml"

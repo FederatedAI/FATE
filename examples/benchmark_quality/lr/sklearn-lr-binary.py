@@ -18,12 +18,12 @@ import argparse
 import os
 
 import pandas
-from pipeline.utils.tools import JobConfig
+from fate_client.pipeline.utils.test_utils import JobConfig
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve
 
 
-def main(config="../../config.yaml", param="./vechile_config.yaml"):
+def main(config="../../config.yaml", param="./breast_lr_sklearn_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -45,7 +45,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
         "max_iter": 100,
         "alpha": param["alpha"],
         "learning_rate": "optimal",
-        "eta0": param["learning_rate"],
+        "eta0": param["eta0"],
         "random_state": 105
     }
 
@@ -84,7 +84,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-p", "--param", type=str, default="./breast_config.yaml",
+    parser.add_argument("-p", "--param", type=str, default="./breast_lr_sklearn_config.yaml",
                         help="config file for params")
     args = parser.parse_args()
     main(param=args.param)

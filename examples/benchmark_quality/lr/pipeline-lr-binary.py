@@ -99,15 +99,18 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     print(pipeline.get_dag())
     pipeline.fit()
 
-    lr_0_data = pipeline.get_component("lr_0").get_output_data()
-    lr_1_data = pipeline.get_component("lr_1").get_output_data()
+    lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
+    lr_1_data = pipeline.get_task_info("lr_1").get_output_data()["test_output_data"]
     lr_0_score = extract_data(lr_0_data, "predict_result")
-    lr_0_label = extract_data(lr_0_data, "label")
+    lr_0_label = extract_data(lr_0_data, "y")
     lr_1_score = extract_data(lr_1_data, "predict_result")
-    lr_1_label = extract_data(lr_1_data, "label")
+    lr_1_label = extract_data(lr_1_data, "y")
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
     lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
-    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_metric())
+    """print(f"evaluation result: {pipeline.get_task_info('evaluation_0').get_output_metric()};"
+          f"result type: {type(pipeline.get_task_info('evaluation_0').get_output_metric())}")
+    """
+    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric())
     print(f"result_summary")
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},

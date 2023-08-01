@@ -9,11 +9,12 @@ init_param:
 learning_rate_scheduler:
   method: "constant"
   scheduler_params:
-    lr: 0.15
     factor: 1.0
     total_iters: 100
 optimizer:
   method: "adam"
   penalty: "L2"
+  optimizer_params:
+    lr: 0.15
 batch_size: 550
 early_stop: "diff"

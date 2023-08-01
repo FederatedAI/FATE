@@ -18,12 +18,12 @@ import argparse
 import os
 
 import pandas
-from pipeline.utils.tools import JobConfig
+from fate_client.pipeline.utils.test_utils import JobConfig
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import precision_score, accuracy_score, recall_score
 
 
-def main(config="../../config.yaml", param="./vechile_config.yaml"):
+def main(config="../../config.yaml", param="./vehicle_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
