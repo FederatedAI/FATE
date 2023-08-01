@@ -50,6 +50,7 @@ class _ArtifactType(Generic[MM]):
         self.uri = uri
         self.metadata = metadata
         self.type_name = type_name
+        self._consumed = False
 
     def __str__(self):
         return f"{self.__class__.__name__}(uri={self.uri}, metadata={self.metadata}, type_name={self.type_name})"
@@ -57,11 +58,16 @@ class _ArtifactType(Generic[MM]):
     def __repr__(self):
         return self.__str__()
 
+    def consumed(self):
+        self._consumed = True
+        return self
+
     def dict(self):
         return {
             "metadata": self.metadata,
             "uri": self.uri.to_string(),
             "type_name": self.type_name,
+            "consumed": self._consumed,
         }
 
 

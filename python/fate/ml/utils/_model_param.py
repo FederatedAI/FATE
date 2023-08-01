@@ -53,3 +53,8 @@ def deserialize_param(param, fit_intercept=False):
     dtype = param["dtype"]
     w = torch.tensor(w, dtype=getattr(torch, dtype))
     return w
+
+
+def check_overflow(param, threshold=1e8):
+    if (torch.abs(param) > threshold).any():
+        raise ValueError(f"Value(s) greater than {threshold} found in model param, please check.")

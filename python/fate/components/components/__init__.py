@@ -121,10 +121,10 @@ class LazyBuildInComponentsLoader:
         return hetero_feature_selection
 
     @_lazy_cpn
-    def feature_union(self):
-        from .feature_union import feature_union
+    def union(self):
+        from .union import union
 
-        return feature_union
+        return union
 
     @_lazy_cpn
     def sample(self):
