@@ -7,6 +7,8 @@ from fate_utils.histogram import Coders as _Coder
 from fate_utils.histogram import FixedpointPaillierVector, FixedpointVector
 from fate_utils.histogram import keygen as _keygen
 
+from .type import TensorEvaluator
+
 V = torch.Tensor
 EV = FixedpointPaillierVector
 FV = FixedpointVector
@@ -34,6 +36,17 @@ class PK:
 class Coder:
     def __init__(self, coder: _Coder):
         self.coder = coder
+
+    def encode_tensor(self, tensor: V, dtype: torch.dtype = None) -> FV:
+        if dtype is None:
+            dtype = tensor.dtype
+        return self.encode_vec(tensor.flatten(), dtype=dtype)
+
+    def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None) -> V:
+        data = self.decode_vec(tensor, dtype)
+        if shape is not None:
+            data = data.reshape(shape)
+        return data
 
     def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
         if dtype is None:
@@ -100,24 +113,28 @@ class Coder:
         return self.coder.decode_i32(val)
 
     def encode_f64_vec(self, vec: torch.Tensor):
+        vec = vec.detach().flatten()
         return self.coder.encode_f64_vec(vec.detach().numpy())
 
     def decode_f64_vec(self, vec):
         return torch.tensor(self.coder.decode_f64_vec(vec))
 
     def encode_i64_vec(self, vec: torch.Tensor):
+        vec = vec.detach().flatten()
         return self.coder.encode_i64_vec(vec.detach().numpy())
 
     def decode_i64_vec(self, vec):
         return torch.tensor(self.coder.decode_i64_vec(vec))
 
     def encode_f32_vec(self, vec: torch.Tensor):
+        vec = vec.detach().flatten()
         return self.coder.encode_f32_vec(vec.detach().numpy())
 
     def decode_f32_vec(self, vec):
         return torch.tensor(self.coder.decode_f32_vec(vec))
 
     def encode_i32_vec(self, vec: torch.Tensor):
+        vec = vec.detach().flatten()
         return self.coder.encode_i32_vec(vec.detach().numpy())
 
     def decode_i32_vec(self, vec):
@@ -129,7 +146,7 @@ def keygen(key_size):
     return SK(sk), PK(pk), Coder(coder)
 
 
-class evaluator:
+class evaluator(TensorEvaluator[EV, V, PK, Coder]):
     @staticmethod
     def add(a: EV, b: EV, pk: PK):
         return a.add(pk.pk, b)
@@ -138,7 +155,7 @@ class evaluator:
     def add_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
         return a.add(pk.pk, encrypted)
 
@@ -156,7 +173,7 @@ class evaluator:
     def sub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
         return a.sub(pk.pk, encrypted)
 
@@ -174,7 +191,7 @@ class evaluator:
     def rsub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
         encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
         return a.rsub(pk.pk, encrypted)
 
@@ -188,7 +205,7 @@ class evaluator:
     def mul_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
         if output_dtype is None:
             output_dtype = b.dtype
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
         return a.mul(pk.pk, encoded)
 
     @staticmethod
@@ -198,13 +215,13 @@ class evaluator:
 
     @staticmethod
     def matmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
         # TODO: move this to python side so other protocols can use it without matmul support?
         return a.matmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
     def rmatmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
-        encoded = coder.encode_vec(b, dtype=output_dtype)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
         return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod

@@ -5,7 +5,7 @@ from fate.arch import Context
 from fate.arch.histogram.histogram import Histogram
 
 ctx = Context()
-kit = ctx.cipher.phe.setup(options={"kind": "paillier_vector_based", "key_length": 1024})
+kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
 sk, pk, coder, evaluator = kit.sk, kit.pk, kit.coder, kit.evaluator
 
 
