@@ -28,15 +28,19 @@ class RawIntersectionGuest(HeteroModule):
     def fit(self, ctx: Context, train_data, validate_data=None):
         # ctx.hosts.put("raw_index", train_data.index.tolist())
         ctx.hosts.put("raw_index", train_data.get_indexer(target="sample_id"))
-        intersect_indexes = ctx.hosts.get("intersect_index")
+        intersect_indexes = ctx.hosts.get("host_intersect_index")
         intersect_data = train_data
         for intersect_index in intersect_indexes:
-            intersect_data = intersect_data.loc(intersect_index, preserve_order=True)
+            intersect_data = intersect_data.loc(intersect_index)
+
+        ctx.hosts.put("final_intersect_index", intersect_data.get_indexer(target="sample_id"))
 
         intersect_count = intersect_data.count()
         ctx.hosts.put("intersect_count", intersect_count)
 
         logger.info(f"intersect count={intersect_count}")
+        data = sorted(intersect_data.block_table.collect())
+        logger.info(f"mgq-debug, data={data}")
         return intersect_data
 
 
@@ -48,8 +52,14 @@ class RawIntersectionHost(HeteroModule):
         guest_index = ctx.guest.get("raw_index")
         intersect_data = train_data.loc(guest_index)
         # ctx.guest.put("intersect_index", intersect_data.index.tolist())
-        ctx.guest.put("intersect_index", intersect_data.get_indexer(target="sample_id"))
+        ctx.guest.put("host_intersect_index", intersect_data.get_indexer(target="sample_id"))
+
+        final_intersect_index = ctx.guest.get("final_intersect_index")
+        intersect_data = intersect_data.loc(final_intersect_index, preserve_order=True)
 
         intersect_count = ctx.guest.get("intersect_count")
+
         logger.info(f"intersect count={intersect_count}")
+        data = sorted(intersect_data.block_table.collect())
+        logger.info(f"mgq-debug, data={data}")
         return intersect_data
