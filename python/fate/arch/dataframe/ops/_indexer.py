@@ -57,12 +57,13 @@ def transform_to_table(block_table, block_index, partition_order_mappings):
 
 
 def get_partition_order_mappings(block_table):
-    block_info = list(block_table.mapValues(lambda blocks: (blocks[0][0], len(blocks[0]))).collect())
+    block_info = sorted(list(block_table.mapValues(lambda blocks: (blocks[0][0], len(blocks[0]))).collect()))
     block_order_mappings = dict()
     start_index = 0
     for block_id, (block_key, block_size) in block_info:
         block_order_mappings[block_key] = dict(
             start_index=start_index, end_index=start_index + block_size - 1, block_id=block_id)
+        start_index += block_size
 
     return block_order_mappings
 
