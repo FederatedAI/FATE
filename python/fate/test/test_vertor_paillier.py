@@ -2,8 +2,8 @@ import torch
 from fate.arch import Context
 
 ctx = Context()
-kit = ctx.cipher.phe.setup({"kind": "heu", "key_length": 1024})
-# kit = ctx.cipher.phe.setup({"kind": "paillier_vector_based", "key_length": 1024})
+# kit = ctx.cipher.phe.setup({"kind": "heu", "key_length": 1024})
+kit = ctx.cipher.phe.setup({"kind": "paillier", "key_length": 1024})
 pk = kit.get_tensor_encryptor()
 sk = kit.get_tensor_decryptor()
 

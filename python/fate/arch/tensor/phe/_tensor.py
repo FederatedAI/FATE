@@ -5,7 +5,7 @@ import torch
 _HANDLED_FUNCTIONS = {}
 
 
-class PaillierTensorEncoded:
+class PHETensorEncoded:
     def __init__(self, coder, shape: torch.Size, data, dtype) -> None:
         self.coder = coder
         self.data = data
@@ -13,7 +13,7 @@ class PaillierTensorEncoded:
         self.dtype = dtype
 
 
-class PaillierTensor:
+class PHETensor:
     def __init__(self, pk, evaluator, coder, shape: torch.Size, data, dtype) -> None:
         self._pk = pk
         self._evaluator = evaluator
@@ -41,7 +41,7 @@ class PaillierTensor:
             dtype = self._dtype
         if shape is None:
             shape = self._shape
-        return PaillierTensor(self._pk, self._evaluator, self._coder, shape, data, dtype)
+        return PHETensor(self._pk, self._evaluator, self._coder, shape, data, dtype)
 
     @property
     def pk(self):
@@ -75,7 +75,7 @@ class PaillierTensor:
     def __torch_function__(cls, func, types, args=(), kwargs=None):
         if kwargs is None:
             kwargs = {}
-        if func not in _HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, PaillierTensor)) for t in types):
+        if func not in _HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, PHETensor)) for t in types):
             return NotImplemented
         return _HANDLED_FUNCTIONS[func](*args, **kwargs)
 

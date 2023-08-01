@@ -1,7 +1,7 @@
 import torch
 from fate.arch.tensor import _custom_ops
 
-from ._tensor import PaillierTensor, implements
+from ._tensor import PHETensor, implements
 
 
 @implements(_custom_ops.decrypt_f)
@@ -10,8 +10,8 @@ def decrypt(input, decryptor):
 
 
 @implements(torch.add)
-def add(input: PaillierTensor, other):
-    if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
+def add(input: PHETensor, other):
+    if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return add(other, input)
 
     evaluator = input.evaluator
@@ -19,7 +19,7 @@ def add(input: PaillierTensor, other):
     coder = input.coder
     shape = input.shape
     dtype = input.dtype
-    if isinstance(other, PaillierTensor):
+    if isinstance(other, PHETensor):
         assert shape == other.shape, f"shape mismatch {shape} != {other.shape}"
         output_dtype = torch.promote_types(dtype, other.dtype)
         data = evaluator.add(input.data, other.data, pk)
@@ -29,7 +29,7 @@ def add(input: PaillierTensor, other):
         # TODO: support broadcast
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = evaluator.add_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = evaluator.add_plain(input.data, other, pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
@@ -49,7 +49,7 @@ def add(input: PaillierTensor, other):
 @implements(torch.rsub)
 def rsub(input, other):
     # assert input is PaillierTensor
-    if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
+    if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return sub(other, input)
 
     evaluator = input.evaluator
@@ -57,7 +57,7 @@ def rsub(input, other):
     coder = input.coder
     shape = input.shape
     dtype = input.dtype
-    if isinstance(other, PaillierTensor):
+    if isinstance(other, PHETensor):
         assert shape == other.shape, f"shape mismatch {shape} != {other.shape}"
         output_dtype = torch.promote_types(dtype, other.dtype)
         data = evaluator.rsub(input.data, other.data, pk)
@@ -66,7 +66,7 @@ def rsub(input, other):
     elif isinstance(other, torch.Tensor):
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = evaluator.rsub_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = evaluator.rsub_plain(input.data, other, pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
@@ -87,7 +87,7 @@ def rsub(input, other):
 @implements(torch.sub)
 def sub(input, other):
     # assert input is PaillierTensor
-    if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
+    if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return rsub(other, input)
 
     evaluator = input.evaluator
@@ -95,7 +95,7 @@ def sub(input, other):
     coder = input.coder
     shape = input.shape
     dtype = input.dtype
-    if isinstance(other, PaillierTensor):
+    if isinstance(other, PHETensor):
         assert shape == other.shape, f"shape mismatch {shape} != {other.shape}"
         output_dtype = torch.promote_types(dtype, other.dtype)
         data = evaluator.sub(input.data, other.data, pk)
@@ -104,7 +104,7 @@ def sub(input, other):
     elif isinstance(other, torch.Tensor):
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = evaluator.sub_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = evaluator.sub_plain(input.data, other, pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
@@ -125,7 +125,7 @@ def sub(input, other):
 @implements(torch.mul)
 def mul(input, other):
     # assert input is PaillierTensor
-    if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
+    if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return mul(other, input)
 
     evaluator = input.evaluator
@@ -133,7 +133,7 @@ def mul(input, other):
     coder = input.coder
     shape = input.shape
     dtype = input.dtype
-    if isinstance(other, PaillierTensor):
+    if isinstance(other, PHETensor):
         raise NotImplementedError(
             f"mul {input} with {other} not supported, paillier is not multiplicative homomorphic"
         )
@@ -141,7 +141,7 @@ def mul(input, other):
     elif isinstance(other, torch.Tensor):
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
-            data = evaluator.mul_plain(input.data, other.flatten().detach(), pk, coder, output_dtype)
+            data = evaluator.mul_plain(input.data, other, pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         elif other.ndim == 0:
             output_dtype = torch.promote_types(dtype, other.dtype)
@@ -161,13 +161,13 @@ def mul(input, other):
 
 @implements(_custom_ops.rmatmul_f)
 def rmatmul_f(input, other):
-    if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
+    if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return matmul(other, input)
 
     if input.ndim > 2 or input.ndim < 1:
         raise ValueError(f"can't rmatmul `PaillierTensor` with `torch.Tensor` with dim `{input.ndim}`")
 
-    if isinstance(other, PaillierTensor):
+    if isinstance(other, PHETensor):
         raise NotImplementedError(
             f"rmatmul {input} with {other} not supported, paillier is not multiplicative homomorphic"
         )
@@ -182,19 +182,19 @@ def rmatmul_f(input, other):
     other_shape = other.shape
     output_dtype = torch.promote_types(input.dtype, other.dtype)
     output_shape = torch.matmul(torch.rand(*other_shape, device="meta"), torch.rand(*shape, device="meta")).shape
-    data = evaluator.rmatmul(input.data, other.flatten().detach(), shape, other_shape, pk, coder, output_dtype)
-    return PaillierTensor(pk, evaluator, coder, output_shape, data, output_dtype)
+    data = evaluator.rmatmul(input.data, other, shape, other_shape, pk, coder, output_dtype)
+    return PHETensor(pk, evaluator, coder, output_shape, data, output_dtype)
 
 
 @implements(torch.matmul)
 def matmul(input, other):
-    if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
+    if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return rmatmul_f(other, input)
 
     if input.ndim > 2 or input.ndim < 1:
         raise ValueError(f"can't matmul `PaillierTensor` with `torch.Tensor` with dim `{input.ndim}`")
 
-    if isinstance(other, PaillierTensor):
+    if isinstance(other, PHETensor):
         raise ValueError("can't matmul `PaillierTensor` with `PaillierTensor`")
 
     if not isinstance(other, torch.Tensor):
@@ -207,8 +207,8 @@ def matmul(input, other):
     other_shape = other.shape
     output_dtype = torch.promote_types(input.dtype, other.dtype)
     output_shape = torch.matmul(torch.rand(*shape, device="meta"), torch.rand(*other_shape, device="meta")).shape
-    data = evaluator.matmul(input.data, other.flatten().detach(), shape, other_shape, pk, coder, output_dtype)
-    return PaillierTensor(pk, evaluator, coder, output_shape, data, output_dtype)
+    data = evaluator.matmul(input.data, other, shape, other_shape, pk, coder, output_dtype)
+    return PHETensor(pk, evaluator, coder, output_shape, data, output_dtype)
 
 
 @implements(_custom_ops.slice_f)
@@ -217,7 +217,7 @@ def slice_f(input, item):
     stride = input.shape[1]
     start = stride * item
     data = evaluator.slice(input, start, stride)
-    return PaillierTensor(input.pk, evaluator, input.coder, torch.Size([*input.shape[1:]]), data, input.dtype)
+    return PHETensor(input.pk, evaluator, input.coder, torch.Size([*input.shape[1:]]), data, input.dtype)
 
 
 @implements(_custom_ops.to_local_f)

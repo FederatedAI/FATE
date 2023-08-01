@@ -36,6 +36,34 @@ class Coder:
         self.float_encoder = kit.float_encoder()
         self.int_encoder = kit.integer_encoder()
 
+    def encode_tensor(self, tensor: V, dtype: torch.dtype = None) -> FV:
+        if dtype is None:
+            dtype = tensor.dtype
+        if dtype == torch.float64:
+            return self.kit.array(tensor.detach().numpy(), self.float_encoder)
+        if dtype == torch.float32:
+            return self.kit.array(tensor.detach().numpy(), self.float_encoder)
+        if dtype == torch.int64:
+            return self.kit.array(tensor.detach().numpy(), self.int_encoder)
+        if dtype == torch.int32:
+            return self.kit.array(tensor.detach().numpy(), self.int_encoder)
+        raise NotImplementedError(f"{dtype} not supported")
+
+    def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None) -> V:
+        if dtype == torch.float64:
+            data = torch.tensor(tensor.to_numpy(self.float_encoder)).type(dtype)
+        elif dtype == torch.float32:
+            data = torch.tensor(tensor.to_numpy(self.float_encoder)).type(dtype)
+        elif dtype == torch.int64:
+            data = torch.tensor(tensor.to_numpy(self.int_encoder)).type(dtype)
+        elif dtype == torch.int32:
+            data = torch.tensor(tensor.to_numpy(self.int_encoder)).type(dtype)
+        else:
+            raise NotImplementedError(f"{dtype} not supported")
+        if shape is not None:
+            data = data.reshape(shape)
+        return data
+
     def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
         if dtype is None:
             dtype = vec.dtype
@@ -208,7 +236,7 @@ class evaluator:
     @staticmethod
     def rmatmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
         encoded = coder.encode_vec(b, dtype=output_dtype)
-        return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
+        return pk.kit.evaluator().matmul(encoded, a)
 
     @staticmethod
     def zeros(pk: PK, size) -> EV:

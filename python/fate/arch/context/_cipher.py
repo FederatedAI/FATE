@@ -51,7 +51,7 @@ class PHECipherBuilder:
         kind = options.get("kind", self.kind)
         key_length = options.get("key_length", 1024)
 
-        if kind == "paillier":
+        if kind == "paillier_old":
             import fate_utils
             from fate.arch.tensor.paillier import PaillierTensorCipher
 
@@ -59,20 +59,20 @@ class PHECipherBuilder:
             tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, None, sk)
             return PHECipher(pk, sk, None, None, tensor_cipher)
 
-        if kind == "paillier_vector_based":
+        if kind == "paillier":
             from fate.arch.protocol.phe.paillier import evaluator, keygen
-            from fate.arch.tensor.phe_vertor_based import PaillierTensorCipher
+            from fate.arch.tensor.phe import PHETensorCipher
 
             sk, pk, coder = keygen(key_length)
-            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+            tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(pk, sk, evaluator, coder, tensor_cipher)
 
         if kind == "heu":
             from fate.arch.protocol.phe.heu import evaluator, keygen
-            from fate.arch.tensor.phe_vertor_based import PaillierTensorCipher
+            from fate.arch.tensor.phe import PHETensorCipher
 
             sk, pk, coder = keygen(key_length)
-            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+            tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(pk, sk, evaluator, coder, tensor_cipher)
 
         elif kind == "mock":

@@ -257,3 +257,24 @@ class Histogram:
         for name, value_container in self._values_mapping.items():
             result._values_mapping[name] = value_container.chunking_sum(intervals)
         return result
+
+    def to_splits(self, num_splits) -> typing.Iterator[typing.Tuple[(int, "Histogram")]]:
+        ...
+
+
+class DistributedHistogram:
+    @classmethod
+    def create(cls, data):
+        data.mapPartions(DistributedHistogram._hist_build_partition_mapper).reduceByKey(lambda x, y: x.merge(y))
+
+    @staticmethod
+    def _repartion_by_nid_and_fid(part):
+        # -> (nid, fid), data
+        ...
+
+    @staticmethod
+    def _hist_build_partition_mapper(part):
+        hist = Histogram()
+        hist.update()
+        hist.cumsum_bins()
+        return hist.to_splits()
