@@ -27,7 +27,7 @@ class DataLoader(object):
         batch_size=-1,
         shuffle=False,
         batch_strategy="full",
-        random_seed=None,
+        random_state=None,
     ):
         self._ctx = ctx
         self._dataset = dataset
@@ -39,7 +39,7 @@ class DataLoader(object):
                 self._batch_size = min(batch_size, len(dataset))
         self._shuffle = shuffle
         self._batch_strategy = batch_strategy
-        self._random_seed = random_seed
+        self._random_state = random_state
         self._need_align = need_align
         self._mode = mode
         self._role = role
@@ -56,7 +56,7 @@ class DataLoader(object):
                 role=self._role,
                 batch_size=self._batch_size,
                 shuffle=self._shuffle,
-                random_seed=self._random_seed,
+                random_state=self._random_state,
                 need_align=self._need_align,
                 sync_arbiter=self._sync_arbiter,
             )
@@ -77,7 +77,7 @@ class DataLoader(object):
 
 
 class FullBatchDataLoader(object):
-    def __init__(self, dataset, ctx, mode, role, batch_size, shuffle, random_seed, need_align, sync_arbiter):
+    def __init__(self, dataset, ctx, mode, role, batch_size, shuffle, random_state, need_align, sync_arbiter):
         self._dataset = dataset
         self._ctx = ctx
         self._mode = mode
@@ -86,7 +86,7 @@ class FullBatchDataLoader(object):
         if self._batch_size is None and self._role != "arbiter":
             self._batch_size = len(self._dataset)
         self._shuffle = shuffle
-        self._random_seed = random_seed
+        self._random_state = random_state
         self._need_align = need_align
         self._sync_arbiter = sync_arbiter
 
@@ -123,7 +123,7 @@ class FullBatchDataLoader(object):
             if self._mode in ["homo", "local"] or self._role == "guest":
                 indexer = sorted(list(self._dataset.get_indexer(target="sample_id").collect()))
                 if self._shuffle:
-                    random.seed = self._random_seed
+                    random.seed = self._random_state
                 random.shuffle(indexer)
 
                 for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
