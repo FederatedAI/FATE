@@ -68,9 +68,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
     if not yes and not click.confirm("running?"):
         return
     client = Clients(config_inst)
-    # @todo: get version
-    # fate_version = client["guest_0"].get_version()
-    fate_version = "2.0.0-beta"
+    fate_version = client["guest_0"].get_version()
     for i, suite in enumerate(suites):
         # noinspection PyBroadException
         try:
