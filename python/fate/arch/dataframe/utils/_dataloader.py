@@ -121,7 +121,7 @@ class FullBatchDataLoader(object):
             self._batch_splits.append(BatchEncoding(self._dataset, batch_id=0))
         else:
             if self._mode in ["homo", "local"] or self._role == "guest":
-                indexer = list(self._dataset.get_indexer(target="sample_id").collect())
+                indexer = sorted(list(self._dataset.get_indexer(target="sample_id").collect()))
                 if self._shuffle:
                     random.seed = self._random_seed
                 random.shuffle(indexer)
