@@ -91,7 +91,7 @@ class MetricOutputMetadata(pydantic.BaseModel):
 
 class ArtifactInputApplySpec(pydantic.BaseModel):
     uri: str
-    metadata: Metadata
+    metadata: Optional[Metadata] = {}
     type_name: Optional[str] = None
 
 
