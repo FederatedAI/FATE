@@ -87,7 +87,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     evaluation_0 = Evaluation("evaluation_0",
                               label_column_name="y",
                               runtime_roles=["guest"],
-                              default_eval_setting="binary",
+                              metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
                               input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(intersect_0)
