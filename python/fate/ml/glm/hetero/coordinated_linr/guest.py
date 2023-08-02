@@ -213,34 +213,6 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
                     g = self.centralized_compute_gradient(batch_ctx, w, X, Y, weight)
                 else:
                     g = self.asynchronous_compute_gradient(batch_ctx, encryptor, w, X, Y, weight)
-                """h = X.shape[0]
-                Xw = torch.matmul(X, w.detach())
-                d = Xw - Y
-                loss = 0.5 / h * torch.matmul(d.T, d)
-                if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-                    loss_norm = self.optimizer.loss_norm(w)
-                    loss += loss_norm
-                Xw_h_all = batch_ctx.hosts.get("Xw_h")
-                for Xw_h in Xw_h_all:
-                    d += Xw_h
-                    loss += 1 / h * torch.matmul(Xw.T, Xw_h)
-
-                if weight:
-                    d = d * weight
-                batch_ctx.hosts.put(d=d)
-
-                for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
-                    loss += 0.5 / h * Xw2_h
-                h_loss_list = batch_ctx.hosts.get("h_loss")
-                for h_loss in h_loss_list:
-                    if h_loss is not None:
-                        loss += h_loss
-
-                if len(Xw_h_all) == 1:
-                    batch_ctx.arbiter.put(loss=loss)
-
-                # gradient
-                g = 1 / h * torch.matmul(X.T, d)"""
                 g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
@@ -259,13 +231,13 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         logger.debug(f"Finish training at {self.end_epoch}th epoch.")
 
     def predict(self, ctx, test_data):
+        pred_df = test_data.create_frame(with_label=True, with_weight=False)
         if self.init_param.get("fit_intercept"):
             test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
         pred = torch.matmul(X, self.w)
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred
-        pred_df = test_data.create_frame(with_label=True, with_weight=False)
         pred_df[predict_tools.PREDICT_SCORE] = pred
         predict_result = predict_tools.compute_predict_details(pred_df, task_type=predict_tools.REGRESSION)
         return predict_result
