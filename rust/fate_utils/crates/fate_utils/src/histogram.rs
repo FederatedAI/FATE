@@ -268,6 +268,39 @@ impl FixedpointPaillierVector {
         let data = self.data[start..start + size].to_vec();
         FixedpointPaillierVector { data }
     }
+    fn i_shuffle(&mut self, indexes: Vec<usize>) {
+        let mut visited = vec![false; self.data.len()];
+        for i in 0..self.data.len() {
+            if visited[i] || indexes[i] == i {
+                continue;
+            }
+
+            let mut current = i;
+            let mut next = indexes[current];
+            while !visited[next] && next != i {
+                self.data.swap(current, next);
+                visited[current] = true;
+                current = next;
+                next = indexes[current];
+            }
+            visited[current] = true;
+        }
+    }
+    fn intervals_slice(&mut self, intervals: Vec<(usize, usize)>) -> PyResult<Self> {
+        let mut data = vec![];
+        for (start, end) in intervals {
+            if end > self.data.len() {
+                return Err(PyRuntimeError::new_err(format!(
+                    "end index out of range: start={}, end={}, data_size={}",
+                    start,
+                    end,
+                    self.data.len()
+                )));
+            }
+            data.extend_from_slice(&self.data[start..end]);
+        }
+        Ok(FixedpointPaillierVector { data })
+    }
     fn iadd_slice(&mut self, pk: &PK, position: usize, other: Vec<PyRef<PyCT>>) {
         for (i, x) in other.iter().enumerate() {
             self.data[position + i] = self.data[position + i].add(&x.ct, &pk.pk);
