@@ -260,6 +260,28 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         return a.slice(start, size)
 
     @staticmethod
+    def i_shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> None:
+        """
+        inplace shuffle, a = a[indices]
+        Args:
+            pk: public key, not used
+            a: the vector to shuffle
+            indices: the indices to shuffle
+        """
+        a.i_shuffle(indices.detach().tolist())
+
+    @staticmethod
+    def intervals_slice(a: EV, intervals: List[Tuple[int, int]]) -> EV:
+        """
+        slice in the given intervals
+
+        for example:
+            intervals=[(0, 4), (6, 12)], a = [a0, a1, a2, a3, a4, a5, a6, a7,...]
+            then the result is [a0, a1, a2, a3, a6, a7, a8, a9, a10, a11]
+        """
+        return a.intervals_slice(intervals)
+
+    @staticmethod
     def intervals_sum_with_step(pk: PK, a: EV, intervals: List[Tuple[int, int]], step: int):
         """
         sum in the given intervals, with step size
