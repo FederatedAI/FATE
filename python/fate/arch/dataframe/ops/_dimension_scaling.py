@@ -77,8 +77,8 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
                     row = []
                     for _field_index in _field_indexes:
                         _src_bid, _offset = align_fields_loc[_field_index]
-                        row.append(blocks[_src_bid][lid][offset].item() if isinstance(blocks[_src_bid], torch.Tensor)
-                                   else blocks[_src_bid][lid][offset])
+                        row.append(blocks[_src_bid][lid][_offset].item() if isinstance(blocks[_src_bid], torch.Tensor)
+                                   else blocks[_src_bid][lid][_offset])
 
                     _align_block.append(row)
 
