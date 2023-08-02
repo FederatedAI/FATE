@@ -62,7 +62,7 @@ def train(
         ),
         init_param: cpn.parameter(
             type=params.init_param(),
-            default=params.InitParam(method="zeros", fit_intercept=True),
+            default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
             desc="Model param init setting.",
         ),
         threshold: cpn.parameter(
