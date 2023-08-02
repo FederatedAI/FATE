@@ -32,6 +32,8 @@ def initialize_param(coef_len, **kwargs):
                 kwargs["fill_val"]), requires_grad=True)
     elif method == 'random':
         return torch.randn((param_len, 1), requires_grad=True)
+    elif method == 'random_uniform':
+        return torch.rand((param_len, 1), requires_grad=True)
     else:
         raise NotImplementedError(f"Unknown initialization method: {method}")
 

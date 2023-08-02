@@ -76,7 +76,7 @@ class Optimizer(object):
             model_parameter_length=None,
             model_parameter=None,
             dtype=torch.float32):
-        # @todo: allow group in future
+        # allow group of parameter in future
         if model_parameter_length is not None:
             model_parameter = torch.nn.parameter.Parameter(torch.zeros(
                 (model_parameter_length, 1), requires_grad=True, dtype=dtype))
@@ -89,20 +89,15 @@ class Optimizer(object):
     def step(self, gradient):
         # logger.info(f"before copy, model parameter: {self.model_parameter}")
         self.prev_model_parameter = self.model_parameter.data.clone()
-        # logger.info(f"gradient shape: {gradient.shape}, parameter shape: {self.model_parameter.shape}")
-        # self.model_parameter = torch.nn.parameter.Parameter(self.model_parameter.detach().clone().to(gradient.dtype))
         self.model_parameter.grad = gradient
-        # update parameter group in optimizer
-        # self.optimizer.param_groups[0]['params'] = [self.model_parameter]
-        # logger.info(f"before step, model parameter gradient: {self.model_parameter.grad}")
         self.optimizer.step()
         # logger.info(f"after step, model parameter: {self.model_parameter}")
 
     def get_delta_gradients(self):
         # logger.info(f"gradient: {self.model_parameter.grad}, prev model parameter: {self.prev_model_parameter},"
-        # f"delta grad: {self.model_parameter - self.prev_model_parameter}")
+        # f"delta grad: {self.prev_model_parameter.data - self.model_parameter.data}")
         if self.prev_model_parameter is not None:
-            return self.prev_model_parameter - self.model_parameter.data
+            return self.prev_model_parameter.data - self.model_parameter.data
         else:
             raise ValueError(f"No optimization history found, please check.")
 
@@ -172,7 +167,7 @@ class Optimizer(object):
         if self.l2_penalty:
             if fit_intercept:
                 weights_sum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
-                logger.info(f"grad: {grad}, weights sum: {weights_sum}")
+                # logger.info(f"grad: {grad}, weights sum: {weights_sum}")
                 new_grad = grad + self.alpha * weights_sum
             else:
                 new_grad = grad + self.alpha * model_weights
@@ -281,8 +276,8 @@ class Optimizer(object):
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
         else:"""
-        logger.info(
-            f"before update, model weights: {model_weights}, delta_grad: {grad}")
+        # logger.info(
+        #     f"before update, model weights: {model_weights}, delta_grad: {grad}")
         delta_grad = grad
         model_weights = self.regularization_update(
             model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
