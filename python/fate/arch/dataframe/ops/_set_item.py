@@ -88,7 +88,7 @@ def _set_new_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
-    def _append_tensor(l_blocks, r_tensor, bid_list=None, dm: DataManager=None):
+    def _append_tensor(l_blocks, r_tensor, bid_list=None, dm: DataManager = None):
         ret_blocks = [block for block in l_blocks]
         for offset, bid in enumerate(bid_list):
             ret_blocks.append(dm.blocks[bid].convert_block(r_tensor[:, offset: offset+1]))
@@ -96,7 +96,7 @@ def _set_new_item(df: "DataFrame", keys, items):
         return ret_blocks
 
     data_manager = df.data_manager
-    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         bids = data_manager.append_columns(keys, BlockType.get_block_type(items))
         _append_func = functools.partial(_append_single, item=items, col_len=len(keys), bid=bids[0], dm=data_manager)
         block_table = df.block_table.mapValues(_append_func)
@@ -193,7 +193,7 @@ def _set_old_item(df: "DataFrame", keys, items):
         return ret_blocks
 
     data_manager = df.data_manager
-    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         narrow_blocks, dst_blocks = data_manager.split_columns(keys, BlockType.get_block_type(items))
         replace_func = functools.partial(_replace_single, item=items, narrow_loc=narrow_blocks,
                                          dst_bids=dst_blocks, dm=data_manager)
@@ -228,7 +228,7 @@ def _set_old_item(df: "DataFrame", keys, items):
             raise ValueError("Setitem with rhs=DTensor must have equal len keys")
         block_type = BlockType.get_block_type(items.dtype)
         narrow_blocks, dst_blocks = data_manager.split_columns(keys, block_type)
-        replace_func = functools.partial(_replace_multi, narrow_loc=narrow_blocks,
+        replace_func = functools.partial(_replace_tensor, narrow_loc=narrow_blocks,
                                          dst_bids=dst_blocks, dm=data_manager)
         block_table = df.block_table.join(items.shardings._data, replace_func)
 

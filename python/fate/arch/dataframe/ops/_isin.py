@@ -21,6 +21,11 @@ from .._dataframe import DataFrame
 
 
 def isin(df: DataFrame, values):
+    """
+    支持的value类型为scalar、list、series、dict
+    注意的问题：torch.isin和np.isin不支持nan，所以需要使用torch.isnan和np.isnan来辅助
+              value为set/list的行为是不一样的，比如{1.0}和[1.0]可能会导致不同的结果，所以当前阶段暂时不转成set
+    """
     if isinstance(values, (list, dict, pd.Series)):
         data_manager = df.data_manager
         block_indexes = data_manager.infer_operable_blocks()
@@ -97,7 +102,7 @@ def _isin(block_table, values, block_indexes):
                             ret_block[:, offset] |= torch.isnan(block[:, offset])
                     ret_blocks.append(ret_block)
                 elif isinstance(block, np.ndarray):
-                    ret_block = np.zeros(block.shape, dtype=np.bool)
+                    ret_block = np.zeros(block.shape, dtype=np.bool_)
                     for offset, in_values in values.get(bid, {}).items():
                         ret_block[:, offset] = np.isin(block[:, offset], in_values)
                         if _has_nan_value(in_values):
