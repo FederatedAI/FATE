@@ -143,6 +143,10 @@ class HistogramEncryptedValues(HistogramValues):
         return cls(pk, evaluator, evaluator.zeros(size * stride), stride)
 
     def iadd_slice(self, index, value):
+        from fate.arch.tensor.phe import PHETensor
+
+        if isinstance(value, PHETensor):
+            value = value.data
         self.evaluator.i_add(self.pk, self.data, value, index * self.stride)
         return self
 
@@ -311,12 +315,14 @@ class Histogram:
                 raise NotImplementedError
         return cls(indexer, values_mapping)
 
-    def i_update(self, nids, fids, targets):
-        for nid, bins, target in zip(nids, fids, targets):
+    def i_update(self, fids, nids, targets):
+        for i in range(fids.shape[0]):
+            nid = nids[i][0]
+            bins = fids[i]
             for fid, bid in enumerate(bins):
                 index = self._indexer.get_position(nid, fid, bid)
-                for name, value in target.items():
-                    self._values_mapping[name].iadd_slice(index, value)
+                for name, value in targets.items():
+                    self._values_mapping[name].iadd_slice(index, value[i])
         return self
 
     def iadd(self, hist: "Histogram"):

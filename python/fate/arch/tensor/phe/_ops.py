@@ -236,7 +236,7 @@ def slice_f(input, item):
     evaluator = input.evaluator
     stride = input.shape[1]
     start = stride * item
-    data = evaluator.slice(input, start, stride)
+    data = evaluator.slice(input._data, start, stride)
     return PHETensor(input.pk, evaluator, input.coder, torch.Size([*input.shape[1:]]), data, input.dtype)
 
 

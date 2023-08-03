@@ -34,7 +34,7 @@ class PHETensor:
         self._dtype = dtype
 
     def __repr__(self) -> str:
-        return f"<PaillierTensor shape={self.shape}, dtype={self.dtype}>"
+        return f"<PHETensor shape={self.shape}, dtype={self.dtype}>"
 
     def __str__(self) -> str:
         return self.__repr__()
