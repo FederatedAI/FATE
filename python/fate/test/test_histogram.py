@@ -323,11 +323,27 @@ def test_distributed_hist_calling_from_df():
 
     stat_obj = df.distributed_hist_stat(hist, pos_df, targets)
 
+    # remote stat_obj to other party
+
+    # decrypt stat_obj
     out = stat_obj.decrypt(sk_map={"g": sk, "h": sk}, coder_map={"g": (coder, torch.float32)})
+    # extract data to do further computation
     print(out.extract_data())
+
+    ## for test only
+    # reshape back, if we know the feature bin sizes
     out = out.reshape([3, 2])
+    # shuffle back, if we know the seed
     out.i_shuffle(seed=0, reverse=True)
+    # print out
+    print(out)
+
+    # extract data to do further computation
     print(out.extract_data())
+
+    # assume the best gain is on indexes {0: 3, 1: 5}
+    best_feature_bins = hist.recover_feature_bins(seed=0, split_points={0: 3, 1: 5})
+    print(best_feature_bins)
 
 
 # test_distributed_hist_calling_from_df()
