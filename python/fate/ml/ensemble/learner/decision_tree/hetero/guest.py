@@ -192,7 +192,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             'max_split_nodes': self.max_split_nodes,
             'l1': self.l1,
             'l2': self.l2,
-            'use_missing': self.use_missing
+            'use_missing': self.use_missing,
+            'zero_as_missing': self.zero_as_missing
         }
         return param
     

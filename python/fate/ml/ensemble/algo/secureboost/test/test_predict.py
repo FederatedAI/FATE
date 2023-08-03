@@ -4,7 +4,7 @@ from fate.arch import Context
 import sys
 from fate.ml.ensemble.algo.secureboost.hetero.guest import HeteroSecureBoostGuest
 from fate.ml.ensemble.algo.secureboost.hetero.host import HeteroSecureBoostHost
-from fate.ml.ensemble.algo.secureboost.common.predict import generate_pos_array, predict_guest, predict_host
+from fate.ml.ensemble.algo.secureboost.common.predict import generate_pos_array, predit_leaf_guest, predict_leaf_host
 
 
 arbiter = ("arbiter", "10000")
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         with open('guest_model.pkl', 'rb') as f:
             trees =trees.from_model(pickle.load(f))
 
-        ret = predict_guest(ctx, trees.get_trees(), data_guest)
+        ret = predit_leaf_guest(ctx, trees.get_trees(), data_guest)
 
     elif party == 'host':
         ctx = create_ctx(host)
@@ -94,4 +94,4 @@ if __name__ == '__main__':
         with open('host_model.pkl', 'rb') as f:
             trees = trees.from_model(pickle.load(f))
 
-        ret = predict_host(ctx, trees.get_trees(), data_host)
+        ret = predict_leaf_host(ctx, trees.get_trees(), data_host)

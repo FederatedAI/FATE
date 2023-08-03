@@ -37,6 +37,9 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._tree_dim = 1  # tree dimension, if is multilcass task, tree dim > 1
         self._loss_func = None
 
+    def _prepare_parameter(self):
+        self._tree_dim = self.num_class if self.objective == 'multiclass' else 1
+
     def _get_loss_func(self, objective: str) -> Optional[object]:
         # to lowercase
         objective = objective.lower()
@@ -108,4 +111,14 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         trees = model['trees']
         self._saved_tree = trees
         self._trees = [HeteroDecisionTreeGuest.from_model(tree) for tree in trees]
+        hyper_parameter = model['hyper_parameters']
+
+        # these parameter are related to predict
+        self.learning_rate = hyper_parameter['learning_rate']
+        self.num_class = hyper_parameter['num_class']
+        self.objective = hyper_parameter['objective']
+        # initialize
+        self._prepare_parameter()
+        self._loss_func = self._get_loss_func(self.objective)
+
         return self
