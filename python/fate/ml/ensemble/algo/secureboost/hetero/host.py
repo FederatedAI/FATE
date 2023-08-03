@@ -5,6 +5,7 @@ from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.utils.binning import binning
+from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_host
 import logging
 
 
@@ -40,8 +41,8 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
             self._update_feature_importance(tree.get_feature_importance())
             logger.info('fitting host decision tree {} done'.format(tree_idx))
 
-    def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
-        pass
+    def predict(self, ctx: Context, predict_data: DataFrame) -> None:
+        predict_leaf_host(ctx, self._trees, predict_data)
 
     def _get_hyper_param(self) -> dict:
         return {

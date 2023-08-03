@@ -5,6 +5,7 @@ from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
 from fate.ml.ensemble.learner.decision_tree.hetero.guest import HeteroDecisionTreeGuest
 from fate.ml.ensemble.utils.binning import binning
 from fate.ml.ensemble.learner.decision_tree.tree_core.loss import BCELoss, CELoss, L2Loss
+from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_guest
 import logging
 
 
@@ -91,7 +92,10 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             logger.info('fitting guest decision tree {} done'.format(tree_idx))
 
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
-        pass
+        
+        leaf_pos = predict_leaf_guest(ctx, self._trees, predict_data)
+        result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func)
+        return result
 
     def _get_hyper_param(self) -> dict:
         return {
@@ -111,7 +115,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         trees = model['trees']
         self._saved_tree = trees
         self._trees = [HeteroDecisionTreeGuest.from_model(tree) for tree in trees]
-        hyper_parameter = model['hyper_parameters']
+        hyper_parameter = model['hyper_param']
 
         # these parameter are related to predict
         self.learning_rate = hyper_parameter['learning_rate']

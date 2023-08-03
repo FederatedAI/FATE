@@ -76,7 +76,9 @@ class BlockType(str, Enum):
 
     @staticmethod
     def get_block_type(data_type):
-        if isinstance(data_type, np.dtype):
+        if hasattr(data_type, "dtype"):
+            data_type = data_type.dtype
+        if hasattr(data_type, "name"):
             data_type = data_type.name
         if isinstance(data_type, str):
             try:
@@ -84,7 +86,7 @@ class BlockType(str, Enum):
             except ValueError:
                 data_type = "np_object"
             return BlockType(data_type)
-        elif isinstance(data_type, (bool, np.bool, np.bool_)) or data_type == torch.bool:
+        elif isinstance(data_type, (bool, np.bool_)) or data_type == torch.bool:
             return BlockType.bool
         elif isinstance(data_type, np.int64) or data_type == torch.int64:
             return BlockType.int64

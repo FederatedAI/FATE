@@ -4,13 +4,12 @@ from fate.arch import Context
 import sys
 from fate.ml.ensemble.algo.secureboost.hetero.guest import HeteroSecureBoostGuest
 from fate.ml.ensemble.algo.secureboost.hetero.host import HeteroSecureBoostHost
-from fate.ml.ensemble.algo.secureboost.common.predict import generate_pos_array, predit_leaf_guest, predict_leaf_host
 
 
 arbiter = ("arbiter", "10000")
 guest = ("guest", "10000")
 host = ("host", "9999")
-name = "fed"
+name = "exp2"
 
 
 def create_ctx(local):
@@ -35,10 +34,9 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 3
-    num_tree = 1
+    max_depth = 4
+    num_tree = 2
     from sklearn.metrics import roc_auc_score as auc
-    import functools
     if party == 'guest':
         ctx = create_ctx(guest)
 
@@ -54,19 +52,20 @@ if __name__ == '__main__':
         
         data_guest = reader.to_frame(ctx, df)
         trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth)
-        # trees.fit(ctx, data_guest)
+        trees.fit(ctx, data_guest)
+        rs = trees.predict(ctx, data_guest)
 
-        # # save model using pickle
-        # import pickle
-        # with open('guest_model.pkl', 'wb') as f:
-        #     pickle.dump(trees.get_model(), f)
+        # save model using pickle
+        import pickle
+        with open('guest_model.pkl', 'wb') as f:
+            pickle.dump(trees.get_model(), f)
 
         # load model from pickle
-        import pickle
-        with open('guest_model.pkl', 'rb') as f:
-            trees =trees.from_model(pickle.load(f))
+        # import pickle
+        # with open('guest_model.pkl', 'rb') as f:
+        #     trees =trees.from_model(pickle.load(f))
+        # rs = trees.predict(ctx, data_guest)
 
-        ret = predit_leaf_guest(ctx, trees.get_trees(), data_guest)
 
     elif party == 'host':
         ctx = create_ctx(host)
@@ -82,16 +81,17 @@ if __name__ == '__main__':
         
         data_host = reader_host.to_frame(ctx, df_host)
         trees = HeteroSecureBoostHost(num_tree, max_depth=max_depth)
-        # trees.fit(ctx, data_host)
+        trees.fit(ctx, data_host)
+        trees.predict(ctx, data_host)
 
-        # # save model using pickle
-        # import pickle
-        # with open('host_model.pkl', 'wb') as f:
-        #     pickle.dump(trees.get_model(), f)
+        # save model using pickle
+        import pickle
+        with open('host_model.pkl', 'wb') as f:
+            pickle.dump(trees.get_model(), f)
 
         # load model
-        import pickle
-        with open('host_model.pkl', 'rb') as f:
-            trees = trees.from_model(pickle.load(f))
+        # import pickle
+        # with open('host_model.pkl', 'rb') as f:
+        #     trees = trees.from_model(pickle.load(f))
+        # trees.predict(ctx, data_host)
 
-        ret = predict_leaf_host(ctx, trees.get_trees(), data_host)

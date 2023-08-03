@@ -96,7 +96,7 @@ def _merge_pos(guest_pos: DataFrame, host_pos: List[DataFrame]):
     return guest_pos
 
 
-def predit_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame):
+def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame):
 
     predict_data = data
     tree_list = [tree.get_nodes() for tree in trees]
@@ -176,5 +176,3 @@ def predict_leaf_host(ctx: Context, trees: List[DecisionTree], data: DataFrame):
         comm_round += 1
 
     logger.info('predict done')
-
-    return new_pos
