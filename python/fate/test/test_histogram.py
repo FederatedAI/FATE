@@ -324,10 +324,10 @@ def test_distributed_hist_calling_from_df():
     stat_obj = df.distributed_hist_stat(hist, pos_df, targets)
 
     out = stat_obj.decrypt(sk_map={"g": sk, "h": sk}, coder_map={"g": (coder, torch.float32)})
-    print(out)
+    print(out.extract_data())
     out = out.reshape([3, 2])
     out.i_shuffle(seed=0, reverse=True)
-    print(out)
+    print(out.extract_data())
 
 
 # test_distributed_hist_calling_from_df()
