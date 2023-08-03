@@ -28,7 +28,7 @@ def cmp_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
     block_indexes = data_manager.infer_operable_blocks()
     column_names = data_manager.infer_operable_field_names()
 
-    if isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         block_table = binary_operate(lhs.block_table, rhs, op, block_indexes)
 
     elif isinstance(rhs, (np.ndarray, list, pd.Series)):

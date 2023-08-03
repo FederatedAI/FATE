@@ -54,17 +54,17 @@ def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, 
     def _pack_with_target(l_values, r_value, target_name):
         l_values[2][target_name] = r_value
 
-        return r_value
+        return l_values
 
     _pack_func = functools.partial(_pack_data_with_position,
                                    l_block_id=data_block_id,
                                    r_block_id=position_block_id)
 
-    data_with_position = df.join(position, _pack_data_with_position)
+    data_with_position = block_table.join(position.block_table, _pack_func)
 
     for name, target in targets.items():
         _pack_with_target_func = functools.partial(_pack_with_target, target_name=name)
-        data_with_position = data_with_position.join(targets, lambda lvalue, rvalue: (lvalue[0], lvalue[1], ))
+        data_with_position = data_with_position.join(target.shardings._data, _pack_with_target_func)
 
     return distributed_hist.i_update(data_with_position)
 
