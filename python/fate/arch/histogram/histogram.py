@@ -512,7 +512,7 @@ class DistributedHistogram:
     def recover_feature_bins(self, seed, split_points: typing.Dict[int, int]) -> typing.Dict[int, int]:
         indexer = HistogramIndexer(self._node_size, self._feature_bin_sizes)
         points = list(split_points.items())
-        real_indexes = indexer.get_shuffler(seed).recover_feature_bins([p[1] for p in points])
+        real_indexes = indexer.get_shuffler(seed).get_reverse_indexes(1, [p[1] for p in points])
         return {nid: indexer.get_reverse_position(index) for (nid, _), index in zip(points, real_indexes)}
 
 
