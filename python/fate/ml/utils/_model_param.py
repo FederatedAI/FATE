@@ -20,6 +20,7 @@ def initialize_param(coef_len, **kwargs):
     param_len = coef_len
     method = kwargs["method"]
     fit_intercept = kwargs["fit_intercept"]
+    random_state = kwargs.get("random_state", None)
     if fit_intercept:
         param_len = param_len + 1
     if method == 'zeros':
@@ -31,7 +32,15 @@ def initialize_param(coef_len, **kwargs):
             (param_len, 1), float(
                 kwargs["fill_val"]), requires_grad=True)
     elif method == 'random':
+        if random_state is not None:
+            generator = torch.Generator().manual_seed(random_state)
+            return torch.randn((param_len, 1), generator=generator, requires_grad=True)
         return torch.randn((param_len, 1), requires_grad=True)
+    elif method == 'random_uniform':
+        if random_state is not None:
+            generator = torch.Generator().manual_seed(random_state)
+            return torch.rand((param_len, 1), generator=generator, requires_grad=True)
+        return torch.rand((param_len, 1), requires_grad=True)
     else:
         raise NotImplementedError(f"Unknown initialization method: {method}")
 
