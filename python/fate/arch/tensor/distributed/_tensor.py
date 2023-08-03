@@ -87,6 +87,12 @@ class DTensor:
     def encrypt(self, encryptor):
         return torch.encrypt_f(self, encryptor)
 
+    def encrypt_encoded(self, encryptor):
+        return torch.encrypt_encoded_f(self, encryptor)
+
+    def encode(self, encoder):
+        return torch.encode_f(self, encoder)
+
     def exp(self):
         return torch.exp(self)
 

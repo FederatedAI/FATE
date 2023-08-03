@@ -3,7 +3,7 @@ import torch
 
 def encrypt_f(tensor, encryptor):
     if isinstance(tensor, torch.Tensor):
-        return encryptor.encrypt(tensor.detach())
+        return encryptor.encrypt_tensor(tensor.detach())
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):
@@ -11,13 +11,36 @@ def encrypt_f(tensor, encryptor):
     raise NotImplementedError("")
 
 
-def decrypt_f(tensor, decryptor):
-    if isinstance(tensor, torch.Tensor.detach):
-        return decryptor.encrypt(tensor.detach())
+def encrypt_encoded_f(tensor, encryptor):
+    if isinstance(tensor, torch.Tensor):
+        return encryptor.encrypt_encoded(tensor.detach())
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):
-            return tensor.__torch_function__(decrypt_f, (type(tensor),), (tensor, decryptor), None)
+            return tensor.__torch_function__(encrypt_encoded_f, (type(tensor),), (tensor, encryptor), None)
+    raise NotImplementedError("")
+
+
+def encode_f(tensor, coder):
+    if isinstance(tensor, torch.Tensor):
+        return coder.encode(tensor.detach())
+    else:
+        # torch tensor-like
+        if hasattr(tensor, "__torch_function__"):
+            return tensor.__torch_function__(encode_f, (type(tensor),), (tensor, coder), None)
+    raise NotImplementedError("")
+
+
+def decrypt_f(tensor, decryptor):
+    # torch tensor-like
+    if hasattr(tensor, "__torch_function__"):
+        return tensor.__torch_function__(decrypt_f, (type(tensor),), (tensor, decryptor), None)
+    raise NotImplementedError("")
+
+
+def decode_f(tensor, coder):
+    if hasattr(tensor, "__torch_function__"):
+        return tensor.__torch_function__(decode_f, (type(tensor),), (tensor, coder), None)
     raise NotImplementedError("")
 
 
@@ -63,7 +86,10 @@ def slice_f(input, arg):
 
 # hook custom ops to torch
 torch.encrypt_f = encrypt_f
+torch.encrypt_encoded_f = encrypt_encoded_f
 torch.decrypt_f = decrypt_f
+torch.encode_f = encode_f
+torch.decode_f = decode_f
 torch.rmatmul_f = rmatmul_f
 torch.to_local_f = to_local_f
 torch.slice_f = slice_f

@@ -20,6 +20,7 @@ impl Secret {
         })))
     }
 }
+
 #[pymethods]
 impl Secret {
     #[new]
@@ -59,7 +60,14 @@ impl Secret {
             (EdwardsPoint::hash_from_bytes::<sha2::Sha512>(bytes).to_montgomery() * self.0)
                 .as_bytes(),
         )
-        .into()
+            .into()
+    }
+    fn encrypt_vec(&self, vec: Vec<&[u8]>) -> Vec<Vec<u8>> {
+        vec.iter().map(
+            |bytes| (EdwardsPoint::hash_from_bytes::<sha2::Sha512>(bytes).to_montgomery() * self.0)
+                .as_bytes()
+                .to_vec(),
+        ).collect()
     }
     #[pyo3(text_signature = "($self, their_public)")]
     fn diffie_hellman(&self, their_public: &[u8], py: Python) -> PyObject {
@@ -72,7 +80,18 @@ impl Secret {
             ) * self.0)
                 .as_bytes(),
         )
-        .into()
+            .into()
+    }
+    fn diffie_hellman_vec(&self, vec: Vec<&[u8]>) -> Vec<Vec<u8>> {
+        vec.iter().map(
+            |&their_public| (MontgomeryPoint(
+                their_public
+                    .try_into()
+                    .expect("diffie_hellman accpet 32 bytes pubkey"),
+            ) * self.0)
+                .as_bytes()
+                .to_vec(),
+        ).collect()
     }
 }
 

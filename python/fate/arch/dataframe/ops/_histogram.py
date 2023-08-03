@@ -43,6 +43,32 @@ def hist(df: DataFrame, targets):
     return block_table.join(targets.shardings._data, _mapper_func).reduce(_reducer)
 
 
+def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, targets: dict):
+    block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager)
+    data_block_id = data_manager.infer_operable_blocks()[0]
+    position_block_id = position.data_manager.infer_operable_blocks()[0]
+
+    def _pack_data_with_position(l_blocks, r_blocks, l_block_id=None, r_block_id=None):
+        return l_blocks[l_block_id], r_blocks[r_block_id], dict()
+
+    def _pack_with_target(l_values, r_value, target_name):
+        l_values[2][target_name] = r_value
+
+        return l_values
+
+    _pack_func = functools.partial(_pack_data_with_position,
+                                   l_block_id=data_block_id,
+                                   r_block_id=position_block_id)
+
+    data_with_position = block_table.join(position.block_table, _pack_func)
+
+    for name, target in targets.items():
+        _pack_with_target_func = functools.partial(_pack_with_target, target_name=name)
+        data_with_position = data_with_position.join(target.shardings._data, _pack_with_target_func)
+
+    return distributed_hist.i_update(data_with_position)
+
+
 def _try_to_compress_table(block_table, data_manager: DataManager):
     block_indexes = data_manager.infer_operable_blocks()
     if len(block_indexes) == 1:
@@ -67,3 +93,5 @@ def _try_to_compress_table(block_table, data_manager: DataManager):
     block_table, data_manager = compress_blocks(block_table, data_manager)
 
     return block_table, data_manager
+
+

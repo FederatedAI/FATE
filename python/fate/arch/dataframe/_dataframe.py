@@ -303,6 +303,10 @@ class DataFrame(object):
 
         return hist(self, targets)
 
+    def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: dict):
+        from .ops._histogram import distributed_hist_stat
+        return distributed_hist_stat(self, distributed_hist, position, targets)
+
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace
         return replace(self, to_replace)
