@@ -18,7 +18,7 @@ class PHETensorEncoded:
         if kwargs is None:
             kwargs = {}
         if func not in _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS or not all(
-            issubclass(t, (torch.Tensor, PHETensor)) for t in types
+            issubclass(t, (torch.Tensor, PHETensorEncoded)) for t in types
         ):
             return NotImplemented
         return _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS[func](*args, **kwargs)
