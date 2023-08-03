@@ -3,6 +3,7 @@ import functools
 import torch
 
 _HANDLED_FUNCTIONS = {}
+_PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS = {}
 
 
 class PHETensorEncoded:
@@ -11,6 +12,16 @@ class PHETensorEncoded:
         self.data = data
         self.shape = shape
         self.dtype = dtype
+
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+        if func not in _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS or not all(
+            issubclass(t, (torch.Tensor, PHETensor)) for t in types
+        ):
+            return NotImplemented
+        return _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS[func](*args, **kwargs)
 
 
 class PHETensor:
@@ -123,11 +134,22 @@ class PHETensor:
 
 
 def implements(torch_function):
-    """Register a torch function override for PaillierTensor"""
+    """Register a torch function override for PHETensor"""
 
     @functools.wraps(torch_function)
     def decorator(func):
         _HANDLED_FUNCTIONS[torch_function] = func
+        return func
+
+    return decorator
+
+
+def implements_encoded(torch_function):
+    """Register a torch function override for PHEEncodedTensor"""
+
+    @functools.wraps(torch_function)
+    def decorator(func):
+        _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS[torch_function] = func
         return func
 
     return decorator
