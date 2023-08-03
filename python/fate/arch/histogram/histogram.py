@@ -1,4 +1,3 @@
-import pprint
 import typing
 from typing import List, MutableMapping, Tuple
 
@@ -7,7 +6,13 @@ import torch
 
 
 class Shuffler:
-    def __init__(self, num_node, node_size, seed):
+    """
+    Shuffler is used to shuffle the data in the same way for all partition.
+
+
+    """
+
+    def __init__(self, num_node: int, node_size: int, seed: int):
         self.num_node = num_node
         self.node_size = node_size
         self.perm_indexes = [
@@ -122,6 +127,9 @@ class HistogramValues:
     def decode(self, coder, dtype):
         raise NotImplementedError
 
+    def cat(self, chunks_info, values):
+        raise NotImplementedError
+
 
 class HistogramEncryptedValues(HistogramValues):
     def __init__(self, pk, evaluator, data, stride=1):
@@ -146,7 +154,7 @@ class HistogramEncryptedValues(HistogramValues):
         return HistogramEncryptedValues(
             self.pk,
             self.evaluator,
-            self.evaluator.slice(self.data, start * self.stride, end * self.stride),
+            self.evaluator.slice(self.data, start * self.stride, (end - start) * self.stride),
             self.stride,
         )
 
@@ -211,7 +219,10 @@ class HistogramEncodedValues(HistogramValues):
             raise NotImplementedError
 
     def slice(self, start, end):
-        return self.data.slice(start * self.stride, end * self.stride)
+        if hasattr(self.data, "slice"):
+            return self.data.slice(start * self.stride, end * self.stride)
+        else:
+            return "<Encoded data=unknown>"
 
 
 class HistogramPlainValues(HistogramValues):
