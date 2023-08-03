@@ -1,15 +1,21 @@
 import pickle
 import random
 
-import pandas as pd
 import torch
 from fate.arch import Context
 from fate.arch.computing.standalone import CSession
+from fate.arch.federation.standalone import StandaloneFederation
 from fate.arch.histogram.histogram import DistributedHistogram, Histogram
 
-ctx = Context()
+computing = CSession()
+
+arbiter = ("arbiter", "10000")
+guest = ("guest", "10000")
+host = ("host", "9999")
+name = "fed"
+ctx = Context(computing=computing, federation=StandaloneFederation(computing, name, guest, [guest, host, arbiter]))
 kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
-sk, pk, coder, evaluator = kit.sk, kit.pk, kit.coder, kit.evaluator
+sk, pk, coder, evaluator, encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
 
 
 def test_plain():
@@ -267,13 +273,13 @@ def test_distributed_hist():
 
 
 def test_distributed_hist_calling_from_df():
-    import multiprocessing
     import random
 
     import pandas as pd
     from fate.arch.dataframe import DataFrame, PandasReader
 
-    multiprocessing.set_start_method("fork")
+    # import multiprocessing
+    # multiprocessing.set_start_method("fork")
 
     data_list = []
     for i in range(100):
@@ -285,15 +291,6 @@ def test_distributed_hist_calling_from_df():
         [[f"sample_id_{i}", f"match_id_{i}", random.randint(0, 3)] for i in range(100)],
         columns=["sample_id", "match_id", "node_id"],
     )
-
-    computing = CSession()
-    from fate.arch.federation.standalone import StandaloneFederation
-
-    arbiter = ("arbiter", "10000")
-    guest = ("guest", "10000")
-    host = ("host", "9999")
-    name = "fed"
-    ctx = Context(computing=computing, federation=StandaloneFederation(computing, name, guest, [guest, host, arbiter]))
 
     df_reader = PandasReader(
         sample_id_name="sample_id",
@@ -310,7 +307,6 @@ def test_distributed_hist_calling_from_df():
     one_df = df.create_frame()
     one_df["one"] = 1
 
-    encryptor = kit.get_tensor_encryptor()
     # decryptor = kit.get_tensor_encryptor()
 
     targets = dict(one=one_df["one"].as_tensor(), g=encryptor.encrypt_tensor(df.label.as_tensor()))
@@ -326,6 +322,12 @@ def test_distributed_hist_calling_from_df():
     )
 
     stat_obj = df.distributed_hist_stat(hist, pos_df, targets)
+
+    out = stat_obj.decrypt(sk_map={"g": sk, "h": sk}, coder_map={"g": (coder, torch.float32)})
+    print(out)
+    out = out.reshape([3, 2])
+    out.i_shuffle(seed=0, reverse=True)
+    print(out)
 
 
 # test_distributed_hist_calling_from_df()
