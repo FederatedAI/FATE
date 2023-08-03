@@ -4,9 +4,24 @@ from fate.arch.tensor import _custom_ops
 from ._tensor import PHETensor, implements
 
 
+@implements(_custom_ops.encrypt_f)
+def encrypt(input, encryptor):
+    return encryptor.encrypt_tensor(input)
+
+
 @implements(_custom_ops.decrypt_f)
 def decrypt(input, decryptor):
     return decryptor.decrypt_tensor(input)
+
+
+@implements(_custom_ops.encode_f)
+def encode(input, coder):
+    return coder.encode(input)
+
+
+@implements(_custom_ops.decode_f)
+def decode(input, coder):
+    return coder.decode(input)
 
 
 @implements(torch.add)

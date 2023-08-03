@@ -11,13 +11,26 @@ def encrypt_f(tensor, encryptor):
     raise NotImplementedError("")
 
 
-def decrypt_f(tensor, decryptor):
+def encode_f(tensor, coder):
     if isinstance(tensor, torch.Tensor):
-        return decryptor.encrypt_tensor(tensor.detach())
+        return coder.encode(tensor.detach())
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):
-            return tensor.__torch_function__(decrypt_f, (type(tensor),), (tensor, decryptor), None)
+            return tensor.__torch_function__(encode_f, (type(tensor),), (tensor, coder), None)
+    raise NotImplementedError("")
+
+
+def decrypt_f(tensor, decryptor):
+    # torch tensor-like
+    if hasattr(tensor, "__torch_function__"):
+        return tensor.__torch_function__(decrypt_f, (type(tensor),), (tensor, decryptor), None)
+    raise NotImplementedError("")
+
+
+def decode_f(tensor, coder):
+    if hasattr(tensor, "__torch_function__"):
+        return tensor.__torch_function__(decode_f, (type(tensor),), (tensor, coder), None)
     raise NotImplementedError("")
 
 
