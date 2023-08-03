@@ -11,6 +11,16 @@ def encrypt_f(tensor, encryptor):
     raise NotImplementedError("")
 
 
+def encrypt_encoded_f(tensor, encryptor):
+    if isinstance(tensor, torch.Tensor):
+        return encryptor.encrypt_encoded(tensor.detach())
+    else:
+        # torch tensor-like
+        if hasattr(tensor, "__torch_function__"):
+            return tensor.__torch_function__(encrypt_encoded_f, (type(tensor),), (tensor, encryptor), None)
+    raise NotImplementedError("")
+
+
 def encode_f(tensor, coder):
     if isinstance(tensor, torch.Tensor):
         return coder.encode(tensor.detach())
@@ -76,6 +86,7 @@ def slice_f(input, arg):
 
 # hook custom ops to torch
 torch.encrypt_f = encrypt_f
+torch.encrypt_encoded_f = encrypt_encoded_f
 torch.decrypt_f = decrypt_f
 torch.encode_f = encode_f
 torch.decode_f = decode_f

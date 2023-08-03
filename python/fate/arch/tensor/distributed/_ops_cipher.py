@@ -18,6 +18,6 @@ def decode_f(input: DTensor, coder):
     return DTensor(input.shardings.map_shard(lambda x: _custom_ops.decode_f(x, coder)))
 
 
-@implements(_custom_ops.rmatmul_f)
+@implements(_custom_ops.encode_f)
 def encode_f(input: DTensor, coder):
     return DTensor(input.shardings.map_shard(lambda x: _custom_ops.encode_f(x, coder)))

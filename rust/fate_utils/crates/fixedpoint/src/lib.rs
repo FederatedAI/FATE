@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 const BASE: u32 = 16;
 
 /// fixedpoint plaintext
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct PT {
     pub significant: paillier::PT,
     pub exp: i32,
