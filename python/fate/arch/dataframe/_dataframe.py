@@ -43,7 +43,7 @@ class DataFrame(object):
         self._label = None
         self._weight = None
 
-        self.__count = None
+        self._count = None
         self._columns = None
 
     @property
@@ -58,7 +58,7 @@ class DataFrame(object):
     def match_id(self):
         if self._match_id is None:
             self._match_id = self.__extract_fields(
-                with_sample_id=True, with_match_id=True, with_label=False, with_weight=False
+                with_sample_id=False, with_match_id=True, with_label=False, with_weight=False
             )
 
         return self._match_id
@@ -101,7 +101,7 @@ class DataFrame(object):
 
     @property
     def shape(self) -> "tuple":
-        if self.__count is None:
+        if self._count is None:
             if self._sample_id_indexer:
                 items = self._sample_id_indexer.count()
             elif self._match_id_indexer:
@@ -113,9 +113,9 @@ class DataFrame(object):
                     items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
                         lambda size1, size2: size1 + size2
                     )
-            self.__count = items
+            self._count = items
 
-        return self.__count, len(self._data_manager.schema.columns)
+        return self._count, len(self._data_manager.schema.columns)
 
     @property
     def schema(self) -> "Schema":
@@ -442,6 +442,12 @@ class DataFrame(object):
         from .ops._set_item import set_item
 
         set_item(self, keys, items, state)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, state_dict):
+        self.__dict__.update(state_dict)
 
     def __len__(self):
         return self.count()
