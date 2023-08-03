@@ -582,6 +582,18 @@ impl FixedpointPaillierVector {
 
 #[pymethods]
 impl FixedpointVector {
+    #[new]
+    fn __new__() -> PyResult<Self> {
+        Ok(FixedpointVector { data: vec![] })
+    }
+    fn __getstate__(&self) -> PyResult<Vec<u8>> {
+        Ok(bincode::serialize(&self.data).unwrap())
+    }
+
+    fn __setstate__(&mut self, state: Vec<u8>) -> PyResult<()> {
+        self.data = bincode::deserialize(&state).unwrap();
+        Ok(())
+    }
     fn __str__(&self) -> String {
         format!("{:?}", self.data)
     }

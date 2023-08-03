@@ -80,7 +80,8 @@ class PHETensorEncryptor:
         raise NotImplementedError(f"`{tensor}` not supported")
 
     def encrypt_tensor(self, tensor: torch.Tensor, obfuscate=False):
-        return self.encrypt_encoded(self._coder.encode(tensor), obfuscate)
+        coded = self._coder.encode(tensor)
+        return self.encrypt_encoded(coded, obfuscate)
 
 
 class PHETensorDecryptor:
