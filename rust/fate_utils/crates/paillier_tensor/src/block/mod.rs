@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 mod matmul;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Cipherblock {
     pub pk: fixedpoint::PK,
     pub data: Vec<fixedpoint::CT>,
