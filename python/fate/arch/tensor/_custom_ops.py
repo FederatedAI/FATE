@@ -77,6 +77,8 @@ def slice_f(input, arg):
 # hook custom ops to torch
 torch.encrypt_f = encrypt_f
 torch.decrypt_f = decrypt_f
+torch.encode_f = encode_f
+torch.decode_f = decode_f
 torch.rmatmul_f = rmatmul_f
 torch.to_local_f = to_local_f
 torch.slice_f = slice_f
