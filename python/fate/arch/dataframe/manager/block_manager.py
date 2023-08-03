@@ -78,7 +78,7 @@ class BlockType(str, Enum):
             except ValueError:
                 data_type = "np_object"
             return BlockType(data_type)
-        elif isinstance(data_type, (bool, np.bool)) or data_type == torch.bool:
+        elif isinstance(data_type, (bool, np.bool, np.bool_)) or data_type == torch.bool:
             return BlockType.bool
         elif isinstance(data_type, np.int64) or data_type == torch.int64:
             return BlockType.int64

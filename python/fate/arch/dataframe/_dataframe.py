@@ -169,7 +169,7 @@ class DataFrame(object):
             columns=columns,
             with_label=with_label,
             with_weight=with_weight,
-            enable_type_align_checking=enable_type_align_checking,
+            enable_type_align_checking=enable_type_align_checking
         )
 
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":

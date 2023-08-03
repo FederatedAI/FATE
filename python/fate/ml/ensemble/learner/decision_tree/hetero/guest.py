@@ -177,7 +177,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # convert sample pos to weights
         self._sample_weights = self._convert_sample_pos_to_weight(self._sample_on_leaves, self._nodes)
         # convert bid to split value
-        # self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
+        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
 
     def fit(self, ctx: Context, train_data: DataFrame):
         pass

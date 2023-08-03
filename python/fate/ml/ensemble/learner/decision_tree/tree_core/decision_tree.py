@@ -352,7 +352,6 @@ class DecisionTree(object):
     
     def _drop_samples_on_leaves(self, new_sample_pos: DataFrame, data: DataFrame):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
-
         x = (new_sample_pos >= 0)
         indexer = x.get_indexer('sample_id')
         update_pos = new_sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]

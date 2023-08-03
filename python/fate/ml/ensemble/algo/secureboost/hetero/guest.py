@@ -30,6 +30,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self.max_split_nodes = max_split_nodes
         self.max_bin = max_bin
         self.l2 = l2
+        self.l1 = l1
+        self.colsample = colsample
         self.num_class = num_class
         self._accumulate_scores = None
         self._tree_dim = 1  # tree dimension, if is multilcass task, tree dim > 1
@@ -69,7 +71,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._accumulate_scores = self._loss_func.initialize(label)
 
         # start tree fitting
-        for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(self.num_trees):
+        for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees)+self.num_trees):
             # compute gh of current iter
             logger.info('start to fit a host tree')
             gh = self._compute_gh(bin_data, self._accumulate_scores, self._loss_func)
@@ -87,3 +89,23 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
 
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
         pass
+
+    def _get_hyper_param(self) -> dict:
+        return {
+            "num_trees": self.num_trees,
+            "learning_rate": self.learning_rate,
+            "max_depth": self.max_depth,
+            "objective": self.objective,
+            "max_split_nodes": self.max_split_nodes,
+            "max_bin": self.max_bin,
+            "l2": self.l2,
+            "num_class": self.num_class,
+            "colsample": self.colsample
+        }
+    
+    def from_model(self, model: dict):
+        
+        trees = model['trees']
+        self._saved_tree = trees
+        self._trees = [HeteroDecisionTreeGuest.from_model(tree) for tree in trees]
+        return self

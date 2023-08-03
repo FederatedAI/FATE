@@ -25,17 +25,17 @@ from ..utils._auto_column_name_generated import generated_default_column_names
 
 
 def apply_row(df: "DataFrame", func,
-              columns: list=None, with_label=False, with_weight=False,
+              columns: list = None, with_label=False, with_weight=False,
               enable_type_align_checking=True) -> "DataFrame":
     """
     In current version, assume that the apply_row results' lengths are equal
     """
     data_manager = df.data_manager
     dst_data_manager, _ = data_manager.derive_new_data_manager(with_sample_id=True,
-                                                            with_match_id=True,
-                                                            with_label=not with_weight,
-                                                            with_weight=not with_weight,
-                                                            columns=None)
+                                                               with_match_id=True,
+                                                               with_label=not with_weight,
+                                                               with_weight=not with_weight,
+                                                               columns=None)
 
     non_operable_field_names = dst_data_manager.get_field_name_list()
     non_operable_blocks = [data_manager.loc_block(field_name,

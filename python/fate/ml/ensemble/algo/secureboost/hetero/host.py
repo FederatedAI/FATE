@@ -31,7 +31,7 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
         bin_info = binning(train_data, max_bin=self.max_bin)
         bin_data: DataFrame = train_data.bucketize(boundaries=bin_info)
         logger.info('data binning done')
-        for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(self.num_trees):
+        for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees)+self.num_trees):
             logger.info('start to fit a host tree')
             tree = HeteroDecisionTreeHost(max_depth=self.max_depth, max_split_nodes=self.max_split_nodes)
             tree.booster_fit(tree_ctx, bin_data, bin_info)
@@ -43,8 +43,18 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
     def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
         pass
 
-    def get_model(self) -> dict:
-        pass
-
-    def from_model(cls, model: dict):
-        pass
+    def _get_hyper_param(self) -> dict:
+        return {
+            "num_trees": self.num_trees,
+            "learning_rate": self.learning_rate,
+            "max_depth": self.max_depth,
+            "max_split_nodes": self.max_split_nodes,
+            "max_bin": self.max_bin,
+            "colsample": self.colsample
+        }
+    
+    def from_model(self, model: dict):
+        trees = model['trees']
+        self._saved_tree = trees
+        self._trees = [HeteroDecisionTreeHost.from_model(tree) for tree in trees]
+        return self

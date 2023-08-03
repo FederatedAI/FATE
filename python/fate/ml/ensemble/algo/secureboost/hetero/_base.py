@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, Union
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-from fate.ml.abc.module import HeteroModule
+from fate.ml.abc.module import HeteroModule, Model
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import FeatureImportance
 from typing import Dict
 
@@ -13,9 +13,6 @@ class HeteroBoostingTree(HeteroModule):
         self._global_feature_importance = {}
         self._trees = []
         self._saved_tree = []
-    
-    def get_tree(self, idx):
-        return self._trees[idx]
     
     def _update_feature_importance(self, fi_dict: Dict[int, FeatureImportance]):
         
@@ -30,4 +27,25 @@ class HeteroBoostingTree(HeteroModule):
 
     def get_feature_importance(self):
         return self._global_feature_importance
+    
+    def print_forest(self):
+        idx = 0
+        for tree in self._trees:
+            print('tree {}: '.format(idx))
+            idx += 1
+            tree.print_tree()
+            print()
+
+    def _get_hyper_param(self) -> dict:
+        pass
+
+    def get_model(self) -> dict:
+        import copy
+        hyper_param = self._get_hyper_param()
+        result = {}
+        result['hyper_param'] = hyper_param
+        result['trees'] = copy.deepcopy(self._saved_tree)
+        return result 
+    
+
     
