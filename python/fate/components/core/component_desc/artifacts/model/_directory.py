@@ -20,6 +20,7 @@ if typing.TYPE_CHECKING:
 
 class ModelDirectoryWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
     def get_directory(self):
+        self.artifact.consumed()
         path = Path(self.artifact.uri.path)
         path.mkdir(parents=True, exist_ok=True)
 
@@ -43,6 +44,7 @@ class ModelDirectoryWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
 
 class ModelDirectoryReader(_ArtifactTypeReader):
     def get_directory(self):
+        self.artifact.consumed()
         path = Path(self.artifact.uri.path)
         return path
 

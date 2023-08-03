@@ -224,6 +224,7 @@ class Context:
                 parties.extend(self._role_to_parties[role])
         parties.sort(key=lambda x: x[0])
         return Parties(
+            self,
             self._get_federation(),
             parties,
             self._namespace,

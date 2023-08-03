@@ -94,7 +94,7 @@ class DataFrame(object):
 
         if self._weight is None:
             self._weight = self.__extract_fields(
-                with_sample_id=True, with_match_id=True, with_label=False, with_weight=False
+                with_sample_id=True, with_match_id=True, with_label=False, with_weight=True
             )
 
         return self._weight

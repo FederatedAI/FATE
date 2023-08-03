@@ -20,7 +20,7 @@ import torch
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils import predict_tools
-from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param
+from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param, check_overflow
 from fate.ml.utils._optimizer import LRScheduler, Optimizer
 
 logger = logging.getLogger(__name__)
@@ -64,15 +64,15 @@ class CoordinatedLRModuleGuest(HeteroModule):
             self.estimator.epochs = epochs
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        original_label = train_data.label
+        # original_label = train_data.label
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
         encryptor = ctx.arbiter("encryptor").get()
-        labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
+        labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
         if self.labels is None:
-            self.labels = labels
+            self.labels = sorted(labels)
         if label_count > 2 or self.ovr:
             logger.info(f"OVR data provided, will train OVR models.")
             self.ovr = True
@@ -136,25 +136,27 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 single_estimator = self.estimator
                 single_estimator.epochs = self.epochs
                 single_estimator.batch_size = self.batch_size
-            single_estimator.fit_single_model(ctx, encryptor, train_data, validate_data)
+            train_data_fit = train_data.copy()
+            validate_data_fit = validate_data
+            if validate_data:
+                validate_data_fit = validate_data.copy()
+            single_estimator.fit_single_model(ctx, encryptor, train_data_fit, validate_data_fit)
             self.estimator = single_estimator
-        train_data.label = original_label
 
     def predict(self, ctx, test_data):
+        pred_df = test_data.create_frame(with_label=True, with_weight=False)
         if self.ovr:
             pred_score = test_data.create_frame(with_label=False, with_weight=False)
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
                 pred = estimator.predict(class_ctx, test_data)
                 pred_score[self.labels[i]] = pred
-            pred_df = test_data.create_frame(with_label=True, with_weight=False)
             pred_df[predict_tools.PREDICT_SCORE] = pred_score.apply_row(lambda v: [list(v)])
             predict_result = predict_tools.compute_predict_details(pred_df,
                                                                    task_type=predict_tools.MULTI,
                                                                    classes=self.labels)
         else:
             predict_score = self.estimator.predict(ctx, test_data)
-            pred_df = test_data.create_frame(with_label=True, with_weight=False)
             pred_df[predict_tools.PREDICT_SCORE] = predict_score
             predict_result = predict_tools.compute_predict_details(pred_df,
                                                                    task_type=predict_tools.BINARY,
@@ -338,46 +340,13 @@ class CoordinatedLREstimatorGuest(HeteroModule):
                 else:
                     g = self.asynchronous_compute_gradient(batch_ctx, encryptor, w, X, Y, weight)
 
-                """h = X.shape[0]
-                # logger.info(f"h: {h}")
-                Xw = torch.matmul(X, w.detach())
-                d = 0.25 * Xw - 0.5 * Y
-                loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
-
-                if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-                    loss_norm = self.optimizer.loss_norm(w)
-                    loss += loss_norm
-
-                Xw_h_all = batch_ctx.hosts.get("Xw_h")
-
-                for Xw_h in Xw_h_all:
-                    d += Xw_h
-                    #loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
-                    # loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)
-                    loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
-                if weight:
-                    # logger.info(f"weight: {weight.tolist()}")
-                    d = d * weight
-                batch_ctx.hosts.put("d", d)
-
-                for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
-                    loss += 0.125 / h * Xw2_h
-                h_loss_list = batch_ctx.hosts.get("h_loss")
-                for h_loss in h_loss_list:
-                    if h_loss is not None:
-                        loss += h_loss
-
-                if len(Xw_h_all) == 1:
-                    batch_ctx.arbiter.put(loss=loss)
-
-                # gradient
-                g = 1 / h * torch.matmul(X.T, d)"""
                 g = self.optimizer.add_regular_to_grad(g, w, self.init_param.get("fit_intercept"))
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
 
                 w = self.optimizer.update_weights(w, g, self.init_param.get("fit_intercept"), self.lr_scheduler.lr)
                 # logger.info(f"w={w}")
+                check_overflow(w)
 
             self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:
@@ -403,11 +372,6 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         return pred
 
     def get_model(self):
-        """w = self.w.tolist()
-        intercept = None
-        if self.init_param.get("fit_intercept"):
-            w = w[:-1]
-            intercept = w[-1]"""
         param = serialize_param(self.w, self.init_param.get("fit_intercept"))
         return {
             # "w": w,
@@ -421,10 +385,6 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         }
 
     def restore(self, model):
-        """w = model["w"]
-        if model["fit_intercept"]:
-            w.append(model["intercept"])
-        self.w = torch.tensor(w)"""
         self.w = deserialize_param(model["param"], model["fit_intercept"])
         self.optimizer = Optimizer()
         self.lr_scheduler = LRScheduler()
