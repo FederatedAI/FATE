@@ -26,7 +26,7 @@ def test_plain():
         ],
     )
     print(f"update: \n: {hist}")
-    hist.merge(hist)
+    hist.iadd(hist)
     print(f"merge: \n: {hist}")
 
 
@@ -45,7 +45,7 @@ def test_tensor():
         ],
     )
     print(f"update: \n: {hist}")
-    hist.merge(hist)
+    hist.iadd(hist)
     print(f"merge: \n: {hist}")
     hist = hist.decrypt({"c0": sk})
     print(f"decrypt: \n: {hist}")
@@ -97,7 +97,7 @@ def create_mixed_hist():
 def test_mixed():
     # mixed
     hist = create_mixed_hist()
-    hist.merge(hist)
+    hist.iadd(hist)
     print(f"merge: \n: {hist}")
     hist = hist.decrypt({"g": sk, "h": sk})
     print(f"decrypt: \n: {hist}")
