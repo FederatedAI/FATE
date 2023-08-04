@@ -37,6 +37,10 @@ class Shuffler:
             indexes = torch.argsort(indexes)
         return indexes
 
+    def get_reverse_indexes(self, step, indexes):
+        mapping = self.get_shuffle_index(step, reverse=True)
+        return [mapping[i] for i in indexes]
+
 
 class HistogramIndexer:
     def __init__(self, node_size: int, feature_bin_sizes: List[int]):
@@ -50,6 +54,13 @@ class HistogramIndexer:
 
     def get_position(self, nid, fid, bid):
         return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
+
+    def get_reverse_position(self, position):
+        nid = position // self.node_axis_stride
+        bid = position % self.node_axis_stride
+        for fid in range(self.feature_size):
+            if bid < self.feature_axis_stride[fid + 1]:
+                return nid, fid, bid - self.feature_axis_stride[fid]
 
     def get_bin_num(self, fid):
         return self.feature_bin_size[fid]
@@ -130,6 +141,9 @@ class HistogramValues:
     def cat(self, chunks_info, values):
         raise NotImplementedError
 
+    def extract_data(self):
+        raise NotImplementedError
+
 
 class HistogramEncryptedValues(HistogramValues):
     def __init__(self, pk, evaluator, data, stride=1):
@@ -191,6 +205,9 @@ class HistogramEncryptedValues(HistogramValues):
 
     def __str__(self):
         return f"<HistogramEncryptedValues stride={self.stride}, data={self.data}>"
+
+    def extract_data(self):
+        return self.data
 
 
 class HistogramEncodedValues(HistogramValues):
@@ -289,6 +306,9 @@ class HistogramPlainValues(HistogramValues):
             data.append(value.data.reshape(num_chunk, chunk_size, value.stride))
         data = torch.cat(data, dim=1).flatten()
         return cls(data, values[0].stride)
+
+    def extract_data(self):
+        return self.data
 
 
 class Histogram:
@@ -406,6 +426,12 @@ class Histogram:
         indexer = self._indexer.reshape(feature_bin_sizes)
         return Histogram(indexer, self._values_mapping)
 
+    def extract_data(self):
+        data = {}
+        for name, value_container in self._values_mapping.items():
+            data[name] = value_container.extract_data()
+        return data
+
 
 class HistogramSplits:
     def __init__(self, num_node, start, end, data):
@@ -482,6 +508,12 @@ class DistributedHistogram:
         )
         table = data.mapReducePartitions(mapper, lambda x, y: x.iadd(y))
         return ShuffledHistogram(table, self._node_size, self._node_data_size)
+
+    def recover_feature_bins(self, seed, split_points: typing.Dict[int, int]) -> typing.Dict[int, int]:
+        indexer = HistogramIndexer(self._node_size, self._feature_bin_sizes)
+        points = list(split_points.items())
+        real_indexes = indexer.get_shuffler(seed).get_reverse_indexes(1, [p[1] for p in points])
+        return {nid: indexer.get_reverse_position(index) for (nid, _), index in zip(points, real_indexes)}
 
 
 class ShuffledHistogram:
