@@ -82,6 +82,11 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     # pipeline.add_task(linr_1)
     pipeline.add_task(evaluation_0)
 
+    if config.task_cores:
+        pipeline.conf.set("task_cores", config.task_cores)
+    if config.timeout:
+        pipeline.conf.set("timeout", config.timeout)
+
     pipeline.compile()
     print(pipeline.get_dag())
     pipeline.fit()
