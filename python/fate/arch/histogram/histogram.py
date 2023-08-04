@@ -55,7 +55,10 @@ class HistogramIndexer:
     def get_position(self, nid, fid, bid):
         return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
 
-    def get_reverse_position(self, position):
+    def get_reverse_position(self, position) -> Tuple[int, int, int]:
+        """
+        get nid, fid, bid from data position
+        """
         nid = position // self.node_axis_stride
         bid = position % self.node_axis_stride
         for fid in range(self.feature_size):
@@ -519,11 +522,17 @@ class DistributedHistogram:
         table = data.mapReducePartitions(mapper, lambda x, y: x.iadd(y))
         return ShuffledHistogram(table, self._node_size, self._node_data_size)
 
-    def recover_feature_bins(self, seed, split_points: typing.Dict[int, int]) -> typing.Dict[int, int]:
+    def recover_feature_bins(
+        self, seed, split_points: typing.Dict[int, int]
+    ) -> typing.Dict[int, typing.Tuple[int, int]]:
         indexer = HistogramIndexer(self._node_size, self._feature_bin_sizes)
         points = list(split_points.items())
         real_indexes = indexer.get_shuffler(seed).get_reverse_indexes(1, [p[1] for p in points])
-        return {nid: indexer.get_reverse_position(index) for (nid, _), index in zip(points, real_indexes)}
+        real_fid_bid = {}
+        for (nid, _), index in zip(points, real_indexes):
+            _, fid, bid = indexer.get_reverse_position(index)
+            real_fid_bid[nid] = (fid, bid)
+        return real_fid_bid
 
 
 class ShuffledHistogram:
@@ -563,7 +572,7 @@ def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas,
             nids, fids, targets = raw
             hist.i_update(nids, fids, targets)
         hist.i_cumsum_bins()
-        if seed is None:
+        if seed is not None:
             hist.i_shuffle(seed)
         splits = hist.to_splits(k)
         return list(splits)
