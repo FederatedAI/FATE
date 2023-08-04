@@ -563,7 +563,7 @@ def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas,
             nids, fids, targets = raw
             hist.i_update(nids, fids, targets)
         hist.i_cumsum_bins()
-        if seed is None:
+        if seed is not None:
             hist.i_shuffle(seed)
         splits = hist.to_splits(k)
         return list(splits)

@@ -53,7 +53,7 @@ class SklearnHistBuilder(object):
 
 class SBTHistogram(object):
 
-    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=42) -> None:
+    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=None) -> None:
         
         columns = bin_train_data.schema.columns
         self.random_seed = random_seed
@@ -72,10 +72,16 @@ class SBTHistogram(object):
             },
             seed=self.random_seed,
         )
+        indexer = bin_train_data.get_indexer('sample_id')
+        gh = gh.loc(indexer, preserve_order=True)
+        sample_pos = sample_pos.loc(indexer, preserve_order=True)
         targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), 'cnt': gh.apply_row(lambda x: 1).as_tensor()}
-        stat_obj = bin_train_data.distributed_hist_stat(hist, sample_pos, targets)
+        map_sample_pos = sample_pos.create_frame()
+        map_sample_pos['node_idx'] = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
+        stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, targets)
 
         return stat_obj
+    
 
 def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, bin_info, hist_type='distributed'):
     

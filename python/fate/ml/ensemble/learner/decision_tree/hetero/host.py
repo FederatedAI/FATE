@@ -1,6 +1,6 @@
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos, FeatureImportance
-from fate.ml.ensemble.learner.decision_tree.tree_core.hist import get_hist_builder
-from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSklearnSplitter
+from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogram
+from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 import numpy as np
@@ -95,8 +95,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         # Get Encrypted Grad And Hess
         grad_and_hess = ctx.guest.get('en_gh')
         root_node = self._initialize_root_node(ctx, grad_and_hess)
-        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, bining_dict, hist_type='sklearn')
-        self.splitter = FedSklearnSplitter(bining_dict)
+        # self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, bining_dict, hist_type='sklearn')
+        # self.splitter = FedSklearnSplitter(bining_dict)
 
         node_map = {}
         cur_layer_node = [root_node]
@@ -108,10 +108,10 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
-            hist = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
-            split_id_map = self.splitter.split(sub_ctx, hist, cur_layer_node)
+            # hist = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
+            # split_id_map = self.splitter.split(sub_ctx, hist, cur_layer_node)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
-            self._convert_split_id_and_record(sub_ctx, cur_layer_node, split_id_map, self.node_fid_bid)
+            # self._convert_split_id_and_record(sub_ctx, cur_layer_node, split_id_map, self.node_fid_bid)
             self._update_host_feature_importance(sub_ctx, cur_layer_node)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)

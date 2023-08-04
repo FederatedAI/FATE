@@ -1,6 +1,6 @@
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos
-from fate.ml.ensemble.learner.decision_tree.tree_core.hist import get_hist_builder
-from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSklearnSplitter
+from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogram
+from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 import numpy as np
@@ -113,11 +113,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
         mask_next_layer = self._mask_node(ctx, next_layer_nodes)
         ctx.hosts.put('sync_nodes', [mask_cur_layer, mask_next_layer])
 
-    def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, bining_dict: dict):
+    def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, binning_dict: dict):
         
         # Initialization
         train_df = bin_train_data
-        feat_max_bin, max_bin = self._get_column_max_bin(bining_dict)
+        feat_max_bin, max_bin = self._get_column_max_bin(binning_dict)
         sample_pos = self._init_sample_pos(train_df)
         self._sample_on_leaves = sample_pos.empty_frame()
         root_node = self._initialize_root_node(ctx, grad_and_hess)
@@ -126,10 +126,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._send_gh(ctx, grad_and_hess)
 
         # init histogram builder
-        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, bining_dict, hist_type='sklearn')
+        self.hist_builder = SBTHistogram(bin_train_data, binning_dict, None)
 
         # init splitter
-        self.splitter = FedSklearnSplitter(bining_dict)
+        self.splitter = FedSBTSplitter(bin_train_data, binning_dict)
 
         # Prepare for training
         node_map = {}
@@ -141,12 +141,14 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 logger.info('no nodes to split, stop training')
                 break
             
+            assert len(sample_pos) == len(train_df), 'sample pos len not match train data len, {} vs {}'.format(len(sample_pos), len(train_df))
             self._check_assign_result(sample_pos, cur_layer_node)
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
-            hist, indices = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map, debug=True)
+            statistic_result = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
+            hist = statistic_result.decrypt({}, {})
             # compute best splits
-            split_info = self.splitter.split(sub_ctx, hist, cur_layer_node)
+            split_info = self.splitter.split(sub_ctx, hist, cur_layer_node, node_map)
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info)
             # update feature importance
@@ -177,7 +179,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # convert sample pos to weights
         self._sample_weights = self._convert_sample_pos_to_weight(self._sample_on_leaves, self._nodes)
         # convert bid to split value
-        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, bining_dict, bin_train_data.schema)
+        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, binning_dict, bin_train_data.schema)
 
     def fit(self, ctx: Context, train_data: DataFrame):
         pass
