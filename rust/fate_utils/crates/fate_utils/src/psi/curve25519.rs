@@ -3,7 +3,7 @@ use curve25519_dalek::montgomery::MontgomeryPoint;
 use curve25519_dalek::scalar::Scalar;
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyTuple};
+use pyo3::types::{PyBytes, PyList, PyTuple};
 use pyo3::ToPyObject;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
@@ -60,14 +60,20 @@ impl Secret {
             (EdwardsPoint::hash_from_bytes::<sha2::Sha512>(bytes).to_montgomery() * self.0)
                 .as_bytes(),
         )
-            .into()
+        .into()
     }
-    fn encrypt_vec(&self, vec: Vec<&[u8]>) -> Vec<Vec<u8>> {
-        vec.iter().map(
-            |bytes| (EdwardsPoint::hash_from_bytes::<sha2::Sha512>(bytes).to_montgomery() * self.0)
-                .as_bytes()
-                .to_vec(),
-        ).collect()
+    fn encrypt_vec(&self, vec: Vec<&[u8]>, py: Python) -> PyResult<Py<PyList>> {
+        let encrypted: Vec<&PyBytes> = vec
+            .iter()
+            .map(|bytes| {
+                PyBytes::new(
+                    py,
+                    (EdwardsPoint::hash_from_bytes::<sha2::Sha512>(bytes).to_montgomery() * self.0)
+                        .as_bytes(),
+                )
+            })
+            .collect();
+        Ok(PyList::new(py, &encrypted).into_py(py))
     }
     #[pyo3(text_signature = "($self, their_public)")]
     fn diffie_hellman(&self, their_public: &[u8], py: Python) -> PyObject {
@@ -80,18 +86,22 @@ impl Secret {
             ) * self.0)
                 .as_bytes(),
         )
-            .into()
+        .into()
     }
-    fn diffie_hellman_vec(&self, vec: Vec<&[u8]>) -> Vec<Vec<u8>> {
-        vec.iter().map(
-            |&their_public| (MontgomeryPoint(
-                their_public
-                    .try_into()
-                    .expect("diffie_hellman accpet 32 bytes pubkey"),
-            ) * self.0)
-                .as_bytes()
-                .to_vec(),
-        ).collect()
+    fn diffie_hellman_vec(&self, vec: Vec<&[u8]>, py: Python) -> PyResult<Py<PyList>> {
+        let dh: Vec<&PyBytes> = vec
+            .iter()
+            .map(|their_public| {
+                let their_public_array = <[u8; 32]>::try_from(*their_public)
+                    .expect("diffie_hellman accepts 32 bytes pubkey");
+
+                PyBytes::new(
+                    py,
+                    (MontgomeryPoint(their_public_array) * self.0).as_bytes(),
+                )
+            })
+            .collect();
+        Ok(PyList::new(py, &dh).into_py(py))
     }
 }
 
