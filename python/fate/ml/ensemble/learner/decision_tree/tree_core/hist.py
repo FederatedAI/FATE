@@ -68,11 +68,11 @@ class SBTHistogram(object):
             value_schemas={
                 "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
                 "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-                "1": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
             },
             seed=self.random_seed,
         )
-        targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), '1': gh.apply_row(lambda x: 1).as_tensor()}
+        targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), 'cnt': gh.apply_row(lambda x: 1).as_tensor()}
         stat_obj = bin_train_data.distributed_hist_stat(hist, sample_pos, targets)
 
         return stat_obj

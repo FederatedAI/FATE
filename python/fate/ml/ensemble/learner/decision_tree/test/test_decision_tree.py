@@ -65,14 +65,18 @@ if __name__ == '__main__':
 
         from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogram
         from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
+        from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
         sample_pos = bin_data.create_frame()
         sample_pos['sample_pos'] = bin_data.apply_row(lambda x: 0 if np.random.rand() > 0.5 else 1)
 
         hist = SBTHistogram(bin_data, bin_info)
-        root_node = [Node(nid=0)]
+        g_sum, h_sum, cnt_sum = float(empty_gh['g'].sum()), float(empty_gh['h'].sum()), len(empty_gh)
+        root_node = [Node(nid=0, grad=g_sum, hess=h_sum, sample_num=cnt_sum)]
         node_map = {0: 0}
         stat_obj = hist.compute_hist(root_node, bin_data, empty_gh, sample_pos, node_map)
-
+        computed_hist = stat_obj.decrypt({}, {})
+        splitter = FedSBTSplitter(data_guest, bin_info)
+        rs = splitter._find_guest_best_splits(computed_hist, '123', root_node, node_map)
         # tree = HeteroDecisionTreeGuest(max_depth)
         # ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info) 
         
