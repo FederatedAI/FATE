@@ -69,6 +69,12 @@ class HistogramIndexer:
         node_stride = nid * self.node_axis_stride
         return node_stride + self.feature_axis_stride[fid], node_stride + self.feature_axis_stride[fid + 1]
 
+    def get_node_intervals(self):
+        intervals = []
+        for nid in range(self.node_size):
+            intervals.append((nid * self.node_axis_stride, (nid + 1) * self.node_axis_stride))
+        return intervals
+
     def get_global_feature_intervals(self):
         intervals = []
         for nid in range(self.node_size):
@@ -141,7 +147,7 @@ class HistogramValues:
     def cat(self, chunks_info, values):
         raise NotImplementedError
 
-    def extract_data(self):
+    def extract_node_data(self, node_data_size, node_size):
         raise NotImplementedError
 
 
@@ -206,8 +212,8 @@ class HistogramEncryptedValues(HistogramValues):
     def __str__(self):
         return f"<HistogramEncryptedValues stride={self.stride}, data={self.data}>"
 
-    def extract_data(self):
-        return self.data
+    def extract_node_data(self, node_data_size, node_size):
+        raise NotImplementedError
 
 
 class HistogramEncodedValues(HistogramValues):
@@ -307,8 +313,8 @@ class HistogramPlainValues(HistogramValues):
         data = torch.cat(data, dim=1).flatten()
         return cls(data, values[0].stride)
 
-    def extract_data(self):
-        return self.data
+    def extract_node_data(self, node_data_size, node_size):
+        return list(self.data.reshape(node_size, node_data_size * self.stride))
 
 
 class Histogram:
@@ -429,7 +435,11 @@ class Histogram:
     def extract_data(self):
         data = {}
         for name, value_container in self._values_mapping.items():
-            data[name] = value_container.extract_data()
+            node_data_list = value_container.extract_node_data(self._indexer.node_axis_stride, self._indexer.node_size)
+            for nid, node_data in enumerate(node_data_list):
+                if nid not in data:
+                    data[nid] = {}
+                data[nid][name] = node_data
         return data
 
 
