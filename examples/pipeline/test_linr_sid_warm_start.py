@@ -21,19 +21,27 @@ pipeline = FateFlowPipeline().set_roles(guest="9999", host="9998", arbiter="9998
 
 intersect_0 = Intersection("intersect_0", method="raw")
 intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                    namespace="experiment_sid"))
+                                                                    namespace="experiment"))
 intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                       namespace="experiment_sid"))
+                                                                       namespace="experiment"))
 linr_0 = CoordinatedLinR("linr_0",
                          epochs=3,
                          batch_size=None,
-                         optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}},
+                         optimizer={"method": "sgd", "optimizer_params": {"lr": 0.15}, "alpha": 0.1},
                          init_param={"fit_intercept": True, "method": "zeros"},
-                         train_data=intersect_0.outputs["output_data"])
+                         train_data=intersect_0.outputs["output_data"],
+                         shuffle=False)
 linr_1 = CoordinatedLinR("linr_1", train_data=intersect_0.outputs["output_data"],
                          warm_start_model=linr_0.outputs["output_model"],
                          epochs=2,
-                         batch_size=200)
+                         batch_size=None)
+linr_2 = CoordinatedLinR("linr_2",
+                         epochs=5,
+                         batch_size=None,
+                         optimizer={"method": "sgd", "optimizer_params": {"lr": 0.15}, "alpha": 0.1},
+                         init_param={"fit_intercept": True, "method": "zeros"},
+                         train_data=intersect_0.outputs["output_data"],
+                         shuffle=False)
 
 """linr_0.guest.component_setting(train_data=DataWarehouseChannel(name="breast_hetero_guest_sid",
                                                              namespace="experiment"))
@@ -42,40 +50,40 @@ linr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_h
 
 evaluation_0 = Evaluation("evaluation_0",
                           runtime_roles=["guest"],
-                          input_data=linr_0.outputs["train_output_data"])
+                          metrics=["r2_score", "mse"],
+                          label_column_name="y",
+                          input_data=[linr_1.outputs["train_output_data"], linr_2.outputs["train_output_data"]])
 
 # pipeline.add_task(feature_scale_0)
 # pipeline.add_task(feature_scale_1)
 pipeline.add_task(intersect_0)
 pipeline.add_task(linr_0)
 pipeline.add_task(linr_1)
-# pipeline.add_task(evaluation_0)
+pipeline.add_task(linr_2)
+pipeline.add_task(evaluation_0)
 # pipeline.add_task(hetero_feature_binning_0)
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
-print(f"linr_0 model: {pipeline.get_task_info('linr_0').get_output_model()}")
-# print(f"linr_0 data: {pipeline.get_task_info('linr_0').get_output_data()}")
-print(f"\nlinr_1 model: {pipeline.get_task_info('linr_1').get_output_model()}")
+import numpy as np
 
-"""# print(pipeline.get_task_info("statistics_0").get_output_model())
-print(pipeline.get_task_info("linr_0").get_output_model())
-print(pipeline.get_task_info("linr_0").get_output_metrics())
-print(f"evaluation metrics: ")
-print(pipeline.get_task_info("evaluation_0").get_output_metrics())
+linr_0_coef = np.array(
+    pipeline.get_task_info('linr_0').get_output_model()["output_model"]["data"]['estimator']["param"]["coef_"])
+linr_0_intercept = np.array(
+    pipeline.get_task_info('linr_0').get_output_model()["output_model"]["data"]['estimator']["param"]["intercept_"])
 
-pipeline.deploy([intersect_0, linr_0])
+linr_1_coef = np.array(
+    pipeline.get_task_info('linr_1').get_output_model()["output_model"]["data"]['estimator']["param"]["coef_"])
+linr_1_intercept = np.array(
+    pipeline.get_task_info('linr_1').get_output_model()["output_model"]["data"]['estimator']["param"]["intercept_"])
+# print(f"linr_1 data: {pipeline.get_task_info('linr_0').get_output_data()}")
+linr_2_coef = np.array(
+    pipeline.get_task_info('linr_2').get_output_model()["output_model"]["data"]['estimator']["param"]["coef_"])
+linr_2_intercept = np.array(
+    pipeline.get_task_info('linr_2').get_output_model()["output_model"]["data"]['estimator']["param"]["intercept_"])
 
-predict_pipeline = FateFlowPipeline()
+print(f"linr_1 coef: {linr_1_coef}, intercept: {linr_1_intercept}")
+print(f"linr_2 coef: {linr_2_coef}, intercept: {linr_2_intercept}")
+print(f"linr_1 vs l2_1 coef diff: {linr_1_coef - linr_2_coef}, intercept diff: {linr_1_intercept - linr_2_intercept}")
 
-deployed_pipeline = pipeline.get_deployed_pipeline()
-deployed_pipeline.intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                      namespace="experiment_sid"))
-deployed_pipeline.intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                                         namespace="experiment_sid"))
-
-predict_pipeline.add_task(deployed_pipeline)
-predict_pipeline.compile()
-# print("\n\n\n")
-# print(predict_pipeline.compile().get_dag())
-predict_pipeline.predict()"""
+print(f"\n evaluation result: {pipeline.get_task_info('evaluation_0').get_output_metric()[0]['data']}")

@@ -369,3 +369,30 @@ def extract_data(df, col_name, convert_float=True, keep_id=False):
         return df[[df.columns[0], col_name]].to_numpy()
     else:
         return df[col_name].to_numpy().astype(np.float64)
+
+
+def parse_job_time_info(job_time_info):
+    time_info_summary = []
+    for cpn in job_time_info:
+        cpn_name = cpn.get("task_name")
+        cpn_elapsed = cpn.get("elapsed")
+        time_info_summary.append((cpn_name, cpn_elapsed))
+    return time_info_summary
+
+
+def pretty_time_info_summary(time_info_summary, job_name):
+    table = PrettyTable()
+    table.set_style(ORGMODE)
+    field_names = ["component name", "time consuming"]
+    table.field_names = field_names
+    time_summary = time_info_summary.get("time_summary", [])
+    for cpn_name, cpn_elapse in time_summary:
+        table.add_row(
+            [
+                f"{TxtStyle.FIELD_VAL}{cpn_name}{TxtStyle.END}",
+                f"{TxtStyle.FIELD_VAL}{cpn_elapse}{TxtStyle.END}",
+            ]
+        )
+
+    return table.get_string(title=f"{TxtStyle.TITLE}Component Time Summary: "
+                                  f"{job_name}({time_info_summary['job_id']}){TxtStyle.END}")

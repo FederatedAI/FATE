@@ -1,20 +1,22 @@
-data_guest: "examples/data/epsilon_5k_hetero_guest.csv"
-data_host: "examples/data/epsilon_5k_hetero_host.csv"
+data_guest: "epsilon_5k_hetero_guest"
+data_host: "epsilon_5k_hetero_host"
 idx: "id"
 label_name: "y"
 epochs: 30
+batch_size: 2500
 init_param:
   fit_intercept: True
-  method: "zeros"
+  method: "random"
+  random_state: 42
 learning_rate_scheduler:
   method: "constant"
   scheduler_params:
     factor: 1.0
-    total_iters: 800
+    total_iters: 1000
 optimizer:
-  method: "rmsprop"
+  method: "adam"
   penalty: "L2"
+  alpha: 0.0001
   optimizer_params:
-    lr: 0.15
-batch_size: 5000
+    lr: 0.3
 early_stop: "diff"

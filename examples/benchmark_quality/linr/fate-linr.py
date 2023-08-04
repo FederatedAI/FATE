@@ -17,14 +17,14 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, Intersection
+from fate_client.pipeline.components.fate import CoordinatedLinR, Intersection
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
-from fate_test.utils import extract_data, parse_summary_result
+from fate_test.utils import parse_summary_result
 
 
-def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
@@ -37,11 +37,10 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
         param = test_utils.JobConfig.load_from_file(param)
 
     assert isinstance(param, dict)
-    guest_data_table = param.get("data_guest")
-    host_data_table = param.get("data_host")
 
-    guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "motor_hetero_host", "namespace": f"experiment{namespace}"}
+
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
 
     intersect_0 = Intersection("intersect_0", method="raw")
@@ -50,7 +49,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
                                                                            namespace=host_train_data["namespace"]))
 
-    lr_param = {
+    linr_param = {
     }
 
     config_param = {
@@ -60,41 +59,49 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
         "batch_size": param["batch_size"],
         "early_stop": param["early_stop"],
         "init_param": param["init_param"],
-        "tol": 1e-5,
+        "tol": 1e-5
     }
-    lr_param.update(config_param)
-    lr_0 = CoordinatedLR("lr_0",
-                         train_data=intersect_0.outputs["output_data"],
-                         **config_param)
-    lr_1 = CoordinatedLR("lr_1",
-                         test_data=intersect_0.outputs["output_data"],
-                         input_model=lr_0.outputs["output_model"])
+    linr_param.update(config_param)
+    linr_0 = CoordinatedLinR("linr_0",
+                             train_data=intersect_0.outputs["output_data"],
+                             **config_param)
+    """linr_1 = CoordinatedLinR("linr_1",
+                             test_data=intersect_0.outputs["output_data"],
+                             input_model=linr_0.outputs["output_model"])"""
 
-    evaluation_0 = Evaluation('evaluation_0',
-                              metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
+    evaluation_0 = Evaluation("evaluation_0",
+                              label_column_name="motor_speed",
+                              runtime_roles=["guest"],
+                              metrics=["r2_score",
+                                       "mse",
+                                       "rmse"],
+                              input_data=linr_0.outputs["train_output_data"])
+
     pipeline.add_task(intersect_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(lr_1)
+    pipeline.add_task(linr_0)
+    # pipeline.add_task(linr_1)
     pipeline.add_task(evaluation_0)
-    if config.task_cores:
-        pipeline.conf.set("task_cores", config.task_cores)
-    if config.timeout:
-        pipeline.conf.set("timeout", config.timeout)
 
     pipeline.compile()
     print(pipeline.get_dag())
     pipeline.fit()
 
-    lr_0_data = pipeline.get_component("lr_0").get_output_data()["train_output_data"]
-    lr_1_data = pipeline.get_component("lr_1").get_output_data()["test_output_data"]
+    """linr_0_data = pipeline.get_task_info("linr_0").get_output_data()["train_output_data"]
+    linr_1_data = pipeline.get_task_info("linr_1").get_output_data()["test_output_data"]
+    linr_0_score = extract_data(linr_0_data, "predict_result")
+    linr_0_label = extract_data(linr_0_data, "motor_speed")
+    linr_1_score = extract_data(linr_1_data, "predict_result")
+    linr_1_label = extract_data(linr_1_data, "motor_speed")
+    linr_0_score_label = extract_data(linr_0_data, "predict_result", keep_id=True)
+    linr_1_score_label = extract_data(linr_1_data, "predict_result", keep_id=True)"""
 
-    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric())
-    lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
-    lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
+    print(f"result_summary")
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
+
     return data_summary, result_summary
 
 
@@ -103,10 +110,6 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", type=str,
                         help="config file", default="../../config.yaml")
     parser.add_argument("-p", "--param", type=str,
-                        help="config file for params", default="./vehicle_config.yaml")
-
+                        help="config file for params", default="./breast_config.yaml")
     args = parser.parse_args()
-    if args.config is not None:
-        main(args.config, args.param)
-    else:
-        main()
+    main(args.config, args.param)

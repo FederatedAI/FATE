@@ -29,6 +29,10 @@ def main(config="./config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    if config.task_cores:
+        pipeline.conf.set("task_cores", config.task_cores)
+    if config.timeout:
+        pipeline.conf.set("timeout", config.timeout)
 
     intersect_0 = Intersection("intersect_0", method="raw")
     intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",

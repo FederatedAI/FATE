@@ -23,7 +23,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import precision_score, accuracy_score, recall_score
 
 
-def main(config="../../config.yaml", param="./vehicle_config.yaml"):
+def main(config="../../config.yaml", param="./vehicle_lr_sklearn_config.yaml"):
     # obtain config
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -65,15 +65,18 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml"):
     pr = precision_score(y, y_pred, average="macro")
     acc = accuracy_score(y, y_pred)
 
-    result = {"accuracy": acc}
+    result = {"multi_accuracy": acc,
+              "multi_precision": pr,
+              "multi_recall": recall}
     print(result)
     return {}, result
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-param", type=str,
-                        help="config file for params")
+    parser.add_argument("-c", "--config", type=str,
+                        help="config file", default="../../config.yaml")
+    parser.add_argument("-p", "--param", type=str,
+                        help="config file for params", default="./vehicle_lr_sklearn_config.yaml")
     args = parser.parse_args()
-    if args.param is not None:
-        main(args.param)
+    main(args.config, args.param)

@@ -192,16 +192,16 @@ class Testsuite(object):
 
         return table.get_string(title=f"{TxtStyle.TITLE}Testsuite Summary: {self.suite_name}{TxtStyle.END}")
 
-    def model_in_dep(self, name):
+    """def model_in_dep(self, name):
         return name in self._dependency
 
-    """def get_dependent_jobs(self, name):
-        return self._dependency[name]"""
+    def get_dependent_jobs(self, name):
+        return self._dependency[name]
 
     def remove_dependency(self, name):
         del self._dependency[name]
 
-    """def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
+    def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
         if model_info is not None:
             job.set_pre_work(name, **model_info)
         if table_info is not None:
@@ -213,7 +213,7 @@ class Testsuite(object):
         if name in job.pre_works:
             job.pre_works.remove(name)
         if job.is_submit_ready():
-            self._ready_jobs.appendleft(job)"""
+            self._ready_jobs.appendleft(job)
 
     def reflash_configs(self, config: Config):
         failed = []
@@ -225,7 +225,7 @@ class Testsuite(object):
             except ValueError as e:
                 failed.append((job, e))
         return failed
-
+    """
     def update_status(
             self, job_name, job_id: str = None, status: str = None, exception_id: str = None
     ):
@@ -322,6 +322,36 @@ class BenchmarkSuite(object):
                 )
             )
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
+        return suite
+
+
+class PerformanceSuite(object):
+    def __init__(
+            self, dataset: typing.List[Data], pipeline_jobs: typing.List[BenchmarkJob], path: Path
+    ):
+        self.dataset = dataset
+        self.pipeline_jobs = pipeline_jobs
+        self.path = path
+
+    @staticmethod
+    def load(path: Path):
+        with path.open("r") as f:
+            # testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+            testsuite_config = yaml.safe_load(f)
+            # testsuite_config = DATA_JSON_HOOK.hook(testsuite_config)
+
+        dataset = []
+        for d in testsuite_config.get("data"):
+            d = DATA_LOAD_HOOK.hook(d)
+            dataset.append(Data.load(d, path))
+
+        pipeline_jobs = []
+        for job_name, job_configs in testsuite_config.get("tasks", {}).items():
+            script_path = path.parent.joinpath(job_configs["script"]).resolve()
+            config_path = path.parent.joinpath(job_configs.get("conf", "")).resolve()
+            pipeline_jobs.append(BenchmarkJob(job_name, script_path, config_path))
+
+        suite = PerformanceSuite(dataset, pipeline_jobs, path)
         return suite
 
 

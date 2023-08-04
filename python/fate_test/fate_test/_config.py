@@ -181,6 +181,8 @@ class Config(object):
         self.tunnel_id_to_tunnel = {}
         self.extend_sid = None
         self.auto_increasing_sid = None
+        self.task_cores = None
+        self.timeout = None
         # self.work_mode = config.get("work_mode", 0)
 
         service_id = 0
@@ -193,6 +195,10 @@ class Config(object):
                 self.service_id_to_service[service_id] = self.service(address)
                 for party in flow_service["parties"]:
                     self.party_to_service_id[party] = service_id
+
+    def update_conf(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @staticmethod
     def load(path: typing.Union[str, Path], **kwargs):

@@ -175,6 +175,10 @@ class FLOWClient(object):
         response = self._client.table.delete(namespace=namespace, table_name=table_name)
         return response
 
+    def query_job(self, job_id, role, party_id):
+        response = self._client.task.query(job_id, role=role, party_id=party_id)
+        return response
+
     """def _submit_job(self, conf, dsl):
         param = {
             'job_dsl': self._save_json(dsl, 'submit_dsl.json'),

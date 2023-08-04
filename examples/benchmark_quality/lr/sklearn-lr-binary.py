@@ -84,7 +84,9 @@ def main(config="../../config.yaml", param="./breast_lr_sklearn_config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-p", "--param", type=str, default="./breast_lr_sklearn_config.yaml",
-                        help="config file for params")
+    parser.add_argument("-c", "--config", type=str,
+                        help="config file", default="../../config.yaml")
+    parser.add_argument("-p", "--param", type=str,
+                        help="config file for params", default="./breast_lr_sklearn_config.yaml")
     args = parser.parse_args()
-    main(param=args.param)
+    main(args.config, args.param)

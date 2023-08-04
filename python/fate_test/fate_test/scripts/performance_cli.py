@@ -14,35 +14,33 @@
 #  limitations under the License.
 #
 import glob
-import json
 import os
 import time
 import uuid
 from datetime import timedelta
+from inspect import signature
+from ruamel import yaml
 
 import click
 from fate_test._client import Clients
 from fate_test._config import Config
-from fate_test._flow_client import JobProgress, QueryJobResponse
 from fate_test._io import LOGGER, echo
-from fate_test._parser import Testsuite
+from fate_test._parser import PerformanceSuite
 from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
     _add_replace_hook
-from fate_test.utils import TxtStyle
+from fate_test.utils import TxtStyle, parse_job_time_info, pretty_time_info_summary
 from prettytable import PrettyTable, ORGMODE
-
-from fate_test import _config
 
 
 @click.command("performance")
 @click.option('-t', '--job-type', type=click.Choice(['intersect', 'intersect_multi', 'hetero_lr', 'hetero_sbt']),
               help="Select the job type, you can also set through include")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *testsuite.json under these paths")
-@click.option('-m', '--timeout', type=int, default=3600,
-              help="maximun running time of job")
-@click.option('-e', '--max-iter', type=int, help="When the algorithm model is LR, the number of iterations is set")
+              help="include *performance.yaml under these paths")
+@click.option('-m', '--timeout', type=int,
+              help="maximum running time of job")
+@click.option('-e', '--epochs', type=int, help="When the algorithm model is LR, the number of iterations is set")
 @click.option('-d', '--max-depth', type=int,
               help="When the algorithm model is SecureBoost, set the number of model layers")
 @click.option('-nt', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
@@ -58,7 +56,7 @@ from fate_test import _config
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters, max_iter,
+def run_task(ctx, job_type, include, replace, timeout, epochs,
              max_depth, num_trees, task_cores, storage_tag, history_tag, skip_data, clean_data, provider, **kwargs):
     """
     Test the performance of big data tasks, alias: bp
@@ -68,8 +66,12 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     config_inst = ctx.obj["config"]
     if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
-    if ctx.obj["auto_increasing_sid"] is not None:
-        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    if task_cores is not None:
+        config_inst.update_conf(task_cores=task_cores)
+    if timeout is not None:
+        config_inst.update_conf(timeout=timeout)
+    """if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -77,7 +79,7 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
         clean_data = config_inst.clean_data
 
     def get_perf_template(conf: Config, job_type):
-        perf_dir = os.path.join(os.path.abspath(conf.perf_template_dir) + '/' + job_type + '/' + "*testsuite.json")
+        perf_dir = os.path.join(os.path.abspath(conf.perf_template_dir) + '/' + job_type + '/' + "*testsuite.yaml")
         return glob.glob(perf_dir)
 
     if not include:
@@ -88,7 +90,8 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
-    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None, provider=provider)
+    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None, provider=provider,
+                              suffix="performance.yaml", suite_type="performance")
     for i, suite in enumerate(suites):
         echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) {suite.path}")
 
@@ -112,21 +115,41 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
 
             echo.stdout_newline()
             try:
-                time_consuming = _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                             storage_tag, history_tag, update_component_parameters, max_iter,
-                                             max_depth, num_trees, task_cores)
-            except Exception as e:
-                raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
-
-            try:
-                _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
+                job_time_info = _run_performance_jobs(config_inst, suite, namespace, data_namespace_mangling, client,
+                                                      epochs, max_depth, num_trees)
             except Exception as e:
                 raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
             echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
             if not skip_data and clean_data:
                 _delete_data(client, suite)
-            echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
+            # echo.echo(suite.pretty_final_summary(job_time_info), fg='red')
+            all_summary = []
+            compare_summary = []
+            for job_name, job_time in job_time_info.items():
+                performance_dir = "/".join(
+                    [os.path.join(os.path.abspath(config_inst.cache_directory),
+                                  'benchmark_history', "performance.yaml")])
+                # @todo: change to client query result
+                # fate_version = clients["guest_0"].get_version()
+                fate_version = "beta-2.0.0"
+                if history_tag:
+                    history_tag = ["_".join([i, job_name]) for i in history_tag]
+                    history_compare_result = comparison_quality(job_name,
+                                                                history_tag,
+                                                                performance_dir,
+                                                                job_time["time_summary"])
+                    compare_summary.append(history_compare_result)
+                if storage_tag:
+                    storage_tag = "_".join(['FATE', fate_version, storage_tag, job_name])
+                    save_quality(storage_tag, performance_dir, job_time["time_summary"])
+                res_str = pretty_time_info_summary(job_time, job_name)
+                all_summary.append(res_str)
+            echo.echo("\n".join(all_summary))
+            echo.echo("#" * 60)
+            echo.echo("\n".join(compare_summary))
+
+            echo.echo()
 
         except Exception:
             exception_id = uuid.uuid1()
@@ -139,195 +162,65 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
-def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
-                storage_tag, history_tag, update_component_parameters, max_iter, max_depth, num_trees, task_cores):
-    # submit jobs
-    with click.progressbar(length=len(suite.jobs),
-                           label="jobs",
-                           show_eta=False,
-                           show_pos=True,
-                           width=24) as bar:
-        time_list = []
-        for job in suite.jobs_iter():
-            start = time.time()
-            job_progress = JobProgress(job.job_name)
-
-            def _raise():
-                exception_id = str(uuid.uuid1())
-                job_progress.exception(exception_id)
-                suite.update_status(job_name=job.job_name, exception_id=exception_id)
-                echo.file(f"exception({exception_id})")
-                LOGGER.exception(f"exception id: {exception_id}")
-
-            # noinspection PyBroadException
-            try:
-                if max_iter is not None:
-                    job.job_conf.update_component_parameters('max_iter', max_iter)
-                if max_depth is not None:
-                    job.job_conf.update_component_parameters('max_depth', max_depth)
-                if num_trees is not None:
-                    job.job_conf.update_component_parameters('num_trees', num_trees)
-                if task_cores is not None:
-                    job.job_conf.update_job_common_parameters(task_cores=task_cores)
-                job.job_conf.update(config.parties, timeout, update_job_parameters, update_component_parameters)
-            except Exception:
-                _raise()
-                continue
-
-            def update_bar(n_step):
-                bar.item_show_func = lambda x: job_progress.show()
-                time.sleep(0.1)
-                bar.update(n_step)
-
-            update_bar(1)
-
-            def _call_back(resp):
-                """if isinstance(resp, SubmitJobResponse):
-                    job_progress.submitted(resp.job_id)
-                    echo.file(f"[jobs] {resp.job_id} ", nl=False)
-                    suite.update_status(job_name=job.job_name, job_id=resp.job_id)"""
-
-                if isinstance(resp, QueryJobResponse):
-                    job_progress.running(resp.status, resp.progress)
-
-                update_bar(0)
-
-            # noinspection PyBroadException
-            try:
-                response = clients["guest_0"].submit_job(job=job, callback=_call_back)
-
-                # noinspection PyBroadException
-                try:
-                    # add notes
-                    notes = f"{job.job_name}@{suite.path}@{namespace}"
-                    for role, party_id_list in job.job_conf.role.items():
-                        for i, party_id in enumerate(party_id_list):
-                            clients[f"{role}_{i}"].add_notes(job_id=response.job_id, role=role, party_id=party_id,
-                                                             notes=notes)
-                except Exception:
-                    pass
-            except Exception:
-                _raise()
-            else:
-                job_progress.final(response.status)
-                suite.update_status(job_name=job.job_name, status=response.status.status)
-                if response.status.is_success():
-                    if suite.model_in_dep(job.job_name):
-                        dependent_jobs = suite.get_dependent_jobs(job.job_name)
-                        for predict_job in dependent_jobs:
-                            model_info, table_info, cache_info, model_loader_info = None, None, None, None
-                            for i in _config.deps_alter[predict_job.job_name]:
-                                if isinstance(i, dict):
-                                    name = i.get('name')
-                                    data_pre = i.get('data')
-
-                            if 'data_deps' in _config.deps_alter[predict_job.job_name]:
-                                roles = list(data_pre.keys())
-                                table_info, hierarchy = [], []
-                                for role_ in roles:
-                                    role, index = role_.split("_")
-                                    input_ = data_pre[role_]
-                                    for data_input, cpn in input_.items():
-                                        try:
-                                            table_name = clients["guest_0"].output_data_table(
-                                                job_id=response.job_id,
-                                                role=role,
-                                                party_id=config.role[role][int(index)],
-                                                component_name=cpn)
-                                        except Exception:
-                                            _raise()
-                                        if predict_job.job_conf.dsl_version == 2:
-                                            hierarchy.append([role, index, data_input])
-                                            table_info.append({'table': table_name})
-                                        else:
-                                            hierarchy.append([role, 'args', 'data'])
-                                            table_info.append({data_input: [table_name]})
-                                table_info = {'hierarchy': hierarchy, 'table_info': table_info}
-                            if 'model_deps' in _config.deps_alter[predict_job.job_name]:
-                                if predict_job.job_conf.dsl_version == 2:
-                                    # noinspection PyBroadException
-                                    try:
-                                        model_info = clients["guest_0"].deploy_model(
-                                            model_id=response.model_info["model_id"],
-                                            model_version=response.model_info["model_version"],
-                                            dsl=predict_job.job_dsl.as_dict())
-                                    except Exception:
-                                        _raise()
-                                else:
-                                    model_info = response.model_info
-                            if 'cache_deps' in _config.deps_alter[predict_job.job_name]:
-                                cache_dsl = predict_job.job_dsl.as_dict()
-                                cache_info = []
-                                for cpn in cache_dsl.get("components").keys():
-                                    if "CacheLoader" in cache_dsl.get("components").get(cpn).get("module"):
-                                        cache_info.append({cpn: {'job_id': response.job_id}})
-                                cache_info = {'hierarchy': [""], 'cache_info': cache_info}
-                            if 'model_loader_deps' in _config.deps_alter[predict_job.job_name]:
-                                model_loader_dsl = predict_job.job_dsl.as_dict()
-                                model_loader_info = []
-                                for cpn in model_loader_dsl.get("components").keys():
-                                    if "ModelLoader" in model_loader_dsl.get("components").get(cpn).get("module"):
-                                        model_loader_info.append({cpn: response.model_info})
-                                model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
-
-                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info,
-                                                cache_info=cache_info, model_loader_info=model_loader_info)
-                        suite.remove_dependency(job.job_name)
-            update_bar(0)
-            time_consuming = time.time() - start
-            performance_dir = "/".join(
-                [os.path.join(os.path.abspath(config.cache_directory), 'benchmark_history', "performance.json")])
-            fate_version = clients["guest_0"].get_version()
-            if history_tag:
-                history_tag = ["_".join([i, job.job_name]) for i in history_tag]
-                comparison_quality(job.job_name, history_tag, performance_dir, time_consuming)
-            if storage_tag:
-                storage_tag = "_".join(['FATE', fate_version, storage_tag, job.job_name])
-                save_quality(storage_tag, performance_dir, time_consuming)
-            echo.stdout_newline()
-            time_list.append(time_consuming)
-        return [str(int(i)) + "s" for i in time_list]
-
-
-def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
+@LOGGER.catch
+def _run_performance_jobs(config: Config, suite: PerformanceSuite, tol: float, namespace: str,
+                          data_namespace_mangling: bool, client, epochs, max_depth, num_trees):
     # pipeline demo goes here
     job_n = len(suite.pipeline_jobs)
-    for i, pipeline_job in enumerate(suite.pipeline_jobs):
-        echo.echo(f"Running [{i + 1}/{job_n}] job: {pipeline_job.job_name}")
-
-        def _raise(err_msg, status="failed"):
-            exception_id = str(uuid.uuid1())
-            suite.update_status(job_name=job_name, exception_id=exception_id, status=status)
-            echo.file(f"exception({exception_id}), error message:\n{err_msg}")
-            # LOGGER.exception(f"exception id: {exception_id}")
-
-        job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
-        mod = _load_module_from_script(script_path)
+    fate_base = config.fate_base
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":" + os.path.join(fate_base, "python")
+    os.environ['PYTHONPATH'] = PYTHONPATH
+    job_time_history = {}
+    for j, job in enumerate(suite.pipeline_jobs):
         try:
-            if data_namespace_mangling:
-                try:
-                    mod.main(config=config, namespace=f"_{namespace}")
-                    suite.update_status(job_name=job_name, status="success")
-                except Exception as e:
-                    _raise(e)
-                    continue
+            echo.echo(f"Running [{j + 1}/{job_n}] job: {job.job_name}")
+            job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
+            param = Config.load_from_file(conf_path)
+            if epochs is not None:
+                param['epochs'] = epochs
+            if max_depth is not None:
+                param['max_depth'] = max_depth
+            if num_trees is not None:
+                param['num_trees'] = num_trees
+
+            mod = _load_module_from_script(script_path)
+            input_params = signature(mod.main).parameters
+            # local script
+            if len(input_params) == 1:
+                job_id = mod.main(param=param)
+            elif len(input_params) == 2:
+                job_id = mod.main(config=config, param=param)
+            # pipeline script
+            elif len(input_params) == 3:
+                if data_namespace_mangling:
+                    job_id = mod.main(config=config, param=param, namespace=f"_{namespace}")
+                else:
+                    job_id = mod.main(config=config, param=param)
             else:
-                try:
-                    mod.main(config=config)
-                    suite.update_status(job_name=job_name, status="success")
-                except Exception as e:
-                    _raise(e)
-                    continue
+                job_id = mod.main()
+            echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!\n")
+            ret_msg = client.query_time_elapse(job_id, role="guest", party_id=config.parties.guest[0]).get("data")
+            time_summary = parse_job_time_info(ret_msg)
+            job_time_history[job_name] = {"job_id": job_id, "time_summary": time_summary}
+            echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} time info: {time_summary}\n")
+
         except Exception as e:
-            _raise(e, status="not submitted")
+            exception_id = uuid.uuid1()
+            echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}", err=True,
+                      fg='red')
+            LOGGER.exception(f"exception id: {exception_id}, error message: \n{e}")
             continue
+    return job_time_history
 
 
 def comparison_quality(group_name, history_tags, history_info_dir, time_consuming):
     assert os.path.exists(history_info_dir), f"Please check the {history_info_dir} Is it deleted"
     with open(history_info_dir, 'r') as f:
-        benchmark_quality = json.load(f, object_hook=dict)
+        benchmark_quality = yaml.load(f)
     benchmark_performance = {}
+    table = PrettyTable()
+    table.set_style(ORGMODE)
+    table.field_names = ["Script Model Name", "component", "time consuming"]
     for history_tag in history_tags:
         for tag in benchmark_quality:
             if '_'.join(tag.split("_")[2:]) == history_tag:
@@ -335,28 +228,28 @@ def comparison_quality(group_name, history_tags, history_info_dir, time_consumin
     if benchmark_performance is not None:
         benchmark_performance[group_name] = time_consuming
 
-    table = PrettyTable()
-    table.set_style(ORGMODE)
-    table.field_names = ["Script Model Name", "time consuming"]
     for script_model_name in benchmark_performance:
-        table.add_row([f"{script_model_name}"] +
-                      [f"{TxtStyle.FIELD_VAL}{benchmark_performance[script_model_name]}{TxtStyle.END}"])
-    print("\n")
-    print(table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}"))
-    print("#" * 60)
+        for cpn, time in benchmark_performance[script_model_name].items():
+            table.add_row([f"{script_model_name}"] +
+                          [f"{TxtStyle.FIELD_VAL}{cpn}{TxtStyle.END}"] +
+                          [f"{TxtStyle.FIELD_VAL}{time}{TxtStyle.END}"])
+    # print("\n")
+    # print(table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}"))
+    # print("#" * 60)
+    return table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}")
 
 
 def save_quality(storage_tag, save_dir, time_consuming):
     os.makedirs(os.path.dirname(save_dir), exist_ok=True)
     if os.path.exists(save_dir):
         with open(save_dir, 'r') as f:
-            benchmark_quality = json.load(f, object_hook=dict)
+            benchmark_quality = yaml.load(f)
     else:
         benchmark_quality = {}
     benchmark_quality.update({storage_tag: time_consuming})
     try:
         with open(save_dir, 'w') as fp:
-            json.dump(benchmark_quality, fp, indent=2)
+            yaml.dump(benchmark_quality, fp)
         print("\n" + "Storage successful, please check: ", save_dir)
     except Exception:
         print("\n" + "Storage failed, please check: ", save_dir)

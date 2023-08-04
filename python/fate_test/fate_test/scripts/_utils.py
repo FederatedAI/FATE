@@ -10,7 +10,7 @@ from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobResponse
 from fate_test._io import echo, LOGGER, set_logger
-from fate_test._parser import Testsuite, BenchmarkSuite, DATA_LOAD_HOOK, CONF_LOAD_HOOK, DSL_LOAD_HOOK
+from fate_test._parser import Testsuite, BenchmarkSuite, PerformanceSuite, DATA_LOAD_HOOK, CONF_LOAD_HOOK, DSL_LOAD_HOOK
 
 
 def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
@@ -82,6 +82,8 @@ def _load_testsuites(includes, excludes, glob, provider=None, suffix="testsuite.
                 suite = Testsuite.load(suite_path.resolve(), provider)
             elif suite_type == "benchmark":
                 suite = BenchmarkSuite.load(suite_path.resolve())
+            elif suite_type == "performance":
+                suite = PerformanceSuite.load(suite_path.resolve())
             else:
                 raise ValueError(f"Unsupported suite type: {suite_type}. Only accept type 'testsuite' or 'benchmark'.")
         except Exception as e:

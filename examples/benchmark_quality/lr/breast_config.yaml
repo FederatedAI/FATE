@@ -1,11 +1,12 @@
-data_guest: "examples/data/breast_hetero_guest.csv"
-data_host: "examples/data/breast_hetero_host.csv"
+data_guest: "breast_hetero_guest"
+data_host: "breast_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 30
+epochs: 15
 init_param:
   fit_intercept: True
-  method: "zeros"
+  method: "uniform"
+  random_state: 42
 learning_rate_scheduler:
   method: "constant"
   scheduler_params:
@@ -13,9 +14,9 @@ learning_rate_scheduler:
     total_iters: 100
 optimizer:
   method: "rmsprop"
-  penalty: "L2"
+  penalty: "l1"
   optimizer_params:
-    lr: 0.1
-  alpha: 0.5
-batch_size: 5000
+    lr: 0.5
+  alpha: 0.1
+batch_size: null
 early_stop: "diff"

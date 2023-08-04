@@ -39,9 +39,12 @@ from fate_test import _config
 
 @click.command("suite")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *testsuite.json under these paths")
+              help="include *testsuite.yaml under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
-              help="exclude *testsuite.json under these paths")
+              help="exclude *testsuite.yaml under these paths")
+@click.option('-p', '--task-cores', type=int, help="processors per node")
+@click.option('-m', '--timeout', type=int,
+              help="maximum running time of job")
 @click.option("-g", '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option("--skip-jobs", is_flag=True, default=False,
@@ -57,7 +60,7 @@ from fate_test import _config
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_suite(ctx, include, exclude, glob,
-              skip_jobs, skip_data, data_only, clean_data, provider, **kwargs):
+              skip_jobs, skip_data, data_only, clean_data, provider, task_cores, timeout, **kwargs):
     """
     process testsuite
     """
@@ -66,6 +69,11 @@ def run_suite(ctx, include, exclude, glob,
     config_inst = ctx.obj["config"]
     if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
+    if task_cores is not None:
+        config_inst.update_conf(task_cores=task_cores)
+    if timeout is not None:
+        config_inst.update_conf(timeout=timeout)
+
     """if ctx.obj["auto_increasing_sid"] is not None:
         config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
     if clean_data is None:

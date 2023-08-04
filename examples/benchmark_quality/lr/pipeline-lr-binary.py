@@ -24,7 +24,7 @@ from fate_client.pipeline.utils import test_utils
 from fate_test.utils import extract_data, parse_summary_result
 
 
-def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./breast_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
@@ -38,21 +38,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     assert isinstance(param, dict)
 
-    data_set = param.get("data_guest").split('/')[-1]
-    if data_set == "default_credit_hetero_guest.csv":
-        guest_data_table = 'default_credit_hetero_guest'
-        host_data_table = 'default_credit_hetero_host'
-    elif data_set == 'breast_hetero_guest.csv':
-        guest_data_table = 'breast_hetero_guest'
-        host_data_table = 'breast_hetero_host'
-    elif data_set == 'give_credit_hetero_guest.csv':
-        guest_data_table = 'give_credit_hetero_guest'
-        host_data_table = 'give_credit_hetero_host'
-    elif data_set == 'epsilon_5k_hetero_guest.csv':
-        guest_data_table = 'epsilon_5k_hetero_guest'
-        host_data_table = 'epsilon_5k_hetero_host'
-    else:
-        raise ValueError(f"Cannot recognized data_set: {data_set}")
+    guest_data_table = param.get("data_guest")
+    host_data_table = param.get("data_host")
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
@@ -79,7 +66,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     lr_param.update(config_param)
     lr_0 = CoordinatedLR("lr_0",
                          train_data=intersect_0.outputs["output_data"],
-                         **config_param)
+                         **lr_param)
     lr_1 = CoordinatedLR("lr_1",
                          test_data=intersect_0.outputs["output_data"],
                          input_model=lr_0.outputs["output_model"])
@@ -95,6 +82,10 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.add_task(lr_1)
     pipeline.add_task(evaluation_0)
 
+    if config.task_cores:
+        pipeline.conf.set("task_cores", config.task_cores)
+    if config.timeout:
+        pipeline.conf.set("timeout", config.timeout)
     pipeline.compile()
     print(pipeline.get_dag())
     pipeline.fit()
@@ -107,11 +98,9 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     lr_1_label = extract_data(lr_1_data, "y")
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
     lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
-    """print(f"evaluation result: {pipeline.get_task_info('evaluation_0').get_output_metric()};"
-          f"result type: {type(pipeline.get_task_info('evaluation_0').get_output_metric())}")
-    """
+
     result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
-    print(f"result_summary")
+    print(f"result_summary: {result_summary}")
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

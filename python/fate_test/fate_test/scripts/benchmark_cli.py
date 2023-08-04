@@ -19,9 +19,12 @@ DATA_DISPLAY_PATTERN = re.compile("^FATE")
 
 @click.command(name="benchmark-quality")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *benchmark.json under these paths")
+              help="include *benchmark.yaml under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
-              help="exclude *benchmark.json under these paths")
+              help="exclude *benchmark.yaml under these paths")
+@click.option('-p', '--task-cores', type=int, help="processors per node", default=None)
+@click.option('-m', '--timeout', type=int, default=None,
+              help="maximum running time of job")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option('-t', '--tol', type=float,
@@ -35,12 +38,14 @@ DATA_DISPLAY_PATTERN = re.compile("^FATE")
               default="all", help="Error value display in algorithm comparison")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
+@click.option("--data-only", is_flag=True, default=False,
+              help="upload data only")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, storage_tag, history_tag, match_details,
-                  **kwargs):
+                  task_cores, timeout, **kwargs):
     """
     process benchmark suite, alias: bq
     """
@@ -50,6 +55,10 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
     config_inst = ctx.obj["config"]
     if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
+    if task_cores is not None:
+        config_inst.update_conf(task_cores=task_cores)
+    if timeout is not None:
+        config_inst.update_conf(timeout=timeout)
 
     """if ctx.obj["auto_increasing_sid"] is not None:
         config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
@@ -81,6 +90,8 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, stora
                     _upload_data(client, suite, config_inst)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                if kwargs.get("data_only"):
+                    continue
             try:
                 _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling, storage_tag,
                                      history_tag, fate_version, match_details)

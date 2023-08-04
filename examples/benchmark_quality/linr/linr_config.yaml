@@ -1,0 +1,22 @@
+data_guest: "examples/data/motor_hetero_guest.csv"
+data_host: "examples/data/motor_hetero_host.csv"
+label_name: "motor_speed"
+penalty: "L2"
+epochs: 10
+init_param:
+  fit_intercept: True
+  method: "zeros"
+  random_state: 42
+learning_rate_scheduler:
+  method: "constant"
+  scheduler_params:
+    factor: 1.0
+    total_iters: 100
+optimizer:
+  method: "sgd"
+  penalty: "L2"
+  optimizer_params:
+    lr: 0.13
+  alpha: 0.01
+batch_size: 100
+early_stop: "diff"
