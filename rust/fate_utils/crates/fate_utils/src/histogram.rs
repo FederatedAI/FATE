@@ -152,7 +152,7 @@ impl Coders {
                 .map(|x| self.coder.decode_f64(x))
                 .collect::<Vec<f64>>(),
         )
-            .into_pyarray(py)
+        .into_pyarray(py)
     }
     fn encode_f32(&self, data: f32) -> FixedpointEncoded {
         FixedpointEncoded {
@@ -177,7 +177,7 @@ impl Coders {
                 .map(|x| self.coder.decode_f32(x))
                 .collect::<Vec<f32>>(),
         )
-            .into_pyarray(py)
+        .into_pyarray(py)
     }
     fn encode_i64(&self, data: i64) -> FixedpointEncoded {
         FixedpointEncoded {
