@@ -514,6 +514,15 @@ class DistributedHistogram:
         self._seed = seed
 
     def i_update(self, data, k=None):
+        """
+        Update the histogram with the data.
+        Args:
+            data: table with the following schema:
+                TODO
+            k: number of output splits of the histogram
+        Returns:
+            ShuffledHistogram, the shuffled(if seed is not None) histogram
+        """
         if k is None:
             k = data.count()
         mapper = get_partition_hist_build_mapper(
@@ -525,6 +534,16 @@ class DistributedHistogram:
     def recover_feature_bins(
         self, seed, split_points: typing.Dict[int, int]
     ) -> typing.Dict[int, typing.Tuple[int, int]]:
+        """
+        Recover the feature bins from the split points.
+
+        Args:
+            seed: random seed
+            split_points: nid -> split data index
+
+        Returns:
+            nid -> (fid, bid)
+        """
         indexer = HistogramIndexer(self._node_size, self._feature_bin_sizes)
         points = list(split_points.items())
         real_indexes = indexer.get_shuffler(seed).get_reverse_indexes(1, [p[1] for p in points])
