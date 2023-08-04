@@ -126,7 +126,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._send_gh(ctx, grad_and_hess)
 
         # init histogram builder
-        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, hist_type='sklearn')
+        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, bining_dict, hist_type='sklearn')
 
         # init splitter
         self.splitter = FedSklearnSplitter(bining_dict)

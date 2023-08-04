@@ -95,7 +95,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         # Get Encrypted Grad And Hess
         grad_and_hess = ctx.guest.get('en_gh')
         root_node = self._initialize_root_node(ctx, grad_and_hess)
-        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, hist_type='sklearn')
+        self.hist_builder = get_hist_builder(train_df, grad_and_hess, root_node, max_bin, bining_dict, hist_type='sklearn')
         self.splitter = FedSklearnSplitter(bining_dict)
 
         node_map = {}

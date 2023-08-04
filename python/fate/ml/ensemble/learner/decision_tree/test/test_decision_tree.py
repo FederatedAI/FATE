@@ -63,8 +63,18 @@ if __name__ == '__main__':
         loss_bce.compute_grad(empty_gh, label, predict)
         loss_bce.compute_hess(empty_gh, label, predict)
 
-        tree = HeteroDecisionTreeGuest(max_depth)
-        ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
+        from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogram
+        from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
+        sample_pos = bin_data.create_frame()
+        sample_pos['sample_pos'] = bin_data.apply_row(lambda x: 0)
+
+        hist = SBTHistogram(bin_data, bin_info)
+        root_node = [Node(nid=0)]
+        node_map = {0: 0}
+        stat_obj = hist.compute_hist(root_node, bin_data, empty_gh, sample_pos, node_map)
+
+        # tree = HeteroDecisionTreeGuest(max_depth)
+        # ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
         
     elif party == 'host':
         ctx = create_ctx(host)

@@ -1,4 +1,6 @@
+import torch
 from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
+from fate.arch.histogram.histogram import DistributedHistogram, Histogram
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
 from typing import List
 import numpy as np
@@ -47,11 +49,40 @@ class SklearnHistBuilder(object):
             return hists, data_indices
         else:
             return hists
-    
+        
 
-def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, hist_type='distributed'):
+class SBTHistogram(object):
+
+    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=42) -> None:
+        
+        columns = bin_train_data.schema.columns
+        self.random_seed = random_seed
+        self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
+
+    def compute_hist(self, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, debug=False):
+        
+        node_num = len(nodes)
+        hist = DistributedHistogram(
+            node_size=node_num,
+            feature_bin_sizes=self.feat_bin_num,
+            value_schemas={
+                "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "1": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+            },
+            seed=self.random_seed,
+        )
+        targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), '1': gh.apply_row(lambda x: 1).as_tensor()}
+        stat_obj = bin_train_data.distributed_hist_stat(hist, sample_pos, targets)
+
+        return stat_obj
+
+def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, bin_info, hist_type='distributed'):
     
     assert hist_type in HIST_TYPE, 'hist_type should be in {}'.format(HIST_TYPE)
+
+    if hist_type == 'distributed':
+        pass
 
     if hist_type == 'sklearn':
 
