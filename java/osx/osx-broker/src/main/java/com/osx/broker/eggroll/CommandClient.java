@@ -65,7 +65,7 @@ public class CommandClient {
                 .addAllArgs(Arrays.stream(baseProtos).
                         map((element) -> ((AbstractMessageLite) element.toProto()).toByteString()).collect(Collectors.toList()))
                 .build();
-        logger.info("===call {} {} id {}", erEndpoint.host, erEndpoint.port, id);
+
 
         ManagedChannel managedChannel = buildManagedChannel(erEndpoint.host, erEndpoint.port);
         CommandServiceGrpc.CommandServiceBlockingStub stub = CommandServiceGrpc.newBlockingStub(managedChannel);

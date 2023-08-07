@@ -124,7 +124,7 @@ public class PushEventHandler extends GrpcEventHandler {
             putBatchSinkPushReqSO.onNext(tbBatch);
 
         }catch(Exception e){
-            logger.error("======handle msg error : "+ messageExt.getTopic(),e);
+            logger.error("handle msg error : "+ messageExt.getTopic(),e);
             if(backBlockingStub!=null) {
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
                         backTopic, MessageFlag.ERROR, sessionId, ErrorMessageUtil.buildRemoteRpcErrorMsg(1343,"kkkkk").getBytes());

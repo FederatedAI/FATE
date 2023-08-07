@@ -162,7 +162,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
         long needOffset;
 
         public  void  answer(Osx.Outbound  consumeResponse){
-            logger.info("============ answer long pulling========");
+
 
             if(streamObserver!=null) {
 

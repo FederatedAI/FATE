@@ -91,7 +91,7 @@ public class NewFateTest {
 
     @Test
     public void testStream(){
-        System.err.println("==========================");
+
         io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.Inbound>  reqSb = stub.transport(new StreamObserver<Osx.Outbound>() {
             @Override
             public void onNext(Osx.Outbound outbound) {
