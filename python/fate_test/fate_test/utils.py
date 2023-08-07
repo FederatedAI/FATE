@@ -16,6 +16,7 @@
 
 import math
 import os
+from datetime import timedelta
 
 import numpy as np
 from colorama import init, deinit, Fore, Style
@@ -372,11 +373,15 @@ def extract_data(df, col_name, convert_float=True, keep_id=False):
 
 
 def parse_job_time_info(job_time_info):
-    time_info_summary = []
+    time_info_summary = {}
+    cpn_list = []
     for cpn in job_time_info:
         cpn_name = cpn.get("task_name")
-        cpn_elapsed = cpn.get("elapsed")
-        time_info_summary.append((cpn_name, cpn_elapsed))
+        # convert milliseconds to seconds
+        cpn_elapsed = round(cpn.get("elapsed") / 1000)
+        time_info_summary[cpn_name] = cpn_elapsed
+        cpn_list.append(cpn_name)
+    time_info_summary["cpn_list"] = cpn_list
     return time_info_summary
 
 
@@ -385,12 +390,13 @@ def pretty_time_info_summary(time_info_summary, job_name):
     table.set_style(ORGMODE)
     field_names = ["component name", "time consuming"]
     table.field_names = field_names
-    time_summary = time_info_summary.get("time_summary", [])
-    for cpn_name, cpn_elapse in time_summary:
+    time_summary = time_info_summary.get("time_summary", {})
+    for cpn_name in time_summary["cpn_list"]:
+        cpn_elapse = time_summary.get(cpn_name)
         table.add_row(
             [
-                f"{TxtStyle.FIELD_VAL}{cpn_name}{TxtStyle.END}",
-                f"{TxtStyle.FIELD_VAL}{cpn_elapse}{TxtStyle.END}",
+                f"{cpn_name}",
+                f"{TxtStyle.FIELD_VAL}{timedelta(seconds=cpn_elapse)}{TxtStyle.END}",
             ]
         )
 

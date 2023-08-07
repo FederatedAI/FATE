@@ -19,7 +19,6 @@ import time
 import uuid
 from datetime import timedelta
 from inspect import signature
-from ruamel import yaml
 
 import click
 from fate_test._client import Clients
@@ -27,10 +26,10 @@ from fate_test._config import Config
 from fate_test._io import LOGGER, echo
 from fate_test._parser import PerformanceSuite
 from fate_test.scripts._options import SharedOptions
-from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
-    _add_replace_hook
+from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script
 from fate_test.utils import TxtStyle, parse_job_time_info, pretty_time_info_summary
 from prettytable import PrettyTable, ORGMODE
+from ruamel import yaml
 
 
 @click.command("performance")
@@ -56,7 +55,7 @@ from prettytable import PrettyTable, ORGMODE
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_task(ctx, job_type, include, replace, timeout, epochs,
+def run_task(ctx, job_type, include, timeout, epochs,
              max_depth, num_trees, task_cores, storage_tag, history_tag, skip_data, clean_data, provider, **kwargs):
     """
     Test the performance of big data tasks, alias: bp
@@ -79,13 +78,13 @@ def run_task(ctx, job_type, include, replace, timeout, epochs,
         clean_data = config_inst.clean_data
 
     def get_perf_template(conf: Config, job_type):
-        perf_dir = os.path.join(os.path.abspath(conf.perf_template_dir) + '/' + job_type + '/' + "*testsuite.yaml")
+        perf_dir = os.path.join(os.path.abspath(conf.perf_template_dir) + '/' + job_type + '/' + "*performance.yaml")
         return glob.glob(perf_dir)
 
     if not include:
         include = get_perf_template(config_inst, job_type)
     # prepare output dir and json hooks
-    _add_replace_hook(replace)
+    # _add_replace_hook(replace)
 
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
@@ -93,7 +92,7 @@ def run_task(ctx, job_type, include, replace, timeout, epochs,
     suites = _load_testsuites(includes=include, excludes=tuple(), glob=None, provider=provider,
                               suffix="performance.yaml", suite_type="performance")
     for i, suite in enumerate(suites):
-        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) {suite.path}")
+        echo.echo(f"\tdataset({len(suite.dataset)}) pipeline jobs({len(suite.pipeline_jobs)}) {suite.path}")
 
     if not yes and not click.confirm("running?"):
         return
@@ -115,7 +114,8 @@ def run_task(ctx, job_type, include, replace, timeout, epochs,
 
             echo.stdout_newline()
             try:
-                job_time_info = _run_performance_jobs(config_inst, suite, namespace, data_namespace_mangling, client,
+                job_time_info = _run_performance_jobs(config_inst, suite, namespace, data_namespace_mangling,
+                                                      client,
                                                       epochs, max_depth, num_trees)
             except Exception as e:
                 raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
@@ -130,9 +130,8 @@ def run_task(ctx, job_type, include, replace, timeout, epochs,
                 performance_dir = "/".join(
                     [os.path.join(os.path.abspath(config_inst.cache_directory),
                                   'benchmark_history', "performance.yaml")])
-                # @todo: change to client query result
-                # fate_version = clients["guest_0"].get_version()
-                fate_version = "beta-2.0.0"
+                fate_version = client["guest_0"].get_version()
+                # fate_version = "beta-2.0.0"
                 if history_tag:
                     history_tag = ["_".join([i, job_name]) for i in history_tag]
                     history_compare_result = comparison_quality(job_name,
@@ -149,8 +148,6 @@ def run_task(ctx, job_type, include, replace, timeout, epochs,
             echo.echo("#" * 60)
             echo.echo("\n".join(compare_summary))
 
-            echo.echo()
-
         except Exception:
             exception_id = uuid.uuid1()
             echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
@@ -163,7 +160,7 @@ def run_task(ctx, job_type, include, replace, timeout, epochs,
 
 
 @LOGGER.catch
-def _run_performance_jobs(config: Config, suite: PerformanceSuite, tol: float, namespace: str,
+def _run_performance_jobs(config: Config, suite: PerformanceSuite, namespace: str,
                           data_namespace_mangling: bool, client, epochs, max_depth, num_trees):
     # pipeline demo goes here
     job_n = len(suite.pipeline_jobs)
@@ -199,7 +196,9 @@ def _run_performance_jobs(config: Config, suite: PerformanceSuite, tol: float, n
             else:
                 job_id = mod.main()
             echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!\n")
-            ret_msg = client.query_time_elapse(job_id, role="guest", party_id=config.parties.guest[0]).get("data")
+            ret_msg = client["guest_0"].query_job(job_id=job_id,
+                                                  role="guest",
+                                                  party_id=config.parties.guest[0]).get("data")
             time_summary = parse_job_time_info(ret_msg)
             job_time_history[job_name] = {"job_id": job_id, "time_summary": time_summary}
             echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} time info: {time_summary}\n")
@@ -216,7 +215,7 @@ def _run_performance_jobs(config: Config, suite: PerformanceSuite, tol: float, n
 def comparison_quality(group_name, history_tags, history_info_dir, time_consuming):
     assert os.path.exists(history_info_dir), f"Please check the {history_info_dir} Is it deleted"
     with open(history_info_dir, 'r') as f:
-        benchmark_quality = yaml.load(f)
+        benchmark_quality = yaml.safe_load(f)
     benchmark_performance = {}
     table = PrettyTable()
     table.set_style(ORGMODE)
@@ -229,10 +228,11 @@ def comparison_quality(group_name, history_tags, history_info_dir, time_consumin
         benchmark_performance[group_name] = time_consuming
 
     for script_model_name in benchmark_performance:
-        for cpn, time in benchmark_performance[script_model_name].items():
+        time_history = benchmark_performance[script_model_name]
+        for cpn in time_history.get("cpn_list"):
             table.add_row([f"{script_model_name}"] +
-                          [f"{TxtStyle.FIELD_VAL}{cpn}{TxtStyle.END}"] +
-                          [f"{TxtStyle.FIELD_VAL}{time}{TxtStyle.END}"])
+                          [f"{cpn}"] +
+                          [f"{TxtStyle.FIELD_VAL}{timedelta(seconds=time_history.get(cpn))}{TxtStyle.END}"])
     # print("\n")
     # print(table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}"))
     # print("#" * 60)
@@ -243,7 +243,7 @@ def save_quality(storage_tag, save_dir, time_consuming):
     os.makedirs(os.path.dirname(save_dir), exist_ok=True)
     if os.path.exists(save_dir):
         with open(save_dir, 'r') as f:
-            benchmark_quality = yaml.load(f)
+            benchmark_quality = yaml.safe_load(f)
     else:
         benchmark_quality = {}
     benchmark_quality.update({storage_tag: time_consuming})

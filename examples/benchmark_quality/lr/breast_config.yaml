@@ -2,21 +2,21 @@ data_guest: "breast_hetero_guest"
 data_host: "breast_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 15
+epochs: 8
 init_param:
   fit_intercept: True
-  method: "uniform"
+  method: "random_uniform"
   random_state: 42
 learning_rate_scheduler:
   method: "constant"
   scheduler_params:
-    factor: 1.0
-    total_iters: 100
+    factor: 0.2
+    total_iters: 18
 optimizer:
   method: "rmsprop"
-  penalty: "l1"
+  penalty: "l2"
   optimizer_params:
-    lr: 0.5
-  alpha: 0.1
-batch_size: null
+    lr: 0.15
+  alpha: 0.2
+batch_size: 240
 early_stop: "diff"

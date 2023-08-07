@@ -280,7 +280,7 @@ class FLOWClient(object):
             retmsg = response['message']
             if retcode != 0 or retmsg != 'success':
                 raise RuntimeError(f"get version error: {response}")
-            fate_version = response["data"]["provider_name"]
+            fate_version = response["data"][0]["provider_name"]
         except Exception as e:
             raise RuntimeError(f"get version error: {response}") from e
         return fate_version
