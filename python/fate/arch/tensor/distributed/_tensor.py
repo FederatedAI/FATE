@@ -253,7 +253,7 @@ class Shardings:
             axis = self.shapes.axis
         if type is None:
             type = self._type
-        return Shardings(self._data.mapValues(func), type, shapes, axis, dtype, self._device)
+        return Shardings(self._data.mapValues(func), shapes, axis, dtype, self._device, type)
 
     def map_reduce_shard(
         self,

@@ -1,11 +1,11 @@
 from typing import List, Optional, Tuple
 
 import torch
-from fate_utils.histogram import PK as _PK
-from fate_utils.histogram import SK as _SK
-from fate_utils.histogram import Coders as _Coder
-from fate_utils.histogram import FixedpointPaillierVector, FixedpointVector
-from fate_utils.histogram import keygen as _keygen
+from fate_utils.paillier import PK as _PK
+from fate_utils.paillier import SK as _SK
+from fate_utils.paillier import Coders as _Coder
+from fate_utils.paillier import FixedpointPaillierVector, FixedpointVector
+from fate_utils.paillier import keygen as _keygen
 
 from .type import TensorEvaluator
 
