@@ -33,6 +33,9 @@ class PHETensor:
         self._shape = shape
         self._dtype = dtype
 
+    def type(self):
+        return f"phe.{self.dtype}"
+
     def __repr__(self) -> str:
         return f"<PHETensor shape={self.shape}, dtype={self.dtype}>"
 
