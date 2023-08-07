@@ -1,4 +1,5 @@
 import torch
+from typing import Dict
 from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
 from fate.arch.histogram.histogram import DistributedHistogram, Histogram
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
@@ -51,13 +52,59 @@ class SklearnHistBuilder(object):
             return hists
         
 
-class SBTHistogram(object):
+# def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, bin_info, hist_type='distributed'):
+    
+#     assert hist_type in HIST_TYPE, 'hist_type should be in {}'.format(HIST_TYPE)
+
+#     if hist_type == 'distributed':
+#         pass
+
+#     if hist_type == 'sklearn':
+
+#         if isinstance(bin_train_data, DataFrame):
+#             data = bin_train_data.as_pd_df()
+#         elif isinstance(bin_train_data, pd.DataFrame):
+#             data = bin_train_data
+
+#         if isinstance(grad_and_hess, DataFrame):
+#             gh = grad_and_hess.as_pd_df()
+#         elif isinstance(grad_and_hess, pd.DataFrame):
+#             gh = grad_and_hess
+
+#         data['sample_id'] = data['sample_id'].astype(np.uint32)
+#         gh['sample_id'] = gh['sample_id'].astype(np.uint32)
+#         collect_data = data.sort_values(by='sample_id')
+#         collect_gh = gh.sort_values(by='sample_id')
+#         if bin_train_data.schema.label_name is None:
+#             feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.match_id_name]).values
+#         else:
+#             feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.label_name, bin_train_data.schema.match_id_name]).values
+#         g = collect_gh['g'].values
+#         h = collect_gh['h'].values
+#         feat_arr = np.asfortranarray(feat_arr.astype(np.uint8))
+#         return SklearnHistBuilder(feat_arr, max_bin, g, h)
+
+class SBTHistogramBuilder(object):
 
     def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=None) -> None:
         
         columns = bin_train_data.schema.columns
         self.random_seed = random_seed
         self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
+
+    def _get_guest_schema(self):
+        return {
+                "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+            }
+    
+    def _get_host_schema(self):
+        return {
+                "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+            }
 
     def compute_hist(self, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, debug=False):
         
@@ -80,37 +127,15 @@ class SBTHistogram(object):
         map_sample_pos['node_idx'] = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, targets)
 
-        return stat_obj
-    
+        return hist, stat_obj
 
-def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, bin_info, hist_type='distributed'):
-    
-    assert hist_type in HIST_TYPE, 'hist_type should be in {}'.format(HIST_TYPE)
-
-    if hist_type == 'distributed':
-        pass
-
-    if hist_type == 'sklearn':
-
-        if isinstance(bin_train_data, DataFrame):
-            data = bin_train_data.as_pd_df()
-        elif isinstance(bin_train_data, pd.DataFrame):
-            data = bin_train_data
-
-        if isinstance(grad_and_hess, DataFrame):
-            gh = grad_and_hess.as_pd_df()
-        elif isinstance(grad_and_hess, pd.DataFrame):
-            gh = grad_and_hess
-
-        data['sample_id'] = data['sample_id'].astype(np.uint32)
-        gh['sample_id'] = gh['sample_id'].astype(np.uint32)
-        collect_data = data.sort_values(by='sample_id')
-        collect_gh = gh.sort_values(by='sample_id')
-        if bin_train_data.schema.label_name is None:
-            feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.match_id_name]).values
+    def recover_feature_bins(self, hist: DistributedHistogram, nid_split_id: Dict[int, int], node_map: dict) -> Dict[int, int]:
+        if self.random_seed is None:
+            return nid_split_id  # randome seed has no shuffle, no need to recover
         else:
-            feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.label_name, bin_train_data.schema.match_id_name]).values
-        g = collect_gh['g'].values
-        h = collect_gh['h'].values
-        feat_arr = np.asfortranarray(feat_arr.astype(np.uint8))
-        return SklearnHistBuilder(feat_arr, max_bin, g, h)
+            reverse_node_map = {v: k for k, v in node_map.items()}
+            nid_split_id_ = {node_map[k]: v for k, v in nid_split_id.items()}
+            recover = hist.recover_feature_bins(self.random_seed, nid_split_id_)
+            print('recover rs is', recover)
+            recover_rs = {reverse_node_map[k]: v for k, v in recover.items()}
+            return recover_rs

@@ -296,7 +296,7 @@ class FedSklearnSplitter(SklearnSplitter):
 class FedSBTSplitter(object):
 
     def __init__(self, bin_train_data: DataFrame, bin_info: dict, min_impurity_split=1e-2, min_sample_split=2,
-                 min_leaf_node=1, min_child_weight=1, l1=0, l2=0.1, valid_features=None) -> None:
+                 min_leaf_node=1, min_child_weight=1, l1=0, l2=0.1) -> None:
         
         super().__init__()
         self.min_impurity_split = min_impurity_split
@@ -308,7 +308,8 @@ class FedSBTSplitter(object):
         columns = bin_train_data.schema.columns
         self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
 
-    def _get_bucket(self, feature_buckets, idx):
+    def get_bucket(self, idx):
+        feature_buckets = self.feat_bin_num
         cumulative_buckets = [0]
         for bucket in feature_buckets:
             cumulative_buckets.append(cumulative_buckets[-1] + bucket)
@@ -400,8 +401,13 @@ class FedSBTSplitter(object):
 
         return rs
     
-    def _find_best_splits(self, node_hist, sitename, cur_layer_nodes, node_map):
+    def _find_best_splits(self, node_hist, sitename, cur_layer_nodes, reverse_node_map, recover_bucket=True):
         
+        """
+        recover_bucket: if node_hist is guest hist, can get the fid and bid of the split info
+                        but for node_hist from host sites, histograms are shuffled, so can not get the fid and bid,
+                        only hosts know them.
+        """
         l_g, l_h, l_cnt = self._extract_hist(node_hist)
         g_sum, h_sum, cnt_sum = self._make_sum_tensor(cur_layer_nodes)
         rs = self._compute_gains(l_g, l_h, l_cnt, g_sum, h_sum, cnt_sum)
@@ -410,45 +416,85 @@ class FedSBTSplitter(object):
         best = rs.max(dim=-1)
         best_gain = best[0]
         best_idx = best[1]
-        reverse_node_map = {v: k for k, v in node_map.items()}
         print('best_idx: ', best_idx)
         print('best_gain: ', best_gain)
 
         split_infos = []
         node_idx = 0
         for idx, gain in zip(best_idx, best_gain):
+            idx_ = int(idx.detach().cpu().item())
             if gain == float('-inf') or cnt_sum[node_idx] < self.min_sample_split:
                 split_infos.append(None)
-                logger.info('Node {} can not be further split'.format(reverse_node_map[idx.detach().cpu().item()]))
+                logger.info('Node {} can not be further split'.format(reverse_node_map[idx_]))
             else:
-                fid, bid = self._get_bucket(self.feat_bin_num, idx)
                 split_info = SplitInfo(
-                    best_fid=int(fid),
-                    best_bid=int(bid),
-                    gain=float(gain),
-                    sum_grad=float(l_g[node_idx][idx]),
-                    sum_hess=float(l_h[node_idx][idx]),
-                    sample_count=int(l_cnt[node_idx][idx]),
-                    sitename=sitename
-                )
+                        gain=float(gain),
+                        sum_grad=float(l_g[node_idx][idx_]),
+                        sum_hess=float(l_h[node_idx][idx_]),
+                        sample_count=int(l_cnt[node_idx][idx_]),
+                        sitename=sitename
+                    )
+                if recover_bucket:
+                    fid, bid = self.get_bucket(idx_)
+                    split_info.best_fid = fid
+                    split_info.best_bid = bid
+                else:
+                    split_info.split_id = idx_
                 split_infos.append(split_info)
             node_idx += 1
 
         return split_infos
     
-    def _guest_split(self, ctx: Context, histogram, cur_layer_node, node_map):
+    def _merge_splits(self, guest_splits, host_splits_list):
+        
+        splits = []
+        for node_idx in range(len(guest_splits)):
+            best_gain = -np.inf
+            best_splitinfo = None
+            guest_splitinfo: SplitInfo = guest_splits[node_idx]
+            if guest_splitinfo is not None and guest_splitinfo.gain > best_gain:
+                best_gain = guest_splitinfo.gain
+                best_splitinfo = guest_splitinfo
+
+            for host_idx in range(len(host_splits_list)):
+                host_splits = host_splits_list[host_idx]
+                host_splitinfo: SplitInfo = host_splits[node_idx]
+                if host_splitinfo is not None and host_splitinfo.gain > best_gain:
+                    best_gain = host_splitinfo.gain
+                    best_splitinfo = host_splitinfo
+            splits.append(best_splitinfo)
+
+        return splits
+    
+    def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map):
+
+        histogram = stat_rs.decrypt({}, {})
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
-        guest_best_splits = self._find_best_splits(histogram, sitename, cur_layer_node, node_map)
-        return guest_best_splits
+        reverse_node_map = {v: k for k, v in node_map.items()}
+        guest_best_splits = self._find_best_splits(histogram, sitename, cur_layer_node, reverse_node_map, recover_bucket=True)
+        host_histograms = ctx.hosts.get('hist')
+        host_splits = []
+        for idx, hist in enumerate(host_histograms):
+            host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
+            host_hist = hist.decrypt({}, {})
+            host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
+            host_splits.append(host_split)
+
+        best_splits = self._merge_splits(guest_best_splits, host_splits)
+        print('guest splits are {}'.format(guest_best_splits))
+        print('host splits are {}'.format(host_splits))
+        print('best splits are {}'.format(best_splits))
+
+        return best_splits
     
-    def _host_split(self, ctx: Context):
-        return None
+    def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
+        ctx.guest.put('hist', en_histogram)
     
-    def split(self, ctx: Context, histogram, cur_layer_node, node_map):
+    def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map):
         
         if ctx.is_on_guest:
-            return self._guest_split(ctx, histogram, cur_layer_node, node_map)
+            return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map)
         elif ctx.is_on_host:
-            return self._host_split(ctx, histogram, cur_layer_node)
+            return self._host_split(ctx, histogram_statistic_result, cur_layer_node)
         else:
             raise ValueError('illegal role {}'.format(ctx.role))

@@ -1,5 +1,5 @@
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos
-from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogram
+from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
@@ -84,7 +84,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
         
         # now skip encrypt
-        ctx.hosts.put('en_gh', grad_and_hess.as_pd_df())
+        ctx.hosts.put('en_gh', grad_and_hess)
 
     def _mask_node(self, ctx: Context, nodes: List[Node]):
         new_nodes = []
@@ -126,7 +126,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._send_gh(ctx, grad_and_hess)
 
         # init histogram builder
-        self.hist_builder = SBTHistogram(bin_train_data, binning_dict, None)
+        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None)
 
         # init splitter
         self.splitter = FedSBTSplitter(bin_train_data, binning_dict)
@@ -145,10 +145,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._check_assign_result(sample_pos, cur_layer_node)
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
-            statistic_result = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
-            hist = statistic_result.decrypt({}, {})
+            hist_inst, statistic_result = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             # compute best splits
-            split_info = self.splitter.split(sub_ctx, hist, cur_layer_node, node_map)
+            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map)
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info)
             # update feature importance
