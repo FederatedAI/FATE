@@ -1,122 +1,10 @@
 import typing
 from typing import List, MutableMapping, Tuple
 
-import numpy as np
 import torch
 
-
-class Shuffler:
-    """
-    Shuffler is used to shuffle the data in the same way for all partition.
-
-
-    """
-
-    def __init__(self, num_node: int, node_size: int, seed: int):
-        self.num_node = num_node
-        self.node_size = node_size
-        self.perm_indexes = [
-            torch.randperm(node_size, generator=torch.Generator().manual_seed(seed)) for _ in range(num_node)
-        ]
-
-    def get_global_perm_index(self):
-        index = torch.hstack([index + (nid * self.node_size) for nid, index in enumerate(self.perm_indexes)])
-        return index
-
-    #
-    # def reverse_index(self, index):
-    #     return torch.argsort(self.perm_index)[index]
-
-    def get_shuffle_index(self, step, reverse=False):
-        """
-        get chunk shuffle index
-        """
-        stepped = torch.arange(0, self.num_node * self.node_size * step).reshape(self.num_node * self.node_size, step)
-        indexes = stepped[self.get_global_perm_index(), :].flatten()
-        if reverse:
-            indexes = torch.argsort(indexes)
-        return indexes
-
-    def get_reverse_indexes(self, step, indexes):
-        mapping = self.get_shuffle_index(step, reverse=True)
-        return [mapping[i] for i in indexes]
-
-
-class HistogramIndexer:
-    def __init__(self, node_size: int, feature_bin_sizes: List[int]):
-        self.node_size = node_size
-        self.feature_bin_size = feature_bin_sizes
-        self.feature_size = len(feature_bin_sizes)
-        self.feature_axis_stride = np.cumsum([0] + [feature_bin_sizes[i] for i in range(self.feature_size)])
-        self.node_axis_stride = sum(feature_bin_sizes)
-
-        self._shuffler = None
-
-    def get_position(self, nid, fid, bid):
-        return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
-
-    def get_reverse_position(self, position) -> Tuple[int, int, int]:
-        """
-        get nid, fid, bid from data position
-        """
-        nid = position // self.node_axis_stride
-        bid = position % self.node_axis_stride
-        for fid in range(self.feature_size):
-            if bid < self.feature_axis_stride[fid + 1]:
-                return nid, fid, bid - self.feature_axis_stride[fid]
-
-    def get_bin_num(self, fid):
-        return self.feature_bin_size[fid]
-
-    def get_bin_interval(self, nid, fid):
-        node_stride = nid * self.node_axis_stride
-        return node_stride + self.feature_axis_stride[fid], node_stride + self.feature_axis_stride[fid + 1]
-
-    def get_node_intervals(self):
-        intervals = []
-        for nid in range(self.node_size):
-            intervals.append((nid * self.node_axis_stride, (nid + 1) * self.node_axis_stride))
-        return intervals
-
-    def get_global_feature_intervals(self):
-        intervals = []
-        for nid in range(self.node_size):
-            for fid in range(self.feature_size):
-                intervals.append(self.get_bin_interval(nid, fid))
-        return intervals
-
-    def splits_into_k(self, k):
-        n = self.node_axis_stride
-        split_sizes = [n // k + (1 if i < n % k else 0) for i in range(k)]
-        start = 0
-        for pid, size in enumerate(split_sizes):
-            end = start + size
-            shift = self.node_axis_stride
-            yield pid, (start, end), [(start + nid * shift, end + nid * shift) for nid in range(self.node_size)]
-            start += size
-
-    def total_data_size(self):
-        return self.node_size * self.node_axis_stride
-
-    def one_node_data_size(self):
-        return self.node_axis_stride
-
-    def global_flatten_bin_sizes(self):
-        return self.feature_bin_size * self.node_size
-
-    def flatten_in_node(self):
-        return HistogramIndexer(self.node_size, [self.one_node_data_size()])
-
-    def squeeze_bins(self):
-        return HistogramIndexer(self.node_size, [1] * self.feature_size)
-
-    def get_shuffler(self, seed):
-        if self._shuffler is None:
-            self._shuffler = Shuffler(self.node_size, self.one_node_data_size(), seed)
-        return self._shuffler
-
-    def reshape(self, feature_bin_sizes):
-        return HistogramIndexer(self.node_size, feature_bin_sizes)
+# from fate_utils.histogram import HistogramIndexer, Shuffler
+from .indexer import HistogramIndexer, Shuffler
 
 
 class HistogramValues:
@@ -325,6 +213,11 @@ class Histogram:
         self._indexer = indexer
         self._values_mapping = values
 
+    def maybe_create_shuffler(self, seed):
+        if seed is None:
+            return None
+        return self._indexer.get_shuffler(seed)
+
     @classmethod
     def create(cls, node_size, feature_bin_sizes, values_schema: dict):
         indexer = HistogramIndexer(node_size, feature_bin_sizes)
@@ -381,20 +274,20 @@ class Histogram:
                 values_mapping[name] = value_container
         return Histogram(self._indexer, values_mapping)
 
-    def i_shuffle(self, seed, reverse=False):
-        shuffler = self._indexer.get_shuffler(seed)
-        for name, value_container in self._values_mapping.items():
-            value_container.i_shuffle(shuffler, reverse=reverse)
+    def i_shuffle(self, shuffler, reverse=False):
+        if shuffler is not None:
+            for name, value_container in self._values_mapping.items():
+                value_container.i_shuffle(shuffler, reverse=reverse)
 
     def __str__(self):
         result = ""
-        for nid in range(self._indexer.node_size):
+        indexes = self._indexer.unflatten_indexes()
+        for nid, fids in indexes.items():
             result += f"node-{nid}:\n"
-            for fid in range(self._indexer.feature_size):
+            for fid, bids in fids.items():
                 result += f"\tfeature-{fid}:\n"
-                for bid in range(self._indexer.get_bin_num(fid)):
+                for start in bids:
                     for name, value_container in self._values_mapping.items():
-                        start = self._indexer.get_position(nid, fid, bid)
                         values = value_container.slice(start, start + 1)
                         result += f"\t\t{name}: {values}"
                     result += "\n"
@@ -419,7 +312,7 @@ class Histogram:
     def sum_bins(self):
         indexer = self._indexer.squeeze_bins()
         values_mapping = {}
-        intervals = self._indexer.get_global_feature_intervals()
+        intervals = self._indexer.get_feature_position_ranges()
         for name, value_container in self._values_mapping.items():
             values_mapping[name] = value_container.chunking_sum(intervals)
         return Histogram(indexer, values_mapping)
@@ -587,12 +480,12 @@ def argmax_reducer(
 def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas, seed, k):
     def _partition_hist_build_mapper(part):
         hist = Histogram.create(node_size, feature_bin_sizes, value_schemas)
+        shuffle = hist.maybe_create_shuffler(seed)
         for _, raw in part:
             nids, fids, targets = raw
             hist.i_update(nids, fids, targets)
         hist.i_cumsum_bins()
-        if seed is not None:
-            hist.i_shuffle(seed)
+        hist.i_shuffle(shuffle)
         splits = hist.to_splits(k)
         return list(splits)
 

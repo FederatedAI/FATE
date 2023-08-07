@@ -268,7 +268,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             a: the vector to shuffle
             indices: the indices to shuffle
         """
-        a.i_shuffle(indices.detach().tolist())
+        a.i_shuffle(indices)
 
     @staticmethod
     def intervals_slice(a: EV, intervals: List[Tuple[int, int]]) -> EV:

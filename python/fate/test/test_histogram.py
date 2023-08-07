@@ -320,7 +320,6 @@ def test_distributed_hist_calling_from_df():
         },
         seed=0,
     )
-
     stat_obj = df.distributed_hist_stat(hist, pos_df, targets)
 
     # remote stat_obj to other party
@@ -334,7 +333,8 @@ def test_distributed_hist_calling_from_df():
     # reshape back, if we know the feature bin sizes
     out = out.reshape([3, 2])
     # shuffle back, if we know the seed
-    out.i_shuffle(seed=0, reverse=True)
+    shuffler = out.maybe_create_shuffler(0)
+    out.i_shuffle(shuffler, reverse=True)
     # print out
     print(out)
 
