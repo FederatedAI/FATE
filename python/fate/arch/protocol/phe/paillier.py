@@ -282,6 +282,30 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         return a.intervals_slice(intervals)
 
     @staticmethod
+    def slice_indexes(a: EV, indexes: List[int]) -> EV:
+        """
+        slice in the given indexes
+        Args:
+            a:
+            indexes:
+
+        Returns:
+
+        """
+        return a.slice_indexes(indexes)
+
+    @staticmethod
+    def cat(list: List[EV]) -> EV:
+        """
+        concatenate the list of vectors
+        Args:
+            list: the list of vectors
+
+        Returns: the concatenated vector
+        """
+        return list[0].cat(list[1:])
+
+    @staticmethod
     def intervals_sum_with_step(pk: PK, a: EV, intervals: List[Tuple[int, int]], step: int):
         """
         sum in the given intervals, with step size
