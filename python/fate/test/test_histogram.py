@@ -5,7 +5,12 @@ import torch
 from fate.arch import Context
 from fate.arch.computing.standalone import CSession
 from fate.arch.federation.standalone import StandaloneFederation
-from fate.arch.histogram.histogram import DistributedHistogram, Histogram
+from fate.arch.histogram.histogram import (
+    DistributedHistogram,
+    Histogram,
+    HistogramPlainValues,
+    ShuffledHistogram,
+)
 
 computing = CSession()
 
@@ -346,4 +351,32 @@ def test_distributed_hist_calling_from_df():
     print(best_feature_bins)
 
 
-# test_distributed_hist_calling_from_df()
+def test_shuffle():
+    hist = Histogram.create(2, [3, 4, 5, 6, 7], {"one": {"type": "tensor", "stride": 1, "dtype": torch.int32}})
+    dist_hist = DistributedHistogram(
+        2, [3, 4, 5, 6, 7], {"one": {"type": "tensor", "stride": 1, "dtype": torch.int32}}, 0
+    )
+    shuffler = hist._indexer.get_shuffler(0)
+    table = ctx.computing.parallelize([1, 2, 3, 4], 1, include_key=False)
+    table = table.mapReducePartitions(lambda k: _create_split(), lambda a, b: a.iadd(b))
+    shuffled = ShuffledHistogram(table, 2, 25)
+
+    decrypted = shuffled.decrypt({}, {})
+    print(decrypted)
+    decrypted.i_shuffle(shuffler, reverse=True)
+    print(decrypted)
+
+    print(dist_hist.recover_feature_bins(0, {0: 3, 1: 5}))
+
+
+def _create_split():
+    seed = 0
+    k = 4
+    hist = Histogram.create(2, [3, 4, 5, 6, 7], {"one": {"type": "tensor", "stride": 1, "dtype": torch.int32}})
+    hist._values_mapping["one"] = HistogramPlainValues(torch.arange(0, 50))
+    print(hist)
+    shuffle = hist.maybe_create_shuffler(seed)
+    # hist.i_cumsum_bins()
+    hist.i_shuffle(shuffle)
+    splits = hist.to_splits(k)
+    return list(splits)
