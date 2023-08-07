@@ -37,7 +37,7 @@ class Shuffler:
         return indexes.detach().cpu().tolist()
 
     def get_reverse_indexes(self, step, indexes):
-        mapping = self.get_shuffle_index(step, reverse=True)
+        mapping = self.get_shuffle_index(step, reverse=False)
         return [mapping[i] for i in indexes]
 
 
@@ -99,6 +99,20 @@ class HistogramIndexer:
         Returns: data position
         """
         return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
+
+    def get_positions(self, nids: List[int], bids: List[List[int]]):
+        """
+        get data positions by node_ids and bin_ids
+        Args:
+            nids: node ids
+            bids: bin ids
+
+        Returns: data positions
+        """
+        positions = []
+        for nid, bids in zip(nids, bids):
+            positions.append([self.get_position(nid, fid, bid) for fid, bid in enumerate(bids)])
+        return positions
 
     def get_reverse_position(self, position) -> Tuple[int, int, int]:
         """
