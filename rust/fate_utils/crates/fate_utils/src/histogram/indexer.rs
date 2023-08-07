@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::iter::Map;
+use ndarray::{Array2, Axis, Ix2};
+use numpy::{PyArray2, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::prelude::*;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -13,6 +14,7 @@ pub struct HistogramIndexer {
     feature_axis_stride: Vec<usize>,
     node_axis_stride: usize,
 }
+
 
 #[pymethods]
 impl HistogramIndexer {
@@ -40,16 +42,10 @@ impl HistogramIndexer {
         nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
     }
 
-    fn get_positions(&self, nids: Vec<usize>, bid_vec: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
-        let mut positions = Vec::with_capacity(bid_vec.len());
-        for (fid, bids) in bid_vec.iter().enumerate() {
-            let mut pos = Vec::with_capacity(bids.len());
-            for (&nid, &bid) in nids.iter().zip(bids) {
-                pos.push(self.get_position(nid, fid, bid));
-            }
-            positions.push(pos);
-        }
-        positions
+    fn get_positions(&self, nids: Vec<usize>, bid_vec: Vec<Vec<usize>>, py: Python) -> Vec<Vec<usize>> {
+        bid_vec.iter().zip(nids.iter()).map(|(bids, &nid)| {
+            bids.iter().enumerate().map(|(fid, &bid)| self.get_position(nid, fid, bid)).collect()
+        }).collect()
     }
 
     fn get_reverse_position(&self, position: usize) -> (usize, usize, usize) {
