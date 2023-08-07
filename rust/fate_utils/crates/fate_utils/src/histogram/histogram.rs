@@ -268,6 +268,21 @@ impl FixedpointPaillierVector {
         let data = self.data[start..start + size].to_vec();
         FixedpointPaillierVector { data }
     }
+
+    fn slice_indexes(&mut self, indexes: Vec<usize>) -> PyResult<Self> {
+        let data = indexes
+            .iter()
+            .map(|i| self.data[*i].clone())
+            .collect::<Vec<_>>();
+        Ok(FixedpointPaillierVector { data })
+    }
+    fn cat(&self, others: Vec<PyRef<FixedpointPaillierVector>>) -> PyResult<Self> {
+        let mut data = self.data.clone();
+        for other in others {
+            data.extend(other.data.clone());
+        }
+        Ok(FixedpointPaillierVector { data })
+    }
     fn i_shuffle(&mut self, indexes: Vec<usize>) {
         let mut visited = vec![false; self.data.len()];
         for i in 0..self.data.len() {
