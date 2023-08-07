@@ -42,7 +42,7 @@ impl HistogramIndexer {
         nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
     }
 
-    fn get_positions(&self, nids: Vec<S>, bid_vec: Vec<Vec<S>>, py: Python) -> Vec<Vec<S>> {
+    fn get_positions(&self, nids: Vec<S>, bid_vec: Vec<Vec<S>>) -> Vec<Vec<S>> {
         bid_vec.iter().zip(nids.iter()).map(|(bids, &nid)| {
             bids.iter().enumerate().map(|(fid, &bid)| self.get_position(nid, fid, bid)).collect()
         }).collect()
@@ -247,7 +247,7 @@ impl Shuffler {
 }
 
 
-pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
+pub(crate) fn register(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<HistogramIndexer>()?;
     m.add_class::<Shuffler>()?;
     Ok(())
