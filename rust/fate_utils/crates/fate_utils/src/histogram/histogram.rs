@@ -152,7 +152,7 @@ impl Coders {
                 .map(|x| self.coder.decode_f64(x))
                 .collect::<Vec<f64>>(),
         )
-        .into_pyarray(py)
+            .into_pyarray(py)
     }
     fn encode_f32(&self, data: f32) -> FixedpointEncoded {
         FixedpointEncoded {
@@ -177,7 +177,7 @@ impl Coders {
                 .map(|x| self.coder.decode_f32(x))
                 .collect::<Vec<f32>>(),
         )
-        .into_pyarray(py)
+            .into_pyarray(py)
     }
     fn encode_i64(&self, data: i64) -> FixedpointEncoded {
         FixedpointEncoded {
@@ -417,7 +417,9 @@ impl FixedpointPaillierVector {
                 self.data[sa..ea]
                     .iter_mut()
                     .zip(other.data[sb..eb].iter())
-                    .for_each(|(x, y)| x.add_assign(y, &pk.pk));
+                    .for_each(|(x, y)| {
+                        x.add_assign(y, &pk.pk)
+                    });
             }
             None => {
                 self.data[sa..]
@@ -612,17 +614,12 @@ impl FixedpointVector {
 }
 
 pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
-    let submodule_quantile = PyModule::new(py, "histogram")?;
-    submodule_quantile.add_class::<FixedpointPaillierVector>()?;
-    submodule_quantile.add_class::<FixedpointVector>()?;
-    submodule_quantile.add_class::<PK>()?;
-    submodule_quantile.add_class::<SK>()?;
-    submodule_quantile.add_class::<Coders>()?;
-    submodule_quantile.add_class::<PyCT>()?;
-    submodule_quantile.add_function(wrap_pyfunction!(keygen, m)?)?;
-    m.add_submodule(submodule_quantile)?;
-    py.import("sys")?
-        .getattr("modules")?
-        .set_item("fate_utils.histogram", submodule_quantile)?;
+    m.add_class::<FixedpointPaillierVector>()?;
+    m.add_class::<FixedpointVector>()?;
+    m.add_class::<PK>()?;
+    m.add_class::<SK>()?;
+    m.add_class::<Coders>()?;
+    m.add_class::<PyCT>()?;
+    m.add_function(wrap_pyfunction!(keygen, m)?)?;
     Ok(())
 }

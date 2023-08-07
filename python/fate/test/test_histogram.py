@@ -331,7 +331,8 @@ if __name__ == '__main__':
     # reshape back, if we know the feature bin sizes
     out = out.reshape([3, 2])
     # shuffle back, if we know the seed
-    out.i_shuffle(seed=0, reverse=True)
+    shuffler = out.maybe_create_shuffler(0)
+    out.i_shuffle(shuffler, reverse=True)
     # print out
     print(out)
 
