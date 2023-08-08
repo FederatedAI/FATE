@@ -4,6 +4,7 @@ import torch
 from fate_utils.paillier import PK as _PK
 from fate_utils.paillier import SK as _SK
 from fate_utils.paillier import Coders as _Coder
+from fate_utils.paillier import Evaluator as _Evaluator
 from fate_utils.paillier import FixedpointPaillierVector, FixedpointVector
 from fate_utils.paillier import keygen as _keygen
 
@@ -294,7 +295,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         Returns:
 
         """
-        return a.slice_indexes(indexes)
+        return _Evaluator.slice_indexes(a, indexes)
 
     @staticmethod
     def cat(list: List[EV]) -> EV:
@@ -305,7 +306,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
 
         Returns: the concatenated vector
         """
-        return list[0].cat(list[1:])
+        return _Evaluator.cat(list)
 
     @staticmethod
     def intervals_sum_with_step(pk: PK, a: EV, intervals: List[Tuple[int, int]], step: int):
