@@ -471,8 +471,12 @@ class FedSBTSplitter(object):
         histogram = stat_rs.decrypt({}, {})
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         reverse_node_map = {v: k for k, v in node_map.items()}
+
+        # find local best splits
         guest_best_splits = self._find_best_splits(histogram, sitename, cur_layer_node, reverse_node_map, recover_bucket=True)
+        # find best splits from host parties
         host_histograms = ctx.hosts.get('hist')
+        raise ValueError('to here cwj')
         host_splits = []
         for idx, hist in enumerate(host_histograms):
             host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
@@ -488,6 +492,7 @@ class FedSBTSplitter(object):
         return host_splits[0]
     
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
+
         ctx.guest.put('hist', en_histogram)
     
     def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map):

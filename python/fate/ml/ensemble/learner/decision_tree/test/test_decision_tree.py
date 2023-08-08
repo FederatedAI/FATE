@@ -99,4 +99,4 @@ if __name__ == '__main__':
         bin_data = data_host.bucketize(boundaries=bin_info)
 
         tree = HeteroDecisionTreeHost(max_depth, random_seed=42)
-        tree.booster_fit(ctx, bin_data, bin_info)
+        ret = tree.booster_fit(ctx, bin_data, bin_info)

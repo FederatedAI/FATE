@@ -93,24 +93,30 @@ class SBTHistogramBuilder(object):
         self.random_seed = random_seed
         self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
 
-    def _get_guest_schema(self):
+    def _get_plain_text_schema(self):
         return {
                 "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
                 "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
                 "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
             }
     
-    def _get_host_schema(self):
+    def _get_enc_hist_schema(self, pk, evaluator):
         return {
-                "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-                "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "g":{"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
+                "h":{"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
                 "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
             }
 
-    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: dict, sample_pos: DataFrame = None, node_map={}, debug=False):
+    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: dict, sample_pos: DataFrame = None, node_map={}, pk=None, evaluator=None):
+
         node_num = len(nodes)
         if ctx.is_on_guest:
-            schema = self._get_guest_schema()
+            schema = self._get_plain_text_schema()
+        elif ctx.is_on_host:
+            if pk is None or evaluator is None:
+                schema = self._get_plain_text_schema()
+            else:
+                schema = self._get_enc_hist_schema(pk, evaluator)
 
         hist = DistributedHistogram(
             node_size=node_num,
@@ -121,7 +127,9 @@ class SBTHistogramBuilder(object):
         indexer = bin_train_data.get_indexer('sample_id')
         gh = gh.loc(indexer, preserve_order=True)
         sample_pos = sample_pos.loc(indexer, preserve_order=True)
-        targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), 'cnt': gh.apply_row(lambda x: 1).as_tensor()}
+        g = gh['g'].as_tensor()
+        h = gh['h'].as_tensor()
+        targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), 'cnt': bin_train_data.apply_row(lambda x: 1).as_tensor()}
         map_sample_pos = sample_pos.create_frame()
         map_sample_pos['node_idx'] = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, targets)

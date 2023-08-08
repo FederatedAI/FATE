@@ -103,8 +103,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
         
         # encrypt g & h
-        en_g_h = dict(g=self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor()), h=self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor()))
-        ctx.hosts.put('en_gh', en_g_h)
+        en_grad_hess = grad_and_hess.create_frame()
+        en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
+        en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
+        ctx.hosts.put('en_gh', en_grad_hess)
+        ctx.hosts.put('en_kit', [self._pk, self._evaluator])
 
     def _mask_node(self, ctx: Context, nodes: List[Node]):
         new_nodes = []
@@ -140,7 +143,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         feat_max_bin, max_bin = self._get_column_max_bin(binning_dict)
         sample_pos = self._init_sample_pos(train_df)
         self._sample_on_leaves = sample_pos.empty_frame()
-        root_node = self._initialize_root_node(ctx, grad_and_hess)
+        root_node = self._initialize_root_node(ctx, train_df, grad_and_hess)
 
         # initialize homographic encryption
         if self._encrypt_kit is None:

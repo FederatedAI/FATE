@@ -139,6 +139,7 @@ class Block(object):
     @field_indexes.setter
     def field_indexes(self, field_indexes: Union[list, set]):
         self._field_indexes = field_indexes
+        self._field_index_mapping = dict(zip(field_indexes, range(len(field_indexes))))
 
     @property
     def should_compress(self):
@@ -172,6 +173,7 @@ class Block(object):
             dst_field_indexes.append(dst_field_index)
 
         new_block = copy.deepcopy(self)
+        new_block.field_indexes = dst_field_indexes
         # new_block = type(self)(dst_field_indexes)
         new_block.should_compress = self._should_compress
 

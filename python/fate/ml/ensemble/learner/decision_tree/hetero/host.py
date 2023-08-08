@@ -22,6 +22,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.splitter = None
         self._valid_features = valid_features
         self._random_seed = random_seed
+        self._pk = None
+        self._evaluator = None
 
     def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, hist_inst: DistributedHistogram, splitter: FedSBTSplitter):
 
@@ -114,8 +116,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         sample_pos = self._init_sample_pos(train_df)
 
         # Get Encrypted Grad And Hess
-        grad_and_hess = ctx.guest.get('en_gh')
-        root_node = self._initialize_root_node(ctx)
+        en_grad_and_hess = ctx.guest.get('en_gh')
+        self._pk, self._evaluator = ctx.guest.get('en_kit')
+        root_node = self._initialize_root_node(ctx, train_df)
         
         # init histogram builder
         self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, random_seed=self._random_seed)
@@ -132,7 +135,8 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
-            hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
+            hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, \
+                                                                            pk=self._pk, evaluator=self._evaluator)
             self.splitter.split(sub_ctx, en_statistic_result, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
             self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, hist_inst, self.splitter)
