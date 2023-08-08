@@ -53,7 +53,7 @@ def transform_to_tensor(block_table,
 
     def _convert_to_phe_tensor(blocks, bid: int = None, dm: DataManager = None):
         phe_block = dm.get_block(bid)
-        return phe_block.convert_to_phe_tensor(blocks[bid], shape=(len(blocks[0]), ))
+        return phe_block.convert_to_phe_tensor(blocks[bid], shape=(len(blocks[0]), 1))
 
     block_indexes = data_manager.infer_operable_blocks()
     is_phe_tensor = False
