@@ -254,6 +254,10 @@ impl FixedpointPaillierVector {
         Ok(())
     }
 
+    fn __len__(&self) -> usize {
+        self.data.len()
+    }
+
     fn __str__(&self) -> String {
         format!("{:?}", self.data)
     }
