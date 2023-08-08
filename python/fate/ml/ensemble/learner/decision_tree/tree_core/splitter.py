@@ -252,7 +252,7 @@ class FedSklearnSplitter(SklearnSplitter):
         logger.info('host split info is {}'.format(all_host_splits))
         final_best_split = self._merge_splits(guest_best_splits, all_host_splits)
         logger.info('final split info is {}'.format(final_best_split))
-        return final_best_split
+        return host_splits[0]
 
     def _host_prepare(self, histogram):
         to_send_hist = []
@@ -485,7 +485,7 @@ class FedSBTSplitter(object):
         print('host splits are {}'.format(host_splits))
         print('best splits are {}'.format(best_splits))
 
-        return best_splits
+        return host_splits[0]
     
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
         ctx.guest.put('hist', en_histogram)

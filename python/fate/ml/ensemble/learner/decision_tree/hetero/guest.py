@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeGuest(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, l1=0.1, l2=0, use_missing=False, zero_as_missing=False, goss=False):
+    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, l1=0.1, l2=0, use_missing=False, zero_as_missing=False, goss=False, encrypt_key_length=1024):
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
         self.max_split_nodes = max_split_nodes
@@ -26,6 +26,25 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.l2 = l2
         self.goss = goss
         self._valid_features = valid_features
+
+        # homographic encryption
+        self._encrypt_kit = None
+        self._encrypt_key_length = encrypt_key_length
+        self._sk = None
+        self._pk = None
+        self._coder = None
+        self._evaluator = None
+        self._encryptor = None
+
+    def set_encrypt_kit(self, kit):
+        self._encrypt_kit = kit
+        self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
+        logger.info('encrypt kit setup through setter')
+
+    def _init_encrypt_kit(self, ctx):
+        kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
+        self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
+        logger.info('encrypt kit is not setup, auto initializing')
 
     def _get_column_max_bin(self, result_dict):
         bin_len = {}
@@ -83,8 +102,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
         
-        # now skip encrypt
-        ctx.hosts.put('en_gh', grad_and_hess)
+        # encrypt g & h
+        en_g_h = dict(g=self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor()), h=self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor()))
+        ctx.hosts.put('en_gh', en_g_h)
 
     def _mask_node(self, ctx: Context, nodes: List[Node]):
         new_nodes = []
@@ -122,6 +142,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._sample_on_leaves = sample_pos.empty_frame()
         root_node = self._initialize_root_node(ctx, grad_and_hess)
 
+        # initialize homographic encryption
+        if self._encrypt_kit is None:
+            self._init_encrypt_kit(ctx)
         # Send Encrypted Grad and Hess
         self._send_gh(ctx, grad_and_hess)
 
@@ -145,7 +168,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._check_assign_result(sample_pos, cur_layer_node)
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
-            hist_inst, statistic_result = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
+            hist_inst, statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             # compute best splits
             split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map)
             # update tree with best splits

@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 from fate.arch.dataframe import DataFrame
+from fate.arch import Context
 
 
 HIST_TYPE = ['distributed', 'sklearn']
@@ -106,17 +107,15 @@ class SBTHistogramBuilder(object):
                 "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
             }
 
-    def compute_hist(self, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, debug=False):
-        
+    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: dict, sample_pos: DataFrame = None, node_map={}, debug=False):
         node_num = len(nodes)
+        if ctx.is_on_guest:
+            schema = self._get_guest_schema()
+
         hist = DistributedHistogram(
             node_size=node_num,
             feature_bin_sizes=self.feat_bin_num,
-            value_schemas={
-                "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-                "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-            },
+            value_schemas=schema,
             seed=self.random_seed,
         )
         indexer = bin_train_data.get_indexer('sample_id')

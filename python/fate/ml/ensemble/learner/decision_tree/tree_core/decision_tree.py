@@ -263,11 +263,14 @@ class DecisionTree(object):
 
         return tree_nodes
 
-    def _initialize_root_node(self, ctx: Context, gh: DataFrame):
+    def _initialize_root_node(self, ctx: Context, gh: DataFrame = None):
         
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
-        sum_g = float(gh['g'].sum())
-        sum_h = float(gh['h'].sum())
+        if gh is None:
+            sum_g, sum_h = 0, 0
+        else:
+            sum_g = float(gh['g'].sum())
+            sum_h = float(gh['h'].sum())
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(gh))
 
         return root_node

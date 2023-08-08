@@ -36,13 +36,24 @@ class HeteroDecisionTreeHost(DecisionTree):
         if len(to_recover) != 0:
             print(to_recover)
             print(node_map)
-            recover_rs = hist_builder.recover_feature_bins(hist_inst, to_recover, node_map)
-            for node_id, split_tuple in recover_rs.items():
-                node = cur_layer_nodes[node_map[node_id]]
-                print(split_tuple)
-                fid, bid = split_tuple
-                node.fid =  int(fid)
-                node.bid = int(bid)
+
+            if self._random_seed is None:
+                print('no shuffle, no need to recover')
+                for node_id, split_id in to_recover.items():
+                    node = cur_layer_nodes[node_map[node_id]]
+                    fid, bid = splitter.get_bucket(split_id)
+                    node.fid = int(fid)
+                    node.bid = int(bid)
+                    print(node.fid, node.bid)
+            else:
+                print('recover from shuffle')
+                recover_rs = hist_builder.recover_feature_bins(hist_inst, to_recover, node_map)
+                for node_id, split_tuple in recover_rs.items():
+                    node = cur_layer_nodes[node_map[node_id]]
+                    fid, bid = split_tuple
+                    node.fid =  int(fid)
+                    node.bid = int(bid)
+                    print(node.fid, node.bid)
 
     def _update_host_feature_importance(self, ctx: Context, nodes: List[Node]):
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
@@ -104,7 +115,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         # Get Encrypted Grad And Hess
         grad_and_hess = ctx.guest.get('en_gh')
-        root_node = self._initialize_root_node(ctx, grad_and_hess)
+        root_node = self._initialize_root_node(ctx)
         
         # init histogram builder
         self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, random_seed=self._random_seed)
@@ -121,7 +132,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
-            hist_inst, en_statistic_result = self.hist_builder.compute_hist(cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
+            hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             self.splitter.split(sub_ctx, en_statistic_result, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
             self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, hist_inst, self.splitter)
