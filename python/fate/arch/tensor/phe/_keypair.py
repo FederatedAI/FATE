@@ -41,12 +41,14 @@ class PHETensorCoder:
 
     def encode(self, tensor: torch.Tensor):
         if isinstance(tensor, torch.Tensor):
+            from fate.arch.unify import device
+
             from ._tensor import PHETensorEncoded
 
             shape = tensor.shape
             dtype = tensor.dtype
             data = self._coder.encode_tensor(tensor, dtype)
-            return PHETensorEncoded(self._coder, shape, data, tensor.dtype)
+            return PHETensorEncoded(self._coder, shape, data, tensor.dtype, device.from_torch_device(tensor.device))
         elif hasattr(tensor, "encode"):
             return tensor.encode(self)
         else:
@@ -56,7 +58,7 @@ class PHETensorCoder:
         from ._tensor import PHETensorEncoded
 
         if isinstance(tensor, PHETensorEncoded):
-            return self._coder.decode_tensor(tensor.data, tensor.dtype, tensor.shape)
+            return self._coder.decode_tensor(tensor.data, tensor.dtype, tensor.shape, tensor.device)
         elif hasattr(tensor, "decode"):
             return tensor.decode(self)
         else:
@@ -74,7 +76,7 @@ class PHETensorEncryptor:
 
         if isinstance(tensor, PHETensorEncoded):
             data = self._pk.encrypt_encoded(tensor.data, obfuscate)
-            return PHETensor(self._pk, self._evaluator, tensor.coder, tensor.shape, data, tensor.dtype)
+            return PHETensor(self._pk, self._evaluator, tensor.coder, tensor.shape, data, tensor.dtype, tensor.device)
         elif hasattr(tensor, "encrypt_encoded"):
             return tensor.encrypt_encoded(self)
         raise NotImplementedError(f"`{tensor}` not supported")
@@ -94,7 +96,7 @@ class PHETensorDecryptor:
 
         if isinstance(tensor, PHETensor):
             data = self._sk.decrypt_to_encoded(tensor.data)
-            return PHETensorEncoded(tensor.coder, tensor.shape, data, tensor.dtype)
+            return PHETensorEncoded(tensor.coder, tensor.shape, data, tensor.dtype, tensor.device)
 
         elif hasattr(tensor, "decrypt_encoded"):
             return tensor.decrypt_encoded(self)

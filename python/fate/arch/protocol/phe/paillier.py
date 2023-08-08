@@ -42,10 +42,12 @@ class Coder:
             dtype = tensor.dtype
         return self.encode_vec(tensor.flatten(), dtype=dtype)
 
-    def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None) -> V:
+    def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None, device=None) -> V:
         data = self.decode_vec(tensor, dtype)
         if shape is not None:
             data = data.reshape(shape)
+        if device is not None:
+            data = data.to(device.to_torch_device())
         return data
 
     def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
