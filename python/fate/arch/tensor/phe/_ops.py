@@ -199,11 +199,12 @@ def rmatmul_f(input, other):
     pk = input.pk
     coder = input.coder
     shape = input.shape
+    device = input.device
     other_shape = other.shape
     output_dtype = torch.promote_types(input.dtype, other.dtype)
     output_shape = torch.matmul(torch.rand(*other_shape, device="meta"), torch.rand(*shape, device="meta")).shape
     data = evaluator.rmatmul(input.data, other, shape, other_shape, pk, coder, output_dtype)
-    return PHETensor(pk, evaluator, coder, output_shape, data, output_dtype)
+    return PHETensor(pk, evaluator, coder, output_shape, data, output_dtype, device)
 
 
 @implements(torch.matmul)
@@ -224,11 +225,12 @@ def matmul(input, other):
     pk = input.pk
     coder = input.coder
     shape = input.shape
+    device = input.device
     other_shape = other.shape
     output_dtype = torch.promote_types(input.dtype, other.dtype)
     output_shape = torch.matmul(torch.rand(*shape, device="meta"), torch.rand(*other_shape, device="meta")).shape
     data = evaluator.matmul(input.data, other, shape, other_shape, pk, coder, output_dtype)
-    return PHETensor(pk, evaluator, coder, output_shape, data, output_dtype)
+    return PHETensor(pk, evaluator, coder, output_shape, data, output_dtype, device)
 
 
 @implements(_custom_ops.slice_f)
@@ -237,7 +239,8 @@ def slice_f(input, item):
     stride = input.shape[1]
     start = stride * item
     data = evaluator.slice(input._data, start, stride)
-    return PHETensor(input.pk, evaluator, input.coder, torch.Size([*input.shape[1:]]), data, input.dtype)
+    device = input.device
+    return PHETensor(input.pk, evaluator, input.coder, torch.Size([*input.shape[1:]]), data, input.dtype, device)
 
 
 @implements(_custom_ops.to_local_f)
