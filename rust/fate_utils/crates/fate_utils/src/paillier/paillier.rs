@@ -263,7 +263,7 @@ impl FixedpointPaillierVector {
     }
 
     #[staticmethod]
-    fn zeros(size: usize) -> PyResult<Self> {
+    pub fn zeros(size: usize) -> PyResult<Self> {
         let data = vec![CT::zero(); size];
         Ok(FixedpointPaillierVector { data })
     }
@@ -280,7 +280,7 @@ impl FixedpointPaillierVector {
             .collect::<Vec<_>>();
         Ok(FixedpointPaillierVector { data })
     }
-    fn cat(&self, others: Vec<PyRef<FixedpointPaillierVector>>) -> PyResult<Self> {
+    pub fn cat(&self, others: Vec<PyRef<FixedpointPaillierVector>>) -> PyResult<Self> {
         let mut data = self.data.clone();
         for other in others {
             data.extend(other.data.clone());
