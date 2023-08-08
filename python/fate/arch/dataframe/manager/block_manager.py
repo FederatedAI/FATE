@@ -377,6 +377,7 @@ class PHETensorBlock(Block):
                          coder=self._coder,
                          shape=shape,
                          data=block,
+                         device=self._device,
                          dtype=self._dtype)
 
     @property
