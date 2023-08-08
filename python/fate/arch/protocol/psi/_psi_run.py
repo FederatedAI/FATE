@@ -12,3 +12,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+from .ecdh._run import psi_ecdh
+
+
+def psi_run(ctx, df, protocol="ecdh_psi", curve_type="curve25519"):
+    if protocol == "ecdh_psi":
+        return psi_ecdh(ctx, df, curve_type=curve_type)
+    else:
+        raise ValueError(f"PSI protocol={protocol} does not implemented yet.")

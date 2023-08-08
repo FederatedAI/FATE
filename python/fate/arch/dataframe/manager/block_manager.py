@@ -23,6 +23,8 @@ import torch
 from enum import Enum
 from typing import Union, Tuple, List, Dict
 from .schema_manager import SchemaManager
+from fate.arch.tensor.phe._tensor import PHETensor
+from fate_utils.paillier import FixedpointPaillierVector
 
 
 class BlockType(str, Enum):
@@ -32,6 +34,7 @@ class BlockType(str, Enum):
     float64 = "float64"
     bool = "bool"
     index = "index"
+    phe_tensor = "phe_tensor"
     np_object = "np_object"
 
     @staticmethod
@@ -58,13 +61,16 @@ class BlockType(str, Enum):
             return True
 
         if self == BlockType.int32:
-            return other not in [BlockType.bool, BlockType.int32]
+            return other not in [BlockType.bool, BlockType.int32, BlockType]
 
         if self == BlockType.int64:
             return other not in [BlockType.bool, BlockType.int32, BlockType.int64]
 
         if self == BlockType.float32:
-            return other == BlockType.float64
+            return other in [BlockType.float64, BlockType.phe_tensor, BlockType.np_object]
+
+        if self == BlockType.float64:
+            return other in [BlockType.phe_tensor, BlockType.np_object]
 
         return False
 
@@ -76,6 +82,8 @@ class BlockType(str, Enum):
 
     @staticmethod
     def get_block_type(data_type):
+        if isinstance(data_type, PHETensor) or type(data_type) == PHETensor:
+            return BlockType.phe_tensor
         if hasattr(data_type, "dtype"):
             data_type = data_type.dtype
         if hasattr(data_type, "name"):
@@ -163,7 +171,8 @@ class Block(object):
             src_field_indexes.append(src_field_index)
             dst_field_indexes.append(dst_field_index)
 
-        new_block = type(self)(dst_field_indexes)
+        new_block = copy.deepcopy(self)
+        # new_block = type(self)(dst_field_indexes)
         new_block.should_compress = self._should_compress
 
         # TODO: can be optimize as sub_field_indexes is ordered, but this is not a bottle neck
@@ -185,6 +194,9 @@ class Block(object):
             BlockType.int32, BlockType.int64,
             BlockType.float32, BlockType.float64
         }
+
+    def is_phe_tensor(self):
+        return self._block_type == BlockType.phe_tensor
 
     def to_dict(self):
         return dict(
@@ -218,6 +230,8 @@ class Block(object):
             return BoolBlock
         elif block_type == block_type.index:
             return IndexBlock
+        elif block_type == block_type.phe_tensor:
+            return PHETensorBlock
         else:
             return NPObjectBlock
 
@@ -233,6 +247,22 @@ class Block(object):
         )
 
         return converted_block
+
+    @classmethod
+    def retrieval_row(cls, block, indexes):
+        if isinstance(block, FixedpointPaillierVector):
+            return block.slice_indexes(indexes)
+        else:
+            return block[indexes]
+
+    @classmethod
+    def transform_row_to_raw(cls, block, index):
+        if isinstance(block, pd.Index):
+            return block[index]
+        elif isinstance(block, FixedpointPaillierVector):
+            return block.slice_indexes([index])
+        else:
+            return block[index].tolist()
 
 
 class Int32Block(Block):
@@ -308,6 +338,52 @@ class IndexBlock(Block):
     @staticmethod
     def convert_block(block):
         return pd.Index(block, dtype=str)
+
+
+class PHETensorBlock(Block):
+    def __init__(self, *args, **kwargs):
+        kwargs["should_compress"] = False
+
+        super(PHETensorBlock, self).__init__(*args, **kwargs)
+        self._block_type = BlockType.phe_tensor
+        self._pk = None
+        self._evaluator = None
+        self._coder = None
+        self._dtype = None
+        self._device = None
+
+    def set_extra_kwargs(self, pk, evaluator, coder, dtype, device):
+        self._pk = pk
+        self._evaluator = evaluator
+        self._coder = coder
+        self._dtype = dtype
+        self._device = device
+
+    @staticmethod
+    def convert_block(block):
+        return block
+
+    def convert_to_phe_tensor(self, block, shape):
+        if isinstance(block, PHETensor):
+            return block
+
+        if isinstance(block, list):
+            return block[0].cat(block[1:])
+
+        return PHETensor(pk=self._pk,
+                         evaluator=self._evaluator,
+                         coder=self._coder,
+                         shape=shape,
+                         data=block,
+                         dtype=self._dtype)
+
+    @property
+    def device(self):
+        return self._device
+
+    @property
+    def dtype(self):
+        return self._dtype
 
 
 class NPObjectBlock(Block):
