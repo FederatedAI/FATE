@@ -370,13 +370,14 @@ class PHETensorBlock(Block):
             return block
 
         if isinstance(block, list):
-            return block[0].cat(block[1:])
+            block = block[0].cat(block[1:])
 
         return PHETensor(pk=self._pk,
                          evaluator=self._evaluator,
                          coder=self._coder,
                          shape=shape,
                          data=block,
+                         device=self._device,
                          dtype=self._dtype)
 
     @property
