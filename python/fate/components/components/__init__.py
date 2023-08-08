@@ -85,10 +85,10 @@ class LazyBuildInComponentsLoader:
         return dataframe_transformer
 
     @_lazy_cpn
-    def intersection(self):
-        from .intersection import intersection
+    def psi(self):
+        from .psi import psi
 
-        return intersection
+        return psi
 
     @_lazy_cpn
     def evaluation(self):

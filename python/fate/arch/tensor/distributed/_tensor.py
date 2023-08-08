@@ -48,6 +48,9 @@ class DTensor:
     def T(self):
         return torch.transpose(self, 0, 1)
 
+    def elem_type(self) -> Optional[str]:
+        return self.shardings._type
+
     def __init__(self, shardings: "Shardings") -> None:
         self.shardings = shardings
 
@@ -167,8 +170,10 @@ class Shardings:
         axis: int = 0,
         dtype: Optional[torch.dtype] = None,
         device: Optional[torch.device] = None,
+        type: Optional[str] = None,
     ):
         self._data = data
+        self._type = type
 
         if shapes is None:
             shards_shape = sorted(self._data.map(lambda k, s: (k, s.shape)).collect())
@@ -236,6 +241,7 @@ class Shardings:
         shapes: Optional[List[torch.Size]] = None,
         axis: Optional[int] = None,
         dtype_promote_to: Optional[torch.dtype] = None,
+        type: Optional[str] = None,
     ):
         if dtype_promote_to is not None:
             dtype = torch.promote_types(self.dtype, dtype_promote_to)
@@ -245,7 +251,9 @@ class Shardings:
             shapes = self.shapes.shapes
         if axis is None:
             axis = self.shapes.axis
-        return Shardings(self._data.mapValues(func), shapes, axis, dtype, self._device)
+        if type is None:
+            type = self._type
+        return Shardings(self._data.mapValues(func), shapes, axis, dtype, self._device, type)
 
     def map_reduce_shard(
         self,

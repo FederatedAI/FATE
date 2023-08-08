@@ -31,3 +31,16 @@ def test_ecdh_dh_bench(benchmark):
 def test_sha256_bench(benchmark):
     m = "1000000000"
     result = benchmark(sha256, m)
+
+
+def test_ecdh_encrypt_vec_bench(benchmark):
+    k = Curve25519()
+    m = [random.SystemRandom().getrandbits(256).to_bytes(32, "little") for _ in range(10000)]
+    result = benchmark(k.encrypt_vec, m)
+
+
+def test_ecdh_dh_vec_bench(benchmark):
+    k = Curve25519()
+    m = [random.SystemRandom().getrandbits(256).to_bytes(32, "little") for _ in range(10000)]
+    e = k.encrypt_vec(m)
+    result = benchmark(k.diffie_hellman_vec, e)

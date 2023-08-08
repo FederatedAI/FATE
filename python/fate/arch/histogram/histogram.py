@@ -8,7 +8,7 @@ from .indexer import HistogramIndexer, Shuffler
 
 
 class HistogramValues:
-    def iadd_slice(self, index, value):
+    def iadd_slice(self, value, sa, sb, size):
         raise NotImplementedError
 
     def iadd(self, other):
@@ -53,12 +53,12 @@ class HistogramEncryptedValues(HistogramValues):
     def zeros(cls, pk, evaluator, size: int, stride: int = 1):
         return cls(pk, evaluator, evaluator.zeros(size * stride), stride)
 
-    def iadd_slice(self, index, value):
+    def iadd_slice(self, value, sa, sb, size):
         from fate.arch.tensor.phe import PHETensor
 
         if isinstance(value, PHETensor):
             value = value.data
-        self.evaluator.i_add(self.pk, self.data, value, index * self.stride)
+        self.evaluator.i_add(self.pk, self.data, value, sa * self.stride, sb, size * self.stride)
         return self
 
     def iadd(self, other):
@@ -167,10 +167,10 @@ class HistogramPlainValues(HistogramValues):
             start = end
         return HistogramPlainValues(result, self.stride)
 
-    def iadd_slice(self, index, value):
-        start = index * self.stride
-        end = index * self.stride + len(value)
-        self.data[start:end] += value
+    def iadd_slice(self, value, sa, sb, size):
+        size = size * self.stride
+        value = value.view(-1)
+        self.data[sa : sa + size] += value[sb : sb + size]
 
     def slice(self, start, end):
         return HistogramPlainValues(self.data[start * self.stride : end * self.stride], self.stride)
@@ -238,13 +238,14 @@ class Histogram:
         return cls(indexer, values_mapping)
 
     def i_update(self, fids, nids, targets):
-        for i in range(fids.shape[0]):
-            nid = nids[i][0]
-            bins = fids[i]
-            for fid, bid in enumerate(bins):
-                index = self._indexer.get_position(nid, fid, bid)
-                for name, value in targets.items():
-                    self._values_mapping[name].iadd_slice(index, value[i])
+        positions = self._indexer.get_positions(
+            nids.flatten().detach().numpy().tolist(), fids.detach().numpy().tolist()
+        )
+        for name, value in targets.items():
+            shape = value.shape
+            for i, feature_positions in enumerate(positions):
+                for pos in feature_positions:
+                    self._values_mapping[name].iadd_slice(value, pos, i * shape[1], shape[1])
         return self
 
     def iadd(self, hist: "Histogram"):
@@ -439,7 +440,8 @@ class DistributedHistogram:
         """
         indexer = HistogramIndexer(self._node_size, self._feature_bin_sizes)
         points = list(split_points.items())
-        real_indexes = indexer.get_shuffler(seed).get_reverse_indexes(1, [p[1] for p in points])
+        shuffler = indexer.get_shuffler(seed)
+        real_indexes = shuffler.get_reverse_indexes(1, [p[1] for p in points])
         real_fid_bid = {}
         for (nid, _), index in zip(points, real_indexes):
             _, fid, bid = indexer.get_reverse_position(index)

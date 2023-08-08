@@ -1,11 +1,9 @@
-mod histogram;
 mod indexer;
 
 use pyo3::prelude::*;
 
 pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
     let submodule = PyModule::new(py, "histogram")?;
-    histogram::register(py, submodule)?;
     indexer::register(py, submodule)?;
     m.add_submodule(submodule)?;
     py.import("sys")?

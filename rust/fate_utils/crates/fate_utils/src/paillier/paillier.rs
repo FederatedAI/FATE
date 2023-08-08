@@ -4,49 +4,49 @@ use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct PK {
     pub pk: fixedpoint::PK,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct SK {
     pub sk: fixedpoint::SK,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct Coders {
     pub coder: fixedpoint::FixedpointCoder,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct PyCT {
     pub ct: CT,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct FixedpointPaillierVector {
-    pub data: Vec<fixedpoint::CT>,
+    pub data: Vec<CT>,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct FixedpointPaillierCiphertext {
-    pub data: fixedpoint::CT,
+    pub data: CT,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct FixedpointEncoded {
     pub data: fixedpoint::PT,
 }
 
-#[pyclass(module = "fate_utils.histogram")]
+#[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
 pub struct FixedpointVector {
     pub data: Vec<fixedpoint::PT>,
@@ -229,7 +229,7 @@ fn keygen(bit_length: u32) -> (SK, PK, Coders) {
 impl FixedpointPaillierVector {
     #[inline]
     fn iadd_i_j(&mut self, pk: &PK, i: usize, j: usize, size: usize) {
-        let mut placeholder = fixedpoint::CT::zero();
+        let mut placeholder = CT::zero();
         for k in 0..size {
             placeholder = std::mem::replace(&mut self.data[i + k], placeholder);
             placeholder.add_assign(&self.data[j + k], &pk.pk);
@@ -254,19 +254,38 @@ impl FixedpointPaillierVector {
         Ok(())
     }
 
+    fn __len__(&self) -> usize {
+        self.data.len()
+    }
+
     fn __str__(&self) -> String {
         format!("{:?}", self.data)
     }
 
     #[staticmethod]
-    fn zeros(size: usize) -> PyResult<Self> {
-        let data = vec![fixedpoint::CT::zero(); size];
+    pub fn zeros(size: usize) -> PyResult<Self> {
+        let data = vec![CT::zero(); size];
         Ok(FixedpointPaillierVector { data })
     }
 
     fn slice(&mut self, start: usize, size: usize) -> FixedpointPaillierVector {
         let data = self.data[start..start + size].to_vec();
         FixedpointPaillierVector { data }
+    }
+
+    fn slice_indexes(&mut self, indexes: Vec<usize>) -> PyResult<Self> {
+        let data = indexes
+            .iter()
+            .map(|i| self.data[*i].clone())
+            .collect::<Vec<_>>();
+        Ok(FixedpointPaillierVector { data })
+    }
+    pub fn cat(&self, others: Vec<PyRef<FixedpointPaillierVector>>) -> PyResult<Self> {
+        let mut data = self.data.clone();
+        for other in others {
+            data.extend(other.data.clone());
+        }
+        Ok(FixedpointPaillierVector { data })
     }
     fn i_shuffle(&mut self, indexes: Vec<usize>) {
         let mut visited = vec![false; self.data.len()];
@@ -443,7 +462,7 @@ impl FixedpointPaillierVector {
             .for_each(|x| x.add_assign(&x.clone(), &pk.pk));
     }
     fn chunking_cumsum_with_step(&mut self, pk: &PK, chunk_sizes: Vec<usize>, step: usize) {
-        let mut placeholder = fixedpoint::CT::zero();
+        let mut placeholder = CT::zero();
         let mut i = 0;
         for chunk_size in chunk_sizes {
             for j in step..chunk_size {
@@ -460,7 +479,7 @@ impl FixedpointPaillierVector {
         intervals: Vec<(usize, usize)>,
         step: usize,
     ) -> FixedpointPaillierVector {
-        let mut data = vec![fixedpoint::CT::zero(); intervals.len() * step];
+        let mut data = vec![CT::zero(); intervals.len() * step];
         for (i, (s, e)) in intervals.iter().enumerate() {
             let chunk = &mut data[i * step..(i + 1) * step];
             let sub_vec = &self.data[*s..*e];
@@ -539,7 +558,7 @@ impl FixedpointPaillierVector {
         lshape: Vec<usize>,
         rshape: Vec<usize>,
     ) -> FixedpointPaillierVector {
-        let mut data = vec![fixedpoint::CT::zero(); lshape[0] * rshape[1]];
+        let mut data = vec![CT::zero(); lshape[0] * rshape[1]];
         for i in 0..lshape[0] {
             for j in 0..rshape[1] {
                 for k in 0..lshape[1] {
@@ -564,7 +583,7 @@ impl FixedpointPaillierVector {
         // other, self
         // 4 x 2, 2 x 5
         // ik, kj  -> ij
-        let mut data = vec![fixedpoint::CT::zero(); lshape[1] * rshape[0]];
+        let mut data = vec![CT::zero(); lshape[1] * rshape[0]];
         for i in 0..rshape[0] {
             // 4
             for j in 0..lshape[1] {
@@ -613,7 +632,7 @@ impl FixedpointVector {
     }
 }
 
-pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
+pub(crate) fn register(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<FixedpointPaillierVector>()?;
     m.add_class::<FixedpointVector>()?;
     m.add_class::<PK>()?;

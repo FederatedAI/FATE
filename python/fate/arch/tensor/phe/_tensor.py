@@ -7,11 +7,12 @@ _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS = {}
 
 
 class PHETensorEncoded:
-    def __init__(self, coder, shape: torch.Size, data, dtype) -> None:
+    def __init__(self, coder, shape: torch.Size, data, dtype, device) -> None:
         self.coder = coder
         self.data = data
         self.shape = shape
         self.dtype = dtype
+        self.device = device
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
@@ -25,13 +26,17 @@ class PHETensorEncoded:
 
 
 class PHETensor:
-    def __init__(self, pk, evaluator, coder, shape: torch.Size, data, dtype) -> None:
+    def __init__(self, pk, evaluator, coder, shape: torch.Size, data, dtype, device) -> None:
         self._pk = pk
         self._evaluator = evaluator
         self._coder = coder
         self._data = data
         self._shape = shape
         self._dtype = dtype
+        self._device = device
+
+    def type(self):
+        return f"phe.{self.dtype}"
 
     def __repr__(self) -> str:
         return f"<PHETensor shape={self.shape}, dtype={self.dtype}>"
@@ -52,7 +57,7 @@ class PHETensor:
             dtype = self._dtype
         if shape is None:
             shape = self._shape
-        return PHETensor(self._pk, self._evaluator, self._coder, shape, data, dtype)
+        return PHETensor(self._pk, self._evaluator, self._coder, shape, data, dtype, self._device)
 
     @property
     def pk(self):
@@ -81,6 +86,10 @@ class PHETensor:
     @property
     def ndim(self):
         return len(self.shape)
+
+    @property
+    def device(self):
+        return self._device
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):

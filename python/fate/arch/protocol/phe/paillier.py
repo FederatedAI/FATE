@@ -1,11 +1,12 @@
 from typing import List, Optional, Tuple
 
 import torch
-from fate_utils.histogram import PK as _PK
-from fate_utils.histogram import SK as _SK
-from fate_utils.histogram import Coders as _Coder
-from fate_utils.histogram import FixedpointPaillierVector, FixedpointVector
-from fate_utils.histogram import keygen as _keygen
+from fate_utils.paillier import PK as _PK
+from fate_utils.paillier import SK as _SK
+from fate_utils.paillier import Coders as _Coder
+from fate_utils.paillier import Evaluator as _Evaluator
+from fate_utils.paillier import FixedpointPaillierVector, FixedpointVector
+from fate_utils.paillier import keygen as _keygen
 
 from .type import TensorEvaluator
 
@@ -42,10 +43,12 @@ class Coder:
             dtype = tensor.dtype
         return self.encode_vec(tensor.flatten(), dtype=dtype)
 
-    def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None) -> V:
+    def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None, device=None) -> V:
         data = self.decode_vec(tensor, dtype)
         if shape is not None:
             data = data.reshape(shape)
+        if device is not None:
+            data = data.to(device.to_torch_device())
         return data
 
     def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
@@ -280,6 +283,30 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             then the result is [a0, a1, a2, a3, a6, a7, a8, a9, a10, a11]
         """
         return a.intervals_slice(intervals)
+
+    @staticmethod
+    def slice_indexes(a: EV, indexes: List[int]) -> EV:
+        """
+        slice in the given indexes
+        Args:
+            a:
+            indexes:
+
+        Returns:
+
+        """
+        return _Evaluator.slice_indexes(a, indexes)
+
+    @staticmethod
+    def cat(list: List[EV]) -> EV:
+        """
+        concatenate the list of vectors
+        Args:
+            list: the list of vectors
+
+        Returns: the concatenated vector
+        """
+        return _Evaluator.cat(list)
 
     @staticmethod
     def intervals_sum_with_step(pk: PK, a: EV, intervals: List[Tuple[int, int]], step: int):

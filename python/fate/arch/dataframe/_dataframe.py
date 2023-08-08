@@ -21,7 +21,6 @@ import numpy as np
 import pandas as pd
 
 from .manager import DataManager, Schema
-from .ops import aggregate_indexer, get_partition_order_mappings
 from fate.arch.tensor import DTensor
 
 
@@ -153,7 +152,8 @@ class DataFrame(object):
         """
         from .ops._transformer import transform_to_tensor
 
-        return transform_to_tensor(self._block_table, self._data_manager, dtype)
+        return transform_to_tensor(self._block_table, self._data_manager,
+                                   dtype, partition_order_mappings=self.partition_order_mappings)
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
@@ -376,11 +376,13 @@ class DataFrame(object):
 
         return cmp_operate(self, other, op)
 
+    """
     def __getattr__(self, attr):
         if attr not in self._data_manager.schema.columns:
             raise ValueError(f"DataFrame does not has attribute {attr}")
 
         return self.__getitem__(attr)
+    """
 
     def __setattr__(self, key, value):
         property_attr_mapping = dict(block_table="_block_table", data_manager="_data_manager")
@@ -497,92 +499,24 @@ class DataFrame(object):
         return indexer
 
     def loc(self, indexer, target="sample_id", preserve_order=False):
-        self_indexer = self.get_indexer(target)
-        if preserve_order:
-            indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, rhs))
-        else:
-            indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, lhs))
+        from .ops._indexer import loc
+        return loc(self, indexer, target=target, preserve_order=preserve_order)
 
-        if indexer.count() == 0:
-            return self.empty_frame()
+    def iloc(self, indexes, return_new_indexer=False):
+        """
+        indexes: table, row: (key=random_key, value=[(partition_id, offset)])
+        """
+        from .ops._indexer import iloc
+        return iloc(self, indexes, return_new_indexer)
 
-        agg_indexer = aggregate_indexer(indexer)
-
-        if not preserve_order:
-
-            def _convert_block(blocks, retrieval_indexes):
-                row_indexes = [retrieval_index[0] for retrieval_index in retrieval_indexes]
-                return [block[row_indexes] for block in blocks]
-
-            block_table = self._block_table.join(agg_indexer, _convert_block)
-        else:
-
-            def _convert_to_block(kvs):
-                ret_dict = {}
-                for block_id, (blocks, block_indexer) in kvs:
-                    """
-                    block_indexer: row_id, (new_block_id, new_row_id)
-                    """
-                    for src_row_id, (dst_block_id, dst_row_id) in block_indexer:
-                        if dst_block_id not in ret_dict:
-                            ret_dict[dst_block_id] = []
-
-                        ret_dict[dst_block_id].append(
-                            (dst_row_id,
-                                [
-                                    block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
-                                    for block in blocks
-                                ]
-                             )
-                        )
-
-                for dst_block_id, value_list in ret_dict.items():
-                    yield dst_block_id, sorted(value_list)
-
-            def _merge_list(lhs, rhs):
-                if not lhs:
-                    return rhs
-                if not rhs:
-                    return lhs
-
-                l_len = len(lhs)
-                r_len = len(rhs)
-                ret = [[] for i in range(l_len + r_len)]
-                i, j, k = 0, 0, 0
-                while i < l_len and j < r_len:
-                    if lhs[i][0] < rhs[j][0]:
-                        ret[k] = lhs[i]
-                        i += 1
-                    else:
-                        ret[k] = rhs[j]
-                        j += 1
-
-                    k += 1
-
-                while i < l_len:
-                    ret[k] = lhs[i]
-                    i += 1
-                    k += 1
-
-                while j < r_len:
-                    ret[k] = rhs[j]
-                    j += 1
-                    k += 1
-
-                return ret
-
-            from .ops._transformer import transform_list_block_to_frame_block
-
-            block_table = self._block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
-            block_table = block_table.mapReducePartitions(_convert_to_block, _merge_list)
-            block_table = block_table.mapValues(lambda values: [v[1] for v in values])
-            block_table = transform_list_block_to_frame_block(block_table, self._data_manager)
-
-        partition_order_mappings = get_partition_order_mappings(block_table)
-        return DataFrame(self._ctx, block_table, partition_order_mappings, self._data_manager.duplicate())
-
-    def iloc(self, indexes):
-        ...
+    def loc_with_sample_id_replacement(self, indexer):
+        """
+        indexer: table,
+            row: (key=random_key,
+            value=((src_partition_id, src_offset), [(sample_id, dst_partition_id, dst_offset) ...])
+        """
+        from .ops._indexer import loc_with_sample_id_replacement
+        return loc_with_sample_id_replacement(self, indexer)
 
     def copy(self) -> "DataFrame":
         return DataFrame(
