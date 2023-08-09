@@ -37,21 +37,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     assert isinstance(param, dict)
 
-    data_set = param.get("data_guest").split('/')[-1]
-    if data_set == "default_credit_hetero_guest.csv":
-        guest_data_table = 'default_credit_hetero_guest'
-        host_data_table = 'default_credit_hetero_host'
-    elif data_set == 'breast_hetero_guest.csv':
-        guest_data_table = 'breast_hetero_guest'
-        host_data_table = 'breast_hetero_host'
-    elif data_set == 'give_credit_hetero_guest.csv':
-        guest_data_table = 'give_credit_hetero_guest'
-        host_data_table = 'give_credit_hetero_host'
-    elif data_set == 'epsilon_5k_hetero_guest.csv':
-        guest_data_table = 'epsilon_5k_hetero_guest'
-        host_data_table = 'epsilon_5k_hetero_host'
-    else:
-        raise ValueError(f"Cannot recognized data_set: {data_set}")
+    guest_data_table = param.get("data_guest")
+    host_data_table = param.get("data_host")
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}

@@ -158,8 +158,8 @@ class Optimizer(object):
         )
 
         if fit_intercept:
-            new_weights = torch.concat((new_weights, model_weights.intercept_))
-            new_weights[-1] -= gradient[-1]
+            new_intercept = model_weights[-1] - gradient[-1]
+            new_weights = torch.concat((new_weights, new_intercept.reshape((1, 1))))
 
         return new_weights
 
@@ -213,7 +213,7 @@ class Optimizer(object):
 
     def __l1_loss_norm(self, model_weights):
         loss_norm = torch.sum(self.alpha * model_weights)
-        return loss_norm
+        return loss_norm.reshape((1, 1))
 
     def __l2_loss_norm(self, model_weights):
         loss_norm = 0.5 * self.alpha * \

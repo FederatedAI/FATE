@@ -365,7 +365,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
         # logger.info(f"in predict, w: {self.w}")
-        pred = torch.matmul(X, self.w)
+        pred = torch.matmul(X, self.w.detach())
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred
         pred = torch.sigmoid(pred)

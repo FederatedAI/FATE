@@ -42,7 +42,7 @@ def main(config="../../config.yaml", param="./breast_lr_sklearn_config.yaml"):
 
     config_param = {
         "penalty": param["penalty"],
-        "max_iter": 100,
+        "max_iter": param["epochs"],
         "alpha": param["alpha"],
         "learning_rate": "optimal",
         "eta0": param["eta0"],
@@ -76,7 +76,7 @@ def main(config="../../config.yaml", param="./breast_lr_sklearn_config.yaml"):
     fpr, tpr, thresholds = roc_curve(y_test, y_prob)
 
     ks = max(tpr - fpr)
-    result = {"auc": auc_score, "binary_recall": recall, "binary_precision": pr, "binary_accuracy": acc}
+    result = {"auc": auc_score, "recall": recall, "binary": pr, "accuracy": acc}
     print(result)
     print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
     return {}, result
