@@ -42,13 +42,13 @@ def decrypt_f(tensor, decryptor):
     # torch tensor-like
     if hasattr(tensor, "__torch_function__"):
         return tensor.__torch_function__(decrypt_f, (type(tensor),), (tensor, decryptor), None)
-    raise NotImplementedError("")
+    raise NotImplementedError(f"{type(tensor)}")
 
 
 def decode_f(tensor, coder):
     if hasattr(tensor, "__torch_function__"):
         return tensor.__torch_function__(decode_f, (type(tensor),), (tensor, coder), None)
-    raise NotImplementedError("")
+    raise NotImplementedError(f"{type(tensor)}")
 
 
 def rmatmul_f(input, other):

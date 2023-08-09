@@ -14,7 +14,7 @@ def encrypt_encoded(input, encryptor):
     return encryptor.encrypt_encoded(input)
 
 
-@implements_encoded(_custom_ops.decrypt_encoded_f)
+@implements(_custom_ops.decrypt_encoded_f)
 def decrypt_encoded(input, decryptor):
     return decryptor.decrypt_encoded(input)
 
