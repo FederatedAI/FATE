@@ -60,6 +60,9 @@ class Coder:
     def encode_vec(self, vec: V, dtype: torch.dtype = None) -> FV:
         if dtype is None:
             dtype = vec.dtype
+        else:
+            if dtype != vec.dtype:
+                vec = vec.to(dtype=dtype)
         if dtype == torch.float64:
             return self.encode_f64_vec(vec)
         if dtype == torch.float32:
