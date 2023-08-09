@@ -308,7 +308,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
     """
     agg_indexer = aggregate_indexer(indexer)
 
-    sample_id_name = df.data_manager.loc_block(df.schema.sample_id_name)
+    sample_id_index = df.data_manager.loc_block(df.schema.sample_id_name, with_offset=False)
 
     def _convert_to_block(kvs):
         ret_dict = {}
@@ -324,7 +324,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
 
                     data = []
                     for idx, block in enumerate(blocks):
-                        if idx == sample_id_name:
+                        if idx == sample_id_index:
                             data.append(sample_id)
                         else:
                             data.append(
