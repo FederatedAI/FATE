@@ -8,6 +8,7 @@ from typing import List
 import functools
 import logging
 import copy
+import fate 
 
 
 logger = logging.getLogger(__name__)
@@ -35,15 +36,18 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._coder = None
         self._evaluator = None
         self._encryptor = None
+        self._decryptor = None
 
     def set_encrypt_kit(self, kit):
         self._encrypt_kit = kit
         self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
+        self._decryptor = kit.get_tensor_decryptor()
         logger.info('encrypt kit setup through setter')
 
     def _init_encrypt_kit(self, ctx):
         kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
         self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
+        self._decryptor = kit.get_tensor_decryptor()
         logger.info('encrypt kit is not setup, auto initializing')
 
     def _get_column_max_bin(self, result_dict):
@@ -104,8 +108,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         
         # encrypt g & h
         en_grad_hess = grad_and_hess.create_frame()
+
         en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
         en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
+
         ctx.hosts.put('en_gh', en_grad_hess)
         ctx.hosts.put('en_kit', [self._pk, self._evaluator])
 
@@ -173,7 +179,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # compute histogram
             hist_inst, statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             # compute best splits
-            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map)
+            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder)
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info)
             # update feature importance

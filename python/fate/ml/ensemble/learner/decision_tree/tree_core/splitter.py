@@ -409,6 +409,9 @@ class FedSBTSplitter(object):
                         only hosts know them.
         """
         l_g, l_h, l_cnt = self._extract_hist(node_hist)
+        print('l_g: ', l_g)
+        print('l_h: ', l_h)
+        print('l_cnt: ', l_cnt)
         g_sum, h_sum, cnt_sum = self._make_sum_tensor(cur_layer_nodes)
         rs = self._compute_gains(l_g, l_h, l_cnt, g_sum, h_sum, cnt_sum)
 
@@ -466,7 +469,10 @@ class FedSBTSplitter(object):
 
         return splits
     
-    def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map):
+    def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder):
+        
+        if sk is None or coder is None:
+            raise ValueError('sk or coder is None, not able to decode host split points')
 
         histogram = stat_rs.decrypt({}, {})
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
@@ -476,11 +482,12 @@ class FedSBTSplitter(object):
         guest_best_splits = self._find_best_splits(histogram, sitename, cur_layer_node, reverse_node_map, recover_bucket=True)
         # find best splits from host parties
         host_histograms = ctx.hosts.get('hist')
-        raise ValueError('to here cwj')
+        
         host_splits = []
         for idx, hist in enumerate(host_histograms):
             host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
-            host_hist = hist.decrypt({}, {})
+            host_hist = hist.decrypt({"g":sk, "h":sk}, {"g": (coder, torch.float32), "h": (coder, torch.float32)})
+            print('splitting host')
             host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
             host_splits.append(host_split)
 
@@ -488,17 +495,17 @@ class FedSBTSplitter(object):
         print('guest splits are {}'.format(guest_best_splits))
         print('host splits are {}'.format(host_splits))
         print('best splits are {}'.format(best_splits))
-
-        return host_splits[0]
+        raise ValueError('to here cwj')
+        return best_splits
     
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
 
         ctx.guest.put('hist', en_histogram)
     
-    def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map):
+    def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map, sk=None, coder=None):
         
         if ctx.is_on_guest:
-            return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map)
+            return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder)
         elif ctx.is_on_host:
             return self._host_split(ctx, histogram_statistic_result, cur_layer_node)
         else:
