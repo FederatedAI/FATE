@@ -16,6 +16,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils import predict_tools
@@ -247,7 +248,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         half_d = 0.25 * Xw - 0.5 * Y
         if weight:
             half_d = half_d * weight
-        batch_ctx.hosts.put("half_d", encryptor.encrypt(half_d))
+        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d))
         half_g = torch.matmul(X.T, half_d)
 
         Xw_h = batch_ctx.hosts.get("Xw_h")[0]

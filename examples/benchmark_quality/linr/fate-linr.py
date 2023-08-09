@@ -17,7 +17,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLinR, Intersection
+from fate_client.pipeline.components.fate import CoordinatedLinR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
@@ -43,11 +43,11 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
 
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
 
-    intersect_0 = Intersection("intersect_0", method="raw")
-    intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                                        namespace=guest_train_data["namespace"]))
-    intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                           namespace=host_train_data["namespace"]))
+    psi_0 = PSI("psi_0")
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
+                                                                  namespace=guest_train_data["namespace"]))
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
+                                                                     namespace=host_train_data["namespace"]))
 
     linr_param = {
     }
@@ -63,10 +63,10 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     }
     linr_param.update(config_param)
     linr_0 = CoordinatedLinR("linr_0",
-                             train_data=intersect_0.outputs["output_data"],
+                             train_data=psi_0.outputs["output_data"],
                              **config_param)
     """linr_1 = CoordinatedLinR("linr_1",
-                             test_data=intersect_0.outputs["output_data"],
+                             test_data=psi_0.outputs["output_data"],
                              input_model=linr_0.outputs["output_model"])"""
 
     evaluation_0 = Evaluation("evaluation_0",
@@ -77,7 +77,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
                                        "rmse"],
                               input_data=linr_0.outputs["train_output_data"])
 
-    pipeline.add_task(intersect_0)
+    pipeline.add_task(psi_0)
     pipeline.add_task(linr_0)
     # pipeline.add_task(linr_1)
     pipeline.add_task(evaluation_0)

@@ -16,7 +16,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, Intersection
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -34,20 +34,20 @@ def main(config="./config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    intersect_0 = Intersection("intersect_0", method="raw")
-    intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                        namespace=f"experiment{namespace}"))
-    intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                           namespace=f"experiment{namespace}"))
+    psi_0 = PSI("psi_0")
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                  namespace=f"experiment{namespace}"))
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     lr_0 = CoordinatedLR("lr_0",
                          epochs=2,
                          batch_size=100,
                          optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}},
                          init_param={"fit_intercept": True},
-                         cv_data=intersect_0.outputs["output_data"],
+                         cv_data=psi_0.outputs["output_data"],
                          cv_param={"n_splits": 3})
 
-    pipeline.add_task(intersect_0)
+    pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
     pipeline.compile()
     print(pipeline.get_dag())

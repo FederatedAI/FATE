@@ -10,13 +10,13 @@ init_param:
 learning_rate_scheduler:
   method: "constant"
   scheduler_params:
-    factor: 1.0
+    factor: 0.5
     total_iters: 5
 optimizer:
   method: "rmsprop"
   penalty: "l2"
   optimizer_params:
-    lr: 0.12
-  alpha: 0.1
+    lr: 0.15
+  alpha: 0.01
 batch_size: 240
 early_stop: "diff"

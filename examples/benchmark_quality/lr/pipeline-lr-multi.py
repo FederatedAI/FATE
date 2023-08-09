@@ -17,7 +17,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, Intersection
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
@@ -44,11 +44,11 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
 
-    intersect_0 = Intersection("intersect_0", method="raw")
-    intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                                        namespace=guest_train_data["namespace"]))
-    intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                           namespace=host_train_data["namespace"]))
+    psi_0 = PSI("psi_0")
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
+                                                                  namespace=guest_train_data["namespace"]))
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
+                                                                     namespace=host_train_data["namespace"]))
 
     lr_param = {
     }
@@ -64,15 +64,15 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     }
     lr_param.update(config_param)
     lr_0 = CoordinatedLR("lr_0",
-                         train_data=intersect_0.outputs["output_data"],
+                         train_data=psi_0.outputs["output_data"],
                          **config_param)
     lr_1 = CoordinatedLR("lr_1",
-                         test_data=intersect_0.outputs["output_data"],
+                         test_data=psi_0.outputs["output_data"],
                          input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation('evaluation_0',
                               metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
-    pipeline.add_task(intersect_0)
+    pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(lr_1)
     pipeline.add_task(evaluation_0)
