@@ -5,6 +5,7 @@ mod psi;
 mod quantile;
 mod secure_aggregation_helper;
 mod tensor;
+mod histogram;
 
 use pyo3::prelude::*;
 

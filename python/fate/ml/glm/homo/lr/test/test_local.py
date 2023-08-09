@@ -21,7 +21,7 @@ logger.addHandler(ch)
 
 computing = CSession()
 ctx = Context("guest", computing=computing, federation=StandaloneFederation(
-    computing, "fed", ("guest", 10000), [("host", 9999)]), )
+    computing, "fed", ("guest", 10000), [("guest", 10000), ("host", 9999)]) )
 
 df = pd.read_csv(
     '../../../../../../../examples/data/breast_homo_guest.csv')

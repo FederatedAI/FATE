@@ -18,6 +18,7 @@ if typing.TYPE_CHECKING:
 
 class TableWriter(_ArtifactTypeWriter[DataOutputMetadata]):
     def write(self, table):
+        self.artifact.consumed()
         if "schema" not in self.artifact.metadata.metadata:
             self.artifact.metadata.metadata["schema"] = {}
         table.save(
@@ -29,6 +30,7 @@ class TableWriter(_ArtifactTypeWriter[DataOutputMetadata]):
 
 class TableReader(_ArtifactTypeReader):
     def read(self):
+        self.artifact.consumed()
         return self.ctx.computing.load(
             uri=self.artifact.uri,
             schema=self.artifact.metadata.metadata.get("schema", {}),

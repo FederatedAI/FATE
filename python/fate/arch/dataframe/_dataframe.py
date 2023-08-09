@@ -22,6 +22,7 @@ import pandas as pd
 
 from .manager import DataManager, Schema
 from .ops import aggregate_indexer, get_partition_order_mappings
+from fate.arch.tensor import DTensor
 
 
 class DataFrame(object):
@@ -93,22 +94,25 @@ class DataFrame(object):
 
         if self._weight is None:
             self._weight = self.__extract_fields(
-                with_sample_id=True, with_match_id=True, with_label=False, with_weight=False
+                with_sample_id=True, with_match_id=True, with_label=False, with_weight=True
             )
 
         return self._weight
 
     @property
     def shape(self) -> "tuple":
-        if not self.__count:
+        if self.__count is None:
             if self._sample_id_indexer:
                 items = self._sample_id_indexer.count()
             elif self._match_id_indexer:
                 items = self._match_id_indexer.count()
             else:
-                items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
-                    lambda size1, size2: size1 + size2
-                )
+                if self._block_table.count() == 0:
+                    items = 0
+                else:
+                    items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
+                        lambda size1, size2: size1 + size2
+                    )
             self.__count = items
 
         return self.__count, len(self._data_manager.schema.columns)
@@ -171,6 +175,14 @@ class DataFrame(object):
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
         return self.__extract_fields(
             with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
+        )
+
+    def empty_frame(self) -> "DataFrame":
+        return DataFrame(
+            self._ctx,
+            self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions),
+            partition_order_mappings=dict(),
+            data_manager=self._data_manager.duplicate()
         )
 
     def drop(self, index) -> "DataFrame":
@@ -291,6 +303,10 @@ class DataFrame(object):
 
         return hist(self, targets)
 
+    def replace(self, to_replace=None) -> "DataFrame":
+        from .ops._replace import replace
+        return replace(self, to_replace)
+
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
@@ -326,6 +342,12 @@ class DataFrame(object):
 
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
+    
+    def __eq__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.eq, other)
+
+    def __ne__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.ne, other)
 
     def __invert__(self):
         from .ops._unary_operator import invert
@@ -384,6 +406,10 @@ class DataFrame(object):
             from .ops._where import where
 
             return where(self, items)
+
+        if isinstance(items, DTensor):
+            from .ops._dimension_scaling import retrieval_row
+            return retrieval_row(self, items)
 
         if isinstance(items, pd.Index):
             items = items.tolist()
@@ -448,6 +474,9 @@ class DataFrame(object):
         if target not in ["sample_id", "match_id"]:
             raise ValueError(f"Target should be sample_id or match_id, but {target} found")
 
+        if self.shape[0] == 0:
+            return self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions)
+
         target_name = getattr(self.schema, f"{target}_name")
         indexer = self.__convert_to_table(target_name)
         if target == "sample_id":
@@ -463,6 +492,9 @@ class DataFrame(object):
             indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, rhs))
         else:
             indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, lhs))
+
+        if indexer.count() == 0:
+            return self.empty_frame()
 
         agg_indexer = aggregate_indexer(indexer)
 
@@ -486,13 +518,16 @@ class DataFrame(object):
                             ret_dict[dst_block_id] = []
 
                         ret_dict[dst_block_id].append(
-                            [
-                                block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
-                                for block in blocks
-                            ]
+                            (dst_row_id,
+                                [
+                                    block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
+                                    for block in blocks
+                                ]
+                             )
                         )
 
-                return list(ret_dict.items())
+                for dst_block_id, value_list in ret_dict.items():
+                    yield dst_block_id, sorted(value_list)
 
             def _merge_list(lhs, rhs):
                 if not lhs:
@@ -530,6 +565,7 @@ class DataFrame(object):
 
             block_table = self._block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
             block_table = block_table.mapReducePartitions(_convert_to_block, _merge_list)
+            block_table = block_table.mapValues(lambda values: [v[1] for v in values])
             block_table = transform_list_block_to_frame_block(block_table, self._data_manager)
 
         partition_order_mappings = get_partition_order_mappings(block_table)
@@ -557,6 +593,10 @@ class DataFrame(object):
         from .ops._dimension_scaling import vstack
 
         return vstack(stacks)
+
+    def sample(self, n: int=None, frac: float=None, random_state=None) -> "DataFrame":
+        from .ops._dimension_scaling import sample
+        return sample(self, n, frac, random_state)
 
     def __extract_fields(
         self,

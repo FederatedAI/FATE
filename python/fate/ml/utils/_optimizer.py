@@ -40,9 +40,7 @@ class LRScheduler:
         return self.lr_scheduler.get_last_lr()[0]
 
     def state_dict(self):
-        return {"lr_scheduler": self.lr_scheduler.state_dict(),
-                "method": self.method,
-                "lr_params": self.lr_params}
+        return {"lr_scheduler": self.lr_scheduler.state_dict(), "method": self.method, "lr_params": self.lr_params}
 
     def load_state_dict(self, dict, optimizer):
         self.method = dict["method"]
@@ -55,7 +53,13 @@ class LRScheduler:
 
 
 class Optimizer(object):
-    def __init__(self, method=None, penalty=None, alpha=None, optim_param: dict = None, iters: int = 0):
+    def __init__(
+            self,
+            method=None,
+            penalty=None,
+            alpha=None,
+            optim_param: dict = None,
+            iters: int = 0):
         self.method = method
         self.optim_param = optim_param
         self.iters = iters
@@ -67,34 +71,33 @@ class Optimizer(object):
         self.prev_model_parameter = None
         self.optimizer = None
 
-    def init_optimizer(self, model_parameter_length=None, model_parameter=None, dtype=torch.float32):
-        # @todo: allow group in future
+    def init_optimizer(
+            self,
+            model_parameter_length=None,
+            model_parameter=None,
+            dtype=torch.float32):
+        # allow group of parameter in future
         if model_parameter_length is not None:
-            model_parameter = torch.nn.parameter.Parameter(torch.zeros((model_parameter_length, 1),
-                                                                       requires_grad=True,
-                                                                       dtype=dtype))
+            model_parameter = torch.nn.parameter.Parameter(torch.zeros(
+                (model_parameter_length, 1), requires_grad=True, dtype=dtype))
         self.model_parameter = model_parameter
-        self.optimizer = optimizer_factory([model_parameter], self.method, self.optim_param)
+        self.optimizer = optimizer_factory(
+            [model_parameter], self.method, self.optim_param)
         # for regularization
         # self.alpha = self.optimizer.state_dict()['param_groups'][0]['alpha']
 
     def step(self, gradient):
         # logger.info(f"before copy, model parameter: {self.model_parameter}")
         self.prev_model_parameter = self.model_parameter.data.clone()
-        # logger.info(f"gradient shape: {gradient.shape}, parameter shape: {self.model_parameter.shape}")
-        # self.model_parameter = torch.nn.parameter.Parameter(self.model_parameter.detach().clone().to(gradient.dtype))
         self.model_parameter.grad = gradient
-        # update parameter group in optimizer
-        # self.optimizer.param_groups[0]['params'] = [self.model_parameter]
-        # logger.info(f"before step, model parameter gradient: {self.model_parameter.grad}")
         self.optimizer.step()
         # logger.info(f"after step, model parameter: {self.model_parameter}")
 
     def get_delta_gradients(self):
         # logger.info(f"gradient: {self.model_parameter.grad}, prev model parameter: {self.prev_model_parameter},"
-        #            f"delta grad: {self.model_parameter - self.prev_model_parameter}")
+        # f"delta grad: {self.prev_model_parameter.data - self.model_parameter.data}")
         if self.prev_model_parameter is not None:
-            return self.prev_model_parameter - self.model_parameter.data
+            return self.prev_model_parameter.data - self.model_parameter.data
         else:
             raise ValueError(f"No optimization history found, please check.")
 
@@ -104,7 +107,7 @@ class Optimizer(object):
 
     def state_dict(self):
         optimizer_state_dict = self.optimizer.state_dict()
-        state_all = optimizer_state_dict['state'].get(0, {})
+        state_all = optimizer_state_dict["state"].get(0, {})
         for k, v in state_all.items():
             if isinstance(v, torch.Tensor):
                 state_all[k] = v.tolist()
@@ -117,7 +120,7 @@ class Optimizer(object):
             "method": self.method,
             "optim_param": self.optim_param,
             "model_parameter": self.model_parameter.tolist(),
-            "model_parameter_dtype": dtype
+            "model_parameter_dtype": dtype,
         }
 
     def load_state_dict(self, state_dict):
@@ -127,10 +130,13 @@ class Optimizer(object):
         self.method = state_dict["method"]
         self.optim_param = state_dict["optim_param"]
         dtype = state_dict["model_parameter_dtype"]
-        self.init_optimizer(model_parameter=torch.nn.parameter.Parameter(torch.tensor(state_dict["model_parameter"],
-                                                                                      dtype=getattr(torch, dtype))))
+        self.init_optimizer(
+            model_parameter=torch.nn.parameter.Parameter(
+                torch.tensor(state_dict["model_parameter"], dtype=getattr(torch, dtype))
+            )
+        )
         state = state_dict["optimizer"]
-        state_all = state['state'].get(0, {})
+        state_all = state["state"].get(0, {})
         for k, v in state_all.items():
             if isinstance(v, list):
                 state_all[k] = torch.tensor(v)
@@ -147,8 +153,9 @@ class Optimizer(object):
             gradient_without_intercept = gradient
             coef_ = model_weights
 
-        new_weights = torch.sign(coef_ - gradient_without_intercept) * torch.maximum(torch.tensor([0]), torch.abs(
-            coef_ - gradient_without_intercept) - self.shrinkage_val(lr))
+        new_weights = torch.sign(coef_ - gradient_without_intercept) * torch.maximum(
+            torch.tensor([0]), torch.abs(coef_ - gradient_without_intercept) - self.shrinkage_val(lr)
+        )
 
         if fit_intercept:
             new_weights = torch.concat((new_weights, model_weights.intercept_))
@@ -160,7 +167,7 @@ class Optimizer(object):
         if self.l2_penalty:
             if fit_intercept:
                 weights_sum = torch.concat((model_weights[:-1], torch.tensor([[0]])))
-                logger.info(f"grad: {grad}, weights sum: {weights_sum}")
+                # logger.info(f"grad: {grad}, weights sum: {weights_sum}")
                 new_grad = grad + self.alpha * weights_sum
             else:
                 new_grad = grad + self.alpha * model_weights
@@ -169,9 +176,16 @@ class Optimizer(object):
 
         return new_grad
 
-    def regularization_update(self, model_weights, grad, fit_intercept, lr, prev_round_weights=None):
+    def regularization_update(
+            self,
+            model_weights,
+            grad,
+            fit_intercept,
+            lr,
+            prev_round_weights=None):
         if self.l1_penalty:
-            model_weights = self._l1_updator(model_weights, grad, fit_intercept, lr)
+            model_weights = self._l1_updator(
+                model_weights, grad, fit_intercept, lr)
         else:
             model_weights = model_weights - grad
         """elif self.l2_penalty:
@@ -202,7 +216,8 @@ class Optimizer(object):
         return loss_norm
 
     def __l2_loss_norm(self, model_weights):
-        loss_norm = 0.5 * self.alpha * torch.matmul(model_weights.T, model_weights)
+        loss_norm = 0.5 * self.alpha * \
+            torch.matmul(model_weights.T, model_weights)
         return loss_norm
 
     """def __add_proximal(self, model_weights, prev_round_weights):
@@ -249,16 +264,23 @@ class Optimizer(object):
                                       raise_overflow_error=delta_s.raise_overflow_error)
     """
 
-    def update_weights(self, model_weights, grad, fit_intercept, lr, prev_round_weights=None,
-                       has_applied=True):
-
+    def update_weights(
+            self,
+            model_weights,
+            grad,
+            fit_intercept,
+            lr,
+            prev_round_weights=None,
+            has_applied=True):
         """if not has_applied:
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
         else:"""
-        logger.info(f"before update, model weights: {model_weights}, delta_grad: {grad}")
+        # logger.info(
+        #     f"before update, model weights: {model_weights}, delta_grad: {grad}")
         delta_grad = grad
-        model_weights = self.regularization_update(model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
+        model_weights = self.regularization_update(
+            model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
         logger.info(f"after update, model weights: {model_weights}")
 
         return model_weights
@@ -279,7 +301,7 @@ def separate(value, size_list):
     separate_res = []
     cur = 0
     for size in size_list:
-        separate_res.append(value[cur:cur + size, :])
+        separate_res.append(value[cur : cur + size, :])
         cur += size
     return separate_res
 
@@ -287,40 +309,41 @@ def separate(value, size_list):
 def optimizer_factory(model_parameter, optimizer_type, optim_params):
     optimizer_params = optim_params
 
-    if optimizer_type == 'adadelta':
+    if optimizer_type == "adadelta":
         return torch.optim.Adadelta(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adagrad':
+    elif optimizer_type == "adagrad":
         return torch.optim.Adagrad(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adam':
+    elif optimizer_type == "adam":
         return torch.optim.Adam(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adamw':
+    elif optimizer_type == "adamw":
         return torch.optim.AdamW(model_parameter, **optimizer_params)
-    elif optimizer_type == 'adamax':
+    elif optimizer_type == "adamax":
         return torch.optim.Adamax(model_parameter, **optimizer_params)
-    elif optimizer_type == 'asgd':
+    elif optimizer_type == "asgd":
         return torch.optim.ASGD(model_parameter, **optimizer_params)
-    elif optimizer_type == 'nadam':
+    elif optimizer_type == "nadam":
         return torch.optim.NAdam(model_parameter, **optimizer_params)
-    elif optimizer_type == 'radam':
+    elif optimizer_type == "radam":
         return torch.optim.RAdam(model_parameter, **optimizer_params)
-    elif optimizer_type == 'rmsprop':
+    elif optimizer_type == "rmsprop":
         return torch.optim.RMSprop(model_parameter, **optimizer_params)
     elif optimizer_type == "rprop":
         return torch.optim.Rprop(model_parameter, **optimizer_params)
-    elif optimizer_type == 'sgd':
+    elif optimizer_type == "sgd":
         return torch.optim.SGD(model_parameter, **optimizer_params)
     else:
-        raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))
+        raise NotImplementedError(
+            "Optimize method cannot be recognized: {}".format(optimizer_type))
 
 
 def lr_scheduler_factory(optimizer, method, scheduler_param):
     scheduler_method = method
-
-    if scheduler_method == 'constant':
+    if scheduler_method == "constant":
         return torch.optim.lr_scheduler.ConstantLR(optimizer, **scheduler_param)
-    elif scheduler_method == 'step':
+    elif scheduler_method == "step":
         return torch.optim.lr_scheduler.StepLR(optimizer, **scheduler_param)
-    elif scheduler_method == 'linear':
+    elif scheduler_method == "linear":
         return torch.optim.lr_scheduler.LinearLR(optimizer, **scheduler_param)
     else:
-        raise NotImplementedError(f"Learning rate method cannot be recognized: {scheduler_method}")
+        raise NotImplementedError(
+            f"Learning rate method cannot be recognized: {scheduler_method}")
