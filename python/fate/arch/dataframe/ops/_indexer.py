@@ -41,7 +41,7 @@ def aggregate_indexer(indexer):
         return list(aggregate_ret.items())
 
     agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
-    agg_indexer = agg_indexer.mapValues(lambda v: sorted(v, key=lambda x: x[1]))
+    # agg_indexer = agg_indexer.mapValues(lambda v: sorted(v, key=lambda x: x[1]))
 
     return agg_indexer
 
@@ -260,7 +260,7 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
 
         for offset, (sample_id, data) in enumerate(kvs):
             if bid is None:
-                bid = partition_order_mappings[sample_id]
+                bid = partition_order_mappings[sample_id]["block_id"]
 
             if return_new_indexer:
                 data = data[0]
@@ -308,7 +308,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
     """
     agg_indexer = aggregate_indexer(indexer)
 
-    sample_id_name = df.data_manager.loc_block(df.schema.sample_id_name)
+    sample_id_index = df.data_manager.loc_block(df.schema.sample_id_name, with_offset=False)
 
     def _convert_to_block(kvs):
         ret_dict = {}
@@ -324,7 +324,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
 
                     data = []
                     for idx, block in enumerate(blocks):
-                        if idx == sample_id_name:
+                        if idx == sample_id_index:
                             data.append(sample_id)
                         else:
                             data.append(
