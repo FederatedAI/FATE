@@ -11,7 +11,7 @@ import sys
 arbiter = ("arbiter", "10000")
 guest = ("guest", "10000")
 host = ("host", "9999")
-name = "fed4"
+name = "fed55"
 
 def create_ctx(local):
     from fate.arch import Context
@@ -35,7 +35,7 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 2
+    max_depth = 3
     if party == 'guest':
         ctx = create_ctx(guest)
 
@@ -98,5 +98,5 @@ if __name__ == '__main__':
         bin_info = binning(data_host, max_bin=32)
         bin_data = data_host.bucketize(boundaries=bin_info)
 
-        tree = HeteroDecisionTreeHost(max_depth, random_seed=None)
+        tree = HeteroDecisionTreeHost(max_depth, random_seed=114)
         ret = tree.booster_fit(ctx, bin_data, bin_info)

@@ -109,11 +109,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # encrypt g & h
         en_grad_hess = grad_and_hess.create_frame()
 
-        g = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
-        g_ = self._decryptor.decrypt_tensor(g)
-        print(g_)
-        raise ValueError('123')
-
         en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
         en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
 
@@ -123,7 +118,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def _mask_node(self, ctx: Context, nodes: List[Node]):
         new_nodes = []
         for n in nodes:
-            new_nodes.append(Node(nid=n.nid, is_leaf=n.is_leaf,  l=n.l, r=n.r, is_left_node=n.is_left_node, split_id=n.split_id, sitename=n.sitename))
+            new_nodes.append(Node(nid=n.nid, is_leaf=n.is_leaf,  l=n.l, r=n.r, is_left_node=n.is_left_node, split_id=n.split_id, sitename=n.sitename, sample_num=n.sample_num))
         return new_nodes
 
     def _check_assign_result(self, sample_pos: DataFrame, cur_layer_node: List[Node]):
@@ -151,7 +146,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         
         # Initialization
         train_df = bin_train_data
-        feat_max_bin, max_bin = self._get_column_max_bin(binning_dict)
         sample_pos = self._init_sample_pos(train_df)
         self._sample_on_leaves = sample_pos.empty_frame()
         root_node = self._initialize_root_node(ctx, train_df, grad_and_hess)

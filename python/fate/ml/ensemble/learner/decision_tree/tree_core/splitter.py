@@ -409,9 +409,6 @@ class FedSBTSplitter(object):
                         only hosts know them.
         """
         l_g, l_h, l_cnt = self._extract_hist(node_hist)
-        print('l_g: ', l_g)
-        print('l_h: ', l_h)
-        print('l_cnt: ', l_cnt)
         g_sum, h_sum, cnt_sum = self._make_sum_tensor(cur_layer_nodes)
         rs = self._compute_gains(l_g, l_h, l_cnt, g_sum, h_sum, cnt_sum)
 
@@ -495,7 +492,7 @@ class FedSBTSplitter(object):
         print('guest splits are {}'.format(guest_best_splits))
         print('host splits are {}'.format(host_splits))
         print('best splits are {}'.format(best_splits))
-        raise ValueError('to here cwj')
+
         return best_splits
     
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
