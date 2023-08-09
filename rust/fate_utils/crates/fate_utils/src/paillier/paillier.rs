@@ -3,8 +3,6 @@ use ndarray::prelude::*;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
-use rug::Integer;
-use math::BInt;
 
 #[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
@@ -143,6 +141,23 @@ impl Coders {
             .map(|x| self.coder.encode_f64(*x))
             .collect();
         FixedpointVector { data }
+    }
+    fn pack_u64_vec(&self, data: Vec<u64>, shift_bit: usize, num_each_pack: usize) -> FixedpointVector {
+        FixedpointVector {
+            data: data.chunks(num_each_pack).map(|x| {
+                self.coder.pack(x, shift_bit)
+            }).collect::<Vec<_>>()
+        }
+    }
+    fn unpack_u64_vec(&self, data: &FixedpointVector, shift_bit: usize, num_each_pack: usize, total_num: usize) -> Vec<u64> {
+        let mut result = Vec::with_capacity(total_num);
+        let mut total_num = total_num;
+        for x in data.data.iter() {
+            let n = std::cmp::min(total_num, num_each_pack);
+            result.extend(self.coder.unpack(x, shift_bit, n));
+            total_num -= n;
+        }
+        result
     }
     fn decode_f64(&self, data: &FixedpointEncoded) -> f64 {
         self.coder.decode_f64(&data.data)
