@@ -155,6 +155,9 @@ impl Cipherblock {
             Err(e) => Err(e),
         }
     }
+    pub fn __str__(&self) -> String {
+        format!("{:?}", self.0.as_ref().unwrap())
+    }
     #[getter]
     pub fn shape(&self) -> Vec<usize> {
         self.0.as_ref().map(|cb| cb.shape.clone()).unwrap()

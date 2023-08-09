@@ -18,6 +18,7 @@ from .._dataframe import DataFrame
 from ..manager.block_manager import BlockType
 from ..manager.data_manager import DataManager
 from fate.arch.tensor import DTensor
+from fate.arch.tensor.phe._tensor import PHETensor
 
 
 def set_item(df: "DataFrame", keys, items, state):
@@ -88,15 +89,21 @@ def _set_new_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
-    def _append_tensor(l_blocks, r_tensor, bid_list=None, dm: DataManager=None):
+    def _append_tensor(l_blocks, r_tensor, bid_list=None, dm: DataManager = None):
         ret_blocks = [block for block in l_blocks]
         for offset, bid in enumerate(bid_list):
             ret_blocks.append(dm.blocks[bid].convert_block(r_tensor[:, offset: offset+1]))
 
         return ret_blocks
 
+    def _append_phe_tensor(l_blocks, r_tensor):
+        ret_blocks = [block for block in l_blocks]
+        ret_blocks.append(r_tensor._data)
+
+        return ret_blocks
+
     data_manager = df.data_manager
-    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         bids = data_manager.append_columns(keys, BlockType.get_block_type(items))
         _append_func = functools.partial(_append_single, item=items, col_len=len(keys), bid=bids[0], dm=data_manager)
         block_table = df.block_table.mapValues(_append_func)
@@ -124,12 +131,26 @@ def _set_new_item(df: "DataFrame", keys, items):
         _append_func = functools.partial(_append_df, r_blocks_loc=operable_blocks_loc)
         block_table = df.block_table.join(items.block_table, _append_func)
     elif isinstance(items, DTensor):
-        if len(keys) != items.shape[1]:
-            raise ValueError("Setitem with rhs=DTensor must have equal len keys")
-        block_type = BlockType.get_block_type(items.dtype)
-        bids = data_manager.append_columns(keys, block_type)
-        _append_func = functools.partial(_append_tensor, bid_list=bids, dm=data_manager)
-        block_table = df.block_table.join(items.shardings._data, _append_func)
+        meta_data = items.shardings._data.mapValues(
+            lambda v: (v.pk, v.evaluator, v.coder, v.dtype) if isinstance(v, PHETensor) else None
+        ).first()[1]
+
+        if isinstance(meta_data, tuple):
+            block_type = BlockType.phe_tensor
+            if len(keys) != 1:
+                raise ValueError("to set item of PHETensor, lhs should has only one columns.")
+            data_manager.append_columns(keys, block_type)
+            data_manager.blocks[-1].set_extra_kwargs(pk=meta_data[0], evaluator=meta_data[1], coder=meta_data[2],
+                                                     dtype=meta_data[3], device=items.device)
+            _append_func = functools.partial(_append_phe_tensor)
+            block_table = df.block_table.join(items.shardings._data, _append_func)
+        else:
+            block_type = BlockType.get_block_type(items.dtype)
+            if len(keys) != items.shape[1]:
+                raise ValueError("Setitem with rhs=DTensor must have equal len keys")
+            bids = data_manager.append_columns(keys, block_type)
+            _append_func = functools.partial(_append_tensor, bid_list=bids, dm=data_manager)
+            block_table = df.block_table.join(items.shardings._data, _append_func)
     else:
         raise ValueError(f"Seiitem with rhs_type={type(items)} is not supported")
 
@@ -193,7 +214,7 @@ def _set_old_item(df: "DataFrame", keys, items):
         return ret_blocks
 
     data_manager = df.data_manager
-    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         narrow_blocks, dst_blocks = data_manager.split_columns(keys, BlockType.get_block_type(items))
         replace_func = functools.partial(_replace_single, item=items, narrow_loc=narrow_blocks,
                                          dst_bids=dst_blocks, dm=data_manager)
@@ -228,7 +249,7 @@ def _set_old_item(df: "DataFrame", keys, items):
             raise ValueError("Setitem with rhs=DTensor must have equal len keys")
         block_type = BlockType.get_block_type(items.dtype)
         narrow_blocks, dst_blocks = data_manager.split_columns(keys, block_type)
-        replace_func = functools.partial(_replace_multi, narrow_loc=narrow_blocks,
+        replace_func = functools.partial(_replace_tensor, narrow_loc=narrow_blocks,
                                          dst_bids=dst_blocks, dm=data_manager)
         block_table = df.block_table.join(items.shardings._data, replace_func)
 
