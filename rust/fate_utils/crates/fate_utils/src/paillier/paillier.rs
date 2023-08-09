@@ -3,6 +3,8 @@ use ndarray::prelude::*;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use rug::Integer;
+use math::BInt;
 
 #[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
@@ -631,6 +633,7 @@ impl FixedpointVector {
             .collect()
     }
 }
+
 
 pub(crate) fn register(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<FixedpointPaillierVector>()?;

@@ -1,12 +1,14 @@
 mod ops;
 mod random;
-mod serde;
+// mod serde;
 use core::cmp::{PartialEq, PartialOrd};
 use rug::Integer;
 use rug::{self, ops::Pow};
+use serde::{Serialize, Deserialize};
+
 
 /// newtype of rug::Integer
-#[derive(Default, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug)]
+#[derive(Default, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Serialize, Deserialize)]
 pub struct BInt(pub Integer);
 pub const ONE: u8 = 1u8;
 
