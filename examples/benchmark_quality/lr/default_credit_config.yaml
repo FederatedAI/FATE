@@ -2,16 +2,16 @@ data_guest: "default_credit_hetero_guest"
 data_host: "default_credit_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 30
+epochs: 22
 init_param:
   fit_intercept: True
   method: "zeros"
   random_state: 42
 learning_rate_scheduler:
-  method: "constant"
+  method: "linear"
   scheduler_params:
-    factor: 1.0
-    total_iters: 10000
+    start_factor: 0.7
+    total_iters: 1000
 optimizer:
   method: "rmsprop"
   penalty: "L2"

@@ -7,14 +7,15 @@ init_param:
   fit_intercept: True
   method: "zeros"
 learning_rate_scheduler:
-  method: "constant"
+  method: "linear"
   scheduler_params:
-    factor: 1.0
-    total_iters: 100
+    factor: 0.7
+    total_iters: 1000
 optimizer:
   method: "adam"
   penalty: "L2"
+  alpha: 10
   optimizer_params:
-    lr: 0.15
-batch_size: 550
+    lr: 0.2
+batch_size: 5500
 early_stop: "diff"

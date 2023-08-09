@@ -51,8 +51,8 @@ def upload(ctx, include, exclude, glob, suite_type, role, config_type, **kwargs)
     config_inst = ctx.obj["config"]
     if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
-    if ctx.obj["auto_increasing_sid"] is not None:
-        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    """if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
     yes = ctx.obj["yes"]
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
@@ -176,8 +176,8 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     config_inst = ctx.obj["config"]
     if ctx.obj["extend_sid"] is not None:
         config_inst.extend_sid = ctx.obj["extend_sid"]
-    if ctx.obj["auto_increasing_sid"] is not None:
-        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    """if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]"""
     if parallelize and upload_data:
         upload_data = False
     yes = ctx.obj["yes"]

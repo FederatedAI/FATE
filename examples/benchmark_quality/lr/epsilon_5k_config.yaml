@@ -2,21 +2,21 @@ data_guest: "epsilon_5k_hetero_guest"
 data_host: "epsilon_5k_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 30
+epochs: 8
 batch_size: 2500
 init_param:
   fit_intercept: True
   method: "random"
   random_state: 42
 learning_rate_scheduler:
-  method: "constant"
+  method: "linear"
   scheduler_params:
-    factor: 1.0
+    start_factor: 0.7
     total_iters: 1000
 optimizer:
   method: "adam"
   penalty: "L2"
   alpha: 0.0001
   optimizer_params:
-    lr: 0.3
+    lr: 0.43
 early_stop: "diff"
