@@ -15,20 +15,22 @@
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
-from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param, check_overflow
+from fate.ml.utils._model_param import (
+    check_overflow,
+    deserialize_param,
+    initialize_param,
+    serialize_param,
+)
 from fate.ml.utils._optimizer import LRScheduler, Optimizer
 
 logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleHost(HeteroModule):
-    def __init__(
-            self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None
-    ):
+    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None):
         self.epochs = epochs
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
@@ -78,8 +80,9 @@ class CoordinatedLRModuleHost(HeteroModule):
                         self.optimizer_param["alpha"],
                         self.optimizer_param["optimizer_params"],
                     )
-                    lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                               self.learning_rate_param["scheduler_params"])
+                    lr_scheduler = LRScheduler(
+                        self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+                    )
                     single_estimator = CoordinatedLREstimatorHost(
                         epochs=self.epochs,
                         batch_size=self.batch_size,
@@ -102,8 +105,9 @@ class CoordinatedLRModuleHost(HeteroModule):
                     self.optimizer_param["alpha"],
                     self.optimizer_param["optimizer_params"],
                 )
-                lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                           self.learning_rate_param["scheduler_params"])
+                lr_scheduler = LRScheduler(
+                    self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+                )
                 single_estimator = CoordinatedLREstimatorHost(
                     epochs=self.epochs,
                     batch_size=self.batch_size,
@@ -134,23 +138,28 @@ class CoordinatedLRModuleHost(HeteroModule):
                 all_estimator[label_idx] = estimator.get_model()
         else:
             all_estimator = self.estimator.get_model()
-        return {"data": {"estimator": all_estimator},
-                "meta": {"label_count": self.label_count,
-                         "ovr": self.ovr,
-                         "epochs": self.epochs,
-                         "batch_size": self.batch_size,
-                         "learning_rate_param": self.learning_rate_param,
-                         "optimizer_param": self.optimizer_param,
-                         "init_param": self.init_param},
-                }
+        return {
+            "data": {"estimator": all_estimator},
+            "meta": {
+                "label_count": self.label_count,
+                "ovr": self.ovr,
+                "epochs": self.epochs,
+                "batch_size": self.batch_size,
+                "learning_rate_param": self.learning_rate_param,
+                "optimizer_param": self.optimizer_param,
+                "init_param": self.init_param,
+            },
+        }
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLRModuleHost":
-        lr = CoordinatedLRModuleHost(epochs=model["meta"]["epochs"],
-                                     batch_size=model["meta"]["batch_size"],
-                                     learning_rate_param=model["meta"]["learning_rate_param"],
-                                     optimizer_param=model["meta"]["optimizer_param"],
-                                     init_param=model["meta"]["init_param"])
+        lr = CoordinatedLRModuleHost(
+            epochs=model["meta"]["epochs"],
+            batch_size=model["meta"]["batch_size"],
+            learning_rate_param=model["meta"]["learning_rate_param"],
+            optimizer_param=model["meta"]["optimizer_param"],
+            init_param=model["meta"]["init_param"],
+        )
         lr.label_count = model["meta"]["label_count"]
         lr.ovr = model["meta"]["ovr"]
 
@@ -160,15 +169,19 @@ class CoordinatedLRModuleHost(HeteroModule):
         if lr.ovr:
             lr.estimator = {}
             for label, d in all_estimator.items():
-                estimator = CoordinatedLREstimatorHost(epochs=model["meta"]["epochs"],
-                                                       batch_size=model["meta"]["batch_size"],
-                                                       init_param=model["meta"]["init_param"])
+                estimator = CoordinatedLREstimatorHost(
+                    epochs=model["meta"]["epochs"],
+                    batch_size=model["meta"]["batch_size"],
+                    init_param=model["meta"]["init_param"],
+                )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
         else:
-            estimator = CoordinatedLREstimatorHost(epochs=model["meta"]["epochs"],
-                                                   batch_size=model["meta"]["batch_size"],
-                                                   init_param=model["meta"]["init_param"])
+            estimator = CoordinatedLREstimatorHost(
+                epochs=model["meta"]["epochs"],
+                batch_size=model["meta"]["batch_size"],
+                init_param=model["meta"]["init_param"],
+            )
             estimator.restore(all_estimator)
             lr.estimator = estimator
         logger.info(f"finish from model")

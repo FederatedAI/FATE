@@ -19,10 +19,9 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
+from fate.arch.tensor import DTensor
 
 from .manager import DataManager, Schema
-from .ops import aggregate_indexer, get_partition_order_mappings
-from fate.arch.tensor import DTensor
 
 
 class DataFrame(object):
@@ -43,7 +42,7 @@ class DataFrame(object):
         self._label = None
         self._weight = None
 
-        self.__count = None
+        self._count = None
         self._columns = None
 
     @property
@@ -58,7 +57,7 @@ class DataFrame(object):
     def match_id(self):
         if self._match_id is None:
             self._match_id = self.__extract_fields(
-                with_sample_id=True, with_match_id=True, with_label=False, with_weight=False
+                with_sample_id=False, with_match_id=True, with_label=False, with_weight=False
             )
 
         return self._match_id
@@ -101,7 +100,7 @@ class DataFrame(object):
 
     @property
     def shape(self) -> "tuple":
-        if self.__count is None:
+        if self._count is None:
             if self._sample_id_indexer:
                 items = self._sample_id_indexer.count()
             elif self._match_id_indexer:
@@ -113,9 +112,9 @@ class DataFrame(object):
                     items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
                         lambda size1, size2: size1 + size2
                     )
-            self.__count = items
+            self._count = items
 
-        return self.__count, len(self._data_manager.schema.columns)
+        return self._count, len(self._data_manager.schema.columns)
 
     @property
     def schema(self) -> "Schema":
@@ -153,7 +152,9 @@ class DataFrame(object):
         """
         from .ops._transformer import transform_to_tensor
 
-        return transform_to_tensor(self._block_table, self._data_manager, dtype)
+        return transform_to_tensor(
+            self._block_table, self._data_manager, dtype, partition_order_mappings=self.partition_order_mappings
+        )
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
@@ -182,7 +183,7 @@ class DataFrame(object):
             self._ctx,
             self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions),
             partition_order_mappings=dict(),
-            data_manager=self._data_manager.duplicate()
+            data_manager=self._data_manager.duplicate(),
         )
 
     def drop(self, index) -> "DataFrame":
@@ -263,16 +264,21 @@ class DataFrame(object):
 
         return sigmoid(self)
 
-    def rename(self, sample_id_name: str = None,
-               match_id_name: str = None,
-               label_name: str = None,
-               weight_name: str = None,
-               columns: dict = None):
-        self._data_manager.rename(sample_id_name=sample_id_name,
-                                  match_id_name=match_id_name,
-                                  label_name=label_name,
-                                  weight_name=weight_name,
-                                  columns=columns)
+    def rename(
+        self,
+        sample_id_name: str = None,
+        match_id_name: str = None,
+        label_name: str = None,
+        weight_name: str = None,
+        columns: dict = None,
+    ):
+        self._data_manager.rename(
+            sample_id_name=sample_id_name,
+            match_id_name=match_id_name,
+            label_name=label_name,
+            weight_name=weight_name,
+            columns=columns,
+        )
 
     def count(self) -> "int":
         return self.shape[0]
@@ -282,20 +288,19 @@ class DataFrame(object):
 
         return describe(self, ddof=ddof, unbiased=unbiased)
 
-    def quantile(
-        self,
-        q,
-        relative_error: float = 1e-4
-    ):
+    def quantile(self, q, relative_error: float = 1e-4):
         from .ops._quantile import quantile
+
         return quantile(self, q, relative_error)
 
     def qcut(self, q: int):
         from .ops._quantile import qcut
+
         return qcut(self, q)
 
     def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
         from .ops._encoder import bucketize
+
         return bucketize(self, boundaries)
 
     def hist(self, targets):
@@ -303,8 +308,14 @@ class DataFrame(object):
 
         return hist(self, targets)
 
+    def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: dict):
+        from .ops._histogram import distributed_hist_stat
+
+        return distributed_hist_stat(self, distributed_hist, position, targets)
+
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace
+
         return replace(self, to_replace)
 
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
@@ -342,7 +353,7 @@ class DataFrame(object):
 
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
-    
+
     def __eq__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.eq, other)
 
@@ -372,11 +383,13 @@ class DataFrame(object):
 
         return cmp_operate(self, other, op)
 
+    """
     def __getattr__(self, attr):
         if attr not in self._data_manager.schema.columns:
             raise ValueError(f"DataFrame does not has attribute {attr}")
 
         return self.__getitem__(attr)
+    """
 
     def __setattr__(self, key, value):
         property_attr_mapping = dict(block_table="_block_table", data_manager="_data_manager")
@@ -409,6 +422,7 @@ class DataFrame(object):
 
         if isinstance(items, DTensor):
             from .ops._dimension_scaling import retrieval_row
+
             return retrieval_row(self, items)
 
         if isinstance(items, pd.Index):
@@ -442,6 +456,12 @@ class DataFrame(object):
         from .ops._set_item import set_item
 
         set_item(self, keys, items, state)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, state_dict):
+        self.__dict__.update(state_dict)
 
     def __len__(self):
         return self.count()
@@ -487,99 +507,34 @@ class DataFrame(object):
         return indexer
 
     def loc(self, indexer, target="sample_id", preserve_order=False):
-        self_indexer = self.get_indexer(target)
-        if preserve_order:
-            indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, rhs))
-        else:
-            indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, lhs))
+        from .ops._indexer import loc
 
-        if indexer.count() == 0:
-            return self.empty_frame()
+        return loc(self, indexer, target=target, preserve_order=preserve_order)
 
-        agg_indexer = aggregate_indexer(indexer)
+    def iloc(self, indexes, return_new_indexer=False):
+        """
+        indexes: table, row: (key=random_key, value=[(partition_id, offset)])
+        """
+        from .ops._indexer import iloc
 
-        if not preserve_order:
+        return iloc(self, indexes, return_new_indexer)
 
-            def _convert_block(blocks, retrieval_indexes):
-                row_indexes = [retrieval_index[0] for retrieval_index in retrieval_indexes]
-                return [block[row_indexes] for block in blocks]
+    def loc_with_sample_id_replacement(self, indexer):
+        """
+        indexer: table,
+            row: (key=random_key,
+            value=((src_partition_id, src_offset), [(sample_id, dst_partition_id, dst_offset) ...])
+        """
+        from .ops._indexer import loc_with_sample_id_replacement
 
-            block_table = self._block_table.join(agg_indexer, _convert_block)
-        else:
-
-            def _convert_to_block(kvs):
-                ret_dict = {}
-                for block_id, (blocks, block_indexer) in kvs:
-                    """
-                    block_indexer: row_id, (new_block_id, new_row_id)
-                    """
-                    for src_row_id, (dst_block_id, dst_row_id) in block_indexer:
-                        if dst_block_id not in ret_dict:
-                            ret_dict[dst_block_id] = []
-
-                        ret_dict[dst_block_id].append(
-                            (dst_row_id,
-                                [
-                                    block[src_row_id] if isinstance(block, pd.Index) else block[src_row_id].tolist()
-                                    for block in blocks
-                                ]
-                             )
-                        )
-
-                for dst_block_id, value_list in ret_dict.items():
-                    yield dst_block_id, sorted(value_list)
-
-            def _merge_list(lhs, rhs):
-                if not lhs:
-                    return rhs
-                if not rhs:
-                    return lhs
-
-                l_len = len(lhs)
-                r_len = len(rhs)
-                ret = [[] for i in range(l_len + r_len)]
-                i, j, k = 0, 0, 0
-                while i < l_len and j < r_len:
-                    if lhs[i][0] < rhs[j][0]:
-                        ret[k] = lhs[i]
-                        i += 1
-                    else:
-                        ret[k] = rhs[j]
-                        j += 1
-
-                    k += 1
-
-                while i < l_len:
-                    ret[k] = lhs[i]
-                    i += 1
-                    k += 1
-
-                while j < r_len:
-                    ret[k] = rhs[j]
-                    j += 1
-                    k += 1
-
-                return ret
-
-            from .ops._transformer import transform_list_block_to_frame_block
-
-            block_table = self._block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
-            block_table = block_table.mapReducePartitions(_convert_to_block, _merge_list)
-            block_table = block_table.mapValues(lambda values: [v[1] for v in values])
-            block_table = transform_list_block_to_frame_block(block_table, self._data_manager)
-
-        partition_order_mappings = get_partition_order_mappings(block_table)
-        return DataFrame(self._ctx, block_table, partition_order_mappings, self._data_manager.duplicate())
-
-    def iloc(self, indexes):
-        ...
+        return loc_with_sample_id_replacement(self, indexer)
 
     def copy(self) -> "DataFrame":
         return DataFrame(
             self._ctx,
             self._block_table.mapValues(lambda v: v),
             copy.deepcopy(self.partition_order_mappings),
-            self._data_manager.duplicate()
+            self._data_manager.duplicate(),
         )
 
     @classmethod
@@ -594,8 +549,9 @@ class DataFrame(object):
 
         return vstack(stacks)
 
-    def sample(self, n: int=None, frac: float=None, random_state=None) -> "DataFrame":
+    def sample(self, n: int = None, frac: float = None, random_state=None) -> "DataFrame":
         from .ops._dimension_scaling import sample
+
         return sample(self, n, frac, random_state)
 
     def __extract_fields(
@@ -627,4 +583,5 @@ class DataFrame(object):
 
     def data_overview(self, num=100):
         from .ops._data_overview import collect_data
+
         return collect_data(self, num=100)

@@ -56,7 +56,7 @@ class BaselineSuite:
         self.b = b
         self.c = c
         self.d = d
-        self.pk, self.sk = phe.generate_paillier_keypair(n_length=1024)
+        self.pk, self.sk = phe.generate_paillier_keypair(n_length=2048)
         self.ea = np.vectorize(self.pk.encrypt)(self.a)
         self.eb = np.vectorize(self.pk.encrypt)(self.b)
         self.ec = np.vectorize(self.pk.encrypt)(self.c)
@@ -105,7 +105,7 @@ class BenchSuite:
         self.b = b
         self.c = c
         self.d = d
-        self.pk, self.sk = keygen(1024)
+        self.pk, self.sk = keygen(2048)
         self.ea = self.pk.encrypt_f64(self.a)
         self.eb = self.pk.encrypt_f64(self.b)
         self.ec = self.pk.encrypt_f64(self.c)

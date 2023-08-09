@@ -1,3 +1,3 @@
-from ._dh import SecureAggregatorClient, SecureAggregatorServer
+from .secure_aggregation import SecureAggregatorClient, SecureAggregatorServer
 
 __all__ = ["SecureAggregatorClient", "SecureAggregatorServer"]

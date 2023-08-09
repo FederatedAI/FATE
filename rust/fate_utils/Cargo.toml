@@ -5,7 +5,7 @@ members = [
 
 [workspace.dependencies]
 serde = { version = "1.0.137", features = ["derive", "rc"] }
-rug = "1.16.0"
+rug = { version = "1.20.1", features = ["serde"] }
 rand = { version = "0.8.3", features = ["getrandom"] }
 rand_core = "0.5.1"
 ndarray = { version = "0.15.4" }

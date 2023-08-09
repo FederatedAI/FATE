@@ -15,27 +15,17 @@
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._convergence import converge_func_factory
-from fate.ml.utils._optimizer import separate, Optimizer, LRScheduler
+from fate.ml.utils._optimizer import LRScheduler, Optimizer, separate
 
 logger = logging.getLogger(__name__)
 
 
 class CoordinatedLinRModuleArbiter(HeteroModule):
-    def __init__(
-            self,
-            epochs,
-            early_stop,
-            tol,
-            batch_size,
-            optimizer_param,
-            learning_rate_param
-
-    ):
+    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param):
         self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
@@ -54,7 +44,9 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
         self.estimator.epochs = epochs
 
     def fit(self, ctx: Context) -> None:
-        encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        encryptor = kit.get_tensor_encryptor()
+        decryptor = kit.get_tensor_decryptor()
         ctx.hosts("encryptor").put(encryptor)
         ctx.guest("encryptor").put(encryptor)
         if self.estimator is None:
@@ -64,36 +56,43 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
                 self.optimizer_param["alpha"],
                 self.optimizer_param["optimizer_params"],
             )
-            lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                       self.learning_rate_param["scheduler_params"])
-            single_estimator = HeteroLinREstimatorArbiter(epochs=self.epochs,
-                                                          early_stop=self.early_stop,
-                                                          tol=self.tol,
-                                                          batch_size=self.batch_size,
-                                                          optimizer=optimizer,
-                                                          learning_rate_scheduler=lr_scheduler)
+            lr_scheduler = LRScheduler(
+                self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+            )
+            single_estimator = HeteroLinREstimatorArbiter(
+                epochs=self.epochs,
+                early_stop=self.early_stop,
+                tol=self.tol,
+                batch_size=self.batch_size,
+                optimizer=optimizer,
+                learning_rate_scheduler=lr_scheduler,
+            )
             self.estimator = single_estimator
         self.estimator.fit_model(ctx, decryptor)
 
     def get_model(self):
         return {
             "data": {"estimator": self.estimator.get_model()},
-            "meta": {"epochs": self.epochs,
-                     "early_stop": self.early_stop,
-                     "tol": self.tol,
-                     "batch_size": self.batch_size,
-                     "learning_rate_param": self.learning_rate_param,
-                     "optimizer_param": self.optimizer_param},
+            "meta": {
+                "epochs": self.epochs,
+                "early_stop": self.early_stop,
+                "tol": self.tol,
+                "batch_size": self.batch_size,
+                "learning_rate_param": self.learning_rate_param,
+                "optimizer_param": self.optimizer_param,
+            },
         }
 
     @classmethod
     def from_model(cls, model):
-        linr = CoordinatedLinRModuleArbiter(model["meta"]["epochs"],
-                                            model["meta"]["early_stop"],
-                                            model["meta"]["tol"],
-                                            model["meta"]["batch_size"],
-                                            model["meta"]["optimizer_param"],
-                                            model["meta"]["learning_rate_param"])
+        linr = CoordinatedLinRModuleArbiter(
+            model["meta"]["epochs"],
+            model["meta"]["early_stop"],
+            model["meta"]["tol"],
+            model["meta"]["batch_size"],
+            model["meta"]["optimizer_param"],
+            model["meta"]["learning_rate_param"],
+        )
         estimator = HeteroLinREstimatorArbiter()
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
@@ -102,14 +101,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
 
 class HeteroLinREstimatorArbiter(HeteroModule):
     def __init__(
-            self,
-            epochs=None,
-            early_stop=None,
-            tol=None,
-            batch_size=None,
-            optimizer=None,
-            learning_rate_scheduler=None
-
+        self, epochs=None, early_stop=None, tol=None, batch_size=None, optimizer=None, learning_rate_scheduler=None
     ):
         self.epochs = epochs
         self.batch_size = batch_size
@@ -142,14 +134,14 @@ class HeteroLinREstimatorArbiter(HeteroModule):
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, _ in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
-                g_guest = decryptor.decrypt(g_guest_enc)
+                g_guest = decryptor.decrypt_tensor(g_guest_enc)
                 size_list = [g_guest.size()[0]]
                 g_total = g_guest.squeeze()
                 # get torch tensor
 
                 host_g = batch_ctx.hosts.get("g_enc")
                 for i, g_host_enc in enumerate(host_g):
-                    g = decryptor.decrypt(g_host_enc)
+                    g = decryptor.decrypt_tensor(g_host_enc)
                     size_list.append(g.size()[0])
                     g_total = torch.hstack((g_total, g.squeeze()))
                 if not optimizer_ready:
@@ -172,7 +164,7 @@ class HeteroLinREstimatorArbiter(HeteroModule):
                     iter_g += torch.hstack(delta_g_list_squeezed)
 
                 if len(host_g) == 1:
-                    loss = decryptor.decrypt(batch_ctx.guest.get("loss"))
+                    loss = decryptor.decrypt_tensor(batch_ctx.guest.get("loss"))
                     iter_loss = 0 if iter_loss is None else iter_loss
                     iter_loss += loss
                 else:
@@ -181,12 +173,14 @@ class HeteroLinREstimatorArbiter(HeteroModule):
             if iter_loss is not None:
                 # logger.info(f"step={i}: linr_loss={iter_loss.tolist()}")
                 iter_ctx.metrics.log_loss("linr_loss", iter_loss.tolist()[0])
-            if self.early_stop == 'weight_diff':
+            if self.early_stop == "weight_diff":
                 self.is_converged = self.converge_func.is_converge(iter_g)
             else:
                 if iter_loss is None:
-                    raise ValueError("Multiple host situation, loss early stop function is not available."
-                                     "You should use 'weight_diff' instead")
+                    raise ValueError(
+                        "Multiple host situation, loss early stop function is not available."
+                        "You should use 'weight_diff' instead"
+                    )
                 self.is_converged = self.converge_func.is_converge(iter_loss)
 
             iter_ctx.hosts.put("converge_flag", self.is_converged)
@@ -208,7 +202,7 @@ class HeteroLinREstimatorArbiter(HeteroModule):
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
             "tol": self.tol,
-            "early_stop": self.early_stop
+            "early_stop": self.early_stop,
         }
 
     def restore(self, model):
