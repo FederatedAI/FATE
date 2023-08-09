@@ -68,15 +68,15 @@ class CoordinatedLRModuleGuest(HeteroModule):
             self.estimator.epochs = epochs
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        original_label = train_data.label
+        # original_label = train_data.label
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
         encryptor = ctx.arbiter("encryptor").get()
-        labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
+        labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
         if self.labels is None:
-            self.labels = labels
+            self.labels = sorted(labels)
         if label_count > 2 or self.ovr:
             logger.info(f"OVR data provided, will train OVR models.")
             self.ovr = True
@@ -142,25 +142,27 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 single_estimator = self.estimator
                 single_estimator.epochs = self.epochs
                 single_estimator.batch_size = self.batch_size
-            single_estimator.fit_single_model(ctx, encryptor, train_data, validate_data)
+            train_data_fit = train_data.copy()
+            validate_data_fit = validate_data
+            if validate_data:
+                validate_data_fit = validate_data.copy()
+            single_estimator.fit_single_model(ctx, encryptor, train_data_fit, validate_data_fit)
             self.estimator = single_estimator
-        train_data.label = original_label
 
     def predict(self, ctx, test_data):
+        pred_df = test_data.create_frame(with_label=True, with_weight=False)
         if self.ovr:
             pred_score = test_data.create_frame(with_label=False, with_weight=False)
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
                 pred = estimator.predict(class_ctx, test_data)
                 pred_score[self.labels[i]] = pred
-            pred_df = test_data.create_frame(with_label=True, with_weight=False)
             pred_df[predict_tools.PREDICT_SCORE] = pred_score.apply_row(lambda v: [list(v)])
             predict_result = predict_tools.compute_predict_details(
                 pred_df, task_type=predict_tools.MULTI, classes=self.labels
             )
         else:
             predict_score = self.estimator.predict(ctx, test_data)
-            pred_df = test_data.create_frame(with_label=True, with_weight=False)
             pred_df[predict_tools.PREDICT_SCORE] = predict_score
             predict_result = predict_tools.compute_predict_details(
                 pred_df, task_type=predict_tools.BINARY, classes=self.labels, threshold=self.threshold
@@ -245,7 +247,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         half_d = 0.25 * Xw - 0.5 * Y
         if weight:
             half_d = half_d * weight
-        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d))
+        batch_ctx.hosts.put("half_d", encryptor.encrypt(half_d))
         half_g = torch.matmul(X.T, half_d)
 
         Xw_h = batch_ctx.hosts.get("Xw_h")[0]

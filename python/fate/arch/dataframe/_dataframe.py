@@ -19,9 +19,9 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
+from fate.arch.tensor import DTensor
 
 from .manager import DataManager, Schema
-from fate.arch.tensor import DTensor
 
 
 class DataFrame(object):
@@ -152,8 +152,9 @@ class DataFrame(object):
         """
         from .ops._transformer import transform_to_tensor
 
-        return transform_to_tensor(self._block_table, self._data_manager,
-                                   dtype, partition_order_mappings=self.partition_order_mappings)
+        return transform_to_tensor(
+            self._block_table, self._data_manager, dtype, partition_order_mappings=self.partition_order_mappings
+        )
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
@@ -182,7 +183,7 @@ class DataFrame(object):
             self._ctx,
             self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions),
             partition_order_mappings=dict(),
-            data_manager=self._data_manager.duplicate()
+            data_manager=self._data_manager.duplicate(),
         )
 
     def drop(self, index) -> "DataFrame":
@@ -263,16 +264,21 @@ class DataFrame(object):
 
         return sigmoid(self)
 
-    def rename(self, sample_id_name: str = None,
-               match_id_name: str = None,
-               label_name: str = None,
-               weight_name: str = None,
-               columns: dict = None):
-        self._data_manager.rename(sample_id_name=sample_id_name,
-                                  match_id_name=match_id_name,
-                                  label_name=label_name,
-                                  weight_name=weight_name,
-                                  columns=columns)
+    def rename(
+        self,
+        sample_id_name: str = None,
+        match_id_name: str = None,
+        label_name: str = None,
+        weight_name: str = None,
+        columns: dict = None,
+    ):
+        self._data_manager.rename(
+            sample_id_name=sample_id_name,
+            match_id_name=match_id_name,
+            label_name=label_name,
+            weight_name=weight_name,
+            columns=columns,
+        )
 
     def count(self) -> "int":
         return self.shape[0]
@@ -282,20 +288,19 @@ class DataFrame(object):
 
         return describe(self, ddof=ddof, unbiased=unbiased)
 
-    def quantile(
-        self,
-        q,
-        relative_error: float = 1e-4
-    ):
+    def quantile(self, q, relative_error: float = 1e-4):
         from .ops._quantile import quantile
+
         return quantile(self, q, relative_error)
 
     def qcut(self, q: int):
         from .ops._quantile import qcut
+
         return qcut(self, q)
 
     def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
         from .ops._encoder import bucketize
+
         return bucketize(self, boundaries)
 
     def hist(self, targets):
@@ -305,10 +310,12 @@ class DataFrame(object):
 
     def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: dict):
         from .ops._histogram import distributed_hist_stat
+
         return distributed_hist_stat(self, distributed_hist, position, targets)
 
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace
+
         return replace(self, to_replace)
 
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
@@ -415,6 +422,7 @@ class DataFrame(object):
 
         if isinstance(items, DTensor):
             from .ops._dimension_scaling import retrieval_row
+
             return retrieval_row(self, items)
 
         if isinstance(items, pd.Index):
@@ -500,6 +508,7 @@ class DataFrame(object):
 
     def loc(self, indexer, target="sample_id", preserve_order=False):
         from .ops._indexer import loc
+
         return loc(self, indexer, target=target, preserve_order=preserve_order)
 
     def iloc(self, indexes, return_new_indexer=False):
@@ -507,6 +516,7 @@ class DataFrame(object):
         indexes: table, row: (key=random_key, value=[(partition_id, offset)])
         """
         from .ops._indexer import iloc
+
         return iloc(self, indexes, return_new_indexer)
 
     def loc_with_sample_id_replacement(self, indexer):
@@ -516,6 +526,7 @@ class DataFrame(object):
             value=((src_partition_id, src_offset), [(sample_id, dst_partition_id, dst_offset) ...])
         """
         from .ops._indexer import loc_with_sample_id_replacement
+
         return loc_with_sample_id_replacement(self, indexer)
 
     def copy(self) -> "DataFrame":
@@ -523,7 +534,7 @@ class DataFrame(object):
             self._ctx,
             self._block_table.mapValues(lambda v: v),
             copy.deepcopy(self.partition_order_mappings),
-            self._data_manager.duplicate()
+            self._data_manager.duplicate(),
         )
 
     @classmethod
@@ -538,8 +549,9 @@ class DataFrame(object):
 
         return vstack(stacks)
 
-    def sample(self, n: int=None, frac: float=None, random_state=None) -> "DataFrame":
+    def sample(self, n: int = None, frac: float = None, random_state=None) -> "DataFrame":
         from .ops._dimension_scaling import sample
+
         return sample(self, n, frac, random_state)
 
     def __extract_fields(
@@ -571,4 +583,5 @@ class DataFrame(object):
 
     def data_overview(self, num=100):
         from .ops._data_overview import collect_data
+
         return collect_data(self, num=100)
