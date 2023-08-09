@@ -1,5 +1,4 @@
 use fixedpoint::CT;
-use ndarray::prelude::*;
 use pyo3::prelude::*;
 use super::paillier;
 

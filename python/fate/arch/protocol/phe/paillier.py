@@ -43,6 +43,12 @@ class Coder:
             dtype = tensor.dtype
         return self.encode_vec(tensor.flatten(), dtype=dtype)
 
+    def pack_vec(self, vec: torch.LongTensor, num_shift_bit, num_elem_each_pack) -> FV:
+        return self.coder.pack_u64_vec(vec.detach().tolist(), num_shift_bit, num_elem_each_pack)
+
+    def unpack_vec(self, vec: FV, num_shift_bit, num_elem_each_pack, total_num) -> torch.LongTensor:
+        return torch.LongTensor(self.coder.unpack_u64_vec(vec, num_shift_bit, num_elem_each_pack, total_num))
+
     def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None, device=None) -> V:
         data = self.decode_vec(tensor, dtype)
         if shape is not None:
