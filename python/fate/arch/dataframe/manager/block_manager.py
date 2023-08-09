@@ -68,6 +68,12 @@ class BlockType(str, Enum):
 
         return False
 
+    def __gt__(self, other):
+        if self == other:
+            return False
+
+        return other < self
+
     @staticmethod
     def get_block_type(data_type):
         if isinstance(data_type, np.dtype):
@@ -78,7 +84,7 @@ class BlockType(str, Enum):
             except ValueError:
                 data_type = "np_object"
             return BlockType(data_type)
-        elif isinstance(data_type, (bool, np.bool)) or data_type == torch.bool:
+        elif isinstance(data_type, (bool, np.bool, np.bool_)) or data_type == torch.bool:
             return BlockType.bool
         elif isinstance(data_type, np.int64) or data_type == torch.int64:
             return BlockType.int64
@@ -98,6 +104,10 @@ class BlockType(str, Enum):
     @staticmethod
     def is_float(block_type):
         return block_type in [BlockType.float32, BlockType.float64]
+
+    @staticmethod
+    def is_integer(block_type):
+        return block_type in [BlockType.int32, BlockType.int64]
 
 
 class Block(object):
@@ -402,7 +412,7 @@ class BlockManager(object):
         for block_id, field_with_offset_list in block_field_maps.items():
             if len(self._blocks[block_id].field_indexes) == len(field_with_offset_list):
                 if len(field_with_offset_list) == 1:
-                    self._blocks[block_id] = Block.get_block_by_type(block_types)(
+                    self._blocks[block_id] = Block.get_block_by_type(block_type)(
                         self._blocks[block_id].field_indexes,
                         should_compress=self._blocks[block_id].should_compress
                     )
@@ -514,7 +524,7 @@ class BlockManager(object):
             compressible_blocks[block.block_type].append((block_id, block))
 
         if not has_compressed:
-            return self._blocks, []
+            return self._blocks, [], []
 
         new_blocks, to_compress_block_loc = [], []
         non_compressed_block_changes = dict()

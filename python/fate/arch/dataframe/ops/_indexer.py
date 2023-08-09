@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import functools
+
 
 def aggregate_indexer(indexer):
     """
@@ -35,7 +37,7 @@ def aggregate_indexer(indexer):
         return list(aggregate_ret.items())
 
     agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
-    agg_indexer = agg_indexer.mapValues(lambda v: sorted(v))
+    agg_indexer = agg_indexer.mapValues(lambda v: sorted(v, key=lambda x: x[1]))
 
     return agg_indexer
 
@@ -55,12 +57,13 @@ def transform_to_table(block_table, block_index, partition_order_mappings):
 
 
 def get_partition_order_mappings(block_table):
-    block_info = list(block_table.mapValues(lambda blocks: (blocks[0][0], len(blocks[0]))).collect())
+    block_info = sorted(list(block_table.mapValues(lambda blocks: (blocks[0][0], len(blocks[0]))).collect()))
     block_order_mappings = dict()
     start_index = 0
     for block_id, (block_key, block_size) in block_info:
         block_order_mappings[block_key] = dict(
             start_index=start_index, end_index=start_index + block_size - 1, block_id=block_id)
+        start_index += block_size
 
     return block_order_mappings
 
@@ -88,3 +91,27 @@ def get_partition_order_by_raw_table(table):
         block_id += 1
 
     return block_order_mappings
+
+
+def regenerated_sample_id(block_table, regenerated_sample_id_table, data_manager):
+    """
+    regenerated_sample_id_table: (sample_id, ([new_id_list]))
+    """
+    from ._dimension_scaling import _flatten_partition
+
+    _flatten_func = functools.partial(_flatten_partition, block_num=data_manager.block_num)
+    raw_table = block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
+    regenerated_table = raw_table.join(regenerated_sample_id_table, lambda lhs, rhs: (lhs, rhs))
+
+    def _flat_id(key, value):
+        content, id_list = value
+        flat_ret = []
+        for _id in id_list:
+            flat_ret.append((_id, content))
+
+        return flat_ret
+
+    _flat_id_func = functools.partial(_flat_id)
+    regenerated_table = regenerated_table.flatMap(_flat_id_func)
+
+    return regenerated_table

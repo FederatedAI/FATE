@@ -6,9 +6,10 @@ from ._fields import string_choice
 
 
 class InitParam(pydantic.BaseModel):
-    method: string_choice(['zeros', 'ones', 'consts', 'random']) = 'zeros'
+    method: string_choice(['zeros', 'ones', 'consts', 'random', 'random_uniform']) = 'zeros'
     fill_val: Union[int, float] = 0.0
     fit_intercept: bool = True
+    random_state: int = None
 
 
 def init_param():

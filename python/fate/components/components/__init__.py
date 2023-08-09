@@ -109,14 +109,39 @@ class LazyBuildInComponentsLoader:
         return statistics
 
     @_lazy_cpn
+    def hetero_feature_binning(self):
+        from .hetero_feature_binning import hetero_feature_binning
+
+        return hetero_feature_binning
+
+    @_lazy_cpn
     def hetero_feature_selection(self):
         from .hetero_feature_selection import hetero_feature_selection
 
         return hetero_feature_selection
 
     @_lazy_cpn
+    def union(self):
+        from .union import union
+
+        return union
+
+    @_lazy_cpn
+    def sample(self):
+        from .sample import sample
+
+        return sample
+
+    @_lazy_cpn
+    def data_split(self):
+        from .data_split import data_split
+
+        return data_split
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
+
         return toy_example
 
     @_lazy_cpn

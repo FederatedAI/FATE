@@ -21,6 +21,7 @@ if typing.TYPE_CHECKING:
 
 class JsonModelWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
     def write(self, data, metadata: dict = None):
+        self.artifact.consumed()
         if not hasattr(self, "_has_write"):
             setattr(self, "_has_write", True)
         else:
@@ -50,6 +51,7 @@ class JsonModelWriter(_ArtifactTypeWriter[ModelOutputMetadata]):
 
 class JsonModelReader(_ArtifactTypeReader):
     def read(self):
+        self.artifact.consumed()
         try:
             with open(self.artifact.uri.path, "r") as fr:
                 return json.load(fr)

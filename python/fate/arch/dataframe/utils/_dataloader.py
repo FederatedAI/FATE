@@ -27,7 +27,7 @@ class DataLoader(object):
         batch_size=-1,
         shuffle=False,
         batch_strategy="full",
-        random_seed=None,
+        random_state=None,
     ):
         self._ctx = ctx
         self._dataset = dataset
@@ -39,7 +39,7 @@ class DataLoader(object):
                 self._batch_size = min(batch_size, len(dataset))
         self._shuffle = shuffle
         self._batch_strategy = batch_strategy
-        self._random_seed = random_seed
+        self._random_state = random_state
         self._need_align = need_align
         self._mode = mode
         self._role = role
@@ -56,7 +56,7 @@ class DataLoader(object):
                 role=self._role,
                 batch_size=self._batch_size,
                 shuffle=self._shuffle,
-                random_seed=self._random_seed,
+                random_state=self._random_state,
                 need_align=self._need_align,
                 sync_arbiter=self._sync_arbiter,
             )
@@ -77,7 +77,7 @@ class DataLoader(object):
 
 
 class FullBatchDataLoader(object):
-    def __init__(self, dataset, ctx, mode, role, batch_size, shuffle, random_seed, need_align, sync_arbiter):
+    def __init__(self, dataset, ctx, mode, role, batch_size, shuffle, random_state, need_align, sync_arbiter):
         self._dataset = dataset
         self._ctx = ctx
         self._mode = mode
@@ -86,7 +86,7 @@ class FullBatchDataLoader(object):
         if self._batch_size is None and self._role != "arbiter":
             self._batch_size = len(self._dataset)
         self._shuffle = shuffle
-        self._random_seed = random_seed
+        self._random_state = random_state
         self._need_align = need_align
         self._sync_arbiter = sync_arbiter
 
@@ -118,12 +118,12 @@ class FullBatchDataLoader(object):
             return
 
         if self._batch_size == len(self._dataset):
-            self._batch_splits.append(self._dataset)
+            self._batch_splits.append(BatchEncoding(self._dataset, batch_id=0))
         else:
             if self._mode in ["homo", "local"] or self._role == "guest":
-                indexer = list(self._dataset.get_indexer(target="sample_id").collect())
+                indexer = sorted(list(self._dataset.get_indexer(target="sample_id").collect()))
                 if self._shuffle:
-                    random.seed = self._random_seed
+                    random.seed = self._random_state
                 random.shuffle(indexer)
 
                 for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
@@ -137,12 +137,12 @@ class FullBatchDataLoader(object):
                     if self._role == "guest":
                         iter_ctx.hosts.put("batch_indexes", batch_indexer)
 
-                    self._batch_splits.append(sub_frame)
+                    self._batch_splits.append(BatchEncoding(sub_frame, batch_id=i))
             elif self._mode == "hetero" and self._role == "host":
                 for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")
                     sub_frame = self._dataset.loc(batch_indexes, preserve_order=True)
-                    self._batch_splits.append(sub_frame)
+                    self._batch_splits.append(BatchEncoding(sub_frame, batch_id=i))
 
     def __next__(self):
         if self._role == "arbiter":
@@ -150,18 +150,8 @@ class FullBatchDataLoader(object):
                 yield BatchEncoding(batch_id=batch_id)
             return
 
-        for bid, batch in enumerate(self._batch_splits):
-            if batch.label and batch.weight:
-                yield BatchEncoding(x=batch.values.as_tensor(),
-                                    label=batch.label.as_tensor(),
-                                    weight=batch.weight.as_tensor(),
-                                    batch_id=bid)
-            elif batch.label:
-                yield BatchEncoding(x=batch.values.as_tensor(),
-                                    label=batch.label.as_tensor(),
-                                    batch_id=bid)
-            else:
-                yield BatchEncoding(x=batch.values.as_tensor())
+        for batch in self._batch_splits:
+            yield batch
 
     def __iter__(self):
         return self.__next__()
@@ -172,10 +162,16 @@ class FullBatchDataLoader(object):
 
 
 class BatchEncoding(object):
-    def __init__(self, x=None, label=None, weight=None, batch_id=None):
-        self._x = x
-        self._label = label
-        self._weight = weight
+    def __init__(self, batch_df=None, batch_id=None):
+        if batch_df:
+            self._x = batch_df.values.as_tensor()
+            self._label = batch_df.label.as_tensor() if batch_df.label else None
+            self._weight = batch_df.weight.as_tensor() if batch_df.weight else None
+        else:
+            self._x = None
+            self._label = None
+            self._weight = None
+
         self._batch_id = batch_id
 
     @property
