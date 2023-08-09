@@ -109,6 +109,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # encrypt g & h
         en_grad_hess = grad_and_hess.create_frame()
 
+        g = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
+        g_ = self._decryptor.decrypt_tensor(g)
+        print(g_)
+        raise ValueError('123')
+
         en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
         en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
 
