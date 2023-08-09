@@ -41,7 +41,7 @@ def aggregate_indexer(indexer):
         return list(aggregate_ret.items())
 
     agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
-    agg_indexer = agg_indexer.mapValues(lambda v: sorted(v, key=lambda x: x[1]))
+    # agg_indexer = agg_indexer.mapValues(lambda v: sorted(v, key=lambda x: x[1]))
 
     return agg_indexer
 
@@ -260,7 +260,7 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
 
         for offset, (sample_id, data) in enumerate(kvs):
             if bid is None:
-                bid = partition_order_mappings[sample_id]
+                bid = partition_order_mappings[sample_id]["block_id"]
 
             if return_new_indexer:
                 data = data[0]
