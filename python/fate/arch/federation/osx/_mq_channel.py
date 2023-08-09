@@ -91,7 +91,7 @@ class MQChannel(object):
 
     @nretry
     def produce(self, body, properties):
-        LOGGER.debug(f"produce body={body}, properties={properties}, mq={self}")
+        # LOGGER.debug(f"produce body={body}, properties={properties}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._send_topic,
@@ -105,7 +105,7 @@ class MQChannel(object):
         )
         msg = osx_pb2.Message(head=bytes(json.dumps(properties), encoding="utf-8"), body=body)
         inbound = osx_pb2.Inbound(metadata=meta, payload=msg.SerializeToString())
-        LOGGER.debug(f"produce inbound={inbound}, mq={self}")
+        # LOGGER.debug(f"produce inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
 
         LOGGER.debug(f"produce {self._receive_topic}  index {self._index} result={result.code}, mq={self}")
@@ -130,7 +130,7 @@ class MQChannel(object):
             MessageOffSet=offset,
         )
         inbound = osx_pb2.Inbound(metadata=meta)
-        LOGGER.debug(f"ack inbound={inbound}, mq={self}")
+        # LOGGER.debug(f"ack inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
         LOGGER.debug(f"ack result={result}, mq={self}")
         return result

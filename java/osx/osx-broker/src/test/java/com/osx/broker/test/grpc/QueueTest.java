@@ -162,7 +162,7 @@ public class QueueTest {
                     //inboundBuilder.getMetadataMap().put(Pcp.Metadata.MessageOffSet.name(),);
                     Osx.Message.Builder messageBuilder = Osx.Message.newBuilder();
                     //4359615
-                    //messageBuilder.setBody(ByteString.copyFrom(createBigArray(10359615)));
+                    messageBuilder.setBody(ByteString.copyFrom(createBigArray(40359615)));
                     messageBuilder.setHead(ByteString.copyFrom(("test head " + i).getBytes()));
                     inboundBuilder.setPayload(messageBuilder.build().toByteString());
                     Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
