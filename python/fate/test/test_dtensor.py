@@ -79,6 +79,13 @@ def test_unary(ctx, t1_f32, t1_f32_sharding, op):
     assert op(t1_f32) == DTensor.from_sharding_list(ctx, [op(s) for s in t1_f32_sharding], num_partitions=3)
 
 
+def test_cipher(ctx, t1_f32):
+    kit = ctx.cipher.phe.setup({})
+    encryptor, decryptor = kit.get_tensor_encryptor(), kit.get_tensor_decryptor()
+    encrypted = encryptor.encrypt_tensor(t1_f32)
+    print(torch.to_local_f(decryptor.decrypt_tensor(encrypted)))
+
+
 @pytest.mark.parametrize(
     "op",
     [torch.add, torch.sub, torch.mul, torch.div, torch.rsub],
