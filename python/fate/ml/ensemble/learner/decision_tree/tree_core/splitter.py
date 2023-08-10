@@ -488,11 +488,11 @@ class FedSBTSplitter(object):
             host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
             host_splits.append(host_split)
 
+
+        print('host splits are {}'.format(host_splits))
         best_splits = self._merge_splits(guest_best_splits, host_splits)
         print('guest splits are {}'.format(guest_best_splits))
-        print('host splits are {}'.format(host_splits))
         print('best splits are {}'.format(best_splits))
-
         return best_splits
     
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):

@@ -6,6 +6,7 @@ from fate.ml.ensemble.learner.decision_tree.hetero.guest import HeteroDecisionTr
 from fate.ml.ensemble.utils.binning import binning
 from fate.ml.ensemble.learner.decision_tree.tree_core.loss import BCELoss, CELoss, L2Loss
 from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_guest
+from fate.ml.utils.predict_tools import compute_predict_details, PREDICT_SCORE, LABEL, BINARY, MULTI, REGRESSION
 import logging
 
 
@@ -13,15 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 OBJECTIVE = {
-    "binary": BCELoss,
-    "multiclass": CELoss,
-    "regression": L2Loss
+    "binary:bce": BCELoss,
+    "multiclass:ce": CELoss,
+    "regression:l2": L2Loss
 }
 
 
 class HeteroSecureBoostGuest(HeteroBoostingTree):
 
-    def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, objective='binary', num_class=3, max_split_nodes=1024, 
+    def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, objective='binary:bce', num_class=3, max_split_nodes=1024, 
                  max_bin=32, l2=0.1, l1=0, colsample=1.0) -> None:
         super().__init__()
         self.num_trees = num_trees
@@ -38,8 +39,11 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._tree_dim = 1  # tree dimension, if is multilcass task, tree dim > 1
         self._loss_func = None
 
+        # debug
+        self.leaf_pos = []
+
     def _prepare_parameter(self):
-        self._tree_dim = self.num_class if self.objective == 'multiclass' else 1
+        self._tree_dim = self.num_class if self.objective == 'multiclass:ce' else 1
 
     def _get_loss_func(self, objective: str) -> Optional[object]:
         # to lowercase
@@ -83,6 +87,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             tree.booster_fit(tree_ctx, bin_data, gh, bin_info)
             # accumulate scores of cur boosting round
             scores = tree.get_sample_predict_weights()
+            self.leaf_pos.append(tree._sample_on_leaves.as_pd_df())
             assert len(scores) == len(self._accumulate_scores), f"tree predict scores length {len(scores)} not equal to accumulate scores length {len(self._accumulate_scores)}."
             scores =  scores.loc(self._accumulate_scores.get_indexer(target="sample_id"), preserve_order=True)
             self._accumulate_scores = self._accumulate_scores + scores * self.learning_rate
@@ -91,11 +96,24 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             self._update_feature_importance(tree.get_feature_importance())
             logger.info('fitting guest decision tree {} done'.format(tree_idx))
 
-    def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
+    def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False) -> DataFrame:
         
         leaf_pos = predict_leaf_guest(ctx, self._trees, predict_data)
+        if predict_leaf:
+            return leaf_pos
         result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func)
-        return result
+
+        task_type = self.objective.split(':')[0]
+        if task_type == BINARY:
+            classes = [0, 1]
+        # align table
+        result: DataFrame = result.loc(predict_data.get_indexer(target="sample_id"), preserve_order=True)
+        ret_frame = result.create_frame()
+        if predict_data.schema.label_name is not None:
+            ret_frame[LABEL] = predict_data.label
+        ret_frame[PREDICT_SCORE] = result['predict']
+
+        return compute_predict_details(ret_frame, task_type, classes)
 
     def _get_hyper_param(self) -> dict:
         return {

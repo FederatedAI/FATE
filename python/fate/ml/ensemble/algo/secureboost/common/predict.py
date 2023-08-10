@@ -25,6 +25,7 @@ def all_reach_leaf(pos: np.array):
 
 
 def not_finished(pos: np.array):
+    assert isinstance(pos, np.ndarray), f"pos should be np.ndarray, but got {type(pos)}"
     return not np.all(pos < 0)
 
 
@@ -34,7 +35,7 @@ def generate_pos_array(tree_num, max_node_num):
     return [np.zeros(tree_num, dtype=dtype)]
 
 
-def go_deep(s: pd.Series, tree: List[Node], sitename, cur_node_id):
+def go_deep(s: pd.Series, tree: List[Node], sitename, cur_node_id, tree_idx=None):
     
     node: Node = tree[cur_node_id]
     while True:
@@ -62,10 +63,11 @@ def traverse_tree(s: pd.Series, trees: List[List[Node]], sitename: str):
     for node_pos, tree in zip(sample_pos, trees):
         
         if node_pos < 0:  # sample already reaches leaf node in this tree
+            tree_idx += 1
             continue
         
         cur_node_id = node_pos
-        end_node_id = go_deep(s, tree, sitename, cur_node_id)
+        end_node_id = go_deep(s, tree, sitename, cur_node_id, tree_idx=tree_idx)
         new_sample_pos[tree_idx] = end_node_id
         tree_idx += 1
 
@@ -123,13 +125,12 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
         new_pos = sample_with_pos.create_frame()
         new_pos['sample_pos'] = sample_with_pos.apply_row(map_func)
         
-        done_sample_idx = new_pos.apply_row(lambda x: all_reach_leaf(x['sample_pos'][0]))  # samples that reach leaf node in all trees
-        not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos'][0]))  # samples that not reach leaf node in all trees
+        done_sample_idx = new_pos.apply_row(lambda x: all_reach_leaf(x['sample_pos']))  # samples that reach leaf node in all trees
+        not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos']))  # samples that not reach leaf node in all trees
         indexer = done_sample_idx.get_indexer('sample_id')
         
         done_sample = new_pos.loc(indexer, preserve_order=True)[done_sample_idx.as_tensor()]
         result_sample_pos = DataFrame.vstack([result_sample_pos, done_sample])
-
         if len(result_sample_pos) == len(data):
             sub_ctx.hosts.put('need_stop', True)
             break

@@ -180,9 +180,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # compute best splits
             split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder)
             # update tree with best splits
-            next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info)
+            next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info, train_df)
             # update feature importance
-            self._update_feature_importance(sub_ctx, split_info)
+            self._update_feature_importance(sub_ctx, split_info, train_df)
             # sync nodes
             self._sync_nodes(sub_ctx, cur_layer_node, next_layer_nodes)
             # update sample positions

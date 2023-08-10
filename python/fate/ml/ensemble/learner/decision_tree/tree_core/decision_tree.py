@@ -255,7 +255,7 @@ class DecisionTree(object):
         for node in tree_nodes:
             if node.sitename == sitename:
                 if not node.is_leaf:
-                    feat_name = columns[node.fid]
+                    feat_name = node.fid
                     split_val = binning_dict[feat_name][node.bid]
                     node.bid = split_val
             else:
@@ -275,17 +275,22 @@ class DecisionTree(object):
 
         return root_node
     
-    def _update_feature_importance(self, ctx: Context, split_info: List[SplitInfo]):
+    def _update_feature_importance(self, ctx: Context, split_info: List[SplitInfo], data: DataFrame):
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         for info in split_info:
             if info is not None and info.sitename == sitename:
-                fid = info.best_fid
-                if fid not in self._feature_importance:
-                    self._feature_importance[fid] = FeatureImportance(gain=info.gain)
+                feat_name = self._fid_to_feature_name(info.best_fid, data)
+                if feat_name not in self._feature_importance:
+                    self._feature_importance[feat_name] = FeatureImportance(gain=info.gain)
                 else:
-                    self._feature_importance[fid] = self._feature_importance[fid] + FeatureImportance(gain=info.gain)
+                    self._feature_importance[feat_name] = self._feature_importance[feat_name] + FeatureImportance(gain=info.gain)
+
+    def _fid_to_feature_name(self, fid: int, dataframe: DataFrame):
+        if fid is None:
+            return None
+        return dataframe.schema.columns[fid]
     
-    def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo]):
+    def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo], data: DataFrame):
         
         assert len(cur_layer_nodes) == len(split_info), 'node num not match split info num, got {} node vs {} split info'.format(len(cur_layer_nodes), len(split_info))
 
@@ -306,7 +311,8 @@ class DecisionTree(object):
             sum_hess = node.hess
             sum_cnt = node.sample_num
 
-            node.fid = split_info[idx].best_fid
+            feat_name = self._fid_to_feature_name(split_info[idx].best_fid, data)
+            node.fid = feat_name
             node.bid = split_info[idx].best_bid
             node.missing_dir = split_info[idx].missing_dir
             node.sitename = split_info[idx].sitename
@@ -447,7 +453,7 @@ class DecisionTree(object):
         
         model_dict = {}
         nodes = [n.to_dict() for n in self._nodes]
-        feat_importance = {int(k): v.to_dict() for k, v in self._feature_importance.items()}
+        feat_importance = {k: v.to_dict() for k, v in self._feature_importance.items()}
         param = self.get_hyper_param()
         model_dict['nodes'] = nodes
         model_dict['feature_importance'] = feat_importance

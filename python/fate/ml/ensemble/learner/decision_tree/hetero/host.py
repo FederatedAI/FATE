@@ -25,7 +25,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._pk = None
         self._evaluator = None
 
-    def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, hist_inst: DistributedHistogram, splitter: FedSBTSplitter):
+    def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, hist_inst: DistributedHistogram, splitter: FedSBTSplitter, data: DataFrame):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         to_recover = {}
@@ -36,36 +36,30 @@ class HeteroDecisionTreeHost(DecisionTree):
                 to_recover[node_id] = split_id
 
         if len(to_recover) != 0:
-            print(to_recover)
-            print(node_map)
 
             if self._random_seed is None:
-                print('no shuffle, no need to recover')
                 for node_id, split_id in to_recover.items():
                     node = cur_layer_nodes[node_map[node_id]]
                     fid, bid = splitter.get_bucket(split_id)
-                    node.fid = int(fid)
+                    node.fid = self._fid_to_feature_name(int(fid), data)
                     node.bid = int(bid)
-                    print(node.fid, node.bid)
             else:
-                print('recover from shuffle')
                 recover_rs = hist_builder.recover_feature_bins(hist_inst, to_recover, node_map)
                 for node_id, split_tuple in recover_rs.items():
                     node = cur_layer_nodes[node_map[node_id]]
                     fid, bid = split_tuple
-                    node.fid =  int(fid)
+                    node.fid =  self._fid_to_feature_name(int(fid), data)
                     node.bid = int(bid)
-                    print(node.fid, node.bid)
 
-    def _update_host_feature_importance(self, ctx: Context, nodes: List[Node]):
+    def _update_host_feature_importance(self, ctx: Context, nodes: List[Node], train_df: DataFrame):
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         for n in nodes:
             if sitename == n.sitename:
-                fid = n.fid
-                if fid not in self._feature_importance:
-                    self._feature_importance[fid] = FeatureImportance()
+                feat_name = n.fid
+                if feat_name not in self._feature_importance:
+                    self._feature_importance[feat_name] = FeatureImportance()
                 else:
-                    self._feature_importance[fid] = self._feature_importance[fid] + FeatureImportance()
+                    self._feature_importance[feat_name]  = self._feature_importance[feat_name] + FeatureImportance()
 
     def _update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
 
@@ -139,8 +133,8 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                                             pk=self._pk, evaluator=self._evaluator)
             self.splitter.split(sub_ctx, en_statistic_result, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
-            self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, hist_inst, self.splitter)
-            self._update_host_feature_importance(sub_ctx, cur_layer_node)
+            self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, hist_inst, self.splitter, train_df)
+            self._update_host_feature_importance(sub_ctx, cur_layer_node, train_df)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
             train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
