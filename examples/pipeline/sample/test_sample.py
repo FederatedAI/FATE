@@ -12,23 +12,22 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
+from fate_client.pipeline.components.fate import Sample, PSI
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
-def main(config="./config.yaml", namespace=""):
+def main(config="../config.yaml", namespace=""):
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+
+    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
@@ -39,16 +38,32 @@ def main(config="./config.yaml", namespace=""):
                                                                   namespace=f"experiment{namespace}"))
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
-    lr_0 = CoordinatedLR("lr_0",
-                         epochs=2,
-                         batch_size=100,
-                         optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}},
-                         init_param={"fit_intercept": True},
-                         cv_data=psi_0.outputs["output_data"],
-                         cv_param={"n_splits": 3})
+
+    psi_1 = PSI("psi_1")
+    psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                  namespace=f"experiment{namespace}"))
+    psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
+
+    sample_0 = Sample("sample_0",
+                      frac={0: 0.5},
+                      replace=False,
+                      hetero_sync=True,
+                      input_data=psi_0.outputs["output_data"])
+
+    sample_1 = Sample("sample_1",
+                      n=100,
+                      replace=False,
+                      hetero_sync=True,
+                      input_data=psi_0.outputs["output_data"]
+                      )
 
     pipeline.add_task(psi_0)
-    pipeline.add_task(lr_0)
+    pipeline.add_task(psi_1)
+    pipeline.add_task(sample_0)
+    pipeline.add_task(sample_1)
+
+    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     print(pipeline.get_dag())
     pipeline.fit()
@@ -56,9 +71,9 @@ def main(config="./config.yaml", namespace=""):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str, default="./config.yaml",
+    parser.add_argument("--config", type=str, default="../config.yaml",
                         help="config file")
-    parser.add_argument("-namespace", type=str, default="",
+    parser.add_argument("--namespace", type=str, default="",
                         help="namespace for data stored in FATE")
     args = parser.parse_args()
     main(config=args.config, namespace=args.namespace)

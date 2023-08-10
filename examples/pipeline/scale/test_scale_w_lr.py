@@ -12,17 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
-from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI, FeatureScale, Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
-def main(config="./config.yaml", namespace=""):
+def main(config="../config.yaml", namespace=""):
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
     parties = config.parties
@@ -39,14 +37,25 @@ def main(config="./config.yaml", namespace=""):
     psi_0 = PSI("psi_0")
     psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                      namespace=f"experiment{namespace}"))
+
+    psi_1 = PSI("psi_1")
+    psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                  namespace=f"experiment{namespace}"))
+    psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
+
+    feature_scale_0 = FeatureScale("feature_scale_0",
+                                   method="standard",
+                                   train_data=psi_0.outputs["output_data"])
+
     lr_0 = CoordinatedLR("lr_0",
                          epochs=10,
                          batch_size=None,
                          optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}},
                          init_param={"fit_intercept": True, "method": "random_uniform"},
-                         train_data=psi_0.outputs["output_data"],
+                         train_data=feature_scale_0.outputs["train_output_data"],
                          learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
                                                                                            "total_iters": 100}})
 
@@ -57,38 +66,38 @@ def main(config="./config.yaml", namespace=""):
                               input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
+    pipeline.add_task(psi_1)
+    pipeline.add_task(feature_scale_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(evaluation_0)
 
+    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     print(pipeline.get_dag())
     pipeline.fit()
 
-    pipeline.deploy([psi_0, lr_0])
+    pipeline.deploy([psi_0, feature_scale_0, lr_0])
 
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(
-        input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                        namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].component_setting(
-        input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                        namespace=f"experiment{namespace}"))
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                  namespace=f"experiment{namespace}"))
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
     predict_pipeline.compile()
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())
     predict_pipeline.predict()
-    # print(f"predict lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str, default="./config.yaml",
+    parser.add_argument("--config", type=str, default="../config.yaml",
                         help="config file")
-    parser.add_argument("-namespace", type=str, default="",
+    parser.add_argument("--namespace", type=str, default="",
                         help="namespace for data stored in FATE")
     args = parser.parse_args()
     main(config=args.config, namespace=args.namespace)

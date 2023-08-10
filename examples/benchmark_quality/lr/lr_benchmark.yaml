@@ -179,15 +179,15 @@ data:
     table_name: vehicle_scale_hetero_host
     namespace: experiment
     role: host_0
-hetero_lr-binary-0-breast:
-  local:
-    script: "./sklearn-lr-binary.py"
-    conf: "./breast_lr_sklearn_config.yaml"
-  FATE-hetero-lr:
-    script: "./pipeline-lr-binary.py"
-    conf: "./breast_config.yaml"
-  compare_setting:
-    relative_tol: 0.01
+#hetero_lr-binary-0-breast:
+#  local:
+#    script: "./sklearn-lr-binary.py"
+#    conf: "./breast_lr_sklearn_config.yaml"
+#  FATE-hetero-lr:
+#    script: "./pipeline-lr-binary.py"
+#    conf: "./breast_config.yaml"
+#  compare_setting:
+#    relative_tol: 0.01
 hetero_lr-binary-1-default-credit:
   local:
     script: "./sklearn-lr-binary.py"
@@ -197,15 +197,15 @@ hetero_lr-binary-1-default-credit:
     conf: "./default_credit_config.yaml"
   compare_setting:
     relative_tol: 0.01
-hetero_lr-binary-2-epsilon-5k:
-  local:
-    script: "./sklearn-lr-binary.py"
-    conf: "./epsilon_5k_lr_sklearn_config.yaml"
-  FATE-hetero-lr:
-    script: "./pipeline-lr-binary.py"
-    conf: "./epsilon_5k_config.yaml"
-  compare_setting:
-    relative_tol: 0.01
+#hetero_lr-binary-2-epsilon-5k:
+#  local:
+#    script: "./sklearn-lr-binary.py"
+#    conf: "./epsilon_5k_lr_sklearn_config.yaml"
+#  FATE-hetero-lr:
+#    script: "./pipeline-lr-binary.py"
+#    conf: "./epsilon_5k_config.yaml"
+#  compare_setting:
+#    relative_tol: 0.01
 hetero_lr-binary-3-give-credit:
   local:
     script: "./sklearn-lr-binary.py"

@@ -71,6 +71,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
                          input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation('evaluation_0',
+                              input_data=lr_0.outputs["train_output_data"],
                               metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
     pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)

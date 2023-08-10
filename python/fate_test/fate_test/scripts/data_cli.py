@@ -8,11 +8,11 @@ from datetime import timedelta
 from pathlib import Path
 
 import click
-# from fate_test._client import Clients
+from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._io import LOGGER, echo
 from fate_test.scripts._options import SharedOptions
-from fate_test.scripts._utils import _load_testsuites, _delete_data, _big_data_task
+from fate_test.scripts._utils import _load_testsuites, _delete_data, _big_data_task, _upload_data
 from ruamel import yaml
 
 from fate_test import _config
@@ -28,14 +28,15 @@ def data_group():
 
 @data_group.command("upload")
 @click.option('-i', '--include', required=False, type=click.Path(exists=True), multiple=True, metavar="<include>",
-              help="include *benchmark.json under these paths")
+              help="include *benchmark.yaml under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *benchmark.json under these paths")
 @click.option("-t", "--config-type", type=click.Choice(["min_test", "all_examples"]), default="min_test",
               help="config file")
 @click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('-s', '--suite-type', required=False, type=click.Choice(["testsuite", "benchmark"]), default="testsuite",
+@click.option('-s', '--suite-type', required=False, type=click.Choice(["testsuite", "benchmark", "performance"]),
+              default="testsuite",
               help="suite type")
 @click.option('-r', '--role', type=str, default='all', help="role to process, default to `all`. "
                                                             "use option likes: `guest_0`, `host_0`, `host`")
@@ -56,9 +57,17 @@ def upload(ctx, include, exclude, glob, suite_type, role, config_type, **kwargs)
     yes = ctx.obj["yes"]
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
+    client = Clients(config_inst)
     if len(include) != 0:
         echo.echo("loading testsuites:")
-        suffix = "benchmark.json" if suite_type == "benchmark" else "testsuite.json"
+        if suite_type == "benchmark":
+            suffix = "benchmark.yaml"
+        elif suite_type == "testsuite":
+            suite_type = "testsuite.yaml"
+        elif suite_type == "performance":
+            suffix = "performance.yaml"
+        else:
+            raise ValueError(f"unknown suite type: {suite_type}")
         suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
                                   suffix=suffix, suite_type=suite_type)
         for suite in suites:
@@ -67,8 +76,9 @@ def upload(ctx, include, exclude, glob, suite_type, role, config_type, **kwargs)
             echo.echo(f"\tdataset({len(suite.dataset)}) {suite.path}")
         if not yes and not click.confirm("running?"):
             return
-        # client_upload(suites=suites, config_inst=config_inst, namespace=namespace)
-        # todo: upload with pipeline
+
+        for suite in suites:
+            _upload_data(client, suite, config_inst)
     else:
         config = get_config(config_inst)
         if config_type == 'min_test':
@@ -77,14 +87,12 @@ def upload(ctx, include, exclude, glob, suite_type, role, config_type, **kwargs)
             config_file = config.all_examples_data_config
 
         with open(config_file, 'r', encoding='utf-8') as f:
-            upload_data = json.loads(f.read())
+            upload_data = yaml.safe_load(f.read())
 
         echo.echo(f"\tdataset({len(upload_data['data'])}) {config_file}")
         if not yes and not click.confirm("running?"):
             return
-        """with Clients(config_inst) as client:
-            data_upload(client, config_inst, upload_data)"""
-        # @todo: upload data with pipeline
+        _upload_data(client, upload_data, config_inst)
         echo.farewell()
         echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
@@ -121,9 +129,9 @@ def delete(ctx, include, exclude, glob, yes, suite_type, **kwargs):
         echo.echo(f"\tdataset({len(suite.dataset)}) {suite.path}")
     if not yes and not click.confirm("running?"):
         return
-    with Clients(config_inst) as client:
-        for i, suite in enumerate(suites):
-            _delete_data(client, suite)
+    client = Clients(config_inst)
+    for i, suite in enumerate(suites):
+        _delete_data(client, suite)
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
@@ -200,11 +208,12 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     _big_data_task(include, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
                    config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path, parallelize)
     if upload_data:
-        if use_local_data:
+        """if use_local_data:
             _config.use_local_data = 0
-        _config.data_switch = remove_data
-        # client_upload(suites=suites, config_inst=config_inst, namespace=namespace, output_path=output_path)
-        # todo: upload with pipeline
+        _config.data_switch = remove_data"""
+        client = Clients(config_inst)
+        for suite in suites:
+            _upload_data(client, upload_data, config_inst)
 
 
 @data_group.command("download")
@@ -265,6 +274,7 @@ def query_schema(ctx, component_name, job_id, role, party_id, **kwargs):
 
     if not yes and not click.confirm("running?"):
         return
+    client = Clients(config_inst)
     # todo: upload data with pipeline
     """with Clients(config_inst) as client:
         query_component_output_data(client, config_inst, component_name, job_id, role, party_id)"""

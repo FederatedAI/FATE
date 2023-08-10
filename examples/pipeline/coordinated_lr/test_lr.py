@@ -16,38 +16,39 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, Intersection
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
-def main(config="./config.yaml", namespace=""):
+def main(config="../config.yaml", namespace=""):
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host
+    host = parties.host[0]
     arbiter = parties.arbiter[0]
 
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    if config.task_cores:
+        pipeline.conf.set("task_cores", config.task_cores)
+    if config.timeout:
+        pipeline.conf.set("timeout", config.timeout)
 
-    intersect_0 = Intersection("intersect_0", method="raw")
-    intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                        namespace=f"{namespace}experiment_sid"))
-    intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                           namespace=f"{namespace}experiment_sid"))
-    intersect_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                           namespace=f"{namespace}experiment_sid"))
+    psi_0 = PSI("psi_0")
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                  namespace=f"experiment{namespace}"))
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     lr_0 = CoordinatedLR("lr_0",
-                         epochs=4,
-                         batch_size=None,
-                         early_stop="weight_diff",
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01}},
-                         init_param={"fit_intercept": True, "method": "zeros"},
-                         train_data=intersect_0.outputs["output_data"],
-                         learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
-                                                                                             "total_iters": 100}})
+                         epochs=10,
+                         batch_size=300,
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}},
+                         init_param={"fit_intercept": True, "method": "random_uniform"},
+                         train_data=psi_0.outputs["output_data"],
+                         learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
+                                                                                           "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
                               label_column_name="y",
@@ -55,7 +56,7 @@ def main(config="./config.yaml", namespace=""):
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])
 
-    pipeline.add_task(intersect_0)
+    pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(evaluation_0)
 
@@ -63,17 +64,17 @@ def main(config="./config.yaml", namespace=""):
     print(pipeline.get_dag())
     pipeline.fit()
 
-    pipeline.deploy([intersect_0, lr_0])
+    pipeline.deploy([psi_0, lr_0])
 
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.intersect_0.guest.component_setting(
+    deployed_pipeline.psi_0.guest.component_setting(
         input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                        namespace=f"{namespace}experiment_sid"))
-    deployed_pipeline.intersect_0.hosts[[0, 1]].component_setting(
-        input_data=DataWarehouseChannel(name="breast_hetero_host_sid",
-                                        namespace=f"{namespace}experiment_sid"))
+                                        namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.hosts[0].component_setting(
+        input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                        namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
     predict_pipeline.compile()
@@ -85,9 +86,9 @@ def main(config="./config.yaml", namespace=""):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str, default="./config.yaml",
+    parser.add_argument("--config", type=str, default="../config.yaml",
                         help="config file")
-    parser.add_argument("-namespace", type=str, default="",
+    parser.add_argument("--namespace", type=str, default="",
                         help="namespace for data stored in FATE")
     args = parser.parse_args()
     main(config=args.config, namespace=args.namespace)

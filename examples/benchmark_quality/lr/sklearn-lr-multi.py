@@ -42,10 +42,10 @@ def main(config="../../config.yaml", param="./vehicle_lr_sklearn_config.yaml"):
 
     config_param = {
         "penalty": param["penalty"],
-        "max_iter": param["max_iter"],
+        "max_iter": param["epochs"],
         "alpha": param["alpha"],
         "learning_rate": "optimal",
-        "eta0": param["learning_rate"],
+        "eta0": param["eta0"],
         "random_state": 105
     }
 

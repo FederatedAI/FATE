@@ -2,20 +2,20 @@ data_guest: "give_credit_hetero_guest"
 data_host: "give_credit_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 6
+epochs: 12
 init_param:
   fit_intercept: True
   method: "zeros"
 learning_rate_scheduler:
   method: "linear"
   scheduler_params:
-    factor: 0.7
+    start_factor: 0.71
     total_iters: 1000
 optimizer:
-  method: "adam"
+  method: "rmsprop"
   penalty: "L2"
-  alpha: 10
+  alpha: 0.01
   optimizer_params:
-    lr: 0.2
+    lr: 0.29
 batch_size: 5500
 early_stop: "diff"
