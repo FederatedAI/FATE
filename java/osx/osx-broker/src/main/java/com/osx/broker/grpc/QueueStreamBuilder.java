@@ -70,12 +70,9 @@ public class QueueStreamBuilder {
         //String uuid = UUID.randomUUID().toString();
         int  temp = count.addAndGet(1);
         long  now = System.currentTimeMillis();
-
-        String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX + srcPartyId+"_"+desPartyId+"_"+now+"_"+temp;
-        String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX + srcPartyId+"_"+desPartyId+"_"+now+"_"+temp;
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-        context.putData(Dict.BLOCKING_STUB,stub);
+        //srcPartyId+"_"+desPartyId
+        String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX +"_"+now+ "_"+sessionId+"_"+temp;
+        String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX +"_"+now+"_"+"sessionId"+"_"+temp;
         context.setTopic(sendTopic);
         context.setActionType(ActionType.MSG_REDIRECT.getAlias());
         CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(backTopic, sessionId, true);
@@ -90,7 +87,7 @@ public class QueueStreamBuilder {
             public void onNext(AbstractMessage message) {
                 context.setMessageFlag(MessageFlag.SENDMSG.name());
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(), sendTopic,MessageFlag.SENDMSG,sessionId,message.toByteArray());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo);
+                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
                 TransferUtil.checkResponse(outbound);
             }
 
@@ -103,7 +100,7 @@ public class QueueStreamBuilder {
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
                                 sendTopic,MessageFlag.ERROR,sessionId,errorData.getBytes(StandardCharsets.UTF_8))
                         .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo);
+                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
                 TransferUtil.checkResponse(outbound);
                 countDownLatch.countDown();
             }
@@ -114,7 +111,7 @@ public class QueueStreamBuilder {
                 Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER,srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
                                 sendTopic,MessageFlag.COMPELETED,sessionId,"completed".getBytes(StandardCharsets.UTF_8))
                         .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
-                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo);
+                Osx.Outbound  outbound = TransferUtil.redirect(context,inboundBuilder.build(),routerInfo,true);
 
                 TransferUtil.checkResponse(outbound);
                 countDownLatch.countDown();

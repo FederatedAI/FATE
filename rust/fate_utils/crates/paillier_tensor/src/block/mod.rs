@@ -5,9 +5,10 @@ use fixedpoint::CouldCode;
 use ndarray::{ArrayD, ArrayViewD};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+
 mod matmul;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Cipherblock {
     pub pk: fixedpoint::PK,
     pub data: Vec<fixedpoint::CT>,
@@ -22,6 +23,7 @@ impl Index<(usize, usize)> for Cipherblock {
         &self.data[index.0 * self.shape[1] + index.1]
     }
 }
+
 impl Cipherblock {
     pub fn reshape(&self, shape: Vec<usize>) -> Cipherblock {
         let s1: usize = self.shape.iter().product();
@@ -33,6 +35,16 @@ impl Cipherblock {
             pk: self.pk.clone(),
             data: self.data.clone(),
             shape,
+        }
+    }
+    pub fn slice0(&self, index: usize) -> Cipherblock {
+        let stride: usize = self.shape[1..].iter().product();
+        let start = index * stride;
+        let end = start + stride;
+        Cipherblock {
+            pk: self.pk.clone(),
+            data: self.data[start..end].to_vec(),
+            shape: self.shape[1..].to_vec(),
         }
     }
     pub fn map<F>(&self, func: F) -> Cipherblock

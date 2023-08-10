@@ -26,10 +26,7 @@ import com.osx.broker.util.TelnetUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.datasource.FileRefreshableDataSource;
-import com.osx.core.exceptions.CycleRouteInfoException;
-import com.osx.core.exceptions.ErrorMessageUtil;
-import com.osx.core.exceptions.ExceptionInfo;
-import com.osx.core.exceptions.InvalidRouteInfoException;
+import com.osx.core.exceptions.*;
 import com.osx.core.flow.PropertyListener;
 import com.osx.core.frame.Lifecycle;
 import com.osx.core.frame.ServiceThread;
@@ -144,9 +141,8 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     public RouterInfo route(String srcPartyId, String srcRole, String dstPartyId, String desRole) {
         // logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
         RouterInfo routerInfo = null;
-        Map<String, List<Map>> partyIdMap = this.endPointMap.get(dstPartyId);
+        Map<String, List<Map>> partyIdMap = this.endPointMap.containsKey(dstPartyId)?this.endPointMap.get(dstPartyId):this.endPointMap.get(DEFAULT);
         if (partyIdMap != null) {
-
             if (StringUtils.isNotEmpty(desRole) && partyIdMap.get(desRole) != null) {
                 List<Map> ips = partyIdMap.getOrDefault(desRole, null);
                 if (ips != null && ips.size() > 0) {
@@ -330,20 +326,23 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     private boolean checkCycle(String ip, int port) {
 
         boolean cycle = false;
-        String localIp = MetaInfo.INSTANCE_ID.split(":")[0];
 
-        if (localIp.equals(ip) || Dict.LOCALHOST.equals(ip) || Dict.LOCALHOST2.equals(ip)) {
-            if (MetaInfo.PROPERTY_GRPC_PORT == (port)) {
-                cycle = true;
-            }
-            if (MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER) {
-                if (MetaInfo.PROPERTY_GRPC_TLS_PORT == port) {
+        if(MetaInfo.PROPERTY_OPEN_ROUTE_CYCLE_CHECKER) {
+            String localIp = MetaInfo.INSTANCE_ID.split(":")[0];
+
+            if (localIp.equals(ip) || Dict.LOCALHOST.equals(ip) || Dict.LOCALHOST2.equals(ip)) {
+                if (MetaInfo.PROPERTY_GRPC_PORT == (port)) {
                     cycle = true;
                 }
-            }
-            if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
-                if (MetaInfo.PROPERTY_HTTP_PORT == (port)) {
-                    cycle = true;
+                if (MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER) {
+                    if (MetaInfo.PROPERTY_GRPC_TLS_PORT == port) {
+                        cycle = true;
+                    }
+                }
+                if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
+                    if (MetaInfo.PROPERTY_HTTP_PORT == (port)) {
+                        cycle = true;
+                    }
                 }
             }
         }
@@ -366,10 +365,19 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         @Override
         public void configLoad(String value) {
             Map confJson = JsonUtil.json2Object(value, Map.class);
-            Map content = (Map) confJson.get("route_table");
-            endPointMap = initRouteTable(content);
-            logger.info("load router config {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
-        }
+            if(confJson!=null){
+
+               // throw new ConfigErrorException("content of route_table.json is invalid");
+
+                Map content = (Map) confJson.get("route_table");
+                endPointMap = initRouteTable(content);
+                logger.info("load router config {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
+
+            }else{
+                logger.error("content of route_table.json is invalid , content is {}",value);
+
+            }
+                   }
     }
 
 

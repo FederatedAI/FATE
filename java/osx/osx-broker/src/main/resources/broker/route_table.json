@@ -29,6 +29,12 @@
         "protocol":"http",
         "url": "http://localhost:8222/osx/inbound"
       }]
+    },
+    "9999":{
+      "default":[{
+        "port": 9360,
+        "ip": "127.0.0.1"
+      }]
     }
   },
   "permission":

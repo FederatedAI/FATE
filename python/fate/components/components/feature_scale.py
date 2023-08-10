@@ -12,13 +12,17 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+import logging
 from typing import List, Union
 
 from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
 
+logger = logging.getLogger(__name__)
 
-@cpn.component(roles=[GUEST, HOST])
+
+@cpn.component(roles=[GUEST, HOST], provider="fate")
 def feature_scale(ctx, role):
     ...
 
@@ -100,6 +104,7 @@ def train(
     strict_range,
     use_anonymous,
 ):
+    logger.info(f"start scale train")
     from fate.ml.preprocessing import FeatureScale
 
     train_data = train_data.read()
@@ -125,6 +130,8 @@ def train(
 
 
 def predict(ctx, input_model, test_data, test_output_data):
+    logger.info(f"start scale transform")
+
     from fate.ml.preprocessing import FeatureScale
 
     sub_ctx = ctx.sub_ctx("predict")
@@ -158,4 +165,7 @@ def get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_
                     feature_range[col] = [0, 1]
         else:
             feature_range = {col: feature_range for col in select_col}
+    if len(select_col) == 0:
+        logger.warning(f"No cols provided. "
+                       f"To scale all columns, please set `scale_col` to None.")
     return select_col, feature_range

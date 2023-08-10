@@ -69,22 +69,29 @@ public class OsxServer {
     PcpGrpcService pcpGrpcService;
 
     private synchronized void init() {
-        proxyGrpcService = new ProxyGrpcService();
-        pcpGrpcService = new PcpGrpcService();
-        server = buildServer();
-        if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
-            httpServer = buildHttpServer();
-            if (httpServer == null) {
-                System.exit(0);
-            }
-            if (MetaInfo.PROPERTY_HTTP_USE_TLS) {
-                httpsServer = buildHttpsServer();
-                if (httpsServer == null) {
+        try {
+            proxyGrpcService = new ProxyGrpcService();
+            pcpGrpcService = new PcpGrpcService();
+            server = buildServer();
+            if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
+                logger.info("prepare to create http server");
+                httpServer = buildHttpServer();
+                if (httpServer == null) {
                     System.exit(0);
                 }
+                if (MetaInfo.PROPERTY_HTTP_USE_TLS) {
+                    logger.info("prepare to create http server with TLS");
+                    httpsServer = buildHttpsServer();
+                    if (httpsServer == null) {
+                        System.exit(0);
+                    }
+                }
             }
+            tlsServer = buildTlsServer();
+        }catch(Exception e){
+            logger.error("server init error ",e);
+            e.printStackTrace();
         }
-        tlsServer = buildTlsServer();
     }
 
     public Server buildHttpServer() {
@@ -228,19 +235,43 @@ public class OsxServer {
                 && StringUtils.isNotBlank(privateKeyFilePath) && StringUtils.isNotBlank(trustCertCollectionFilePath)) {
             try {
                 SocketAddress address = new InetSocketAddress(MetaInfo.PROPERTY_BIND_HOST, MetaInfo.PROPERTY_GRPC_TLS_PORT);
-                NettyServerBuilder serverBuilder = NettyServerBuilder.forAddress(address);
+                NettyServerBuilder nettyServerBuilder = NettyServerBuilder.forAddress(address);
                 SslContextBuilder sslContextBuilder = GrpcSslContexts.forServer(new File(certChainFilePath), new File(privateKeyFilePath))
                         .trustManager(new File(trustCertCollectionFilePath))
                         .clientAuth(ClientAuth.REQUIRE)
-                        .sessionTimeout(3600 << 4)
-                        .sessionCacheSize(65536);
+                        .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
+                        .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
                 logger.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
                         certChainFilePath, privateKeyFilePath, trustCertCollectionFilePath);
                 //serverBuilder.executor(executor);
-                serverBuilder.sslContext(GrpcSslContexts.configure(sslContextBuilder, SslProvider.OPENSSL).build());
-                serverBuilder.addService(ServerInterceptors.intercept(proxyGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
-                serverBuilder.addService(ServerInterceptors.intercept(pcpGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
-                return serverBuilder.build();
+                nettyServerBuilder.sslContext(GrpcSslContexts.configure(sslContextBuilder, SslProvider.OPENSSL).build());
+                nettyServerBuilder.addService(ServerInterceptors.intercept(proxyGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
+                nettyServerBuilder.addService(ServerInterceptors.intercept(pcpGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
+
+
+                nettyServerBuilder
+                        .executor(Executors.newCachedThreadPool())
+                        .maxConcurrentCallsPerConnection(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION)
+                        .maxInboundMessageSize(MetaInfo.PROPERTY_GRPC_SERVER_MAX_INBOUND_MESSAGE_SIZE)
+                        .maxInboundMetadataSize(MetaInfo.PROPERTY_GRPC_SERVER_MAX_INBOUND_METADATA_SIZE)
+                        .flowControlWindow(MetaInfo.PROPERTY_GRPC_SERVER_FLOW_CONTROL_WINDOW);
+                if (MetaInfo.PROPERTY_GRPC_SERVER_KEEPALIVE_TIME_SEC > 0)
+                    nettyServerBuilder.keepAliveTime(MetaInfo.PROPERTY_GRPC_SERVER_KEEPALIVE_TIME_SEC, TimeUnit.SECONDS);
+                if (MetaInfo.PROPERTY_GRPC_SERVER_KEEPALIVE_TIMEOUT_SEC > 0)
+                    nettyServerBuilder.keepAliveTimeout(MetaInfo.PROPERTY_GRPC_SERVER_KEEPALIVE_TIMEOUT_SEC, TimeUnit.SECONDS);
+                if (MetaInfo.PROPERTY_GRPC_SERVER_PERMIT_KEEPALIVE_TIME_SEC > 0) {
+                    nettyServerBuilder.permitKeepAliveTime(MetaInfo.PROPERTY_GRPC_SERVER_PERMIT_KEEPALIVE_TIME_SEC, TimeUnit.SECONDS);
+                }
+                if (MetaInfo.PROPERTY_GRPC_SERVER_KEEPALIVE_WITHOUT_CALLS_ENABLED)
+                    nettyServerBuilder.permitKeepAliveWithoutCalls(MetaInfo.PROPERTY_GRPC_SERVER_KEEPALIVE_WITHOUT_CALLS_ENABLED);
+                if (MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_IDLE_SEC > 0)
+                    nettyServerBuilder.maxConnectionIdle(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_IDLE_SEC, TimeUnit.SECONDS);
+                if (MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_SEC > 0)
+                    nettyServerBuilder.maxConnectionAge(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_SEC, TimeUnit.SECONDS);
+                if (MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC > 0)
+                    nettyServerBuilder.maxConnectionAgeGrace(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC, TimeUnit.SECONDS);
+
+                return nettyServerBuilder.build();
             } catch (SSLException e) {
                 throw new SecurityException(e);
             }

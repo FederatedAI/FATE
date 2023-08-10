@@ -16,12 +16,13 @@ FRAME_SCHEME = "fate.arch.dataframe"
 
 
 def build_schema(data):
-    fields = data.data_manager.serialize()
+    meta = data.data_manager.serialize()
 
     built_schema = dict()
-    built_schema["fields"] = fields
+    built_schema["schema_meta"] = meta
     built_schema["partition_order_mappings"] = data.partition_order_mappings
     built_schema["type"] = FRAME_SCHEME
+
     return built_schema
 
 
@@ -29,7 +30,7 @@ def parse_schema(schema):
     if schema.get("type") != FRAME_SCHEME:
         raise ValueError(f"deserialize data error, schema type is not {FRAME_SCHEME}")
 
-    fields = schema["fields"]
+    schema_meta = schema["schema_meta"]
     partition_order_mappings = schema["partition_order_mappings"]
 
-    return fields, partition_order_mappings
+    return schema_meta, partition_order_mappings

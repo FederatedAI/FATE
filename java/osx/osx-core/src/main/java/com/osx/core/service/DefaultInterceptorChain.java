@@ -50,8 +50,6 @@ public class DefaultInterceptorChain<ctx extends Context, req, resp> implements 
         for (Interceptor<ctx, req, resp> interceptor : chain) {
             if (interceptor != null) {
                 interceptor.doProcess(context, inboundPackage,outboundPackage);
-            } else {
-                logger.error("===========chain====={}", chain);
             }
         }
     }

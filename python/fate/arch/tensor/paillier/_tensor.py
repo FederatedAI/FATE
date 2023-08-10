@@ -5,6 +5,11 @@ import torch
 _HANDLED_FUNCTIONS = {}
 
 
+class PaillierTensorEncoded:
+    def __init__(self, data) -> None:
+        self._data = data
+
+
 class PaillierTensor:
     def __init__(self, data, dtype) -> None:
         self._data = data
@@ -15,6 +20,12 @@ class PaillierTensor:
 
     def __str__(self) -> str:
         return self.__repr__()
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return PaillierTensor(self._data.slice0(item), self._dtype)
+        else:
+            raise NotImplementedError(f"item {item} not supported")
 
     @property
     def shape(self):

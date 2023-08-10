@@ -128,7 +128,13 @@ impl Cipherblock {
 impl Cipherblock {
     pub fn sum_cb(&self) -> Cipherblock {
         let cb = self.unwrap();
-        let sum = cb.agg(fixedpoint::CT::zero(), |s, c| s.add(c, &cb.pk));
+        if cb.data.len() == 0 {
+            panic!("sum of empty Cipherblock")
+        }
+        let mut sum = cb.data[0].clone();
+        for i in 1..cb.data.len() {
+            sum.add_assign(&cb.data[i], &cb.pk);
+        }
         Cipherblock::new(block::Cipherblock {
             pk: cb.pk.clone(),
             data: vec![sum],
@@ -136,16 +142,8 @@ impl Cipherblock {
         })
     }
     pub fn mean_cb(&self) -> Cipherblock {
-        let cb = self.unwrap();
-        let (s, n) = cb.agg((fixedpoint::CT::zero(), 0usize), |s, c| {
-            (s.0.add(c, &cb.pk), s.1 + 1)
-        });
-        let mean = s.mul(&(1.0f64 / (n as f64)).encode(&cb.pk.coder), &cb.pk);
-        Cipherblock::new(block::Cipherblock {
-            pk: cb.pk.clone(),
-            data: vec![mean],
-            shape: vec![1],
-        })
+        let n = self.unwrap().data.len();
+        self.sum_cb().mul_plaintext_scalar(1.0f64 / (n as f64))
     }
 }
 

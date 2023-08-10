@@ -63,6 +63,7 @@ public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueC
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
         if (transferQueue != null) {
             long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
+            logger.info("topic {} need consume {} ,  {} inqueue",transferId,consumeOffset, indexFileOffset);
             return consumeOffset <= indexFileOffset;
         }
         return false;

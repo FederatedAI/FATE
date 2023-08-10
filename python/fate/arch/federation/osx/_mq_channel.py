@@ -35,6 +35,7 @@ class MQChannel(object):
         self._namespace = namespace
         self._send_topic = send_topic
         self._receive_topic = receive_topic
+        self._index = 1
         self._src_party_id = src_party_id
         self._src_role = src_role
         self._dst_party_id = dst_party_id
@@ -51,7 +52,7 @@ class MQChannel(object):
         LOGGER.debug(f"consume, offset={offset}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
-            MessageTopic=self._send_topic,
+            MessageTopic=self._receive_topic,
             TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
@@ -64,9 +65,8 @@ class MQChannel(object):
         inbound = osx_pb2.Inbound(metadata=meta)
         LOGGER.debug(f"consume, inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
-        LOGGER.debug(f"consume, result={result}, mq={self}")
-        print(result)
-        print(result.code)
+        LOGGER.debug(f"consume, result={result.code}, mq={self}")
+
         return result
 
     @nretry
@@ -94,7 +94,7 @@ class MQChannel(object):
         LOGGER.debug(f"produce body={body}, properties={properties}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
-            MessageTopic=self._receive_topic,
+            MessageTopic=self._send_topic,
             TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
@@ -107,7 +107,11 @@ class MQChannel(object):
         inbound = osx_pb2.Inbound(metadata=meta, payload=msg.SerializeToString())
         LOGGER.debug(f"produce inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
-        LOGGER.debug(f"produce result={result}, mq={self}")
+
+        LOGGER.debug(f"produce {self._receive_topic}  index {self._index} result={result.code}, mq={self}")
+        if result.code!="0":
+            raise RuntimeError(f"produce msg error ,code : {result.code} msg : {result.message}")
+        self._index+=1
         return result
 
     @nretry
@@ -115,7 +119,7 @@ class MQChannel(object):
         LOGGER.debug(f"ack offset={offset}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
-            MessageTopic=self._send_topic,
+            MessageTopic=self._receive_topic,
             TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,

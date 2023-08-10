@@ -23,6 +23,7 @@ import com.osx.api.constants.Protocol;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.FateContext;
 import com.osx.core.exceptions.ExceptionInfo;
+import com.osx.core.exceptions.NoRouterInfoException;
 import com.osx.core.exceptions.RemoteRpcException;
 import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.ptp.SourceMethod;
@@ -73,9 +74,14 @@ public class UnaryCallService extends AbstractServiceAdaptor<FateContext,Proxy.P
     public Proxy.Packet unaryCall(FateContext context, Proxy.Packet req) {
         Proxy.Packet result = null;
         RouterInfo routerInfo=context.getRouterInfo();
+        if(routerInfo==null){
+            String sourcePartyId = context.getSrcPartyId();
+            String desPartyId = context.getDesPartyId();
+            throw  new NoRouterInfoException(sourcePartyId+" to "+desPartyId +" found no router info");
+        }
         if(routerInfo.getProtocol().equals(Protocol.http)){
             Osx.Inbound  inbound = TransferUtil.buildInboundFromPushingPacket(req, MetaInfo.PROPERTY_FATE_TECH_PROVIDER, TargetMethod.UNARY_CALL.name(), SourceMethod.OLDUNARY_CALL.name()).build();
-            Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo);
+            Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo,true);
             if(outbound!=null) {
                 if (outbound.getCode().equals(StatusCode.SUCCESS)) {
                     try {

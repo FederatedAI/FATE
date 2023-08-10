@@ -38,6 +38,7 @@ import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.frame.ServiceThread;
 import com.osx.core.ptp.TargetMethod;
 import com.osx.core.utils.JsonUtil;
+import com.osx.core.utils.NetUtils;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +54,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TransferQueueManager {
@@ -336,6 +338,7 @@ public class TransferQueueManager {
         }
         return result;
     }
+    ConcurrentHashMap<String, Lock>  clusterApplyLockMap  = new ConcurrentHashMap();
 
 
     public synchronized TransferQueueApplyInfo handleClusterApply(String transferId,
@@ -359,17 +362,24 @@ public class TransferQueueManager {
     }
 
 
-    public CreateQueueResult createNewQueue(String transferId, String sessionId, boolean forceCreateLocal) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
-        CreateQueueResult createQueueResult = new CreateQueueResult();
+    public ReentrantLock getLock(String  transferId){
         ReentrantLock transferCreateLock = transferIdLockMap.get(transferId);
         if (transferCreateLock == null) {
             transferIdLockMap.putIfAbsent(transferId, new ReentrantLock(false));
         }
         transferCreateLock = transferIdLockMap.get(transferId);
-        transferCreateLock.lock();
-        try {
+        return  transferCreateLock;
+    }
 
+
+
+
+    public CreateQueueResult createNewQueue(String transferId, String sessionId, boolean forceCreateLocal) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
+        CreateQueueResult createQueueResult = new CreateQueueResult();
+        ReentrantLock transferCreateLock= getLock(transferId);
+        try {
+            transferCreateLock.lock();
             boolean exist = this.transferQueueMap.get(transferId) != null;
             if (exist) {
                 createQueueResult.setTransferQueue(this.transferQueueMap.get(transferId));
@@ -398,7 +408,6 @@ public class TransferQueueManager {
                          */
                     }
                 }
-
                 Osx.Outbound applyTopicResponse = this.applyFromMaster(transferId, sessionId, MetaInfo.INSTANCE_ID);
                 logger.info("apply topic response {}", applyTopicResponse);
 
@@ -437,15 +446,17 @@ public class TransferQueueManager {
                  * 单机版部署，直接本地建Q
                  */
                 createQueueResult.setTransferQueue(localCreate(transferId, sessionId));
-                String[] args = MetaInfo.INSTANCE_ID.split("_");
-                String ip = args[0];
-                String portString = args[1];
-                createQueueResult.setPort(Integer.parseInt(portString));
-                createQueueResult.setRedirectIp(ip);
+//                String[] args = MetaInfo.INSTANCE_ID.split("_");
+//                String ip = args[0];
+//                String portString = args[1];
+
+                createQueueResult.setPort(MetaInfo.PROPERTY_GRPC_PORT);
+                createQueueResult.setRedirectIp(NetUtils.getLocalHost());
             }
             return createQueueResult;
         } finally {
             transferCreateLock.unlock();
+
         }
     }
 

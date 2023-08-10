@@ -1044,7 +1044,9 @@ def _do_join(p: _BinaryProcess):
             try:
                 v3 = p.get_func()(v1, v2)
             except Exception as e:
-                raise RuntimeError(f"Error when joining {v1} and {v2}: {e}") from e
+                raise RuntimeError(
+                    f"Error when joining:\n" f"left:\n" f"{v1}\n" f"right:\n" f"{v2}\n" f"error: {e}"
+                ) from e
             dst_txn.put(k_bytes, serialize(v3))
     return rtn
 

@@ -22,7 +22,7 @@ public class TransferQueueNotExistException extends BaseException {
         super(StatusCode.TRANSFER_QUEUE_NOT_FIND, "TRANSFER_QUEUE_NOT_FIND");
     }
 
-    public TransferQueueNotExistException(String code, String msg) {
-        super(code, msg);
+    public TransferQueueNotExistException( String msg) {
+        super(StatusCode.TRANSFER_QUEUE_NOT_FIND, msg);
     }
 }

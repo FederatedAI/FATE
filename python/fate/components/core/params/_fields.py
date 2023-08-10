@@ -17,11 +17,17 @@ class Parameter:
 T = TypeVar("T")
 
 
+class _SmartUnion(pydantic.BaseModel.Config):
+    smart_union = True
+
+
 def parse(type_: Type[T], obj: Any) -> T:
     if not isinstance(type_, typing._GenericAlias) and issubclass(type_, Parameter):
         return type_.parse(obj)
     else:
-        return pydantic.parse_obj_as(type_, obj)
+        # create_model to inject config
+        model = pydantic.create_model("parameter", __config__=_SmartUnion, p=(type_, ...))
+        return pydantic.parse_obj_as(model, {"p": obj}).p
 
 
 def jsonschema(type_: Type[T]):

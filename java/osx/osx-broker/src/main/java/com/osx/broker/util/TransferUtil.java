@@ -195,6 +195,10 @@ public class TransferUtil {
         if (rollSiteHeader != null) {
             sessionId = String.join("_", rollSiteHeader.getRollSiteSessionId(), desRole, dstPartyId);
         }
+        if(metadata.getDst()!=null){
+            transferMeta.setTopic(metadata.getDst().getName());
+        }
+
         transferMeta.setDesPartyId(dstPartyId);
         transferMeta.setSrcPartyId(srcPartyId);
         transferMeta.setDesRole(desRole);
@@ -206,6 +210,7 @@ public class TransferUtil {
     public static void assableContextFromInbound(Context context, Osx.Inbound request) {
         Map<String, String> metaDataMap = request.getMetadataMap();
         String version = metaDataMap.get(Osx.Header.Version.name());
+        String jobId = metaDataMap.get(Osx.Metadata.JobId.name());
         String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
         String traceId = metaDataMap.get(Osx.Header.TraceID.name());
         String token = metaDataMap.get(Osx.Header.Token.name());
@@ -221,14 +226,20 @@ public class TransferUtil {
         String targetPartyId = StringUtils.isEmpty(targetInstId) ? targetNodeId : targetInstId + "." + targetNodeId;
         String topic = metaDataMap.get(Osx.Metadata.MessageTopic.name());
         String offsetString = metaDataMap.get(Osx.Metadata.MessageOffSet.name());
+        String messageCode = metaDataMap.get(Osx.Metadata.MessageCode.name());
         Long offset = StringUtils.isNotEmpty(offsetString) ? Long.parseLong(offsetString) : null;
         context.setTraceId(traceId);
         context.setToken(token);
         context.setDesPartyId(targetPartyId);
         context.setSrcPartyId(sourcePartyId);
         context.setTopic(topic);
+        context.setJobId(jobId);
+
+
+
         if (context instanceof FateContext) {
             ((FateContext) context).setRequestMsgIndex(offset);
+            ((FateContext) context).setMessageCode(messageCode);
         }
         context.setSessionId(sessionId);
         context.setDesComponent(targetComponentName);
@@ -248,6 +259,7 @@ public class TransferUtil {
         context.setSrcComponent(transferMeta.getSrcRole());
         context.setDesComponent(transferMeta.getDesRole());
         context.setSessionId(transferMeta.getSessionId());
+        context.setTopic(transferMeta.getTopic());
         context.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         if (MetaInfo.PROPERTY_SELF_PARTY.contains(context.getDesPartyId())) {
             context.setSelfPartyId(context.getDesPartyId());
@@ -386,20 +398,18 @@ public class TransferUtil {
     }
 
     static public Osx.Outbound redirect(FateContext context, Osx.Inbound
-            produceRequest, RouterInfo routerInfo) {
-        AssertUtil.notNull(routerInfo, "router info is null");
+            produceRequest, RouterInfo routerInfo,boolean usePooled) {
+        AssertUtil.notNull(routerInfo, context.getDesPartyId()!=null?"des partyId "+context.getDesPartyId()+" router info is null":" error router info");
         Osx.Outbound result = null;
-        // 目的端协议为grpc
+        context.setDataSize(produceRequest.getSerializedSize());
         if (routerInfo.isCycle()) {
             throw new CycleRouteInfoException("cycle router info");
         }
-
-
         if (routerInfo.getProtocol() == null || routerInfo.getProtocol().equals(Protocol.grpc)) {
             //来自旧版fateflow的请求，需要用旧版的stub
             if (context.isDestination() && Role.fateflow.name().equals(routerInfo.getDesRole())
                     && SourceMethod.OLDUNARY_CALL.name().equals(produceRequest.getMetadataMap().get(Osx.Metadata.SourceMethod.name()))) {
-                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
                 DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
                 Proxy.Packet request;
                 try {
@@ -413,13 +423,12 @@ public class TransferUtil {
 
                 PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
                 if (context.getData(Dict.BLOCKING_STUB) == null) {
-                    ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+                    ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
                     stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
                 } else {
                     stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
                 }
                 try {
-                    //  logger.info("===========send data {}",produceRequest);
                     result = stub.invoke(produceRequest);
                 } catch (StatusRuntimeException e) {
                     logger.error("redirect error", e);
@@ -440,6 +449,7 @@ public class TransferUtil {
                     }
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 logger.error("sendPtpPost failed : ", e);
                 ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
                 result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
@@ -449,28 +459,39 @@ public class TransferUtil {
     }
 
 
-    public static Osx.Outbound buildResponse(String code, String msgReturn, TransferQueue.TransferQueueConsumeResult messageWraper) {
-        // FireworkTransfer.ConsumeResponse.Builder  consumeResponseBuilder = FireworkTransfer.ConsumeResponse.newBuilder();
-        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
+    public static  Osx.Outbound.Builder buildResponseInner(String code, String msgReturn, byte[] content) {
 
+        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
         builder.setCode(code);
         builder.setMessage(msgReturn);
+        if(content!=null) {
+            builder.setPayload(ByteString.copyFrom(content));
+        }
+        return builder;
+    }
+
+
+
+
+
+
+
+    public static Osx.Outbound buildResponse(String code, String msgReturn, TransferQueue.TransferQueueConsumeResult messageWraper) {
+
+        byte[] content = null;
         if (messageWraper != null) {
             Osx.Message message = null;
             try {
                 message = Osx.Message.parseFrom(messageWraper.getMessage().getBody());
             } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
+                logger.error("parse message error",e);
             }
-            builder.setPayload(message.toByteString());
-            builder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(messageWraper.getRequestIndex()));
-//                FireworkTransfer.Message msg = produceRequest.getMessage();
-//                consumeResponseBuilder.setTransferId(produceRequest.getTransferId());
-//                consumeResponseBuilder.setMessage(msg);
-//                consumeResponseBuilder.setStartOffset(messageWraper.getRequestIndex());
-//                consumeResponseBuilder.setTotalOffset(messageWraper.getLogicIndexTotal());
+            content = message.toByteArray();
         }
-
+        Osx.Outbound.Builder  builder =buildResponseInner(code,msgReturn,content);
+        if(messageWraper!=null){
+            builder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(messageWraper.getRequestIndex()));
+        }
         return builder.build();
     }
 
@@ -479,6 +500,7 @@ public class TransferUtil {
             String code = outbound.getCode();
             String message = outbound.getMessage();
             if (!StatusCode.SUCCESS.equals(code)) {
+                logger.error("================== xxxxxx  {}",outbound);
                 throw new RemoteRpcException("remote code : " + code + " remote msg: " + message);
             }
         } else {

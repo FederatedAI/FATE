@@ -29,7 +29,7 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
 
 lr_0 = CoordinatedLR("lr_0",
                      epochs=10,
-                     batch_size=-1,
+                     batch_size=None,
                      init_param={"fit_intercept": False})
 
 lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",

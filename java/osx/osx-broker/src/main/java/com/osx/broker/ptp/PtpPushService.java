@@ -39,6 +39,7 @@ public class PtpPushService extends AbstractServiceAdaptor<FateContext,StreamObs
     @Override
     protected StreamObserver doService(FateContext context, InboundPackage<StreamObserver> data) {
         StreamObserver responseStreamObserver = data.getBody();
+        context.setNeedPrintFlowLog(false);
         return  new StreamObserver<Osx.Inbound>() {
             Logger logger = LoggerFactory.getLogger(PtpPushService.class);
             QueuePushReqStreamObserver queuePushReqStreamObserver = new  QueuePushReqStreamObserver(context,ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER),

@@ -39,7 +39,7 @@ public class IndexQueue {
     private long maxPhysicOffset = -1;
     private volatile long minLogicOffset = 0;
     private AtomicLong logicOffset = new AtomicLong(0);
-
+    Logger  logger = LoggerFactory.getLogger(IndexQueue.class);
     public IndexQueue(
             final String transferId,
             final String storePath,
@@ -68,9 +68,7 @@ public class IndexQueue {
 
     public long getLastOffset() {
         long lastOffset = -1;
-
         int logicFileSize = this.mappedFileSize;
-
         MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile();
         if (mappedFile != null) {
 
@@ -143,18 +141,18 @@ public class IndexQueue {
 
     public long putMessagePositionInfoWrapper(long offset, int msgSize) {
         final int maxRetries = 30;
-
+        long  resultLogicOffset = -1;
         for (int i = 0; i < maxRetries; i++) {
 
             boolean result = this.putMessagePositionInfo(offset,
                     msgSize, this.logicOffset.get() + 1);
 
             if (result) {
-                return logicOffset.addAndGet(1);
-
+                  resultLogicOffset =  logicOffset.addAndGet(1);
+                  return  resultLogicOffset;
             }
         }
-        return -1;
+        return resultLogicOffset;
 
     }
 

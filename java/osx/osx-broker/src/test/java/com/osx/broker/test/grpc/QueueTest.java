@@ -4,8 +4,11 @@ package com.osx.broker.test.grpc;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.osx.api.router.RouterInfo;
+import com.osx.broker.util.TransferUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
+import com.osx.core.context.FateContext;
 import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.ptp.TargetMethod;
 
@@ -29,13 +32,19 @@ public class QueueTest {
     Logger logger = LoggerFactory.getLogger(QueueTest.class);
     String ip = "localhost";
     //int port = 8250;//nginx
-    int port = 9373;//nginx
+    int port = 9370;//nginx
     String desPartyId = "9999";
     String desRole = "";
     String srcPartyId = "10000";
     String srcRole = "";
     String transferId = "testTransferId";
     String sessionId = "testSessionId";
+
+    //4359615
+
+
+
+
     PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub;
 //    FireworkQueueServiceGrpc.FireworkQueueServiceBlockingStub  blockingStub;
 
@@ -64,10 +73,10 @@ public class QueueTest {
 
     @Before
     public void init() {
-        ManagedChannel managedChannel = createManagedChannel(ip, port);
-        //  stub =      PrivateTransferProtocolGrpc.newBlockingStub();
-        ManagedChannel managedChannel2 = createManagedChannel(ip, port);
-        blockingStub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel2);
+//        ManagedChannel managedChannel = createManagedChannel(ip, port);
+//        //  stub =      PrivateTransferProtocolGrpc.newBlockingStub();
+//        ManagedChannel managedChannel2 = createManagedChannel(ip, port);
+//        blockingStub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel2);
     }
 
 
@@ -88,9 +97,12 @@ public class QueueTest {
         inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
         inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
         inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
-
-
-        Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
+        FateContext  fateContext= new FateContext();
+        RouterInfo  routerInfo= new RouterInfo();
+        routerInfo.setHost("localhost");
+        routerInfo.setPort(9370);
+        Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
+       // Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
         Osx.TopicInfo topicInfo = null;
         try {
             topicInfo = Osx.TopicInfo.parseFrom(outbound.getPayload());
@@ -112,35 +124,66 @@ public class QueueTest {
     }
 
 
+    private  byte[] createBigArray(int size){
+        byte[]  result = new  byte[size];
+        for(int i=0;i<size;i++){
+            result[i]=1;
+        }
+        return  result;
+    }
+
+
     @Test
     public void test04UnaryProduce() {
         for (int i = 0; i < 1; i++) {
-            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-            inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-            inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
-            inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
-            inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "9999");
-            inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-            inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-            inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionID");
-            inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), "PRODUCE_MSG");
-            inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
-            inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-            inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
-            //inboundBuilder.getMetadataMap().put(Pcp.Metadata.MessageOffSet.name(),);
-            Osx.Message.Builder messageBuilder = Osx.Message.newBuilder();
-            messageBuilder.setBody(ByteString.copyFrom(("test body element " + i).getBytes()));
-            messageBuilder.setHead(ByteString.copyFrom(("test head " + i).getBytes()));
-            inboundBuilder.setPayload(messageBuilder.build().toByteString());
-            Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
-            System.err.println("response " + outbound);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+                    Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+                    inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
+                    inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+                    inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
+                    inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
+                    inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "9999");
+                    inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
+                    inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
+                    inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionID");
+                    inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), "PRODUCE_MSG");
+                    inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
+                    inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
+                    inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
+                    inboundBuilder.putMetadata(Osx.Metadata.MessageCode.name(), Long.toString(System.currentTimeMillis()));
+                    //inboundBuilder.getMetadataMap().put(Pcp.Metadata.MessageOffSet.name(),);
+                    Osx.Message.Builder messageBuilder = Osx.Message.newBuilder();
+                    //4359615
+                    messageBuilder.setBody(ByteString.copyFrom(createBigArray(10359615)));
+                    //messageBuilder.setHead(ByteString.copyFrom(("test head " + i).getBytes()));
+                    inboundBuilder.setPayload(messageBuilder.build().toByteString());
+
+                    FateContext  fateContext= new FateContext();
+                    RouterInfo  routerInfo= new RouterInfo();
+                    routerInfo.setHost("localhost");
+                    routerInfo.setPort(9370);
+                   // System.err.println(routerInfo);
+                    Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
+
+
+//            Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
+                    System.err.println("response " + outbound);
+
+//                }
+//            }).start();
+
+
         }
+
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Test

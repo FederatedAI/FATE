@@ -2,7 +2,8 @@ import typing
 
 import numpy
 from fate.arch import Context
-from fate_utils.secure_aggregation_helper import DiffieHellman, MixAggregate, RandomMix
+from fate.arch.protocol.diffie_hellman import DiffieHellman
+from fate_utils.secure_aggregation_helper import MixAggregate, RandomMix
 
 
 class _SecureAggregatorMeta:

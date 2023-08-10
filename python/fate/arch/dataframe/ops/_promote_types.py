@@ -13,8 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import functools
+import torch
 from ..manager import DataManager
 from ..manager.block_manager import Block
+from typing import List, Tuple
 
 
 def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
@@ -30,3 +33,34 @@ def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
 
     return block_table, data_manager
 
+
+def promote_partial_block_types(block_table, narrow_blocks, dst_blocks, dst_fields_loc,
+                                data_manager: DataManager, inplace=True):
+    def _mapper(blocks, narrow_loc: list = None, dst_bids: list = None,
+                dst_loc: List[Tuple[str, str]] = None, dm: DataManager = None, inp: bool = True):
+        ret_blocks = []
+        for block in blocks:
+            if inp:
+                if isinstance(block, torch.Tensor):
+                    ret_blocks.append(block.clone())
+                else:
+                    ret_blocks.append(block.copy())
+            else:
+                ret_blocks.append(block)
+
+        for i in range(len(ret_blocks), dm.block_num):
+            ret_blocks.append([])
+
+        for bid, offsets in narrow_loc:
+            ret_blocks[bid] = ret_blocks[bid][:, offsets]
+
+        for dst_bid, (src_bid, src_offset) in zip(dst_bids, dst_loc):
+            block_values = blocks[src_bid][:, [src_offset]]
+            ret_blocks[dst_bid] = dm.blocks[dst_bid].convert_block(block_values)
+
+        return ret_blocks
+
+    _mapper_func = functools.partial(_mapper, narrow_loc=narrow_blocks, dst_bids=dst_blocks,
+                                     dst_loc=dst_fields_loc, dm=data_manager, inp=inplace)
+
+    return block_table.mapValues(_mapper_func)

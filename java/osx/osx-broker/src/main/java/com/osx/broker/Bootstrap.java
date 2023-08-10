@@ -29,6 +29,7 @@ import java.util.Properties;
 public class Bootstrap {
     static Logger logger = LoggerFactory.getLogger(Bootstrap.class);
     static CommandLine commandLine;
+    static Object lockObject= new Object();
     public static void main(String[] args) {
         try {
             Options options = ServerUtil.buildCommandlineOptions(new Options());
@@ -45,7 +46,12 @@ public class Bootstrap {
             bootstrap.start(args);
             Thread shutDownThread = new Thread(bootstrap::stop);
             Runtime.getRuntime().addShutdownHook(shutDownThread);
+            synchronized (lockObject){
+                lockObject.wait();
+            }
+
         } catch (Exception ex) {
+            logger.error("broker start failed ",ex);
             ex.printStackTrace();
             System.exit(1);
         }

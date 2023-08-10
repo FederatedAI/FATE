@@ -35,6 +35,7 @@ import com.osx.core.exceptions.*;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.Interceptor;
 import com.osx.core.service.OutboundPackage;
+import com.osx.core.utils.FlowLogUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
@@ -45,12 +46,13 @@ import static com.osx.broker.util.TransferUtil.redirect;
 public class PtpProduceService extends AbstractPtpServiceAdaptor {
 
     Logger logger = LoggerFactory.getLogger(PtpProduceService.class);
-    private TransferQueue transferQueue;
+
 
     public PtpProduceService() {
         this.addPostProcessor(new Interceptor<FateContext, Osx.Inbound, Osx.Outbound>() {
             @Override
             public void doProcess(FateContext context, InboundPackage<Osx.Inbound> inboundPackage, OutboundPackage<Osx.Outbound> outboundPackage) {
+                TransferQueue transferQueue = (TransferQueue) context.getData(Dict.TRANSFER_QUEUE);
                 if (transferQueue != null) {
                     transferQueue.cacheReceivedMsg(inboundPackage.getBody().getMetadataMap().get(Osx.Metadata.MessageCode.name()), outboundPackage);
                 }
@@ -60,7 +62,7 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
 
     @Override
     protected Osx.Outbound doService(FateContext context, InboundPackage<Osx.Inbound> data) {
-
+        TransferQueue   transferQueue ;
         String topic = context.getTopic();
         RouterInfo routerInfo = context.getRouterInfo();
         String srcPartyId = context.getSrcPartyId();
@@ -71,13 +73,17 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             Osx.Outbound response = null;
             int tryTime = 0;
             context.setActionType(ActionType.MSG_REDIRECT.getAlias());
+            boolean usePooled = true;
             while (tryTime < MetaInfo.PROPERTY_PRODUCE_MSG_MAX_TRY_TIME) {
                 tryTime++;
+
                 try {
                     if (tryTime > 1) {
+                        context.setRetryTime(tryTime);
                         produceRequest = produceRequest.toBuilder().putMetadata(Osx.Metadata.RetryCount.name(), Integer.toString(tryTime)).build();
+                        usePooled = false;
                     }
-                    response = redirect(context, produceRequest, routerInfo);
+                    response = redirect(context, produceRequest, routerInfo,usePooled);
                     if (response == null) {
                         continue;
                     }
@@ -86,6 +92,8 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     logger.error("redirect retry count {}", tryTime);
                     if (tryTime == MetaInfo.PROPERTY_PRODUCE_MSG_MAX_TRY_TIME) {
                         throw e;
+                    }else{
+                        FlowLogUtil.printFlowLog(context);
                     }
                     try {
                         Thread.sleep(MetaInfo.PROPERTY_PRODUCE_MSG_RETRY_INTERVAL);
@@ -105,8 +113,10 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             if (StringUtils.isEmpty(sessionId)) {
                 throw new ParameterException(StatusCode.PARAM_ERROR, "sessionId is null");
             }
+            int dataSize = produceRequest.getSerializedSize();
             context.setActionType(ActionType.MSG_DOWNLOAD.getAlias());
             context.setRouterInfo(null);
+            context.setDataSize(dataSize);
             transferQueue = ServiceContainer.transferQueueManager.getQueue(topic);
             CreateQueueResult createQueueResult = null;
             if (transferQueue == null) {
@@ -117,10 +127,12 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                 transferQueue = createQueueResult.getTransferQueue();
             }
             String resource = TransferUtil.buildResource(produceRequest);
-            int dataSize = produceRequest.getSerializedSize();
-            ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
-            ServiceContainer.flowCounterManager.pass(resource, dataSize);
+
+
             if (transferQueue != null) {
+                ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
+                ServiceContainer.flowCounterManager.pass(resource, dataSize);
+                context.putData(Dict.TRANSFER_QUEUE, transferQueue);
                 String msgCode = produceRequest.getMetadataMap().get(Osx.Metadata.MessageCode.name());
                 String retryCountString = produceRequest.getMetadataMap().get(Osx.Metadata.RetryCount.name());
                 //此处为处理重复请求
@@ -164,7 +176,7 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     throw new PutMessageException("put status " + putMessageResult.getPutMessageStatus());
                 }
                 long logicOffset = putMessageResult.getMsgLogicOffset();
-                context.putData(Dict.CURRENT_INDEX, logicOffset);
+                context.putData(Dict.CURRENT_INDEX, transferQueue.getIndexQueue().getLogicOffset().get());
                 Osx.Outbound.Builder outBoundBuilder = Osx.Outbound.newBuilder();
                 outBoundBuilder.setCode(StatusCode.SUCCESS);
                 outBoundBuilder.setMessage(Dict.SUCCESS);
@@ -185,7 +197,7 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     redirectRouterInfo.setPort(redirectPort);
                     context.putData(Dict.ROUTER_INFO, redirectRouterInfo);
                     context.setActionType(ActionType.INNER_REDIRECT.getAlias());
-                    return redirect(context, produceRequest, redirectRouterInfo);
+                    return redirect(context, produceRequest, redirectRouterInfo,true);
                 } else {
                     logger.error("create topic {} error", topic);
                     throw new ProduceMsgExcption();

@@ -15,20 +15,22 @@
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
-from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param
+from fate.ml.utils._model_param import (
+    check_overflow,
+    deserialize_param,
+    initialize_param,
+    serialize_param,
+)
 from fate.ml.utils._optimizer import LRScheduler, Optimizer
 
 logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleHost(HeteroModule):
-    def __init__(
-            self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None
-    ):
+    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None):
         self.epochs = epochs
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
@@ -78,8 +80,9 @@ class CoordinatedLRModuleHost(HeteroModule):
                         self.optimizer_param["alpha"],
                         self.optimizer_param["optimizer_params"],
                     )
-                    lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                               self.learning_rate_param["scheduler_params"])
+                    lr_scheduler = LRScheduler(
+                        self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+                    )
                     single_estimator = CoordinatedLREstimatorHost(
                         epochs=self.epochs,
                         batch_size=self.batch_size,
@@ -102,8 +105,9 @@ class CoordinatedLRModuleHost(HeteroModule):
                     self.optimizer_param["alpha"],
                     self.optimizer_param["optimizer_params"],
                 )
-                lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                           self.learning_rate_param["scheduler_params"])
+                lr_scheduler = LRScheduler(
+                    self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+                )
                 single_estimator = CoordinatedLREstimatorHost(
                     epochs=self.epochs,
                     batch_size=self.batch_size,
@@ -134,23 +138,28 @@ class CoordinatedLRModuleHost(HeteroModule):
                 all_estimator[label_idx] = estimator.get_model()
         else:
             all_estimator = self.estimator.get_model()
-        return {"data": {"estimator": all_estimator},
-                "meta": {"label_count": self.label_count,
-                         "ovr": self.ovr,
-                         "epochs": self.epochs,
-                         "batch_size": self.batch_size,
-                         "learning_rate_param": self.learning_rate_param,
-                         "optimizer_param": self.optimizer_param,
-                         "init_param": self.init_param},
-                }
+        return {
+            "data": {"estimator": all_estimator},
+            "meta": {
+                "label_count": self.label_count,
+                "ovr": self.ovr,
+                "epochs": self.epochs,
+                "batch_size": self.batch_size,
+                "learning_rate_param": self.learning_rate_param,
+                "optimizer_param": self.optimizer_param,
+                "init_param": self.init_param,
+            },
+        }
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLRModuleHost":
-        lr = CoordinatedLRModuleHost(epochs=model["meta"]["epochs"],
-                                     batch_size=model["meta"]["batch_size"],
-                                     learning_rate_param=model["meta"]["learning_rate_param"],
-                                     optimizer_param=model["meta"]["optimizer_param"],
-                                     init_param=model["meta"]["init_param"])
+        lr = CoordinatedLRModuleHost(
+            epochs=model["meta"]["epochs"],
+            batch_size=model["meta"]["batch_size"],
+            learning_rate_param=model["meta"]["learning_rate_param"],
+            optimizer_param=model["meta"]["optimizer_param"],
+            init_param=model["meta"]["init_param"],
+        )
         lr.label_count = model["meta"]["label_count"]
         lr.ovr = model["meta"]["ovr"]
 
@@ -160,15 +169,19 @@ class CoordinatedLRModuleHost(HeteroModule):
         if lr.ovr:
             lr.estimator = {}
             for label, d in all_estimator.items():
-                estimator = CoordinatedLREstimatorHost(epochs=model["meta"]["epochs"],
-                                                       batch_size=model["meta"]["batch_size"],
-                                                       init_param=model["meta"]["init_param"])
+                estimator = CoordinatedLREstimatorHost(
+                    epochs=model["meta"]["epochs"],
+                    batch_size=model["meta"]["batch_size"],
+                    init_param=model["meta"]["init_param"],
+                )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
         else:
-            estimator = CoordinatedLREstimatorHost(epochs=model["meta"]["epochs"],
-                                                   batch_size=model["meta"]["batch_size"],
-                                                   init_param=model["meta"]["init_param"])
+            estimator = CoordinatedLREstimatorHost(
+                epochs=model["meta"]["epochs"],
+                batch_size=model["meta"]["batch_size"],
+                init_param=model["meta"]["init_param"],
+            )
             estimator.restore(all_estimator)
             lr.estimator = estimator
         logger.info(f"finish from model")
@@ -189,6 +202,41 @@ class CoordinatedLREstimatorHost(HeteroModule):
         self.end_epoch = -1
         self.is_converged = False
 
+    def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
+        h = X.shape[0]
+        Xw_h = 0.25 * torch.matmul(X, w.detach())
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
+        half_g = torch.matmul(X.T, Xw_h)
+
+        guest_half_d = batch_ctx.guest.get("half_d")
+        guest_half_g = torch.matmul(X.T, guest_half_d)
+
+        batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+        loss_norm = self.optimizer.loss_norm(w)
+        if loss_norm is not None:
+            batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+        else:
+            batch_ctx.guest.put(h_loss=loss_norm)
+
+        g = 1 / h * (half_g + guest_half_g)
+        return g
+
+    def centralized_compute_gradient(self, batch_ctx, encryptor, w, X):
+        h = X.shape[0]
+        Xw_h = 0.25 * torch.matmul(X, w.detach())
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
+        batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+
+        loss_norm = self.optimizer.loss_norm(w)
+        if loss_norm is not None:
+            batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+        else:
+            batch_ctx.guest.put(h_loss=loss_norm)
+
+        d = batch_ctx.guest.get("d")
+        g = 1 / h * torch.matmul(X.T, d)
+        return g
+
     def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None) -> None:
         coef_count = train_data.shape[1]
         w = self.w
@@ -199,29 +247,24 @@ class CoordinatedLREstimatorHost(HeteroModule):
         batch_loader = DataLoader(train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
         # if self.end_epoch >= 0:
         #    self.start_epoch = self.end_epoch + 1
+        is_centralized = len(ctx.hosts) > 1
         for i, iter_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set epoch{i}")
             for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 X = batch_data.x
-                h = X.shape[0]
-                Xw_h = 0.25 * torch.matmul(X, w.detach())
-                batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
-                batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
-
-                loss_norm = self.optimizer.loss_norm(w)
-                if loss_norm is not None:
-                    batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+                if is_centralized:
+                    g = self.centralized_compute_gradient(batch_ctx, encryptor, w, X)
                 else:
-                    batch_ctx.guest.put(h_loss=loss_norm)
+                    g = self.asynchronous_compute_gradient(batch_ctx, encryptor, w, X)
 
-                d = batch_ctx.guest.get("d")
-                g = 1 / h * torch.matmul(X.T, d)
                 g = self.optimizer.add_regular_to_grad(g, w, False)
                 batch_ctx.arbiter.put("g_enc", g)
                 g = batch_ctx.arbiter.get("g")
 
                 w = self.optimizer.update_weights(w, g, False, self.lr_scheduler.lr)
+                check_overflow(w)
+
             self.is_converged = iter_ctx.arbiter("converge_flag").get()
             if self.is_converged:
                 self.end_epoch = i

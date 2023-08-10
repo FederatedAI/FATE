@@ -16,6 +16,7 @@
 
 package com.osx.core.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -23,6 +24,7 @@ import com.osx.core.constant.DeployMode;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.StreamLimitMode;
 import com.osx.core.exceptions.ConfigErrorException;
+import com.osx.core.utils.JsonUtil;
 import com.osx.core.utils.NetUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -85,11 +87,15 @@ public class MetaInfo {
     @Config(confKey = "grpc.client.max.connection.idle", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_GRPC_CLIENT_MAX_CONNECTION_IDLE_SEC = 86400;
     @Config(confKey = "grpc.client.per.rpc.buffer.limit", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT = 86400;
+    public static int PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT =  (2 << 30) - 1;
     @Config(confKey = "grpc.client.retry.buffer.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
     @Config(confKey = "transfer.cached.msgid.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
+    @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
+    @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE = 65536;
 
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
@@ -106,6 +112,8 @@ public class MetaInfo {
     public static String PROPERTY_SERVER_PRIVATE_KEY_FILE;
     @Config(confKey = "server.ca.file")
     public static String PROPERTY_SERVER_CA_FILE;
+    @Config(confKey = "custom.local.host")
+    public static String PROPERTY_CUSTOMER_LOCAL_HOST;
     @Config(confKey = "bind.host")
     public static String PROPERTY_BIND_HOST = "0.0.0.0";
     @Config(confKey = "open.grpc.tls.server", pattern = Dict.BOOLEAN_PATTERN)
@@ -182,6 +190,8 @@ public class MetaInfo {
     public static String PROPERTY_FLOW_RULE_TABLE = "broker/flowRule.json";
     @Config(confKey = "use.zookeeper", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_USE_ZOOKEEPER = true;
+    @Config(confKey = "open.route.cycle.checker", pattern = Dict.BOOLEAN_PATTERN)
+    public static Boolean PROPERTY_OPEN_ROUTE_CYCLE_CHECKER = false;
 
     @Config(confKey = "zookeeper.acl.enable", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_ACL_ENABLE = false;
@@ -193,7 +203,8 @@ public class MetaInfo {
     public static Integer PROPERTY_QUEUE_MAX_FREE_TIME = 60000000;
     @Config(confKey = "queue.check.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static int PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 60 * 1000 * 10;
-    public static String INSTANCE_ID = NetUtils.getLocalHost() + "_" + MetaInfo.PROPERTY_GRPC_PORT;
+    public static String INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_GRPC_PORT;
+
 
 
 
@@ -206,18 +217,24 @@ public class MetaInfo {
     /**
      * 从连接池中申请连接的超时时间
      */
+    @Config(confKey = "http.client.method.config")
+    public static Map<String,Map<String,Integer>> PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP =new HashMap<>();
+
     @Config(confKey = "http.client.con.req.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT = 500;
     /**
      * 建立连接的超时时间
      */
     @Config(confKey = "http.client.connection.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 2000;
+    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 10000;
+
+    @Config(confKey = "http.client.max.idle.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME = 5;
     /**
      * 等待数据
      */
     @Config(confKey = "http.client.socket.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT = 30000;
+    public static Integer PROPERTY_HTTP_CLIENT_CONFIG_SOCK_TIME_OUT = 300000;
     @Config(confKey = "http.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_SSL_SESSION_TIME_OUT = 3600 << 4;
     @Config(confKey = "http.client.pool.max.total", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -276,6 +293,11 @@ public class MetaInfo {
                             Set set = new HashSet();
                             set.addAll(Lists.newArrayList(value.toString().split(",")));
                             field.set(null, set);
+                        } else if (clazz.isAssignableFrom(Map.class)) {
+
+                            Map<String,  Map<String,Integer>> conConfig = JsonUtil.object2Objcet(value, new TypeReference<Map<String, Map<String,Integer>>>() {
+                            });
+                            field.set(null,conConfig);
                         }
                     }
                     if (StringUtils.isNotEmpty(confKey)) {
@@ -306,6 +328,11 @@ public class MetaInfo {
             }
         }
         return result;
+    }
+
+    public  static void main(String args){
+
+       System.err.println( (2 << 30) - 1);
     }
 
 }

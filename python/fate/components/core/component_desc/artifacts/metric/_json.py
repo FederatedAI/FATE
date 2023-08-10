@@ -24,6 +24,7 @@ if typing.TYPE_CHECKING:
 
 class JsonMetricFileWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
     def write(self, data, metadata: Optional[Dict] = None):
+        self.artifact.consumed()
         path = Path(self.artifact.uri.path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as fw:
@@ -35,6 +36,7 @@ class JsonMetricFileWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
 
 class JsonMetricRestfulWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
     def write(self, data):
+        self.artifact.consumed()
         try:
             output = requests.post(url=self.artifact.uri.original_uri, json=dict(data=[data]))
         except Exception as e:

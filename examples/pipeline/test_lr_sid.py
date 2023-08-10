@@ -25,10 +25,10 @@ intersect_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast
 intersect_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                        namespace="experiment_sid"))
 lr_0 = CoordinatedLR("lr_0",
-                     epochs=2,
-                     batch_size=100,
-                     optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}},
-                     init_param={"fit_intercept": True},
+                     epochs=4,
+                     batch_size=None,
+                     optimizer={"method": "rprop", "optimizer_params": {"lr": 0.01}},
+                     init_param={"fit_intercept": True, "method": "zeros"},
                      train_data=intersect_0.outputs["output_data"])
 lr_1 = CoordinatedLR("lr_1", test_data=intersect_0.outputs["output_data"],
                      input_model=lr_0.outputs["output_model"])
@@ -39,24 +39,26 @@ lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_het
                                                                 namespace="experiment"))"""
 
 evaluation_0 = Evaluation("evaluation_0",
+                          label_column_name="y",
                           runtime_roles=["guest"],
+                          default_eval_setting="binary",
                           input_data=lr_0.outputs["train_output_data"])
 
 # pipeline.add_task(feature_scale_0)
 # pipeline.add_task(feature_scale_1)
 pipeline.add_task(intersect_0)
 pipeline.add_task(lr_0)
-pipeline.add_task(evaluation_0)
+# pipeline.add_task(evaluation_0)
 # pipeline.add_task(hetero_feature_binning_0)
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
+print(f"lr_0 model: {pipeline.get_task_info('lr_0').get_output_model()}")
+print(f"train lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")
 
 # print(pipeline.get_task_info("statistics_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_metrics())
-print(f"evaluation metrics: ")
-print(pipeline.get_task_info("evaluation_0").get_output_metrics())
+# print(f"evaluation metrics: ")
+# print(pipeline.get_task_info("evaluation_0").get_output_metric())
 
 pipeline.deploy([intersect_0, lr_0])
 
@@ -73,3 +75,4 @@ predict_pipeline.compile()
 # print("\n\n\n")
 # print(predict_pipeline.compile().get_dag())
 predict_pipeline.predict()
+print(f"predict lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")

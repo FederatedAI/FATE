@@ -12,13 +12,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._indexer import (
-    aggregate_indexer,
-    get_partition_order_mappings
-)
-
-
-__all__ = [
-           "aggregate_indexer",
-           "get_partition_order_mappings"
-           ]

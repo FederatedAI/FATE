@@ -92,7 +92,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
+    count=$(ps -ef | grep $pid |grep 'com.osx' | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       rm ./bin/broker.pid
       unset pid

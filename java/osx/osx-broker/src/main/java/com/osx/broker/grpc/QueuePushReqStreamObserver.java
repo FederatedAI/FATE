@@ -133,7 +133,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             context.setRouterInfo(routerInfo);
             context.setSrcPartyId(routerInfo.getSourcePartyId());
             context.setDesPartyId(routerInfo.getDesPartyId());
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), true);
 
             if (routerInfo.getProtocol().equals(Protocol.http))  {
                 //由本方发起的传输且使用队列替代流式传输，需要在本地建立接受应答的队列,
@@ -141,6 +140,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                             routerInfo, srcPartyId, desPartyId, rsHeader.getRollSiteSessionId(),finishLatch);
 
             } else {
+                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), true);
                 if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
                     DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
                     ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, backRespSOClass, () -> {
@@ -198,7 +198,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             logger.error("get session error ", e);
         }
         if (!SessionStatus.ACTIVE.name().equals(session.getErSessionMeta().getStatus())) {
-            IllegalStateException error = new IllegalStateException("session=${sessionId} with illegal status. expected=${SessionStatus.ACTIVE}, actual=${session.sessionMeta.status}");
+            SessionInitException error = new SessionInitException("eggroll session "+sessionId+" invalid status : "+session.getErSessionMeta().getStatus());
             onError(error);
             throw error;
         }
