@@ -31,6 +31,10 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
         bin_info = binning(train_data, max_bin=self.max_bin)
         bin_data: DataFrame = train_data.bucketize(boundaries=bin_info)
         logger.info('data binning done')
+        # predict to help guest to get the warmstart scores
+        if self._model_loaded:
+            pred_ctx = ctx.sub_ctx('warmstart_predict')
+            self.predict(pred_ctx, train_data)
         for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees)+self.num_trees):
             logger.info('start to fit a host tree')
             tree = HeteroDecisionTreeHost(max_depth=self.max_depth)

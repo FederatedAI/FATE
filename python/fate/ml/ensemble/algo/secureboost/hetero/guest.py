@@ -84,14 +84,19 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
     def get_tree(self, idx):
         return self._trees[idx]
     
-    def _init_sample_scores(self, label):
+    def _init_sample_scores(self, ctx: Context, label, train_data: DataFrame):
         task_type = self.objective.split(":")[0]
-        if task_type == REGRESSION:
-            self._accumulate_scores, avg_score = self._loss_func.initialize(label)
-            if self._init_score is None:
-                self._init_score = avg_score
+        pred_ctx = ctx.sub_ctx('warmstart_predict')
+        if self._model_loaded:
+            self._accumulate_scores = self.predict(pred_ctx, train_data, ret_std_format=False)
+            self._accumulate_scores = self._accumulate_scores.loc(train_data.get_indexer(target='sample_id'), preserve_order=True)
         else:
-            self._accumulate_scores = self._loss_func.initialize(label)
+            if task_type == REGRESSION:
+                self._accumulate_scores, avg_score = self._loss_func.initialize(label)
+                if self._init_score is None:
+                    self._init_score = avg_score
+            else:
+                self._accumulate_scores = self._loss_func.initialize(label)
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
         
@@ -102,7 +107,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         # init loss func & scores
         self._loss_func = self._get_loss_func(self.objective)
         label = bin_data.label
-        self._init_sample_scores(label)
+        self._init_sample_scores(ctx, label, train_data)
 
         # init encryption kit
         self._encrypt_kit= self._init_encrypt_kit(ctx)
@@ -110,7 +115,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         # start tree fitting
         for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees)+self.num_trees):
             # compute gh of current iter
-            logger.info('start to fit a host tree')
+            logger.info('start to fit a guest tree')
             gh = self._compute_gh(bin_data, self._accumulate_scores, self._loss_func)
             tree = HeteroDecisionTreeGuest(max_depth=self.max_depth, l2=self.l2, l1=self.l1, 
                                            min_impurity_split=self.min_impurity_split, min_sample_split=self.min_sample_split, 

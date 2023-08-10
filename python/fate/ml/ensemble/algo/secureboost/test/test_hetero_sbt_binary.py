@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     party = sys.argv[1]
     max_depth = 3
-    num_tree = 2
+    num_tree = 1
     from sklearn.metrics import roc_auc_score as auc
     if party == 'guest':
   
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
         print('fitting again, warm start')
         # fit again
-        new_tree = HeteroSecureBoostGuest(1, max_depth=2)
+        new_tree = HeteroSecureBoostGuest(1, max_depth=3)
         new_tree.from_model(trees.get_model())
         new_tree.fit(ctx, data_guest)
         
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         trees.predict(ctx, data_host)
 
         # fit again
-        new_tree = HeteroSecureBoostHost(1, max_depth=2)
+        new_tree = HeteroSecureBoostHost(1, max_depth=3)
         new_tree.from_model(trees.get_model())
         new_tree.fit(ctx, data_host)
 
