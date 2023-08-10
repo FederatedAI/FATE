@@ -4,12 +4,16 @@ from fate.arch import Context
 import sys
 from fate.ml.ensemble.algo.secureboost.hetero.guest import HeteroSecureBoostGuest
 from fate.ml.ensemble.algo.secureboost.hetero.host import HeteroSecureBoostHost
+from datetime import datetime
+
+def get_current_datetime_str():
+    return datetime.now().strftime('%Y-%m-%d-%H-%M')
 
 
 arbiter = ("arbiter", "10000")
 guest = ("guest", "10000")
 host = ("host", "9999")
-name = "ysjp1145"
+name = get_current_datetime_str()
 
 
 def create_ctx(local):
@@ -34,11 +38,11 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 4
-    num_tree = 1
+    max_depth = 3
+    num_tree = 2
     from sklearn.metrics import roc_auc_score as auc
     if party == 'guest':
-        problem_samples = [119, 121, 151, 187, 245, 310, 415, 453, 155, 158, 161, 206, 216, 51, 69, 118, 157, 222, 250, 263, 531, 298, 345, 422, 438, 61, 71, 106, 116, 156, 525, 568]
+  
         ctx = create_ctx(guest)
         df = pd.read_csv(
             './../../../../../../../examples/data/breast_hetero_guest.csv')
@@ -52,7 +56,7 @@ if __name__ == '__main__':
         
         data_guest = reader.to_frame(ctx, df)
 
-        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth)
+        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, l2=0.5, min_impurity_split=200)
         trees.fit(ctx, data_guest)
         pred = trees.get_cache_predict_score().as_pd_df()
         pred['sample_id'] = pred.sample_id.astype(int)
@@ -62,10 +66,16 @@ if __name__ == '__main__':
         # tree_dict = pickle.load(open('guest_tree.pkl', 'rb'))
         # trees.from_model(tree_dict)
         pred_ = trees.predict(ctx, data_guest).as_pd_df()
-        print(auc(df.y, df.predict))
+        print(auc(df.y, df.score))
         print(auc(pred_.label, pred_.predict_score))
         pred_.sample_id = pred_.sample_id.astype(int)
         merge_df = pd.merge(pred, pred_, on='sample_id')
+
+        print('fitting again, warm start')
+        # fit again
+        new_tree = HeteroSecureBoostGuest(1, max_depth=2)
+        new_tree.from_model(trees.get_model())
+        new_tree.fit(ctx, data_guest)
         
     elif party == 'host':
         ctx = create_ctx(host)
@@ -87,4 +97,10 @@ if __name__ == '__main__':
         # tree_dict = pickle.load(open('host_tree.pkl', 'rb'))
         # trees.from_model(tree_dict)
         trees.predict(ctx, data_host)
+
+        # fit again
+        new_tree = HeteroSecureBoostHost(1, max_depth=2)
+        new_tree.from_model(trees.get_model())
+        new_tree.fit(ctx, data_host)
+
 

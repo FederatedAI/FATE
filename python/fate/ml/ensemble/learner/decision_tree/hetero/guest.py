@@ -3,12 +3,9 @@ from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBu
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-import numpy as np
 from typing import List
 import functools
-import logging
-import copy
-import fate 
+import logging 
 
 
 logger = logging.getLogger(__name__)
@@ -16,27 +13,38 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeGuest(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, l1=0.1, l2=0, use_missing=False, zero_as_missing=False, goss=False, encrypt_key_length=1024):
+    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, goss=False, l1=0.1, l2=0, 
+                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1):
+
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
-        self.max_split_nodes = max_split_nodes
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
+
+        # regularization
         self.l1 = l1
         self.l2 = l2
+        self.min_impurity_split = min_impurity_split
+        self.min_sample_split = min_sample_split
+        self.min_leaf_node = min_leaf_node
+        self.min_child_weight = min_child_weight
+
+        # goss
         self.goss = goss
+
+        # other
         self._valid_features = valid_features
 
         # homographic encryption
         self._encrypt_kit = None
-        self._encrypt_key_length = encrypt_key_length
         self._sk = None
         self._pk = None
         self._coder = None
         self._evaluator = None
         self._encryptor = None
         self._decryptor = None
+
 
     def set_encrypt_kit(self, kit):
         self._encrypt_kit = kit
@@ -160,7 +168,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None)
 
         # init splitter
-        self.splitter = FedSBTSplitter(bin_train_data, binning_dict)
+        self.splitter = FedSBTSplitter(bin_train_data, binning_dict, l2=self.l2, l1=self.l1, 
+                                       min_sample_split=self.min_sample_split, min_impurity_split=self.min_impurity_split,
+                                       min_child_weight=self.min_child_weight, min_leaf_node=self.min_leaf_node)
 
         # Prepare for training
         node_map = {}
@@ -173,7 +183,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 break
             
             assert len(sample_pos) == len(train_df), 'sample pos len not match train data len, {} vs {}'.format(len(sample_pos), len(train_df))
-            self._check_assign_result(sample_pos, cur_layer_node)
+
+            # debug checking code
+            # self._check_assign_result(sample_pos, cur_layer_node)
+            # initialize node map
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
             hist_inst, statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
@@ -211,17 +224,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # convert bid to split value
         self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, binning_dict, bin_train_data.schema)
 
-    def fit(self, ctx: Context, train_data: DataFrame):
-        pass
-
-    def predict(self, ctx: Context, data_inst: DataFrame):
-        pass
-
     def get_hyper_param(self):
         param = {
             'max_depth': self.max_depth,
             'valid_features': self._valid_features,
-            'max_split_nodes': self.max_split_nodes,
             'l1': self.l1,
             'l2': self.l2,
             'use_missing': self.use_missing,

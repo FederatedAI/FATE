@@ -34,14 +34,14 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 4
+    max_depth = 2
     num_tree = 1
     from sklearn.metrics import roc_auc_score as auc
     if party == 'guest':
-        problem_samples = [119, 121, 151, 187, 245, 310, 415, 453, 155, 158, 161, 206, 216, 51, 69, 118, 157, 222, 250, 263, 531, 298, 345, 422, 438, 61, 71, 106, 116, 156, 525, 568]
+
         ctx = create_ctx(guest)
         df = pd.read_csv(
-            './../../../../../../../examples/data/breast_hetero_guest.csv')
+            './../../../../../../../examples/data/student_hetero_guest.csv')
         df['sample_id'] = [i for i in range(len(df))]
 
         reader = PandasReader(
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         
         data_guest = reader.to_frame(ctx, df)
 
-        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth)
+        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, objective='regression:l2')
         trees.fit(ctx, data_guest)
         pred = trees.get_cache_predict_score().as_pd_df()
         pred['sample_id'] = pred.sample_id.astype(int)
@@ -62,8 +62,6 @@ if __name__ == '__main__':
         # tree_dict = pickle.load(open('guest_tree.pkl', 'rb'))
         # trees.from_model(tree_dict)
         pred_ = trees.predict(ctx, data_guest).as_pd_df()
-        print(auc(df.y, df.predict))
-        print(auc(pred_.label, pred_.predict_score))
         pred_.sample_id = pred_.sample_id.astype(int)
         merge_df = pd.merge(pred, pred_, on='sample_id')
         
@@ -71,7 +69,7 @@ if __name__ == '__main__':
         ctx = create_ctx(host)
 
         df_host = pd.read_csv(
-            './../../../../../../../examples/data/breast_hetero_host.csv')
+            './../../../../../../../examples/data/student_hetero_host.csv')
         df_host['sample_id'] = [i for i in range(len(df_host))]
 
         reader_host = PandasReader(

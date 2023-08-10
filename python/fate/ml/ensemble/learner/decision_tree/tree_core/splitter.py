@@ -425,7 +425,7 @@ class FedSBTSplitter(object):
             idx_ = int(idx.detach().cpu().item())
             if gain == float('-inf') or cnt_sum[node_idx] < self.min_sample_split:
                 split_infos.append(None)
-                logger.info('Node {} can not be further split'.format(reverse_node_map[idx_]))
+                logger.info('Node {} can not be further split'.format(reverse_node_map[node_idx]))
             else:
                 split_info = SplitInfo(
                         gain=float(gain),
@@ -487,7 +487,6 @@ class FedSBTSplitter(object):
             print('splitting host')
             host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
             host_splits.append(host_split)
-
 
         print('host splits are {}'.format(host_splits))
         best_splits = self._merge_splits(guest_best_splits, host_splits)

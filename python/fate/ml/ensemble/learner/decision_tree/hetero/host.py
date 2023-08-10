@@ -14,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeHost(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, max_split_nodes=1024, use_missing=False, zero_as_missing=False, random_seed=42):
+    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, random_seed=42):
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
-        self.max_split_nodes = max_split_nodes
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
@@ -126,7 +125,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             if len(cur_layer_node) == 0:
                 logger.info('no nodes to split, stop training')
                 break
-
+                    
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
             hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, \
@@ -152,17 +151,10 @@ class HeteroDecisionTreeHost(DecisionTree):
         # convert bid to split value
         self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, binning_dict, bin_train_data.schema)
 
-    def fit(self, ctx: Context, train_data: DataFrame):
-        pass
-
-    def predict(self, ctx: Context, data_inst: DataFrame):
-        pass
-
     def get_hyper_param(self):
         param = {
             'max_depth': self.max_depth,
             'valid_features': self._valid_features,
-            'max_split_nodes': self.max_split_nodes,
             'use_missing': self.use_missing,
             'zero_as_missing': self.zero_as_missing
         }

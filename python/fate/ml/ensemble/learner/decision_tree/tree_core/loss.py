@@ -23,7 +23,7 @@ class BCELoss(object):
     @staticmethod
     def predict(score: DataFrame):
         pred_rs = score.create_frame()
-        pred_rs['predict'] = score.apply_row(lambda s: sigmoid(s))
+        pred_rs['score'] = score.apply_row(lambda s: sigmoid(s))
         return pred_rs
 
     @staticmethod
@@ -38,7 +38,7 @@ class BCELoss(object):
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
-        gh['g'] = predict_score['predict'] - label
+        gh['g'] = predict_score - label
 
     @staticmethod
     def compute_hess(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
@@ -84,8 +84,9 @@ class L2Loss(object):
     @staticmethod
     def initialize(label):
         init_score = label.create_frame()
-        init_score['score'] = float(label.mean())
-        return init_score
+        mean_score = float(label.mean())
+        init_score['score'] = mean_score
+        return init_score, mean_score
 
     @staticmethod
     def predict(score):

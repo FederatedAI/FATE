@@ -345,6 +345,7 @@ class DecisionTree(object):
             r_g = float(sum_grad - l_g)
             r_h = float(sum_hess - l_h)
             r_cnt = sum_cnt - l_cnt
+
             right_node = Node(nid=r_id,
                               grad=r_g,
                               hess=r_h,
@@ -353,6 +354,7 @@ class DecisionTree(object):
                               sibling_nodeid=l_id,
                               sample_num=r_cnt,
                               is_left_node=False)
+            
             next_layer_node.append(left_node)
             next_layer_node.append(right_node)
             self._nodes.append(node)
