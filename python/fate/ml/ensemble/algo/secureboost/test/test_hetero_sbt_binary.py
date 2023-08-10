@@ -56,26 +56,26 @@ if __name__ == '__main__':
         
         data_guest = reader.to_frame(ctx, df)
 
-        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, l2=0.5, min_impurity_split=200)
-        trees.fit(ctx, data_guest)
-        pred = trees.get_cache_predict_score().as_pd_df()
-        pred['sample_id'] = pred.sample_id.astype(int)
-        df = pd.merge(df, pred, on='sample_id')
+        # trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, l2=0.5, min_impurity_split=200)
+        # trees.fit(ctx, data_guest)
+        # pred = trees.get_cache_predict_score().as_pd_df()
+        # pred['sample_id'] = pred.sample_id.astype(int)
+        # df = pd.merge(df, pred, on='sample_id')
 
-        # load tree
-        # tree_dict = pickle.load(open('guest_tree.pkl', 'rb'))
-        # trees.from_model(tree_dict)
-        pred_ = trees.predict(ctx, data_guest).as_pd_df()
-        print(auc(df.y, df.score))
-        print(auc(pred_.label, pred_.predict_score))
-        pred_.sample_id = pred_.sample_id.astype(int)
-        merge_df = pd.merge(pred, pred_, on='sample_id')
+        # # load tree
+        # # tree_dict = pickle.load(open('guest_tree.pkl', 'rb'))
+        # # trees.from_model(tree_dict)
+        # pred_ = trees.predict(ctx, data_guest).as_pd_df()
+        # print(auc(df.y, df.score))
+        # print(auc(pred_.label, pred_.predict_score))
+        # pred_.sample_id = pred_.sample_id.astype(int)
+        # merge_df = pd.merge(pred, pred_, on='sample_id')
 
-        print('fitting again, warm start')
-        # fit again
-        new_tree = HeteroSecureBoostGuest(1, max_depth=3)
-        new_tree.from_model(trees.get_model())
-        new_tree.fit(ctx, data_guest)
+        # print('fitting again, warm start')
+        # # fit again
+        # new_tree = HeteroSecureBoostGuest(1, max_depth=3)
+        # new_tree.from_model(trees.get_model())
+        # new_tree.fit(ctx, data_guest)
         
     elif party == 'host':
         ctx = create_ctx(host)
