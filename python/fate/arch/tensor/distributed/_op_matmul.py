@@ -186,7 +186,7 @@ def matmul(a: DTensor, b: DTensor):
                     b.shardings, mapper_func=promote_torch_matmul, reduce_func=torch.add
                 )
             else:
-                raise RuntimeError(f"invalid shape {a.shape} and {b.shape}")
+                raise RuntimeError(f"invalid shape {a.shardings.shapes} and {b.shardings.shapes}")
 
         else:
             assert a.shape[-1] == b.shape[-2], f"shapes mismatch: {a.shape} and {b.shape}"

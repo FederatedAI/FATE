@@ -23,6 +23,25 @@ class device(Enum):
     CPU = ("CPU", 1)
     CUDA = ("CUDA", 2)
 
+    @classmethod
+    def from_torch_device(cls, tensor_device):
+        if tensor_device.type == "cpu":
+            return device.CPU
+        elif tensor_device.type == "cuda":
+            return device.CUDA
+        else:
+            raise ValueError(f"device type {tensor_device.type} not supported")
+
+    def to_torch_device(self):
+        import torch
+
+        if self.type == "CPU":
+            return torch.device("cpu")
+        elif self.type == "CUDA":
+            return torch.device("cuda", self.index)
+        else:
+            raise ValueError(f"device type {self.type} not supported")
+
 
 class Backend(Enum):
     STANDALONE = "STANDALONE"

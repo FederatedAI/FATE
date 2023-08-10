@@ -5,6 +5,11 @@ import torch
 _HANDLED_FUNCTIONS = {}
 
 
+class PaillierTensorEncoded:
+    def __init__(self, data) -> None:
+        self._data = data
+
+
 class PaillierTensor:
     def __init__(self, data, dtype) -> None:
         self._data = data

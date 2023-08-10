@@ -1,8 +1,28 @@
 use math::{BInt, ONE};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
+use std::ops::AddAssign;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 pub struct CT(pub BInt); //ciphertext
+
+impl Display for CT {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CT")
+    }
+}
+
+impl Default for CT {
+    fn default() -> Self {
+        todo!()
+    }
+}
+
+impl<'b> AddAssign<&'b CT> for CT {
+    fn add_assign(&mut self, _rhs: &'b CT) {
+        todo!()
+    }
+}
 
 impl CT {
     pub fn zero() -> CT {
@@ -15,31 +35,39 @@ impl CT {
     pub fn add_ct(&self, ct: &CT, pk: &PK) -> CT {
         CT(&self.0 * &ct.0 % &pk.ns)
     }
+    pub fn i_double(&mut self, pk: &PK) {
+        self.0.pow_mod_mut(&BInt::from(2), &pk.ns);
+    }
     pub fn mul_pt(&self, b: &PT, pk: &PK) -> CT {
         CT(self.0.pow_mod_ref(&b.0, &pk.ns))
     }
 }
-#[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
+
+#[derive(Default, Clone, Deserialize, Serialize, Debug, PartialEq)]
 pub struct PT(pub BInt); // plaintest
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PK {
     pub n: BInt,
     pub ns: BInt, // n * n
 }
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct SK {
     p: BInt,
     q: BInt,
-    pub n: BInt, // n = p * q
+    pub n: BInt,
+    // n = p * q
     p_minus_one: BInt,
     q_minus_one: BInt,
     ps: BInt,
     qs: BInt,
-    p_invert: BInt, // p^{-1} mod q
+    p_invert: BInt,
+    // p^{-1} mod q
     hp: BInt,
     hq: BInt,
 }
+
 /// generate paillier keypairs with providing bit lenght
 pub fn keygen(bit_lenght: u32) -> (SK, PK) {
     assert!(bit_lenght % 2 == 0);
@@ -57,13 +85,16 @@ pub fn keygen(bit_lenght: u32) -> (SK, PK) {
     }
     (SK::new(p, q, n.clone()), PK::new(n))
 }
+
 impl PK {
     fn new(n: BInt) -> PK {
         let ns = &n * &n;
         PK { n, ns }
     }
     fn random_rn(&self) -> BInt {
-        BInt::gen_positive_integer(&self.n).pow_mod(&self.n, &self.ns)
+        let mut r = BInt::gen_positive_integer(&self.n);
+        r.pow_mod_mut(&self.n, &self.ns);
+        r
     }
     /// encrypt plaintext
     ///

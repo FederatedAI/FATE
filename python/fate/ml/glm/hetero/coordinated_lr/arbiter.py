@@ -15,7 +15,6 @@
 import logging
 
 import torch
-
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -55,7 +54,9 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             self.estimator.epochs = epochs
 
     def fit(self, ctx: Context) -> None:
-        encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        encryptor = kit.get_tensor_encryptor()
+        decryptor = kit.get_tensor_decryptor()
         ctx.hosts("encryptor").put(encryptor)
         ctx.guest("encryptor").put(encryptor)
         label_count = ctx.guest("label_count").get()
@@ -152,8 +153,9 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         lr.estimator = {}
         if lr.ovr:
             for label, d in all_estimator.items():
-                estimator = CoordinatedLREstimatorArbiter(epochs=model["meta"]["epochs"],
-                                                          batch_size=model["meta"]["batch_size"])
+                estimator = CoordinatedLREstimatorArbiter(
+                    epochs=model["meta"]["epochs"], batch_size=model["meta"]["batch_size"]
+                )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
         else:
@@ -197,13 +199,13 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, _ in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
-                g_guest = decryptor.decrypt(g_guest_enc)
+                g_guest = decryptor.decrypt_tensor(g_guest_enc)
                 size_list = [g_guest.size()[0]]
                 g_total = g_guest.squeeze()  # get torch tensor
 
                 host_g = batch_ctx.hosts.get("g_enc")
                 for i, g_host_enc in enumerate(host_g):
-                    g = decryptor.decrypt(g_host_enc)
+                    g = decryptor.decrypt_tensor(g_host_enc)
                     size_list.append(g.size()[0])
                     g_total = torch.hstack((g_total, g.squeeze()))
                 if not optimizer_ready:
@@ -226,7 +228,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
                     iter_g += torch.hstack(delta_g_list_squeezed)
 
                 if len(host_g) == 1:
-                    loss = decryptor.decrypt(batch_ctx.guest.get("loss"))
+                    loss = decryptor.decrypt_tensor(batch_ctx.guest.get("loss"))
                     iter_loss = 0 if iter_loss is None else iter_loss
                     iter_loss += loss
                 else:
@@ -262,7 +264,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
             "tol": self.tol,
-            "early_stop": self.early_stop
+            "early_stop": self.early_stop,
         }
 
     def restore(self, model):

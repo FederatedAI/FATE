@@ -1,12 +1,14 @@
 mod ops;
 mod random;
-mod serde;
+// mod serde;
 use core::cmp::{PartialEq, PartialOrd};
 use rug::Integer;
 use rug::{self, ops::Pow};
+use serde::{Serialize, Deserialize};
+
 
 /// newtype of rug::Integer
-#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug)]
+#[derive(Default, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Serialize, Deserialize)]
 pub struct BInt(pub Integer);
 pub const ONE: u8 = 1u8;
 
@@ -17,8 +19,8 @@ impl BInt {
     pub fn significant_bits(&self) -> u32 {
         self.0.significant_bits()
     }
-    pub fn pow_mod(self, exp: &BInt, modulo: &BInt) -> BInt {
-        BInt(self.0.pow_mod(&exp.0, &modulo.0).unwrap())
+    pub fn pow_mod_mut(&mut self, exp: &BInt, modulo: &BInt) {
+        self.0.pow_mod_mut(&exp.0, &modulo.0).unwrap();
     }
     pub fn pow_mod_ref(&self, exp: &BInt, modulo: &BInt) -> BInt {
         BInt(Integer::from(
