@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
         trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, objective='regression:l2')
         trees.fit(ctx, data_guest)
-        pred = trees.get_cache_predict_score().as_pd_df()
+        pred = trees.get_train_predict().as_pd_df()
         pred['sample_id'] = pred.sample_id.astype(int)
         df = pd.merge(df, pred, on='sample_id')
 

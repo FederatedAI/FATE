@@ -14,10 +14,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+BINARY_CE = "binary:bce"
+MULTI_CE = "multi:ce"
+REGRESSION_L2 = "regression:l2"
+
+
 OBJECTIVE = {
-    "binary:bce": BCELoss,
-    "multi:ce": CELoss,
-    "regression:l2": L2Loss
+    BINARY_CE: BCELoss,
+    MULTI_CE: CELoss,
+    REGRESSION_L2: L2Loss
 }
 
 
@@ -46,6 +51,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._accumulate_scores = None
         self._tree_dim = 1  # tree dimension, if is multilcass task, tree dim > 1
         self._loss_func = None
+        self._train_predict = None
 
         # encryption
         self._encrypt_kit = None
@@ -80,8 +86,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": self._encrypt_key_length})
         return kit
     
-    def get_cache_predict_score(self):
-        return self._loss_func.predict(self._accumulate_scores)
+    def get_train_predict(self):
+        return self._train_predict
     
     def get_tree(self, idx):
         return self._trees[idx]
@@ -120,7 +126,28 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         else:
             self._num_label = None
 
+    def get_task_info(self):
+        task_type = self.objective.split(':')[0]
+        if task_type == BINARY:
+            classes = [0, 1]
+        elif task_type == REGRESSION:
+            classes = None
+        return task_type, classes
+
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
+
+        """
+        Train model with train data and validate data.
+
+        Parameters
+        ----------
+        ctx: Context
+            FATE Context object
+        train_data: DataFrame
+            Train data used to fit model.
+        validate_data: DataFrame, optional
+            Validate data used to evaluate model performance during training process.
+        """
         
         # data binning
         bin_info = binning(train_data, max_bin=self.max_bin)
@@ -154,19 +181,39 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             self._update_feature_importance(tree.get_feature_importance())
             logger.info('fitting guest decision tree {} done'.format(tree_idx))
 
+        # compute train predict using cache scores
+        train_predict: DataFrame = self._loss_func.predict(self._accumulate_scores)
+        train_predict = train_predict.loc(train_data.get_indexer(target='sample_id'), preserve_order=True)
+        train_predict[LABEL] = train_data.label
+        task_type, classes = self.get_task_info()
+        train_predict.rename(columns={'score': PREDICT_SCORE})
+        self._train_predict = compute_predict_details(train_predict, task_type, classes)
+
     def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True) -> DataFrame:
         
+        """
+        predict function
+
+        Parameters
+        ----------
+        ctx: Context
+            FATE Context object
+        predict_data: DataFrame
+            Data used to predict.
+        predict_leaf: bool, optional
+            Whether to predict and return leaf index.
+        ret_std_format: bool, optional
+            Whether to return result in a FATE standard format which contains more details.
+        """
+
         leaf_pos = predict_leaf_guest(ctx, self._trees, predict_data)
         if predict_leaf:
             return leaf_pos
         result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func)
 
         if ret_std_format:
-            task_type = self.objective.split(':')[0]
-            if task_type == BINARY:
-                classes = [0, 1]
-            elif task_type == REGRESSION:
-                classes = None
+            task_type, classes = self.get_task_info()
+            if task_type == REGRESSION:
                 result = result + self._init_score
             # align table
             result: DataFrame = result.loc(predict_data.get_indexer(target="sample_id"), preserve_order=True)
