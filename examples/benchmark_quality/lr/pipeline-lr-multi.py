@@ -72,6 +72,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
 
     evaluation_0 = Evaluation('evaluation_0',
                               runtime_roles=['guest'],
+                              label_column_name=param.get("label_name"),
                               input_data=lr_0.outputs["train_output_data"],
                               metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
     pipeline.add_task(psi_0)
