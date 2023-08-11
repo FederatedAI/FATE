@@ -256,7 +256,7 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
     if retrieval_raw_table.count() == 0:
         return df.empty_frame()
 
-    partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table)
+    partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table, df.data_manager.block_row_size)
     to_blocks_func = functools.partial(to_blocks, dm=df.data_manager, partition_mappings=partition_order_mappings)
 
     block_table = retrieval_raw_table.mapPartitions(to_blocks_func, use_previous_behavior=False)
