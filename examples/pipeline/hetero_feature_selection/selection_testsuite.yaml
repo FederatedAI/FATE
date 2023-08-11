@@ -38,7 +38,7 @@ tasks:
     script: test_feature_selection_binning.py
   selection-manual:
     script: test_feature_selection_manual.py
-  binning-statistics:
+  selection-statistics:
     script: test_feature_selection_statistics.py
-  binning-multi-model:
+  selection-multi-model:
     script: test_feature_selection_multi_model.py

@@ -16,7 +16,7 @@ import argparse
 
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import PSI, HeteroFeatureSelection, HeteroFeatureBinning, \
-    FeatureScale, Union, DataSplit, CoordinatedLR, CoordinatedLinR, Statistics, Sample, Evaluation
+    FeatureScale, Union, DataSplit, CoordinatedLR, Statistics, Sample, Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -38,7 +38,7 @@ def main(config="../config.yaml", namespace=""):
     psi_0 = PSI("psi_0")
     psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
     data_split_0 = DataSplit("data_split_0", input_data=psi_0.outputs["output_data"],
@@ -109,7 +109,7 @@ def main(config="../config.yaml", namespace=""):
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
