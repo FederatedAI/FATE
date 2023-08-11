@@ -46,7 +46,6 @@ def main(config="../config.yaml", namespace=""):
     psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
-    Linear: 0.7
     data_split_0 = DataSplit("data_split_0",
                              train_size=0.6,
                              validate_size=0.0,
@@ -68,7 +67,7 @@ def main(config="../config.yaml", namespace=""):
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
 
     # print(pipeline.get_task_info("data_split_0").get_output_data())

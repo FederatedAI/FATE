@@ -76,12 +76,12 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(evaluation_0)
 
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
-    print(f"lr_1 model: {pipeline.get_task_info('lr_1').get_output_model()}")
+    # print(f"lr_1 model: {pipeline.get_task_info('lr_1').get_output_model()}")
     # print(f"train lr_1 data: {pipeline.get_task_info('lr_1').get_output_data()}")
 
-    print(f"lr_2 model: {pipeline.get_task_info('lr_2').get_output_model()}")
+    # print(f"lr_2 model: {pipeline.get_task_info('lr_2').get_output_model()}")
     # print(f"train lr_2 data: {pipeline.get_task_info('lr_2').get_output_data()}")
 
 

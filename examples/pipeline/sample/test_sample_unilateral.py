@@ -66,7 +66,7 @@ def main(config="../config.yaml", namespace=""):
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
 
 

@@ -12,10 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import Sample, PSI
+from fate_client.pipeline.components.fate import DataSplit, PSI, Sample, FeatureScale
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -45,6 +46,20 @@ def main(config="../config.yaml", namespace=""):
     psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
+    data_split_0 = DataSplit("data_split_0",
+                             train_size=0.6,
+                             validate_size=0.0,
+                             test_size=0.4,
+                             stratified=True,
+                             input_data=psi_0.outputs["output_data"])
+
+    data_split_1 = DataSplit("data_split_1",
+                             train_size=200,
+                             test_size=50,
+                             stratified=True,
+                             input_data=psi_0.outputs["output_data"]
+                             )
+
     sample_0 = Sample("sample_0",
                       frac={0: 0.5},
                       replace=False,
@@ -57,16 +72,35 @@ def main(config="../config.yaml", namespace=""):
                       hetero_sync=True,
                       input_data=psi_0.outputs["output_data"]
                       )
-
+    feature_scale_0 = FeatureScale("feature_scale_0",
+                                   method="min_max",
+                                   feature_range={"x0": [-1, 1]},
+                                   scale_col=["x0", "x1", "x3"],
+                                   train_data=psi_0.outputs["output_data"])
     pipeline.add_task(psi_0)
     pipeline.add_task(psi_1)
+    pipeline.add_task(data_split_0)
+    pipeline.add_task(data_split_1)
     pipeline.add_task(sample_0)
     pipeline.add_task(sample_1)
+    pipeline.add_task(feature_scale_0)
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
+
+    # print(pipeline.get_task_info("data_split_0").get_output_data())
+    """output_data = pipeline.get_task_info("data_split_0").get_output_data()
+    import pandas as pd
+
+    print(f"data split 0 train size: {pd.DataFrame(output_data['train_output_data']).shape};"
+          f"validate size: {pd.DataFrame(output_data['validate_output_data']).shape}"
+          f"test size: {pd.DataFrame(output_data['test_output_data']).shape}")
+    output_data = pipeline.get_task_info("data_split_1").get_output_data()
+    print(f"data split 1train size: {pd.DataFrame(output_data['train_output_data']).shape};"
+          f"validate size: {pd.DataFrame(output_data['validate_output_data']).shape}"
+          f"test size: {pd.DataFrame(output_data['test_output_data']).shape}")"""
 
 
 if __name__ == "__main__":

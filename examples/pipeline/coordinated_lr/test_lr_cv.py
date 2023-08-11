@@ -50,7 +50,7 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
 
 

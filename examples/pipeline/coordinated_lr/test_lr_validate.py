@@ -62,11 +62,12 @@ def main(config="../config.yaml", namespace=""):
                               input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
+    pipeline.add_task(data_split_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(evaluation_0)
 
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
 
 
