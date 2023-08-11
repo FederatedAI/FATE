@@ -22,6 +22,16 @@ from ..manager import DataManager
 
 
 def where(df: DataFrame, other: DataFrame):
+    """
+    df[mask]触发该操作
+    a. mask的列可能于df不一致，这个时候，df在mask中不出现的列均为nan
+        (1) columns完全对等
+        (2) columns一致，但顺序不一致
+        (3) mask columns数少于df columns数
+    b. 当mask中某一列有false的时候，需要考虑类型问题：如果原类型为int/bool等，需要上升为float32，如果为float32，保持不变
+        (1) mask 计算哪些列出现False，提前做列类型对齐
+    c. 要求df与mask的key是一致的
+    """
     if df.shape[0] != other.shape[0]:
         raise ValueError("Row numbers should be identical.")
 
@@ -106,7 +116,7 @@ def _where_float_type(l_block_table, r_block_table,
 
     def __convert_na(l_blocks, r_blocks):
         ret_blocks = []
-        for block in ret_blocks:
+        for block in l_blocks:
             if isinstance(block, torch.Tensor):
                 ret_blocks.append(block.clone())
             elif isinstance(block, np.ndarray):
@@ -115,10 +125,10 @@ def _where_float_type(l_block_table, r_block_table,
                 ret_blocks.append(block)
 
         for (l_bid, l_offset), (r_bid, r_offset) in zip(l_loc_info, r_loc_info):
-            if isinstance(ret_blocks[l_blocks], torch.Tensor):
-                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][: r_offset]] = torch.nan
+            if isinstance(ret_blocks[l_bid], torch.Tensor):
+                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][:, r_offset]] = torch.nan
             else:
-                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][: r_offset]] = np.nan
+                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][:, r_offset]] = np.nan
 
         return ret_blocks
 
