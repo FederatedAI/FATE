@@ -186,7 +186,7 @@ def _convert_raw_table_to_df(
 ):
     from ..ops._indexer import get_partition_order_by_raw_table
     from ..ops._dimension_scaling import to_blocks
-    partition_order_mapping = get_partition_order_by_raw_table(table)
+    partition_order_mapping = get_partition_order_by_raw_table(table, data_manager.block_row_size)
     to_block_func = functools.partial(to_blocks, dm=data_manager, partition_mappings=partition_order_mapping)
     block_table = table.mapPartitions(to_block_func,
                                       use_previous_behavior=False)
