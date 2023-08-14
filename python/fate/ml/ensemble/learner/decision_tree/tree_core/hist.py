@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
+import logging
+
 
 
 HIST_TYPE = ['distributed', 'sklearn']
@@ -107,7 +109,7 @@ class SBTHistogramBuilder(object):
                 "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
             }
 
-    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: dict, sample_pos: DataFrame = None, node_map={}, pk=None, evaluator=None):
+    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, pk=None, evaluator=None):
 
         node_num = len(nodes)
         if ctx.is_on_guest:
@@ -127,11 +129,10 @@ class SBTHistogramBuilder(object):
         indexer = bin_train_data.get_indexer('sample_id')
         gh = gh.loc(indexer, preserve_order=True)
         sample_pos = sample_pos.loc(indexer, preserve_order=True)
-        g = gh['g'].as_tensor()
-        h = gh['h'].as_tensor()
         targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), 'cnt': bin_train_data.apply_row(lambda x: 1).as_tensor()}
         map_sample_pos = sample_pos.create_frame()
         map_sample_pos['node_idx'] = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
+
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, targets)
 
         return hist, stat_obj

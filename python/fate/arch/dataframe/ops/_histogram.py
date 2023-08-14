@@ -59,7 +59,6 @@ def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, 
     _pack_func = functools.partial(_pack_data_with_position,
                                    l_block_id=data_block_id,
                                    r_block_id=position_block_id)
-
     data_with_position = block_table.join(position.block_table, _pack_func)
 
     for name, target in targets.items():

@@ -14,13 +14,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-BINARY_CE = "binary:bce"
+BINARY_BCE = "binary:bce"
 MULTI_CE = "multi:ce"
 REGRESSION_L2 = "regression:l2"
 
 
 OBJECTIVE = {
-    BINARY_CE: BCELoss,
+    BINARY_BCE: BCELoss,
     MULTI_CE: CELoss,
     REGRESSION_L2: L2Loss
 }

@@ -109,7 +109,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         sample_pos = self._init_sample_pos(train_df)
 
         # Get Encrypted Grad And Hess
-        en_grad_and_hess = ctx.guest.get('en_gh')
+        en_grad_and_hess: DataFrame = ctx.guest.get('en_gh')
+        print('cwj got g is {}'.format(list(en_grad_and_hess['g'].as_tensor().shardings._data.collect())))
         self._pk, self._evaluator = ctx.guest.get('en_kit')
         root_node = self._initialize_root_node(ctx, train_df)
         
@@ -128,6 +129,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                     
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
+            logger.info('train_df is {} grad hess is {}'.format(train_df, en_grad_and_hess))
             hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, \
                                                                             pk=self._pk, evaluator=self._evaluator)
             self.splitter.split(sub_ctx, en_statistic_result, cur_layer_node, node_map)

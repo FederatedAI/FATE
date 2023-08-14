@@ -250,7 +250,8 @@ class Table(object):
                     ret[_k] = reducer(ret[_k], _v)
             return ret
 
-        dup.put_all(self.applyPartitions(_local_map_reduce).reduce(_dict_reduce).items())
+        a = self.applyPartitions(_local_map_reduce)
+        dup.put_all(a.reduce(_dict_reduce).items())
         return dup
 
     def glom(self):
