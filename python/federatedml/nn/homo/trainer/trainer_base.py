@@ -274,7 +274,7 @@ class TrainerBase(object):
 
         if self._exporter:
             LOGGER.debug('save model to fate')
-            model_dict = self._exporter.export_model_dict(model=modedel,
+            model_dict = self._exporter.export_model_dict(model=model,
                                                           optimizer=optimizer,
                                                           model_define=self.nn_define,
                                                           optimizer_define=self.opt_define,
