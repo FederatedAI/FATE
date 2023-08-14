@@ -470,17 +470,15 @@ class HomoLRClient(HomoModule):
             'init_param': self.init_param,
             'ovr': self.ovr,
             'label_num': self.label_num}
-        export_ = ModelIO(data=param, meta=meta)
 
-        return export_
+        return {'param': param, 'meta': meta}
 
-    def from_model(self, model: ModelIO):
+    def from_model(self, model: dict):
 
-        model = model.dict()
-        if 'data' not in model:
+        if 'param' not in model:
             raise ('key "data" is not found in the input model dict')
 
-        model_param = model['data']
+        model_param = model['param']
         if 'model' not in model_param:
             raise ValueError(
                 "param dict must have key 'model' that contains the model parameter and structure info")
