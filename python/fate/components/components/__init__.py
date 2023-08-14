@@ -77,6 +77,12 @@ class LazyBuildInComponentsLoader:
         from .homo_lr import homo_lr
         
         return homo_lr
+    
+    @_lazy_cpn
+    def hetero_sbt(self):
+        from .hetero_sbt import hetero_sbt
+
+        return hetero_sbt
 
     @_lazy_cpn
     def dataframe_transformer(self):

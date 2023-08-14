@@ -150,7 +150,7 @@ def train(
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
     train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
     train_model_output: cpn.model_directory_output(roles=[GUEST, HOST], optional=True),
-    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
+    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True)
 ):
 
     runner: NNRunner = prepare_runner_class(
