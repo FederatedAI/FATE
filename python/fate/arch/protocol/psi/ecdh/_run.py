@@ -61,6 +61,16 @@ def _flat_block_key(intersect_id):
     """
     key=eid, value = ((guest_block_id, guest_block_offset(, [(host0_block_id, host0_block_offset)...])
     """
+    def _mapper(kvs):
+        for _, value in kvs:
+            guest_loc = value[0]
+            host_loc = value[1]
+            for guest_block_id, guest_offset in guest_loc:
+                yield (guest_block_id, guest_offset), host_loc
+
+    return intersect_id.mapPartitions(_mapper, use_previous_behavior=False)
+
+    """
     def _mapper(key, value):
         guest_loc = value[0]
         host_loc = value[1]
@@ -68,6 +78,7 @@ def _flat_block_key(intersect_id):
             yield (guest_block_id, guest_offset), host_loc
 
     return intersect_id.flatMap(_mapper)
+    """
 
 
 def psi_ecdh(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
