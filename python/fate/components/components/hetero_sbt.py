@@ -71,14 +71,14 @@ def train(
         train_data_output.write(train_scores)
         # get tree param
         tree_dict = booster.get_model()
-        train_model_output.write(tree_dict, meta_data={})
+        train_model_output.write(tree_dict, metadata={})
 
     elif role.is_host:
         
         booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin)
         booster.fit(ctx, train_data, validate_data)
         tree_dict = booster.get_model()
-        train_data_output.write(tree_dict, meta_data={})
+        train_model_output.write(tree_dict, metadata={})
 
     else:
         raise RuntimeError(f"Unknown role: {role}")
