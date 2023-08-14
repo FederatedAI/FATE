@@ -17,5 +17,5 @@ optimizer:
   alpha: 0.01
   optimizer_params:
     lr: 0.25
-batch_size: 5500
+batch_size: null
 early_stop: "diff"

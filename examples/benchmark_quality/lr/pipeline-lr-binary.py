@@ -87,7 +87,6 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
     pipeline.compile()
-    print(pipeline.get_dag())
     pipeline.fit()
 
     lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]

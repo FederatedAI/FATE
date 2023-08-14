@@ -85,7 +85,6 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
         pipeline.conf.set("timeout", config.timeout)
 
     pipeline.compile()
-    print(pipeline.get_dag())
     pipeline.fit()
 
     lr_0_data = pipeline.get_component("lr_0").get_output_data()["train_output_data"]

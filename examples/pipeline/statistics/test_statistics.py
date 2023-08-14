@@ -40,15 +40,15 @@ def main(config=".../config.yaml", namespace=""):
                                                                      namespace=f"experiment{namespace}"))
 
     statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"],
-                              metrics=["mean", "std", "min", "max"])
+                              metrics=["mean", "std", "min", "max", "25%", "median", "75%"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(statistics_0)
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
-    print(pipeline.get_dag())
     pipeline.fit()
+    # print(f"statistics_0 output model: {pipeline.get_task_info('statistics_0').get_output_model()}")
 
 
 if __name__ == "__main__":
