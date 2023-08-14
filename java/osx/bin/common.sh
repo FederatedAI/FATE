@@ -135,11 +135,11 @@ start() {
 debug() {
   echo "try to start $1"
   module=broker
-  main_class= org.fedai.osx.broker.Bootstrap
+  main_class=org.fedai.osx.broker.Bootstrap
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
-    JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8008 -cp conf/broker/:lib/*:extension/*:${BASE_DIR}/${project_name}-${module}-${module_version}.jar"
+    JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007 -cp conf/broker/:lib/*:extension/*:${BASE_DIR}/${project_name}-${module}-${module_version}.jar"
     JAVA_OPT="${JAVA_OPT} ${main_class}"
     JAVA_OPT="${JAVA_OPT} -c ${configpath} "
     echo $JAVA ${JAVA_OPT}
