@@ -148,7 +148,7 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
         r_flatten = r_block_table.mapPartitions(r_flatten_func, use_previous_behavior=False)
         l_flatten = l_flatten.union(r_flatten)
 
-    partition_order_mappings = get_partition_order_by_raw_table(l_flatten)
+    partition_order_mappings = get_partition_order_by_raw_table(l_flatten, data_manager.block_row_size)
     _convert_to_block_func = functools.partial(to_blocks, dm=data_manager, partition_mappings=partition_order_mappings)
     block_table = l_flatten.mapPartitions(_convert_to_block_func, use_previous_behavior=False)
     block_table, data_manager = compress_blocks(block_table, data_manager)
@@ -187,7 +187,9 @@ def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
     r_flatten_table = index.block_table.mapPartitions(r_flatten_func, use_previous_behavior=False)
 
     drop_flatten = l_flatten_table.subtractByKey(r_flatten_table)
-    partition_order_mappings = get_partition_order_by_raw_table(drop_flatten) if drop_flatten.count() else dict()
+    partition_order_mappings = get_partition_order_by_raw_table(
+        drop_flatten, data_manager.block_row_size
+    ) if drop_flatten.count() else dict()
 
     _convert_to_block_func = functools.partial(to_blocks,
                                                dm=data_manager,
@@ -254,7 +256,7 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
     if retrieval_raw_table.count() == 0:
         return df.empty_frame()
 
-    partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table)
+    partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table, df.data_manager.block_row_size)
     to_blocks_func = functools.partial(to_blocks, dm=df.data_manager, partition_mappings=partition_order_mappings)
 
     block_table = retrieval_raw_table.mapPartitions(to_blocks_func, use_previous_behavior=False)
@@ -286,16 +288,20 @@ def _flatten_partition(kvs, block_num=0):
 
 
 def to_blocks(kvs, dm: DataManager = None, partition_mappings: dict = None):
-    ret_blocks = [[] for i in range(dm.block_num)]
+    ret_blocks = [[] for _ in range(dm.block_num)]
 
-    partition_id = None
-    for sample_id, value in kvs:
-        if partition_id is None:
-            partition_id = partition_mappings[sample_id]["block_id"]
+    block_id = None
+    for lid, (sample_id, value) in enumerate(kvs):
+        if block_id is None:
+            block_id = partition_mappings[sample_id]["start_block_id"]
         ret_blocks[0].append(sample_id)
         for bid, buf in enumerate(value):
             ret_blocks[bid + 1].append(buf)
 
-    ret_blocks = dm.convert_to_blocks(ret_blocks)
+        if (lid + 1) % dm.block_row_size == 0:
+            yield block_id, dm.convert_to_blocks(ret_blocks)
+            ret_blocks = [[] for i in range(dm.block_num)]
+            block_id += 1
 
-    return [(partition_id, ret_blocks)]
+    if ret_blocks[0]:
+        yield block_id, dm.convert_to_blocks(ret_blocks)

@@ -106,7 +106,7 @@ def _where_float_type(l_block_table, r_block_table,
 
     def __convert_na(l_blocks, r_blocks):
         ret_blocks = []
-        for block in ret_blocks:
+        for block in l_blocks:
             if isinstance(block, torch.Tensor):
                 ret_blocks.append(block.clone())
             elif isinstance(block, np.ndarray):
@@ -115,10 +115,10 @@ def _where_float_type(l_block_table, r_block_table,
                 ret_blocks.append(block)
 
         for (l_bid, l_offset), (r_bid, r_offset) in zip(l_loc_info, r_loc_info):
-            if isinstance(ret_blocks[l_blocks], torch.Tensor):
-                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][: r_offset]] = torch.nan
+            if isinstance(ret_blocks[l_bid], torch.Tensor):
+                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][:, r_offset]] = torch.nan
             else:
-                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][: r_offset]] = np.nan
+                ret_blocks[l_bid][:, l_offset][~r_blocks[r_bid][:, r_offset]] = np.nan
 
         return ret_blocks
 

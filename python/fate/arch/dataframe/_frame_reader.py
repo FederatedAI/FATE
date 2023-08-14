@@ -17,6 +17,7 @@ import pandas as pd
 from typing import Union
 
 
+from .conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
 from .entity import types
 from ._dataframe import DataFrame
 from .manager import DataManager
@@ -41,7 +42,8 @@ class TableReader(object):
         na_values: Union[str, list, dict] = None,
         input_format: str = "dense",
         tag_with_value: bool = False,
-        tag_value_delimiter: str = ":"
+        tag_value_delimiter: str = ":",
+        block_row_size: int = None
     ):
         self._sample_id_name = sample_id_name
         self._match_id_name = match_id_name
@@ -60,12 +62,16 @@ class TableReader(object):
         self._input_format = input_format
         self._tag_with_value = tag_with_value
         self._tag_value_delimiter = tag_value_delimiter
+        self._block_row_size = block_row_size if block_row_size is not None else DATAFRAME_BLOCK_ROW_SIZE
 
         self.check_params()
 
     def check_params(self):
         if not self._sample_id_name:
             raise ValueError("Please provide sample_id_name")
+
+        if not isinstance(self._block_row_size, int) or self._block_row_size < 0:
+            raise ValueError("block_row_size should be positive integer")
 
     def to_frame(self, ctx, table):
         if self._input_format != "dense":
@@ -74,7 +80,7 @@ class TableReader(object):
         return self._dense_format_to_frame(ctx, table)
 
     def _dense_format_to_frame(self, ctx, table):
-        data_manager = DataManager()
+        data_manager = DataManager(block_row_size=self._block_row_size)
         columns = self._header.split(self._delimiter, -1)
         columns.remove(self._sample_id_name)
         retrieval_index_dict = data_manager.init_from_local_file(
@@ -84,7 +90,7 @@ class TableReader(object):
             dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
 
         from .ops._indexer import get_partition_order_by_raw_table
-        partition_order_mappings = get_partition_order_by_raw_table(table)
+        partition_order_mappings = get_partition_order_by_raw_table(table, data_manager.block_row_size)
         # partition_order_mappings = _get_partition_order(table)
         table = table.mapValues(lambda value: value.split(self._delimiter, -1))
         to_block_func = functools.partial(_to_blocks,
@@ -129,7 +135,8 @@ class CSVReader(object):
         weight_type: str = "float32",
         dtype: str = "float32",
         na_values: Union[None, str, list, dict] = None,
-        partition: int = 4
+        partition: int = 4,
+        block_row_size: int = None
     ):
         self._sample_id_name = sample_id_name
         self._match_id_list = match_id_list
@@ -142,6 +149,7 @@ class CSVReader(object):
         self._dtype = dtype
         self._na_values = na_values
         self._partition = partition
+        self._block_row_size = block_row_size if block_row_size is not None else DATAFRAME_BLOCK_ROW_SIZE
 
     def to_frame(self, ctx, path):
         # TODO: use table put data instead of read all data
@@ -156,6 +164,7 @@ class CSVReader(object):
             weight_name=self._weight_name,
             dtype=self._dtype,
             partition=self._partition,
+            block_row_size=self._block_row_size
         ).to_frame(ctx, df)
 
 
@@ -194,6 +203,7 @@ class PandasReader(object):
         weight_type: str = "float32",
         dtype: str = "float32",
         partition: int = 4,
+        block_row_size: int = None,
     ):
         self._sample_id_name = sample_id_name
         self._match_id_list = match_id_list
@@ -204,6 +214,7 @@ class PandasReader(object):
         self._weight_type = weight_type
         self._dtype = dtype
         self._partition = partition
+        self._block_row_size = block_row_size if block_row_size is not None else DATAFRAME_BLOCK_ROW_SIZE
 
         if self._sample_id_name and not self._match_id_name:
             raise ValueError(f"As sample_id {self._sample_id_name} is given, match_id should be given too")
@@ -215,7 +226,7 @@ class PandasReader(object):
         else:
             df = df.set_index(self._sample_id_name)
 
-        data_manager = DataManager()
+        data_manager = DataManager(block_row_size=self._block_row_size)
         retrieval_index_dict = data_manager.init_from_local_file(
             sample_id_name=self._sample_id_name, columns=df.columns.tolist(), match_id_list=self._match_id_list,
             match_id_name=self._match_id_name, label_name=self._label_name, weight_name=self._weight_name,
@@ -260,11 +271,11 @@ def _to_blocks(kvs,
     """
     sample_id/match_id,label(maybe missing),weight(maybe missing),X
     """
-    partition_id = None
+    block_id = None
 
     schema = data_manager.schema
 
-    splits = [[] for idx in range(data_manager.block_num)]
+    splits = [[] for _ in range(data_manager.block_num)]
     sample_id_block = data_manager.loc_block(schema.sample_id_name, with_offset=False) if schema.sample_id_name else None
 
     match_id_block = data_manager.loc_block(schema.match_id_name, with_offset=False)if schema.match_id_name else None
@@ -287,9 +298,13 @@ def _to_blocks(kvs,
 
         column_blocks_mapping[bid].append(col_id)
 
+    block_row_size = data_manager.block_row_size
+
+    lid = 0
     for key, value in kvs:
-        if partition_id is None:
-            partition_id = partition_order_mappings[key]["block_id"]
+        if block_id is None:
+            block_id = partition_order_mappings[key]["start_block_id"]
+        lid += 1
 
         # columns = value.split(",", -1)
         splits[sample_id_block].append(key)
@@ -303,6 +318,12 @@ def _to_blocks(kvs,
         for bid, col_id_list in column_blocks_mapping.items():
             splits[bid].append([value[col_id] for col_id in col_id_list])
 
-    converted_blocks = data_manager.convert_to_blocks(splits)
+        if lid % block_row_size == 0:
+            converted_blocks = data_manager.convert_to_blocks(splits)
+            yield  block_id, converted_blocks
+            block_id += 1
+            splits = [[] for _ in range(data_manager.block_num)]
 
-    return [(partition_id, converted_blocks)]
+    if lid % block_row_size:
+        converted_blocks = data_manager.convert_to_blocks(splits)
+        yield block_id, converted_blocks

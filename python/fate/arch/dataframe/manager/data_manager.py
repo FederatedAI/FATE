@@ -19,12 +19,19 @@ from .block_manager import BlockManager
 from .block_manager import BlockType
 from ..entity import types
 from typing import Union, List, Tuple
+from ..conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
 
 
 class DataManager(object):
-    def __init__(self, schema_manager: SchemaManager = None, block_manager: BlockManager = None):
+    def __init__(
+            self,
+            schema_manager: SchemaManager = None,
+            block_manager: BlockManager = None,
+            block_row_size: int = DATAFRAME_BLOCK_ROW_SIZE
+    ):
         self._schema_manager = schema_manager
         self._block_manager = block_manager
+        self._block_row_size = block_row_size
 
     @property
     def blocks(self):
@@ -33,6 +40,10 @@ class DataManager(object):
     @property
     def block_num(self):
         return len(self._block_manager.blocks)
+
+    @property
+    def block_row_size(self):
+        return self._block_row_size
 
     @property
     def schema(self):
