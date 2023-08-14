@@ -6,7 +6,7 @@ from ._tensor import MockPaillierTensor, implements
 
 @implements(_custom_ops.decrypt_f)
 def decrypt_f(input, decryptor):
-    return decryptor.decrypt(input)
+    return decryptor.decrypt_tensor(input)
 
 
 @implements(torch.add)

@@ -42,7 +42,11 @@ impl DiffieHellman {
 
         let other_public_key: [u8; 32] = match other_public_key.try_into() {
             Ok(key) => key,
-            Err(_) => return Err(PyTypeError::new_err("slice with incorrect length, should be 32 bytes")),
+            Err(_) => {
+                return Err(PyTypeError::new_err(
+                    "slice with incorrect length, should be 32 bytes",
+                ))
+            }
         };
 
         let shared_secret = private_key.diffie_hellman(&PublicKey::from(other_public_key));
@@ -107,7 +111,8 @@ impl RandomMix {
             }
         };
         let range = Uniform::new(-1e7f64, 1e7f64);
-        output_decimal_array.iter_mut()
+        output_decimal_array
+            .iter_mut()
             .zip(output_integer_array.iter_mut())
             .for_each(|(output_decimal, output_integer)| {
                 for state in self.states.iter_mut() {
@@ -168,15 +173,18 @@ impl MixAggregate {
         }
     }
     fn aggregate(&mut self, inputs: Vec<(PyReadonlyArrayDyn<f64>, PyReadonlyArrayDyn<f64>)>) {
-        inputs.into_iter().enumerate().for_each(|(i, (decimal, integer))| {
-            if i >= self.decimal_sum.len() {
-                self.decimal_sum.push(decimal.as_array().to_owned());
-                self.integer_sum.push(integer.as_array().to_owned());
-            } else {
-                self.decimal_sum[i] += &decimal.as_array();
-                self.integer_sum[i] += &integer.as_array();
-            }
-        });
+        inputs
+            .into_iter()
+            .enumerate()
+            .for_each(|(i, (decimal, integer))| {
+                if i >= self.decimal_sum.len() {
+                    self.decimal_sum.push(decimal.as_array().to_owned());
+                    self.integer_sum.push(integer.as_array().to_owned());
+                } else {
+                    self.decimal_sum[i] += &decimal.as_array();
+                    self.integer_sum[i] += &integer.as_array();
+                }
+            });
     }
     fn finalize(&self, py: Python, weight: Option<f64>) -> Vec<Py<PyArrayDyn<f64>>> {
         self.decimal_sum
@@ -193,7 +201,6 @@ impl MixAggregate {
             .collect()
     }
 }
-
 
 pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
     let submodule_secure_aggregation_helper = PyModule::new(py, "secure_aggregation_helper")?;

@@ -51,47 +51,47 @@ public class MetaInfo {
     public static String PROPERTY_DEFAULT_CLIENT_VERSION = "2.X.X";
     public static volatile MasterInfo masterInfo;
     @Config(confKey = "grpc.server.max.concurrent.call.per.connection", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION = 1000;
+    public static Integer PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION = 1000;
     @Config(confKey = "grpc.server.max.inbound.metadata.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_MAX_INBOUND_METADATA_SIZE = 128 << 20;
+    public static Integer PROPERTY_GRPC_SERVER_MAX_INBOUND_METADATA_SIZE = 128 << 20;
     @Config(confKey = "grpc.server.max.inbound.message.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_MAX_INBOUND_MESSAGE_SIZE = (2 << 30) - 1;
+    public static Integer PROPERTY_GRPC_SERVER_MAX_INBOUND_MESSAGE_SIZE = (2 << 30) - 1;
     @Config(confKey = "grpc.server.flow.control.window", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_FLOW_CONTROL_WINDOW = 128 << 20;
+    public static Integer PROPERTY_GRPC_SERVER_FLOW_CONTROL_WINDOW = 128 << 20;
     @Config(confKey = "grpc.server.keepalive.time.sec", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_KEEPALIVE_TIME_SEC = 7200;
+    public static Integer PROPERTY_GRPC_SERVER_KEEPALIVE_TIME_SEC = 7200;
     @Config(confKey = "grpc.server.keepalive.timeout.sec", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_KEEPALIVE_TIMEOUT_SEC = 3600;
+    public static Integer PROPERTY_GRPC_SERVER_KEEPALIVE_TIMEOUT_SEC = 3600;
     @Config(confKey = "grpc.server.permit.keepalive.time.sec", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_PERMIT_KEEPALIVE_TIME_SEC = 10;
+    public static Integer PROPERTY_GRPC_SERVER_PERMIT_KEEPALIVE_TIME_SEC = 10;
     @Config(confKey = "grpc.server.keepalive.without.calls.enabled", pattern = Dict.BOOLEAN_PATTERN)
-    public static boolean PROPERTY_GRPC_SERVER_KEEPALIVE_WITHOUT_CALLS_ENABLED = true;
+    public static Boolean PROPERTY_GRPC_SERVER_KEEPALIVE_WITHOUT_CALLS_ENABLED = true;
     @Config(confKey = "grpc.server.max.connection.idle.sec", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_MAX_CONNECTION_IDLE_SEC = 86400;
+    public static Integer PROPERTY_GRPC_SERVER_MAX_CONNECTION_IDLE_SEC = 86400;
     @Config(confKey = "grpc.server.max.connection.age.sec", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_SEC = 86400;
+    public static Integer PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_SEC = 86400;
     @Config(confKey = "grpc.server.max.connection.age.grace.sec", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC = 86400;
+    public static Integer PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC = 86400;
     @Config(confKey = "grpc.oncompleted.wait.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT = 600;
+    public static Integer PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT = 600;
     @Config(confKey = "grpc.client.max.inbound.message.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_MAX_INBOUND_MESSAGE_SIZE = (2 << 30) - 1;
+    public static Integer PROPERTY_GRPC_CLIENT_MAX_INBOUND_MESSAGE_SIZE = (2 << 30) - 1;
     @Config(confKey = "grpc.client.flow.control.window", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_FLOW_CONTROL_WINDOW = 128 << 20;
+    public static Integer PROPERTY_GRPC_CLIENT_FLOW_CONTROL_WINDOW = 128 << 20;
     @Config(confKey = "grpc.client.keepalive.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_KEEPALIVE_TIME_SEC = 7200;
+    public static Integer PROPERTY_GRPC_CLIENT_KEEPALIVE_TIME_SEC = 7200;
     @Config(confKey = "grpc.client.keepalive.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_KEEPALIVE_TIMEOUT_SEC = 3600;
+    public static Integer PROPERTY_GRPC_CLIENT_KEEPALIVE_TIMEOUT_SEC = 3600;
     @Config(confKey = "grpc.client.keepalive.without.calls.enabled", pattern = Dict.BOOLEAN_PATTERN)
-    public static boolean PROPERTY_GRPC_CLIENT_KEEPALIVE_WITHOUT_CALLS_ENABLED = true;
+    public static Boolean PROPERTY_GRPC_CLIENT_KEEPALIVE_WITHOUT_CALLS_ENABLED = true;
     @Config(confKey = "grpc.client.max.connection.idle", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_MAX_CONNECTION_IDLE_SEC = 86400;
+    public static Integer PROPERTY_GRPC_CLIENT_MAX_CONNECTION_IDLE_SEC = 86400;
     @Config(confKey = "grpc.client.per.rpc.buffer.limit", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT =  (2 << 30) - 1;
+    public static Integer PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT =  (2 << 30) - 1;
     @Config(confKey = "grpc.client.retry.buffer.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
+    public static Integer PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
     @Config(confKey = "transfer.cached.msgid.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
+    public static Integer PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
     @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
     @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -100,12 +100,12 @@ public class MetaInfo {
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
     @Config(confKey = "mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int MAP_FILE_SIZE = 1 << 25;
+    public static Integer MAP_FILE_SIZE = 1 << 25;
     @Config(confKey = "mapped.file.dir")
     public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped/.fate/transfer_file";
 
     @Config(confKey = "index.mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_INDEX_MAP_FILE_SIZE = 1 << 21;
+    public static Integer PROPERTY_INDEX_MAP_FILE_SIZE = 1 << 21;
     @Config(confKey = "server.cert.chain.file")
     public static String PROPERTY_SERVER_CERT_CHAIN_FILE;
     @Config(confKey = "server.private.key.file")
@@ -133,9 +133,9 @@ public class MetaInfo {
     @Config(confKey = "http.use.tls", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_HTTP_USE_TLS = false;
     @Config(confKey = "http.server.acceptor.num", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_HTTP_SERVER_ACCEPTOR_NUM = 10;
+    public static Integer PROPERTY_HTTP_SERVER_ACCEPTOR_NUM = 10;
     @Config(confKey = "http.server.selector.num", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_HTTP_SERVER_SELECTOR_NUM = 1;
+    public static Integer PROPERTY_HTTP_SERVER_SELECTOR_NUM = 1;
     @Config(confKey = "http.ssl.trust.store.type")
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_TYPE = "PKCS12";
     @Config(confKey = "http.ssl.trust.store.provider")
@@ -152,19 +152,19 @@ public class MetaInfo {
     public static Boolean PROPERTY_HTTP_SSL_HOSTNAME_VERIFY = false;
 
     @Config(confKey = "http.request.body.max.size")
-    public static int PROPERTY_HTTP_REQUEST_BODY_MAX_SIZE = 32 * 1024 * 1024;
+    public static Integer PROPERTY_HTTP_REQUEST_BODY_MAX_SIZE = 32 * 1024 * 1024;
     @Config(confKey = "http.context.path")
     public static String PROPERTY_HTTP_CONTEXT_PATH = "/osx";
     @Config(confKey = "http.servlet.path")
     public static String PROPERTY_HTTP_SERVLET_PATH = "/inbound";
     @Config(confKey = "http.receive.queue.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_HTTP_RECEIVE_QUEUE_SIZE = 36;
+    public static Integer PROPERTY_HTTP_RECEIVE_QUEUE_SIZE = 36;
     @Config(confKey = "http.accept.receive.buffer.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE = 4096;
+    public static Integer PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE = 4096;
     @Config(confKey = "zk.url")
     public static String PROPERTY_ZK_URL;
     @Config(confKey = "stream.limit.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 3;
+    public static Integer PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 3;
     @Config(confKey = "produce.msg.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_PRODUCE_MSG_MAX_TRY_TIME = 3;
     @Config(confKey = "produce.msg.max.try.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -202,7 +202,7 @@ public class MetaInfo {
     @Config(confKey = "queue.max.free.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_QUEUE_MAX_FREE_TIME = 60000000;
     @Config(confKey = "queue.check.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static int PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 60 * 1000 * 10;
+    public static Integer PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 60 * 1000 * 10;
     public static String INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_GRPC_PORT;
 
 
@@ -277,6 +277,7 @@ public class MetaInfo {
                     Class clazz = field.getType();
                     String confKey = config.confKey();
                     Object value = environment.get(confKey);
+                    System.err.println("key:"+confKey+ " value :"+value);
                     if (value != null) {
                         String pattern = config.pattern();
                         if (StringUtils.isNotEmpty(pattern) && !checkPattern(pattern, value.toString())) {
@@ -310,7 +311,7 @@ public class MetaInfo {
             } catch (Exception e) {
              //   e.printStackTrace();
                 logger.error("parse config error",e);
-                throw new ConfigErrorException("parse config error: "+e.getMessage());
+                //throw new ConfigErrorException("parse config error: "+e.getMessage());
             }
         });
     }

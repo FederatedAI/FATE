@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 public class PtpPushService extends AbstractServiceAdaptor<FateContext,StreamObserver, StreamObserver> {
     Logger  logger = LoggerFactory.getLogger(PtpPushService.class);
 
+
+
     @Override
     protected StreamObserver doService(FateContext context, InboundPackage<StreamObserver> data) {
         StreamObserver responseStreamObserver = data.getBody();

@@ -6,7 +6,7 @@ from ._tensor import PaillierTensor, implements
 
 @implements(_custom_ops.decrypt_f)
 def decrypt(input, decryptor):
-    return decryptor.decrypt(input)
+    return decryptor.decrypt_tensor(input)
 
 
 @implements(torch.add)

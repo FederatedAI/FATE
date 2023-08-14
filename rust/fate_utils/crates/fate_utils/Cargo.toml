@@ -18,14 +18,16 @@ rand = { workspace = true }
 libsm = { workspace = true }
 sha2 = { workspace = true }
 curve25519-dalek = { workspace = true }
-rayon = { workspace = true, optional = true}
+rayon = { workspace = true, optional = true }
 rand_chacha = { workspace = true }
 x25519-dalek = { workspace = true }
 rand_core = { workspace = true }
+rug = { workspace = true }
 quantile = { path = "../quantile" }
 math = { path = "../math" }
 fixedpoint = { path = "../fixedpoint" }
 paillier_tensor = { path = "../paillier_tensor" }
+paillier = { path = "../paillier" }
 
 [features]
 default = ["rug", "rayon", "std", "u64_backend", "extension-module"]

@@ -447,8 +447,11 @@ class SchemaManager(object):
                 self._type_mapping[column] = dtype.get(column, default_type)
 
     def init_name_mapping(self):
-        offset = 1
-        self._name_offset_mapping[self._schema.sample_id_name] = 0
+        offset = 0
+
+        if self._schema.sample_id_name:
+            offset = 1
+            self._name_offset_mapping[self._schema.sample_id_name] = 0
 
         if self._schema.match_id_name:
             self._name_offset_mapping[self._schema.match_id_name] = offset

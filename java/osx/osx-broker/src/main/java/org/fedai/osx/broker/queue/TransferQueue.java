@@ -157,7 +157,7 @@ public class TransferQueue {
                     }
                 }
             } else {
-                logger.info("topic {} put msg error",transferId);
+                logger.info("topic {} put msg error {}",transferId,putMessageResult.getPutMessageStatus());
                 throw new PutMessageException("topic " + msg.getTopic() + " put message error");
             }
             return putMessageResult;

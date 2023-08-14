@@ -14,6 +14,5 @@ numpy==1.23.1
 torch==1.13.1
 urllib3==1.26.5
 grpcio==1.46.3
-ml_metadata
 beautifultable
 rust_paillier

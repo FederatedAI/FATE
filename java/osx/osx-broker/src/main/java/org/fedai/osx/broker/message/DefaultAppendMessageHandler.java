@@ -79,6 +79,7 @@ public class DefaultAppendMessageHandler implements AppendMessageHandler {
         final int msgLen = calMsgLength(msgInner.getSysFlag(), srcPartyIdLength, desPartyIdLength, bodyLength, topicLength, propertiesLength);
         // Exceeds the maximum message
         if (msgLen > this.maxMessageSize) {
+            log.error("msg length {} bigger than {}",msgLen,this.maxMessageSize);
             return new AppendMessageResult(AppendMessageStatus.MESSAGE_SIZE_EXCEEDED);
         }
         // Determines whether there is sufficient free space

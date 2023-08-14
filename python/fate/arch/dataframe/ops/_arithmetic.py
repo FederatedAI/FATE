@@ -57,7 +57,7 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
         block_table = binary_operate(lhs.block_table, rhs_blocks, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs_types)
 
-    elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         block_table = binary_operate(lhs.block_table, rhs, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs)
     else:
@@ -85,7 +85,7 @@ def _operate(lhs, rhs, op, block_indexes, rhs_block_id=None):
                 for bid in range(len(blocks))
             ]
         )
-    elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
+    elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         op_ret = lhs.mapValues(
             lambda blocks:
             [

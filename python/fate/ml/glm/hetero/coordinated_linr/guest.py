@@ -16,25 +16,21 @@
 import logging
 
 import torch
-
-from fate.arch import dataframe, Context
+from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils import predict_tools
-from fate.ml.utils._model_param import initialize_param, serialize_param, deserialize_param
-from fate.ml.utils._optimizer import Optimizer, LRScheduler
+from fate.ml.utils._model_param import (
+    deserialize_param,
+    initialize_param,
+    serialize_param,
+)
+from fate.ml.utils._optimizer import LRScheduler, Optimizer
 
 logger = logging.getLogger(__name__)
 
 
 class CoordinatedLinRModuleGuest(HeteroModule):
-    def __init__(
-            self,
-            epochs=None,
-            batch_size=None,
-            optimizer_param=None,
-            learning_rate_param=None,
-            init_param=None
-    ):
+    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None):
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer_param = optimizer_param
@@ -59,13 +55,16 @@ class CoordinatedLinRModuleGuest(HeteroModule):
                 self.optimizer_param["alpha"],
                 self.optimizer_param["optimizer_params"],
             )
-            lr_scheduler = LRScheduler(self.learning_rate_param["method"],
-                                       self.learning_rate_param["scheduler_params"])
-            estimator = CoordinatedLinREstimatorGuest(epochs=self.epochs,
-                                                      batch_size=self.batch_size,
-                                                      optimizer=optimizer,
-                                                      learning_rate_scheduler=lr_scheduler,
-                                                      init_param=self.init_param)
+            lr_scheduler = LRScheduler(
+                self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
+            )
+            estimator = CoordinatedLinREstimatorGuest(
+                epochs=self.epochs,
+                batch_size=self.batch_size,
+                optimizer=optimizer,
+                learning_rate_scheduler=lr_scheduler,
+                init_param=self.init_param,
+            )
             self.estimator = estimator
         encryptor = ctx.arbiter("encryptor").get()
         self.estimator.fit_model(ctx, encryptor, train_data, validate_data)
@@ -75,23 +74,30 @@ class CoordinatedLinRModuleGuest(HeteroModule):
         return prob
 
     def get_model(self):
-        return {"data": {"estimator": self.estimator.get_model()},
-                "meta": {"epochs": self.epochs,
-                         "batch_size": self.batch_size,
-                         "learning_rate_param": self.learning_rate_param,
-                         "init_param": self.init_param,
-                         "optimizer_param": self.optimizer_param}
-                }
+        return {
+            "data": {"estimator": self.estimator.get_model()},
+            "meta": {
+                "epochs": self.epochs,
+                "batch_size": self.batch_size,
+                "learning_rate_param": self.learning_rate_param,
+                "init_param": self.init_param,
+                "optimizer_param": self.optimizer_param,
+            },
+        }
 
     @classmethod
     def from_model(cls, model) -> "CoordinatedLinRModuleGuest":
-        linr = CoordinatedLinRModuleGuest(optimizer_param=model["meta"]["optimizer_param"],
-                                          learning_rate_param=model["meta"]["learning_rate_param"],
-                                          batch_size=model["meta"]["batch_size"],
-                                          init_param=model["meta"]["init_param"])
-        estimator = CoordinatedLinREstimatorGuest(epochs=model["meta"]["epochs"],
-                                                  batch_size=model["meta"]["batch_size"],
-                                                  init_param=model["meta"]["init_param"])
+        linr = CoordinatedLinRModuleGuest(
+            optimizer_param=model["meta"]["optimizer_param"],
+            learning_rate_param=model["meta"]["learning_rate_param"],
+            batch_size=model["meta"]["batch_size"],
+            init_param=model["meta"]["init_param"],
+        )
+        estimator = CoordinatedLinREstimatorGuest(
+            epochs=model["meta"]["epochs"],
+            batch_size=model["meta"]["batch_size"],
+            init_param=model["meta"]["init_param"],
+        )
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
 
@@ -99,14 +105,7 @@ class CoordinatedLinRModuleGuest(HeteroModule):
 
 
 class CoordinatedLinREstimatorGuest(HeteroModule):
-    def __init__(
-            self,
-            epochs=None,
-            batch_size=None,
-            optimizer=None,
-            learning_rate_scheduler=None,
-            init_param=None
-    ):
+    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer
@@ -124,7 +123,7 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         half_d = Xw - Y
         if weight:
             half_d = half_d * weight
-        batch_ctx.hosts.put("half_d", encryptor.encrypt(half_d))
+        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d))
         half_g = torch.matmul(X.T, half_d)
 
         Xw_h = batch_ctx.hosts.get("Xw_h")[0]
@@ -256,7 +255,7 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
-            "fit_intercept": self.init_param.get("fit_intercept")
+            "fit_intercept": self.init_param.get("fit_intercept"),
         }
 
     def restore(self, model):

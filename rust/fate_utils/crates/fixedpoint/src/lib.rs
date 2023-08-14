@@ -1,5 +1,6 @@
 mod coder;
 mod frexp;
+
 pub use coder::CouldCode;
 pub use coder::FixedpointCoder;
 use math::BInt;
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 const BASE: u32 = 16;
 
 /// fixedpoint plaintext
-#[derive(Debug)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct PT {
     pub significant: paillier::PT,
     pub exp: i32,
@@ -17,13 +18,13 @@ pub struct PT {
 
 /// fixedpoint ciphertext
 /// raw paillier ciphertext represents encryped significant
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CT {
     significant_encryped: paillier::CT,
     exp: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PK {
     pub pk: paillier::PK,
     pub coder: coder::FixedpointCoder,
@@ -35,7 +36,8 @@ impl PK {
         PK { pk, coder }
     }
 }
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SK {
     pub sk: paillier::SK,
     pub coder: coder::FixedpointCoder,
@@ -120,6 +122,12 @@ impl CT {
     pub fn add_assign(&mut self, b: &CT, pk: &PK) {
         // FIXME
         *self = self.add(b, pk);
+    }
+    pub fn i_double(&mut self, pk: &PK) {
+        self.significant_encryped.0 = self
+            .significant_encryped
+            .0
+            .pow_mod_ref(&BInt::from(2), &pk.pk.ns);
     }
     pub fn add(&self, b: &CT, pk: &PK) -> CT {
         let a = self;
