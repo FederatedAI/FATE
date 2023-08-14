@@ -3,11 +3,6 @@ use ndarray::prelude::*;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
-<<<<<<< HEAD
-use rug::Integer;
-use math::BInt;
-=======
->>>>>>> dev-2.0.0-beta
 
 #[pyclass(module = "fate_utils.paillier")]
 #[derive(Default)]
@@ -147,8 +142,6 @@ impl Coders {
             .collect();
         FixedpointVector { data }
     }
-<<<<<<< HEAD
-=======
     fn pack_u64_vec(&self, data: Vec<u64>, shift_bit: usize, num_each_pack: usize) -> FixedpointVector {
         FixedpointVector {
             data: data.chunks(num_each_pack).map(|x| {
@@ -166,7 +159,6 @@ impl Coders {
         }
         result
     }
->>>>>>> dev-2.0.0-beta
     fn decode_f64(&self, data: &FixedpointEncoded) -> f64 {
         self.coder.decode_f64(&data.data)
     }

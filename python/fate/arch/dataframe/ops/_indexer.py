@@ -220,11 +220,7 @@ def loc(df: DataFrame, indexer, target, preserve_order=False):
         block_table = block_table.mapValues(lambda values: [v[1] for v in values])
         block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
 
-<<<<<<< HEAD
-    partition_order_mappings = get_partition_order_mappings(block_table)
-=======
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, df.data_manager.block_row_size)
->>>>>>> dev-2.0.0-beta
     return DataFrame(
         df._ctx,
         block_table,
@@ -275,31 +271,18 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
         return retrieval_ret
 
     agg_indexer = indexer.mapReducePartitions(_agg_mapper, _agg_reducer)
-<<<<<<< HEAD
-
-    raw_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2)).flatMap(_retrieval_mapper)
-
-    partition_order_mappings = get_partition_order_by_raw_table(raw_table)
-=======
     raw_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2)).flatMap(_retrieval_mapper)
     partition_order_mappings = get_partition_order_by_raw_table(raw_table, data_manager.block_row_size)
->>>>>>> dev-2.0.0-beta
 
     def _convert_to_blocks(kvs):
         bid = None
         ret_blocks = [[] for _ in range(block_num)]
 
-<<<<<<< HEAD
-        for offset, (sample_id, data) in enumerate(kvs):
-            if bid is None:
-                bid = partition_order_mappings[sample_id]
-=======
         lid = 0
         for sample_id, data in kvs:
             lid += 1
             if bid is None:
                 bid = partition_order_mappings[sample_id]["start_block_id"]
->>>>>>> dev-2.0.0-beta
 
             if return_new_indexer:
                 data = data[0]
@@ -310,11 +293,6 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
                 else:
                     ret_blocks[i].append(data[i])
 
-<<<<<<< HEAD
-        ret_blocks = [data_manager.blocks[i].convert_block(block) for i, block in enumerate(ret_blocks)]
-
-        return [(bid, ret_blocks)]
-=======
             if lid % data_manager.block_row_size == 0:
                 ret_blocks = [data_manager.blocks[i].convert_block(block) for i, block in enumerate(ret_blocks)]
                 yield bid, ret_blocks
@@ -324,7 +302,6 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
         if lid % data_manager.block_row_size:
             ret_blocks = [data_manager.blocks[i].convert_block(block) for i, block in enumerate(ret_blocks)]
             yield bid, ret_blocks
->>>>>>> dev-2.0.0-beta
 
     block_table = raw_table.mapPartitions(_convert_to_blocks, use_previous_behavior=False)
 
@@ -340,13 +317,6 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
     else:
         def _mapper(kvs):
             bid = None
-<<<<<<< HEAD
-            for offset, (sample_id, (_, k)) in enumerate(kvs):
-                if bid is None:
-                    bid = partition_order_mappings[sample_id]["block_id"]
-
-                yield k, [(sample_id, bid, offset)]
-=======
             offset = 0
             for sample_id, (_, k) in kvs:
                 if bid is None:
@@ -358,7 +328,6 @@ def iloc(df: DataFrame, indexer, return_new_indexer=True):
                 if offset == data_manager.block_row_size:
                     bid += 1
                     offset = 0
->>>>>>> dev-2.0.0-beta
 
         new_indexer = raw_table.mapReducePartitions(_mapper, lambda v1, v2: v1 + v2)
 
@@ -369,19 +338,11 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
     """
     indexer: table,
             row: (key=random_key,
-<<<<<<< HEAD
-            value=((src_partition_id, src_offset), [(sample_id, dst_partition_id, dst_offset) ...])
-    """
-    agg_indexer = aggregate_indexer(indexer)
-
-    sample_id_name = df.data_manager.loc_block(df.schema.sample_id_name)
-=======
             value=((src_partition_id, src_offset), [(sample_id, dst_block_id, dst_offset) ...])
     """
     agg_indexer = aggregate_indexer(indexer)
 
     sample_id_index = df.data_manager.loc_block(df.schema.sample_id_name, with_offset=False)
->>>>>>> dev-2.0.0-beta
 
     def _convert_to_block(kvs):
         ret_dict = {}
@@ -389,10 +350,6 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
             """
             block_indexer: row_id, [(sample_id, new_block_id, new_row_id)...]
             """
-<<<<<<< HEAD
-
-=======
->>>>>>> dev-2.0.0-beta
             for src_row_id, dst_indexer_list in block_indexer:
                 for sample_id, dst_block_id, dst_row_id in dst_indexer_list:
                     if dst_block_id not in ret_dict:
@@ -400,11 +357,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
 
                     data = []
                     for idx, block in enumerate(blocks):
-<<<<<<< HEAD
-                        if idx == sample_id_name:
-=======
                         if idx == sample_id_index:
->>>>>>> dev-2.0.0-beta
                             data.append(sample_id)
                         else:
                             data.append(
@@ -423,15 +376,11 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
     block_table = block_table.mapValues(lambda values: [v[1] for v in values])
     block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
 
-<<<<<<< HEAD
-    partition_order_mappings = get_partition_order_mappings(block_table)
-=======
     partition_order_mappings = get_partition_order_mappings_by_block_table(
         block_table,
         df.data_manager.block_row_size
     )
 
->>>>>>> dev-2.0.0-beta
     return DataFrame(
         df._ctx,
         block_table,

@@ -372,15 +372,6 @@ class PHETensorBlock(Block):
         if isinstance(block, list):
             block = block[0].cat(block[1:])
 
-<<<<<<< HEAD
-        return PHETensor(pk=self._pk,
-                         evaluator=self._evaluator,
-                         coder=self._coder,
-                         shape=shape,
-                         data=block,
-                         device=self._device,
-                         dtype=self._dtype)
-=======
         return PHETensor(
             pk=self._pk,
             evaluator=self._evaluator,
@@ -390,7 +381,6 @@ class PHETensorBlock(Block):
             device=self._device,
             dtype=self._dtype,
         )
->>>>>>> dev-2.0.0-beta
 
     @property
     def device(self):

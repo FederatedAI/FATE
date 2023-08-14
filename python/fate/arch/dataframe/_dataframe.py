@@ -22,10 +22,6 @@ import pandas as pd
 from fate.arch.tensor import DTensor
 
 from .manager import DataManager, Schema
-<<<<<<< HEAD
-from fate.arch.tensor import DTensor
-=======
->>>>>>> dev-2.0.0-beta
 
 
 class DataFrame(object):
@@ -156,14 +152,9 @@ class DataFrame(object):
         """
         from .ops._transformer import transform_to_tensor
 
-<<<<<<< HEAD
-        return transform_to_tensor(self._block_table, self._data_manager,
-                                   dtype, partition_order_mappings=self.partition_order_mappings)
-=======
         return transform_to_tensor(
             self._block_table, self._data_manager, dtype, partition_order_mappings=self.partition_order_mappings
         )
->>>>>>> dev-2.0.0-beta
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
@@ -319,10 +310,6 @@ class DataFrame(object):
 
     def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: dict):
         from .ops._histogram import distributed_hist_stat
-<<<<<<< HEAD
-=======
-
->>>>>>> dev-2.0.0-beta
         return distributed_hist_stat(self, distributed_hist, position, targets)
 
     def replace(self, to_replace=None) -> "DataFrame":
@@ -520,17 +507,6 @@ class DataFrame(object):
 
     def loc(self, indexer, target="sample_id", preserve_order=False):
         from .ops._indexer import loc
-<<<<<<< HEAD
-        return loc(self, indexer, target=target, preserve_order=preserve_order)
-
-    def iloc(self, indexes, return_new_indexer=False):
-        """
-        indexes: table, row: (key=random_key, value=[(partition_id, offset)])
-        """
-        from .ops._indexer import iloc
-        return iloc(self, indexes, return_new_indexer)
-
-=======
 
         return loc(self, indexer, target=target, preserve_order=preserve_order)
 
@@ -542,7 +518,6 @@ class DataFrame(object):
 
         return iloc(self, indexes, return_new_indexer)
 
->>>>>>> dev-2.0.0-beta
     def loc_with_sample_id_replacement(self, indexer):
         """
         indexer: table,
@@ -550,10 +525,6 @@ class DataFrame(object):
             value=((src_partition_id, src_offset), [(sample_id, dst_partition_id, dst_offset) ...])
         """
         from .ops._indexer import loc_with_sample_id_replacement
-<<<<<<< HEAD
-=======
-
->>>>>>> dev-2.0.0-beta
         return loc_with_sample_id_replacement(self, indexer)
 
     def copy(self) -> "DataFrame":

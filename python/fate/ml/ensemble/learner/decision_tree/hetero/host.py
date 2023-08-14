@@ -110,7 +110,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         # Get Encrypted Grad And Hess
         en_grad_and_hess: DataFrame = ctx.guest.get('en_gh')
-        print('cwj got g is {}'.format(list(en_grad_and_hess['g'].as_tensor().shardings._data.collect())))
         self._pk, self._evaluator = ctx.guest.get('en_kit')
         root_node = self._initialize_root_node(ctx, train_df)
         
