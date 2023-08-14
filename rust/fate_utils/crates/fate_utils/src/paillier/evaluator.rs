@@ -1,5 +1,8 @@
 use fixedpoint::CT;
+<<<<<<< HEAD
 use ndarray::prelude::*;
+=======
+>>>>>>> dev-2.0.0-beta
 use pyo3::prelude::*;
 use super::paillier;
 

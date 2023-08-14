@@ -76,7 +76,7 @@ class _ComputingTimer(object):
         self._start = time.time()
 
         function_stack = "\n".join(function_stack_list)
-        self._hash = hashlib.blake2b(function_stack.encode("utf-8"), digest_size=5).hexdigest()
+        self._hash = hashlib.blake2b(f"{function_name}#{function_stack}".encode("utf-8"), digest_size=5).hexdigest()
 
         if self._hash not in self._STATS:
             self._STATS[self._hash] = _ComputingTimerItem(function_name, function_stack)

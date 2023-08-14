@@ -17,11 +17,15 @@
 import bisect
 import copy
 import json
+from enum import Enum
+from typing import Dict, List, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import torch
-from enum import Enum
-from typing import Union, Tuple, List, Dict
+from fate.arch.tensor.phe._tensor import PHETensor
+from fate_utils.paillier import FixedpointPaillierVector
+
 from .schema_manager import SchemaManager
 from fate.arch.tensor.phe._tensor import PHETensor
 from fate_utils.paillier import FixedpointPaillierVector
@@ -192,19 +196,19 @@ class Block(object):
         return f"block_type:{self._block_type}, fields=={field_indexes_format}"
 
     def is_numeric(self):
-        return self._block_type in {
-            BlockType.int32, BlockType.int64,
-            BlockType.float32, BlockType.float64
-        }
+        return self._block_type in {BlockType.int32, BlockType.int64, BlockType.float32, BlockType.float64}
+
+    def is_phe_tensor(self):
+        return self._block_type == BlockType.phe_tensor
 
     def is_phe_tensor(self):
         return self._block_type == BlockType.phe_tensor
 
     def to_dict(self):
         return dict(
-            block_type= json.dumps(self._block_type),
+            block_type=json.dumps(self._block_type),
             field_indexes=self._field_indexes,
-            should_compress=self._should_compress
+            should_compress=self._should_compress,
         )
 
     @staticmethod
@@ -242,11 +246,7 @@ class Block(object):
         raise NotImplemented
 
     def convert_block_type(self, block_type):
-        converted_block = self.get_block_by_type(block_type)(
-            self._field_indexes,
-            block_type,
-            self._should_compress
-        )
+        converted_block = self.get_block_by_type(block_type)(self._field_indexes, block_type, self._should_compress)
 
         return converted_block
 
@@ -372,6 +372,7 @@ class PHETensorBlock(Block):
         if isinstance(block, list):
             block = block[0].cat(block[1:])
 
+<<<<<<< HEAD
         return PHETensor(pk=self._pk,
                          evaluator=self._evaluator,
                          coder=self._coder,
@@ -379,6 +380,17 @@ class PHETensorBlock(Block):
                          data=block,
                          device=self._device,
                          dtype=self._dtype)
+=======
+        return PHETensor(
+            pk=self._pk,
+            evaluator=self._evaluator,
+            coder=self._coder,
+            shape=shape,
+            data=block,
+            device=self._device,
+            dtype=self._dtype,
+        )
+>>>>>>> dev-2.0.0-beta
 
     @property
     def device(self):
@@ -421,28 +433,41 @@ class BlockManager(object):
         schema = schema_manager.schema
         sample_id_type = schema_manager.get_field_types(name=schema.sample_id_name)
 
-        self._blocks.append(Block.get_block_by_type(sample_id_type)(
-            [schema_manager.get_field_offset(schema.sample_id_name)], should_compress=False))
+        self._blocks.append(
+            Block.get_block_by_type(sample_id_type)(
+                [schema_manager.get_field_offset(schema.sample_id_name)], should_compress=False
+            )
+        )
 
         if schema.match_id_name:
             dtype = schema_manager.get_field_types(name=schema.match_id_name)
-            self._blocks.append(Block.get_block_by_type(dtype)(
-                [schema_manager.get_field_offset(schema.match_id_name)], should_compress=False))
+            self._blocks.append(
+                Block.get_block_by_type(dtype)(
+                    [schema_manager.get_field_offset(schema.match_id_name)], should_compress=False
+                )
+            )
 
         if schema.label_name:
             dtype = schema_manager.get_field_types(name=schema.label_name)
-            self._blocks.append(Block.get_block_by_type(dtype)(
-                [schema_manager.get_field_offset(schema.label_name)], should_compress=False))
+            self._blocks.append(
+                Block.get_block_by_type(dtype)(
+                    [schema_manager.get_field_offset(schema.label_name)], should_compress=False
+                )
+            )
 
         if schema.weight_name:
             dtype = schema_manager.get_field_types(name=schema.weight_name)
-            self._blocks.append(Block.get_block_by_type(dtype)(
-                [schema_manager.get_field_offset(schema.weight_name)], should_compress=False))
+            self._blocks.append(
+                Block.get_block_by_type(dtype)(
+                    [schema_manager.get_field_offset(schema.weight_name)], should_compress=False
+                )
+            )
 
         for column_name in schema.columns:
             dtype = schema_manager.get_field_types(name=column_name)
-            self._blocks.append(Block.get_block_by_type(dtype)(
-                [schema_manager.get_field_offset(column_name)], should_compress=True))
+            self._blocks.append(
+                Block.get_block_by_type(dtype)([schema_manager.get_field_offset(column_name)], should_compress=True)
+            )
 
         new_blocks, _1, _2 = self.compress()
 
@@ -494,24 +519,19 @@ class BlockManager(object):
             if len(self._blocks[block_id].field_indexes) == len(field_with_offset_list):
                 if len(field_with_offset_list) == 1:
                     self._blocks[block_id] = Block.get_block_by_type(block_type)(
-                        self._blocks[block_id].field_indexes,
-                        should_compress=self._blocks[block_id].should_compress
+                        self._blocks[block_id].field_indexes, should_compress=self._blocks[block_id].should_compress
                     )
                 else:
                     should_compress = self._blocks[block_id].should_compress
                     for idx, (field, offset, block_type) in enumerate(field_with_offset_list):
                         if not idx:
                             self._blocks[block_id] = Block.get_block_by_type(block_type)(
-                                [field],
-                                should_compress=should_compress
+                                [field], should_compress=should_compress
                             )
                             self._field_block_mapping[field] = (block_id, 0)
                         else:
                             self._blocks.append(
-                                Block.get_block_by_type(block_type)(
-                                    [field],
-                                    should_compress=should_compress
-                                )
+                                Block.get_block_by_type(block_type)([field], should_compress=should_compress)
                             )
                             self._field_block_mapping[field] = (cur_block_num, 0)
                             cur_block_num += 1
@@ -526,8 +546,7 @@ class BlockManager(object):
                 narrow_blocks.append((block_id, narrow_field_offsets))
 
                 self._blocks[block_id] = Block.get_block_by_type(self._blocks[block_id].block_type)(
-                    narrow_field_indexes,
-                    should_compress=self._blocks[block_id].should_compress
+                    narrow_field_indexes, should_compress=self._blocks[block_id].should_compress
                 )
                 for offset, narrow_field in enumerate(narrow_field_indexes):
                     self._field_block_mapping[narrow_field] = (block_id, offset)
@@ -535,8 +554,7 @@ class BlockManager(object):
                 for field, offset, block_type in field_with_offset_list:
                     self._blocks.append(
                         Block.get_block_by_type(block_type)(
-                            [field],
-                            should_compress=self._blocks[block_id].should_compress
+                            [field], should_compress=self._blocks[block_id].should_compress
                         )
                     )
                     self._field_block_mapping[field] = (cur_block_num, 0)
@@ -653,7 +671,9 @@ class BlockManager(object):
             for idx in blocks.field_indexes:
                 self._field_block_mapping[idx] = (bid, blocks.get_field_offset(idx))
 
-    def apply(self, ):
+    def apply(
+        self,
+    ):
         """
         make some fields to some other type
 
@@ -663,11 +683,7 @@ class BlockManager(object):
         """
         deserialize
         """
-        return dict(
-            blocks=[
-                blk.to_dict() for blk in self._blocks
-            ]
-        )
+        return dict(blocks=[blk.to_dict() for blk in self._blocks])
 
     @staticmethod
     def from_dict(s_dict):

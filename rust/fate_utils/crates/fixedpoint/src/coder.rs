@@ -1,8 +1,9 @@
+use std::ops::{AddAssign, ShlAssign, SubAssign};
 use super::frexp::Frexp;
 use super::PT;
 use crate::paillier;
 use math::BInt;
-use rug::{self, ops::Pow};
+use rug::{self, Integer, ops::Pow};
 use serde::{Deserialize, Serialize};
 
 const FLOAT_MANTISSA_BITS: u32 = 53;
@@ -34,6 +35,31 @@ impl FixedpointCoder {
             significant,
             exp: 0,
         }
+    }
+    pub fn pack(&self, plaintexts: &[u64], num_shift_bit: usize) -> PT {
+        let significant = plaintexts.iter().fold(Integer::default(), |mut x, v| {
+            x.shl_assign(num_shift_bit);
+            x.add_assign(v);
+            x
+        });
+        PT {
+            significant: paillier::PT(BInt(significant)),
+            exp: 0,
+        }
+    }
+    pub fn unpack(&self, encoded: &PT, num_shift_bit: usize, num: usize) -> Vec<u64> {
+        let mut significant = encoded.significant.0.0.clone();
+        let mut mask = Integer::from(1u64 << num_shift_bit);
+        mask.sub_assign(1);
+
+        let mut result = Vec::with_capacity(num);
+        for _ in 0..num {
+            let value = Integer::from(significant.clone() & mask.clone()).to_u64().unwrap();
+            result.push(value);
+            significant >>= num_shift_bit;
+        }
+        result.reverse();
+        result
     }
     pub fn encode_i32(&self, plaintext: i32) -> PT {
         let significant = paillier::PT(if plaintext < 0 {
@@ -115,6 +141,7 @@ pub trait CouldCode {
     fn encode(&self, coder: &FixedpointCoder) -> PT;
     fn decode(pt: &PT, coder: &FixedpointCoder) -> Self;
 }
+
 impl CouldCode for f64 {
     fn encode(&self, coder: &FixedpointCoder) -> PT {
         coder.encode_f64(*self)
@@ -132,6 +159,7 @@ impl CouldCode for i64 {
         coder.decode_i64(pt)
     }
 }
+
 impl CouldCode for i32 {
     fn encode(&self, coder: &FixedpointCoder) -> PT {
         coder.encode_i32(*self)
@@ -140,6 +168,7 @@ impl CouldCode for i32 {
         coder.decode_i32(pt)
     }
 }
+
 impl CouldCode for f32 {
     fn encode(&self, coder: &FixedpointCoder) -> PT {
         coder.encode_f32(*self)

@@ -277,8 +277,12 @@ def test_distributed_hist():
     print(out)
 
 
+<<<<<<< HEAD
 if __name__ == '__main__':
     
+=======
+def test_distributed_hist_calling_from_df():
+>>>>>>> dev-2.0.0-beta
     import random
 
     import pandas as pd
@@ -309,11 +313,21 @@ if __name__ == '__main__':
 
     pos_reader = PandasReader(sample_id_name="sample_id", match_id_name="match_id", dtype={"node_id": "int32"})
     pos_df = pos_reader.to_frame(ctx, node_df)
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev-2.0.0-beta
     one_df = df.create_frame()
     one_df["one"] = 1
 
     # decryptor = kit.get_tensor_encryptor()
+<<<<<<< HEAD
     targets = dict(one=one_df["one"].as_tensor(), g=encryptor.encrypt_tensor(df.label.as_tensor()))
+=======
+
+    targets = dict(one=one_df["one"].as_tensor(), g=encryptor.encrypt_tensor(df.label.as_tensor()))
+
+>>>>>>> dev-2.0.0-beta
     hist = DistributedHistogram(
         node_size=4,
         feature_bin_sizes=[2, 3, 4, 5],

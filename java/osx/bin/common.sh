@@ -14,9 +14,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-error_exit ()
-{
+error_exit (){
     echo "ERROR: $1 !!"
     exit 1
 }
@@ -74,6 +72,8 @@ choose_gc_options()
       JAVA_OPT="${JAVA_OPT} -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0"
       JAVA_OPT="${JAVA_OPT} -Xlog:gc*:file=${GC_LOG_DIR}/rmq_srv_gc_%p_%t.log:time,tags:filecount=5,filesize=30M"
     fi
+
+    JAVA_OPT="${JAVA_OPT} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${BASE_DIR}/oom/heapdump.hprof "
 }
 
 choose_gc_log_directory
@@ -92,7 +92,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid |grep 'com.osx' | grep -v "grep" | wc -l)
+    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       rm ./bin/broker.pid
       unset pid
@@ -110,7 +110,7 @@ mklogsdir() {
 start() {
   echo "try to start $1"
   module=broker
-  main_class=com.osx.broker.Bootstrap
+  main_class= org.fedai.osx.broker.Bootstrap
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
@@ -135,7 +135,7 @@ start() {
 debug() {
   echo "try to start $1"
   module=broker
-  main_class=com.osx.broker.Bootstrap
+  main_class= org.fedai.osx.broker.Bootstrap
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
