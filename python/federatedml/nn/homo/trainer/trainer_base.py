@@ -52,6 +52,7 @@ class TrainerBase(object):
         self._model_checkpoint = None
         self._exporter = None
         self._evaluation_summary = {}
+        self._client_num = None
 
         # running status
         self._set_model_checkpoint_epoch = set()
@@ -273,7 +274,7 @@ class TrainerBase(object):
 
         if self._exporter:
             LOGGER.debug('save model to fate')
-            model_dict = self._exporter.export_model_dict(model=model,
+            model_dict = self._exporter.export_model_dict(model=modedel,
                                                           optimizer=optimizer,
                                                           model_define=self.nn_define,
                                                           optimizer_define=self.opt_define,

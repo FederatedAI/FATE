@@ -298,6 +298,10 @@ class HomoNNClient(ModelBase):
         self.trainer_inst.set_model(model)
         self.trainer_inst.set_tracker(self.tracker)
         self.trainer_inst.set_model_exporter(self.exporter)
+        party_id_list = [self.component_properties.guest_partyid]
+        for i in self.component_properties.host_party_idlist:
+            party_id_list.append(i)
+        self.trainer_inst.set_party_id_list(party_id_list)
 
         # load dataset class
         dataset_inst = load_dataset(

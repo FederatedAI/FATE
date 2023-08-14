@@ -191,7 +191,7 @@ class FedAVGTrainer(TrainerBase):
         else:
             return self.model
 
-    def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss):
+    def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss_func):
 
         epoch_loss = 0.0
         batch_idx = 0
@@ -210,19 +210,10 @@ class FedAVGTrainer(TrainerBase):
         batch_label = None
         for _batch_iter in to_iterate:
             _batch_iter = self._decode(_batch_iter)
-            if isinstance(_batch_iter, list):
+            if isinstance(_batch_iter, list) or isinstance(_batch_iter, tuple):
                 batch_data, batch_label = _batch_iter
             else:
                 batch_data = _batch_iter
-            """
-            if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
-                batch_data = _batch_iter
-            else:
-                batch_data, batch_label = _batch_iter
-
-            batch_data = self._decode(batch_data)
-            batch_label = self._decode(batch_label)
-            """
 
             if self.cuda is not None or self._enable_deepspeed:
                 device = self.cuda_main_device if self.cuda_main_device is not None else self.model.device
@@ -237,17 +228,17 @@ class FedAVGTrainer(TrainerBase):
 
             pred = model(batch_data)
 
-            if not loss and hasattr(pred, "loss"):
+            if not loss_func and hasattr(pred, "loss"):
                 batch_loss = pred.loss
 
-            elif loss is not None:
+            elif loss_func is not None:
                 if batch_label is None:
                     raise ValueError(
                         "When loss is set, please provide label to calculate loss"
                     )
                 if not isinstance(pred, torch.Tensor) and hasattr(pred, "logits"):
                     pred = pred.logits
-                batch_loss = loss(pred, batch_label)
+                batch_loss = loss_func(pred, batch_label)
             else:
                 raise ValueError(
                     'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
@@ -293,7 +284,7 @@ class FedAVGTrainer(TrainerBase):
 
         if optimizer is None:
             raise ValueError(
-                'FedAVGTrainer requires an optimizer, but got None, please specify optimizer in the '
+                'An optimizer is required, but got None, please specify optimizer in the '
                 'job configuration')
 
         if self.batch_size > len(train_set) or self.batch_size == -1:
@@ -309,7 +300,7 @@ class FedAVGTrainer(TrainerBase):
         need_stop = False
         evaluation_summary = {}
 
-        self._get_train_data_loader(train_set)
+        self.data_loader = self._get_train_data_loader(train_set)
         # training process
         for i in range(self.epochs):
 
@@ -608,3 +599,4 @@ class FedAVGTrainer(TrainerBase):
         else:
             dist.gather(loss, dst=0, async_op=False)
             # LOGGER.info(f"Loss on rank{dist.get_rank()}={loss}")
+
