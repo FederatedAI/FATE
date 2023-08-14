@@ -110,7 +110,7 @@ mklogsdir() {
 start() {
   echo "try to start $1"
   module=broker
-  main_class= org.fedai.osx.broker.Bootstrap
+  main_class=org.fedai.osx.broker.Bootstrap
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir

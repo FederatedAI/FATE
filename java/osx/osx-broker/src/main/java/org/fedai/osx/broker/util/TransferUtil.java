@@ -211,6 +211,7 @@ public class TransferUtil {
     }
 
     public static void assableContextFromInbound(Context context, Osx.Inbound request) {
+        //initContext
         Map<String, String> metaDataMap = request.getMetadataMap();
         String version = metaDataMap.get(Osx.Header.Version.name());
         String jobId = metaDataMap.get(Osx.Metadata.JobId.name());
