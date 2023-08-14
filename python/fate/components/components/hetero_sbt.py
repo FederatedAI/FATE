@@ -59,12 +59,18 @@ def train(
     if validate_data is not None:
         validate_data = validate_data.read()
 
+    if train_model_input is not None:
+        train_model_input = train_model_input.read()
+
     if role.is_guest:
         
         booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin,
                                          l2=l2, min_impurity_split=min_impurity_split, min_sample_split=min_sample_split,
                                         min_leaf_node=min_leaf_node, min_child_weight=min_child_weight, encrypt_key_length=encrypt_key_length,
                                         objective=objective, num_class=num_class)
+        if train_model_input is not None:
+            booster.from_model(train_model_input)
+            logger.info('sbt input model loaded, will start warmstarting')
         booster.fit(ctx, train_data, validate_data)
         # get cached train data score
         train_scores = booster.get_train_predict()
@@ -76,6 +82,9 @@ def train(
     elif role.is_host:
         
         booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin)
+        if train_model_input is not None:
+            booster.from_model(train_model_input)
+            logger.info('sbt input model loaded, will start warmstarting')
         booster.fit(ctx, train_data, validate_data)
         tree_dict = booster.get_model()
         train_model_output.write(tree_dict, metadata={})
@@ -94,13 +103,18 @@ def predict(
     test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     
+    model_input = predict_model_input.read()
+    test_data = test_data.read()
     if role.is_guest:
+        booster = HeteroSecureBoostGuest()
+        booster.from_model(model_input)
+        pred_table_rs = booster.predict(ctx, test_data)
+        test_output_data.write(pred_table_rs)
         
-        test_data = test_data.read()
-        model_input = predict_model_input.read()
-
     elif role.is_host:
-        pass
+        booster = HeteroSecureBoostHost()
+        booster.from_model(model_input)
+        booster.predict(ctx, test_data)
 
     else:
         raise RuntimeError(f"Unknown role: {role}")
