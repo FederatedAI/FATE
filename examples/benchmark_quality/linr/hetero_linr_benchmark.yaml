@@ -1,0 +1,47 @@
+data:
+  - file: examples/data/motor_hetero_guest_sid.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      label_type: float64
+      label_name: motor_speed
+      match_id_name: "idx"
+      match_id_range: 0
+      sample_id_name: "sid"
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: false
+    table_name: motor_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: examples/data/motor_hetero_host_sid.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "idx"
+      match_id_range: 0
+      sample_id_name: "sid"
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: false
+    table_name: motor_hetero_host
+    namespace: experiment
+    role: host_0
+
+hetero_linr:
+  local:
+    script: "./local-linr.py"
+    conf: "./linr_sklearn_config.yaml"
+  FATE-hetero-linr:
+    script: "./fate-linr.py"
+    conf: "./linr_config.yaml"
+  compare_setting:
+    relative_tol: 0.01

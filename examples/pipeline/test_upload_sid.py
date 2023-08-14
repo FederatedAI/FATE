@@ -33,8 +33,8 @@ meta = {'delimiter': ',',
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
     meta=meta, head=True, extend_sid=False,
-    namespace="experiment",
-    name="breast_hetero_guest_sid")
+    namespace="experiment_sid",
+    name="breast_hetero_guest")
 
 meta = {'delimiter': ',',
         'dtype': 'float64',
@@ -47,7 +47,7 @@ meta = {'delimiter': ',',
         'tag_with_value': False,
         'weight_type': 'float64'}
 
-pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
+pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_host}",
     meta=meta, head=True, extend_sid=False,
-    namespace="experiment",
-    name="breast_hetero_host_sid")
+    namespace="experiment_sid",
+    name="breast_hetero_host")

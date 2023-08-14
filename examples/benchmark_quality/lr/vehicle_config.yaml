@@ -1,0 +1,23 @@
+data_guest: "vehicle_scale_hetero_guest"
+data_host: "vehicle_scale_hetero_host"
+idx: "id"
+label_name: "y"
+epochs: 20
+init_param:
+  fit_intercept: True
+  method: "random_uniform"
+learning_rate_scheduler:
+  method: "constant"
+  scheduler_params:
+    factor: 1.0
+    total_iters: 800
+optimizer:
+  method: "adam"
+  penalty: "L2"
+  alpha: 0.00001
+  optimizer_params:
+    lr: 0.3
+batch_size: 16
+early_stop: "diff"
+task_cores: null
+timeout: 3600

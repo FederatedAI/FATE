@@ -31,7 +31,6 @@ meta = {'delimiter': ',',
         'weight_type': 'float32'}
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
-    file="/Users/yuwu/PycharmProjects/FATE/examples/data/breast_hetero_guest.csv",
     meta=meta, head=True,
     namespace="experiment",
     name="breast_hetero_guest")
@@ -53,7 +52,6 @@ pipeline.set_site_role("local")
 pipeline.set_site_party_id("0")
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_host}",
-    file="/Users/yuwu/PycharmProjects/FATE/examples/data/breast_hetero_host.csv",
     meta=meta, head=True,
     namespace="experiment",
     name="breast_hetero_host")

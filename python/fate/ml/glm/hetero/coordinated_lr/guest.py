@@ -16,6 +16,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context, dataframe
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils import predict_tools
@@ -156,7 +157,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
             for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
                 estimator = self.estimator[i]
                 pred = estimator.predict(class_ctx, test_data)
-                pred_score[self.labels[i]] = pred
+                pred_score[str(self.labels[i])] = pred
             pred_df[predict_tools.PREDICT_SCORE] = pred_score.apply_row(lambda v: [list(v)])
             predict_result = predict_tools.compute_predict_details(
                 pred_df, task_type=predict_tools.MULTI, classes=self.labels
@@ -380,7 +381,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             test_data["intercept"] = 1.0
         X = test_data.values.as_tensor()
         # logger.info(f"in predict, w: {self.w}")
-        pred = torch.matmul(X, self.w)
+        pred = torch.matmul(X, self.w.detach())
         for h_pred in ctx.hosts.get("h_pred"):
             pred += h_pred
         pred = torch.sigmoid(pred)

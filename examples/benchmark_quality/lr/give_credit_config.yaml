@@ -1,0 +1,21 @@
+data_guest: "give_credit_hetero_guest"
+data_host: "give_credit_hetero_host"
+idx: "id"
+label_name: "y"
+epochs: 16
+init_param:
+  fit_intercept: True
+  method: "zeros"
+learning_rate_scheduler:
+  method: "linear"
+  scheduler_params:
+    start_factor: 0.71
+    total_iters: 1000
+optimizer:
+  method: "rmsprop"
+  penalty: "L1"
+  alpha: 0.01
+  optimizer_params:
+    lr: 0.25
+batch_size: null
+early_stop: "diff"

@@ -15,6 +15,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -213,10 +214,11 @@ class CoordinatedLREstimatorHost(HeteroModule):
 
         batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
         loss_norm = self.optimizer.loss_norm(w)
+
         if loss_norm is not None:
             batch_ctx.guest.put("h_loss", encryptor.encrypt_tensor(loss_norm))
         else:
-            batch_ctx.guest.put(h_loss=loss_norm)
+            batch_ctx.guest.put("h_loss", loss_norm)
 
         g = 1 / h * (half_g + guest_half_g)
         return g

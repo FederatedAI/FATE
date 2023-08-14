@@ -25,7 +25,8 @@ def statistics(
         role: Role,
         input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         metrics: cpn.parameter(
-            type=Union[List[params.statistic_metrics_param()], params.statistic_metrics_param()],
+            type=Union[List[Union[params.statistic_metrics_param(), params.legal_percentile()]],
+            params.statistic_metrics_param(), params.legal_percentile()],
             default=["mean", "std", "min", "max"],
             desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']",
         ),
@@ -37,6 +38,8 @@ def statistics(
             default=True,
             desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.",
         ),
+        relative_error: cpn.parameter(type=params.confloat(gt=0, le=1), default=1e-3,
+                                      desc="float, error rate for quantile"),
         skip_col: cpn.parameter(
             type=List[str],
             default=None,
@@ -60,7 +63,7 @@ def statistics(
         for metric in metrics:
             if metric == "describe":
                 raise ValueError(f"'describe' should not be combined with additional metric names.")
-    stat_computer = FeatureStatistics(list(set(metrics)), ddof, bias)
+    stat_computer = FeatureStatistics(list(set(metrics)), ddof, bias, relative_error)
     input_data = input_data[select_cols]
     stat_computer.fit(sub_ctx, input_data)
 

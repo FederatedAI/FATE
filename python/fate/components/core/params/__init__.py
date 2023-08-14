@@ -27,6 +27,6 @@ from ._filter_param import (
 )
 from ._init_param import InitParam, init_param
 from ._learning_rate import LRSchedulerParam, lr_scheduler_param
-from ._metrics import metrics_param, statistic_metrics_param
+from ._metrics import metrics_param, statistic_metrics_param, legal_percentile
 from ._optimizer import OptimizerParam, optimizer_param
 from ._penalty import penalty_param

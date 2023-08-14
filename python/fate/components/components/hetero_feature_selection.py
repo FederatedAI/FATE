@@ -29,20 +29,20 @@ def hetero_feature_selection(ctx, role):
 
 @hetero_feature_selection.train()
 def train(
-    ctx: Context,
-    role: Role,
-    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-    input_models: cpn.json_model_inputs(roles=[GUEST, HOST]),
-    method: cpn.parameter(
-        type=List[params.string_choice(["manual", "iv", "statistics"])],
-        default=["manual"],
-        optional=False,
-        desc="selection method, options: {manual, binning, statistics}",
-    ),
-    select_col: cpn.parameter(
-        type=List[str],
-        default=None,
-        desc="list of column names to be selected, if None, all columns will be considered",
+        ctx: Context,
+        role: Role,
+        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        input_models: cpn.json_model_inputs(roles=[GUEST, HOST], optional=True),
+        method: cpn.parameter(
+            type=List[params.string_choice(["manual", "iv", "statistics"])],
+            default=["manual"],
+            optional=False,
+            desc="selection method, options: {manual, binning, statistics}",
+        ),
+        select_col: cpn.parameter(
+            type=List[str],
+            default=None,
+            desc="list of column names to be selected, if None, all columns will be considered",
     ),
     iv_param: cpn.parameter(
         type=params.iv_filter_param(),
@@ -105,7 +105,7 @@ def train(
     # temp code end
     # logger.info(f"input_models: {input_models}, len: {len(input_models)}")
 
-    input_iso_models = [model.read() for model in input_models]
+    input_iso_models = [model.read() for model in input_models] if input_models is not None else None
     # logger.info(f"read in input_models len: {len(input_iso_models)}; \n read in input models: {input_iso_models}")
     if role.is_guest:
         selection = HeteroSelectionModuleGuest(
