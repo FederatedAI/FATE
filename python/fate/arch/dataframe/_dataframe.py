@@ -101,17 +101,9 @@ class DataFrame(object):
     @property
     def shape(self) -> "tuple":
         if self._count is None:
-            if self._sample_id_indexer:
-                items = self._sample_id_indexer.count()
-            elif self._match_id_indexer:
-                items = self._match_id_indexer.count()
-            else:
-                if self._block_table.count() == 0:
-                    items = 0
-                else:
-                    items = self._block_table.mapValues(lambda block: 0 if block is None else len(block[0])).reduce(
-                        lambda size1, size2: size1 + size2
-                    )
+            items = 0
+            for _, v in self._partition_order_mappings.items():
+                items += v["end_index"] - v["start_index"] + 1
             self._count = items
 
         return self._count, len(self._data_manager.schema.columns)
