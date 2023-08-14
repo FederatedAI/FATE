@@ -511,23 +511,22 @@ class DataFrame(object):
 
         return loc(self, indexer, target=target, preserve_order=preserve_order)
 
-    def iloc(self, indexes, return_new_indexer=False):
-        """
-        indexes: table, row: (key=random_key, value=[(partition_id, offset)])
-        """
-        from .ops._indexer import iloc
-
-        return iloc(self, indexes, return_new_indexer)
-
     def loc_with_sample_id_replacement(self, indexer):
         """
         indexer: table,
             row: (key=random_key,
-            value=((src_partition_id, src_offset), [(sample_id, dst_partition_id, dst_offset) ...])
+            value=(sample_id, (src_block_id, src_block_offset))
         """
         from .ops._indexer import loc_with_sample_id_replacement
 
         return loc_with_sample_id_replacement(self, indexer)
+
+    def flatten(self, key_type="block_id", with_sample_id=True):
+        """
+        flatten data_frame
+        """
+        from .ops._indexer import flatten_data
+        return flatten_data(self, key_type=key_type, with_sample_id=with_sample_id)
 
     def copy(self) -> "DataFrame":
         return DataFrame(
@@ -536,6 +535,14 @@ class DataFrame(object):
             copy.deepcopy(self.partition_order_mappings),
             self._data_manager.duplicate(),
         )
+
+    @classmethod
+    def from_flatten_data(cls, ctx, flatten_table, data_manager) -> "DataFrame":
+        """
+        key=random_key, value=(sample_id, data)
+        """
+        from .ops._indexer import transform_flatten_data_to_df
+        return transform_flatten_data_to_df(ctx, flatten_table, data_manager)
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":

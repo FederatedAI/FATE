@@ -245,7 +245,7 @@ class PandasReader(object):
         )
 
         from .ops._indexer import get_partition_order_by_raw_table
-        partition_order_mappings = get_partition_order_by_raw_table(table)
+        partition_order_mappings = get_partition_order_by_raw_table(table, data_manager.block_row_size)
         # partition_order_mappings = _get_partition_order(table)
         to_block_func = functools.partial(_to_blocks,
                                           data_manager=data_manager,
