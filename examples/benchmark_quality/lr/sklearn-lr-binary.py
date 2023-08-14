@@ -78,7 +78,7 @@ def main(config="../../config.yaml", param="./breast_lr_sklearn_config.yaml"):
     ks = max(tpr - fpr)
     result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc}
     print(result)
-    print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
+    # print(f"coef_: {lm_fit.coef_}, intercept_: {lm_fit.intercept_}, n_iter: {lm_fit.n_iter_}")
     return {}, result
 
 
