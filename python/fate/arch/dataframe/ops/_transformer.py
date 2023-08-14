@@ -72,12 +72,9 @@ def transform_to_tensor(block_table,
                                                         bid=block_id,
                                                         dm=data_manager)
         phe_table = block_table.mapValues(_convert_to_phe_tensor_func)
-        shapes = [(0, 1) for i in range(len(partition_order_mappings))]
-        for _, block_summary in partition_order_mappings.items():
-            st = block_summary["start_index"]
-            ed = block_summary["end_index"]
-            _bid = block_summary["block_id"]
-            shapes[_bid] = (ed - st + 1, 1)
+
+        shape_table = block_table.mapValues(lambda blocks: (len(blocks[0]), 1))
+        shapes = [shape_obj for k, shape_obj in sorted(shape_table.collect())]
 
         return tensor.DTensor.from_sharding_table(phe_table,
                                                   shapes=shapes,

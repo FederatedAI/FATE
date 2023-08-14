@@ -35,10 +35,13 @@ def _diffie_hellman(values, curve: Curve25519 = None):
 
 
 def _flat_block_with_possible_duplicate_keys(block_table, duplicate_allow=False):
+    """
+    row_value: (encrypt_id, [(block_id, _offset)])
+    """
     def _mapper(kvs):
-        for partition_id, id_list in kvs:
+        for block_id, id_list in kvs:
             for _i, _id in enumerate(id_list):
-                yield _id, [(partition_id, _i)]
+                yield _id, [(block_id, _i)]
 
     def _reducer(v1, v2):
         if not v1:
@@ -52,6 +55,19 @@ def _flat_block_with_possible_duplicate_keys(block_table, duplicate_allow=False)
         return v1 + v2
 
     return block_table.mapReducePartitions(_mapper, _reducer)
+
+
+def _flat_block_key(intersect_id):
+    """
+    key=eid, value = ((guest_block_id, guest_block_offset(, [(host0_block_id, host0_block_offset)...])
+    """
+    def _mapper(key, value):
+        guest_loc = value[0]
+        host_loc = value[1]
+        for guest_block_id, guest_offset in guest_loc:
+            yield (guest_block_id, guest_offset), host_loc
+
+    return intersect_id.flatMap(_mapper)
 
 
 def psi_ecdh(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
@@ -87,22 +103,38 @@ def guest_run(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
 
     guest_second_sign_match_ids = ctx.hosts.get(GUEST_SECOND_SIGN)
 
-    intersect_id = None
+    flat_intersect_id = None
     for guest_second_sign_id, host_second_sign_match_id in zip(guest_second_sign_match_ids, host_second_sign_match_ids):
-        intersect_single = guest_second_sign_id.join(host_second_sign_match_id, lambda id_list_l, id_list_r: id_list_l)
-        if not intersect_id:
-            intersect_id = intersect_single
+        intersect_eid = guest_second_sign_id.join(
+            host_second_sign_match_id, lambda id_list_l, id_list_r: (id_list_l, id_list_r)
+        )
+        intersect_single = _flat_block_key(intersect_eid)
+        if not flat_intersect_id:
+            flat_intersect_id = intersect_single
         else:
-            intersect_id = intersect_id.join(intersect_single, lambda id_list_l, id_list_r: id_list_l)
+            flat_intersect_id = flat_intersect_id.join(
+                intersect_single, lambda id_list_l, id_list_r: id_list_l + id_list_r
+            )
 
-    guest_df, new_indexer = df.iloc(intersect_id, return_new_indexer=True)
     """
-    new_indexer: (intersect_id, [(sample_id, bid, offset) ...])
+    a.  flatmap=>
+        key=(bid, offset), value=[(host0_bid, host0_offset)...]
+    b. df => flatMap
+        key=(bid, offset), value=(sample_id, data)
+    c. (bid, offset), (host
     """
-    for host_id, host_second_sign_match_id in enumerate(host_second_sign_match_ids):
-        host_indexer = host_second_sign_match_id.join(new_indexer, lambda v1, v2: (v1[0], v2))
+    flatten_df = df.flatten(key_type="block_id", with_sample_id=True)
+    intersect_with_offset_ids = flatten_df.join(flat_intersect_id, lambda vl, vr: (vl, vr))
+    """
+    host_indexer: key=(block_id, offset), value=(sample_id, (bid, offset))
+    """
+    for host_id in range(len(guest_second_sign_match_ids)):
+        host_indexer = intersect_with_offset_ids.mapValues(lambda v: (v[0][0], v[1][i]))
         ctx.hosts[host_id].put(HOST_INDEXER, host_indexer)
 
+    intersect_guest_data = intersect_with_offset_ids.mapValues(lambda v: v[0])
+
+    guest_df =  DataFrame.from_flatten_data(ctx, intersect_guest_data, df.data_manager)
     return guest_df
 
 
@@ -122,8 +154,10 @@ def host_run(ctx, df: DataFrame, curve_type, **kwargs):
                                                                           duplicate_allow=True)
     ctx.guest.put(GUEST_SECOND_SIGN, guest_second_sign_match_id)
 
+    """
+    host_indexer: key=(block_id, offset), value=(sample_id, (bid, offset))
+    """
     host_indexer = ctx.guest.get(HOST_INDEXER)
 
     host_df = df.loc_with_sample_id_replacement(host_indexer)
-
     return host_df
