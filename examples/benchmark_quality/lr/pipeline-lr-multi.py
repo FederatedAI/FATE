@@ -88,10 +88,10 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     pipeline.compile()
     pipeline.fit()
 
-    lr_0_data = pipeline.get_component("lr_0").get_output_data()["train_output_data"]
-    lr_1_data = pipeline.get_component("lr_1").get_output_data()["test_output_data"]
+    lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
+    lr_1_data = pipeline.get_task_info("lr_1").get_output_data()["test_output_data"]
 
-    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric())
+    result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
     lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
     lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
 

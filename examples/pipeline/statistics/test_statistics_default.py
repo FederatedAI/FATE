@@ -39,16 +39,16 @@ def main(config=".../config.yaml", namespace=""):
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
-    statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"],
-                              metrics=["mean", "std", "min", "max", "0%", "25%", "median", "75%", "100%"])
+    statistics_0 = Statistics("statistics_0",
+                              skip_col=["x0", "x3"],
+                              input_data=psi_0.outputs["output_data"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(statistics_0)
 
-    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     pipeline.fit()
-    # print(f"statistics_0 output model: {pipeline.get_task_info('statistics_0').get_output_model()}")
+    print(f"statistics_0 output model: {pipeline.get_task_info('statistics_0').get_output_model()}")
 
 
 if __name__ == "__main__":

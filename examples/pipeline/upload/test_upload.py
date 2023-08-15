@@ -18,36 +18,38 @@ pipeline = FateFlowPipeline().set_roles(
     local="0")
 pipeline.set_site_role("local")
 pipeline.set_site_party_id("0")
-
 meta = {'delimiter': ',',
-        'dtype': 'float64',
+        'dtype': 'float32',
         'input_format': 'dense',
-        'label_type': 'int64',
+        'label_type': 'int32',
         'label_name': 'y',
         'match_id_name': 'id',
         'match_id_range': 0,
-        'sample_id_name': 'sid',
         'tag_value_delimiter': ':',
         'tag_with_value': False,
-        'weight_type': 'float64'}
+        'weight_type': 'float32'}
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
-    meta=meta, head=True, extend_sid=False,
-    namespace="experiment_sid",
+    meta=meta, head=True, extend_sid=True,
+    namespace="experiment",
     name="breast_hetero_guest")
 
 meta = {'delimiter': ',',
-        'dtype': 'float64',
+        'dtype': 'float32',
         'input_format': 'dense',
-        'label_type': 'int64',
-        'sample_id_name': 'sid',
-        'match_id_range': 0,
+        'label_type': 'int',
         'match_id_name': 'id',
+        'match_id_range': 0,
         'tag_value_delimiter': ':',
         'tag_with_value': False,
-        'weight_type': 'float64'}
+        'weight_type': 'float32'}
+
+pipeline = FateFlowPipeline().set_roles(
+    local="0")
+pipeline.set_site_role("local")
+pipeline.set_site_party_id("0")
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_host}",
-    meta=meta, head=True, extend_sid=False,
-    namespace="experiment_sid",
+    meta=meta, head=True, extend_sid=True,
+    namespace="experiment",
     name="breast_hetero_host")

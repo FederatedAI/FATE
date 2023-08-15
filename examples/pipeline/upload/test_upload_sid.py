@@ -31,7 +31,7 @@ meta = {'delimiter': ',',
         'weight_type': 'float32'}
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_guest}",
-    meta=meta, head=True,
+    meta=meta, head=True, extend_sid=False,
     namespace="experiment",
     name="breast_hetero_guest")
 
@@ -52,6 +52,6 @@ pipeline.set_site_role("local")
 pipeline.set_site_party_id("0")
 
 pipeline.transform_local_file_to_dataframe(  # file="${abs_path_of_data_host}",
-    meta=meta, head=True,
+    meta=meta, head=True, extend_sid=False,
     namespace="experiment",
     name="breast_hetero_host")

@@ -25,7 +25,7 @@ def main(config="../config.yaml", namespace=""):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
+    host = parties.host
 
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
     if config.task_cores:
@@ -38,18 +38,20 @@ def main(config="../config.yaml", namespace=""):
                                                                   namespace=f"experiment{namespace}"))
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
-
+    psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     psi_1 = PSI("psi_1")
     psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
     psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
-
+    psi_1.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     binning_0 = HeteroFeatureBinning("binning_0",
                                      method="bucket",
                                      n_bins=10,
+                                     skip_metrics=False,
                                      transform_method="bin_idx",
-                                     skip_metrics=True,
                                      train_data=psi_0.outputs["output_data"]
                                      )
     binning_1 = HeteroFeatureBinning("binning_1",
@@ -68,7 +70,6 @@ def main(config="../config.yaml", namespace=""):
     pipeline.fit()
 
     # print(pipeline.get_task_info("binning_0").get_output_model())
-    # print(pipeline.get_task_info("feature_scale_1").get_output_model())
 
     pipeline.deploy([psi_0, binning_0])
 
@@ -78,6 +79,8 @@ def main(config="../config.yaml", namespace=""):
     deployed_pipeline.psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                                     namespace=f"experiment{namespace}"))
     deployed_pipeline.psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                       namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                                        namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)

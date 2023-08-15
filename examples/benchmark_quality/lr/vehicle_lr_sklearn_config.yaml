@@ -7,5 +7,5 @@ fit_intercept: True
 method: "rmsprop"
 penalty: "L2"
 eta0: 0.1
-alpha: 0.5
+alpha: 0.0005
 batch_size: 5000

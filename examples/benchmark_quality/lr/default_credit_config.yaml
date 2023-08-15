@@ -2,7 +2,7 @@ data_guest: "default_credit_hetero_guest"
 data_host: "default_credit_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 16
+epochs: 6
 init_param:
   fit_intercept: True
   method: "zeros"
@@ -18,5 +18,5 @@ optimizer:
   alpha: 0.01
   optimizer_params:
     lr: 0.22
-batch_size: 2000
+batch_size: 1000
 early_stop: "diff"

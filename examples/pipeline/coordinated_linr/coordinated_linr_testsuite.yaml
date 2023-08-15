@@ -4,9 +4,9 @@ data:
       delimiter: ","
       dtype: float64
       input_format: dense
-      label_type: int64
+      label_type: float64
       label_name: motor_speed
-      match_id_name: id
+      match_id_name: idx
       match_id_range: 0
       tag_value_delimiter: ":"
       tag_with_value: false
@@ -22,7 +22,7 @@ data:
       delimiter: ","
       dtype: float64
       input_format: dense
-      match_id_name: id
+      match_id_name: idx
       match_id_range: 0
       tag_value_delimiter: ":"
       tag_with_value: false
@@ -38,7 +38,7 @@ data:
       delimiter: ","
       dtype: float64
       input_format: dense
-      match_id_name: id
+      match_id_name: idx
       match_id_range: 0
       tag_value_delimiter: ":"
       tag_with_value: false

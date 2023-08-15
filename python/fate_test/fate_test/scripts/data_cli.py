@@ -63,7 +63,7 @@ def upload(ctx, include, exclude, glob, suite_type, role, config_type, **kwargs)
         if suite_type == "benchmark":
             suffix = "benchmark.yaml"
         elif suite_type == "testsuite":
-            suite_type = "testsuite.yaml"
+            suffix = "testsuite.yaml"
         elif suite_type == "performance":
             suffix = "performance.yaml"
         else:
