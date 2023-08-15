@@ -329,6 +329,34 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                                                                 key_type="block_id")
     
     def _aggregate(kvs):
+        bid, offset = None, 0
+        flat_ret = []
+        for k, values in kvs:
+            sample_id, (src_block_id, src_offset) = values
+            if bid is None:
+                bid = partition_order_mappings[sample_id]["start_block_id"]
+
+            flat_ret.append((src_block_id, src_offset, sample_id, bid, offset))
+
+            offset += 1
+            if offset == data_manager.block_row_size:
+                offset = 0
+                bid += 1
+
+        flat_ret.sort(key=lambda value: value[0])
+        i = 0
+        l = len(flat_ret)
+        while i < l:
+            j = i
+            while j < l and flat_ret[i][0] == flat_ret[j][0]:
+                j += 1
+
+            agg_ret = [(flat_ret[k][1], flat_ret[k][2], flat_ret[k][3], flat_ret[k][4])
+                       for k in range(i, j)]
+            yield  flat_ret[i][0], agg_ret
+
+            i = j
+        """
         aggregate_ret = dict()
         offset = 0
         bid = None
@@ -348,6 +376,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                 offset = 0
 
         return list(aggregate_ret.items())
+        """
     
     sample_id_index = data_manager.loc_block(data_manager.schema.sample_id_name, with_offset=False)
     block_num = data_manager.block_num
@@ -371,8 +400,9 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                 ret_dict[dst_block_id].append(
                     (dst_row_id, row_data)
                 )
-                
-        return ret_dict.items()
+
+        for dst_block_id, value_list in ret_dict.items():
+            yield dst_block_id, sorted(value_list)
 
     def _convert_to_frame_block(blocks):
         convert_blocks = []
