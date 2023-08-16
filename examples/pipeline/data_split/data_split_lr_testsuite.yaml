@@ -33,8 +33,26 @@ data:
     table_name: breast_hetero_host
     namespace: experiment
     role: host_0
+  - file: examples/data/breast_hetero_host.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: id
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_hetero_host
+    namespace: experiment
+    role: host_1
 tasks:
   data-split:
     script: test_data_split.py
   data-split-stratified:
     script: test_data_split_stratified.py
+  data-split-multi-host:
+    script: test_data_split_multi_host.py

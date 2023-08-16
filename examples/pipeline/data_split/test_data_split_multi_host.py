@@ -26,7 +26,7 @@ def main(config="../config.yaml", namespace=""):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
+    host = parties.host
 
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
     if config.task_cores:
@@ -39,24 +39,24 @@ def main(config="../config.yaml", namespace=""):
                                                                   namespace=f"experiment{namespace}"))
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
-
+    psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     psi_1 = PSI("psi_1")
     psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
     psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
-
+    psi_1.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     data_split_0 = DataSplit("data_split_0",
                              train_size=0.6,
-                             validate_size=0.0,
-                             test_size=0.4,
-                             stratified=True,
+                             validate_size=0.1,
+                             test_size=None,
                              input_data=psi_0.outputs["output_data"])
 
     data_split_1 = DataSplit("data_split_1",
                              train_size=200,
                              test_size=50,
-                             stratified=True,
                              input_data=psi_0.outputs["output_data"]
                              )
 

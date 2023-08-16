@@ -12,11 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import DataSplit, PSI
+from fate_client.pipeline.components.fate import Sample, PSI
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -26,7 +25,7 @@ def main(config="../config.yaml", namespace=""):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
+    host = parties.host
 
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
     if config.task_cores:
@@ -39,32 +38,36 @@ def main(config="../config.yaml", namespace=""):
                                                                   namespace=f"experiment{namespace}"))
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
+    psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
 
     psi_1 = PSI("psi_1")
     psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
     psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
+    psi_1.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
 
-    data_split_0 = DataSplit("data_split_0",
-                             train_size=0.6,
-                             validate_size=0.0,
-                             test_size=0.4,
-                             stratified=True,
-                             input_data=psi_0.outputs["output_data"])
+    sample_0 = Sample("sample_0",
+                      frac={0: 0.8, 1: 0.5},
+                      replace=False,
+                      hetero_sync=True,
+                      input_data=psi_0.outputs["output_data"])
 
-    data_split_1 = DataSplit("data_split_1",
-                             train_size=200,
-                             test_size=50,
-                             stratified=True,
-                             input_data=psi_0.outputs["output_data"]
-                             )
+    sample_1 = Sample("sample_1",
+                      n=800,
+                      replace=True,
+                      hetero_sync=True,
+                      input_data=psi_0.outputs["output_data"]
+                      )
 
     pipeline.add_task(psi_0)
     pipeline.add_task(psi_1)
-    pipeline.add_task(data_split_0)
-    pipeline.add_task(data_split_1)
+    pipeline.add_task(sample_0)
+    pipeline.add_task(sample_1)
 
+    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()

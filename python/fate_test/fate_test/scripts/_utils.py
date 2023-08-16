@@ -14,11 +14,11 @@ from fate_test._parser import Testsuite, BenchmarkSuite, PerformanceSuite, DATA_
 
 
 def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
-                   config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path, parallelize):
+                   config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path):
     from fate_test.scripts import generate_mock_data
 
     def _find_testsuite_files(path):
-        suffix = ["testsuite.json", "benchmark.json"]
+        suffix = ["testsuite.yaml", "benchmark.yaml", "performance.yaml"]
         if isinstance(path, str):
             path = Path(path)
         if path.is_file():
@@ -40,7 +40,7 @@ def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num,
             for include_path in include_paths:
                 generate_mock_data.get_big_data(guest_data_size, host_data_size, guest_feature_num, host_feature_num,
                                                 include_path, host_data_type, config_inst, encryption_type,
-                                                match_rate, sparsity, force, split_host, output_path, parallelize)
+                                                match_rate, sparsity, force, split_host, output_path)
 
 
 def _load_testsuites(includes, excludes, glob, provider=None, suffix="testsuite.yaml", suite_type="testsuite"):
