@@ -77,7 +77,6 @@ def train(
         # get cached train data score
         train_scores = booster.get_train_predict()
         train_scores = add_dataset_type(train_scores, consts.TRAIN_SET)
-        logger.info('train score is {}'.format(train_scores.as_pd_df()))
         train_data_output.write(train_scores)
         # get tree param
         tree_dict = booster.get_model()
