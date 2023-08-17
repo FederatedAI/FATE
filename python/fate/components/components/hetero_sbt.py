@@ -20,6 +20,8 @@ from fate.arch.dataframe import DataFrame
 from fate.components.components.utils import consts, tools
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 from fate.ml.ensemble import HeteroSecureBoostGuest, HeteroSecureBoostHost, BINARY_BCE, MULTI_CE, REGRESSION_L2
+from fate.components.components.utils.tools import add_dataset_type
+from fate.components.components.utils import consts
 
 
 logger = logging.getLogger(__name__)
@@ -74,6 +76,7 @@ def train(
         booster.fit(ctx, train_data, validate_data)
         # get cached train data score
         train_scores = booster.get_train_predict()
+        train_scores = add_dataset_type(train_scores, consts.TRAIN_SET)
         train_data_output.write(train_scores)
         # get tree param
         tree_dict = booster.get_model()
@@ -109,8 +112,9 @@ def predict(
         booster = HeteroSecureBoostGuest()
         booster.from_model(model_input)
         pred_table_rs = booster.predict(ctx, test_data)
+        pred_table_rs = add_dataset_type(pred_table_rs, consts.TEST_SET)
         test_output_data.write(pred_table_rs)
-        
+
     elif role.is_host:
         booster = HeteroSecureBoostHost()
         booster.from_model(model_input)
