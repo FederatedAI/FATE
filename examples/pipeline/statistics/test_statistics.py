@@ -40,7 +40,8 @@ def main(config=".../config.yaml", namespace=""):
                                                                      namespace=f"experiment{namespace}"))
 
     statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"],
-                              metrics=["mean", "std", "min", "max", "0%", "25%", "median", "75%", "100%"])
+                              metrics=["mean", "std", "0%", "25%", "median", "75%", "100%",
+                                       "missing_ratio"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(statistics_0)

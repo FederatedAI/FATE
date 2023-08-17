@@ -50,7 +50,7 @@ def main(config="../config.yaml", namespace=""):
     binning_0 = HeteroFeatureBinning("binning_0",
                                      method="bucket",
                                      n_bins=10,
-                                     skip_metrics=False,
+                                     skip_metrics=True,
                                      transform_method="bin_idx",
                                      train_data=psi_0.outputs["output_data"]
                                      )

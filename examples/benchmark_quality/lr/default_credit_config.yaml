@@ -17,6 +17,6 @@ optimizer:
   penalty: "L2"
   alpha: 0.01
   optimizer_params:
-    lr: 0.22
+    lr: 0.1
 batch_size: 1000
 early_stop: "diff"

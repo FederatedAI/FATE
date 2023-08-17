@@ -57,6 +57,7 @@ def main(config="../config.yaml", namespace=""):
                              train_size=200,
                              test_size=50,
                              stratified=True,
+                             hetero_sync=False,
                              input_data=psi_0.outputs["output_data"]
                              )
 

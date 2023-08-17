@@ -52,6 +52,7 @@ def main(config="../config.yaml", namespace=""):
                              train_size=0.6,
                              validate_size=0.1,
                              test_size=None,
+                             hetero_sync=False,
                              input_data=psi_0.outputs["output_data"])
 
     data_split_1 = DataSplit("data_split_1",
