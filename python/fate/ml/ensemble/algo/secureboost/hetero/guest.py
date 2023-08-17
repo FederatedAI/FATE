@@ -60,7 +60,6 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self.min_child_weight = min_child_weight
 
         # running var
-        self._num_label = None
         self.num_class = num_class
         self._accumulate_scores = None
         self._tree_dim = 1  # tree dimension, if is multilcass task, tree dim > 1
@@ -84,7 +83,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         # to lowercase
         objective = objective.lower()
         assert objective in OBJECTIVE, f"objective {objective} not found, supported objective: {list(OBJECTIVE.keys())}"
-        loss_func = OBJECTIVE[objective]()
+        obj_class = OBJECTIVE[objective]
+        loss_func = obj_class()
         return loss_func
     
     def _compute_gh(self, data: DataFrame, scores: DataFrame, loss_func):
@@ -117,6 +117,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 self._accumulate_scores, avg_score = self._loss_func.initialize(label)
                 if self._init_score is None:
                     self._init_score = avg_score
+            elif task_type == MULTI:
+                self._accumulate_scores = self._loss_func.initialize(label, self.num_class)
             else:
                 self._accumulate_scores = self._loss_func.initialize(label)
 
@@ -136,9 +138,10 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             label_set = set(np.unique(label_df))
             assert len(label_set) == 2, f"binary classification task should have 2 unique label, but got {label_set}"
             assert 0 in label_set and 1 in label_set, f"binary classification task should have label 0 and 1, but got {label_set}"
-            self._num_label = 2
+            self.num_class = 2
         else:
-            self._num_label = None
+            self.num_class = None
+            
 
     def get_task_info(self):
         task_type = self.objective.split(':')[0]
@@ -166,6 +169,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         # data binning
         bin_info = binning(train_data, max_bin=self.max_bin)
         bin_data: DataFrame = train_data.bucketize(boundaries=bin_info)
+        self._check_label(bin_data.label)
 
         # init loss func & scores
         self._loss_func = self._get_loss_func(self.objective)

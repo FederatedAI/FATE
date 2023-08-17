@@ -59,7 +59,7 @@ class MultiRecall(Metric):
         label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
-        recall = recall_score(label, predict, average='micro')
+        recall = recall_score(label, predict, average='macro')
         return EvalResult(self.metric_name, recall)
 
 
@@ -72,7 +72,7 @@ class MultiPrecision(Metric):
         label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
-        precision = precision_score(label, predict, average='micro')
+        precision = precision_score(label, predict, average='macro')
         return EvalResult(self.metric_name, precision)
 
 
