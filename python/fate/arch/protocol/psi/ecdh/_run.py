@@ -14,10 +14,14 @@
 #  limitations under the License.
 #
 import functools
+import logging
+
 
 from fate.arch.dataframe import DataFrame
 from fate_utils.psi import Curve25519
 
+
+logger = logging.getLogger(__name__)
 
 GUEST_FIRST_SIGN = "guest_first_sign"
 HOST_FIRST_SIGN = "host_first_sign"
@@ -59,7 +63,7 @@ def _flat_block_with_possible_duplicate_keys(block_table, duplicate_allow=False)
 
 def _flat_block_key(intersect_id):
     """
-    key=eid, value = ((guest_block_id, guest_block_offset(, [(host0_block_id, host0_block_offset)...])
+    key=eid, value = ((guest_block_id, guest_block_offset), [(host0_block_id, host0_block_offset)...])
     """
     def _mapper(kvs):
         for _, value in kvs:
@@ -69,16 +73,6 @@ def _flat_block_key(intersect_id):
                 yield (guest_block_id, guest_offset), host_loc
 
     return intersect_id.mapPartitions(_mapper, use_previous_behavior=False)
-
-    """
-    def _mapper(key, value):
-        guest_loc = value[0]
-        host_loc = value[1]
-        for guest_block_id, guest_offset in guest_loc:
-            yield (guest_block_id, guest_offset), host_loc
-
-    return intersect_id.flatMap(_mapper)
-    """
 
 
 def psi_ecdh(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
@@ -140,12 +134,20 @@ def guest_run(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
     host_indexer: key=(block_id, offset), value=(sample_id, (bid, offset))
     """
     for host_id in range(len(guest_second_sign_match_ids)):
-        host_indexer = intersect_with_offset_ids.mapValues(lambda v: (v[0][0], v[1][i]))
+        host_indexer = intersect_with_offset_ids.mapValues(lambda v: (v[0][0], v[1][host_id]))
         ctx.hosts[host_id].put(HOST_INDEXER, host_indexer)
 
     intersect_guest_data = intersect_with_offset_ids.mapValues(lambda v: v[0])
 
     guest_df =  DataFrame.from_flatten_data(ctx, intersect_guest_data, df.data_manager)
+    ctx.metrics.log_metrics({"intersect_count": guest_df.shape[0]}, name="intersect_id_count", type="custom")
+
+    """
+    the following just for debug, need to be delete 
+    """
+    # ids = [v[0] for k, v in sorted(guest_df.block_table.collect())]
+    # logger.debug(f"intersect ids is: {ids}")
+
     return guest_df
 
 
@@ -171,4 +173,13 @@ def host_run(ctx, df: DataFrame, curve_type, **kwargs):
     host_indexer = ctx.guest.get(HOST_INDEXER)
 
     host_df = df.loc_with_sample_id_replacement(host_indexer)
+
+    ctx.metrics.log_metrics({"intersect_count": host_df.shape[0]}, name="intersect_id_count", type="custom")
+
+    """
+    the following just for debug, need to be delete 
+    """
+    # ids = [v[0] for k, v in sorted(host_df.block_table.collect())]
+    # logger.debug(f"intersect ids is: {ids}")
+
     return host_df

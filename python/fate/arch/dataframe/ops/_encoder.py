@@ -209,14 +209,7 @@ def bucketize(df: DataFrame, boundaries: Union[pd.DataFrame, dict]):
     def _mapper(
         blocks, boundaries_list: list = None, narrow_loc: list = None, dst_bids: list = None, dm: DataManager = None
     ):
-        ret_blocks = []
-        for block in blocks:
-            if isinstance(block, torch.Tensor):
-                ret_blocks.append(block.clone())
-            elif isinstance(block, np.ndarray):
-                ret_blocks.append(block.copy())
-            else:
-                ret_blocks.append(block)
+        ret_blocks = [block for block in blocks]
 
         for i in range(len(ret_blocks), dm.block_num):
             ret_blocks.append([])

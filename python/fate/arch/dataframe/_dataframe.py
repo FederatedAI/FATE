@@ -153,7 +153,7 @@ class DataFrame(object):
 
         return transform_to_pandas_dataframe(self._block_table, self._data_manager)
 
-    def apply_row(self, func, columns=None, with_label=False, with_weight=False, enable_type_align_checking=True):
+    def apply_row(self, func, columns=None, with_label=False, with_weight=False, enable_type_align_checking=False):
         from .ops._apply_row import apply_row
 
         return apply_row(
