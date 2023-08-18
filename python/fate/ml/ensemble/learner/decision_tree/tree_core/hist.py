@@ -142,12 +142,12 @@ class SBTHistogramBuilder(object):
         )
         indexer = bin_train_data.get_indexer('sample_id')
         gh = gh.loc(indexer, preserve_order=True)
-        gh["cnt"] = 1
         sample_pos = sample_pos.loc(indexer, preserve_order=True)
+        targets = {'g': gh['g'].as_tensor(), 'h': gh['h'].as_tensor(), 'cnt': bin_train_data.apply_row(lambda x: 1).as_tensor()}
         map_sample_pos = sample_pos.create_frame()
         map_sample_pos['node_idx'] = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
 
-        stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)
+        stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, targets)
 
         return hist, stat_obj
 
