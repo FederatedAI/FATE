@@ -15,11 +15,11 @@
 import copy
 import functools
 from typing import List
-import pandas as pd
 import torch
 from sklearn.utils import resample
 from .._dataframe import DataFrame
 from ..manager.data_manager import DataManager
+from ..manager.block_manager import Block
 from ._compress_block import compress_blocks
 from ._indexer import get_partition_order_by_raw_table
 from ._promote_types import promote_partial_block_types
@@ -270,21 +270,11 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
 
 
 def _flatten_partition(kvs, block_num=0):
-    _flattens = []
-    for partition_id, blocks in kvs:
-        lines = len(blocks[0])
-        for idx in range(lines):
-            sample_id = blocks[0][idx]
-            row = []
-            for bid in range(1, block_num):
-                if isinstance(blocks[bid], pd.Index):
-                    row.append(blocks[bid][idx])
-                else:
-                    row.append(blocks[bid][idx].tolist())
-
-            _flattens.append((sample_id, row))
-
-    return _flattens
+    for block_id, blocks in kvs:
+        flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+        lines = len(flat_blocks[0])
+        for i in range(lines):
+            yield flat_blocks[0][i], [flat_blocks[j][i] for j in range(1, block_num)]
 
 
 def to_blocks(kvs, dm: DataManager = None, partition_mappings: dict = None):
@@ -300,7 +290,7 @@ def to_blocks(kvs, dm: DataManager = None, partition_mappings: dict = None):
 
         if (lid + 1) % dm.block_row_size == 0:
             yield block_id, dm.convert_to_blocks(ret_blocks)
-            ret_blocks = [[] for i in range(dm.block_num)]
+            ret_blocks = [[] for _ in range(dm.block_num)]
             block_id += 1
 
     if ret_blocks[0]:

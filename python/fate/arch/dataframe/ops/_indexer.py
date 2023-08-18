@@ -14,9 +14,8 @@
 #  limitations under the License.
 #
 import functools
-import pandas as pd
 
-from ..manager import Block, BlockType, DataManager
+from ..manager import Block, DataManager
 from .._dataframe import DataFrame
 
 
@@ -28,17 +27,24 @@ def aggregate_indexer(indexer):
 
     agg_indexer: key=old_block_id, value=(old_row_id, (new_block_id, new_row_id))
     """
-
     def _aggregate(kvs):
-        aggregate_ret = dict()
+        flat_values = []
         for k, values in kvs:
             old_msg, new_msg = values
-            if old_msg[0] not in aggregate_ret:
-                aggregate_ret[old_msg[0]] = []
 
-            aggregate_ret[old_msg[0]].append([old_msg[1], new_msg])
+            flat_values.append((old_msg[0], [old_msg[1], new_msg]))
 
-        return list(aggregate_ret.items())
+        flat_values.sort()
+        i = 0
+        l = len(flat_values)
+        while i < l:
+            j = i
+            while j < l and flat_values[i][0] == flat_values[j][0]:
+                j += 1
+
+            agg_ret = [flat_values[k][1] for k in range(i, j)]
+            yield flat_values[i][0], agg_ret
+            i = j
 
     agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
 
@@ -47,13 +53,9 @@ def aggregate_indexer(indexer):
 
 def transform_to_table(block_table, block_index, partition_order_mappings):
     def _convert_to_order_index(kvs):
-        order_indexes = []
-
         for block_id, blocks in kvs:
             for _idx, _id in enumerate(blocks[block_index]):
-                order_indexes.append((_id, (block_id, _idx)))
-
-        return order_indexes
+                yield _id, (block_id, _idx)
 
     return block_table.mapPartitions(_convert_to_order_index,
                                      use_previous_behavior=False)
@@ -197,25 +199,26 @@ def loc(df: DataFrame, indexer, target, preserve_order=False):
     agg_indexer = aggregate_indexer(indexer)
 
     if not preserve_order:
-
         def _convert_block(blocks, retrieval_indexes):
             row_indexes = [retrieval_index[0] for retrieval_index in retrieval_indexes]
             return [Block.retrieval_row(block, row_indexes) for block in blocks]
 
         block_table = df.block_table.join(agg_indexer, _convert_block)
     else:
-        def _convert_to_block(kvs):
+        def _convert_to_row(kvs):
             ret_dict = {}
             for block_id, (blocks, block_indexer) in kvs:
                 """
                 block_indexer: row_id, (new_block_id, new_row_id)
                 """
+                flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+                block_num = len(flat_blocks)
                 for src_row_id, (dst_block_id, dst_row_id) in block_indexer:
                     if dst_block_id not in ret_dict:
                         ret_dict[dst_block_id] = []
 
                     ret_dict[dst_block_id].append(
-                        (dst_row_id, [Block.transform_row_to_raw(block, src_row_id) for block in blocks])
+                        (dst_row_id, [flat_blocks[i][src_row_id] for i in range(block_num)])
                     )
 
             for dst_block_id, value_list in ret_dict.items():
@@ -224,7 +227,7 @@ def loc(df: DataFrame, indexer, target, preserve_order=False):
         from ._transformer import transform_list_block_to_frame_block
 
         block_table = df.block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
-        block_table = block_table.mapReducePartitions(_convert_to_block, _merge_list)
+        block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
         block_table = block_table.mapValues(lambda values: [v[1] for v in values])
         block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
 
@@ -247,30 +250,19 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
 
     def _flatten_with_block_id_key(kvs):
         for block_id, blocks in kvs:
+            flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+            block_num = len(flat_blocks)
             for row_id in range(len(blocks[0])):
                 if with_sample_id:
                     yield (block_id, row_id), (
-                        blocks[sample_id_index][row_id],
-                        [Block.transform_row_to_raw(block, row_id) for block in blocks]
+                        flat_blocks[sample_id_index][row_id],
+                        [flat_blocks[i][row_id] for i in range(block_num)]
                     )
                 else:
-                    yield (block_id, row_id), [Block.transform_row_to_raw(block, row_id) for block in blocks]
-
-    """
-    def _flatten_with_block_id_key(block_id, blocks):
-        for row_id in range(len(blocks[0])):
-            if with_sample_id:
-                yield (block_id, row_id), (
-                    blocks[sample_id_index][row_id],
-                    [Block.transform_row_to_raw(block, row_id) for block in blocks]
-                )
-            else:
-                yield (block_id, row_id), [Block.transform_row_to_raw(block, row_id) for block in blocks]
-    """
+                    yield (block_id, row_id), [flat_blocks[i][row_id] for i in range(block_num)]
 
     if key_type == "block_id":
         return df.block_table.mapPartitions(_flatten_with_block_id_key, use_previous_behavior=False)
-        # return df.block_table.flatMap(_flatten_with_block_id_key)
     else:
         raise ValueError(f"Not Implement key_type={key_type} of flatten_data.")
 
@@ -343,7 +335,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                 offset = 0
                 bid += 1
 
-        flat_ret.sort(key=lambda value: value[0])
+        flat_ret.sort()
         i = 0
         l = len(flat_ret)
         while i < l:
@@ -351,51 +343,24 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
             while j < l and flat_ret[i][0] == flat_ret[j][0]:
                 j += 1
 
-            agg_ret = [(flat_ret[k][1], flat_ret[k][2], flat_ret[k][3], flat_ret[k][4])
-                       for k in range(i, j)]
+            agg_ret = [flat_ret[k][1:] for k in range(i, j)]
             yield  flat_ret[i][0], agg_ret
 
             i = j
-        """
-        aggregate_ret = dict()
-        offset = 0
-        bid = None
-        for k, values in kvs:
-            sample_id, (src_block_id, src_offset) = values
-            if bid is None:
-                bid = partition_order_mappings[sample_id]["start_block_id"]
-                
-            if src_block_id not in aggregate_ret:
-                aggregate_ret[src_block_id] = []
-                
-            aggregate_ret[src_block_id].append((src_offset, sample_id, bid, offset))
-            
-            offset += 1
-            if offset == data_manager.block_row_size:
-                bid += 1
-                offset = 0
 
-        return list(aggregate_ret.items())
-        """
-    
     sample_id_index = data_manager.loc_block(data_manager.schema.sample_id_name, with_offset=False)
     block_num = data_manager.block_num
     
     def _convert_to_row(kvs):
         ret_dict = {}
         for block_id, (blocks, block_indexer) in kvs:
+            flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
             for src_row_id, sample_id, dst_block_id, dst_row_id in block_indexer:
                 if dst_block_id not in ret_dict:
                     ret_dict[dst_block_id] = []
 
-                row_data = []
-                for i in range(block_num):
-                    if i == sample_id_index:
-                        row_data.append(sample_id)
-                    elif data_manager.blocks[i].block_type == BlockType.index:
-                        row_data.append(blocks[i][src_row_id])
-                    else:
-                        row_data.append(blocks[i][src_row_id].tolist())
+                row_data = [flat_blocks[i][src_row_id] for i in range(block_num)]
+                row_data[sample_id_index] = sample_id
 
                 ret_dict[dst_block_id].append(
                     (dst_row_id, row_data)
@@ -416,13 +381,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
     block_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2))
     block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
     block_table = block_table.mapValues(_convert_to_frame_block)
-    """
-    block_table = block_table.mapValues(lambda values: [v[1] for v in values])
-    
-    from ._transformer import transform_list_block_to_frame_block
-    block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
-    """
-    
+
     return DataFrame(
         ctx=df._ctx,
         block_table=block_table,

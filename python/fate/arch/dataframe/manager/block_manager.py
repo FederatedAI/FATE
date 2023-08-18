@@ -253,6 +253,13 @@ class Block(object):
             return block[indexes]
 
     @classmethod
+    def transform_block_to_list(cls, block):
+        if isinstance(block, FixedpointPaillierVector):
+            return [block.slice_indexes([i]) for i in range(len(block))]
+        else:
+            return block.tolist()
+
+    @classmethod
     def transform_row_to_raw(cls, block, index):
         if isinstance(block, pd.Index):
             return block[index]
