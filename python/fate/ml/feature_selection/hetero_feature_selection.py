@@ -20,8 +20,8 @@ import random
 
 import numpy as np
 import pandas as pd
-from fate.arch import Context
 
+from fate.arch import Context
 from ..abc.module import HeteroModule, Module
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class HeteroSelectionModuleGuest(HeteroModule):
             self.isometric_model_dict = isometric_model_dict
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        logger.info(f"isometric_model_dict: {self.isometric_model_dict}")
+        # logger.info(f"isometric_model_dict: {self.isometric_model_dict}")
         if self.select_col is None:
             self.select_col = train_data.schema.columns.to_list()
 
@@ -354,19 +354,6 @@ class StandardSelection(Module):
                 metric_conf["threshold"] = metric_conf.get("threshold", []) + [threshold]
                 metric_conf["take_high"] = metric_conf.get("take_high", []) + [take_high]
                 self.filter_conf[metric_name] = metric_conf
-        # temp code block starts
-        """if param is not None:
-            for metric_name, filter_type, threshold, take_high in zip(
-                    self.param.metrics or DEFAULT_METRIC.get(method),
-                    self.param.filter_type or  ['threshold'],
-                    self.param.threshold or [1.0],
-                    self.param.take_high or [True]):
-                metric_conf = self.filter_conf.get(metric_name, {})
-                metric_conf["filter_type"] = metric_conf.get("filter_type", []) + [filter_type]
-                metric_conf["threshold"] = metric_conf.get("threshold", []) + [threshold]
-                metric_conf["take_high"] = metric_conf.get("take_high", []) + [take_high]
-                self.filter_conf[metric_name] = metric_conf"""
-        # temp code block ends
 
         self.model = self.convert_model(model)
         self.keep_one = keep_one
@@ -407,9 +394,6 @@ class StandardSelection(Module):
             self._prev_selected_mask = pd.Series(np.ones(len(header)), dtype=bool, index=header)
 
         metric_names = self.param.get("metrics", [])
-        # temp code bock start
-        """metric_names = self.param.metrics or []"""
-        # temp code ends
         # local only
         if self.method in ["statistics"]:
             for metric_name in metric_names:
@@ -429,11 +413,6 @@ class StandardSelection(Module):
                     f"metrics for columns {missing_col} from `select_col` or header not found in given model."
                 )
 
-            """ mask_all = metrics_all.apply(lambda r: StandardSelection.filter_multiple_metrics(r,
-                                                                                             self.param.filter_type,
-                                                                                             self.param.threshold,
-                                                                                             self.param.take_high,
-                                                                                             metric_names), axis=1)"""
             mask_all = self.apply_filter(metrics_all, self.filter_conf)
             self._all_selected_mask = mask_all
             cur_selected_mask = mask_all.all(axis=0)
@@ -451,13 +430,6 @@ class StandardSelection(Module):
             # metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
             metrics_all = StandardSelection.convert_series_metric_to_dataframe(iv_metrics, "iv")
             self._all_metrics = metrics_all
-            # works for multiple iv filters
-            """mask_all = metrics_all.apply(lambda r: StandardSelection.filter_multiple_metrics(r,
-                                                                                             self.param.filter_type,
-                                                                                             self.param.threshold,
-                                                                                             self.param.take_high,
-                                                                                             metric_names), axis=1)
-            """
             mask_all = self.apply_filter(metrics_all, self.filter_conf)
             self._all_selected_mask = mask_all
             cur_selected_mask = mask_all.all(axis=0)
@@ -467,7 +439,7 @@ class StandardSelection(Module):
                 self._keep_one(self._selected_mask, self._prev_selected_mask, self._header)
             if self.param.get("select_federated", True):
                 host_metrics_summary = self.model.get("data", {}).get("host_metrics_summary")
-                logger.info(f"host metrics summary: {host_metrics_summary}")
+                # logger.info(f"host metrics summary: {host_metrics_summary}")
                 if host_metrics_summary is None:
                     raise ValueError(f"Host metrics not found in provided model, please check.")
                 for host, host_metrics in host_metrics_summary.items():
@@ -475,21 +447,8 @@ class StandardSelection(Module):
                     # metrics_all = pd.DataFrame(iv_metrics).T.rename({0: "iv"}, axis=0)
                     metrics_all = StandardSelection.convert_series_metric_to_dataframe(iv_metrics, "iv")
                     self._all_host_metrics[host] = metrics_all
-                    """host_mask_all = metrics_all.apply(lambda r:
-                                                 StandardSelection.filter_multiple_metrics(r,
-                                                                                           self.param.host_filter_type,
-                                                                                                     self.param.threshold,
-                                                                                                     self.param.take_high,
-                                                                                                     metric_names), axis=1)
-                    """
                     host_mask_all = self.apply_filter(metrics_all, self.filter_conf)
                     self._all_host_selected_mask[host] = host_mask_all
-                    """host_prev_selected_mask = self._host_prev_selected_mask.get(host)
-                    if host_prev_selected_mask is None:
-                        host_prev_selected_mask = pd.Series(np.ones(len(iv_metrics.index)),
-                                                            index=iv_metrics.index)
-                        self._host_prev_selected_mask[host] = host_prev_selected_mask"""
-
                     host_selected_mask = host_mask_all.all(axis=0)
                     if self.keep_one:
                         self._keep_one(host_selected_mask)
@@ -535,7 +494,7 @@ class StandardSelection(Module):
             return StandardSelection.filter_by_top_k(metrics, threshold, take_high)
         elif filter_type == "threshold":
             return StandardSelection.filter_by_threshold(metrics, threshold, take_high)
-        elif filter_type == "percentile":
+        elif filter_type == "top_percentile":
             return StandardSelection.filter_by_percentile(metrics, threshold, take_high)
         else:
             raise ValueError(f"filter_type {filter_type} not supported, please check")

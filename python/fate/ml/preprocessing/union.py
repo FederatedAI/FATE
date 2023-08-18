@@ -43,17 +43,6 @@ class Union(Module):
             if sum([col_names != column_name_list[0] for col_names in column_name_list]):
                 raise ValueError(f"Data sets should all have the same columns for union on 0 axis.")
             result_data = DataFrame.vstack(train_data_list)
-        elif self.axis == 1:
-            if sum([data.label is not None for data in train_data_list]) > 1:
-                raise ValueError(f"At most on input data set may contain label.")
-            col_set = set()
-            for data in train_data_list:
-                data_cols = set(data.schema.columns)
-                if col_set.intersection(data_cols):
-                    raise ValueError(f"column name conflict: {col_set.intersection(data_cols)}. "
-                                     f"Please check input data")
-                col_set.update(data_cols)
-            result_data = DataFrame.hstack(train_data_list)
+            return result_data
         else:
-            raise ValueError(f"axis must be 0 or 1, but got {self.axis}")
-        return result_data
+            raise ValueError(f"axis must be 0, but got {self.axis}")

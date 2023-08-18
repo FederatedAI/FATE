@@ -124,7 +124,7 @@ class FullBatchDataLoader(object):
                 indexer = sorted(list(self._dataset.get_indexer(target="sample_id").collect()))
                 if self._shuffle:
                     random.seed = self._random_state
-                random.shuffle(indexer)
+                    random.shuffle(indexer)
 
                 for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]

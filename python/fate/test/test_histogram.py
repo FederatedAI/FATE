@@ -308,7 +308,6 @@ def test_distributed_hist_calling_from_df():
 
     pos_reader = PandasReader(sample_id_name="sample_id", match_id_name="match_id", dtype={"node_id": "int32"})
     pos_df = pos_reader.to_frame(ctx, node_df)
-
     one_df = df.create_frame()
     one_df["one"] = 1
 

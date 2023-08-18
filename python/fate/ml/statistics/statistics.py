@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 import logging
+import re
 from typing import List
 
 import pandas as pd
@@ -25,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 class FeatureStatistics(Module):
-    def __init__(self, metrics: List[str] = None, ddof=1, bias=True):
+    def __init__(self, metrics: List[str] = None, ddof=1, bias=True, relative_error=1e-3):
         self.metrics = metrics
-        self.summary = StatisticsSummary(ddof, bias)
+        self.summary = StatisticsSummary(ddof, bias, relative_error)
 
     def fit(self, ctx: Context, input_data, validate_data=None) -> None:
         self.summary.compute_metrics(input_data, self.metrics)
@@ -49,7 +50,7 @@ class FeatureStatistics(Module):
 
 
 class StatisticsSummary(Module):
-    def __init__(self, ddof=1, bias=True):
+    def __init__(self, ddof=1, bias=True, relative_error=1e-3):
         """if metrics is not None:
         if len(metrics) == 1 and metrics[0] == "describe":
             self.inner_metric_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
@@ -57,20 +58,31 @@ class StatisticsSummary(Module):
             self.inner_metric_names = metrics"""
         self.ddof = ddof
         self.bias = bias
+        self.relative_error = relative_error
         self.inner_metric_names = []
         self.metrics_summary = None
         self._count = None
         self._nan_count = None
         self._mean = None
         self._describe = None
+        self._quantile = None
+        self._q_pts = None
 
     def get_from_describe(self, data, metric):
         if self._describe is None:
             self._describe = data.describe(ddof=self.ddof, unbiased=~self.bias)
         return self._describe[metric]
 
+    def get_from_quantile_summary(self, data, metric):
+        query_q = int(metric[:-1]) / 100
+        if self._quantile is None:
+            self._quantile = data.quantile(q=self._q_pts, relative_error=self.relative_error)
+        return self._quantile.loc[query_q]
+
     def compute_metrics(self, data, metrics):
         res = pd.DataFrame(columns=data.schema.columns)
+        q_metrics = [metric for metric in metrics if re.match(r"^(100|\d{1,2})%$", metric)]
+        self._q_pts = [int(metric[:-1]) / 100 for metric in q_metrics]
         for metric in metrics:
             metric_val = None
             """if metric == "describe":
@@ -80,12 +92,15 @@ class StatisticsSummary(Module):
                 return"""
             if metric in ["sum", "min", "max", "mean", "std", "var"]:
                 metric_val = self.get_from_describe(data, metric)
+            if metric in q_metrics:
+                metric_val = self.get_from_quantile_summary(data, metric)
             elif metric == "count":
                 if self._count is None:
                     self._count = data.count()
                 metric_val = self._count
             elif metric == "median":
-                metric_val = data.median()
+                metric_val = data.quantile(q=0.5, relative_error=self.relative_error)
+                metric_val = metric_val.loc[0.5]
             elif metric == "coefficient_of_variation":
                 metric_val = self.get_from_describe(data, "variation")
             elif metric == "missing_count":
