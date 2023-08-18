@@ -14,12 +14,11 @@
 #  limitations under the License.
 import functools
 import pandas as pd
-import torch
 
 from collections import Iterable
 
 from .._dataframe import DataFrame
-from ..manager.block_manager import BlockType
+from ..manager.block_manager import Block, BlockType
 from ..manager.data_manager import DataManager
 from ..utils._auto_column_name_generated import generated_default_column_names
 
@@ -32,10 +31,10 @@ def apply_row(df: "DataFrame", func,
     """
     data_manager = df.data_manager
     dst_data_manager, _ = data_manager.derive_new_data_manager(with_sample_id=True,
-                                                            with_match_id=True,
-                                                            with_label=not with_weight,
-                                                            with_weight=not with_weight,
-                                                            columns=None)
+                                                               with_match_id=True,
+                                                               with_label=not with_weight,
+                                                               with_weight=not with_weight,
+                                                               columns=None)
 
     non_operable_field_names = dst_data_manager.get_field_name_list()
     non_operable_blocks = [data_manager.loc_block(field_name,
@@ -75,14 +74,9 @@ def _apply(blocks, func=None, src_field_names=None,
     ret_column_len = len(ret_columns) if ret_columns is not None else None
     block_types = []
 
+    flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
     for lid in range(lines):
-        apply_row_data = []
-        for bid, offset in src_fields_loc:
-            if isinstance(blocks[bid], torch.Tensor):
-                apply_row_data.append(blocks[bid][lid][offset].item())
-            else:
-                apply_row_data.append(blocks[bid][lid][offset])
-
+        apply_row_data = [flat_blocks[bid][lid][offset] for bid, offset in src_fields_loc]
         apply_ret = func(pd.Series(apply_row_data, index=src_field_names))
 
         if isinstance(apply_ret, Iterable):
@@ -101,7 +95,7 @@ def _apply(blocks, func=None, src_field_names=None,
 
         if not block_types:
             block_types = [BlockType.get_block_type(value) for value in apply_ret]
-            apply_blocks = [[] for idx in range(ret_column_len)]
+            apply_blocks = [[] for _ in range(ret_column_len)]
 
         for idx, value in enumerate(apply_ret):
             apply_blocks[idx].append([value])
@@ -119,7 +113,7 @@ def _apply(blocks, func=None, src_field_names=None,
         ret_columns, block_types
     )
 
-    ret_blocks = [[] for idx in range(len(src_non_operable_blocks) + ret_column_len)]
+    ret_blocks = [[] for _ in range(len(src_non_operable_blocks) + ret_column_len)]
     for idx, bid in enumerate(src_non_operable_blocks):
         ret_blocks[idx] = blocks[bid]
 

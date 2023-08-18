@@ -229,7 +229,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 node.is_leaf = True
                 node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1] # leaf always on guest
                 self._nodes.append(node)
-                self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_pos])
+            self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_pos])
 
         # when training is done, all samples must be on leaves
         assert len(self._sample_on_leaves) == len(bin_train_data), 'sample on leaves num not match, {} vs {}'.format(len(self._sample_on_leaves), len(bin_train_data))

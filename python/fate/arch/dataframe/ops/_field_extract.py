@@ -12,7 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import pandas as pd
 from .._dataframe import DataFrame
 
 
@@ -27,13 +26,7 @@ def field_extract(df: "DataFrame", with_sample_id=True, with_match_id=True, with
         for src_block_id, dst_block_id, is_changed, block_column_indexes in blocks_loc:
             block = src_blocks[src_block_id]
             if is_changed:
-                """
-                multiple columns, maybe pandas or fate.arch.tensor object
-                """
-                if isinstance(block, pd.DataFrame):
-                    extract_blocks[dst_block_id] = block.iloc[:, block_column_indexes]
-                else:
-                    extract_blocks[dst_block_id] = block[:, block_column_indexes]
+                extract_blocks[dst_block_id] = block[:, block_column_indexes]
             else:
                 extract_blocks[dst_block_id] = block
 
