@@ -61,12 +61,7 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(evaluation_0)
 
     pipeline.compile()
-    print(pipeline.get_dag())
     pipeline.fit()
-
-    lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
-    import pandas as pd
-    print(f"lr_0 data: {pd.DataFrame(lr_0_data)}")
 
     pipeline.deploy([psi_0, lr_0])
 
