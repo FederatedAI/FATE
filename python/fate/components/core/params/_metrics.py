@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import re
 from typing import Type
 
-from ._fields import StringChoice
+from ._fields import StringChoice, Parameter
 
 
 class Metrics(StringChoice):
@@ -68,3 +69,24 @@ def metrics_param(auc=True, ks=True, accuracy=True, mse=True) -> Type[str]:
         choice={k for k, v in choice.items() if v},
     )
     return type("Metrics", (Metrics,), namespace)
+
+
+class LegalPercentile(str, Parameter):
+    legal_percentile = r"^(100|\d{1,2})%$"
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.percentile_validator
+
+    @classmethod
+    def percentile_validator(cls, v):
+        if re.match(cls.legal_percentile, v):
+            return v
+        raise ValueError(f"provided `{v}` not in legal percentile format")
+
+
+def legal_percentile() -> Type[str]:
+    namespace = dict(
+        legal_percentile=LegalPercentile.legal_percentile,
+    )
+    return type("LegalPercentile", (LegalPercentile,), namespace)

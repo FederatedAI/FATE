@@ -89,7 +89,7 @@ def train(
         train_df = train_data.read()
         validate_df = validate_data.read() if validate_data else None
         client.fit(sub_ctx, train_df, validate_df)
-        model_dict = client.get_model().dict()
+        model_dict = client.get_model()
 
         train_rs = client.predict(sub_ctx, train_df)
         train_rs = add_dataset_type(train_rs, consts.TRAIN_SET)
@@ -127,8 +127,7 @@ def predict(
 
         client = HomoLRClient(batch_size=batch_size, threshold=threshold)
         model_input = predict_input_model.read()
-        model_data = ModelIO.from_dict(model_input)
-        client.from_model(model_data)
+        client.from_model(model_input)
         pred_rs = client.predict(ctx, test_data.read())
         pred_rs = add_dataset_type(pred_rs, consts.TEST_SET)
         test_output_data.write(pred_rs)

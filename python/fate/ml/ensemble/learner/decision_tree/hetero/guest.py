@@ -1,57 +1,78 @@
-from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, FLOAT_ZERO
-from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SklearnHistBuilder
-from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import SklearnSplitter, SplitInfo
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos
+from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder
+from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-import numpy as np
-import pandas as pd
 from typing import List
 import functools
-import logging
+import logging 
 
 
 logger = logging.getLogger(__name__)
 
 
-def make_decision(feat_val, bid, missing_dir=None, use_missing=None, zero_as_missing=None, zero_val=0):
-
-    # no missing val
-    left, right = True, False
-    direction = left if feat_val <= bid + FLOAT_ZERO else right
-    return direction
-
-
-def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict):
-
-    node_id = s[-1]
-    node = cur_layer_node[node_map[node_id]]
-    if node.is_leaf:
-        return -1  # reach leaf
-    feat_val = s[node.fid]
-    bid = node.bid
-    
-    dir_ = make_decision(feat_val, bid)
-    if dir_:  # go left
-        ret_node = node.l
-    else:
-        ret_node = node.r
-    # print(node_id, feat_val, bid, dir_, ret_node)
-    return ret_node
-
 class HeteroDecisionTreeGuest(DecisionTree):
 
-    def __init__(self, max_depth=3, feature_importance_type='split', valid_features=None, max_split_nodes=1024, sitename='local'):
-        super().__init__(max_depth, use_missing=False, zero_as_missing=False, feature_importance_type=feature_importance_type, valid_features=valid_features)
-        self.sitename = sitename
-        self.max_split_nodes = max_split_nodes
+    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, goss=False, l1=0.1, l2=0, 
+                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1):
+
+        super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
+        self.host_sitenames = None
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
 
-    def _compute_best_splits(self):
-        pass
+        # regularization
+        self.l1 = l1
+        self.l2 = l2
+        self.min_impurity_split = min_impurity_split
+        self.min_sample_split = min_sample_split
+        self.min_leaf_node = min_leaf_node
+        self.min_child_weight = min_child_weight
 
-    def get_column_max_bin(self, result_dict):
+        # goss
+        self.goss = goss
+
+        # other
+        self._valid_features = valid_features
+
+        # homographic encryption
+        self._encrypt_kit = None
+        self._sk = None
+        self._pk = None
+        self._coder = None
+        self._evaluator = None
+        self._encryptor = None
+        self._decryptor = None
+
+
+    def set_encrypt_kit(self, kit):
+        self._encrypt_kit = kit
+        self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
+        self._decryptor = kit.get_tensor_decryptor()
+        logger.info('encrypt kit setup through setter')
+
+    def _init_encrypt_kit(self, ctx):
+        kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
+        self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
+        self._decryptor = kit.get_tensor_decryptor()
+        logger.info('encrypt kit is not setup, auto initializing')
+
+    def _get_column_max_bin(self, result_dict):
         bin_len = {}
         
         for column, values in result_dict.items():
@@ -62,158 +83,173 @@ class HeteroDecisionTreeGuest(DecisionTree):
         
         return bin_len, max_max_value
     
-    def get_sklearn_hist_builder(self, bin_train_data, grad_and_hess, root_node, max_bin):
-        data = bin_train_data.as_pd_df()
-        data['sample_id'] = data['sample_id'].astype(np.uint32)
-        gh = grad_and_hess.as_pd_df()
-        gh['sample_id'] = gh['sample_id'].astype(np.uint32)
-        collect_data = data.sort_values(by='sample_id')
-        collect_gh = gh.sort_values(by='sample_id')
-        root_node.set_inst_indices(collect_gh['sample_id'].values)
-        feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.label_name, bin_train_data.schema.match_id_name]).values
-        g = collect_gh['g'].values
-        h = collect_gh['h'].values
-        feat_arr = np.asfortranarray(feat_arr.astype(np.uint8))
-        return SklearnHistBuilder(feat_arr, max_bin, g, h)
-    
-    def update_tree(self, split_infos, cur_layer_node):
-        pass
-    
-    def get_sklearn_splitter(self, bin_train_data, grad_and_hess, root_node, max_bin):
-        pass
+    def _update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
 
-    def get_distribute_hist_builder(self, bin_train_data, grad_and_hess, root_node, max_bin):
-        pass
-    
-    def update(self, nodes, cur_to_split: List[Node], split_info: List[SplitInfo], sample_pos: DataFrame, data: DataFrame, node_map: dict):
-        
-        assert len(cur_to_split) == len(split_info), 'node num not match split info num, got {} node vs {} split info'.format(len(cur_to_split), len(split_info))
-
-        next_layer_node = []
-
+        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         data_with_pos = DataFrame.hstack([data, sample_pos])
-        new_sample_pos = data.create_frame()
+        map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
+        local_sample_idx = data_with_pos.apply_row(map_func)
+        local_samples = data_with_pos.loc(local_sample_idx.get_indexer(target="sample_id"), preserve_order=True)[local_sample_idx.values.as_tensor()]
+        logger.info('{}/{} samples on local nodes'.format(len(local_samples), len(data)))
+        if len(local_samples) == 0:
+            updated_sample_pos = None
+        else:
+            updated_sample_pos = sample_pos.loc(local_samples.get_indexer(target="sample_id"), preserve_order=True).create_frame()
+            update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
+            map_rs = local_samples.apply_row(update_func)
+            updated_sample_pos["node_idx"] = map_rs # local_samples.apply_row(update_func)
 
-        for idx in range(len(split_info)):
+        # synchronize sample pos
+        host_update_sample_pos = ctx.hosts.get('updated_data')
+        new_sample_pos = sample_pos.empty_frame()
 
-            node: Node = cur_to_split[idx]
+        for host_data in host_update_sample_pos:
+            if host_data[0]:  # True
+                pos_data, pos_index = host_data[1]
+                tmp_frame = sample_pos.create_frame()
+                tmp_frame = tmp_frame.loc(pos_index, preserve_order=True)
+                tmp_frame['node_idx'] = pos_data
+                new_sample_pos = DataFrame.vstack([new_sample_pos, tmp_frame])
 
-            if split_info[idx] is None:
-                node.is_leaf = True
-                self._nodes.append(node)
-                continue
+        if updated_sample_pos is not None:
+            if len(updated_sample_pos) == len(data):  # all samples are on local
+                new_sample_pos = updated_sample_pos
+            else:
+                logger.info('stack new sample pos, guest len {}, host len {}'.format(len(updated_sample_pos), len(new_sample_pos)))
+                new_sample_pos = DataFrame.vstack([updated_sample_pos, new_sample_pos])
+        else:
+            new_sample_pos = new_sample_pos  # all samples are on host
 
-            print('split info is {}'.format(split_info))
+       # share new sample position with all hosts
+        ctx.hosts.put('new_sample_pos', (new_sample_pos.as_tensor(), new_sample_pos.get_indexer(target='sample_id')))
+        self.sample_pos = new_sample_pos
 
-            sum_grad = node.grad
-            sum_hess = node.hess
-            node.fid = split_info[idx].best_fid
-            node.bid = split_info[idx].best_bid
-            node.missing_dir = split_info[idx].missing_dir
+        return new_sample_pos
 
-            p_id = node.nid
-            l_id, r_id = self._tree_node_num + 1, self._tree_node_num + 2
-            self._tree_node_num += 2
-            node.l, node.r = l_id, r_id
-
-            l_g, l_h = split_info[idx].sum_grad, split_info[idx].sum_hess
-
-            # create new left node and new right node
-            left_node = Node(nid=l_id,
-                             sitename=self.sitename,
-                             grad=float(l_g),
-                             hess=float(l_h),
-                             weight=float(self.splitter.node_weight(l_g, l_h)),
-                             parent_nodeid=p_id,
-                             sibling_nodeid=r_id,
-                             is_left_node=True)
-            right_node = Node(nid=r_id,
-                              sitename=self.sitename,
-                              grad=float(sum_grad - l_g),
-                              hess=float(sum_hess - l_h),
-                              weight=float(self.splitter.node_weight(sum_grad - l_g, sum_hess - l_h)),
-                              parent_nodeid=p_id,
-                              sibling_nodeid=l_id,
-                              is_left_node=False)
-            
-            next_layer_node.append(left_node)
-            next_layer_node.append(right_node)
-            self._nodes.append(node)
-
-        map_func = functools.partial(_update_sample_pos, cur_layer_node=cur_to_split, node_map=node_map)
-        new_sample_pos['node_idx'] = data_with_pos.apply_row(map_func)
-
-        need_drop_idx = (new_sample_pos['node_idx'] != -1).as_tensor()
-        new_sample_pos = new_sample_pos[need_drop_idx]
-        new_data = data[need_drop_idx]
-
-        return next_layer_node, new_sample_pos, new_data
-
-    def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, bining_dict: dict):
+    def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
         
-        feat_max_bin, max_bin = self.get_column_max_bin(bining_dict)
-        sample_pos = self._init_sample_pos(bin_train_data)
-        root_node = self._initialize_root_node(grad_and_hess, ctx.guest.party[0] + '_' + ctx.guest.party[1])
-        self._nodes.append(root_node)
-        # init histogram builder
-        self.hist_builder = self.get_sklearn_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin)
-        # init splitter
-        self.splitter = SklearnSplitter(bining_dict)
+        # encrypt g & h
+        en_grad_hess = grad_and_hess.create_frame()
 
+        en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
+        en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
+
+        ctx.hosts.put('en_gh', en_grad_hess)
+        ctx.hosts.put('en_kit', [self._pk, self._evaluator])
+
+    def _mask_node(self, ctx: Context, nodes: List[Node]):
+        new_nodes = []
+        for n in nodes:
+            new_nodes.append(Node(nid=n.nid, is_leaf=n.is_leaf,  l=n.l, r=n.r, is_left_node=n.is_left_node, split_id=n.split_id, sitename=n.sitename, sample_num=n.sample_num))
+        return new_nodes
+
+    def _check_assign_result(self, sample_pos: DataFrame, cur_layer_node: List[Node]):
+        # debugging function
+        sample_pos_df = sample_pos.as_pd_df()
+        sample_pos_count = sample_pos_df.groupby('node_idx').count().to_dict()['sample_id']
+        for node in cur_layer_node:
+            nid = node.nid
+            sample_count_0 = node.sample_num
+            sample_count_1 = sample_pos_count[nid]
+            if sample_count_0 != sample_count_1:
+                parent_nid = node.parent_nodeid
+                for i in self._nodes:
+                    if i.nid == parent_nid:
+                        logger.info('parent node {}'.format(i))
+                raise ValueError('node {} sample count not match, {} vs {}, node details {}'.format(nid, sample_count_0, sample_count_1, node))
+
+    def _sync_nodes(self, ctx: Context, cur_layer_nodes: List[Node], next_layer_nodes: List[Node]):
+        
+        mask_cur_layer = self._mask_node(ctx, cur_layer_nodes)
+        mask_next_layer = self._mask_node(ctx, next_layer_nodes)
+        ctx.hosts.put('sync_nodes', [mask_cur_layer, mask_next_layer])
+
+    def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, binning_dict: dict):
+        
+        # Initialization
+        train_df = bin_train_data
+        sample_pos = self._init_sample_pos(train_df)
+        self._sample_on_leaves = sample_pos.empty_frame()
+        root_node = self._initialize_root_node(ctx, train_df, grad_and_hess)
+
+        # initialize homographic encryption
+        if self._encrypt_kit is None:
+            self._init_encrypt_kit(ctx)
+        # Send Encrypted Grad and Hess
+        self._send_gh(ctx, grad_and_hess)
+
+        # init histogram builder
+        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None)
+
+        # init splitter
+        self.splitter = FedSBTSplitter(bin_train_data, binning_dict, l2=self.l2, l1=self.l1, 
+                                       min_sample_split=self.min_sample_split, min_impurity_split=self.min_impurity_split,
+                                       min_child_weight=self.min_child_weight, min_leaf_node=self.min_leaf_node)
+
+        # Prepare for training
+        node_map = {}
         cur_layer_node = [root_node]
-        for cur_depth in range(self.max_depth):
+
+        for cur_depth, sub_ctx in ctx.on_iterations.ctxs_range(self.max_depth):
             
             if len(cur_layer_node) == 0:
+                logger.info('no nodes to split, stop training')
                 break
+            
+            assert len(sample_pos) == len(train_df), 'sample pos len not match train data len, {} vs {}'.format(len(sample_pos), len(train_df))
 
+            # debug checking code
+            # self._check_assign_result(sample_pos, cur_layer_node)
+            # initialize node map
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram
-            hist = self.hist_builder.compute_hist(cur_layer_node, bin_train_data, grad_and_hess, sample_pos, node_map)
+            hist_inst, statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             # compute best splits
-            split_info = self.splitter.split(hist, cur_layer_node)
+            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder)
             # update tree with best splits
-            cur_layer_node, sample_pos, bin_train_data = self.update(self._nodes, cur_layer_node, split_info, sample_pos, bin_train_data, node_map)
-
+            next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info, train_df)
+            # update feature importance
+            self._update_feature_importance(sub_ctx, split_info, train_df)
+            # sync nodes
+            self._sync_nodes(sub_ctx, cur_layer_node, next_layer_nodes)
+            # update sample positions
+            sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
+            # if sample reaches leaf nodes, drop them
+            sample_on_leaves = self._get_samples_on_leaves(sample_pos)
+            train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
+            self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_on_leaves])
+            # next layer nodes
+            cur_layer_node = next_layer_nodes
             logger.info('layer {} done: next layer will split {} nodes, active samples num {}'.format(cur_depth, len(cur_layer_node), len(sample_pos)))
+            self.next_layer_node = next_layer_nodes
 
         # handle final leaves
         if len(cur_layer_node) != 0:
             for node in cur_layer_node:
                 node.is_leaf = True
+                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1] # leaf always on guest
                 self._nodes.append(node)
+            self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_pos])
 
-        return cur_layer_node, sample_pos
+        # when training is done, all samples must be on leaves
+        assert len(self._sample_on_leaves) == len(bin_train_data), 'sample on leaves num not match, {} vs {}'.format(len(self._sample_on_leaves), len(bin_train_data))
+        # convert sample pos to weights
+        self._sample_weights = self._convert_sample_pos_to_weight(self._sample_on_leaves, self._nodes)
+        # convert bid to split value
+        self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, binning_dict, bin_train_data.schema)
+
+    def get_hyper_param(self):
+        param = {
+            'max_depth': self.max_depth,
+            'valid_features': self._valid_features,
+            'l1': self.l1,
+            'l2': self.l2,
+            'use_missing': self.use_missing,
+            'zero_as_missing': self.zero_as_missing
+        }
+        return param
     
-    def get_nodes(self):
-        return self._nodes
-    
-    def print_tree(self, show_path=False):
-        nodes = self._nodes
-        def print_node(node, prefix=""):
-            if node is not None:
-                info_str = "("
-                if node.is_leaf:
-                    info_str += "weight: " + str(node.weight)
-                    info_str += " leaf)"
-                else:
-                    info_str += "fid {}, split {}".format(node.fid, node.bid)
-                    info_str += ")"
-                
-                if not node.is_leaf:
-                    print_node(next((n for n in nodes if n.nid == node.r), None), prefix + "--R--> ")
-                
-                if not show_path:
-                    prefix = " " * len(prefix)
-                print(f"{prefix}id:{node.nid}", info_str)
-
-                if not node.is_leaf:
-                    print_node(next((n for n in nodes if n.nid == node.l), None), prefix + "--L--> ")
-
-        print_node(nodes[0])
-
-    def fit(self, ctx: Context, train_data: DataFrame):
-        pass
-
-    def predict(self, ctx: Context, data_inst: DataFrame):
-        pass
+    @staticmethod
+    def from_model(model_dict):
+        return HeteroDecisionTreeGuest._from_model(model_dict, HeteroDecisionTreeGuest)
     

@@ -15,6 +15,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -205,18 +206,19 @@ class CoordinatedLREstimatorHost(HeteroModule):
     def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = 0.25 * torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
         half_g = torch.matmul(X.T, Xw_h)
 
         guest_half_d = batch_ctx.guest.get("half_d")
         guest_half_g = torch.matmul(X.T, guest_half_d)
 
-        batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+        batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
         loss_norm = self.optimizer.loss_norm(w)
+
         if loss_norm is not None:
-            batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+            batch_ctx.guest.put("h_loss", encryptor.encrypt_tensor(loss_norm))
         else:
-            batch_ctx.guest.put(h_loss=loss_norm)
+            batch_ctx.guest.put("h_loss", loss_norm)
 
         g = 1 / h * (half_g + guest_half_g)
         return g
@@ -224,12 +226,12 @@ class CoordinatedLREstimatorHost(HeteroModule):
     def centralized_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = 0.25 * torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt(Xw_h))
-        batch_ctx.guest.put("Xw2_h", encryptor.encrypt(torch.matmul(Xw_h.T, Xw_h)))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
+        batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
 
         loss_norm = self.optimizer.loss_norm(w)
         if loss_norm is not None:
-            batch_ctx.guest.put("h_loss", encryptor.encrypt(loss_norm))
+            batch_ctx.guest.put("h_loss", encryptor.encrypt_tensor(loss_norm))
         else:
             batch_ctx.guest.put(h_loss=loss_norm)
 

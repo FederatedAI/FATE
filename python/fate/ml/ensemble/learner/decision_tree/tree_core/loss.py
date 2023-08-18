@@ -1,10 +1,22 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import numpy as np
 import pandas as pd
 import torch as t
 from fate.arch.dataframe import DataFrame
 from scipy.special import expit as sigmoid
-
-
 
 
 
@@ -23,7 +35,7 @@ class BCELoss(object):
     @staticmethod
     def predict(score: DataFrame):
         pred_rs = score.create_frame()
-        pred_rs['predict'] = score.apply_row(lambda s: sigmoid(s))
+        pred_rs['score'] = score.apply_row(lambda s: sigmoid(s))
         return pred_rs
 
     @staticmethod
@@ -38,7 +50,7 @@ class BCELoss(object):
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
-        gh['g'] = label - predict_score['predict']
+        gh['g'] = predict_score - label
 
     @staticmethod
     def compute_hess(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
@@ -50,13 +62,18 @@ class CELoss(object):
     @staticmethod
     def initialize(label, class_num=3):
         init_score = label.create_frame()
-        init_score['score'] = [0 for i in range(class_num)]
+        init_score['score'] = [0.0 for i in range(class_num)]
         return init_score
 
     @staticmethod
     def predict(score: DataFrame):
-        pred = score.apply_row(lambda s: np.exp(s)/np.exp(s).sum())
-        return pred
+        def softmax(s):
+            s = np.array(s['score']).astype(np.float64)
+            ret = (np.exp(s) / np.exp(s).sum()).tolist()
+            return [ret]
+        pred_rs = score.create_frame()
+        pred_rs['score'] = score.apply_row(lambda s: softmax(s))
+        return pred_rs
  
     @staticmethod
     def compute_loss(label: DataFrame, pred: DataFrame, weight: DataFrame):
@@ -72,11 +89,11 @@ class CELoss(object):
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, score: DataFrame):
-        gh['g'] = score - 1
+        gh['g'] = score.apply_row(lambda s: [[i - 1 for i in s['score']]])
 
     @staticmethod
     def compute_hess(gh: DataFrame, y, score):
-        gh['h'] = score * (1 - score)
+        gh['h'] = score.apply_row(lambda s: [[2 * i * (1 - i) for i in s['score']]])
 
 
 class L2Loss(object):
@@ -84,8 +101,9 @@ class L2Loss(object):
     @staticmethod
     def initialize(label):
         init_score = label.create_frame()
-        init_score['score'] = float(label.mean())
-        return init_score
+        mean_score = float(label.mean())
+        init_score['score'] = mean_score
+        return init_score, mean_score
 
     @staticmethod
     def predict(score):
