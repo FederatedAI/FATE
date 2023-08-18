@@ -11,8 +11,7 @@ provide:
 2. Federated Feature Engineering: Feature Sampling, Feature Binning,
    Feature Selection, etc.
 3. Federated Machine Learning Algorithms: LR, GBDT, DNN
-4. Model Evaluation: Binary | Multiclass | Regression | Clustering
-   Evaluation
+4. Model Evaluation: Binary | Multiclass | Regression evaluation
 5. Secure Protocol: Provides multiple security protocols for secure
    multi-party computing and interaction between participants.
 
@@ -37,8 +36,6 @@ provide:
 
 ## Secure Protocol
 
-- [Encrypt](secureprotol.md#encrypt)
-    - [Paillier encryption](secureprotol.md#paillier-encryption)
-    - [RSA encryption](secureprotol.md#rsa-encryption)
-- [Hash](secureprotol.md#hash-factory)
-- [Diffie Hellman Key Exchange](secureprotol.md#diffie-hellman-key-exchange)
+- [Encrypt](secure_protocol.md#encrypt)
+    - [Paillier encryption](secure_protocol.md#paillier-encryption)
+- [Diffie Hellman Key Exchange](secure_protocol.md#diffie-hellman-key-exchange)
