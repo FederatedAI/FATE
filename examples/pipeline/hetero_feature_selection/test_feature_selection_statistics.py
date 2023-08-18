@@ -39,12 +39,13 @@ def main(config=".../config.yaml", namespace=""):
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
-    statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"])
+    statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"],
+                              metrics=["min", "max", "25%", "mean", "median"])
     selection_0 = HeteroFeatureSelection("selection_0",
                                          method=["statistics"],
                                          train_data=psi_0.outputs["output_data"],
                                          input_models=[statistics_0.outputs["output_model"]],
-                                         statistic_param={"metrics": ["max", "mean"],
+                                         statistic_param={"metrics": ["max", "mean", "25%"],
                                                           "filter_type": "top_k", "threshold": 5})
 
     pipeline.add_task(psi_0)

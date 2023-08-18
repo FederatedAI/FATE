@@ -18,7 +18,7 @@ class SharedOptions(object):
                                False),
         "yes": (('-y', '--yes',), dict(type=bool, is_flag=True, help="Skip double check", default=None),
                 False),
-        "extend_sid": (('--extend_sid',),
+        "extend_sid": (('--extend-sid',),
                        dict(type=bool, is_flag=True, help="whether to append uuid as sid when uploading data",
                             default=None), None),
         # "auto_increasing_sid": (('--auto_increasing_sid',),

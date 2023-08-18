@@ -72,7 +72,7 @@ def metrics_param(auc=True, ks=True, accuracy=True, mse=True) -> Type[str]:
 
 
 class LegalPercentile(str, Parameter):
-    legal_percentile = r"^(100)|(?:[05]|[0-9]?[05])0*%$"
+    legal_percentile = r"^(100|\d{1,2})%$"
 
     @classmethod
     def __get_validators__(cls):

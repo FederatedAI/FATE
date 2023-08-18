@@ -50,6 +50,7 @@ def main(config="../config.yaml", namespace=""):
                              train_size=0.6,
                              validate_size=0.1,
                              test_size=None,
+                             stratified=True,
                              input_data=psi_0.outputs["output_data"])
 
     data_split_1 = DataSplit("data_split_1",
@@ -63,7 +64,6 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(data_split_0)
     pipeline.add_task(data_split_1)
 
-    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()

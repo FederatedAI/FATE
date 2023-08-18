@@ -1,5 +1,5 @@
 data:
-  - file: examples/data/breast_hetero_guest_sid.csv
+  - file: examples/data/breast_hetero_guest.csv
     meta:
       delimiter: ","
       dtype: float64
@@ -8,41 +8,38 @@ data:
       label_name: y
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     partitions: 4
     head: true
-    extend_sid: false
+    extend_sid: true
     table_name: breast_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: examples/data/breast_hetero_host_sid.csv
+  - file: examples/data/breast_hetero_host.csv
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     partitions: 4
     head: true
-    extend_sid: false
+    extend_sid: true
     table_name: breast_hetero_host
     namespace: experiment
     role: host_0
-  - file: "../../data/default_credit_hetero_guest_sid.csv"
+  - file: "examples/data/default_credit_hetero_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       label_type: int64
       label_name: y
       tag_value_delimiter: ":"
@@ -50,35 +47,33 @@ data:
       weight_type: float64
     partitions: 4
     head: true
-    extend_sid: false
+    extend_sid: true
     table_name: default_credit_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "../../data/default_credit_hetero_host_sid.csv"
+  - file: "examples/data/default_credit_hetero_host.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     partitions: 4
     head: true
-    extend_sid: false
+    extend_sid: true
     table_name: default_credit_hetero_host
     namespace: experiment
     role: host_0
-  - file: "../../data/give_credit_hetero_guest_sid.csv"
+  - file: "examples/data/give_credit_hetero_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       label_type: int64
       label_name: y
       tag_value_delimiter: ":"
@@ -86,35 +81,33 @@ data:
       weight_type: float64
     partitions: 4
     head: true
-    extend_sid: false
+    extend_sid: true
     table_name: give_credit_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "../../data/give_credit_hetero_host_sid.csv"
+  - file: "examples/data/give_credit_hetero_host.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     head: true
     partition: 4
-    extend_sid: false
+    extend_sid: true
     table_name: give_credit_hetero_host
     namespace: experiment
     role: host_0
-  - file: "../../data/epsilon_5k_hetero_guest_sid.csv"
+  - file: "examples/data/epsilon_5k_hetero_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       label_type: int64
       label_name: y
       tag_value_delimiter: ":"
@@ -122,35 +115,33 @@ data:
       weight_type: float64
     head: true
     partition: 4
-    extend_sid: false
+    extend_sid: true
     table_name: epsilon_5k_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "../../data/epsilon_5k_hetero_host_sid.csv"
+  - file: "examples/data/epsilon_5k_hetero_host.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     head: true
     partition: 4
-    extend_sid: false
+    extend_sid: true
     table_name: epsilon_5k_hetero_host
     namespace: experiment
     role: host_0
-  - file: "../../data/vehicle_scale_hetero_guest_sid.csv"
+  - file: "examples/data/vehicle_scale_hetero_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       label_type: int64
       label_name: y
       tag_value_delimiter: ":"
@@ -158,24 +149,23 @@ data:
       weight_type: float64
     head: true
     partition: 4
-    extend_sid: false
+    extend_sid: true
     table_name: vehicle_scale_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "../../data/vehicle_scale_hetero_host_sid.csv"
+  - file: "examples/data/vehicle_scale_hetero_host.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      sample_id_name: "sid"
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     head: true
     partition: 4
-    extend_sid: false
+    extend_sid: true
     table_name: vehicle_scale_hetero_host
     namespace: experiment
     role: host_0
@@ -215,12 +205,13 @@ hetero_lr-binary-3-give-credit:
     conf: "./give_credit_config.yaml"
   compare_setting:
     relative_tol: 0.01
-#multi-vehicle:
-#  local:
-#    script: "./sklearn-lr-multi.py"
-#    conf: "./vehicle_lr_sklearn_config.yaml"
-#  FATE-hetero-lr:
-#    script: "./pipeline-lr-multi.py"
-#    conf: "./vehicle_config.yaml"
-#  compare_setting:
-#    relative_tol: 0.01
+multi-vehicle:
+  local:
+    script: "./sklearn-lr-multi.py"
+    conf: "./vehicle_lr_sklearn_config.yaml"
+  FATE-hetero-lr:
+    script: "./pipeline-lr-multi.py"
+    conf: "./vehicle_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+

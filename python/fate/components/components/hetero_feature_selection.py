@@ -98,11 +98,9 @@ def train(
         if manual_param.keep_col is not None:
             keep_col = [columns[anonymous_columns.index(col)] for col in manual_param.keep_col]
             manual_param.keep_col = keep_col
-    # temp code start
     iv_param = iv_param.dict()
     statistic_param = statistic_param.dict()
     manual_param = manual_param.dict()
-    # temp code end
     # logger.info(f"input_models: {input_models}, len: {len(input_models)}")
 
     input_iso_models = [model.read() for model in input_models] if input_models is not None else None
@@ -138,6 +136,8 @@ def train(
     output_data = train_data
     if method is not None:
         output_data = selection.transform(sub_ctx, train_data)
+    # logger.info(f"output_data schema columns: {output_data.schema.columns}; "
+    #             f"anonymous columns: {output_data.schema.anonymous_columns}")
     train_output_data.write(output_data)
 
 

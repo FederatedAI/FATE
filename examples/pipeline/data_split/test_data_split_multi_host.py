@@ -12,10 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import PSI, HeteroFeatureBinning
+from fate_client.pipeline.components.fate import DataSplit, PSI
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -25,7 +26,7 @@ def main(config="../config.yaml", namespace=""):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
+    host = parties.host
 
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
     if config.task_cores:
@@ -38,53 +39,36 @@ def main(config="../config.yaml", namespace=""):
                                                                   namespace=f"experiment{namespace}"))
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
-
+    psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
     psi_1 = PSI("psi_1")
     psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
     psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
+    psi_1.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                     namespace=f"experiment{namespace}"))
+    data_split_0 = DataSplit("data_split_0",
+                             train_size=0.6,
+                             validate_size=0.1,
+                             test_size=None,
+                             hetero_sync=False,
+                             input_data=psi_0.outputs["output_data"])
 
-    binning_0 = HeteroFeatureBinning("binning_0",
-                                     method="bucket",
-                                     n_bins=10,
-                                     transform_method="bin_idx",
-                                     skip_metrics=True,
-                                     train_data=psi_0.outputs["output_data"]
-                                     )
-    binning_1 = HeteroFeatureBinning("binning_1",
-                                     transform_method="bin_idx",
-                                     input_model=binning_0.outputs["output_model"],
-                                     test_data=psi_1.outputs["output_data"])
+    data_split_1 = DataSplit("data_split_1",
+                             train_size=200,
+                             test_size=50,
+                             input_data=psi_0.outputs["output_data"]
+                             )
 
     pipeline.add_task(psi_0)
     pipeline.add_task(psi_1)
-    pipeline.add_task(binning_0)
-    pipeline.add_task(binning_1)
+    pipeline.add_task(data_split_0)
+    pipeline.add_task(data_split_1)
 
-    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
-
-    # print(pipeline.get_task_info("binning_0").get_output_model())
-    # print(pipeline.get_task_info("feature_scale_1").get_output_model())
-
-    pipeline.deploy([psi_0, binning_0])
-
-    predict_pipeline = FateFlowPipeline()
-
-    deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                    namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                                       namespace=f"experiment{namespace}"))
-
-    predict_pipeline.add_task(deployed_pipeline)
-    predict_pipeline.compile()
-    # print("\n\n\n")
-    # print(predict_pipeline.compile().get_dag())
-    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

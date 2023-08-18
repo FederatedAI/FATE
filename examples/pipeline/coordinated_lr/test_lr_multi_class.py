@@ -44,7 +44,7 @@ def main(config="../config.yaml", namespace=""):
     lr_0 = CoordinatedLR("lr_0",
                          epochs=10,
                          batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}},
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}, "penalty": "L1"},
                          init_param={"fit_intercept": True, "method": "random_uniform"},
                          train_data=psi_0.outputs["output_data"],
                          learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
@@ -54,6 +54,7 @@ def main(config="../config.yaml", namespace=""):
                               label_column_name="y",
                               runtime_roles=["guest"],
                               default_eval_setting="multi",
+                              predict_column_name='predict_result',
                               input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)

@@ -12,16 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import DataSplit, PSI
+from fate_client.pipeline.components.fate import PSI, Statistics
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
-def main(config="../config.yaml", namespace=""):
+def main(config=".../config.yaml", namespace=""):
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
     parties = config.parties
@@ -40,35 +39,16 @@ def main(config="../config.yaml", namespace=""):
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
-    psi_1 = PSI("psi_1")
-    psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
-    psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
-
-    data_split_0 = DataSplit("data_split_0",
-                             train_size=0.6,
-                             validate_size=0.0,
-                             test_size=0.4,
-                             stratified=True,
-                             input_data=psi_0.outputs["output_data"])
-
-    data_split_1 = DataSplit("data_split_1",
-                             train_size=200,
-                             test_size=50,
-                             stratified=True,
-                             hetero_sync=False,
-                             input_data=psi_0.outputs["output_data"]
-                             )
+    statistics_0 = Statistics("statistics_0",
+                              skip_col=["x0", "x3"],
+                              input_data=psi_0.outputs["output_data"])
 
     pipeline.add_task(psi_0)
-    pipeline.add_task(psi_1)
-    pipeline.add_task(data_split_0)
-    pipeline.add_task(data_split_1)
+    pipeline.add_task(statistics_0)
 
     pipeline.compile()
-    # print(pipeline.get_dag())
     pipeline.fit()
+    print(f"statistics_0 output model: {pipeline.get_task_info('statistics_0').get_output_model()}")
 
 
 if __name__ == "__main__":

@@ -36,3 +36,5 @@ data:
 tasks:
   statistics:
     script: test_statistics.py
+  statistics-default:
+    script: test_statistics_default.py

@@ -23,24 +23,14 @@ class Clients(object):
         self._flow_clients = {}
         # self._tunnel_id_to_flow_clients = {}
         self._role_str_to_service_id = {}
-        # self._service_id_to_role_str = {}
-        # self._service_id_to_party = {}
-        # self._tunnel_id_to_tunnel = config.tunnel_id_to_tunnel
         for party, service_id in config.party_to_service_id.items():
             for role_str in config.parties.party_to_role_string(party):
                 self._role_str_to_service_id[role_str] = service_id
-                # self._service_id_to_role_str[service_id] = role_str
-                # self._service_id_to_party[service_id] = party
 
         for service_id, service in config.service_id_to_service.items():
             if isinstance(service, Config.service):
                 self._flow_clients[service_id] = FLOWClient(
                     service.address, config.data_base_dir, config.cache_directory)
-
-            """elif isinstance(service, Config.tunnel_service):
-                self._flow_clients[service_id] = FLOWClient(None, config.data_base_dir, config.cache_directory)
-                self._tunnel_id_to_flow_clients.setdefault(service.tunnel_id, []).append(
-                    (service.index, self._flow_clients[service_id]))"""
 
     def __getitem__(self, role_str: str) -> 'FLOWClient':
         if role_str not in self._role_str_to_service_id:
