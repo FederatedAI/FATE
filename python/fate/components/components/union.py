@@ -14,7 +14,7 @@
 #  limitations under the License.
 
 from fate.arch import Context
-from fate.components.core import GUEST, HOST, Role, cpn, params
+from fate.components.core import GUEST, HOST, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
@@ -22,8 +22,6 @@ def union(
         ctx: Context,
         role: Role,
         input_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
-        axis: cpn.parameter(type=params.conint(strict=True, ge=0, le=1), default=0, optional=False,
-                            desc="axis along which concatenation is performed, 0 for row-wise, 1 for column-wise"),
         output_data: cpn.dataframe_output(roles=[GUEST, HOST])
 ):
     from fate.ml.preprocessing import Union
@@ -33,6 +31,6 @@ def union(
         data_list.append(data)
 
     sub_ctx = ctx.sub_ctx("train")
-    union_obj = Union(axis)
+    union_obj = Union()
     output_df = union_obj.fit(sub_ctx, data_list)
     output_data.write(output_df)
