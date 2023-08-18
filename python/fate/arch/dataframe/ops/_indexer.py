@@ -51,6 +51,15 @@ def aggregate_indexer(indexer):
     return agg_indexer
 
 
+def _convert_to_frame_block(blocks, data_manager):
+    convert_blocks = []
+    for idx, block_schema in enumerate(data_manager.blocks):
+        block_content = [row_data[1][idx] for row_data in blocks]
+        convert_blocks.append(block_schema.convert_block(block_content))
+
+    return convert_blocks
+
+
 def transform_to_table(block_table, block_index, partition_order_mappings):
     def _convert_to_order_index(kvs):
         for block_id, blocks in kvs:
@@ -228,8 +237,11 @@ def loc(df: DataFrame, indexer, target, preserve_order=False):
 
         block_table = df.block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
         block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
-        block_table = block_table.mapValues(lambda values: [v[1] for v in values])
-        block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
+
+        _convert_to_frame_block_func = functools.partial(_convert_to_frame_block, data_manager=df.data_manager)
+        block_table = block_table.mapValues(_convert_to_frame_block_func)
+        # block_table = block_table.mapValues(lambda values: [v[1] for v in values])
+        # block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
 
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, df.data_manager.block_row_size)
     return DataFrame(
@@ -369,6 +381,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
         for dst_block_id, value_list in ret_dict.items():
             yield dst_block_id, sorted(value_list)
 
+    """
     def _convert_to_frame_block(blocks):
         convert_blocks = []
         for idx, block_schema in enumerate(data_manager.blocks):
@@ -376,11 +389,14 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
             convert_blocks.append(block_schema.convert_block(block_content))
 
         return convert_blocks
+    """
 
     agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
     block_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2))
     block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
-    block_table = block_table.mapValues(_convert_to_frame_block)
+    
+    _convert_to_frame_block_func = functools.partial(_convert_to_frame_block, data_manager=data_manager)
+    block_table = block_table.mapValues(_convert_to_frame_block_func)
 
     return DataFrame(
         ctx=df._ctx,
