@@ -7,7 +7,7 @@ import torch
 # from fate_utils.histogram import HistogramIndexer, Shuffler
 from .indexer import HistogramIndexer, Shuffler
 
-loggger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class HistogramValues:
@@ -195,7 +195,7 @@ class HistogramPlainValues(HistogramValues):
         index = index.flatten()
 
         if self.data.dtype != value.dtype:
-            loggger.warning(f"update value dtype {value.dtype} is not equal to data dtype {self.data.dtype}")
+            logger.warning(f"update value dtype {value.dtype} is not equal to data dtype {self.data.dtype}")
             value = value.to(self.data.dtype)
         self.data.scatter_add_(0, index, value)
 
