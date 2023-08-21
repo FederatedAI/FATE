@@ -240,18 +240,21 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
 def retrieval_row(df: "DataFrame", indexer: "DTensor"):
     if indexer.shape[1] != 1:
         raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
+    block_num = df.data_manager.block_num
 
-    def _retrieval(blocks, t: torch.Tensor):
-        index = t.reshape(-1).tolist()
-        ret_blocks = [block[index] for block in blocks]
+    block_num = df.data_manager.block_num
+    def _flatten_data(kvs):
+        for _, (blocks, t) in kvs:
+            flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+            for i, v in enumerate(t):
+                v = v.item()
+                if not v:
+                    continue
+                yield flat_blocks[0][i], [flat_blocks[j][i] for j in range(1, block_num)]
 
-        return ret_blocks
 
-    _retrieval_func = functools.partial(_retrieval)
-    retrieval_block_table = df.block_table.join(indexer.shardings._data, _retrieval_func)
-
-    _flatten_func = functools.partial(_flatten_partition, block_num=df.data_manager.block_num)
-    retrieval_raw_table = retrieval_block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
+    block_table_with_index = df.block_table.join(indexer.shardings._data, lambda v1, v2: (v1, v2))
+    retrieval_raw_table = block_table_with_index.mapPartitions(_flatten_data, use_previous_behavior=False)
 
     if retrieval_raw_table.count() == 0:
         return df.empty_frame()

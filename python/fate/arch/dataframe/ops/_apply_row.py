@@ -71,40 +71,40 @@ def _apply(blocks, func=None, src_field_names=None,
     dm = dst_dm.duplicate()
     apply_blocks = []
     lines = len(blocks[0])
-    ret_column_len = len(ret_columns) if ret_columns is not None else None
-    block_types = []
 
     flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
-    for lid in range(lines):
-        apply_row_data = [flat_blocks[bid][lid][offset] for bid, offset in src_fields_loc]
-        apply_ret = func(pd.Series(apply_row_data, index=src_field_names))
+    apply_data = [[] for _ in range(lines)]
+    for bid, offset in src_fields_loc:
+        for lid in range(lines):
+            apply_data[lid].append(flat_blocks[bid][lid][offset])
 
-        if isinstance(apply_ret, Iterable):
-            apply_ret = list(apply_ret)
-            if ret_column_len is None:
-                ret_column_len = len(apply_ret)
-            elif ret_column_len != len(apply_ret):
-                raise ValueError("Result of apply row should have equal length")
-        else:
-            if ret_column_len and ret_column_len != 1:
-                raise ValueError("Result of apply row should have equal length")
-            apply_ret = [apply_ret]
+    apply_data = pd.DataFrame(apply_data, columns=src_field_names)
+    apply_ret = apply_data.apply(lambda row: func(row), axis=1).values.tolist()
 
-        if ret_column_len is None:
-            ret_column_len = len(apply_ret)
+    if isinstance(apply_ret[0], Iterable):
+        first_row = list(apply_ret[0])
+        ret_column_len = len(first_row)
+        block_types = [BlockType.get_block_type(value) for value in first_row]
+        apply_blocks = [[] for _ in range(ret_column_len)]
+        for ret in apply_ret:
+            for idx, value in enumerate(ret):
+                apply_blocks[idx].append([value])
 
-        if not block_types:
-            block_types = [BlockType.get_block_type(value) for value in apply_ret]
-            apply_blocks = [[] for _ in range(ret_column_len)]
-
-        for idx, value in enumerate(apply_ret):
-            apply_blocks[idx].append([value])
+                if enable_type_align_checking:
+                    block_type = BlockType.get_block_type(value)
+                    if block_types[idx] < block_type:
+                        block_types[idx] = block_type
+    else:
+        block_types = [BlockType.get_block_type(apply_ret[0])]
+        apply_blocks.append([[ret] for ret in apply_ret])
+        ret_column_len = 1
 
         if enable_type_align_checking:
-            for idx, value in enumerate(apply_ret):
-                block_type = BlockType.get_block_type(value)
-                if block_types[idx] < block_type:
-                    block_types[idx] = block_type
+            for ret in apply_ret:
+                block_type = BlockType.get_block_type(ret)
+                if block_types[0] < block_type:
+                    block_types[0] = block_type
+
 
     if not ret_columns:
         ret_columns = generated_default_column_names(ret_column_len)
