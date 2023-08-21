@@ -60,8 +60,8 @@ class CommunicatorTransVar(HomoTransferBase):
 
 class ServerCommunicator(object):
 
-    def __init__(self, prefix=None):
-        self.trans_var = CommunicatorTransVar(prefix=prefix)
+    def __init__(self, prefix=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
+        self.trans_var = CommunicatorTransVar(prefix=prefix, server=server, clients=clients)
         self._client_parties = self.trans_var.client_parties
 
     def get_parties(self, party_idx):
@@ -85,8 +85,8 @@ class ServerCommunicator(object):
 
 class ClientCommunicator(object):
 
-    def __init__(self, prefix=None):
-        trans_var = CommunicatorTransVar(prefix=prefix)
+    def __init__(self, prefix=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
+        trans_var = CommunicatorTransVar(prefix=prefix, server=server, clients=clients)
         self.trans_var = trans_var
         self._server_parties = trans_var.server_parties
 

@@ -42,7 +42,8 @@ class HomoNNParam(BaseParam):
                  nn_define: dict = None,
                  loss: dict = None,
                  optimizer: dict = None,
-                 ds_config: dict = None
+                 ds_config: dict = None,
+                 server_init: bool = False
                  ):
 
         super(HomoNNParam, self).__init__()
@@ -53,6 +54,7 @@ class HomoNNParam(BaseParam):
         self.loss = loss
         self.optimizer = optimizer
         self.ds_config = ds_config
+        self.server_init = server_init
 
     def check(self):
 

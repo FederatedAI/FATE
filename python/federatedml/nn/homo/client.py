@@ -23,6 +23,7 @@ from federatedml.nn.backend.utils.data import get_ret_predict_table
 from federatedml.nn.backend.utils.data import add_match_id
 from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam as HomoNNParamPB
 from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta as HomoNNMetaPB
+from federatedml.nn.homo._init import init
 
 
 class NNModelExporter(ExporterBase):
@@ -85,6 +86,12 @@ class NNModelExporter(ExporterBase):
         return get_homo_model_dict(param, meta)
 
 
+def default_client_post_process(trainer):
+    model = trainer.get_cached_model()
+    summary = trainer.get_summary()
+    return model, summary
+
+
 class HomoNNClient(ModelBase):
 
     def __init__(self):
@@ -122,6 +129,7 @@ class HomoNNClient(ModelBase):
         self._ds_stage = -1
         self.model_save_flag = False
 
+
     def _init_model(self, param: HomoNNParam):
 
         train_param = param.trainer.to_dict()
@@ -135,136 +143,6 @@ class HomoNNClient(ModelBase):
         self.loss = param.loss
         self.optimizer = param.optimizer
         self.ds_config = param.ds_config
-
-    def init(self):
-
-        # set random seed
-        global_seed(self.torch_seed)
-
-        if self.ds_config:
-            deepspeed_util.init_deepspeed_env(self.ds_config)
-
-        # load trainer class
-        if self.trainer is None:
-            raise ValueError(
-                'Trainer is not specified, please specify your trainer')
-
-        trainer_class = get_trainer_class(self.trainer)
-        LOGGER.info('trainer class is {}'.format(trainer_class))
-
-        # recover model from model config / or recover from saved model param
-        loaded_model_dict = None
-
-        # if has model protobuf, load model config from protobuf
-        load_opt_state_dict = False
-        if self.model_loaded:
-
-            param, meta = get_homo_param_meta(self.model)
-            LOGGER.info('save path is {}'.format(param.local_save_path))
-            if param.local_save_path == '':
-                LOGGER.info('Load model from model protobuf')
-                self.warm_start_iter = param.epoch_idx
-                if param is None or meta is None:
-                    raise ValueError(
-                        'model protobuf is None, make sure'
-                        'that your trainer calls export_model() function to save models')
-
-                if meta.nn_define[0] is None:
-                    raise ValueError(
-                        'nn_define is None, model protobuf has no nn-define, make sure'
-                        'that your trainer calls export_model() function to save models')
-
-                self.nn_define = json.loads(meta.nn_define[0])
-                loss = json.loads(meta.loss_func_define[0])
-                optimizer = json.loads(meta.optimizer_define[0])
-                loaded_model_dict = recover_model_bytes(param.model_bytes)
-                extra_data = recover_model_bytes(param.extra_data_bytes)
-            else:
-                LOGGER.info('Load model from local save path')
-                save_dict = torch.load(open(param.local_save_path, 'rb'))
-                self.warm_start_iter = save_dict['epoch_idx']
-                self.nn_define = save_dict['model_define']
-                loss = save_dict['loss_define']
-                optimizer = save_dict['optimizer_define']
-                loaded_model_dict = save_dict
-                extra_data = save_dict['extra_data']
-
-            if self.optimizer is not None and optimizer != self.optimizer:
-                LOGGER.info('optimizer updated')
-            else:
-                self.optimizer = optimizer
-                load_opt_state_dict = True
-
-            if self.loss is not None and self.loss != loss:
-                LOGGER.info('loss updated')
-            else:
-                self.loss = loss
-        else:
-            extra_data = {}
-
-        # check key param
-        if self.nn_define is None:
-            raise ValueError(
-                'Model structure is not defined, nn_define is None, please check your param')
-
-        # get model from nn define
-        model = s.recover_sequential_from_dict(self.nn_define)
-        if loaded_model_dict:
-            model.load_state_dict(loaded_model_dict['model'])
-            LOGGER.info('load model state dict from check point')
-
-        LOGGER.info('model structure is {}'.format(model))
-        # init optimizer
-        if self.optimizer is not None and not self.ds_config:
-            optimizer_: FateTorchOptimizer = s.recover_optimizer_from_dict(
-                self.optimizer)
-            # pass model parameters to optimizer
-            optimizer = optimizer_.to_torch_instance(model.parameters())
-            if load_opt_state_dict:
-                LOGGER.info('load optimizer state dict')
-                optimizer.load_state_dict(loaded_model_dict['optimizer'])
-            LOGGER.info('optimizer is {}'.format(optimizer))
-        else:
-            optimizer = None
-            LOGGER.info('optimizer is not specified')
-
-        # init loss
-        if self.loss is not None:
-            loss_fn = s.recover_loss_fn_from_dict(self.loss)
-            LOGGER.info('loss function is {}'.format(loss_fn))
-        else:
-            loss_fn = None
-            LOGGER.info('loss function is not specified')
-
-        # init trainer
-        trainer_inst: TrainerBase = trainer_class(**self.trainer_param)
-        LOGGER.info('trainer class is {}'.format(trainer_class))
-
-        trainer_train_args = inspect.getfullargspec(trainer_inst.train).args
-        args_format = [
-            'self',
-            'train_set',
-            'validate_set',
-            'optimizer',
-            'loss',
-            'extra_data'
-        ]
-        if len(trainer_train_args) < 6:
-            raise ValueError(
-                'Train function of trainer should take 6 arguments :{}, but current trainer.train '
-                'only takes {} arguments: {}'.format(
-                    args_format, len(trainer_train_args), trainer_train_args))
-
-        trainer_inst.set_nn_config(self.nn_define, self.optimizer, self.loss)
-        trainer_inst.fed_mode = True
-
-        if self.ds_config:
-            model, optimizer = deepspeed_util.deepspeed_init(model, self.ds_config)
-            trainer_inst.enable_deepspeed(is_zero_3=deepspeed_util.is_zero3(self.ds_config))
-            if deepspeed_util.is_zero3(self.ds_config):
-                model.train()
-
-        return trainer_inst, model, optimizer, loss_fn, extra_data
 
     def fit(self, train_input, validate_input=None):
 
@@ -294,13 +172,21 @@ class HomoNNClient(ModelBase):
         # set random seed
         global_seed(self.torch_seed)
 
-        self.trainer_inst, model, optimizer, loss_fn, extra_data = self.init()
+        # init
+        self.trainer_inst, model, optimizer, loss_fn, extra_data, self.optimizer, self.loss, self.warm_start_iter = init(
+            trainer=self.trainer, trainer_param=self.trainer_param, nn_define=self.nn_define,
+            config_optimizer=self.optimizer, config_loss=self.loss, torch_seed=self.torch_seed, model_loaded_flag=self.model_loaded,
+            loaded_model=self.model, ds_config=self.ds_config
+        )
+
+        # prepare to train
         self.trainer_inst.set_model(model)
         self.trainer_inst.set_tracker(self.tracker)
         self.trainer_inst.set_model_exporter(self.exporter)
         party_id_list = [self.component_properties.guest_partyid]
-        for i in self.component_properties.host_party_idlist:
-            party_id_list.append(i)
+        if self.component_properties.host_party_idlist is not None:
+            for i in self.component_properties.host_party_idlist:
+                party_id_list.append(i)
         self.trainer_inst.set_party_id_list(party_id_list)
 
         # load dataset class
@@ -343,8 +229,8 @@ class HomoNNClient(ModelBase):
         )
 
         # training is done, get exported model
-        self.model = self.trainer_inst.get_cached_model()
-        self.set_summary(self.trainer_inst.get_summary())
+        self.model, summary = default_client_post_process(self.trainer_inst)
+        self.set_summary(summary)
 
     def predict(self, cpn_input):
 
