@@ -13,6 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
+import torch
+from ..manager import BlockType
 from ..manager import DataManager
 
 
@@ -22,23 +25,23 @@ def compress_blocks(block_table, data_manager: DataManager):
         return block_table, data_manager
 
     def _compress(blocks):
-        ret_blocks = [[] for idx in range(data_manager.block_num)]
+        ret_blocks = [[] for _ in range(data_manager.block_num)]
         for src_bid, dst_bid in non_compress_block_changes.items():
             ret_blocks[dst_bid] = blocks[src_bid]
 
         lines = len(blocks[0])
         for dst_bid, block_loc in to_compress_block_loc:
-            block_buf = []
             field_len = len(data_manager.get_block(dst_bid).field_indexes)
-            for lid in range(lines):
-                row_value = [None for idx in range(field_len)]
-                for src_bid, field_indexes in block_loc:
-                    for field_idx, val in zip(field_indexes, blocks[src_bid][lid]):
-                        row_value[field_idx] = val
+            block = data_manager.get_block(dst_bid)
+            if BlockType.is_tensor(block.block_type):
+                block_buf = torch.empty((lines, field_len), dtype=getattr(torch, block.block_type.value))
+            else:
+                block_buf = np.empty((lines, field_len), dtype=getattr(np, block.block_type.value))
 
-                block_buf.append(row_value)
+            for src_bid, field_indexes in block_loc:
+                block_buf[:, field_indexes] = blocks[src_bid]
 
-            ret_blocks[dst_bid] = data_manager.get_block(dst_bid).convert_block(block_buf)
+            ret_blocks[dst_bid] = block.convert_block(block_buf)
 
         return ret_blocks
 
