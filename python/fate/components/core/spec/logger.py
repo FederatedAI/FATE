@@ -23,8 +23,8 @@ import pydantic
 class LoggerConfig(pydantic.BaseModel):
     config: Optional[dict] = None
 
-    def install(self):
-        if self.config is None:
+    def install(self, debug=False):
+        if debug or self.config is None:
             handler_name = "rich_handler"
             self.config = dict(
                 version=1,
