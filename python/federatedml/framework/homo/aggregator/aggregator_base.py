@@ -20,7 +20,10 @@ class AutoSuffix(object):
 
 class AggregatorBaseClient(object):
 
-    def __init__(self, communicate_match_suffix: str = None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
+    def __init__(
+        self, communicate_match_suffix: str = None, server=(
+            consts.ARBITER,), clients=(
+            consts.GUEST, consts.HOST)):
         """Base class of client aggregator
 
         Parameters

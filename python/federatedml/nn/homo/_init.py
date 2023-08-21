@@ -9,8 +9,17 @@ from federatedml.nn.backend.utils.common import recover_model_bytes
 from federatedml.nn.backend.utils import deepspeed_util
 
 
-def init(trainer, trainer_param, nn_define, config_optimizer, config_loss, torch_seed, model_loaded_flag, loaded_model, ds_config):
-    
+def init(
+        trainer,
+        trainer_param,
+        nn_define,
+        config_optimizer,
+        config_loss,
+        torch_seed,
+        model_loaded_flag,
+        loaded_model,
+        ds_config):
+
     warm_start_iter = None
 
     if ds_config:

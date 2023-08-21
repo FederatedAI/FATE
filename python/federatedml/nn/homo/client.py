@@ -129,7 +129,6 @@ class HomoNNClient(ModelBase):
         self._ds_stage = -1
         self.model_save_flag = False
 
-
     def _init_model(self, param: HomoNNParam):
 
         train_param = param.trainer.to_dict()

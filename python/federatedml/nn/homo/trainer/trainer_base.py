@@ -554,12 +554,13 @@ class TrainerBase(object):
 Load Trainer
 """
 
+
 def get_trainer_class(trainer_module_name: str):
     if trainer_module_name.endswith('.py'):
         trainer_module_name = trainer_module_name.replace('.py', '')
-    
+
     std_fate_trainer_path = '{}.homo.trainer.{}'.format(ML_PATH, trainer_module_name)
-    
+
     paths_to_check = [std_fate_trainer_path]
     errors = []
     try:
@@ -568,7 +569,7 @@ def get_trainer_class(trainer_module_name: str):
         paths_to_check.append(fate_llm_trainer_path)
     except Exception as e:
         pass
-    
+
     trainers = []
     ds_modules = None
 
@@ -580,10 +581,12 @@ def get_trainer_class(trainer_module_name: str):
             errors.append(str(e))
 
     if ds_modules is None:
-        raise ImportError('Could not import from any of the paths: {}, error details {}'.format(', '.join(paths_to_check), errors))
+        raise ImportError(
+            'Could not import from any of the paths: {}, error details {}'.format(
+                ', '.join(paths_to_check), errors))
 
     for k, v in ds_modules.__dict__.items():
-        
+
         if isinstance(v, type):
             if issubclass(v, TrainerBase) and v is not TrainerBase:
                 trainers.append(v)

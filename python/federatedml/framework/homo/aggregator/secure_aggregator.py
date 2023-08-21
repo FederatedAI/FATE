@@ -31,7 +31,10 @@ class SecureAggregatorClient(AggregatorBaseClient):
         # init secure aggregate random padding:
         if self.secure_aggregate:
             self._random_padding_cipher: PadsCipher = RandomPaddingCipherClient(
-                trans_var=RandomPaddingCipherTransVar(prefix=communicate_match_suffix, clients=clients, server=server)).create_cipher()
+                trans_var=RandomPaddingCipherTransVar(
+                    prefix=communicate_match_suffix,
+                    clients=clients,
+                    server=server)).create_cipher()
             LOGGER.info('initialize secure aggregator done')
 
         # compute weight
@@ -186,7 +189,16 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
 class SecureAggregatorServer(AggregatorBaseServer):
 
-    def __init__(self, secure_aggregate=True, communicate_match_suffix=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
+    def __init__(
+        self,
+        secure_aggregate=True,
+        communicate_match_suffix=None,
+        server=(
+            consts.ARBITER,
+        ),
+        clients=(
+            consts.GUEST,
+            consts.HOST)):
         super(SecureAggregatorServer, self).__init__(
             communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
         self.suffix = {

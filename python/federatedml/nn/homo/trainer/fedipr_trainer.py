@@ -17,7 +17,7 @@ from federatedml.util import consts
 
 
 def get_sign_blocks(model: torch.nn.Module):
-    
+
     record_sign_block = {}
     for name, m in model.named_modules():
         if is_sign_block(m):
@@ -27,9 +27,9 @@ def get_sign_blocks(model: torch.nn.Module):
 
 
 def get_keys(sign_block_dict: dict, num_bits: int):
-    
-    key_pairs = {}  
-    param_len = [] 
+
+    key_pairs = {}
+    param_len = []
     sum_allocated_bits = 0
     # Iterate through each layer and compute the flattened parameter lengths
     for k, v in sign_block_dict.items():
@@ -49,13 +49,14 @@ def get_keys(sign_block_dict: dict, num_bits: int):
 
     for k, v in sign_block_dict.items():
         key_pairs[k] = generate_signature(v, alloc_bits[k])
-    
+
     return key_pairs
 
 
 """
 Verify Tools
 """
+
 
 def to_cuda(var, device=0):
     if hasattr(var, 'cuda'):
@@ -85,7 +86,7 @@ def _verify_sign_blocks(sign_blocks, keys, cuda=False, device=None):
         extract_bits = block.extract_sign(W)
         total_bit += len(extract_bits)
         signature_correct_count += (extract_bits == signature).sum().detach().cpu().item()
-    
+
     sign_acc = signature_correct_count / total_bit
     return sign_acc
 
@@ -94,7 +95,9 @@ def _suggest_sign_bit(param_num, client_num):
     max_signbit = param_num // client_num
     max_signbit -= 1  # not to exceed
     if max_signbit <= 0:
-        raise ValueError('not able to add feature based watermark, param_num is {}, client num is {}, computed max bit is {} <=0'.format(param_num, client_num, max_signbit))
+        raise ValueError(
+            'not able to add feature based watermark, param_num is {}, client num is {}, computed max bit is {} <=0'.format(
+                param_num, client_num, max_signbit))
     return max_signbit
 
 
@@ -109,27 +112,41 @@ def compute_sign_bit(model, client_num):
 
 
 def verify_feature_based_signature(model, keys):
-    
+
     model = model.cpu()
     sign_blocks = get_sign_blocks(model)
     return _verify_sign_blocks(sign_blocks, keys, cuda=False)
 
 
-
 class FedIPRTrainer(FedAVGTrainer):
 
-    def __init__(self, epochs=10,  noraml_dataset_batch_size=32, watermark_dataset_batch_size=2,
-                  early_stop=None, tol=0.0001, secure_aggregate=True, weighted_aggregation=True, 
-                 aggregate_every_n_epoch=None, cuda=None, pin_memory=True, shuffle=True, 
-                 data_loader_worker=0, validation_freqs=None, checkpoint_save_freqs=None, 
+    def __init__(self, epochs=10, noraml_dataset_batch_size=32, watermark_dataset_batch_size=2,
+                 early_stop=None, tol=0.0001, secure_aggregate=True, weighted_aggregation=True,
+                 aggregate_every_n_epoch=None, cuda=None, pin_memory=True, shuffle=True,
+                 data_loader_worker=0, validation_freqs=None, checkpoint_save_freqs=None,
                  task_type='auto', save_to_local_dir=False, collate_fn=None, collate_fn_params=None,
                  alpha=0.01, verify_freqs=1, backdoor_verify_method: Literal['accuracy', 'loss'] = 'accuracy'
                  ):
-        
-        super().__init__(epochs, noraml_dataset_batch_size, early_stop, tol, secure_aggregate, weighted_aggregation, 
-                         aggregate_every_n_epoch, cuda, pin_memory, shuffle, data_loader_worker, 
-                         validation_freqs, checkpoint_save_freqs, task_type, save_to_local_dir, collate_fn, collate_fn_params)
-        
+
+        super().__init__(
+            epochs,
+            noraml_dataset_batch_size,
+            early_stop,
+            tol,
+            secure_aggregate,
+            weighted_aggregation,
+            aggregate_every_n_epoch,
+            cuda,
+            pin_memory,
+            shuffle,
+            data_loader_worker,
+            validation_freqs,
+            checkpoint_save_freqs,
+            task_type,
+            save_to_local_dir,
+            collate_fn,
+            collate_fn_params)
+
         self.normal_train_set = None
         self.watermark_set = None
         self.data_loader = None
@@ -177,7 +194,6 @@ class FedIPRTrainer(FedAVGTrainer):
                 sampler=train_sampler
             )
 
-    
     def _get_train_data_loader(self, train_set):
 
         collate_fn = self._get_collate_fn(train_set)
@@ -210,7 +226,7 @@ class FedIPRTrainer(FedAVGTrainer):
             return device
         else:
             return None
-    
+
     def verify(self, sign_blocks: dict, keys: dict):
 
         return _verify_sign_blocks(sign_blocks, keys, self.cuda is not None, self._get_device())
@@ -232,24 +248,24 @@ class FedIPRTrainer(FedAVGTrainer):
             raise ValueError(
                 'Trainer requires a loss function, but got None, please specify loss function in the'
                 ' job configuration')
-        
+
         return batch_loss
-    
+
     def _get_keys(self, sign_blocks):
-        
+
         if self._sign_keys is None:
             self._sign_keys = get_keys(sign_blocks, self._sign_bits)
         return self._sign_keys
-    
+
     def _get_sign_blocks(self):
         if self._sign_blocks is None:
             sign_blocks = get_sign_blocks(self.model)
             self._sign_blocks = sign_blocks
 
         return self._sign_blocks
-    
-    def train(self, train_set: Dataset, validate_set: Dataset = None, optimizer = None, loss=None, extra_dict={}):
-        
+
+    def train(self, train_set: Dataset, validate_set: Dataset = None, optimizer=None, loss=None, extra_dict={}):
+
         if 'keys' in extra_dict:
             self._sign_keys = extra_dict['keys']
             self._sign_bits = extra_dict['num_bits']
@@ -258,7 +274,6 @@ class FedIPRTrainer(FedAVGTrainer):
             if self._client_num is None and self.party_id_list is not None:
                 self._client_num = len(self.party_id_list)
             self._sign_bits = compute_sign_bit(self.model, self._client_num)
-        
 
         LOGGER.info('client num {}, party id list {}'.format(self._client_num, self.party_id_list))
         LOGGER.info('will assign {} bits for feature based watermark'.format(self._sign_bits))
@@ -322,7 +337,7 @@ class FedIPRTrainer(FedAVGTrainer):
                 optimizer.zero_grad()
             else:
                 model.zero_grad()
-            
+
             pred = model(batch_data)
 
             sign_loss = 0
@@ -337,8 +352,7 @@ class FedIPRTrainer(FedAVGTrainer):
                     signature = self.to_cuda(signature, device)
                 sign_loss += self.alpha * block.sign_loss(W, signature)
 
-            
-            batch_loss = self.get_loss_from_pred(loss_func, pred, batch_label)     
+            batch_loss = self.get_loss_from_pred(loss_func, pred, batch_label)
             batch_loss += sign_loss
 
             if not self._enable_deepspeed:
@@ -445,7 +459,7 @@ class FedIPRTrainer(FedAVGTrainer):
 
         if distributed_util.is_distributed() and not distributed_util.is_rank_0():
             return
-        
+
         if isinstance(dataset, WaterMarkDataset):
             normal_train_set = dataset.get_normal_dataset()
             if normal_train_set is None:
@@ -460,7 +474,7 @@ class FedIPRTrainer(FedAVGTrainer):
                 ids, ret_rs, ret_label, task_type=self.task_type)
         else:
             return ret_rs, ret_label
-        
+
     def save(
             self,
             model=None,
@@ -485,5 +499,3 @@ class FedIPRTrainer(FedAVGTrainer):
 
         extra_data = {'keys': self._sign_keys, 'num_bits': self._sign_bits}
         super().local_save(model, epoch_idx, optimizer, converge_status, loss_history, best_epoch, extra_data)
-
-

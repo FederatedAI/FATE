@@ -331,7 +331,7 @@ class FedAVGTrainer(TrainerBase):
         return need_stop
 
     def _server_aggregates_data(self, epoch_idx, check_converge, converge_func):
-        
+
         need_stop = False
         if not (self.aggregate_every_n_epoch is not None and (epoch_idx + 1) % self.aggregate_every_n_epoch != 0):
 
@@ -382,9 +382,9 @@ class FedAVGTrainer(TrainerBase):
         evaluation_summary = {}
 
         self.data_loader = self._get_train_data_loader(train_set)
-        
+
         self.on_loop_begin_client()
-        
+
         # training process
         for i in range(self.epochs):
 
@@ -547,7 +547,7 @@ class FedAVGTrainer(TrainerBase):
             need_stop = self._server_aggregates_data(i, check_converge, converge_func)
             if need_stop:
                 break
-                
+
         self.on_loop_end_server()
         if self.model is not None:
             if self.save_to_local_dir:
@@ -614,7 +614,7 @@ class FedAVGTrainer(TrainerBase):
             )
 
         return data_loader
-        
+
     def _share_model(self):
         if distributed_util.is_rank_0():
             for p in self.model.parameters():
@@ -650,4 +650,3 @@ class FedAVGTrainer(TrainerBase):
         else:
             dist.gather(loss, dst=0, async_op=False)
             # LOGGER.info(f"Loss on rank{dist.get_rank()}={loss}")
-
