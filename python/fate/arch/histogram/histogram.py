@@ -1,4 +1,5 @@
 import typing
+import logging
 from typing import List, MutableMapping, Tuple
 
 import torch
@@ -6,9 +7,14 @@ import torch
 # from fate_utils.histogram import HistogramIndexer, Shuffler
 from .indexer import HistogramIndexer, Shuffler
 
+logger = logging.getLogger(__name__)
+
 
 class HistogramValues:
     def iadd_slice(self, value, sa, sb, size):
+        raise NotImplementedError
+
+    def i_update(self, value, positions):
         raise NotImplementedError
 
     def iadd(self, other):
@@ -60,6 +66,11 @@ class HistogramEncryptedValues(HistogramValues):
             value = value.data
         self.evaluator.i_add(self.pk, self.data, value, sa * self.stride, sb, size * self.stride)
         return self
+
+    def i_update(self, value, positions):
+        for i, feature_positions in enumerate(positions):
+            for pos in feature_positions:
+                self.iadd_slice(value, pos, i * self.stride, self.stride)
 
     def iadd(self, other):
         self.evaluator.i_add(self.pk, self.data, other.data)
@@ -163,20 +174,30 @@ class HistogramPlainValues(HistogramValues):
         start = 0
         for s, e in intervals:
             end = start + (e - s) * self.stride
-            result[start:end] = self.data[s * self.stride : e * self.stride]
+            result[start:end] = self.data[s * self.stride: e * self.stride]
             start = end
         return HistogramPlainValues(result, self.stride)
 
     def iadd_slice(self, value, sa, sb, size):
         size = size * self.stride
         value = value.view(-1)
-        self.data[sa : sa + size] += value[sb : sb + size]
+        self.data[sa: sa + size] += value[sb: sb + size]
 
     def slice(self, start, end):
-        return HistogramPlainValues(self.data[start * self.stride : end * self.stride], self.stride)
+        return HistogramPlainValues(self.data[start * self.stride: end * self.stride], self.stride)
 
     def iadd(self, other):
         self.data += other.data
+
+    def i_update(self, value, positions):
+        index = torch.LongTensor(positions)
+        value = value.reshape(-1, self.stride).expand(-1, index.shape[1]).flatten()
+        index = index.flatten()
+
+        if self.data.dtype != value.dtype:
+            logger.warning(f"update value dtype {value.dtype} is not equal to data dtype {self.data.dtype}")
+            value = value.to(self.data.dtype)
+        self.data.scatter_add_(0, index, value)
 
     def i_shuffle(self, shuffler: "Shuffler", reverse=False):
         indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
@@ -186,14 +207,14 @@ class HistogramPlainValues(HistogramValues):
         data_view = self.data.view(-1, self.stride)
         start = 0
         for num in chunk_sizes:
-            data_view[start : start + num, :] = data_view[start : start + num, :].cumsum(dim=0)
+            data_view[start: start + num, :] = data_view[start: start + num, :].cumsum(dim=0)
             start += num
 
     def chunking_sum(self, intervals: typing.List[typing.Tuple[int, int]]):
         result = torch.zeros(len(intervals) * self.stride, dtype=self.data.dtype)
         data_view = self.data.view(-1, self.stride)
         for i, (start, end) in enumerate(intervals):
-            result[i * self.stride : (i + 1) * self.stride] = data_view[start:end, :].sum(dim=0)
+            result[i * self.stride: (i + 1) * self.stride] = data_view[start:end, :].sum(dim=0)
         return HistogramPlainValues(result, self.stride)
 
     @classmethod
@@ -242,10 +263,7 @@ class Histogram:
             nids.flatten().detach().numpy().tolist(), fids.detach().numpy().tolist()
         )
         for name, value in targets.items():
-            shape = value.shape
-            for i, feature_positions in enumerate(positions):
-                for pos in feature_positions:
-                    self._values_mapping[name].iadd_slice(value, pos, i * shape[1], shape[1])
+            self._values_mapping[name].i_update(value, positions)
         return self
 
     def iadd(self, hist: "Histogram"):
@@ -375,9 +393,9 @@ class HistogramSplits:
         return self
 
     def decrypt(
-        self,
-        sk_map: MutableMapping[str, typing.Any],
-        coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
+            self,
+            sk_map: MutableMapping[str, typing.Any],
+            coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
     ):
         self.i_decrypt(sk_map)
         self.i_decode(coder_map)
@@ -418,7 +436,7 @@ class DistributedHistogram:
             ShuffledHistogram, the shuffled(if seed is not None) histogram
         """
         if k is None:
-            k = data.count()
+            k = data.partitions
         mapper = get_partition_hist_build_mapper(
             self._node_size, self._feature_bin_sizes, self._value_schemas, self._seed, k
         )
@@ -426,7 +444,7 @@ class DistributedHistogram:
         return ShuffledHistogram(table, self._node_size, self._node_data_size)
 
     def recover_feature_bins(
-        self, seed, split_points: typing.Dict[int, int]
+            self, seed, split_points: typing.Dict[int, int]
     ) -> typing.Dict[int, typing.Tuple[int, int]]:
         """
         Recover the feature bins from the split points.
@@ -456,9 +474,9 @@ class ShuffledHistogram:
         self._node_data_size = node_data_size
 
     def decrypt(
-        self,
-        sk_map: MutableMapping[str, typing.Any],
-        coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
+            self,
+            sk_map: MutableMapping[str, typing.Any],
+            coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
     ):
         out = list(self._table.map(lambda pid, split: (pid, split.decrypt(sk_map, coder_map))).collect())
         out.sort(key=lambda x: x[0])
@@ -470,7 +488,7 @@ class ShuffledHistogram:
 
 
 def argmax_reducer(
-    max1: typing.Dict[int, typing.Tuple[int, int, float]], max2: typing.Dict[int, typing.Tuple[int, int, float]]
+        max1: typing.Dict[int, typing.Tuple[int, int, float]], max2: typing.Dict[int, typing.Tuple[int, int, float]]
 ):
     for nid, (pid, index, gain) in max2.items():
         if nid in max1:
