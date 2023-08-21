@@ -42,7 +42,8 @@ def main(config="../config.yaml", namespace=""):
     linr_0 = CoordinatedLinR("linr_0",
                              epochs=10,
                              batch_size=None,
-                             optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01}},
+                             optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01},
+                                        "alpha": 0.001},
                              init_param={"fit_intercept": True},
                              cv_data=psi_0.outputs["output_data"],
                              cv_param={"n_splits": 3})

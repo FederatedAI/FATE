@@ -292,24 +292,6 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             d = d * weight
         batch_ctx.hosts.put("d", d)
 
-        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
-        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-            loss_norm = self.optimizer.loss_norm(w)
-            loss += loss_norm
-        for Xw_h in Xw_h_all:
-            loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
-
-        for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
-            loss += 0.125 / h * Xw2_h
-
-        h_loss_list = batch_ctx.hosts.get("h_loss")
-        for h_loss in h_loss_list:
-            if h_loss is not None:
-                loss += h_loss
-
-        if len(Xw_h_all) == 1:
-            batch_ctx.arbiter.put(loss=loss)
-
         # gradient
         g = 1 / h * torch.matmul(X.T, d)
         return g
