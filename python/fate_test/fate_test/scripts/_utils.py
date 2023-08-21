@@ -22,7 +22,7 @@ def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num,
         if isinstance(path, str):
             path = Path(path)
         if path.is_file():
-            if path.name.endswith(suffix[0]) or path.name.endswith(suffix[1]):
+            if path.name.endswith(suffix[0]) or path.name.endswith(suffix[1]) or path.name.endswith(suffix[2]):
                 paths = [path]
             else:
                 LOGGER.warning(f"{path} is file, but not end with `{suffix}`, skip")
