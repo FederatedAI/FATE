@@ -40,7 +40,7 @@ public class FileMetricReport implements MetricReport {
     @Override
     public void report(List<MetricNode> data) {
         try {
-            //  logger.info("report  {}",data);
+       //     logger.info("report  {}",data);
             metricWriter.write(TimeUtil.currentTimeMillis(), data);
         } catch (Exception e) {
          //   e.printStackTrace();
