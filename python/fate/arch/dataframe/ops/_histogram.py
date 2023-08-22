@@ -29,7 +29,7 @@ def hist(df: DataFrame, targets):
     data_manager = df.data_manager
     column_names = data_manager.infer_operable_field_names()
 
-    block_table, data_manager = _try_to_compress_table(df.block_table, data_manager)
+    block_table, data_manager = _try_to_compress_table(df.block_table, data_manager, force_compress=True)
     block_id = data_manager.infer_operable_blocks()[0]
 
     def _mapper(blocks, target, bid: int = None):
@@ -47,7 +47,7 @@ def hist(df: DataFrame, targets):
 
 
 def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, targets: Union[dict, DataFrame]):
-    block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager)
+    block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager, force_compress=True)
     data_block_id = data_manager.infer_operable_blocks()[0]
     position_block_id = position.data_manager.infer_operable_blocks()[0]
 
@@ -98,7 +98,7 @@ def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, 
     return distributed_hist.i_update(data_with_position)
 
 
-def _try_to_compress_table(block_table, data_manager: DataManager):
+def _try_to_compress_table(block_table, data_manager: DataManager, force_compress=False):
     block_indexes = data_manager.infer_operable_blocks()
     if len(block_indexes) == 1:
         return block_table, data_manager
@@ -119,8 +119,6 @@ def _try_to_compress_table(block_table, data_manager: DataManager):
         to_promote_types.append((bid, block_type))
 
     data_manager.promote_types(to_promote_types)
-    block_table, data_manager = compress_blocks(block_table, data_manager)
+    block_table, data_manager = compress_blocks(block_table, data_manager, force_compress=force_compress)
 
     return block_table, data_manager
-
-
