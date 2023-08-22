@@ -277,7 +277,7 @@ class FedAVGTrainer(TrainerBase):
             if self.fed_mode:
                 if batch_idx % (total_batch_len // 100) == 0:
                     percentage = (batch_idx / total_batch_len) * 100
-                    LOGGER.info(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
+                    LOGGER.debug(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
 
         epoch_loss = epoch_loss / len(train_set)
         return epoch_loss
