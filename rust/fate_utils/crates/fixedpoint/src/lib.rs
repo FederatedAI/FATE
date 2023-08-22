@@ -20,8 +20,8 @@ pub struct PT {
 /// raw paillier ciphertext represents encryped significant
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CT {
-    significant_encryped: paillier::CT,
-    exp: i32,
+    pub significant_encryped: paillier::CT,
+    pub exp: i32,
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -129,8 +129,15 @@ impl CT {
             .0
             .pow_mod_ref(&BInt::from(2), &pk.pk.ns);
     }
+
     pub fn add(&self, b: &CT, pk: &PK) -> CT {
         let a = self;
+        if a.significant_encryped.0.0 == 1 {
+            return b.clone();
+        }
+        if b.significant_encryped.0.0 == 1 {
+            return a.clone();
+        }
         if a.exp > b.exp {
             let a = &a.decrese_exp_to(b.exp, &pk.pk);
             CT {

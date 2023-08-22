@@ -106,7 +106,7 @@ def get_partition_order_by_raw_table(table, block_row_size, key_type="sample_id"
 
         return {key: block_size}
 
-    block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
+    block_summary = table.applyPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
 
     start_index, acc_block_num = 0, 0
     block_order_mappings = dict()
