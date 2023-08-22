@@ -478,7 +478,7 @@ class ShuffledHistogram:
             sk_map: MutableMapping[str, typing.Any],
             coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
     ):
-        out = list(self._table.map(lambda pid, split: (pid, split.decrypt(sk_map, coder_map))).collect())
+        out = list(self._table.mapValues(lambda split: split.decrypt(sk_map, coder_map)).collect())
         out.sort(key=lambda x: x[0])
         return self.cat([split for _, split in out])
 
