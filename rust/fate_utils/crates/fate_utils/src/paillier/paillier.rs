@@ -469,8 +469,12 @@ impl FixedpointPaillierVector {
 
     fn iupdate(&mut self, other: &FixedpointPaillierVector, indexes: Vec<Vec<usize>>, stride: usize, pk: &PK) -> PyResult<()> {
         for (i, x) in indexes.iter().enumerate() {
+            let sb = i * stride;
             for pos in x.iter() {
-                self.data[*pos].add_assign(&other.data[i * stride], &pk.pk);
+                let sa = pos * stride;
+                for i in 0..stride {
+                    self.data[sa + i].add_assign(&other.data[sb + i], &pk.pk);
+                }
             }
         }
         Ok(())
