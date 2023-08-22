@@ -59,18 +59,17 @@ class HistogramEncryptedValues(HistogramValues):
     def zeros(cls, pk, evaluator, size: int, stride: int = 1):
         return cls(pk, evaluator, evaluator.zeros(size * stride), stride)
 
-    def iadd_slice(self, value, sa, sb, size):
+    def i_update(self, value, positions):
         from fate.arch.tensor.phe import PHETensor
-
         if isinstance(value, PHETensor):
             value = value.data
-        self.evaluator.i_add(self.pk, self.data, value, sa * self.stride, sb, size * self.stride)
-        return self
 
-    def i_update(self, value, positions):
-        for i, feature_positions in enumerate(positions):
-            for pos in feature_positions:
-                self.iadd_slice(value, pos, i * self.stride, self.stride)
+        if hasattr(self.evaluator, "i_update"):
+            return self.evaluator.i_update(self.pk, self.data, value, positions, self.stride)
+        else:
+            for i, feature_positions in enumerate(positions):
+                for pos in feature_positions:
+                    self.evaluator.i_add(self.pk, self.data, value, pos * self.stride, i * self.stride, self.stride)
 
     def iadd(self, other):
         self.evaluator.i_add(self.pk, self.data, other.data)
@@ -190,14 +189,21 @@ class HistogramPlainValues(HistogramValues):
         self.data += other.data
 
     def i_update(self, value, positions):
-        index = torch.LongTensor(positions)
-        value = value.reshape(-1, self.stride).expand(-1, index.shape[1]).flatten()
-        index = index.flatten()
-
+        if self.stride == 1:
+            index = torch.LongTensor(positions)
+            value = value.view(-1, 1).expand(-1, index.shape[1]).flatten()
+            index = index.flatten()
+            data = self.data
+        else:
+            index = torch.LongTensor(positions)
+            data = self.data.view(-1, self.stride)
+            value = value.view(-1, self.stride).unsqueeze(1).expand(-1, index.shape[1], self.stride).reshape(-1,
+                                                                                                             self.stride)
+            index = index.flatten().unsqueeze(1).expand(-1, self.stride)
         if self.data.dtype != value.dtype:
             logger.warning(f"update value dtype {value.dtype} is not equal to data dtype {self.data.dtype}")
-            value = value.to(self.data.dtype)
-        self.data.scatter_add_(0, index, value)
+            value = value.to(data.dtype)
+        data.scatter_add_(0, index, value)
 
     def i_shuffle(self, shuffler: "Shuffler", reverse=False):
         indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
@@ -502,11 +508,11 @@ def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas,
         hist = Histogram.create(node_size, feature_bin_sizes, value_schemas)
         shuffle = hist.maybe_create_shuffler(seed)
         for _, raw in part:
-            nids, fids, targets = raw
-            hist.i_update(nids, fids, targets)
+            fids, nids, targets = raw
+            hist.i_update(fids, nids, targets)
         hist.i_cumsum_bins()
         hist.i_shuffle(shuffle)
-        splits = hist.to_splits(k)
-        return list(splits)
+        splits = list(hist.to_splits(k))
+        return splits
 
     return _partition_hist_build_mapper
