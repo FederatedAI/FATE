@@ -68,7 +68,7 @@ class HomoNN(FateComponent):
     optimizer, optimizer from fate_torch
     ds_config, config for deepspeed
     model, a fate torch sequential defining the model structure
-    server_init, whether to initialize the model, loss and optimizer on server, if configs are provided, they will be used.  In 
+    server_init, whether to initialize the model, loss and optimizer on server, if configs are provided, they will be used.  In
                  current version this option is specially designed for offsite-tuning
     """
 
