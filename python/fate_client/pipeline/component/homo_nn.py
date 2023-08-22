@@ -86,7 +86,7 @@ class HomoNN(FateComponent):
                  loss=None,
                  optimizer: OptimizerType = None,
                  ds_config: dict = None,
-                 model: Sequential = None, 
+                 model: Sequential = None,
                  server_init: bool = False,
                  **kwargs):
 
