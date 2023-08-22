@@ -100,8 +100,15 @@ class HomoNN(FateComponent):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type='single')
         self._module_name = "HomoNN"
-        self._updated = {'trainer': False, 'dataset': False,
-                         'torch_seed': False, 'loss': False, 'optimizer': False, 'model': False, 'ds_config': False, 'server_init': False}
+        self._updated = {
+            'trainer': False,
+            'dataset': False,
+            'torch_seed': False,
+            'loss': False,
+            'optimizer': False,
+            'model': False,
+            'ds_config': False,
+            'server_init': False}
         self._set_param(kwargs["explict_parameters"])
         self._check_parameters()
 
