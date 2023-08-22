@@ -35,8 +35,8 @@ class PHETensor:
         self._dtype = dtype
         self._device = device
 
-    def type(self):
-        return f"phe.{self.dtype}"
+    def type(self, dtype):
+        return self.with_template(self._data, dtype)
 
     def __repr__(self) -> str:
         return f"<PHETensor shape={self.shape}, dtype={self.dtype}>"
