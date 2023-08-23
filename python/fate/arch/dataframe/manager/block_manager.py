@@ -276,10 +276,12 @@ class Int32Block(Block):
 
     @staticmethod
     def convert_block(block):
-        try:
-            return torch.tensor(block, dtype=torch.int32)
-        except ValueError:
-            return torch.tensor(np.array(block, dtype="int32"), dtype=torch.int32)
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.int32:
+                return block.clone().detach()
+            else:
+                return block.to(torch.int32)
+        return torch.tensor(np.array(block, dtype="int32"), dtype=torch.int32)
 
 
 class Int64Block(Block):
@@ -365,6 +367,8 @@ class PHETensorBlock(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, list):
+            block = block[0].cat(block[1:])
         return block
 
     def convert_to_phe_tensor(self, block, shape):

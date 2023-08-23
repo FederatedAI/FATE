@@ -82,10 +82,15 @@ def _set_new_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
-    def _append_df(l_blocks, r_blocks, r_blocks_loc=None):
+    def _append_df(l_blocks, r_blocks, r_blocks_loc=None, dm=None):
         ret_blocks = [block for block in l_blocks]
+        l_bid = len(ret_blocks)
         for bid, offset in r_blocks_loc:
-            ret_blocks.append(r_blocks[bid][:, [offset]])
+            if dm.blocks[bid].is_phe_tensor():
+                ret_blocks.append(r_blocks[bid])
+            else:
+                ret_blocks.append(r_blocks[bid][:, [offset]])
+            l_bid += 1
 
         return ret_blocks
 
@@ -128,7 +133,7 @@ def _set_new_item(df: "DataFrame", keys, items):
             raise ValueError("Setitem with rhs=DataFrame must have equal len keys")
         data_manager.append_columns(keys, block_types)
 
-        _append_func = functools.partial(_append_df, r_blocks_loc=operable_blocks_loc)
+        _append_func = functools.partial(_append_df, r_blocks_loc=operable_blocks_loc, dm=data_manager)
         block_table = df.block_table.join(items.block_table, _append_func)
     elif isinstance(items, DTensor):
         meta_data = items.shardings._data.mapValues(
