@@ -113,14 +113,14 @@ class SBTHistogramBuilder(object):
         return {
                 "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
                 "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
             }
     
     def _get_enc_hist_schema(self, pk, evaluator):
         return {
                 "g":{"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
                 "h":{"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
-                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.float32},
+                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
             }
 
     def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, pk=None, evaluator=None):

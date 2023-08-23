@@ -16,8 +16,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
-from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import PSI, CoordinatedLR, Evaluation, \
+    HeteroFeatureBinning, HeteroFeatureSelection
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -37,53 +37,61 @@ def main(config="../config.yaml", namespace=""):
         pipeline.conf.set("timeout", config.timeout)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="vehicle_scale_hetero_host",
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
+
+    binning_0 = HeteroFeatureBinning("binning_0",
+                                     method="quantile",
+                                     n_bins=10,
+                                     train_data=psi_0.outputs["output_data"]
+                                     )
+    selection_0 = HeteroFeatureSelection("selection_0",
+                                         method=["iv"],
+                                         train_data=psi_0.outputs["output_data"],
+                                         input_models=[binning_0.outputs["output_model"]],
+                                         iv_param={"metrics": "iv", "filter_type": "threshold", "threshold": 0.1})
+
     lr_0 = CoordinatedLR("lr_0",
                          epochs=10,
                          batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}, "penalty": "L1",
-                                    "alpha": 0.001},
-                         init_param={"fit_intercept": True, "method": "random_uniform"},
-                         train_data=psi_0.outputs["output_data"],
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}, "penalty": "l2", "alpha": 0.001},
+                         init_param={"fit_intercept": True, "method": "zeros"},
+                         train_data=selection_0.outputs["train_output_data"],
                          learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
                                                                                            "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
                               label_column_name="y",
                               runtime_roles=["guest"],
-                              default_eval_setting="multi",
-                              predict_column_name='predict_result',
+                              default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
+    pipeline.add_task(binning_0)
+    pipeline.add_task(selection_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(evaluation_0)
 
+    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
 
-    pipeline.deploy([psi_0, lr_0])
+    pipeline.deploy([psi_0, selection_0, lr_0])
 
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(
-        input_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
-                                        namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].component_setting(
-        input_data=DataWarehouseChannel(name="vehicle_scale_hetero_host",
-                                        namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                                    namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                       namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
     predict_pipeline.compile()
-    # print("\n\n\n")
-    # print(predict_pipeline.compile().get_dag())
     predict_pipeline.predict()
-    # print(f"predict lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")
 
 
 if __name__ == "__main__":
