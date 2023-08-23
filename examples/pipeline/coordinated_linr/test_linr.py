@@ -42,7 +42,8 @@ def main(config="../config.yaml", namespace=""):
     linr_0 = CoordinatedLinR("linr_0",
                              epochs=10,
                              batch_size=100,
-                             optimizer={"method": "rmsprop", "optimizer_params": {"lr": 0.01}},
+                             optimizer={"method": "rmsprop", "optimizer_params": {"lr": 0.01},
+                                        "alpha": 0.001},
                              init_param={"fit_intercept": True},
                              train_data=psi_0.outputs["output_data"])
     evaluation_0 = Evaluation("evaluation_0",

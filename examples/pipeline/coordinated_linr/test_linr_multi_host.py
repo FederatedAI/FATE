@@ -16,7 +16,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
+from fate_client.pipeline.components.fate import CoordinatedLinR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
@@ -39,31 +39,32 @@ def main(config="../config.yaml", namespace=""):
                                                                      namespace=f"{namespace}experiment"))
     psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="motor_hetero_host",
                                                                      namespace=f"{namespace}experiment"))
-    lr_0 = CoordinatedLR("lr_0",
-                         epochs=5,
-                         batch_size=None,
-                         early_stop="weight_diff",
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}},
-                         init_param={"fit_intercept": True, "method": "random_uniform"},
-                         train_data=psi_0.outputs["output_data"],
-                         learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
-                                                                                             "total_iters": 100}})
+    linr_0 = CoordinatedLinR("linr_0",
+                             epochs=5,
+                             batch_size=None,
+                             early_stop="weight_diff",
+                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1},
+                                        "alpha": 0.001},
+                             init_param={"fit_intercept": True, "method": "random_uniform"},
+                             train_data=psi_0.outputs["output_data"],
+                             learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
+                                                                                                 "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
                               label_column_name="motor_speed",
                               runtime_roles=["guest"],
                               default_eval_setting="regression",
-                              input_data=lr_0.outputs["train_output_data"])
+                              input_data=linr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
-    pipeline.add_task(lr_0)
+    pipeline.add_task(linr_0)
     pipeline.add_task(evaluation_0)
 
     pipeline.compile()
     print(pipeline.get_dag())
     pipeline.fit()
 
-    pipeline.deploy([psi_0, lr_0])
+    pipeline.deploy([psi_0, linr_0])
 
     predict_pipeline = FateFlowPipeline()
 
@@ -80,7 +81,7 @@ def main(config="../config.yaml", namespace=""):
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())
     predict_pipeline.predict()
-    # print(f"predict lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")
+    # print(f"predict linr_0 data: {pipeline.get_task_info('linr_0').get_output_data()}")
 
 
 if __name__ == "__main__":
