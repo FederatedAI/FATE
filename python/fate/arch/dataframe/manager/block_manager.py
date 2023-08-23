@@ -268,6 +268,21 @@ class Block(object):
         else:
             return block[index].tolist()
 
+    @classmethod
+    def vstack(cls, blocks):
+        ret = blocks[0]
+        if isinstance(ret, pd.Index):
+            for block in blocks[1:]:
+                ret = ret.union(block, sort=False)
+        elif isinstance(ret, torch.Tensor):
+            ret = torch.vstack(blocks)
+        elif isinstance(ret, np.ndarray):
+            ret = np.vstack(blocks)
+        else:
+            raise ValueError(f"Not implemented block vstack for type {type(ret)}")
+
+        return ret
+
 
 class Int32Block(Block):
     def __init__(self, *args, **kwargs):
