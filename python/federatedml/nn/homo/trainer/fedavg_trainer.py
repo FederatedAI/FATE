@@ -150,6 +150,11 @@ class FedAVGTrainer(TrainerBase):
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
 
+        # federation
+        self.client_agg = None
+        self.server_agg = None
+        self.aggregate_round = None
+
     def _init_aggregator(self, train_set):
         # compute round to aggregate
         cur_agg_round = 0
@@ -191,7 +196,7 @@ class FedAVGTrainer(TrainerBase):
         else:
             return self.model
 
-    def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss):
+    def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss_func):
 
         epoch_loss = 0.0
         batch_idx = 0
@@ -202,6 +207,8 @@ class FedAVGTrainer(TrainerBase):
 
         dl = self.data_loader
 
+        total_batch_len = len(dl)
+
         if not self.fed_mode:
             to_iterate = tqdm.tqdm(dl)
         else:
@@ -210,19 +217,10 @@ class FedAVGTrainer(TrainerBase):
         batch_label = None
         for _batch_iter in to_iterate:
             _batch_iter = self._decode(_batch_iter)
-            if isinstance(_batch_iter, list):
+            if isinstance(_batch_iter, list) or isinstance(_batch_iter, tuple):
                 batch_data, batch_label = _batch_iter
             else:
                 batch_data = _batch_iter
-            """
-            if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
-                batch_data = _batch_iter
-            else:
-                batch_data, batch_label = _batch_iter
-
-            batch_data = self._decode(batch_data)
-            batch_label = self._decode(batch_label)
-            """
 
             if self.cuda is not None or self._enable_deepspeed:
                 device = self.cuda_main_device if self.cuda_main_device is not None else self.model.device
@@ -237,17 +235,17 @@ class FedAVGTrainer(TrainerBase):
 
             pred = model(batch_data)
 
-            if not loss and hasattr(pred, "loss"):
+            if not loss_func and hasattr(pred, "loss"):
                 batch_loss = pred.loss
 
-            elif loss is not None:
+            elif loss_func is not None:
                 if batch_label is None:
                     raise ValueError(
                         "When loss is set, please provide label to calculate loss"
                     )
                 if not isinstance(pred, torch.Tensor) and hasattr(pred, "logits"):
                     pred = pred.logits
-                batch_loss = loss(pred, batch_label)
+                batch_loss = loss_func(pred, batch_label)
             else:
                 raise ValueError(
                     'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
@@ -276,12 +274,86 @@ class FedAVGTrainer(TrainerBase):
             batch_idx += 1
             # LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
 
-        if self.fed_mode:
-            LOGGER.debug(
-                'epoch {} batch {} finished'.format(epoch_idx, batch_idx))
+            if self.fed_mode:
+                if batch_idx % (total_batch_len // 100) == 0:
+                    percentage = (batch_idx / total_batch_len) * 100
+                    LOGGER.debug(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
 
         epoch_loss = epoch_loss / len(train_set)
         return epoch_loss
+
+    def on_loop_begin_client(self, **kwargs):
+        pass
+
+    def on_loop_end_client(self, **kwargs):
+        pass
+
+    def on_loop_begin_server(self, **kwargs):
+        pass
+
+    def on_loop_end_server(self, **kwargs):
+        pass
+
+    def _client_sends_data(self, epoch_idx, epoch_loss, cur_agg_round):
+        need_stop = False
+        if self.client_agg is not None or distributed_util.is_distributed():
+            if not (self.aggregate_every_n_epoch is not None and (epoch_idx + 1) % self.aggregate_every_n_epoch != 0):
+
+                # model averaging, only aggregate trainable param
+                if self._deepspeed_zero_3:
+                    deepspeed_util.gather_model(self.model)
+
+                if not distributed_util.is_distributed() or distributed_util.is_rank_0():
+                    self.model = self.client_agg.model_aggregation(self.model)
+                    if distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
+                        self._share_model()
+                else:
+                    self._share_model()
+
+                # agg loss and get converge status
+                if not distributed_util.is_distributed() or distributed_util.is_rank_0():
+                    converge_status = self.client_agg.loss_aggregation(epoch_loss)
+                    cur_agg_round += 1
+                    if distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
+                        self._sync_converge_status(converge_status)
+                else:
+                    converge_status = self._sync_converge_status()
+
+                if not distributed_util.is_distributed() or distributed_util.is_rank_0():
+                    LOGGER.info(
+                        'model averaging finished, aggregate round {}/{}'.format(
+                            cur_agg_round, self.aggregate_round))
+
+                if converge_status:
+                    LOGGER.info('early stop triggered, stop training')
+                    need_stop = True
+
+        return need_stop
+
+    def _server_aggregates_data(self, epoch_idx, check_converge, converge_func):
+
+        need_stop = False
+        if not (self.aggregate_every_n_epoch is not None and (epoch_idx + 1) % self.aggregate_every_n_epoch != 0):
+
+            # model aggregate
+            self.server_agg.model_aggregation()
+
+            # loss aggregate
+            agg_loss, converge_status = self.server_agg.loss_aggregation(
+                check_converge=check_converge, converge_func=converge_func)
+            self.callback_loss(agg_loss, epoch_idx)
+
+            # save check point process
+            if self.save_freq is not None and ((epoch_idx + 1) % self.save_freq == 0):
+                self.checkpoint(epoch_idx=epoch_idx)
+                LOGGER.info('save checkpoint : epoch {}'.format(epoch_idx))
+
+            # check stop condition
+            if converge_status:
+                LOGGER.debug('stop triggered, stop aggregation')
+                need_stop = True
+
+        return need_stop
 
     def train(
             self,
@@ -293,7 +365,7 @@ class FedAVGTrainer(TrainerBase):
 
         if optimizer is None:
             raise ValueError(
-                'FedAVGTrainer requires an optimizer, but got None, please specify optimizer in the '
+                'An optimizer is required, but got None, please specify optimizer in the '
                 'job configuration')
 
         if self.batch_size > len(train_set) or self.batch_size == -1:
@@ -301,7 +373,7 @@ class FedAVGTrainer(TrainerBase):
 
         # compute round to aggregate
         cur_agg_round = 0
-        client_agg, aggregate_round = self._init_aggregator(train_set)
+        self.client_agg, self.aggregate_round = self._init_aggregator(train_set)
 
         # running var
         cur_epoch = 0
@@ -309,7 +381,10 @@ class FedAVGTrainer(TrainerBase):
         need_stop = False
         evaluation_summary = {}
 
-        self._get_train_data_loader(train_set)
+        self.data_loader = self._get_train_data_loader(train_set)
+
+        self.on_loop_begin_client()
+
         # training process
         for i in range(self.epochs):
 
@@ -323,37 +398,8 @@ class FedAVGTrainer(TrainerBase):
                 LOGGER.info('epoch loss is {}'.format(epoch_loss))
 
             # federation process, if running local mode, cancel federation
-            if client_agg is not None or distributed_util.is_distributed():
-                if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
-
-                    # model averaging, only aggregate trainable param
-                    if self._deepspeed_zero_3:
-                        deepspeed_util.gather_model(self.model)
-
-                    if not distributed_util.is_distributed() or distributed_util.is_rank_0():
-                        self.model = client_agg.model_aggregation(self.model)
-                        if distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
-                            self._share_model()
-                    else:
-                        self._share_model()
-
-                    # agg loss and get converge status
-                    if not distributed_util.is_distributed() or distributed_util.is_rank_0():
-                        converge_status = client_agg.loss_aggregation(epoch_loss)
-                        cur_agg_round += 1
-                        if distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
-                            self._sync_converge_status(converge_status)
-                    else:
-                        converge_status = self._sync_converge_status()
-
-                    if not distributed_util.is_distributed() or distributed_util.is_rank_0():
-                        LOGGER.info(
-                            'model averaging finished, aggregate round {}/{}'.format(
-                                cur_agg_round, aggregate_round))
-
-                    if converge_status:
-                        LOGGER.info('early stop triggered, stop training')
-                        need_stop = True
+            need_stop = self._client_sends_data(i, epoch_loss, cur_agg_round)
+            cur_agg_round += 1
 
             # validation process
             if self.validation_freq and ((i + 1) % self.validation_freq == 0):
@@ -399,6 +445,8 @@ class FedAVGTrainer(TrainerBase):
         # post-process
         if self._deepspeed_zero_3:
             deepspeed_util.gather_model(self.model)
+
+        self.on_loop_end_client()
 
         if not distributed_util.is_distributed() or distributed_util.is_rank_0():
             best_epoch = int(np.array(loss_history).argmin())
@@ -490,31 +538,23 @@ class FedAVGTrainer(TrainerBase):
                 'check early stop, converge func is {}'.format(converge_func))
 
         LOGGER.info('server running aggregate procedure')
-        server_agg = SecureAggServer(self.secure_aggregate, communicate_match_suffix=self.comm_suffix)
+        self.server_agg = SecureAggServer(self.secure_aggregate, communicate_match_suffix=self.comm_suffix)
 
+        self.on_loop_begin_server()
         # aggregate and broadcast models
         for i in range(self.epochs):
-            if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
 
-                # model aggregate
-                server_agg.model_aggregation()
+            need_stop = self._server_aggregates_data(i, check_converge, converge_func)
+            if need_stop:
+                break
 
-                # loss aggregate
-                agg_loss, converge_status = server_agg.loss_aggregation(
-                    check_converge=check_converge, converge_func=converge_func)
-                self.callback_loss(agg_loss, i)
-
-                # save check point process
-                if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
-                    self.checkpoint(epoch_idx=i)
-                    LOGGER.info('save checkpoint : epoch {}'.format(i))
-
-                # check stop condition
-                if converge_status:
-                    LOGGER.debug('stop triggered, stop aggregation')
-                    break
-
-        LOGGER.info('server aggregation process done')
+        self.on_loop_end_server()
+        if self.model is not None:
+            if self.save_to_local_dir:
+                self.local_save(model=self.model, epoch_idx=i, converge_status=need_stop)
+            else:
+                self.save(model=self.model, epoch_idx=i, converge_status=need_stop)
+            LOGGER.info('sever side model saved')
 
     def _decode(self, data):
         if isinstance(data, transformers.tokenization_utils_base.BatchEncoding):
@@ -550,7 +590,7 @@ class FedAVGTrainer(TrainerBase):
         collate_fn = self._get_collate_fn(train_set)
 
         if not distributed_util.is_distributed() or distributed_util.get_num_workers() <= 1:
-            self.data_loader = DataLoader(
+            data_loader = DataLoader(
                 train_set,
                 batch_size=self.batch_size,
                 pin_memory=self.pin_memory,
@@ -564,7 +604,7 @@ class FedAVGTrainer(TrainerBase):
                 num_replicas=dist.get_world_size(),
                 rank=dist.get_rank()
             )
-            self.data_loader = DataLoader(
+            data_loader = DataLoader(
                 train_set,
                 batch_size=self.batch_size,
                 pin_memory=self.pin_memory,
@@ -572,6 +612,8 @@ class FedAVGTrainer(TrainerBase):
                 collate_fn=collate_fn,
                 sampler=train_sampler
             )
+
+        return data_loader
 
     def _share_model(self):
         if distributed_util.is_rank_0():
