@@ -100,7 +100,7 @@ public class MetaInfo {
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
     @Config(confKey = "mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer MAP_FILE_SIZE = 1 << 25;
+    public static Integer MAP_FILE_SIZE = 1 << 28;
     @Config(confKey = "mapped.file.dir")
     public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped/.fate/transfer_file";
 
