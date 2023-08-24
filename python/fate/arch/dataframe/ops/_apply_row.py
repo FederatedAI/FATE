@@ -118,6 +118,17 @@ def _apply(blocks, func=None, src_field_names=None,
         ret_blocks[idx] = blocks[bid]
 
     for idx, bid in enumerate(block_indexes):
-        ret_blocks[bid] = dm.blocks[bid].convert_block(apply_blocks[idx])
+        if dm.blocks[bid].is_phe_tensor():
+            single_value = apply_blocks[idx][0][0]
+            dm.blocks[bid].set_extra_kwargs(pk=single_value.pk,
+                                            evaluator=single_value.evaluator,
+                                            coder=single_value.coder,
+                                            dtype=single_value.dtype,
+                                            device=single_value.device)
+            ret = [v[0]._data for v in apply_blocks[idx]]
+            ret_blocks[bid] = dm.blocks[bid].convert_block(ret)
+            # ret_blocks[bid] = dm.blocks[bid].convert_to_phe_tensor(ret, shape=(len(ret), 1))
+        else:
+            ret_blocks[bid] = dm.blocks[bid].convert_block(apply_blocks[idx])
 
     return ret_blocks, dm

@@ -367,6 +367,8 @@ class PHETensorBlock(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, list):
+            block = block[0].cat(block[1:])
         return block
 
     def convert_to_phe_tensor(self, block, shape):

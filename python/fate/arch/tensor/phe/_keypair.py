@@ -86,6 +86,7 @@ class PHETensorEncryptor:
         return self.encrypt_encoded(coded, obfuscate)
 
     def lift(self, data, shape, dtype, device):
+        from ._tensor import PHETensor
         return PHETensor(self._pk, self._evaluator, self._coder, shape, data, dtype, device)
 
 
