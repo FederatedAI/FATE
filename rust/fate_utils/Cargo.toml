@@ -20,3 +20,4 @@ sha2 = "0.9.9"
 iai = "0.1.1"
 criterion = { version = "0.3", features = ["html_reports"] }
 rand_chacha = "0.3.1"
+anyhow = "1.0.75"

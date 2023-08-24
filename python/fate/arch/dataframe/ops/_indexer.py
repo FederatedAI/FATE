@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import functools
+import numpy as np
 
 from ..manager import Block, DataManager
 from .._dataframe import DataFrame
@@ -77,7 +78,8 @@ def get_partition_order_mappings_by_block_table(block_table, block_row_size):
         first_block_id = 0
         for k, v in kvs:
             if partition_key is None:
-                partition_key = k
+                partition_key = v[0][0]
+                # partition_key = k
 
             size += len(v[0])
 
@@ -170,7 +172,7 @@ def _merge_list(lhs, rhs):
 
     l_len = len(lhs)
     r_len = len(rhs)
-    ret = [[] for i in range(l_len + r_len)]
+    ret = [None] * (l_len + r_len)
     i, j, k = 0, 0, 0
     while i < l_len and j < r_len:
         if lhs[i][0] < rhs[j][0]:
@@ -233,15 +235,11 @@ def loc(df: DataFrame, indexer, target, preserve_order=False):
             for dst_block_id, value_list in ret_dict.items():
                 yield dst_block_id, sorted(value_list)
 
-        from ._transformer import transform_list_block_to_frame_block
-
         block_table = df.block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
         block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
 
         _convert_to_frame_block_func = functools.partial(_convert_to_frame_block, data_manager=df.data_manager)
         block_table = block_table.mapValues(_convert_to_frame_block_func)
-        # block_table = block_table.mapValues(lambda values: [v[1] for v in values])
-        # block_table = transform_list_block_to_frame_block(block_table, df.data_manager)
 
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, df.data_manager.block_row_size)
     return DataFrame(

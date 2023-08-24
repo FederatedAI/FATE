@@ -23,11 +23,13 @@ rand_chacha = { workspace = true }
 x25519-dalek = { workspace = true }
 rand_core = { workspace = true }
 rug = { workspace = true }
+anyhow = { workspace = true }
 quantile = { path = "../quantile" }
 math = { path = "../math" }
 fixedpoint = { path = "../fixedpoint" }
 paillier_tensor = { path = "../paillier_tensor" }
 paillier = { path = "../paillier" }
+fixedpoint_paillier = { path = "../fixedpoint_paillier" }
 
 [features]
 default = ["rug", "rayon", "std", "u64_backend", "extension-module"]

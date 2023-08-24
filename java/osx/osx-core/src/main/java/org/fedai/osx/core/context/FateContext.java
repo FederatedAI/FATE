@@ -40,6 +40,16 @@ public class FateContext implements Context{
     protected boolean needCheckRouterInfo = true;
     protected Long dataSize;
 
+    public Integer getSleepTime() {
+        return sleepTime;
+    }
+
+    public void setSleepTime(Integer sleepTime) {
+        this.sleepTime = sleepTime;
+    }
+
+    protected Integer sleepTime;
+
     public Integer getRetryTime() {
         return retryTime;
     }
@@ -365,6 +375,9 @@ public class FateContext implements Context{
         }
         if (this.getDataSize() != null) {
             stringBuffer.append("size:").append(this.getDataSize()).append(SPLIT);
+        }
+        if(this.getSleepTime()!=null&&this.getSleepTime()>0){
+            stringBuffer.append("sleep:").append(this.getSleepTime()).append(SPLIT);
         }
         if(this.retryTime>1){
             stringBuffer.append("retry:").append(this.retryTime).append(SPLIT);

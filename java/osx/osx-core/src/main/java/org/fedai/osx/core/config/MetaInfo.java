@@ -100,7 +100,7 @@ public class MetaInfo {
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
     @Config(confKey = "mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer MAP_FILE_SIZE = 1 << 25;
+    public static Integer MAP_FILE_SIZE = 1 << 28;
     @Config(confKey = "mapped.file.dir")
     public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped/.fate/transfer_file";
 
@@ -164,7 +164,7 @@ public class MetaInfo {
     @Config(confKey = "zk.url")
     public static String PROPERTY_ZK_URL;
     @Config(confKey = "stream.limit.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 3;
+    public static Integer PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 20;
     @Config(confKey = "produce.msg.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_PRODUCE_MSG_MAX_TRY_TIME = 3;
     @Config(confKey = "produce.msg.max.try.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)

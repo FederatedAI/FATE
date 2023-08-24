@@ -59,7 +59,7 @@ public class QueueTest {
                     .keepAliveTime(12, TimeUnit.MINUTES)
                     .keepAliveTimeout(12, TimeUnit.MINUTES)
                     .keepAliveWithoutCalls(true)
-                    //.idleTimeout(60, TimeUnit.SECONDS)
+                    .idleTimeout(60, TimeUnit.SECONDS)
                     .perRpcBufferLimit(128 << 20)
                     .flowControlWindow(32 << 20)
                     .maxInboundMessageSize(32 << 20)
@@ -136,7 +136,7 @@ public class QueueTest {
 
     @Test
     public void test04UnaryProduce() {
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10; i++) {
 //            new Thread(new Runnable() {
 //                @Override
 //                public void run() {
@@ -157,7 +157,7 @@ public class QueueTest {
                     //inboundBuilder.getMetadataMap().put(Pcp.Metadata.MessageOffSet.name(),);
                     Osx.Message.Builder messageBuilder = Osx.Message.newBuilder();
                     //4359615
-                    messageBuilder.setBody(ByteString.copyFrom(createBigArray(40359615)));
+                    messageBuilder.setBody(ByteString.copyFrom(createBigArray(1024)));
                     messageBuilder.setHead(ByteString.copyFrom(("test head " + i).getBytes()));
                     inboundBuilder.setPayload(messageBuilder.build().toByteString());
                     Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
