@@ -49,7 +49,7 @@ data:
     table_name: breast_hetero_host
     namespace: experiment
     role: host_1
-  - file: "../../data/vehicle_scale_hetero_guest.csv"
+  - file: examples/data/vehicle_scale_hetero_guest.csv
     meta:
       delimiter: ","
       dtype: float64
@@ -67,7 +67,7 @@ data:
     table_name: vehicle_scale_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "../../data/vehicle_scale_hetero_host.csv"
+  - file: examples/data/vehicle_scale_hetero_host.csv
     meta:
       delimiter: ","
       dtype: float64
