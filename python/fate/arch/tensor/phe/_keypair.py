@@ -54,6 +54,21 @@ class PHETensorCoder:
         else:
             raise NotImplementedError(f"`{tensor}` not supported")
 
+    def pack_encode_float_tensor(self, tensor: torch.DoubleTensor, offset_bit: int, pack_num: int, precision: int):
+        if isinstance(tensor, torch.Tensor):
+            from fate.arch.unify import device
+
+            from ._tensor import PHETensorEncoded
+
+            shape = tensor.shape
+            dtype = tensor.dtype
+            data = self._coder.pack_floats(tensor, offset_bit, pack_num, precision)
+            return PHETensorEncoded(self._coder, shape, data, tensor.dtype, device.from_torch_device(tensor.device))
+        elif hasattr(tensor, "pack_encode_float_tensor"):
+            return tensor.pack_encode_float_tensor(self, offset_bit, pack_num, precision)
+        else:
+            raise NotImplementedError(f"`{tensor}` not supported")
+
     def decode(self, tensor: "PHETensorEncoded"):
         from ._tensor import PHETensorEncoded
 
@@ -61,6 +76,16 @@ class PHETensorCoder:
             return self._coder.decode_tensor(tensor.data, tensor.dtype, tensor.shape, tensor.device)
         elif hasattr(tensor, "decode"):
             return tensor.decode(self)
+        else:
+            raise NotImplementedError(f"`{tensor}` not supported")
+
+    def pack_decode_float_tensor(self, tensor: "PHETensorEncoded", offset_bit: int, pack_num: int, precision: int):
+        from ._tensor import PHETensorEncoded
+
+        if isinstance(tensor, PHETensorEncoded):
+            return self._coder.unpack_floats(tensor.data, offset_bit, pack_num, precision, tensor.shape.numel())
+        elif hasattr(tensor, "pack_decode_float_tensor"):
+            return tensor.pack_decode_float_tensor(self, offset_bit, pack_num, precision)
         else:
             raise NotImplementedError(f"`{tensor}` not supported")
 
