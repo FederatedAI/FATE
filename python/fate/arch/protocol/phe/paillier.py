@@ -3,16 +3,16 @@ from typing import List, Optional, Tuple
 import torch
 from fate_utils.paillier import PK as _PK
 from fate_utils.paillier import SK as _SK
-from fate_utils.paillier import Coders as _Coder
+from fate_utils.paillier import Coder as _Coder
 from fate_utils.paillier import Evaluator as _Evaluator
-from fate_utils.paillier import FixedpointPaillierVector, FixedpointVector
+from fate_utils.paillier import CiphertextVector, PlaintextVector
 from fate_utils.paillier import keygen as _keygen
 
 from .type import TensorEvaluator
 
 V = torch.Tensor
-EV = FixedpointPaillierVector
-FV = FixedpointVector
+EV = CiphertextVector
+FV = PlaintextVector
 
 
 class SK:
@@ -30,7 +30,7 @@ class PK:
     def encrypt_encoded(self, vec: FV, obfuscate: bool) -> EV:
         return self.pk.encrypt_encoded(vec, obfuscate)
 
-    def encrypt_encoded_scalar(self, val, obfuscate) -> FixedpointPaillierVector:
+    def encrypt_encoded_scalar(self, val, obfuscate) -> EV:
         return self.pk.encrypt_encoded_scalar(val, obfuscate)
 
 
@@ -238,7 +238,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
 
     @staticmethod
     def zeros(size) -> EV:
-        return FixedpointPaillierVector.zeros(size)
+        return CiphertextVector.zeros(size)
 
     @staticmethod
     def i_add(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
