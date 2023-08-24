@@ -38,6 +38,7 @@ class HistogramValues:
 
     def squeeze(self, pack_num, offset_bit):
         raise NotImplementedError
+
     def unpack(self, coder, pack_num, offset_bit, precision, total_num):
         raise NotImplementedError
 
@@ -521,23 +522,26 @@ class ShuffledHistogram:
             sk_map: MutableMapping[str, typing.Any],
             coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
     ):
-
-        def _decrypt(split: HistogramSplits):
-            split.i_decrypt(sk_map)
-            if self._squeezed:
-                split.i_unpack_decode(coder_map)
-                return split
-            else:
-                split.i_decode(coder_map)
-                return split
-
-        out = list(self._table.mapValues(lambda split: _decrypt).collect())
+        out = list(self._table.mapValues(_decrypt_func(sk_map, coder_map, self._squeezed)).collect())
         out.sort(key=lambda x: x[0])
         return self.cat([split for _, split in out])
 
     def cat(self, hists: typing.List["HistogramSplits"]) -> "Histogram":
         data = HistogramSplits.cat(hists)
         return Histogram(HistogramIndexer(self._node_size, [self._node_data_size]), data)
+
+
+def _decrypt_func(sk_map, coder_map, squeezed):
+    def _decrypt(split: HistogramSplits):
+        split.i_decrypt(sk_map)
+        if squeezed:
+            split.i_unpack_decode(coder_map)
+            return split
+        else:
+            split.i_decode(coder_map)
+            return split
+
+    return _decrypt
 
 
 def argmax_reducer(
@@ -559,7 +563,7 @@ def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas,
             hist.i_update(fids, nids, targets)
         hist.i_cumsum_bins()
         hist.i_shuffle(shuffle)
-        splits = list(hist.to_splits(k))
+        splits = hist.to_splits(k)
         return splits
 
     return _partition_hist_build_mapper
