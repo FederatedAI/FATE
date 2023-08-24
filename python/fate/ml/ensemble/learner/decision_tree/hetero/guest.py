@@ -15,20 +15,27 @@
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
+from fate.ml.ensemble.learner.decision_tree.tree_core.loss import get_task_info
+from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from typing import List
 import functools
 import logging 
+import pandas as pd
+import torch as t
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
+
+FIX_POINT_PRECISION = 2**52
 
 
 class HeteroDecisionTreeGuest(DecisionTree):
 
     def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, goss=False, l1=0.1, l2=0, 
-                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1):
+                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, gh_pack=True, objective=None):
 
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
@@ -58,6 +65,16 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._evaluator = None
         self._encryptor = None
         self._decryptor = None
+
+        # for g, h packing
+        self._gh_pack = gh_pack
+        self._g_offset = 0
+        self._g_abs_max = 0
+        self._h_abs_max = 0
+        self._objective = objective
+        if gh_pack:
+            if objective is None:
+                raise ValueError('objective must be specified when gh_pack is True')
 
 
     def set_encrypt_kit(self, kit):
@@ -125,15 +142,52 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.sample_pos = new_sample_pos
 
         return new_sample_pos
+    
+    def _g_h_process(self, grad_and_hess: DataFrame):
+        
+        en_grad_hess = grad_and_hess.create_frame()
+
+        def make_long_tensor(s: pd.Series, coder, pk, encryptor, offset=0, pack_num=2, shift_bit=52):
+            gh = t.LongTensor([int((s['g']+offset)*FIX_POINT_PRECISION), int(s['h']*FIX_POINT_PRECISION)])
+            pack_vec = coder.pack_vec(gh, num_shift_bit=shift_bit, num_elem_each_pack=pack_num)
+            en = pk.encrypt_encoded(pack_vec, obfuscate=True)
+            return encryptor.lift(en, (len(en), 1), t.long, gh.device)
+
+        def compute_offset_bit(sample_num, g_max, h_max):
+            g_bit = int(np.log2(FIX_POINT_PRECISION * sample_num * g_max) + 1) # add 1 more bit for safety
+            h_bit = int(np.log2(FIX_POINT_PRECISION * sample_num * h_max) + 1) 
+            return max(g_bit, h_bit)
+
+        if self._gh_pack:
+            
+            task_type = get_task_info(self._objective)
+
+            if task_type == BINARY or task_type == MULTI:
+                self._g_offset = 1
+                self._g_abs_max = 2
+                self._h_abs_max = 1
+                
+            elif task_type == REGRESSION:
+                self._g_offset = abs(float(grad_and_hess['g'].min()['g']))
+                self._g_abs_max = abs(float(grad_and_hess['g'].max()['g'])) + self._g_offset
+                self._h_abs_max = 2
+
+            shift_bit = compute_offset_bit(len(grad_and_hess), self._g_abs_max, self._h_abs_max)
+            
+            partial_func = functools.partial(make_long_tensor, coder=self._coder, offset=self._g_offset, pk=self._pk,
+                                             shift_bit=shift_bit, pack_num=2, encryptor=self._encryptor)
+            
+            en_grad_hess['gh'] = grad_and_hess.apply_row(partial_func)
+        else:
+            en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
+            en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
+
+        return en_grad_hess
 
     def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
         
         # encrypt g & h
-        en_grad_hess = grad_and_hess.create_frame()
-
-        en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
-        en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
-
+        en_grad_hess = self._g_h_process(grad_and_hess)
         ctx.hosts.put('en_gh', en_grad_hess)
         ctx.hosts.put('en_kit', [self._pk, self._evaluator])
 
@@ -205,7 +259,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # compute histogram
             hist_inst, statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             # compute best splits
-            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder)
+            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder, self._gh_pack)
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info, train_df)
             # update feature importance

@@ -19,7 +19,7 @@ from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
 from fate.ml.ensemble.learner.decision_tree.hetero.guest import HeteroDecisionTreeGuest
 from fate.ml.ensemble.utils.binning import binning
-from fate.ml.ensemble.learner.decision_tree.tree_core.loss import BCELoss, CELoss, L2Loss
+from fate.ml.ensemble.learner.decision_tree.tree_core.loss import OBJECTIVE, get_task_info
 from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_guest
 from fate.ml.utils.predict_tools import compute_predict_details, PREDICT_SCORE, LABEL, BINARY, MULTI, REGRESSION
 import logging
@@ -28,22 +28,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-BINARY_BCE = "binary:bce"
-MULTI_CE = "multi:ce"
-REGRESSION_L2 = "regression:l2"
-
-
-OBJECTIVE = {
-    BINARY_BCE: BCELoss,
-    MULTI_CE: CELoss,
-    REGRESSION_L2: L2Loss
-}
-
 
 class HeteroSecureBoostGuest(HeteroBoostingTree):
 
     def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, objective='binary:bce', num_class=3,
-                 max_bin=32, encrypt_key_length=2048, l2=0.1, l1=0, min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1) -> None:
+                 max_bin=32, encrypt_key_length=2048, l2=0.1, l1=0, min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1
+                 ) -> None:
+        
         super().__init__()
         self.num_trees = num_trees
         self.learning_rate = learning_rate
@@ -142,9 +133,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         else:
             self.num_class = None
             
-
     def get_task_info(self):
-        task_type = self.objective.split(':')[0]
+        task_type = get_task_info(self.objective)
         if task_type == BINARY:
             classes = [0, 1]
         elif task_type == REGRESSION:
