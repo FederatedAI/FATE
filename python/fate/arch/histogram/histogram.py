@@ -1,6 +1,7 @@
 import typing
 import logging
 from typing import List, MutableMapping, Tuple
+from fate.arch.abc._table import CTableABC
 
 import torch
 
@@ -384,8 +385,6 @@ class HistogramSplits:
         self.end = end
         self._data: typing.MutableMapping[str, HistogramValues] = data
 
-        self._squeezed = False
-
     def __str__(self):
         result = f"HistogramSplits(start={self.start}, end={self.end}):\n"
         for name, value in self._data.items():
@@ -427,18 +426,6 @@ class HistogramSplits:
                 self._data[name] = value.decode(coder, dtype)
         return self
 
-    def decrypt(
-            self,
-            sk_map: MutableMapping[str, typing.Any],
-            coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
-    ):
-        self.i_decrypt(sk_map)
-        if self._squeezed:
-            self.i_unpack_decode(coder_map)
-        else:
-            self.i_decode(coder_map)
-        return self
-
     @classmethod
     def cat(cls, splits: typing.List["HistogramSplits"]):
         data = {}
@@ -459,7 +446,6 @@ class HistogramSplits:
             if name in coder_map:
                 pack_num, offset_bit = coder_map[name]
                 self._data[name] = value.squeeze(pack_num=pack_num, offset_bit=offset_bit)
-        self._squeezed = True
         return self
 
 
@@ -514,17 +500,38 @@ class DistributedHistogram:
 
 
 class ShuffledHistogram:
-    def __init__(self, table, node_size, node_data_size):
+    def __init__(self, table: CTableABC[int, HistogramSplits], node_size, node_data_size, squeezed=False):
         self._table = table
         self._node_size = node_size
         self._node_data_size = node_data_size
+        self._squeezed = squeezed
+
+    def squeeze(self, squeeze_map: MutableMapping[str, typing.Tuple[int, int]]):
+        """
+        Squeeze the histogram values.
+
+        Args:
+            squeeze_map: name -> (pack_num, offset_bit)
+        """
+        table = self._table.mapValues(lambda split: split.i_squeeze(squeeze_map))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size, True)
 
     def decrypt(
             self,
             sk_map: MutableMapping[str, typing.Any],
             coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
     ):
-        out = list(self._table.mapValues(lambda split: split.decrypt(sk_map, coder_map)).collect())
+
+        def _decrypt(split: HistogramSplits):
+            split.i_decrypt(sk_map)
+            if self._squeezed:
+                split.i_unpack_decode(coder_map)
+                return split
+            else:
+                split.i_decode(coder_map)
+                return split
+
+        out = list(self._table.mapValues(lambda split: _decrypt).collect())
         out.sort(key=lambda x: x[0])
         return self.cat([split for _, split in out])
 
