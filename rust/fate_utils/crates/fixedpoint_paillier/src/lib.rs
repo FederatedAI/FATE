@@ -2,10 +2,12 @@ use math::BInt;
 use paillier;
 use anyhow::Result;
 use anyhow::anyhow;
-use std::ops::{AddAssign, ShlAssign, SubAssign};
+use std::ops::{Add, AddAssign, Mul, ShlAssign, SubAssign};
 use rug::{self, Integer, ops::Pow};
 use serde::{Deserialize, Serialize};
+
 mod frexp;
+
 use frexp::Frexp;
 
 const BASE: u32 = 16;
@@ -62,6 +64,7 @@ impl Coder {
             max_int: n / MAX_INT_FRACTION,
         }
     }
+
     pub fn encode_i64(&self, plaintext: i64) -> Plaintext {
         let significant = paillier::PT(if plaintext < 0 {
             BInt::from(&self.n + plaintext)
@@ -400,11 +403,21 @@ impl CiphertextVector {
             placeholder = std::mem::replace(&mut self.data[i + k], placeholder);
         }
     }
-}
-
-impl CiphertextVector {
     pub fn zeros(size: usize) -> Self {
         let data = vec![Ciphertext::zero(); size];
+        CiphertextVector { data }
+    }
+
+    pub fn pack_squeeze(&self, pk: &PK, pack_num: usize, shift_bit: u32) -> CiphertextVector {
+        let base = BInt::from(2).pow(shift_bit);
+        let data = self.data.chunks(pack_num).map(|x| {
+            let mut result = x[0].significant_encryped.0.clone();
+            for y in &x[1..] {
+                result.pow_mod_mut(&base, &pk.pk.ns);
+                result = result.mul(&y.significant_encryped.0) % &pk.pk.ns;
+            }
+            Ciphertext { significant_encryped: paillier::CT(result), exp: 0 }
+        }).collect();
         CiphertextVector { data }
     }
 
@@ -420,6 +433,7 @@ impl CiphertextVector {
             .collect::<Vec<_>>();
         CiphertextVector { data }
     }
+
     pub fn cat(&self, others: Vec<&CiphertextVector>) -> Self {
         let mut data = self.data.clone();
         for other in others {
@@ -427,6 +441,7 @@ impl CiphertextVector {
         }
         CiphertextVector { data }
     }
+
     pub fn i_shuffle(&mut self, indexes: Vec<usize>) {
         let mut visited = vec![false; self.data.len()];
         for i in 0..self.data.len() {
@@ -445,6 +460,7 @@ impl CiphertextVector {
             visited[current] = true;
         }
     }
+
     pub fn intervals_slice(&mut self, intervals: Vec<(usize, usize)>) -> Result<Self> {
         let mut data = vec![];
         for (start, end) in intervals {
@@ -466,6 +482,7 @@ impl CiphertextVector {
             self.data[position + i] = self.data[position + i].add(&x, &pk);
         }
     }
+
     pub fn iadd_vec_self(
         &mut self,
         sa: usize,
@@ -546,6 +563,7 @@ impl CiphertextVector {
         // };
         Ok(())
     }
+
     pub fn iadd_vec(
         &mut self,
         other: &CiphertextVector,
@@ -603,18 +621,21 @@ impl CiphertextVector {
         }
         Ok(())
     }
+
     pub fn iadd(&mut self, pk: &PK, other: &CiphertextVector) {
         self.data
             .iter_mut()
             .zip(other.data.iter())
             .for_each(|(x, y)| x.add_assign(y, &pk));
     }
+
     pub fn idouble(&mut self, pk: &PK) {
         // TODO: fix me, remove clone
         self.data
             .iter_mut()
             .for_each(|x| x.add_assign(&x.clone(), &pk));
     }
+
     pub fn chunking_cumsum_with_step(&mut self, pk: &PK, chunk_sizes: Vec<usize>, step: usize) {
         let mut placeholder = Ciphertext::zero();
         let mut i = 0;
@@ -627,6 +648,7 @@ impl CiphertextVector {
             i += chunk_size;
         }
     }
+
     pub fn intervals_sum_with_step(
         &mut self,
         pk: &PK,
@@ -657,10 +679,12 @@ impl CiphertextVector {
             .collect();
         CiphertextVector { data }
     }
+
     pub fn add_scalar(&self, pk: &PK, other: &Ciphertext) -> CiphertextVector {
         let data = self.data.iter().map(|x| x.add(&other, &pk)).collect();
         CiphertextVector { data }
     }
+
     pub fn sub(&self, pk: &PK, other: &CiphertextVector) -> CiphertextVector {
         let data = self
             .data
@@ -670,10 +694,12 @@ impl CiphertextVector {
             .collect();
         CiphertextVector { data }
     }
+
     pub fn sub_scalar(&self, pk: &PK, other: &Ciphertext) -> CiphertextVector {
         let data = self.data.iter().map(|x| x.sub(&other, &pk)).collect();
         CiphertextVector { data }
     }
+
     pub fn rsub(&self, pk: &PK, other: &CiphertextVector) -> CiphertextVector {
         let data = self
             .data
@@ -683,10 +709,12 @@ impl CiphertextVector {
             .collect();
         CiphertextVector { data }
     }
+
     pub fn rsub_scalar(&self, pk: &PK, other: &Ciphertext) -> CiphertextVector {
         let data = self.data.iter().map(|x| other.sub(x, &pk)).collect();
         CiphertextVector { data }
     }
+
     pub fn mul(&self, pk: &PK, other: &PlaintextVector) -> CiphertextVector {
         let data = self
             .data
@@ -696,6 +724,7 @@ impl CiphertextVector {
             .collect();
         CiphertextVector { data }
     }
+
     pub fn mul_scalar(&self, pk: &PK, other: &Plaintext) -> CiphertextVector {
         let data = self
             .data

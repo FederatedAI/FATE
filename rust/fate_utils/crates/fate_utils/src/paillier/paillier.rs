@@ -134,6 +134,26 @@ impl Coder {
         Ok(())
     }
 
+    fn pack_floats(&self, float_tensor: Vec<f64>, offset_bit: usize, pack_num: usize, precision: u32) -> PlaintextVector {
+        let int_scale = 2_u32.pow(precision) as f64;
+        let data = float_tensor.iter().map(|x| (x * int_scale) as u64).collect::<Vec<u64>>()
+            .chunks(pack_num)
+            .map(|x| self.0.pack(x, offset_bit))
+            .collect();
+        PlaintextVector(fixedpoint_paillier::PlaintextVector { data })
+    }
+
+    fn unpack_floats(&self, packed: &PlaintextVector, offset_bit: usize, pack_num: usize, precision: u32, total_num: usize) -> Vec<f64> {
+        let int_scale = 2_u32.pow(precision) as f64;
+        let mut result = Vec::with_capacity(total_num);
+        let mut total_num = total_num;
+        for x in packed.0.data.iter() {
+            let n = std::cmp::min(total_num, pack_num);
+            result.extend(self.0.unpack(x, offset_bit, n).iter().map(|x| (*x as f64) / int_scale));
+            total_num -= n;
+        }
+        result
+    }
     fn encode_f64_vec(&self, data: PyReadonlyArray1<f64>) -> PlaintextVector {
         let data = data
             .as_array()
@@ -246,6 +266,10 @@ impl CiphertextVector {
     #[staticmethod]
     pub fn zeros(size: usize) -> PyResult<Self> {
         Ok(CiphertextVector(fixedpoint_paillier::CiphertextVector::zeros(size)))
+    }
+
+    pub fn pack_squeeze(&self, pack_num: usize, offset_bit: u32, pk: &PK) -> PyResult<CiphertextVector> {
+        Ok(CiphertextVector(self.0.pack_squeeze(&pk.0, pack_num, offset_bit)))
     }
 
     fn slice(&mut self, start: usize, size: usize) -> CiphertextVector {
