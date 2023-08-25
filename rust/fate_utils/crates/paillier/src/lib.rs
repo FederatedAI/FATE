@@ -35,6 +35,13 @@ impl CT {
     pub fn add_ct(&self, ct: &CT, pk: &PK) -> CT {
         CT(&self.0 * &ct.0 % &pk.ns)
     }
+
+    pub fn neg(&self, pk: &PK) -> CT {
+        CT(self.0.invert_ref(&pk.ns))
+    }
+    pub fn sub_ct(&self, ct: &CT, pk: &PK) -> CT {
+        self.add_ct(&ct.neg(&pk), &pk)
+    }
     pub fn i_double(&mut self, pk: &PK) {
         self.0.pow_mod_mut(&BInt::from(2), &pk.ns);
     }

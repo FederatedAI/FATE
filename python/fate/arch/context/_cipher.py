@@ -60,10 +60,11 @@ class PHECipherBuilder:
             return PHECipher(pk, sk, None, None, tensor_cipher)
 
         if kind == "paillier":
-            from fate.arch.protocol.phe.paillier import evaluator, keygen
+            from fate.arch.protocol.phe.paillier import evaluator, keygen, Coder
             from fate.arch.tensor.phe import PHETensorCipher
 
-            sk, pk, coder = keygen(key_length)
+            sk, pk = keygen(key_length)
+            coder = Coder.from_pk(pk)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(pk, sk, evaluator, coder, tensor_cipher)
 

@@ -380,10 +380,9 @@ class PHETensorBlock(Block):
         self._dtype = dtype
         self._device = device
 
-    @staticmethod
-    def convert_block(block):
+    def convert_block(self, block):
         if isinstance(block, list):
-            block = block[0].cat(block[1:])
+            block = self._evaluator.cat(block)
         return block
 
     def convert_to_phe_tensor(self, block, shape):
@@ -391,7 +390,7 @@ class PHETensorBlock(Block):
             return block
 
         if isinstance(block, list):
-            block = block[0].cat(block[1:])
+            block = self._evaluator.cat(block)
 
         return PHETensor(
             pk=self._pk,

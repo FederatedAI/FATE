@@ -184,6 +184,25 @@ def mul(input, other):
         return NotImplemented
 
 
+@implements(torch.sum)
+def sum(input, *args, **kwargs):
+    evaluator = input.evaluator
+    dim = None
+    if len(args) > 0:
+        dim = args[0]
+    if "dim" in kwargs:
+        dim = kwargs["dim"]
+    if isinstance(dim, int):
+        dim = (dim,)
+    output_dtype = kwargs.get("dtype", input.dtype)
+    if dim is None:
+        output_shape = torch.Size([])
+    else:
+        output_shape = torch.Size([input.shape[i] for i in range(len(input.shape)) if i != dim])
+    out = evaluator.sum(input.data, input.shape, dim)
+    return input.with_template(out, dtype=output_dtype, shape=output_shape)
+
+
 @implements(_custom_ops.rmatmul_f)
 def rmatmul_f(input, other):
     if not isinstance(input, PHETensor) and isinstance(other, PHETensor):

@@ -9,5 +9,6 @@ edition = "2021"
 serde = { workspace = true}
 rug = { workspace = true }
 anyhow = { workspace = true }
+itertools = "0.11.0"
 math = { path = "../math" }
 paillier = { path = "../paillier" }

@@ -3,6 +3,7 @@ use paillier;
 use anyhow::Result;
 use anyhow::anyhow;
 use std::ops::{Add, AddAssign, Mul, ShlAssign, SubAssign};
+use itertools::Itertools;
 use rug::{self, Integer, ops::Pow};
 use serde::{Deserialize, Serialize};
 
@@ -57,26 +58,11 @@ pub struct Coder {
     pub max_int: BInt,
 }
 
-impl Coder {
-    pub fn new(n: &BInt) -> Self {
-        Coder {
-            n: n.clone(),
-            max_int: n / MAX_INT_FRACTION,
-        }
-    }
+#[derive(Default)]
+pub struct Packer {}
 
-    pub fn encode_i64(&self, plaintext: i64) -> Plaintext {
-        let significant = paillier::PT(if plaintext < 0 {
-            BInt::from(&self.n + plaintext)
-        } else {
-            BInt::from(plaintext)
-        });
-        Plaintext {
-            significant,
-            exp: 0,
-        }
-    }
-    pub fn pack(&self, plaintexts: &[u64], num_shift_bit: usize) -> Plaintext {
+impl Packer {
+    pub fn pack(plaintexts: &[u64], num_shift_bit: usize) -> Plaintext {
         let significant = plaintexts.iter().fold(Integer::default(), |mut x, v| {
             x.shl_assign(num_shift_bit);
             x.add_assign(v);
@@ -87,7 +73,7 @@ impl Coder {
             exp: 0,
         }
     }
-    pub fn unpack(&self, encoded: &Plaintext, num_shift_bit: usize, num: usize) -> Vec<u64> {
+    pub fn unpack(encoded: &Plaintext, num_shift_bit: usize, num: usize) -> Vec<u64> {
         let mut significant = encoded.significant.0.0.clone();
         let mut mask = Integer::from(1u64 << num_shift_bit);
         mask.sub_assign(1);
@@ -100,6 +86,31 @@ impl Coder {
         }
         result.reverse();
         result
+    }
+}
+
+impl Coder {
+    pub fn new(n: &BInt) -> Self {
+        Coder {
+            n: n.clone(),
+            max_int: n / MAX_INT_FRACTION,
+        }
+    }
+
+    pub fn from_pk(pk: &PK) -> Self {
+        Coder::new(&pk.pk.n)
+    }
+
+    pub fn encode_i64(&self, plaintext: i64) -> Plaintext {
+        let significant = paillier::PT(if plaintext < 0 {
+            BInt::from(&self.n + plaintext)
+        } else {
+            BInt::from(plaintext)
+        });
+        Plaintext {
+            significant,
+            exp: 0,
+        }
     }
     pub fn encode_i32(&self, plaintext: i32) -> Plaintext {
         let significant = paillier::PT(if plaintext < 0 {
@@ -732,6 +743,44 @@ impl CiphertextVector {
             .map(|x| x.mul(&other, &pk))
             .collect();
         CiphertextVector { data }
+    }
+
+    pub fn sum(&self, shape: Vec<usize>, dim: Option<usize>, pk: &PK) -> CiphertextVector {
+        match dim {
+            None => {
+                let data = self.data.iter().fold(Ciphertext::zero(), |mut x, y| {
+                    x.add_assign(y, &pk);
+                    x
+                });
+                CiphertextVector { data: vec![data] }
+            }
+            Some(d) => {
+                let out_shape = shape.iter().enumerate().filter(|(i, _)| *i != d).map(|(_, v)| *v).collect::<Vec<_>>();
+                let out_numel = out_shape.iter().product::<usize>();
+                let mut out_data = vec![Ciphertext::zero(); out_numel];
+
+                let mut input_strides = vec![1; shape.len()];
+                for i in (0..shape.len() - 1).rev() {
+                    input_strides[i] = input_strides[i + 1] * shape[i + 1];
+                }
+                let mut output_strides = vec![1; out_shape.len()];
+                for i in (0..out_shape.len() - 1).rev() {
+                    output_strides[i] = output_strides[i + 1] * out_shape[i + 1];
+                }
+                output_strides.insert(d, 0);
+
+                shape.iter().map(|x| 0..*x).multi_cartesian_product().for_each(|indexes| {
+                    let mut input_index = 0;
+                    let mut output_index = 0;
+                    for (i, index) in indexes.iter().enumerate() {
+                        input_index += index * input_strides[i];
+                        output_index += index * output_strides[i];
+                    }
+                    out_data[output_index].add_assign(&self.data[input_index], &pk);
+                });
+                CiphertextVector { data: out_data }
+            }
+        }
     }
 
     pub fn matmul(

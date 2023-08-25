@@ -463,7 +463,6 @@ class DistributedHistogram:
         Update the histogram with the data.
         Args:
             data: table with the following schema:
-                TODO
             k: number of output splits of the histogram
         Returns:
             ShuffledHistogram, the shuffled(if seed is not None) histogram
