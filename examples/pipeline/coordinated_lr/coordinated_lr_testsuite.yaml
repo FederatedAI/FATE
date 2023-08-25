@@ -49,12 +49,12 @@ data:
     table_name: breast_hetero_host
     namespace: experiment
     role: host_1
-  - file: "../../data/vehicle_scale_hetero_guest.csv"
+  - file: examples/data/vehicle_scale_hetero_guest.csv
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
-      match_id_name: "id"
+      match_id_name: id
       match_id_range: 0
       label_type: int64
       label_name: y
@@ -62,24 +62,24 @@ data:
       tag_with_value: false
       weight_type: float64
     head: true
-    partition: 4
-    extend_sid: false
+    partitions: 4
+    extend_sid: true
     table_name: vehicle_scale_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "../../data/vehicle_scale_hetero_host.csv"
+  - file: examples/data/vehicle_scale_hetero_host.csv
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
-      match_id_name: "id"
+      match_id_name: id
       match_id_range: 0
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     head: true
-    partition: 4
-    extend_sid: false
+    partitions: 4
+    extend_sid: true
     table_name: vehicle_scale_hetero_host
     namespace: experiment
     role: host_0
