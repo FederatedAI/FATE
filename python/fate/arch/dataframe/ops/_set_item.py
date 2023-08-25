@@ -86,7 +86,7 @@ def _set_new_item(df: "DataFrame", keys, items):
         ret_blocks = [block for block in l_blocks]
         l_bid = len(ret_blocks)
         for bid, offset in r_blocks_loc:
-            if dm.blocks[bid].is_phe_tensor():
+            if dm.blocks[l_bid].is_phe_tensor():
                 ret_blocks.append(r_blocks[bid])
             else:
                 ret_blocks.append(r_blocks[bid][:, [offset]])
