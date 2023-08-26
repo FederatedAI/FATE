@@ -508,8 +508,6 @@ class FedSBTSplitter(object):
         for idx, hist in enumerate(host_histograms):
             host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
             host_hist = self._recover_pack_split(hist, decrypt_schema)
-            print(host_hist)
-            raise ValueError('cwj debug')
             logger.debug('splitting host')
             host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
             host_splits.append(host_split)
