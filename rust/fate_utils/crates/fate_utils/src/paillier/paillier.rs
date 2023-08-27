@@ -135,7 +135,7 @@ impl Coder {
     }
 
     fn pack_floats(&self, float_tensor: Vec<f64>, offset_bit: usize, pack_num: usize, precision: u32) -> PlaintextVector {
-        let int_scale = 2_u32.pow(precision) as f64;
+        let int_scale = 2_f64.powf(precision as f64);
         let data = float_tensor.iter().map(|x| (x * int_scale) as u64).collect::<Vec<u64>>()
             .chunks(pack_num)
             .map(|x| self.0.pack(x, offset_bit))
@@ -144,7 +144,7 @@ impl Coder {
     }
 
     fn unpack_floats(&self, packed: &PlaintextVector, offset_bit: usize, pack_num: usize, precision: u32, total_num: usize) -> Vec<f64> {
-        let int_scale = 2_u32.pow(precision) as f64;
+        let int_scale = 2_f64.powf(precision as f64);
         let mut result = Vec::with_capacity(total_num);
         let mut total_num = total_num;
         for x in packed.0.data.iter() {
