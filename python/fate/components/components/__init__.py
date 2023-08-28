@@ -145,6 +145,12 @@ class LazyBuildInComponentsLoader:
         return data_split
 
     @_lazy_cpn
+    def coordinated_poisson(self):
+        from .coordinated_poisson import coordinated_poisson
+
+        return coordinated_poisson
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
 
