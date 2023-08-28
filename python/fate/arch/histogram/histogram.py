@@ -159,7 +159,7 @@ class HistogramEncodedValues(HistogramValues):
 
     def unpack(self, coder, pack_num, offset_bit, precision, total_num):
         return HistogramPlainValues(coder.unpack_floats(self.data, offset_bit, pack_num, precision, total_num),
-                                    self.stride)
+                                    pack_num)
 
     def slice(self, start, end):
         if hasattr(self.data, "slice"):
@@ -416,7 +416,8 @@ class HistogramSplits:
     def i_unpack_decode(self, coder_map):
         for name, value in self._data.items():
             if name in coder_map:
-                coder, pack_num, offset_bit, precision, total_num = coder_map[name]
+                coder, pack_num, offset_bit, precision = coder_map[name]
+                total_num = (self.end - self.start) * self.num_node * pack_num
                 self._data[name] = value.unpack(coder, pack_num, offset_bit, precision, total_num)
         return self
 
