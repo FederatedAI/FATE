@@ -47,7 +47,6 @@ def main(config="../config.yaml", namespace=""):
                                    init_param={"fit_intercept": True},
                                    train_data=psi_0.outputs["output_data"])
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="doctorco",
                               runtime_roles=["guest"],
                               default_eval_setting="regression",
                               input_data=poisson_0.outputs["train_output_data"])

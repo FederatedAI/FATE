@@ -67,7 +67,6 @@ def main(config="../config.yaml", namespace=""):
                                                                                                        "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="doctorco",
                               runtime_roles=["guest"],
                               default_eval_setting="regression",
                               input_data=[poisson_1.outputs["train_output_data"],
