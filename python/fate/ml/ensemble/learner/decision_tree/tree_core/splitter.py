@@ -481,6 +481,7 @@ class FedSBTSplitter(object):
 
         return splits
     
+<<<<<<< HEAD
     def _recover_pack_split(self, hist: ShuffledHistogram, schema, decode_schema=None):
         
         if decode_schema is not None:
@@ -492,6 +493,14 @@ class FedSBTSplitter(object):
         return host_hist
     
     def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack, pack_info):
+=======
+    def _recover_pack_split(self, hist, schema):
+        print('schema is {}'.format(schema))
+        host_hist = hist.decrypt(schema[0], schema[1])
+        return host_hist
+    
+    def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack):
+>>>>>>> dev-2.0.0-beta
         
         if sk is None or coder is None:
             raise ValueError('sk or coder is None, not able to decode host split points')
@@ -508,6 +517,7 @@ class FedSBTSplitter(object):
         host_splits = []
         if gh_pack:
             decrypt_schema = ({"gh":sk}, {"gh": (coder, torch.int64)})   
+<<<<<<< HEAD
             # (coder, pack_num, offset_bit, precision, total_num)
             if pack_info is not None:
                 decode_schema = {"gh": (coder, pack_info['pack_num'], pack_info['shift_bit'], pack_info['precision'])}
@@ -523,6 +533,14 @@ class FedSBTSplitter(object):
             print('host_hist is ', host_hist)
             # coder.unpack_floats(host_hist, )
             raise ValueError('cwj debug')
+=======
+        else:
+            decrypt_schema = ({"g":sk, "h":sk}, {"g": (coder, torch.float32), "h": (coder, torch.float32)})
+
+        for idx, hist in enumerate(host_histograms):
+            host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
+            host_hist = self._recover_pack_split(hist, decrypt_schema)
+>>>>>>> dev-2.0.0-beta
             logger.debug('splitting host')
             host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
             host_splits.append(host_split)
@@ -536,13 +554,21 @@ class FedSBTSplitter(object):
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
         ctx.guest.put('hist', en_histogram)
     
+<<<<<<< HEAD
     def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map, sk=None, coder=None, gh_pack=None, pack_info=None):
+=======
+    def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map, sk=None, coder=None, gh_pack=None):
+>>>>>>> dev-2.0.0-beta
         
         if ctx.is_on_guest:
             if sk is None or coder is None:
                 raise ValueError('sk or coder is None, not able to decode host split points')
             assert gh_pack is not None and isinstance(gh_pack, bool), 'gh_pack should be bool, indicating if the gh is packed'
+<<<<<<< HEAD
             return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder, gh_pack, pack_info)
+=======
+            return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder, gh_pack)
+>>>>>>> dev-2.0.0-beta
         elif ctx.is_on_host:
             return self._host_split(ctx, histogram_statistic_result, cur_layer_node)
         else:
