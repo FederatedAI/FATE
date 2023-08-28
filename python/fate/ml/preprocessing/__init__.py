@@ -14,4 +14,5 @@
 #  limitations under the License.
 
 from .feature_scale import FeatureScale
+from .one_hot_encoder import OneHotEncoder
 from .union import Union

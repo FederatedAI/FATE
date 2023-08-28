@@ -145,6 +145,12 @@ class LazyBuildInComponentsLoader:
         return data_split
 
     @_lazy_cpn
+    def one_hot_encoder(self):
+        from .one_hot_encoder import one_hot_encoder
+
+        return one_hot_encoder
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
 
