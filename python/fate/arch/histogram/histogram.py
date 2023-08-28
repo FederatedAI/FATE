@@ -546,6 +546,14 @@ class ShuffledHistogram:
         table = self._table.mapValues(lambda split: split.i_decode(coder_map))
         return ShuffledHistogram(table, self._node_size, self._node_data_size)
 
+    def union(self) -> Histogram:
+        """
+        Union the splits into one histogram.
+        """
+        out = list(self._table.collect())
+        out.sort(key=lambda x: x[0])
+        return self.cat([split for _, split in out])
+
     def decrypt(
             self,
             sk_map: MutableMapping[str, typing.Any],
