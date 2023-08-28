@@ -1,10 +1,11 @@
 import json
-import pandas as pd
-from fate.arch.dataframe import PandasReader
-import numpy as np
-from typing import Union
-from fate.arch.dataframe import DataFrame
 from typing import Literal
+
+import numpy as np
+import pandas as pd
+
+from fate.arch.dataframe import DataFrame
+from fate.arch.dataframe import PandasReader
 
 # DATA SET COLUMNS
 TRAIN_SET = 'train_set'
@@ -59,7 +60,7 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
     
     if not isinstance(dataframe, DataFrame):
         raise ValueError('dataframe must be a fate DataFrame, but got {}'.format(type(dataframe)))
-    
+    dataframe.rename(label_name=LABEL)
     assert PREDICT_SCORE in dataframe.schema.columns, 'column {} is not found in input dataframe'.format(PREDICT_SCORE)
 
     if task_type == BINARY and task_type == MULTI:
@@ -70,7 +71,8 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
         if len(classes) == 2:
             neg_class, pos_class = classes[0], classes[1]
             dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row( \
-                lambda v: [int(v[PREDICT_SCORE] > threshold), predict_detail_dict_to_str({neg_class: 1 - v[PREDICT_SCORE], pos_class: v[PREDICT_SCORE]})], 
+                lambda v: [int(v[PREDICT_SCORE] > threshold),
+                           predict_detail_dict_to_str({neg_class: 1 - v[PREDICT_SCORE], pos_class: v[PREDICT_SCORE]})],
                 enable_type_align_checking=False)
         else:
             raise ValueError(
