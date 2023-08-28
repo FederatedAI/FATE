@@ -486,6 +486,7 @@ class FedSBTSplitter(object):
         if decode_schema is not None:
             host_hist = hist.decrypt_(schema[0])
             host_hist = host_hist.unpack_decode(decode_schema)
+            host_hist = host_hist.union()
         else:
             host_hist = hist.decrypt(schema[0], schema[1])
         return host_hist
@@ -509,7 +510,7 @@ class FedSBTSplitter(object):
             decrypt_schema = ({"gh":sk}, {"gh": (coder, torch.int64)})   
             # (coder, pack_num, offset_bit, precision, total_num)
             if pack_info is not None:
-                decode_schema = {"gh": (coder, pack_info['pack_num'], pack_info['shift_bit'], pack_info['precision'], pack_info['total_num'])}
+                decode_schema = {"gh": (coder, pack_info['pack_num'], pack_info['shift_bit'], pack_info['precision'])}
             else:
                 raise ValueError('pack info is not provided')
         else:
