@@ -110,15 +110,20 @@ class HeteroDecisionTreeGuest(DecisionTree):
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
         local_sample_idx = data_with_pos.apply_row(map_func)
-        local_samples = data_with_pos.loc(local_sample_idx.get_indexer(target="sample_id"), preserve_order=True)[local_sample_idx.values.as_tensor()]
+        local_samples = data_with_pos[local_sample_idx.values.as_tensor()]
         logger.info('{}/{} samples on local nodes'.format(len(local_samples), len(data)))
         if len(local_samples) == 0:
             updated_sample_pos = None
         else:
+            """
             updated_sample_pos = sample_pos.loc(local_samples.get_indexer(target="sample_id"), preserve_order=True).create_frame()
             update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
             map_rs = local_samples.apply_row(update_func)
             updated_sample_pos["node_idx"] = map_rs # local_samples.apply_row(update_func)
+            """
+            update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
+            updated_sample_pos = local_samples.create_frame()
+            updated_sample_pos["node_idx"] = local_samples.apply_row(update_func)
 
         # synchronize sample pos
         host_update_sample_pos = ctx.hosts.get('updated_data')
