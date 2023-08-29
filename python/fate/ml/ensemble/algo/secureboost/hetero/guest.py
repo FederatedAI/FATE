@@ -104,7 +104,6 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             logger.info('prepare warmstarting score')
             self._accumulate_scores = self.predict(pred_ctx, train_data, ret_std_format=False)
             self._accumulate_scores = self._accumulate_scores.loc(train_data.get_indexer(target='sample_id'), preserve_order=True)
-            logger.info('cwj acc scores are {}'.format(self._accumulate_scores.as_pd_df()))
         else:
             if task_type == REGRESSION:
                 self._accumulate_scores, avg_score = self._loss_func.initialize(label)
