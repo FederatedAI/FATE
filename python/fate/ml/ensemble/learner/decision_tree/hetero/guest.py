@@ -29,21 +29,12 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
 FIX_POINT_PRECISION = 52
-=======
-FIX_POINT_PRECISION = 2**52
-
->>>>>>> dev-2.0.0-beta
 
 class HeteroDecisionTreeGuest(DecisionTree):
 
     def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, goss=False, l1=0.1, l2=0, 
-<<<<<<< HEAD
                  min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, gh_pack=True, objective=None):
-=======
-                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, gh_pack=False, objective=None):
->>>>>>> dev-2.0.0-beta
 
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
@@ -83,10 +74,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         if gh_pack:
             if objective is None:
                 raise ValueError('objective must be specified when gh_pack is True')
-<<<<<<< HEAD
         self._pack_info = {}
-=======
->>>>>>> dev-2.0.0-beta
 
 
     def set_encrypt_kit(self, kit):
@@ -159,7 +147,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         
         en_grad_hess = grad_and_hess.create_frame()
 
-<<<<<<< HEAD
         def make_long_tensor(s: pd.Series, coder, pk, offset, shift_bit, precision, encryptor, pack_num=2):
             pack_tensor = t.Tensor(s.values)
             pack_tensor[0] = pack_tensor[0] + offset
@@ -171,17 +158,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         def compute_offset_bit(sample_num, g_max, h_max):
             g_bit = int(np.log2(2**FIX_POINT_PRECISION * sample_num * g_max) + 1) # add 1 more bit for safety
             h_bit = int(np.log2(2**FIX_POINT_PRECISION * sample_num * h_max) + 1) 
-=======
-        def make_long_tensor(s: pd.Series, coder, pk, encryptor, offset=0, pack_num=2, shift_bit=52):
-            gh = t.LongTensor([int((s['g']+offset)*FIX_POINT_PRECISION), int(s['h']*FIX_POINT_PRECISION)])
-            pack_vec = coder.pack_vec(gh, num_shift_bit=shift_bit, num_elem_each_pack=pack_num)
-            en = pk.encrypt_encoded(pack_vec, obfuscate=True)
-            return encryptor.lift(en, (len(en), 1), t.long, gh.device)
-
-        def compute_offset_bit(sample_num, g_max, h_max):
-            g_bit = int(np.log2(FIX_POINT_PRECISION * sample_num * g_max) + 1) # add 1 more bit for safety
-            h_bit = int(np.log2(FIX_POINT_PRECISION * sample_num * h_max) + 1) 
->>>>>>> dev-2.0.0-beta
             return max(g_bit, h_bit)
 
         if self._gh_pack:
@@ -198,7 +174,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 self._g_abs_max = abs(float(grad_and_hess['g'].max()['g'])) + self._g_offset
                 self._h_abs_max = 2
 
-<<<<<<< HEAD
             pack_num, total_num = 2, 2
             shift_bit = compute_offset_bit(len(grad_and_hess), self._g_abs_max, self._h_abs_max)
             partial_func = functools.partial(make_long_tensor, coder=self._coder, offset=self._g_offset, pk=self._pk,
@@ -206,19 +181,13 @@ class HeteroDecisionTreeGuest(DecisionTree):
             en_grad_hess['gh'] = grad_and_hess.apply_row(partial_func)
 
             # record pack info
+            self._pack_info['g_offset'] = self._g_offset
             self._pack_info['shift_bit'] = shift_bit
             self._pack_info['precision'] = FIX_POINT_PRECISION
             self._pack_info['pack_num'] = pack_num
             self._pack_info['total_num'] = total_num
-=======
-            shift_bit = compute_offset_bit(len(grad_and_hess), self._g_abs_max, self._h_abs_max)
-            
-            partial_func = functools.partial(make_long_tensor, coder=self._coder, offset=self._g_offset, pk=self._pk,
-                                             shift_bit=shift_bit, pack_num=2, encryptor=self._encryptor)
-            
-            en_grad_hess['gh'] = grad_and_hess.apply_row(partial_func)
->>>>>>> dev-2.0.0-beta
         else:
+            logger.info('not using gh pack')
             en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
             en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
 
@@ -299,11 +268,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # compute histogram
             hist_inst, statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map)
             # compute best splits
-<<<<<<< HEAD
             split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder, self._gh_pack, self._pack_info)
-=======
-            split_info = self.splitter.split(sub_ctx, statistic_result, cur_layer_node, node_map, self._sk, self._coder, self._gh_pack)
->>>>>>> dev-2.0.0-beta
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info, train_df)
             # update feature importance

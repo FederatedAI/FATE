@@ -178,7 +178,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             gh = self._compute_gh(bin_data, self._accumulate_scores, self._loss_func)
             tree = HeteroDecisionTreeGuest(max_depth=self.max_depth, l2=self.l2, l1=self.l1, 
                                            min_impurity_split=self.min_impurity_split, min_sample_split=self.min_sample_split, 
-                                           min_leaf_node=self.min_leaf_node, min_child_weight=self.min_child_weight, objective=self.objective)
+                                           min_leaf_node=self.min_leaf_node, min_child_weight=self.min_child_weight, objective=self.objective, gh_pack=True)
             tree.set_encrypt_kit(self._encrypt_kit)
             tree.booster_fit(tree_ctx, bin_data, gh, bin_info)
             # accumulate scores of cur boosting round
@@ -194,7 +194,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         # compute train predict using cache scores
         train_predict: DataFrame = self._loss_func.predict(self._accumulate_scores)
         train_predict = train_predict.loc(train_data.get_indexer(target='sample_id'), preserve_order=True)
-        train_predict[LABEL] = train_data.label
+        train_predict.label = train_data.label
         task_type, classes = self.get_task_info()
         train_predict.rename(columns={'score': PREDICT_SCORE})
         self._train_predict = compute_predict_details(train_predict, task_type, classes)
@@ -231,7 +231,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             result: DataFrame = result.loc(predict_data.get_indexer(target="sample_id"), preserve_order=True)
             ret_frame = result.create_frame()
             if predict_data.schema.label_name is not None:
-                ret_frame[LABEL] = predict_data.label
+                ret_frame.label = predict_data.label
             ret_frame[PREDICT_SCORE] = result['score']
 
             return compute_predict_details(ret_frame, task_type, classes)

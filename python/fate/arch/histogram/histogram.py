@@ -240,16 +240,14 @@ class HistogramPlainValues(HistogramValues):
 
     @classmethod
     def cat(cls, chunks_info: List[Tuple[int, int]], values: List["HistogramPlainValues"]):
-        logger.debug(f"cat chunks_info: {chunks_info}")
         data = []
         for (num_chunk, chunk_size), value in zip(chunks_info, values):
-            logger.debug(f"cat value: {value}")
             data.append(value.data.reshape(num_chunk, chunk_size, value.stride))
         data = torch.cat(data, dim=1).flatten()
         return cls(data, values[0].stride)
 
     def extract_node_data(self, node_data_size, node_size):
-        return list(self.data.reshape(node_size, node_data_size * self.stride))
+        return list(self.data.reshape(node_size, node_data_size, self.stride))
 
 
 class Histogram:
