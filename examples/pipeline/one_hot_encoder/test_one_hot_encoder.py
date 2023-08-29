@@ -48,7 +48,8 @@ def main(config="../config.yaml", namespace=""):
                                      )
     encoder_0 = OneHotEncoder("one_hot_encoder_0",
                               drop="first",
-                              train_data=binning_0.outputs["output_data"])
+                              encode_col=["x0", "x4"],
+                              train_data=binning_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(binning_0)
@@ -59,8 +60,9 @@ def main(config="../config.yaml", namespace=""):
     # print(pipeline.get_dag())
     pipeline.fit()
 
-    # print(pipeline.get_task_info("binning_0").get_output_model())
-    # print(pipeline.get_task_info("feature_scale_1").get_output_model())
+    print(pipeline.get_task_info("one_hot_encoder_0").get_output_model())
+    # import pandas as pd
+    # print(pd.DataFrame(pipeline.get_task_info("one_hot_encoder_0").get_output_data()["train_output_data"]).head(20))
 
     pipeline.deploy([psi_0, binning_0, encoder_0])
 
@@ -77,6 +79,7 @@ def main(config="../config.yaml", namespace=""):
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())
     predict_pipeline.predict()
+    # print(pd.DataFrame(pipeline.get_task_info("one_hot_encoder_0").get_output_data()["train_output_data"]).head(20))
 
 
 if __name__ == "__main__":
