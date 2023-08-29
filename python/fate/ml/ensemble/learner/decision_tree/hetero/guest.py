@@ -25,6 +25,7 @@ import logging
 import pandas as pd
 import torch as t
 import numpy as np
+import math
 
 
 logger = logging.getLogger(__name__)
@@ -159,8 +160,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             return ret
 
         def compute_offset_bit(sample_num, g_max, h_max):
-            g_bit = int(np.log2(2**FIX_POINT_PRECISION * sample_num * g_max) + 1) # add 1 more bit for safety
-            h_bit = int(np.log2(2**FIX_POINT_PRECISION * sample_num * h_max) + 1) 
+            g_bit = int(math.log2(2**FIX_POINT_PRECISION * sample_num * g_max) + 1) # add 1 more bit for safety
+            h_bit = int(math.log2(2**FIX_POINT_PRECISION * sample_num * h_max) + 1) 
             return max(g_bit, h_bit)
 
         if self._gh_pack:
@@ -190,6 +191,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._pack_info['precision'] = FIX_POINT_PRECISION
             self._pack_info['pack_num'] = pack_num
             self._pack_info['total_pack_num'] = total_pack_num
+            self._pack_info['split_point_shift_bit'] = shift_bit * pack_num
         else:
             logger.info('not using gh pack')
             en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
@@ -244,6 +246,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._init_encrypt_kit(ctx)
         # Send Encrypted Grad and Hess
         self._send_gh(ctx, grad_and_hess)
+
+        # send pack info
+        send_pack_info = {'total_pack_num': self._pack_info['total_pack_num'], 'split_point_shift_bit': self._pack_info['split_point_shift_bit']} \
+            if self._gh_pack else {}
+        ctx.hosts.put('pack_info', send_pack_info)
 
         # init histogram builder
         self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None)

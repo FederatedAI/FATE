@@ -63,7 +63,7 @@ class PHECipherBuilder:
             from fate.arch.protocol.phe.paillier import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 
-            sk, pk, coder = keygen(key_length)
+            sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
 
@@ -95,7 +95,7 @@ class PHECipher:
         self._tensor_cipher = tensor_cipher
     
     @property
-    def key_size():
+    def key_size(self):
         return self._key_size
 
     def get_tensor_encryptor(self):
