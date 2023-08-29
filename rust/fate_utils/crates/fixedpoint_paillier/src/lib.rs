@@ -2,8 +2,8 @@ use math::BInt;
 use paillier;
 use anyhow::Result;
 use anyhow::anyhow;
-use std::ops::{Add, AddAssign, Mul, ShlAssign, SubAssign};
-use rug::{self, Integer, ops::Pow};
+use std::ops::{AddAssign, BitAnd, Mul, ShlAssign, SubAssign};
+use rug::{self, Integer, ops::Pow, Float, Rational};
 use serde::{Deserialize, Serialize};
 
 mod frexp;
@@ -76,29 +76,41 @@ impl Coder {
             exp: 0,
         }
     }
-    pub fn pack(&self, plaintexts: &[u64], num_shift_bit: usize) -> Plaintext {
-        let significant = plaintexts.iter().fold(Integer::default(), |mut x, v| {
-            x.shl_assign(num_shift_bit);
-            x.add_assign(v);
-            x
-        });
-        Plaintext {
-            significant: paillier::PT(BInt(significant)),
-            exp: 0,
-        }
+    pub fn pack_floats(&self, floats: &Vec<f64>, offset_bit: usize, pack_num: usize, precision: u32) -> Vec<Plaintext> {
+        let int_scale = Integer::from(2).pow(precision);
+        floats.chunks(pack_num).map(|data| {
+            let significant = data.iter().fold(Integer::default(), |mut x, v| {
+                x.shl_assign(offset_bit);
+                x.add_assign(Float::with_val(64, v).mul(&int_scale).round().to_integer().unwrap());
+                x
+            });
+            Plaintext {
+                significant: paillier::PT(BInt(significant)),
+                exp: 0,
+            }
+        })
+            .collect()
     }
-    pub fn unpack(&self, encoded: &Plaintext, num_shift_bit: usize, num: usize) -> Vec<u64> {
-        let mut significant = encoded.significant.0.0.clone();
-        let mut mask = Integer::from(1u64 << num_shift_bit);
+    pub fn unpack_floats(&self, encoded: &[Plaintext], offset_bit: usize, pack_num: usize, precision: u32, total_num: usize) -> Vec<f64> {
+        let int_scale = Integer::from(2).pow(precision);
+        let mut mask = Integer::from(1);
+        mask <<= offset_bit;
         mask.sub_assign(1);
-
-        let mut result = Vec::with_capacity(num);
-        for _ in 0..num {
-            let value = Integer::from(significant.clone() & mask.clone()).to_u64().unwrap();
-            result.push(value);
-            significant >>= num_shift_bit;
+        let mut result = Vec::with_capacity(total_num);
+        let mut total_num = total_num;
+        for x in encoded {
+            let n = std::cmp::min(total_num, pack_num);
+            let mut significant = x.significant.0.0.clone();
+            let mut temp = Vec::with_capacity(n);
+            for _ in 0..n {
+                let value = Rational::from(((&significant).bitand(&mask), &int_scale)).to_f64();
+                temp.push(value);
+                significant >>= offset_bit;
+            }
+            temp.reverse();
+            result.extend(temp);
+            total_num -= n;
         }
-        result.reverse();
         result
     }
     pub fn encode_i32(&self, plaintext: i32) -> Plaintext {
@@ -801,6 +813,9 @@ impl PlaintextVector {
 
 #[test]
 fn test() {
+    let a = Float::with_val(53, Integer::from(2).pow(64));
+    let b = Float::with_val(53, Integer::from(2).pow(65));
+    println!("{}", a.div(b));
     let (sk, pk) = paillier::keygen(1024);
     let coder = Coder::new(&pk.n);
     let mut data = vec![0.0; 100];
