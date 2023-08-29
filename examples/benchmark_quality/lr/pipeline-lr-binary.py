@@ -72,7 +72,6 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
                          input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="y",
                               runtime_roles=["guest"],
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
                               input_data=lr_0.outputs["train_output_data"])

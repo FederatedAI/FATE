@@ -70,7 +70,6 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
                              input_model=linr_0.outputs["output_model"])"""
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="motor_speed",
                               runtime_roles=["guest"],
                               metrics=["r2_score",
                                        "mse",

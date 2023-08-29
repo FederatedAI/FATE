@@ -159,7 +159,7 @@ class HistogramEncodedValues(HistogramValues):
 
     def unpack(self, coder, pack_num, offset_bit, precision, total_num):
         return HistogramPlainValues(coder.unpack_floats(self.data, offset_bit, pack_num, precision, total_num),
-                                    self.stride)
+                                    pack_num)
 
     def slice(self, start, end):
         if hasattr(self.data, "slice"):
@@ -416,7 +416,8 @@ class HistogramSplits:
     def i_unpack_decode(self, coder_map):
         for name, value in self._data.items():
             if name in coder_map:
-                coder, pack_num, offset_bit, precision, total_num = coder_map[name]
+                coder, pack_num, offset_bit, precision = coder_map[name]
+                total_num = (self.end - self.start) * self.num_node * pack_num
                 self._data[name] = value.unpack(coder, pack_num, offset_bit, precision, total_num)
         return self
 
@@ -458,12 +459,11 @@ class DistributedHistogram:
         self._value_schemas = value_schemas
         self._seed = seed
 
-    def i_update(self, data, k=None):
+    def i_update(self, data, k=None) -> "ShuffledHistogram":
         """
         Update the histogram with the data.
         Args:
             data: table with the following schema:
-                TODO
             k: number of output splits of the histogram
         Returns:
             ShuffledHistogram, the shuffled(if seed is not None) histogram
@@ -516,6 +516,44 @@ class ShuffledHistogram:
         """
         table = self._table.mapValues(lambda split: split.i_squeeze(squeeze_map))
         return ShuffledHistogram(table, self._node_size, self._node_data_size, True)
+
+    def decrypt_(self, sk_map: MutableMapping[str, typing.Any]):
+        """
+        Decrypt the histogram values.
+
+        Args:
+            sk_map: name -> sk
+        """
+        table = self._table.mapValues(lambda split: split.i_decrypt(sk_map))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size)
+
+    def unpack_decode(self, coder_map: MutableMapping[str, typing.Tuple[typing.Any, int, int, int, int]]):
+        """
+        Unpack and decode the histogram values.
+
+        Args:
+            coder_map: name -> (coder, pack_num, offset_bit, precision, total_num)
+        """
+        table = self._table.mapValues(lambda split: split.i_unpack_decode(coder_map))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size)
+
+    def decode(self, coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]]):
+        """
+        Decode the histogram values.
+
+        Args:
+            coder_map: name -> (coder, dtype)
+        """
+        table = self._table.mapValues(lambda split: split.i_decode(coder_map))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size)
+
+    def union(self) -> Histogram:
+        """
+        Union the splits into one histogram.
+        """
+        out = list(self._table.collect())
+        out.sort(key=lambda x: x[0])
+        return self.cat([split for _, split in out])
 
     def decrypt(
             self,
