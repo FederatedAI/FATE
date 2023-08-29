@@ -300,7 +300,7 @@ class DataFrame(object):
 
         return hist(self, targets)
 
-    def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: dict):
+    def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: Union[dict, "DataFrame"]):
         from .ops._histogram import distributed_hist_stat
 
         return distributed_hist_stat(self, distributed_hist, position, targets)
@@ -529,12 +529,12 @@ class DataFrame(object):
         )
 
     @classmethod
-    def from_flatten_data(cls, ctx, flatten_table, data_manager) -> "DataFrame":
+    def from_flatten_data(cls, ctx, flatten_table, data_manager, key_type) -> "DataFrame":
         """
         key=random_key, value=(sample_id, data)
         """
         from .ops._indexer import transform_flatten_data_to_df
-        return transform_flatten_data_to_df(ctx, flatten_table, data_manager)
+        return transform_flatten_data_to_df(ctx, flatten_table, data_manager, key_type)
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
@@ -583,4 +583,4 @@ class DataFrame(object):
     def data_overview(self, num=100):
         from .ops._data_overview import collect_data
 
-        return collect_data(self, num=100)
+        return collect_data(self, num=num)

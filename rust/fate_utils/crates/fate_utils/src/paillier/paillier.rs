@@ -135,24 +135,12 @@ impl Coder {
     }
 
     fn pack_floats(&self, float_tensor: Vec<f64>, offset_bit: usize, pack_num: usize, precision: u32) -> PlaintextVector {
-        let int_scale = 2_f64.powf(precision as f64);
-        let data = float_tensor.iter().map(|x| (x * int_scale) as u64).collect::<Vec<u64>>()
-            .chunks(pack_num)
-            .map(|x| self.0.pack(x, offset_bit))
-            .collect();
+        let data = self.0.pack_floats(&float_tensor, offset_bit, pack_num, precision);
         PlaintextVector(fixedpoint_paillier::PlaintextVector { data })
     }
 
     fn unpack_floats(&self, packed: &PlaintextVector, offset_bit: usize, pack_num: usize, precision: u32, total_num: usize) -> Vec<f64> {
-        let int_scale = 2_f64.powf(precision as f64);
-        let mut result = Vec::with_capacity(total_num);
-        let mut total_num = total_num;
-        for x in packed.0.data.iter() {
-            let n = std::cmp::min(total_num, pack_num);
-            result.extend(self.0.unpack(x, offset_bit, n).iter().map(|x| (*x as f64) / int_scale));
-            total_num -= n;
-        }
-        result
+        self.0.unpack_floats(&packed.0.data, offset_bit, pack_num, precision, total_num)
     }
     fn encode_f64_vec(&self, data: PyReadonlyArray1<f64>) -> PlaintextVector {
         let data = data
@@ -161,24 +149,6 @@ impl Coder {
             .map(|x| self.0.encode_f64(*x))
             .collect();
         PlaintextVector(fixedpoint_paillier::PlaintextVector { data })
-    }
-    fn pack_u64_vec(&self, data: Vec<u64>, shift_bit: usize, num_each_pack: usize) -> PlaintextVector {
-        PlaintextVector(fixedpoint_paillier::PlaintextVector {
-            data:
-            data.chunks(num_each_pack).map(|x| {
-                self.0.pack(x, shift_bit)
-            }).collect::<Vec<_>>()
-        })
-    }
-    fn unpack_u64_vec(&self, data: &PlaintextVector, shift_bit: usize, num_each_pack: usize, total_num: usize) -> Vec<u64> {
-        let mut result = Vec::with_capacity(total_num);
-        let mut total_num = total_num;
-        for x in data.0.data.iter() {
-            let n = std::cmp::min(total_num, num_each_pack);
-            result.extend(self.0.unpack(x, shift_bit, n));
-            total_num -= n;
-        }
-        result
     }
     fn decode_f64_vec<'py>(&self, data: &PlaintextVector, py: Python<'py>) -> &'py PyArray1<f64> {
         Array1::from(
