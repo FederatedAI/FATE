@@ -66,6 +66,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._decryptor = None
 
         # for g, h packing
+        self._en_key_length = None
         self._gh_pack = gh_pack
         self._g_offset = 0
         self._g_abs_max = 0
@@ -79,12 +80,14 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def set_encrypt_kit(self, kit):
         self._encrypt_kit = kit
+        self._en_key_length = kit.key_size
         self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
         self._decryptor = kit.get_tensor_decryptor()
         logger.info('encrypt kit setup through setter')
 
     def _init_encrypt_kit(self, ctx):
         kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
+        self._en_key_length = kit.key_size
         self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
         self._decryptor = kit.get_tensor_decryptor()
         logger.info('encrypt kit is not setup, auto initializing')
@@ -174,8 +177,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 self._g_abs_max = abs(float(grad_and_hess['g'].max()['g'])) + self._g_offset
                 self._h_abs_max = 2
 
-            pack_num, total_num = 2, 2
+            pack_num = 2
             shift_bit = compute_offset_bit(len(grad_and_hess), self._g_abs_max, self._h_abs_max)
+            total_pack_num = (self._en_key_length - 2) // (shift_bit * pack_num)   # -2 in case overflow
             partial_func = functools.partial(make_long_tensor, coder=self._coder, offset=self._g_offset, pk=self._pk,
                                              shift_bit=shift_bit, pack_num=2, precision=FIX_POINT_PRECISION, encryptor=self._encryptor)
             en_grad_hess['gh'] = grad_and_hess.apply_row(partial_func)
@@ -185,7 +189,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._pack_info['shift_bit'] = shift_bit
             self._pack_info['precision'] = FIX_POINT_PRECISION
             self._pack_info['pack_num'] = pack_num
-            self._pack_info['total_num'] = total_num
+            self._pack_info['total_pack_num'] = total_pack_num
         else:
             logger.info('not using gh pack')
             en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
