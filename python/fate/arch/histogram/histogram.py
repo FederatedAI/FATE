@@ -113,7 +113,7 @@ class HistogramEncryptedValues(HistogramValues):
         return HistogramEncodedValues(data, self.stride)
 
     def squeeze(self, pack_num, offset_bit):
-        data = self.evaluator.squeeze(pack_num, offset_bit, self.pk)
+        data = self.evaluator.pack_squeeze(self.data, pack_num, offset_bit, self.pk)
         return HistogramEncryptedValues(self.pk, self.evaluator, data, self.stride)
 
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):

@@ -38,8 +38,8 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 2
-    num_tree = 1
+    max_depth = 3
+    num_tree = 3
     from sklearn.metrics import roc_auc_score as auc
     if party == 'guest':
   
@@ -96,11 +96,11 @@ if __name__ == '__main__':
         # load tree
         # tree_dict = pickle.load(open('host_tree.pkl', 'rb'))
         # trees.from_model(tree_dict)
-        trees.predict(ctx, data_host)
+        # trees.predict(ctx, data_host)
 
         # fit again
-        new_tree = HeteroSecureBoostHost(1, max_depth=3)
-        new_tree.from_model(trees.get_model())
-        new_tree.fit(ctx, data_host)
+        # new_tree = HeteroSecureBoostHost(1, max_depth=3)
+        # new_tree.from_model(trees.get_model())
+        # new_tree.fit(ctx, data_host)
 
 
