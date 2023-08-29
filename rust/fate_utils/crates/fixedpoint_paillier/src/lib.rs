@@ -91,13 +91,13 @@ impl Coder {
         })
             .collect()
     }
-    pub fn unpack_floats(&self, encoded: &[Plaintext], offset_bit: usize, pack_num: usize, precision: u32, total_num: usize) -> Vec<f64> {
+    pub fn unpack_floats(&self, encoded: &[Plaintext], offset_bit: usize, pack_num: usize, precision: u32, expect_total_num: usize) -> Vec<f64> {
         let int_scale = Integer::from(2).pow(precision);
         let mut mask = Integer::from(1);
         mask <<= offset_bit;
         mask.sub_assign(1);
-        let mut result = Vec::with_capacity(total_num);
-        let mut total_num = total_num;
+        let mut result = Vec::with_capacity(expect_total_num);
+        let mut total_num = expect_total_num;
         for x in encoded {
             let n = std::cmp::min(total_num, pack_num);
             let mut significant = x.significant.0.0.clone();
@@ -111,6 +111,9 @@ impl Coder {
             result.extend(temp);
             total_num -= n;
         }
+        #[cfg(debug_assertions)]
+        assert_eq!(result.len(), expect_total_num);
+
         result
     }
     pub fn encode_i32(&self, plaintext: i32) -> Plaintext {
