@@ -53,20 +53,22 @@ def to_fate_df(ctx, sample_id_name, match_id_name, result_df: pd.DataFrame):
 
 def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', 'multi', 'regression'], classes: list = None, threshold=0.5):
 
-    assert task_type in [BINARY, MULTI, REGRESSION, OTHER], 'task_type must be one of {} as a std task, but got {}'.format(
+    assert task_type in [BINARY, MULTI, REGRESSION,
+                         OTHER], 'task_type must be one of {} as a std task, but got {}'.format(
         [BINARY, MULTI, REGRESSION, OTHER], task_type)
-    
+
     assert threshold >= 0 and threshold <= 1, 'threshold must be float in [0, 1], but got {}'.format(threshold)
-    
+
     if not isinstance(dataframe, DataFrame):
         raise ValueError('dataframe must be a fate DataFrame, but got {}'.format(type(dataframe)))
-    dataframe.rename(label_name=LABEL)
+    if dataframe.schema.label_name is not None:
+        dataframe.rename(label_name=LABEL)
     assert PREDICT_SCORE in dataframe.schema.columns, 'column {} is not found in input dataframe'.format(PREDICT_SCORE)
 
     if task_type == BINARY and task_type == MULTI:
         if classes is None or (not isinstance(classes, list) and len(classes) < 2):
             raise ValueError('task_type is binary or multi, but classes is None, or classes length is less than 2')
-    
+
     if task_type == BINARY:
         if len(classes) == 2:
             neg_class, pos_class = classes[0], classes[1]
