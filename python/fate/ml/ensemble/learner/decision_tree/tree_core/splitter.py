@@ -521,7 +521,7 @@ class FedSBTSplitter(object):
             decrypt_schema = ({"gh":sk}, {"gh": (coder, torch.int64)})   
             # (coder, pack_num, offset_bit, precision, total_num)
             if pack_info is not None:
-                decode_schema = {"gh": (coder, pack_info['pack_num'], pack_info['shift_bit'], pack_info['precision'])}
+                decode_schema = {"gh": (coder, pack_info['pack_num'], pack_info['shift_bit'], pack_info['precision'], pack_info['total_pack_num'])}
             else:
                 raise ValueError('pack info is not provided')
         else:
