@@ -63,6 +63,8 @@ if __name__ == '__main__':
         loss_bce.compute_grad(empty_gh, label, predict)
         loss_bce.compute_hess(empty_gh, label, predict)
 
+        kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
+        sk, pk, coder, evaluator, encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
         # from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogram
         # from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
         # from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
@@ -77,7 +79,8 @@ if __name__ == '__main__':
         # computed_hist = stat_obj.decrypt({}, {})
         # splitter = FedSBTSplitter(data_guest, bin_info)
         # rs = splitter._find_guest_best_splits(computed_hist, '123', root_node, node_map)
-        tree = HeteroDecisionTreeGuest(max_depth)
+        tree = HeteroDecisionTreeGuest(max_depth, objective='binary:bce', gh_pack=True)
+        tree.set_encrypt_kit(kit)
         ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info) 
         
     elif party == 'host':

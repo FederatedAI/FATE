@@ -247,7 +247,7 @@ class HistogramPlainValues(HistogramValues):
         return cls(data, values[0].stride)
 
     def extract_node_data(self, node_data_size, node_size):
-        return list(self.data.reshape(node_size, node_data_size * self.stride))
+        return list(self.data.reshape(node_size, node_data_size, self.stride))
 
 
 class Histogram:
