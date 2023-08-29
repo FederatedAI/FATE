@@ -365,15 +365,15 @@ class DecisionTree(object):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
         x = (new_sample_pos >= 0)
         indexer = x.get_indexer('sample_id')
-        update_pos = new_sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]
-        new_data = data.loc(indexer, preserve_order=True)[x.as_tensor()]
+        x_t = x.as_tensor()
+        update_pos = new_sample_pos[x_t]
+        new_data = data.loc(indexer, preserve_order=True)[x_t]
         logger.info('drop leaf samples, new sample count is {}, {} samples dropped'.format(len(new_sample_pos), len(data) - len(new_data)))
         return new_data, update_pos
         
     def _get_samples_on_leaves(self, sample_pos: DataFrame):
         x = (sample_pos < 0)
-        indexer = x.get_indexer('sample_id')
-        samples_on_leaves = sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]
+        samples_on_leaves = sample_pos[x.as_tensor()]
         return samples_on_leaves
 
     def _get_column_max_bin(self, result_dict):
