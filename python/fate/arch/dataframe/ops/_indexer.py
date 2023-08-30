@@ -282,7 +282,7 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
         raise ValueError(f"Not Implement key_type={key_type} of flatten_data.")
 
 
-def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, key_type):
+def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, key_type, value_with_sample_id=True):
     partition_order_mappings = get_partition_order_by_raw_table(flatten_table,
                                                                 data_manager.block_row_size,
                                                                 key_type=key_type)
@@ -293,9 +293,14 @@ def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, 
         ret_blocks = [[] for _ in range(block_num)]
 
         lid = 0
-        for _, (sample_id, data) in kvs:
+        for _, value in kvs:
+            if value_with_sample_id:
+                data = value[1]
+            else:
+                data = value
             lid += 1
             if bid is None:
+                sample_id = data[0]
                 bid = partition_order_mappings[sample_id]["start_block_id"]
 
             for i in range(block_num):
@@ -332,7 +337,8 @@ def loc(df: DataFrame, indexer, target="sample_id", preserve_order=False):
         flatten_table = flatten_table.join(indexer, lambda v1, v2: v1)
         if not flatten_table.count():
             return df.empty_frame()
-        return transform_flatten_data_to_df(df._ctx, flatten_table, df.data_manager, key_type="sample_id")
+        return transform_flatten_data_to_df(df._ctx, flatten_table, df.data_manager,
+                                            key_type="sample_id", value_with_sample_id=False)
     else:
         flatten_table_with_dst_indexer = flatten_table.join(indexer, lambda v1, v2: (v2[0], (v2[1], v1)))
         if not flatten_table_with_dst_indexer.count():

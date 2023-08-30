@@ -273,7 +273,7 @@ class Block(object):
         ret = blocks[0]
         if isinstance(ret, pd.Index):
             for block in blocks[1:]:
-                ret = ret.union(block, sort=False)
+                ret = ret.append(block)
         elif isinstance(ret, torch.Tensor):
             ret = torch.vstack(blocks)
         elif isinstance(ret, np.ndarray):
