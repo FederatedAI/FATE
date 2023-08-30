@@ -15,10 +15,10 @@ AGG_TYPE = ['weighted_mean', 'sum', 'mean']
 class SecureAggregatorClient(AggregatorBaseClient):
 
     def __init__(self, secure_aggregate=True, aggregate_type='weighted_mean', aggregate_weight=1.0,
-                 communicate_match_suffix=None):
+                 communicate_match_suffix=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
 
         super(SecureAggregatorClient, self).__init__(
-            communicate_match_suffix=communicate_match_suffix)
+            communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
         self.secure_aggregate = secure_aggregate
         self.suffix = {
             "local_loss": AutoSuffix("local_loss"),
@@ -31,7 +31,10 @@ class SecureAggregatorClient(AggregatorBaseClient):
         # init secure aggregate random padding:
         if self.secure_aggregate:
             self._random_padding_cipher: PadsCipher = RandomPaddingCipherClient(
-                trans_var=RandomPaddingCipherTransVar(prefix=communicate_match_suffix)).create_cipher()
+                trans_var=RandomPaddingCipherTransVar(
+                    prefix=communicate_match_suffix,
+                    clients=clients,
+                    server=server)).create_cipher()
             LOGGER.info('initialize secure aggregator done')
 
         # compute weight
@@ -186,9 +189,18 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
 class SecureAggregatorServer(AggregatorBaseServer):
 
-    def __init__(self, secure_aggregate=True, communicate_match_suffix=None):
+    def __init__(
+        self,
+        secure_aggregate=True,
+        communicate_match_suffix=None,
+        server=(
+            consts.ARBITER,
+        ),
+        clients=(
+            consts.GUEST,
+            consts.HOST)):
         super(SecureAggregatorServer, self).__init__(
-            communicate_match_suffix=communicate_match_suffix)
+            communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
         self.suffix = {
             "local_loss": AutoSuffix("local_loss"),
             "agg_loss": AutoSuffix("agg_loss"),
@@ -199,7 +211,7 @@ class SecureAggregatorServer(AggregatorBaseServer):
         self.secure_aggregate = secure_aggregate
         if self.secure_aggregate:
             RandomPaddingCipherServer(trans_var=RandomPaddingCipherTransVar(
-                prefix=communicate_match_suffix)).exchange_secret_keys()
+                prefix=communicate_match_suffix, clients=clients, server=server)).exchange_secret_keys()
             LOGGER.info('initialize secure aggregator done')
 
         agg_weights = self.collect(suffix=('agg_weight', ))

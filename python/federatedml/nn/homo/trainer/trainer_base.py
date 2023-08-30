@@ -9,7 +9,7 @@ from typing import List
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.model_base import serialize_models
-from federatedml.nn.backend.utils.common import ML_PATH
+from federatedml.nn.backend.utils.common import ML_PATH, LLM_PATH
 from federatedml.feature.instance import Instance
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_base import Metric, MetricMeta
@@ -52,6 +52,9 @@ class TrainerBase(object):
         self._model_checkpoint = None
         self._exporter = None
         self._evaluation_summary = {}
+        self._client_num = None
+        self._optimizer = None
+        self._loss_fn = None
 
         # running status
         self._set_model_checkpoint_epoch = set()
@@ -65,6 +68,9 @@ class TrainerBase(object):
         # deepspeed enabled
         self._enable_deepspeed = False
         self._deepspeed_zero_3 = False
+
+        # deepspeed config
+        self._ds_config = None
 
     @staticmethod
     def is_pos_int(val):
@@ -119,7 +125,8 @@ class TrainerBase(object):
         assert isinstance(val, bool), 'fed mode must be a bool'
         self._fed_mode = val
 
-    def enable_deepspeed(self, is_zero_3=False):
+    def enable_deepspeed(self, ds_config, is_zero_3=False):
+        self._ds_config = ds_config
         self._enable_deepspeed = True
         self._deepspeed_zero_3 = is_zero_3
 
@@ -225,10 +232,17 @@ class TrainerBase(object):
             if hasattr(model, "enable_save_pretrained") and model.enable_save_pretrained:
                 unwrap_model.save_pretrained(save_path)
             else:
-                model_state_dict = model.state_dict()
+                if model is None:
+                    model_state_dict = None
+                else:
+                    model_state_dict = model.state_dict()
+                if optimizer is None:
+                    optimizer_state_dict = None
+                else:
+                    optimizer_state_dict = optimizer.state_dict()
                 model_dict = {
                     'model': model_state_dict,
-                    'optimizer': optimizer.state_dict(),
+                    'optimizer': optimizer_state_dict,
                     'model_define': self.nn_define,
                     'optimizer_define': self.opt_define,
                     'loss_define': self.loss_define,
@@ -238,6 +252,7 @@ class TrainerBase(object):
                     'best_epoch': best_epoch,
                     'extra_data': extra_data
                 }
+                LOGGER.info('save path is {}'.format(save_path))
                 t.save(model_dict, save_path)
 
         local_save_path = save_path if not self._enable_deepspeed else os.environ[consts.FLOW_MODEL_SYNC_PATH]
@@ -548,22 +563,43 @@ Load Trainer
 
 
 def get_trainer_class(trainer_module_name: str):
-
     if trainer_module_name.endswith('.py'):
         trainer_module_name = trainer_module_name.replace('.py', '')
-    ds_modules = importlib.import_module(
-        '{}.homo.trainer.{}'.format(
-            ML_PATH, trainer_module_name))
+
+    std_fate_trainer_path = '{}.homo.trainer.{}'.format(ML_PATH, trainer_module_name)
+
+    paths_to_check = [std_fate_trainer_path]
+    errors = []
     try:
-        trainers = []
-        for k, v in ds_modules.__dict__.items():
-            if isinstance(v, type):
-                if issubclass(v, TrainerBase) and v is not TrainerBase:
-                    trainers.append(v)
-        if len(trainers) == 0:
-            raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
-                             format(trainer_module_name))
-        else:
-            return trainers[-1]  # return the last defined trainer
-    except ValueError as e:
-        raise e
+        importlib.import_module(LLM_PATH)
+        fate_llm_trainer_path = '{}.trainer.{}'.format(LLM_PATH, trainer_module_name)
+        paths_to_check.append(fate_llm_trainer_path)
+    except Exception as e:
+        pass
+
+    trainers = []
+    ds_modules = None
+
+    for path in paths_to_check:
+        try:
+            ds_modules = importlib.import_module(path)
+            break
+        except Exception as e:
+            errors.append(str(e))
+
+    if ds_modules is None:
+        raise ImportError(
+            'Could not import from any of the paths: {}, error details {}'.format(
+                ', '.join(paths_to_check), errors))
+
+    for k, v in ds_modules.__dict__.items():
+
+        if isinstance(v, type):
+            if issubclass(v, TrainerBase) and v is not TrainerBase:
+                trainers.append(v)
+
+    if len(trainers) == 0:
+        raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
+                         format(trainer_module_name))
+    else:
+        return trainers[-1]  # return the last defined trainer

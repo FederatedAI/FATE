@@ -1,4 +1,5 @@
 from federatedml.framework.homo.blocks import ServerCommunicator, ClientCommunicator
+from federatedml.util import consts
 
 
 class AutoSuffix(object):
@@ -19,7 +20,10 @@ class AutoSuffix(object):
 
 class AggregatorBaseClient(object):
 
-    def __init__(self, communicate_match_suffix: str = None):
+    def __init__(
+        self, communicate_match_suffix: str = None, server=(
+            consts.ARBITER,), clients=(
+            consts.GUEST, consts.HOST)):
         """Base class of client aggregator
 
         Parameters
@@ -28,7 +32,7 @@ class AggregatorBaseClient(object):
                           To make sure that client and server can communicate correctly,
                           the server-side and client-side aggregators need to have the same suffix
         """
-        self.communicator = ClientCommunicator(prefix=communicate_match_suffix)
+        self.communicator = ClientCommunicator(prefix=communicate_match_suffix, server=server, clients=clients)
         self.suffix = {}
 
     def _get_suffix(self, var_name, user_suffix=tuple()):
@@ -52,7 +56,7 @@ class AggregatorBaseClient(object):
 
 class AggregatorBaseServer(object):
 
-    def __init__(self, communicate_match_suffix=None):
+    def __init__(self, communicate_match_suffix=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
         """Base class of server aggregator
 
         Parameters
@@ -61,7 +65,7 @@ class AggregatorBaseServer(object):
                           To make sure that client and server can communicate correctly,
                           the server-side and client-side aggregators need to have the same suffix
         """
-        self.communicator = ServerCommunicator(prefix=communicate_match_suffix)
+        self.communicator = ServerCommunicator(prefix=communicate_match_suffix, server=server, clients=clients)
         self.suffix = {}
 
     def _get_suffix(self, var_name, user_suffix=tuple()):
