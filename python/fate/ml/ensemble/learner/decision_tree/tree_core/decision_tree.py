@@ -269,8 +269,8 @@ class DecisionTree(object):
         if gh is None:
             sum_g, sum_h = 0, 0
         else:
-            sum_g = float(gh['g'].sum())
-            sum_h = float(gh['h'].sum())
+            sum_g = float(gh['g'].sum().iloc[0])
+            sum_h = float(gh['h'].sum().iloc[0])
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(train_df))
 
         return root_node
