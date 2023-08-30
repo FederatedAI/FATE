@@ -134,6 +134,7 @@ class SecureAggregatorClient(AggregatorBaseClient):
                 for k, v in model.named_parameters():
                     if k in parameters and v.requires_grad:
                         v.data.copy_(t.Tensor(parameters[k]))
+                return model
             else:
                 return agg_model
         else:
