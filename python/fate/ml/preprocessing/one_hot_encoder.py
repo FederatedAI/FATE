@@ -87,17 +87,25 @@ class LocalOneHotEncoder(Module):
                 keep_col = encoded_col.schema.columns[1:]
                 encoded_col = encoded_col[keep_col]
             stored_category_col = self._column_encode_map.get(col)
+            # logger.info(f"store_category_col: {stored_category_col}")
             if stored_category_col:
-                if set(encoded_col.schema.columns).issubset(set(stored_category_col)):
+                cur_category_col = set(encoded_col.schema.columns.to_list())
+                if not cur_category_col.issubset(set(stored_category_col)):
                     if self.raise_if_unknown:
                         raise ValueError(f"unknown categories found in {encoded_col.schema.columns}, "
                                          f"but not in {stored_category_col}")
+                else:
+                    to_encode_col = set(stored_category_col).difference(cur_category_col)
+                    if len(to_encode_col) > 0:
+                        result_data[to_encode_col] = 0
             else:
-                self._column_encode_map[col] = encoded_col.columns.to_list()
+                self._column_encode_map[col] = encoded_col.schema.columns.to_list()
+                # logger.info(f"store column {col} encode map: {encoded_col.schema.columns}")
             result_data[encoded_col.schema.columns] = encoded_col
         return result_data
 
     def to_model(self):
+        # logger.info(f"column_encode_map: {self._column_encode_map}")
         return dict(
             column_encode_map=self._column_encode_map
         )

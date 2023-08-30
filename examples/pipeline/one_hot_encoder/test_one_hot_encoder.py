@@ -49,6 +49,7 @@ def main(config="../config.yaml", namespace=""):
     encoder_0 = OneHotEncoder("one_hot_encoder_0",
                               drop="first",
                               encode_col=["x0", "x4"],
+                              handle_unknown="error",
                               train_data=binning_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)

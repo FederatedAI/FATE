@@ -117,12 +117,12 @@ def train(
     encoder = OneHotEncoder(drop, handle_unknown, encode_col)
     encoder.fit(sub_ctx, train_data)
 
-    model = encoder.get_model()
-    output_model.write(model, metadata={})
-
     sub_ctx = ctx.sub_ctx("predict")
     output_data = encoder.transform(sub_ctx, train_data)
     train_output_data.write(output_data)
+
+    model = encoder.get_model()
+    output_model.write(model, metadata={})
 
 
 def predict(ctx, input_model, test_data, test_output_data):
