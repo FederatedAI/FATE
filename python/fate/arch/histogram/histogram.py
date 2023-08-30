@@ -49,7 +49,7 @@ class HistogramValues:
         raise NotImplementedError
 
     def cat(self, chunks_info, values):
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__.__name__}.cat")
 
     def extract_node_data(self, node_data_size, node_size):
         raise NotImplementedError
@@ -362,7 +362,7 @@ class Histogram:
             data = {}
             for name, value_container in self._values_mapping.items():
                 data[name] = value_container.intervals_slice(indexes)
-            yield pid, HistogramSplits(self._indexer.node_size, start, end, data)
+            yield pid, HistogramSplits(pid, self._indexer.node_size, start, end, data)
 
     def reshape(self, feature_bin_sizes):
         indexer = self._indexer.reshape(feature_bin_sizes)
@@ -380,7 +380,8 @@ class Histogram:
 
 
 class HistogramSplits:
-    def __init__(self, num_node, start, end, data):
+    def __init__(self, i, num_node, start, end, data):
+        self.i = i
         self.num_node = num_node
         self.start = start
         self.end = end
@@ -446,13 +447,6 @@ class HistogramSplits:
         for name, values in data.items():
             data[name] = values[0].cat(chunks_info, values)
         return data
-
-    def pack(self, coder_map):
-        for name, value in self._data.items():
-            if name in coder_map:
-                pack_num, offset_bit = coder_map[name]
-                self._data[name] = value.squeeze(pack_num=pack_num, offset_bit=offset_bit)
-        return self
 
 
 class DistributedHistogram:
@@ -578,7 +572,7 @@ def _decrypt_func(sk_map, coder_map, squeezed):
     def _decrypt(split: HistogramSplits):
         split.i_decrypt(sk_map)
         if squeezed:
-            split.i_unpack_decode(coder_map)
+            split.i_unpack_decode(coder_map, squeezed)
             return split
         else:
             split.i_decode(coder_map)

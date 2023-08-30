@@ -813,16 +813,3 @@ impl PlaintextVector {
             .collect()
     }
 }
-
-#[test]
-fn test() {
-    let a = Float::with_val(53, Integer::from(2).pow(64));
-    let b = Float::with_val(53, Integer::from(2).pow(65));
-    println!("{}", a.div(b));
-    let (sk, pk) = paillier::keygen(1024);
-    let coder = Coder::new(&pk.n);
-    let mut data = vec![0.0; 100];
-    for i in 0..100 {
-        data[i] = i as f64;
-    }
-}
