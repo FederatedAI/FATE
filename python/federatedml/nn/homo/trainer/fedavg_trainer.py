@@ -210,7 +210,6 @@ class FedAVGTrainer(TrainerBase):
 
         total_batch_len = len(dl)
         LOGGER.info('total batch len is {}'.format(total_batch_len))
-        
         if not self.fed_mode:
             to_iterate = tqdm.tqdm(dl)
         else:
