@@ -243,7 +243,6 @@ class FedAVGTrainer(TrainerBase):
                     batch_loss = pred.loss.mean()
                 else:
                     batch_loss = pred.loss
-                    
             elif loss_func is not None:
                 if batch_label is None:
                     raise ValueError(
