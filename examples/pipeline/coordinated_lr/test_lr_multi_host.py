@@ -51,7 +51,6 @@ def main(config="../config.yaml", namespace=""):
                                                                                              "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="y",
                               runtime_roles=["guest"],
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])

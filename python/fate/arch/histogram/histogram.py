@@ -1,6 +1,7 @@
 import typing
 import logging
 from typing import List, MutableMapping, Tuple
+from fate.arch.abc._table import CTableABC
 
 import torch
 
@@ -35,6 +36,12 @@ class HistogramValues:
     def decrypt(self, sk):
         raise NotImplementedError
 
+    def squeeze(self, pack_num, offset_bit):
+        raise NotImplementedError
+
+    def unpack(self, coder, pack_num, offset_bit, precision, total_num, stride):
+        raise NotImplementedError
+
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         raise NotImplementedError
 
@@ -42,7 +49,7 @@ class HistogramValues:
         raise NotImplementedError
 
     def cat(self, chunks_info, values):
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__.__name__}.cat")
 
     def extract_node_data(self, node_data_size, node_size):
         raise NotImplementedError
@@ -105,6 +112,10 @@ class HistogramEncryptedValues(HistogramValues):
         data = sk.decrypt_to_encoded(self.data)
         return HistogramEncodedValues(data, self.stride)
 
+    def squeeze(self, pack_num, offset_bit):
+        data = self.evaluator.pack_squeeze(self.data, pack_num, offset_bit, self.pk)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.stride)
+
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         chunk_sizes = [num * self.stride for num in chunk_sizes]
         self.evaluator.chunking_cumsum_with_step(self.pk, self.data, chunk_sizes, self.stride)
@@ -145,6 +156,10 @@ class HistogramEncodedValues(HistogramValues):
             return self.decode_i32(coder)
         else:
             raise NotImplementedError
+
+    def unpack(self, coder, pack_num, offset_bit, precision, total_num, stride):
+        data = coder.unpack_floats(self.data, offset_bit, pack_num, precision, total_num)
+        return HistogramPlainValues(data, stride)
 
     def slice(self, start, end):
         if hasattr(self.data, "slice"):
@@ -232,7 +247,7 @@ class HistogramPlainValues(HistogramValues):
         return cls(data, values[0].stride)
 
     def extract_node_data(self, node_data_size, node_size):
-        return list(self.data.reshape(node_size, node_data_size * self.stride))
+        return list(self.data.reshape(node_size, node_data_size, self.stride))
 
 
 class Histogram:
@@ -347,7 +362,7 @@ class Histogram:
             data = {}
             for name, value_container in self._values_mapping.items():
                 data[name] = value_container.intervals_slice(indexes)
-            yield pid, HistogramSplits(self._indexer.node_size, start, end, data)
+            yield pid, HistogramSplits(pid, self._indexer.node_size, start, end, data)
 
     def reshape(self, feature_bin_sizes):
         indexer = self._indexer.reshape(feature_bin_sizes)
@@ -365,7 +380,8 @@ class Histogram:
 
 
 class HistogramSplits:
-    def __init__(self, num_node, start, end, data):
+    def __init__(self, i, num_node, start, end, data):
+        self.i = i
         self.num_node = num_node
         self.start = start
         self.end = end
@@ -391,20 +407,30 @@ class HistogramSplits:
                 self._data[name] = value.decrypt(sk_map[name])
         return self
 
+    def i_squeeze(self, squeeze_map):
+        for name, value in self._data.items():
+            if name in squeeze_map:
+                pack_num, offset_bit = squeeze_map[name]
+                self._data[name] = value.squeeze(pack_num, offset_bit)
+        return self
+
+    def i_unpack_decode(self, coder_map, squeezed):
+        for name, value in self._data.items():
+            if name in coder_map:
+                coder, gh_pack_num, offset_bit, precision, squeeze_num = coder_map[name]
+                if squeezed:
+                    pack_num = gh_pack_num * squeeze_num
+                else:
+                    pack_num = gh_pack_num
+                total_num = (self.end - self.start) * self.num_node * gh_pack_num
+                self._data[name] = value.unpack(coder, pack_num, offset_bit, precision, total_num, gh_pack_num)
+        return self
+
     def i_decode(self, coder_map):
         for name, value in self._data.items():
             if name in coder_map:
                 coder, dtype = coder_map[name]
                 self._data[name] = value.decode(coder, dtype)
-        return self
-
-    def decrypt(
-            self,
-            sk_map: MutableMapping[str, typing.Any],
-            coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
-    ):
-        self.i_decrypt(sk_map)
-        self.i_decode(coder_map)
         return self
 
     @classmethod
@@ -431,12 +457,11 @@ class DistributedHistogram:
         self._value_schemas = value_schemas
         self._seed = seed
 
-    def i_update(self, data, k=None):
+    def i_update(self, data, k=None) -> "ShuffledHistogram":
         """
         Update the histogram with the data.
         Args:
             data: table with the following schema:
-                TODO
             k: number of output splits of the histogram
         Returns:
             ShuffledHistogram, the shuffled(if seed is not None) histogram
@@ -474,23 +499,86 @@ class DistributedHistogram:
 
 
 class ShuffledHistogram:
-    def __init__(self, table, node_size, node_data_size):
+    def __init__(self, table: CTableABC[int, HistogramSplits], node_size, node_data_size, squeezed=False):
         self._table = table
         self._node_size = node_size
         self._node_data_size = node_data_size
+        self._squeezed = squeezed
+
+    def i_squeeze(self, squeeze_map: MutableMapping[str, typing.Tuple[int, int]]):
+        """
+        Squeeze the histogram values.
+
+        Args:
+            squeeze_map: name -> (pack_num, offset_bit)
+        """
+        self._table = self._table.mapValues(lambda split: split.i_squeeze(squeeze_map))
+        self._squeezed = True
+        # return ShuffledHistogram(table, self._node_size, self._node_data_size, True)
+
+    def decrypt_(self, sk_map: MutableMapping[str, typing.Any]):
+        """
+        Decrypt the histogram values.
+
+        Args:
+            sk_map: name -> sk
+        """
+        table = self._table.mapValues(lambda split: split.i_decrypt(sk_map))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size, self._squeezed)
+
+    def unpack_decode(self, coder_map: MutableMapping[str, typing.Tuple[typing.Any, int, int, int, int]]):
+        """
+        Unpack and decode the histogram values.
+
+        Args:
+            coder_map: name -> (coder, pack_num, offset_bit, precision, total_num)
+        """
+        table = self._table.mapValues(lambda split: split.i_unpack_decode(coder_map, self._squeezed))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size)
+
+    def decode(self, coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]]):
+        """
+        Decode the histogram values.
+
+        Args:
+            coder_map: name -> (coder, dtype)
+        """
+        table = self._table.mapValues(lambda split: split.i_decode(coder_map))
+        return ShuffledHistogram(table, self._node_size, self._node_data_size)
+
+    def union(self) -> Histogram:
+        """
+        Union the splits into one histogram.
+        """
+        out = list(self._table.collect())
+        out.sort(key=lambda x: x[0])
+        return self.cat([split for _, split in out])
 
     def decrypt(
             self,
             sk_map: MutableMapping[str, typing.Any],
             coder_map: MutableMapping[str, typing.Tuple[typing.Any, torch.dtype]],
     ):
-        out = list(self._table.mapValues(lambda split: split.decrypt(sk_map, coder_map)).collect())
+        out = list(self._table.mapValues(_decrypt_func(sk_map, coder_map, self._squeezed)).collect())
         out.sort(key=lambda x: x[0])
         return self.cat([split for _, split in out])
 
     def cat(self, hists: typing.List["HistogramSplits"]) -> "Histogram":
         data = HistogramSplits.cat(hists)
         return Histogram(HistogramIndexer(self._node_size, [self._node_data_size]), data)
+
+
+def _decrypt_func(sk_map, coder_map, squeezed):
+    def _decrypt(split: HistogramSplits):
+        split.i_decrypt(sk_map)
+        if squeezed:
+            split.i_unpack_decode(coder_map, squeezed)
+            return split
+        else:
+            split.i_decode(coder_map)
+            return split
+
+    return _decrypt
 
 
 def argmax_reducer(
@@ -512,7 +600,7 @@ def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas,
             hist.i_update(fids, nids, targets)
         hist.i_cumsum_bins()
         hist.i_shuffle(shuffle)
-        splits = list(hist.to_splits(k))
+        splits = hist.to_splits(k)
         return splits
 
     return _partition_hist_build_mapper

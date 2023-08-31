@@ -145,7 +145,7 @@ class _ComputingTimer(object):
         if timer_aggregator:
             timer_aggregator.union(total)
 
-        return base_table.get_string(), detailed_base_table.get_string()
+        return str(base_table), str(detailed_base_table)
 
 
 class _FederationTimer(object):
@@ -183,7 +183,7 @@ class _FederationTimer(object):
 
         if timer_aggregator:
             timer_aggregator.union(total)
-        return base_table.get_string()
+        return str(base_table)
 
 
 class _FederationRemoteTimer(_FederationTimer):

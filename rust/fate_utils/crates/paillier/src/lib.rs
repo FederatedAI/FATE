@@ -70,7 +70,7 @@ pub struct SK {
 
 /// generate paillier keypairs with providing bit lenght
 pub fn keygen(bit_lenght: u32) -> (SK, PK) {
-    assert!(bit_lenght % 2 == 0);
+    assert_eq!(bit_lenght % 2, 0);
     let prime_bit_size = bit_lenght / 2;
     // generate prime p and q such that num_bit(p) * num_bit(q) == bit_length
     // and p != q
@@ -163,7 +163,12 @@ impl SK {
     pub fn decrypt(&self, c: &CT) -> PT {
         let dp = SK::h_function(&c.0, &self.p, &self.p_minus_one, &self.ps, &self.hp);
         let dq = SK::h_function(&c.0, &self.q, &self.q_minus_one, &self.qs, &self.hq);
-        PT((((dq - &dp) * &self.p_invert) % &self.q) * &self.p + &dp)
+        let mut o = (((dq - &dp) * &self.p_invert) % &self.q) * &self.p + &dp;
+        // TODO: any better way to do this?
+        if o < BInt::from(0) {
+            o.0.add_assign(&self.n.0)
+        }
+        PT(o)
     }
     #[inline]
     fn h_function(c: &BInt, p: &BInt, p_1: &BInt, ps: &BInt, hp: &BInt) -> BInt {

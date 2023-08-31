@@ -122,8 +122,15 @@ class SBTHistogramBuilder(object):
                 "h":{"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
                 "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
             }
+    
+    def _get_pack_en_hist_schema(self, pk, evaluator):
+            return {
+                "gh":{"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
+                "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
+            }
 
-    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, pk=None, evaluator=None):
+    def compute_hist(self, ctx: Context, nodes: List[Node], bin_train_data: DataFrame, gh: DataFrame, sample_pos: DataFrame = None, node_map={}, 
+                     pk=None, evaluator=None, gh_pack=False):
 
         node_num = len(nodes)
         if ctx.is_on_guest:
@@ -132,7 +139,10 @@ class SBTHistogramBuilder(object):
             if pk is None or evaluator is None:
                 schema = self._get_plain_text_schema()
             else:
-                schema = self._get_enc_hist_schema(pk, evaluator)
+                if gh_pack:
+                    schema = self._get_pack_en_hist_schema(pk, evaluator)
+                else:
+                    schema = self._get_enc_hist_schema(pk, evaluator)
 
         hist = DistributedHistogram(
             node_size=node_num,

@@ -67,7 +67,6 @@ def main(config="../config.yaml", namespace=""):
                                                                                                  "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="motor_speed",
                               runtime_roles=["guest"],
                               default_eval_setting="regression",
                               input_data=[linr_1.outputs["train_output_data"], linr_2.outputs["train_output_data"]])

@@ -106,7 +106,7 @@ class FullBatchDataLoader(object):
         elif self._mode == "local":
             self._batch_num = (len(self._dataset) + self._batch_size - 1) // self._batch_size
         elif self._mode == "hetero":
-            # TODO: index should be align first
+            # NOTE: index should be align first, using after doing psi
             if self._role != "arbiter":
                 self._batch_num = (len(self._dataset) + self._batch_size - 1) // self._batch_size
                 if self._role == "guest" and self._sync_arbiter:
@@ -132,12 +132,13 @@ class FullBatchDataLoader(object):
                                                                     include_key=True,
                                                                     partition=self._dataset.block_table.partitions)
 
-                    sub_frame = self._dataset.loc(batch_indexer, preserve_order=True)
+                    sub_frame = self._dataset.loc(batch_indexer, preserve_order=False)
 
-                    if self._role == "guest":
-                        iter_ctx.hosts.put("batch_indexes", batch_indexer)
+                    if self._mode == "hetero" and self._role == "guest":
+                        iter_ctx.hosts.put("batch_indexes", sub_frame.get_indexer(target="sample_id"))
 
                     self._batch_splits.append(BatchEncoding(sub_frame, batch_id=i))
+
             elif self._mode == "hetero" and self._role == "host":
                 for i, iter_ctx in self._ctx.sub_ctx("dataloader_batch").ctxs_range(self._batch_num):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")

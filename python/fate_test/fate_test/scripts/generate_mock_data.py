@@ -239,7 +239,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         date_set[os.path.basename(upload_dict.get('file'))] = upload_dict.get('role')
         table_name_list.append(upload_dict.get('table_name'))
         table_namespace_list.append(upload_dict.get('namespace'))
-        partition_list.append(upload_dict.get('partition', 8))
+        partition_list.append(upload_dict.get('partitions', 8))
 
     data_save(
         data_info=date_set,

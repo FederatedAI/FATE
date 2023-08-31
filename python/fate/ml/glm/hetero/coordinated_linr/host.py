@@ -60,7 +60,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
             lr_scheduler = LRScheduler(
                 self.learning_rate_param["method"], self.learning_rate_param["scheduler_params"]
             )
-            estimator = CoordiantedLinREstimatorHost(
+            estimator = CoordinatedLinREstimatorHost(
                 epochs=self.epochs,
                 batch_size=self.batch_size,
                 optimizer=optimizer,
@@ -95,7 +95,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
             batch_size=model["meta"]["batch_size"],
             init_param=model["meta"]["init_param"],
         )
-        estimator = CoordiantedLinREstimatorHost(
+        estimator = CoordinatedLinREstimatorHost(
             epochs=model["meta"]["epochs"],
             batch_size=model["meta"]["batch_size"],
             init_param=model["meta"]["init_param"],
@@ -106,7 +106,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
         return linr
 
 
-class CoordiantedLinREstimatorHost(HeteroModule):
+class CoordinatedLinREstimatorHost(HeteroModule):
     def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
         self.epochs = epochs
         self.optimizer = optimizer

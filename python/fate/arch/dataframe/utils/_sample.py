@@ -169,6 +169,9 @@ def _federated_sample_host(
         regenerated_raw_table = _regenerated_sample_ids(df, regenerated_ids)
         sample_df = _convert_raw_table_to_df(df._ctx, regenerated_raw_table, df.data_manager)
 
+        sample_indexer = ctx.guest.get(SAMPLE_INDEX_TAG)
+        sample_df = sample_df.loc(sample_indexer, preserve_order=True)
+
     return sample_df
 
 

@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import torch
 from fate.arch.tensor.phe._tensor import PHETensor
-from fate_utils.paillier import FixedpointPaillierVector
+from fate_utils.paillier import CiphertextVector
 
 from .schema_manager import SchemaManager
 
@@ -247,14 +247,14 @@ class Block(object):
 
     @classmethod
     def retrieval_row(cls, block, indexes):
-        if isinstance(block, FixedpointPaillierVector):
+        if isinstance(block, CiphertextVector):
             return block.slice_indexes(indexes)
         else:
             return block[indexes]
 
     @classmethod
     def transform_block_to_list(cls, block):
-        if isinstance(block, FixedpointPaillierVector):
+        if isinstance(block, CiphertextVector):
             return [block.slice_indexes([i]) for i in range(len(block))]
         else:
             return block.tolist()
@@ -263,7 +263,7 @@ class Block(object):
     def transform_row_to_raw(cls, block, index):
         if isinstance(block, pd.Index):
             return block[index]
-        elif isinstance(block, FixedpointPaillierVector):
+        elif isinstance(block, CiphertextVector):
             return block.slice_indexes([index])
         else:
             return block[index].tolist()
@@ -273,7 +273,7 @@ class Block(object):
         ret = blocks[0]
         if isinstance(ret, pd.Index):
             for block in blocks[1:]:
-                ret = ret.union(block, sort=False)
+                ret = ret.append(block)
         elif isinstance(ret, torch.Tensor):
             ret = torch.vstack(blocks)
         elif isinstance(ret, np.ndarray):
