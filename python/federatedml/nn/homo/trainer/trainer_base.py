@@ -56,7 +56,6 @@ class TrainerBase(object):
         self._optimizer = None
         self._loss_fn = None
 
-
         # running status
         self._set_model_checkpoint_epoch = set()
 
