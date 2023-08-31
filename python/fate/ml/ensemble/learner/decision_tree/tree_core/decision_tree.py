@@ -269,8 +269,9 @@ class DecisionTree(object):
         if gh is None:
             sum_g, sum_h = 0, 0
         else:
-            sum_g = float(gh['g'].sum().iloc[0])
-            sum_h = float(gh['h'].sum().iloc[0])
+            sum_gh = gh.sum()
+            sum_g = float(sum_gh['g'])
+            sum_h = float(sum_gh['h'])
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(train_df))
 
         return root_node
@@ -365,15 +366,14 @@ class DecisionTree(object):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
         x = (new_sample_pos >= 0)
         indexer = x.get_indexer('sample_id')
-        x_t = x.as_tensor()
-        update_pos = new_sample_pos[x_t]
-        new_data = data.loc(indexer, preserve_order=True)[x_t]
+        update_pos = new_sample_pos.iloc(x)
+        new_data = data.loc(indexer, preserve_order=True).iloc(x)
         logger.info('drop leaf samples, new sample count is {}, {} samples dropped'.format(len(new_sample_pos), len(data) - len(new_data)))
         return new_data, update_pos
         
     def _get_samples_on_leaves(self, sample_pos: DataFrame):
         x = (sample_pos < 0)
-        samples_on_leaves = sample_pos[x.as_tensor()]
+        samples_on_leaves = sample_pos.iloc(x)
         return samples_on_leaves
 
     def _get_column_max_bin(self, result_dict):

@@ -152,7 +152,7 @@ class SBTHistogramBuilder(object):
         )
         indexer = bin_train_data.get_indexer('sample_id')
         gh = gh.loc(indexer, preserve_order=True)
-        gh["cnt"] = 1
+        # gh["cnt"] = 1
         sample_pos = sample_pos.loc(indexer, preserve_order=True)
         map_sample_pos = sample_pos.create_frame()
         map_sample_pos['node_idx'] = sample_pos.apply_row(lambda x: node_map[x['node_idx']])

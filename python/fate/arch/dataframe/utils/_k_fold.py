@@ -52,8 +52,8 @@ class KFold(object):
         else:
             for _, iter_ctx in self._ctx.sub_ctx("KFold").ctxs_range(self._n_splits):
                 train_indexer, test_indexer = iter_ctx.guest.get("fold_indexes")
-                train_frame = df.loc(train_indexer)
-                test_frame = df.loc(test_indexer)
+                train_frame = df.loc(train_indexer, preserve_order=True)
+                test_frame = df.loc(test_indexer, preserve_order=True)
 
                 yield train_frame, test_frame
 
@@ -77,7 +77,8 @@ class KFold(object):
             test_frame = df.loc(test_indexer)
 
             if return_indexer:
-                yield  train_frame, test_frame, train_indexer, test_indexer
+                yield  train_frame, test_frame, \
+                       train_frame.get_indexer(target="sample_id"), test_frame.get_indexer(target="sample_id")
             else:
                 yield train_frame, test_frame
 

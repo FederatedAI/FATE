@@ -110,7 +110,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
         local_sample_idx = data_with_pos.apply_row(map_func)
-        local_samples = data_with_pos[local_sample_idx.values.as_tensor()]
+        # local_samples = data_with_pos[local_sample_idx.as_tensor()]
+        local_samples = data_with_pos.iloc(local_sample_idx)
         logger.info('{}/{} samples on local nodes'.format(len(local_samples), len(data)))
         if len(local_samples) == 0:
             updated_sample_pos = None
@@ -147,7 +148,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             new_sample_pos = new_sample_pos  # all samples are on host
 
        # share new sample position with all hosts
-        ctx.hosts.put('new_sample_pos', (new_sample_pos.as_tensor(), new_sample_pos.get_indexer(target='sample_id')))
+        # ctx.hosts.put('new_sample_pos', (new_sample_pos.as_tensor(), new_sample_pos.get_indexer(target='sample_id')))
+        ctx.hosts.put('new_sample_pos', new_sample_pos)
         self.sample_pos = new_sample_pos
 
         return new_sample_pos
@@ -268,6 +270,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # Prepare for training
         node_map = {}
         cur_layer_node = [root_node]
+        grad_and_hess["cnt"] = 1
 
         for cur_depth, sub_ctx in ctx.on_iterations.ctxs_range(self.max_depth):
             

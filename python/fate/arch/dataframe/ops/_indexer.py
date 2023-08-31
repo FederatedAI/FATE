@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import functools
+import uuid
 
 from ..manager import Block, DataManager
 from .._dataframe import DataFrame
@@ -76,11 +77,13 @@ def get_partition_order_mappings_by_block_table(block_table, block_row_size):
         size = 0
         first_block_id = 0
         for k, v in kvs:
-            if partition_key is None:
+            if size == 0 and len(v[0]):
                 partition_key = v[0][0]
-                # partition_key = k
 
             size += len(v[0])
+
+        if size == 0:
+            partition_key = str(first_block_id) + "_" + str(uuid.uuid1())
 
         return first_block_id, (partition_key, size)
 

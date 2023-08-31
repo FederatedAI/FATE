@@ -14,7 +14,7 @@
 #  limitations under the License.
 import copy
 import functools
-from typing import List
+from typing import List, Union
 import torch
 from sklearn.utils import resample
 from .._dataframe import DataFrame
@@ -247,6 +247,7 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
     return sample_frame
 
 
+"""
 def retrieval_row(df: "DataFrame", indexer: "DTensor"):
     if indexer.shape[1] != 1:
         raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
@@ -279,6 +280,69 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
         partition_order_mappings,
         df.data_manager
     )
+"""
+def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
+    if indexer.shape[1] != 1:
+        raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
+
+    data_manager = df.data_manager
+
+    def _block_counter(kvs, value_type="tensor"):
+        size = 0
+        first_block_id = None
+        for k, value in kvs:
+            if first_block_id is None:
+                first_block_id = k
+
+            if value_type == "tensor":
+                size += value.sum().item()
+            else:
+                size += len(value[0])
+
+        return first_block_id, size
+
+    if isinstance(indexer, DataFrame):
+        _block_counter_func = functools.partial(_block_counter, value_type="dataframe")
+        block_info = sorted([summary[1] for summary in indexer.block_table.applyPartitions(_block_counter_func).collect()])
+    else:
+        block_info = sorted([summary[1] for summary in indexer.shardings._data.applyPartitions(_block_counter).collect()])
+    block_order_mappings = dict()
+    start_index = 0
+    acc_block_num = 0
+    for block_id, block_size in block_info:
+        block_num = (block_size + data_manager.block_row_size - 1) // data_manager.block_row_size
+        block_order_mappings[block_id] = dict(
+            start_index=start_index,
+            end_index=start_index + block_size - 1,
+            start_block_id=acc_block_num,
+            end_block_id=acc_block_num + block_num - 1
+        )
+        start_index += block_size
+        acc_block_num += block_num
+
+    if start_index == 0:
+        return df.empty_frame()
+
+    if isinstance(indexer, DataFrame):
+        bid = indexer.data_manager.infer_operable_blocks()[0]
+        block_table = df.block_table.join(indexer.block_table, lambda v1, v2: (v1, v2[bid]))
+    else:
+        block_table = df.block_table.join(indexer.shardings._data, lambda v1, v2: (v1, v2))
+
+    _balance_block_func = functools.partial(_balance_blocks_with_index,
+                                            partition_order_mappings=block_order_mappings,
+                                            data_manager=data_manager)
+    block_table = block_table.mapPartitions(_balance_block_func,
+                                           use_previous_behavior=False)
+    block_table, data_manager = compress_blocks(block_table, data_manager)
+    partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, data_manager.block_row_size)
+
+    return DataFrame(
+        df._ctx,
+        block_table,
+        partition_order_mappings,
+        data_manager
+    )
 
 
 def _flatten_partition_without_value(kvs):
@@ -299,7 +363,7 @@ def _balance_blocks(kvs, partition_order_mappings: dict=None, block_row_size: in
     block_id = None
     previous_blocks = list()
     for _, blocks in kvs:
-        if block_id is None:
+        if block_id is None and len(blocks[0]):
             sample_id = blocks[0][0]
             block_id = partition_order_mappings[sample_id]["start_block_id"]
 
@@ -317,6 +381,38 @@ def _balance_blocks(kvs, partition_order_mappings: dict=None, block_row_size: in
 
     if previous_blocks:
         yield  block_id, previous_blocks
+
+    if block_id is None:
+        return []
+
+
+def _balance_blocks_with_index(kvs, partition_order_mappings: dict=None, data_manager: DataManager=None):
+    block_id = None
+    block_num = data_manager.block_num
+    ret_blocks = [[] for _ in range(block_num)]
+    block_size = 0
+    for _, (blocks, t) in kvs:
+        if block_id is None:
+            block_id = partition_order_mappings[_]["start_block_id"]
+
+        flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+        for i, v in enumerate(t):
+            v = v.item()
+            if not v:
+                continue
+
+            block_size += 1
+            for j in range(block_num):
+                ret_blocks[j].append(flat_blocks[j][i])
+
+            if block_size == data_manager.block_row_size:
+                yield block_id, data_manager.convert_to_blocks(ret_blocks)
+                block_size = 0
+                block_id += 1
+                ret_blocks = [[] for _ in range(block_num)]
+
+    if block_size:
+        yield block_id, data_manager.convert_to_blocks(ret_blocks)
 
 
 def to_blocks(kvs, dm: DataManager = None, partition_mappings: dict = None):

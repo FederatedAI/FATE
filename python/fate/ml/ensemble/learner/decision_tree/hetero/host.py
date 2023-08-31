@@ -82,16 +82,18 @@ class HeteroDecisionTreeHost(DecisionTree):
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
-        local_sample_idx = data_with_pos.apply_row(map_func).values.as_tensor()
-        local_samples = data_with_pos[local_sample_idx]
+        # local_sample_idx = data_with_pos.apply_row(map_func).as_tensor()
+        # local_samples = data_with_pos[local_sample_idx]
+        local_sample_idx = data_with_pos.apply_row(map_func)
+        local_samples = data_with_pos.iloc(local_sample_idx)
         logger.info('{} samples on local nodes'.format(len(local_samples)))
 
         if len(local_samples) == 0:
             updated_sample_pos = None
         else:
-            updated_sample_pos = sample_pos.loc(local_samples.get_indexer(target="sample_id"), preserve_order=True).create_frame()
             update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
-            updated_sample_pos['node_idx'] = local_samples.apply_row(update_func)
+            updated_sample_pos = local_samples.create_frame()
+            updated_sample_pos["node_idx"] = local_samples.apply_row(update_func)
 
         # synchronize sample pos
         if updated_sample_pos is None:
@@ -101,10 +103,13 @@ class HeteroDecisionTreeHost(DecisionTree):
             pos_index = updated_sample_pos.get_indexer(target='sample_id')
             update_data = (True, (pos_data, pos_index))
         ctx.guest.put('updated_data', update_data)
+        """
         new_pos_data, new_pos_indexer = ctx.guest.get('new_sample_pos')
         new_sample_pos = sample_pos.create_frame()
         new_sample_pos = new_sample_pos.loc(new_pos_indexer, preserve_order=True)
         new_sample_pos['node_idx'] = new_pos_data
+        """
+        new_sample_pos = ctx.guest.get('new_sample_pos')
 
         return new_sample_pos
     
@@ -145,6 +150,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         node_map = {}
         cur_layer_node = [root_node]
+        en_grad_and_hess["cnt"] = 1
         for cur_depth, sub_ctx in ctx.on_iterations.ctxs_range(self.max_depth):
             
             if len(cur_layer_node) == 0:
