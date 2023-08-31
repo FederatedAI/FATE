@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _update_sample_pos_on_local_nodes, _merge_sample_pos
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.ml.ensemble.learner.decision_tree.tree_core.loss import get_task_info
@@ -108,47 +108,21 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         data_with_pos = DataFrame.hstack([data, sample_pos])
-        map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
-        local_sample_idx = data_with_pos.apply_row(map_func)
-        # local_samples = data_with_pos[local_sample_idx.as_tensor()]
-        local_samples = data_with_pos.iloc(local_sample_idx)
-        logger.info('{}/{} samples on local nodes'.format(len(local_samples), len(data)))
-        if len(local_samples) == 0:
-            updated_sample_pos = None
-        else:
-            """
-            updated_sample_pos = sample_pos.loc(local_samples.get_indexer(target="sample_id"), preserve_order=True).create_frame()
-            update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
-            map_rs = local_samples.apply_row(update_func)
-            updated_sample_pos["node_idx"] = map_rs # local_samples.apply_row(update_func)
-            """
-            update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
-            updated_sample_pos = local_samples.create_frame()
-            updated_sample_pos["node_idx"] = local_samples.apply_row(update_func)
+        map_func = functools.partial(_update_sample_pos_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
+        updated_sample_pos = data_with_pos.apply_row(map_func, columns=["g_on_local", "g_node_idx"])
 
         # synchronize sample pos
         host_update_sample_pos = ctx.hosts.get('updated_data')
-        new_sample_pos = sample_pos.empty_frame()
 
+        merge_func = functools.partial(_merge_sample_pos)
         for host_data in host_update_sample_pos:
-            if host_data[0]:  # True
-                pos_data, pos_index = host_data[1]
-                tmp_frame = sample_pos.create_frame()
-                tmp_frame = tmp_frame.loc(pos_index, preserve_order=True)
-                tmp_frame['node_idx'] = pos_data
-                new_sample_pos = DataFrame.vstack([new_sample_pos, tmp_frame])
+            updated_sample_pos = DataFrame.hstack([updated_sample_pos, host_data]).apply_row(
+                merge_func,
+                columns=["g_on_local", "g_node_idx"]
+            )
 
-        if updated_sample_pos is not None:
-            if len(updated_sample_pos) == len(data):  # all samples are on local
-                new_sample_pos = updated_sample_pos
-            else:
-                logger.info('stack new sample pos, guest len {}, host len {}'.format(len(updated_sample_pos), len(new_sample_pos)))
-                new_sample_pos = DataFrame.vstack([updated_sample_pos, new_sample_pos])
-        else:
-            new_sample_pos = new_sample_pos  # all samples are on host
-
-       # share new sample position with all hosts
-        # ctx.hosts.put('new_sample_pos', (new_sample_pos.as_tensor(), new_sample_pos.get_indexer(target='sample_id')))
+        new_sample_pos = updated_sample_pos.create_frame(columns=["g_node_idx"])
+        new_sample_pos.rename(columns={"g_node_idx": "node_idx"})
         ctx.hosts.put('new_sample_pos', new_sample_pos)
         self.sample_pos = new_sample_pos
 

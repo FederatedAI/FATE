@@ -182,6 +182,21 @@ def _get_sample_on_local_nodes(s: pd.Series, cur_layer_node: List[Node], node_ma
     return on_local_node
 
 
+def _update_sample_pos_on_local_nodes(s: pd.Series, cur_layer_node: List[Node], node_map: dict, sitename):
+    on_local_node = _get_sample_on_local_nodes(s, cur_layer_node, node_map, sitename)
+    if not on_local_node:
+        return False, -1
+    else:
+        return True, _update_sample_pos(s, cur_layer_node, node_map, sitename)
+
+
+def _merge_sample_pos(s: pd.Series):
+    if s['g_on_local']:
+        return s['g_on_local'], s['g_node_idx']
+    else:
+        return s['h_on_local'], s['h_node_idx']
+
+
 def _convert_sample_pos_to_score(s: pd.Series, tree_nodes: List[Node]):
     
     node_idx = s[0]

@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos, FeatureImportance
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _update_sample_pos_on_local_nodes, FeatureImportance
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder, DistributedHistogram
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch.histogram.histogram import ShuffledHistogram
@@ -81,34 +81,10 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         data_with_pos = DataFrame.hstack([data, sample_pos])
-        map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
-        # local_sample_idx = data_with_pos.apply_row(map_func).as_tensor()
-        # local_samples = data_with_pos[local_sample_idx]
-        local_sample_idx = data_with_pos.apply_row(map_func)
-        local_samples = data_with_pos.iloc(local_sample_idx)
-        logger.info('{} samples on local nodes'.format(len(local_samples)))
+        map_func = functools.partial(_update_sample_pos_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
+        update_sample_pos = data_with_pos.apply_row(map_func, columns=["h_on_local", "h_node_idx"])
 
-        if len(local_samples) == 0:
-            updated_sample_pos = None
-        else:
-            update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
-            updated_sample_pos = local_samples.create_frame()
-            updated_sample_pos["node_idx"] = local_samples.apply_row(update_func)
-
-        # synchronize sample pos
-        if updated_sample_pos is None:
-            update_data = (False, None)
-        else:
-            pos_data = updated_sample_pos.as_tensor()
-            pos_index = updated_sample_pos.get_indexer(target='sample_id')
-            update_data = (True, (pos_data, pos_index))
-        ctx.guest.put('updated_data', update_data)
-        """
-        new_pos_data, new_pos_indexer = ctx.guest.get('new_sample_pos')
-        new_sample_pos = sample_pos.create_frame()
-        new_sample_pos = new_sample_pos.loc(new_pos_indexer, preserve_order=True)
-        new_sample_pos['node_idx'] = new_pos_data
-        """
+        ctx.guest.put('updated_data', update_sample_pos)
         new_sample_pos = ctx.guest.get('new_sample_pos')
 
         return new_sample_pos
