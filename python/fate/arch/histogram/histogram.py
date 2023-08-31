@@ -467,7 +467,7 @@ class DistributedHistogram:
             ShuffledHistogram, the shuffled(if seed is not None) histogram
         """
         if k is None:
-            k = data.partitions
+            k = data.partitions ** 2
         mapper = get_partition_hist_build_mapper(
             self._node_size, self._feature_bin_sizes, self._value_schemas, self._seed, k
         )
