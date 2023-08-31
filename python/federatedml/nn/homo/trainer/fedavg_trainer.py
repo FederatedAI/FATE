@@ -459,8 +459,13 @@ class FedAVGTrainer(TrainerBase):
             best_epoch = int(np.array(loss_history).argmin())
 
             if self.save_to_local_dir:
-                self.local_save(model=self.model, optimizer=self._optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
-                                converge_status=need_stop, best_epoch=best_epoch)
+                self.local_save(
+                    model=self.model,
+                    optimizer=self._optimizer,
+                    epoch_idx=cur_epoch,
+                    loss_history=loss_history,
+                    converge_status=need_stop,
+                    best_epoch=best_epoch)
             else:
                 self.save(model=self.model, optimizer=self._optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
                           converge_status=need_stop, best_epoch=best_epoch)
