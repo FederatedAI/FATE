@@ -629,7 +629,6 @@ class FedAVGTrainer(TrainerBase):
 
 
     def _share_model(self, sync_trainable_only=True):
-      
         if distributed_util.is_rank_0():
 
             for p in self.model.parameters():
