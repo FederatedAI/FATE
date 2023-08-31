@@ -220,7 +220,7 @@ class SecureAggregatorServer(AggregatorBaseServer):
         clients=(
             consts.GUEST,
             consts.HOST)
-            ):
+    ):
 
         super(SecureAggregatorServer, self).__init__(
             communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
