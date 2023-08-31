@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 import logging
+from typing import Union
 
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
@@ -43,17 +44,16 @@ def train(
         "for list of configurable arguments, "
         "refer to torch.optim.lr_scheduler",
     ),
-    epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
-    batch_size: cpn.parameter(
-        type=params.conint(ge=10),
-        default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
-    ),
-    optimizer: cpn.parameter(
-        type=params.optimizer_param(),
-        default=params.OptimizerParam(
-            method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
+        epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
+        batch_size: cpn.parameter(
+            type=params.conint(ge=10),
+            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
         ),
-    ),
+        optimizer: cpn.parameter(
+            type=params.optimizer_param(),
+            default=params.OptimizerParam(
+                method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0})
+        ),
         tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
         early_stop: cpn.parameter(
             type=params.string_choice(["weight_diff", "diff", "abs"]),
@@ -68,6 +68,10 @@ def train(
         threshold: cpn.parameter(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
+        class_weight: cpn.parameter(
+            type=Union[params.string_choice(["balanced"], dict)], default=None,
+            desc="weight of each class, accept 'balanced' or dict of format {label: weight},"
+                 "default None to use weight from dataframe"),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
         warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True),
@@ -92,6 +96,7 @@ def train(
             learning_rate_scheduler,
             init_param,
             threshold,
+            class_weight,
             warm_start_model
         )
     elif role.is_host:
@@ -172,6 +177,10 @@ def cross_validation(
         threshold: cpn.parameter(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
+        class_weight: cpn.parameter(
+            type=Union[params.string_choice(["balanced"], dict)], default=None,
+            desc="weight of each class, accept 'balanced' or dict of format {label: weight},"
+                 "default None to use weight from dataframe"),
         cv_param: cpn.parameter(type=params.cv_param(),
                                 default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
                                 desc="cross validation param"),
@@ -213,6 +222,7 @@ def cross_validation(
                 learning_rate_param=learning_rate_scheduler,
                 init_param=init_param,
                 threshold=threshold,
+                class_weight=class_weight
             )
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
@@ -252,9 +262,9 @@ def cross_validation(
 
 
 def train_guest(
-    ctx,
-    train_data,
-    validate_data,
+        ctx,
+        train_data,
+        validate_data,
         train_output_data,
         output_model,
         epochs,
@@ -263,6 +273,7 @@ def train_guest(
         learning_rate_param,
         init_param,
         threshold,
+        class_weight,
         input_model
 ):
     if input_model is not None:
@@ -280,6 +291,7 @@ def train_guest(
             learning_rate_param=learning_rate_param,
             init_param=init_param,
             threshold=threshold,
+            class_weight=class_weight
         )
     # optimizer = optimizer_factory(optimizer_param)
     logger.info(f"coordinated lr guest start train")
@@ -409,24 +421,3 @@ def predict_host(ctx, input_model, test_data, test_output_data):
     module = CoordinatedLRModuleHost.from_model(model)
     test_data = test_data.read()
     module.predict(sub_ctx, test_data)
-
-
-"""def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):
-    if is_ovr:
-        df = test_data.create_frame(with_label=True, with_weight=False)
-        df[["predict_result", "predict_score", "predict_detail", "type"]] = predict_score.apply_row(
-            lambda v: [labels[v.argmax()],
-                       v[v.argmax()],
-                       json.dumps({str(label): v[i] for i, label in enumerate(labels)}),
-                       data_type],
-            enable_type_align_checking=False)
-    else:
-        df = test_data.create_frame(with_label=True, with_weight=False)
-        pred_res = test_data.create_frame(with_label=False, with_weight=False)
-        pred_res["predict_result"] = predict_score
-        # logger.info(f"predict score: {list(predict_score.shardings._data.collect())}")
-        df[["predict_result", "predict_score", "predict_detail", "type"]] = pred_res.apply_row(
-            lambda v: [int(v[0] > threshold), v[0], json.dumps({1: v[0], 0: 1 - v[0]}), data_type],
-            enable_type_align_checking=False,
-        )
-    return df"""

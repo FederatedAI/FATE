@@ -40,6 +40,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         learning_rate_param=None,
         init_param=None,
         threshold=0.5,
+        class_weight=None
     ):
         self.epochs = epochs
         self.batch_size = batch_size
@@ -47,6 +48,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.optimizer_param = optimizer_param
         self.init_param = init_param
         self.threshold = threshold
+        self.class_weight = None
 
         self.estimator = None
         self.ovr = False
@@ -74,6 +76,15 @@ class CoordinatedLRModuleGuest(HeteroModule):
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
+        if self.class_weight:
+            if self.class_weight == "balanced":
+                label_weight = train_data_binarized_label.shape[0] / (label_count * train_data_binarized_label.sum())
+                label_weight_dict = label_weight.as_dict()
+
+            # todo: apply weight to train data, multiply if sample weight, else assign to sample weight
+            train_data.weight = train_data.weight.fillna(1)
+            train_data.weight = train_data.weight * train_data.label.apply(lambda x: label_weight_dict[x])
+
         encryptor = ctx.arbiter("encryptor").get()
         labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
         if self.labels is None:
