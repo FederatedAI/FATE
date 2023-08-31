@@ -188,6 +188,7 @@ class FedAVGTrainer(TrainerBase):
         if self.cuda is not None:
             self.model = self.model.cuda(self.cuda_main_device)
             if self.data_parallel:
+                LOGGER.info('device ids are {}'.format(self.cuda))
                 self.parallel_model = DataParallel(model, device_ids=self.cuda, output_device=self.cuda_main_device)
 
     def _select_model(self):
@@ -208,7 +209,7 @@ class FedAVGTrainer(TrainerBase):
         dl = self.data_loader
 
         total_batch_len = len(dl)
-
+        LOGGER.info('total batch len is {}'.format(total_batch_len))
         if not self.fed_mode:
             to_iterate = tqdm.tqdm(dl)
         else:
@@ -236,8 +237,11 @@ class FedAVGTrainer(TrainerBase):
             pred = model(batch_data)
 
             if not loss_func and hasattr(pred, "loss"):
-                batch_loss = pred.loss
 
+                if isinstance(model, DataParallel):
+                    batch_loss = pred.loss.mean()
+                else:
+                    batch_loss = pred.loss
             elif loss_func is not None:
                 if batch_label is None:
                     raise ValueError(
@@ -272,13 +276,12 @@ class FedAVGTrainer(TrainerBase):
                     epoch_loss += batch_loss_np
 
             batch_idx += 1
-            # LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
 
+            # LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
             if self.fed_mode:
                 if batch_idx % (total_batch_len // 100) == 0:
                     percentage = (batch_idx / total_batch_len) * 100
                     LOGGER.debug(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
-
         epoch_loss = epoch_loss / len(train_set)
         return epoch_loss
 
@@ -368,6 +371,9 @@ class FedAVGTrainer(TrainerBase):
                 'An optimizer is required, but got None, please specify optimizer in the '
                 'job configuration')
 
+        self._optimizer = optimizer
+        self._loss_fn = loss
+
         if self.batch_size > len(train_set) or self.batch_size == -1:
             self.batch_size = len(train_set)
 
@@ -391,11 +397,10 @@ class FedAVGTrainer(TrainerBase):
             cur_epoch = i
             LOGGER.info('epoch is {}'.format(i))
             model = self._select_model()
-            epoch_loss = self.train_an_epoch(i, model, train_set, optimizer, loss)
+            epoch_loss = self.train_an_epoch(i, model, train_set, self._optimizer, self._loss_fn)
             if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 self.callback_loss(epoch_loss, i)
                 loss_history.append(float(epoch_loss))
-                LOGGER.info('epoch loss is {}'.format(epoch_loss))
 
             # federation process, if running local mode, cancel federation
             need_stop = self._client_sends_data(i, epoch_loss, cur_agg_round)
@@ -432,10 +437,10 @@ class FedAVGTrainer(TrainerBase):
 
                     if self.save_to_local_dir:
                         self.local_checkpoint(
-                            self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
+                            self.model, i, self._optimizer, converge_status=need_stop, loss_history=loss_history)
                     else:
                         self.checkpoint(
-                            self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
+                            self.model, i, self._optimizer, converge_status=need_stop, loss_history=loss_history)
                     LOGGER.info('save checkpoint : epoch {}'.format(i))
 
             # if meet stop condition then stop
@@ -452,10 +457,15 @@ class FedAVGTrainer(TrainerBase):
             best_epoch = int(np.array(loss_history).argmin())
 
             if self.save_to_local_dir:
-                self.local_save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
-                                converge_status=need_stop, best_epoch=best_epoch)
+                self.local_save(
+                    model=self.model,
+                    optimizer=self._optimizer,
+                    epoch_idx=cur_epoch,
+                    loss_history=loss_history,
+                    converge_status=need_stop,
+                    best_epoch=best_epoch)
             else:
-                self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
+                self.save(model=self.model, optimizer=self._optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
                           converge_status=need_stop, best_epoch=best_epoch)
 
             best_epoch = int(np.array(loss_history).argmin())
@@ -549,7 +559,7 @@ class FedAVGTrainer(TrainerBase):
                 break
 
         self.on_loop_end_server()
-        if self.model is not None:
+        if self._model is not None:
             if self.save_to_local_dir:
                 self.local_save(model=self.model, epoch_idx=i, converge_status=need_stop)
             else:
@@ -615,15 +625,17 @@ class FedAVGTrainer(TrainerBase):
 
         return data_loader
 
-    def _share_model(self):
+    def _share_model(self, sync_trainable_only=True):
         if distributed_util.is_rank_0():
+
             for p in self.model.parameters():
-                if p.requires_grad:
+                if (not sync_trainable_only) or (sync_trainable_only and p.requires_grad):
                     scatter_list = [p.data for _ in range(distributed_util.get_num_workers())]
                     dist.scatter(p.data, scatter_list, async_op=False)
         else:
+
             for p in self.model.parameters():
-                if p.requires_grad:
+                if (not sync_trainable_only) or (sync_trainable_only and p.requires_grad):
                     dist.scatter(p.data, src=0, async_op=False)
 
     def _sync_converge_status(self, converge_status=None):

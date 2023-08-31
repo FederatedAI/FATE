@@ -52,10 +52,14 @@ Client & Server Communication
 
 
 class CommunicatorTransVar(HomoTransferBase):
-    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None, disable_gc=False):
         super().__init__(server=server, clients=clients, prefix=prefix)
-        self.client_to_server = self.create_client_to_server_variable(name="client_to_server")
-        self.server_to_client = self.create_server_to_client_variable(name="server_to_client")
+        if not disable_gc:
+            self.client_to_server = self.create_client_to_server_variable(name="client_to_server")
+            self.server_to_client = self.create_server_to_client_variable(name="server_to_client")
+        else:
+            self.client_to_server = self.create_client_to_server_variable(name="client_to_server").disable_auto_clean()
+            self.server_to_client = self.create_server_to_client_variable(name="server_to_client").disable_auto_clean()
 
 
 class ServerCommunicator(object):

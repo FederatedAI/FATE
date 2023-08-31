@@ -142,7 +142,7 @@ def init(
 
     if ds_config:
         model, optimizer = deepspeed_util.deepspeed_init(model, ds_config)
-        trainer_inst.enable_deepspeed(is_zero_3=deepspeed_util.is_zero3(ds_config))
+        trainer_inst.enable_deepspeed(ds_config=ds_config, is_zero_3=deepspeed_util.is_zero3(ds_config))
         if deepspeed_util.is_zero3(ds_config):
             model.train()
 

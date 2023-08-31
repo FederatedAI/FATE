@@ -53,6 +53,8 @@ class TrainerBase(object):
         self._exporter = None
         self._evaluation_summary = {}
         self._client_num = None
+        self._optimizer = None
+        self._loss_fn = None
 
         # running status
         self._set_model_checkpoint_epoch = set()
@@ -66,6 +68,9 @@ class TrainerBase(object):
         # deepspeed enabled
         self._enable_deepspeed = False
         self._deepspeed_zero_3 = False
+
+        # deepspeed config
+        self._ds_config = None
 
     @staticmethod
     def is_pos_int(val):
@@ -120,7 +125,8 @@ class TrainerBase(object):
         assert isinstance(val, bool), 'fed mode must be a bool'
         self._fed_mode = val
 
-    def enable_deepspeed(self, is_zero_3=False):
+    def enable_deepspeed(self, ds_config, is_zero_3=False):
+        self._ds_config = ds_config
         self._enable_deepspeed = True
         self._deepspeed_zero_3 = is_zero_3
 
@@ -246,6 +252,7 @@ class TrainerBase(object):
                     'best_epoch': best_epoch,
                     'extra_data': extra_data
                 }
+                LOGGER.info('save path is {}'.format(save_path))
                 t.save(model_dict, save_path)
 
         local_save_path = save_path if not self._enable_deepspeed else os.environ[consts.FLOW_MODEL_SYNC_PATH]
