@@ -87,7 +87,7 @@ class SecureAggregatorClient(AggregatorBaseClient):
             return self._handle_table_data(model)
 
         if isinstance(model, t.nn.Module):
-            if self._lm_aggregate:  
+            if self._lm_aggregate:
                 # if model is large, cannot send large object, need to break into key/value
                 # and aggregate them in the format of distributed table
                 from fate_arch.session import computing_session as session
