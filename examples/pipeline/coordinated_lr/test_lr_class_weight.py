@@ -29,6 +29,7 @@ def main(config="../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
+
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
@@ -41,49 +42,45 @@ def main(config="../config.yaml", namespace=""):
     psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
     lr_0 = CoordinatedLR("lr_0",
-                         epochs=4,
-                         batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01},
-                                    "alpha": 0.001},
+                         epochs=10,
+                         batch_size=300,
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}, "penalty": "l2", "alpha": 0.001},
                          init_param={"fit_intercept": True, "method": "zeros"},
                          train_data=psi_0.outputs["output_data"],
-                         learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
-                                                                                             "total_iters": 100}})
-    lr_1 = CoordinatedLR("lr_1", train_data=psi_0.outputs["output_data"],
-                         warm_start_model=lr_0.outputs["output_model"],
-                         epochs=2,
-                         batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01}},
-                         )
-
-    lr_2 = CoordinatedLR("lr_2", epochs=6,
-                         batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01},
-                                    "alpha": 0.001},
-                         init_param={"fit_intercept": True, "method": "zeros"},
-                         train_data=psi_0.outputs["output_data"],
-                         learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
-                                                                                             "total_iters": 100}})
+                         learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
+                                                                                           "total_iters": 100}},
+                         class_weight='balanced')
 
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_roles=["guest"],
                               default_eval_setting="binary",
-                              input_data=[lr_1.outputs["train_output_data"], lr_2.outputs["train_output_data"]])
+                              input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
-    pipeline.add_task(lr_1)
-    pipeline.add_task(lr_2)
     pipeline.add_task(evaluation_0)
 
     pipeline.compile()
-    # print(pipeline.get_dag())
     pipeline.fit()
-    # print(f"lr_1 model: {pipeline.get_task_info('lr_1').get_output_model()}")
-    # print(f"train lr_1 data: {pipeline.get_task_info('lr_1').get_output_data()}")
+    print(f"predict lr_0 model: {pipeline.get_task_info('lr_0').get_output_model()}")
 
-    # print(f"lr_2 model: {pipeline.get_task_info('lr_2').get_output_model()}")
-    # print(f"train lr_2 data: {pipeline.get_task_info('lr_2').get_output_data()}")
+    pipeline.deploy([psi_0, lr_0])
+
+    predict_pipeline = FateFlowPipeline()
+
+    deployed_pipeline = pipeline.get_deployed_pipeline()
+    deployed_pipeline.psi_0.guest.component_setting(
+        input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                        namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.hosts[0].component_setting(
+        input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                        namespace=f"experiment{namespace}"))
+
+    predict_pipeline.add_task(deployed_pipeline)
+    predict_pipeline.compile()
+    # print("\n\n\n")
+    # print(predict_pipeline.compile().get_dag())
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

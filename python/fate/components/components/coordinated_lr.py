@@ -69,7 +69,7 @@ def train(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
         class_weight: cpn.parameter(
-            type=Union[params.string_choice(["balanced"], dict)], default=None,
+            type=Union[params.string_choice(["balanced"]), dict], default=None,
             desc="weight of each class, accept 'balanced' or dict of format {label: weight},"
                  "default None to use weight from dataframe"),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
@@ -178,7 +178,7 @@ def cross_validation(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
         class_weight: cpn.parameter(
-            type=Union[params.string_choice(["balanced"], dict)], default=None,
+            type=Union[params.string_choice(["balanced"]), dict], default=None,
             desc="weight of each class, accept 'balanced' or dict of format {label: weight},"
                  "default None to use weight from dataframe"),
         cv_param: cpn.parameter(type=params.cv_param(),

@@ -86,12 +86,16 @@ data:
 tasks:
   normal-lr:
     script: test_lr.py
+  normal-lr-class-weight:
+    script: test_lr_class_weight.py
   lr-cv:
     script: test_lr_cv.py
   lr-validate:
     script: test_lr_validate.py
   lr-warm-start:
     script: test_lr_warm_start.py
+  lr-warm-start-class-weight:
+    script: test_lr_warm_start_class_weight.py
   lr-multi-class:
     script: test_lr_multi_class.py
   lr-multi-host:

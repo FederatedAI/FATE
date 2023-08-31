@@ -48,7 +48,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.optimizer_param = optimizer_param
         self.init_param = init_param
         self.threshold = threshold
-        self.class_weight = None
+        self.class_weight = class_weight
 
         self.estimator = None
         self.ovr = False
@@ -76,15 +76,25 @@ class CoordinatedLRModuleGuest(HeteroModule):
         label_count = train_data_binarized_label.shape[1]
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
+        train_data_fit = train_data.copy()
+
         if self.class_weight:
             if self.class_weight == "balanced":
+                logger.debug(f"use balanced class weight")
+                # logger.info(f"count per label: {train_data_binarized_label.sum()}")
                 label_weight = train_data_binarized_label.shape[0] / (label_count * train_data_binarized_label.sum())
-                label_weight_dict = label_weight.as_dict()
-
-            # todo: apply weight to train data, multiply if sample weight, else assign to sample weight
-            train_data.weight = train_data.weight.fillna(1)
-            train_data.weight = train_data.weight * train_data.label.apply(lambda x: label_weight_dict[x])
-
+                label_weight.index = [label_name.split("_")[1] for label_name in label_weight.index]
+                label_weight_dict = dict(label_weight)
+                # logger.info(f"label weight dict: {label_weight_dict}")
+            else:
+                logger.debug(f"customized class weight provided: {self.class_weight}")
+                label_weight_dict = self.class_weight
+            if train_data_fit.weight is None:
+                train_data_fit.weight = train_data_fit.label.apply_row(lambda x: label_weight_dict[str(x[0])])
+            else:
+                train_data_fit.weight = train_data_fit.weight.fillna(1.0)
+                train_data_fit.weight = train_data_fit.weight * \
+                                        train_data_fit.label.apply_row(lambda x: label_weight_dict[str(x[0])])
         encryptor = ctx.arbiter("encryptor").get()
         labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
         if self.labels is None:
@@ -123,12 +133,12 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     single_estimator = self.estimator[i]
                     single_estimator.epochs = self.epochs
                     single_estimator.batch_size = self.batch_size
-                class_train_data = train_data.copy()
+                # class_train_data = train_data.copy()
                 class_validate_data = validate_data
                 if validate_data:
                     class_validate_data = validate_data.copy()
-                class_train_data.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
-                single_estimator.fit_single_model(class_ctx, encryptor, class_train_data, class_validate_data)
+                train_data_fit.label = train_data_binarized_label[train_data_binarized_label.columns[i]]
+                single_estimator.fit_single_model(class_ctx, encryptor, train_data_fit, class_validate_data)
                 self.estimator[i] = single_estimator
 
         else:
@@ -154,7 +164,6 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 single_estimator = self.estimator
                 single_estimator.epochs = self.epochs
                 single_estimator.batch_size = self.batch_size
-            train_data_fit = train_data.copy()
             validate_data_fit = validate_data
             if validate_data:
                 validate_data_fit = validate_data.copy()
@@ -200,6 +209,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 "labels": self.labels,
                 "ovr": self.ovr,
                 "threshold": self.threshold,
+                "class_weight": self.class_weight
             },
         }
 
@@ -212,6 +222,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
             optimizer_param=model["meta"]["optimizer_param"],
             threshold=model["meta"]["threshold"],
             init_param=model["meta"]["init_param"],
+            class_weight=model["meta"]["class_weight"]
         )
         lr.ovr = model["meta"]["ovr"]
         lr.labels = model["meta"]["labels"]

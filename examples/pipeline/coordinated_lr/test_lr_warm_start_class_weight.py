@@ -48,7 +48,8 @@ def main(config="../config.yaml", namespace=""):
                          init_param={"fit_intercept": True, "method": "zeros"},
                          train_data=psi_0.outputs["output_data"],
                          learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
-                                                                                             "total_iters": 100}})
+                                                                                             "total_iters": 100}},
+                         class_weight={"0": 2, "1": 1})
     lr_1 = CoordinatedLR("lr_1", train_data=psi_0.outputs["output_data"],
                          warm_start_model=lr_0.outputs["output_model"],
                          epochs=2,
@@ -63,7 +64,8 @@ def main(config="../config.yaml", namespace=""):
                          init_param={"fit_intercept": True, "method": "zeros"},
                          train_data=psi_0.outputs["output_data"],
                          learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
-                                                                                             "total_iters": 100}})
+                                                                                             "total_iters": 100}},
+                         class_weight={"0": 2, "1": 1})
 
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_roles=["guest"],
