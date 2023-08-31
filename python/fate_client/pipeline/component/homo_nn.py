@@ -44,7 +44,8 @@ try:
         'loss': None,
         'optimizer': None,
         'nn_define': None,
-        'ds_config': None
+        'ds_config': None,
+        'server_init': False
     }
 except Exception as e:
     print(e)
@@ -65,7 +66,10 @@ class HomoNN(FateComponent):
     torch_seed, global random seed
     loss, loss function from fate_torch
     optimizer, optimizer from fate_torch
+    ds_config, config for deepspeed
     model, a fate torch sequential defining the model structure
+    server_init, whether to initialize the model, loss and optimizer on server, if configs are provided, they will be used.  In
+                 current version this option is specially designed for offsite-tuning
     """
 
     @extract_explicit_parameter
@@ -82,7 +86,9 @@ class HomoNN(FateComponent):
                  loss=None,
                  optimizer: OptimizerType = None,
                  ds_config: dict = None,
-                 model: Sequential = None, **kwargs):
+                 model: Sequential = None,
+                 server_init: bool = False,
+                 **kwargs):
 
         explicit_parameters = copy.deepcopy(DEFAULT_PARAM_DICT)
         if 'name' not in kwargs["explict_parameters"]:
@@ -94,8 +100,15 @@ class HomoNN(FateComponent):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type='single')
         self._module_name = "HomoNN"
-        self._updated = {'trainer': False, 'dataset': False,
-                         'torch_seed': False, 'loss': False, 'optimizer': False, 'model': False}
+        self._updated = {
+            'trainer': False,
+            'dataset': False,
+            'torch_seed': False,
+            'loss': False,
+            'optimizer': False,
+            'model': False,
+            'ds_config': False,
+            'server_init': False}
         self._set_param(kwargs["explict_parameters"])
         self._check_parameters()
 

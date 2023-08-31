@@ -210,7 +210,7 @@ class FedAVGTrainer(TrainerBase):
 
         total_batch_len = len(dl)
         LOGGER.info('total batch len is {}'.format(total_batch_len))
-
+        
         if not self.fed_mode:
             to_iterate = tqdm.tqdm(dl)
         else:
@@ -238,10 +238,12 @@ class FedAVGTrainer(TrainerBase):
             pred = model(batch_data)
 
             if not loss_func and hasattr(pred, "loss"):
+
                 if isinstance(model, DataParallel):
                     batch_loss = pred.loss.mean()
                 else:
                     batch_loss = pred.loss
+                    
             elif loss_func is not None:
                 if batch_label is None:
                     raise ValueError(
@@ -276,14 +278,13 @@ class FedAVGTrainer(TrainerBase):
                     epoch_loss += batch_loss_np
 
             batch_idx += 1
+
+            # LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
             if self.fed_mode:
-                if total_batch_len > 100:
-                    if batch_idx % (total_batch_len // 100) == 0:
-                        percentage = (batch_idx / total_batch_len) * 100
-                        LOGGER.debug(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
-                else:
-                    LOGGER.debug("Training epoch {}:batch {}".format(epoch_idx, batch_idx))
-        
+                if batch_idx % (total_batch_len // 100) == 0:
+                    percentage = (batch_idx / total_batch_len) * 100
+                    LOGGER.debug(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
+                    
         epoch_loss = epoch_loss / len(train_set)
         return epoch_loss
 
@@ -622,7 +623,9 @@ class FedAVGTrainer(TrainerBase):
 
         return data_loader
 
+
     def _share_model(self, sync_trainable_only=True):
+      
         if distributed_util.is_rank_0():
 
             for p in self.model.parameters():
