@@ -191,7 +191,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._pack_info['precision'] = FIX_POINT_PRECISION
             self._pack_info['pack_num'] = pack_num
             self._pack_info['total_pack_num'] = total_pack_num
-            self._pack_info['split_point_shift_bit'] = shift_bit * total_pack_num
+            self._pack_info['split_point_shift_bit'] = shift_bit * pack_num
         else:
             logger.info('not using gh pack')
             en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
