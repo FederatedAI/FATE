@@ -503,6 +503,10 @@ class DataFrame(object):
 
         return loc(self, indexer, target=target, preserve_order=preserve_order)
 
+    def iloc(self, indexer: "DataFrame") -> "DataFrame":
+        from .ops._dimension_scaling import retrieval_row
+        return retrieval_row(self, indexer)
+
     def loc_with_sample_id_replacement(self, indexer):
         """
         indexer: table,

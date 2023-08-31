@@ -249,6 +249,11 @@ class Block(object):
     def retrieval_row(cls, block, indexes):
         if isinstance(block, CiphertextVector):
             return block.slice_indexes(indexes)
+        elif isinstance(block, pd.Index):
+            if isinstance(indexes, list):
+                return block[indexes]
+            else:
+                return pd.Index(block[indexes])
         else:
             return block[indexes]
 
