@@ -285,7 +285,7 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
     if indexer.shape[1] != 1:
         raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
 
-    data_manager = df.data_manager
+    data_manager = df.data_manager.duplicate()
 
     def _block_counter(kvs, value_type="tensor"):
         size = 0
