@@ -325,7 +325,7 @@ def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, 
         ctx=ctx,
         block_table=block_table,
         partition_order_mappings=partition_order_mappings,
-        data_manager=data_manager
+        data_manager=data_manager.duplicate()
     )
 
 
@@ -389,7 +389,7 @@ def loc(df: DataFrame, indexer, target="sample_id", preserve_order=False):
             df._ctx,
             block_table=block_table,
             partition_order_mappings=partition_order_mappings,
-            data_manager=data_manager
+            data_manager=data_manager.duplicate()
         )
 
 
