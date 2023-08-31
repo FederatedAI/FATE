@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import numpy as np
 import torch
@@ -6,32 +6,33 @@ import torch
 
 class Shuffler:
     """
-    Shuffler is used to shuffle the data in the same way for all partition.
+    Shuffler is used to shuffle the data.
 
-
+    data is stored in a flatten array with the shape is (num_node * node_size * step) and the
+    shuffle is applied to the `node_size` dimension.
     """
 
     def __init__(self, num_node: int, node_size: int, seed: int):
+        self.seed = seed
         self.num_node = num_node
         self.node_size = node_size
-        self.perm_indexes = [
-            torch.randperm(node_size, generator=torch.Generator().manual_seed(seed)) for _ in range(num_node)
+
+    def _get_perm_indexes(self):
+        return [
+            torch.randperm(self.node_size, generator=torch.Generator().manual_seed(self.seed)) for _ in
+            range(self.num_node)
         ]
 
-    def get_global_perm_index(self):
-        index = torch.hstack([index + (nid * self.node_size) for nid, index in enumerate(self.perm_indexes)])
+    def _get_global_perm_index(self):
+        index = torch.hstack([index + (nid * self.node_size) for nid, index in enumerate(self._get_perm_indexes())])
         return index
-
-    #
-    # def reverse_index(self, index):
-    #     return torch.argsort(self.perm_index)[index]
 
     def get_shuffle_index(self, step, reverse=False):
         """
         get chunk shuffle index
         """
         stepped = torch.arange(0, self.num_node * self.node_size * step).reshape(self.num_node * self.node_size, step)
-        indexes = stepped[self.get_global_perm_index(), :].flatten()
+        indexes = stepped[self._get_global_perm_index(), :].flatten()
         if reverse:
             indexes = torch.argsort(indexes)
         return indexes.detach().cpu().tolist()
@@ -86,7 +87,11 @@ class HistogramIndexer:
         self.feature_axis_stride = np.cumsum([0] + [feature_bin_sizes[i] for i in range(self.feature_size)])
         self.node_axis_stride = sum(feature_bin_sizes)
 
-        self._shuffler = None
+    def get_node_size(self):
+        return self.node_size
+
+    def get_node_axis_stride(self):
+        return self.node_axis_stride
 
     def get_position(self, nid: int, fid: int, bid: int):
         """
@@ -100,7 +105,7 @@ class HistogramIndexer:
         """
         return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
 
-    def get_positions(self, nids: List[int], bids: List[List[int]]):
+    def get_positions(self, nids: List[int], bids: List[List[int]], nid_mapping: Dict[int, int]):
         """
         get data positions by node_ids and bin_ids
         Args:
@@ -110,8 +115,12 @@ class HistogramIndexer:
         Returns: data positions
         """
         positions = []
-        for nid, bids in zip(nids, bids):
-            positions.append([self.get_position(nid, fid, bid) for fid, bid in enumerate(bids)])
+        if nid_mapping is not None:
+            for nid, bids in zip(nids, bids):
+                positions.append([self.get_position(nid_mapping[nid], fid, bid) for fid, bid in enumerate(bids)])
+        else:
+            for nid, bids in zip(nids, bids):
+                positions.append([self.get_position(nid, fid, bid) for fid, bid in enumerate(bids)])
         return positions
 
     def get_reverse_position(self, position) -> Tuple[int, int, int]:
@@ -148,16 +157,6 @@ class HistogramIndexer:
                 )
         return intervals
 
-    def splits_into_k(self, k: int):
-        n = self.node_axis_stride
-        split_sizes = [n // k + (1 if i < n % k else 0) for i in range(k)]
-        start = 0
-        for pid, size in enumerate(split_sizes):
-            end = start + size
-            shift = self.node_axis_stride
-            yield pid, (start, end), [(start + nid * shift, end + nid * shift) for nid in range(self.node_size)]
-            start += size
-
     def total_data_size(self):
         return self.node_size * self.node_axis_stride
 
@@ -176,11 +175,6 @@ class HistogramIndexer:
     def reshape(self, feature_bin_sizes):
         return HistogramIndexer(self.node_size, feature_bin_sizes)
 
-    def get_shuffler(self, seed):
-        if self._shuffler is None:
-            self._shuffler = Shuffler(self.node_size, self.one_node_data_size(), seed)
-        return self._shuffler
-
     def unflatten_indexes(self):
         indexes = {}
         for nid in range(self.node_size):
@@ -190,3 +184,25 @@ class HistogramIndexer:
                 for bid in range(self.feature_bin_sizes[fid]):
                     indexes[nid][fid].append(self.get_position(nid, fid, bid))
         return indexes
+
+    def splits_into_k(self, k: int):
+        for pid, (start, end) in enumerate(self._splits_into_k(self.node_axis_stride, k)):
+            shift = self.node_axis_stride
+            yield pid, (start, end), [(start + nid * shift, end + nid * shift) for nid in range(self.node_size)]
+
+    @staticmethod
+    def _splits_into_k(n, k: int):
+        d, r = divmod(n, k)
+        start = 0
+        for _ in range(k):
+            end = start + d + (r > 0)
+            yield start, end
+            start = end
+            r -= 1
+
+    @staticmethod
+    def _find_split(n, k: int, i):
+        d, r = divmod(n, k)
+        if i < (d + 1) * r:
+            return i // (d + 1)
+        return r + (i - (d + 1) * r) // d

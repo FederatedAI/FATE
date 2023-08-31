@@ -15,10 +15,8 @@
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _update_sample_pos_on_local_nodes, FeatureImportance
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder, DistributedHistogram
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
-from fate.arch.histogram.histogram import ShuffledHistogram
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-import numpy as np
 from typing import List
 import functools
 import logging
@@ -41,7 +39,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._gh_pack = True
         self._pack_info = None
 
-    def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, hist_inst: DistributedHistogram, splitter: FedSBTSplitter, data: DataFrame):
+    def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, statistic_histogram: DistributedHistogram, splitter: FedSBTSplitter, data: DataFrame):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         to_recover = {}
@@ -60,7 +58,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                     node.fid = self._fid_to_feature_name(int(fid), data)
                     node.bid = int(bid)
             else:
-                recover_rs = hist_builder.recover_feature_bins(hist_inst, to_recover, node_map)
+                recover_rs = hist_builder.recover_feature_bins(statistic_histogram, to_recover, node_map)
                 for node_id, split_tuple in recover_rs.items():
                     node = cur_layer_nodes[node_map[node_id]]
                     fid, bid = split_tuple
@@ -136,12 +134,12 @@ class HeteroDecisionTreeHost(DecisionTree):
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
             logger.info('train_df is {} grad hess is {}, {}, gh pack {}'.format(train_df, en_grad_and_hess, en_grad_and_hess.columns, self._gh_pack))
-            hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, pk=self._pk, evaluator=self._evaluator, gh_pack=self._gh_pack)
+            hist_inst, statistic_histogram = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, pk=self._pk, evaluator=self._evaluator, gh_pack=self._gh_pack)
             if self._gh_pack:
-                en_statistic_result.i_squeeze({'gh': (self._pack_info['total_pack_num'], self._pack_info['split_point_shift_bit'])})
-            self.splitter.split(sub_ctx, en_statistic_result, cur_layer_node, node_map)
+                statistic_histogram.i_squeeze({'gh': (self._pack_info['total_pack_num'], self._pack_info['split_point_shift_bit'])})
+            self.splitter.split(sub_ctx, statistic_histogram, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
-            self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, hist_inst, self.splitter, train_df)
+            self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, statistic_histogram, self.splitter, train_df)
             self._update_host_feature_importance(sub_ctx, cur_layer_node, train_df)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)

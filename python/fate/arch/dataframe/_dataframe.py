@@ -15,6 +15,7 @@
 #
 import copy
 import operator
+import typing
 from typing import List, Union
 
 import numpy as np
@@ -22,6 +23,9 @@ import pandas as pd
 from fate.arch.tensor import DTensor
 
 from .manager import DataManager, Schema
+
+if typing.TYPE_CHECKING:
+    from fate.arch.histogram import DistributedHistogram, HistogramBuilder
 
 
 class DataFrame(object):
@@ -303,10 +307,10 @@ class DataFrame(object):
 
         return hist(self, targets)
 
-    def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: Union[dict, "DataFrame"]):
+    def distributed_hist_stat(self, histogram_builder: "HistogramBuilder", position: "DataFrame", targets: Union[dict, "DataFrame"]) -> "DistributedHistogram":
         from .ops._histogram import distributed_hist_stat
 
-        return distributed_hist_stat(self, distributed_hist, position, targets)
+        return distributed_hist_stat(self, histogram_builder, position, targets)
 
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace

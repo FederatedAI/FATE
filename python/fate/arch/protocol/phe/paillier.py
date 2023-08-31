@@ -264,6 +264,23 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             a.iadd_vec(b, sa, sb, size, pk.pk)
 
     @staticmethod
+    def i_sub(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
+        """
+        inplace sub, a[sa:sa+size] += b[sb:sb+size], if size is None, then size = min(a.size - sa, b.size - sb)
+        Args:
+            pk: the public key
+            a: the vector to add to
+            b: the vector to add
+            sa: the start index of a
+            sb: the start index of b
+            size: the size to add
+        """
+        if a is b:
+            a.isub_vec_self(sa, sb, size, pk.pk)
+        else:
+            a.isub_vec(b, sa, sb, size, pk.pk)
+
+    @staticmethod
     def slice(a: EV, start: int, size: int) -> EV:
         """
         slice a[start:start+size]

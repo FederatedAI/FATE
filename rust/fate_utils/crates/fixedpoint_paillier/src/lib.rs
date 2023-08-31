@@ -287,6 +287,10 @@ impl Ciphertext {
         // FIXME
         *self = self.add(b, pk);
     }
+    pub fn sub_assign(&mut self, b: &Ciphertext, pk: &PK) {
+        // FIXME
+        *self = self.sub(b, pk);
+    }
     pub fn i_double(&mut self, pk: &PK) {
         self.significant_encryped.0 = self
             .significant_encryped
@@ -415,6 +419,15 @@ impl CiphertextVector {
         for k in 0..size {
             placeholder = std::mem::replace(&mut self.data[i + k], placeholder);
             placeholder.add_assign(&self.data[j + k], &pk);
+            placeholder = std::mem::replace(&mut self.data[i + k], placeholder);
+        }
+    }
+    #[inline]
+    fn isub_i_j(&mut self, pk: &PK, i: usize, j: usize, size: usize) {
+        let mut placeholder = Ciphertext::default();
+        for k in 0..size {
+            placeholder = std::mem::replace(&mut self.data[i + k], placeholder);
+            placeholder.sub_assign(&self.data[j + k], &pk);
             placeholder = std::mem::replace(&mut self.data[i + k], placeholder);
         }
     }
@@ -552,30 +565,62 @@ impl CiphertextVector {
                 self.iadd_i_j(&pk, sa, sb, self.data.len() - sa);
             }
         }
-
-        // match size {
-        //     Some(s) => {
-        //         let ea = sa + s;
-        //         let eb = sb + s;
-        //         if ea > self.data.len() {
-        //             return Err(PyRuntimeError::new_err(format!("end index out of range: sa={}, ea={}, data_size={}", sa, ea, self.data.len())));
-        //         }
-        //         if eb > self.data.len() {
-        //             return Err(PyRuntimeError::new_err(format!("end index out of range: sb={}, eb={}, data_size={}", sb, eb, self.data.len())));
-        //         }
-        //         let data = self.data[sa..ea];
-        //         self.data[sa..ea]
-        //             .iter_mut()
-        //             .zip(self.data[sb..eb].iter())
-        //             .for_each(|(x, y)| x.add_assign(y, &pk.pk));
-        //     }
-        //     None => {
-        //         self.data[sa..]
-        //             .iter_mut()
-        //             .zip(self.data[sb..].iter())
-        //             .for_each(|(x, y)| x.add_assign(y, &pk.pk));
-        //     }
-        // };
+        Ok(())
+    }
+    pub fn isub_vec_self(
+        &mut self,
+        sa: usize,
+        sb: usize,
+        size: Option<usize>,
+        pk: &PK,
+    ) -> Result<()> {
+        if sa == sb {
+            if let Some(s) = size {
+                if sa + s > self.data.len() {
+                    return Err(anyhow!(
+                        "end index out of range: sa={}, s={}, data_size={}",
+                        sa,
+                        s,
+                        self.data.len()
+                    ));
+                }
+                self.data[sa..sa + s]
+                    .iter_mut()
+                    .for_each(|x| *x = Ciphertext::zero());
+            } else {
+                self.data[sa..].iter_mut().for_each(|x| *x = Ciphertext::zero());
+            }
+        } else if sa < sb {
+            // it's safe to update from left to right
+            if let Some(s) = size {
+                if sb + s > self.data.len() {
+                    return Err(anyhow!(
+                        "end index out of range: sb={}, s={}, data_size={}",
+                        sb,
+                        s,
+                        self.data.len()
+                    ));
+                }
+                self.isub_i_j(&pk, sb, sa, s);
+            } else {
+                self.isub_i_j(&pk, sb, sa, self.data.len() - sb);
+            }
+        } else {
+            // it's safe to update from right to left
+            if let Some(s) = size {
+                if sa + s > self.data.len() {
+                    return Err(anyhow!(
+                        "end index out of range: sa={}, s={}, data_size={}",
+                        sa,
+                        s,
+                        self.data.len()
+                    ));
+                }
+                self.isub_i_j(&pk, sa, sb, s);
+            } else {
+                self.isub_i_j(&pk, sa, sb, self.data.len() - sa);
+            }
+        }
         Ok(())
     }
 
@@ -619,6 +664,51 @@ impl CiphertextVector {
                     .iter_mut()
                     .zip(other.data[sb..].iter())
                     .for_each(|(x, y)| x.add_assign(y, &pk));
+            }
+        };
+        Ok(())
+    }
+
+    pub fn isub_vec(
+        &mut self,
+        other: &CiphertextVector,
+        sa: usize,
+        sb: usize,
+        size: Option<usize>,
+        pk: &PK,
+    ) -> Result<()> {
+        match size {
+            Some(s) => {
+                let ea = sa + s;
+                let eb = sb + s;
+                if ea > self.data.len() {
+                    return Err(anyhow!(
+                        "end index out of range: sa={}, ea={}, data_size={}",
+                        sa,
+                        ea,
+                        self.data.len()
+                    ));
+                }
+                if eb > other.data.len() {
+                    return Err(anyhow!(
+                        "end index out of range: sb={}, eb={}, data_size={}",
+                        sb,
+                        eb,
+                        other.data.len()
+                    ));
+                }
+                self.data[sa..ea]
+                    .iter_mut()
+                    .zip(other.data[sb..eb].iter())
+                    .for_each(|(x, y)| {
+                        x.sub_assign(y, &pk)
+                    });
+            }
+            None => {
+                self.data[sa..]
+                    .iter_mut()
+                    .zip(other.data[sb..].iter())
+                    .for_each(|(x, y)| x.sub_assign(y, &pk));
             }
         };
         Ok(())

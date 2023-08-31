@@ -8,12 +8,11 @@
 # kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
 # sk, pk, coder, evaluator, encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
 import cProfile
-import time
 
 import torch
 from fate.arch import Context
 from fate.arch.computing.standalone import CSession
-from fate.arch.histogram.histogram import Histogram
+from fate.arch.histogram import Histogram
 
 computing = CSession()
 ctx = Context(computing=computing)

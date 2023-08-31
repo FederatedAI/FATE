@@ -271,31 +271,17 @@ impl CiphertextVector {
         self.0.iadd_vec_self(sa, sb, size, &pk.0).map_err(|e| e.to_py_err())?;
         Ok(())
     }
+    fn isub_vec_self(
+        &mut self,
+        sa: usize,
+        sb: usize,
+        size: Option<usize>,
+        pk: &PK,
+    ) -> PyResult<()> {
+        self.0.isub_vec_self(sa, sb, size, &pk.0).map_err(|e| e.to_py_err())?;
+        Ok(())
+    }
 
-    // match size {
-    //     Some(s) => {
-    //         let ea = sa + s;
-    //         let eb = sb + s;
-    //         if ea > self.data.len() {
-    //             return Err(PyRuntimeError::new_err(format!("end index out of range: sa={}, ea={}, data_size={}", sa, ea, self.data.len())));
-    //         }
-    //         if eb > self.data.len() {
-    //             return Err(PyRuntimeError::new_err(format!("end index out of range: sb={}, eb={}, data_size={}", sb, eb, self.data.len())));
-    //         }
-    //         let data = self.data[sa..ea];
-    //         self.data[sa..ea]
-    //             .iter_mut()
-    //             .zip(self.data[sb..eb].iter())
-    //             .for_each(|(x, y)| x.add_assign(y, &pk.pk));
-    //     }
-    //     None => {
-    //         self.data[sa..]
-    //             .iter_mut()
-    //             .zip(self.data[sb..].iter())
-    //             .for_each(|(x, y)| x.add_assign(y, &pk.pk));
-    //     }
-    // };
-    // }
     fn iadd_vec(
         &mut self,
         other: &CiphertextVector,
@@ -305,6 +291,18 @@ impl CiphertextVector {
         pk: &PK,
     ) -> PyResult<()> {
         self.0.iadd_vec(&other.0, sa, sb, size, &pk.0).map_err(|e| e.to_py_err())?;
+        Ok(())
+    }
+
+    fn isub_vec(
+        &mut self,
+        other: &CiphertextVector,
+        sa: usize,
+        sb: usize,
+        size: Option<usize>,
+        pk: &PK,
+    ) -> PyResult<()> {
+        self.0.isub_vec(&other.0, sa, sb, size, &pk.0).map_err(|e| e.to_py_err())?;
         Ok(())
     }
 

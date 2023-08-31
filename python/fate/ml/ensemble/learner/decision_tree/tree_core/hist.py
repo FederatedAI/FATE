@@ -15,14 +15,12 @@
 import torch
 from typing import Dict
 from sklearn.ensemble._hist_gradient_boosting.grower import HistogramBuilder
-from fate.arch.histogram.histogram import DistributedHistogram, Histogram
+from fate.arch.histogram import HistogramBuilder, DistributedHistogram
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import Node
 from typing import List
 import numpy as np
-import pandas as pd
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
-import logging
 
 
 
@@ -144,7 +142,7 @@ class SBTHistogramBuilder(object):
                 else:
                     schema = self._get_enc_hist_schema(pk, evaluator)
 
-        hist = DistributedHistogram(
+        hist = HistogramBuilder(
             node_size=node_num,
             feature_bin_sizes=self.feat_bin_num,
             value_schemas=schema,
@@ -158,16 +156,17 @@ class SBTHistogramBuilder(object):
         map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
 
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)
+        # stat_obj.i_shuffle(self.random_seed)
 
         return hist, stat_obj
 
-    def recover_feature_bins(self, hist: DistributedHistogram, nid_split_id: Dict[int, int], node_map: dict) -> Dict[int, int]:
+    def recover_feature_bins(self, statistic_histogram: DistributedHistogram, nid_split_id: Dict[int, int], node_map: dict) -> Dict[int, int]:
         if self.random_seed is None:
             return nid_split_id  # randome seed has no shuffle, no need to recover
         else:
             reverse_node_map = {v: k for k, v in node_map.items()}
             nid_split_id_ = {node_map[k]: v for k, v in nid_split_id.items()}
-            recover = hist.recover_feature_bins(self.random_seed, nid_split_id_)
+            recover = statistic_histogram.recover_feature_bins(self.feat_bin_num, self.random_seed, nid_split_id_)
             print('recover rs is', recover)
             recover_rs = {reverse_node_map[k]: v for k, v in recover.items()}
             return recover_rs

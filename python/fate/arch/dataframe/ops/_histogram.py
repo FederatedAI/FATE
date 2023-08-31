@@ -14,8 +14,7 @@
 #  limitations under the License.
 #
 import functools
-import numpy as np
-import torch
+import typing
 from typing import Union
 
 from fate.arch.tensor.inside import Hist
@@ -23,6 +22,9 @@ from fate.arch.tensor.inside import Hist
 from .._dataframe import DataFrame
 from ..manager import BlockType, DataManager
 from ._compress_block import compress_blocks
+
+if typing.TYPE_CHECKING:
+    from fate.arch.histogram import DistributedHistogram, HistogramBuilder
 
 
 def hist(df: DataFrame, targets):
@@ -46,7 +48,7 @@ def hist(df: DataFrame, targets):
     return block_table.join(targets.shardings._data, _mapper_func).reduce(_reducer)
 
 
-def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, targets: Union[dict, DataFrame]):
+def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", position: DataFrame, targets: Union[dict, DataFrame]) -> "DistributedHistogram":
     block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager, force_compress=True)
     data_block_id = data_manager.infer_operable_blocks()[0]
     position_block_id = position.data_manager.infer_operable_blocks()[0]
@@ -94,8 +96,7 @@ def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, 
 
         data_with_position = data_with_position.join(targets.block_table, _pack_with_targets)
 
-
-    return distributed_hist.i_update(data_with_position)
+    return histogram_builder.statistic(data_with_position)
 
 
 def _try_to_compress_table(block_table, data_manager: DataManager, force_compress=False):
