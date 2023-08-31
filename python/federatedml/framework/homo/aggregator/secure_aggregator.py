@@ -14,8 +14,19 @@ AGG_TYPE = ['weighted_mean', 'sum', 'mean']
 
 class SecureAggregatorClient(AggregatorBaseClient):
 
-    def __init__(self, secure_aggregate=True, aggregate_type='weighted_mean', aggregate_weight=1.0,
-                 communicate_match_suffix=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), lm_aggregate=False):
+    def __init__(
+            self,
+            secure_aggregate=True,
+            aggregate_type='weighted_mean',
+            aggregate_weight=1.0,
+            communicate_match_suffix=None,
+            server=(
+                consts.ARBITER,
+            ),
+            clients=(
+                consts.GUEST,
+                consts.HOST),
+            lm_aggregate=False):
 
         super(SecureAggregatorClient, self).__init__(
             communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
