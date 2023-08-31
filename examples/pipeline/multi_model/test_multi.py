@@ -77,11 +77,9 @@ def main(config="../config.yaml", namespace=""):
                            validate_data=selection_1.outputs["test_output_data"], epochs=3)
 
     evaluation_0 = Evaluation("evaluation_0", input_data=lr_0.outputs["train_output_data"],
-                              label_column_name="y",
                               runtime_roles=["guest"])
     evaluation_1 = Evaluation("evaluation_1", input_data=linr_0.outputs["train_output_data"],
                               default_eval_setting="regression",
-                              label_column_name="y",
                               runtime_roles=["guest"])
     pipeline.add_task(psi_0)
     pipeline.add_task(data_split_0)

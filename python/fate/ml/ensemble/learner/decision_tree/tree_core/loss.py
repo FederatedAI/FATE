@@ -17,7 +17,12 @@ import pandas as pd
 import torch as t
 from fate.arch.dataframe import DataFrame
 from scipy.special import expit as sigmoid
+from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION
 
+
+BINARY_BCE = "binary:bce"
+MULTI_CE = "multi:ce"
+REGRESSION_L2 = "regression:l2"
 
 
 def apply_weight(loss: DataFrame, weight: DataFrame):
@@ -126,41 +131,14 @@ class L2Loss(object):
         gh['h'] = 2
 
 
-# class L1Loss(object):
 
-#     @staticmethod
-#     def initialize(label):
-#         init_score = label.create_frame()
-#         init_score['score'] = label.median()
-#         return init_score
+OBJECTIVE = {
+    BINARY_BCE: BCELoss,
+    MULTI_CE: CELoss,
+    REGRESSION_L2: L2Loss
+}
 
-#     @staticmethod
-#     def predict(score):
-#         return score
 
-#     @staticmethod
-#     def compute_loss(label, pred, weight=None):
-#         loss_col = label.create_frame()
-#         sample_num = len(label)
-#         loss_col['loss'] = (label['label'] - pred['score']).abs()
-#         if weight:
-#             loss_col['loss'] = apply_weight(loss_col, weight)
-#         reduce_loss = loss_col['loss'].sum() / sample_num
-#         return reduce_loss
-
-#     @staticmethod
-#     def compute_grad(gh: DataFrame, label, score):
-#         gh['g'] = label['label'] - score['score']
-#         def compute_l1_g(s):
-#             ret = 0.0
-#             if s[0] > FLOAT_ZERO:
-#                 ret = 1.0
-#             elif s[0] < FLOAT_ZERO:
-#                 ret = -1.0
-#             ret = pd.Series({'g': ret})
-#             return ret
-#         gh['g'] = gh['g'].apply_row(compute_l1_g)
-
-#     @staticmethod
-#     def compute_hess(gh: DataFrame, label, score):
-#         gh['h'] = 1
+def get_task_info(objective):
+    task_type = objective.split(':')[0]
+    return task_type

@@ -66,7 +66,13 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
         String srcPartyId = context.getSrcPartyId();
         String sessionId = context.getSessionId();
         Osx.Inbound produceRequest = data.getBody();
+        int dataSize = produceRequest.getSerializedSize();
+        String resource = TransferUtil.buildResource(produceRequest);
+        ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
+        ServiceContainer.flowCounterManager.pass(resource, dataSize);
+        context.setDataSize(dataSize);
         if (!MetaInfo.PROPERTY_SELF_PARTY.contains(context.getDesPartyId())) {
+
             //向外转发
             Osx.Outbound response = null;
             int tryTime = 0;
@@ -85,6 +91,7 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     if (response == null) {
                         continue;
                     }
+
                     break;
                 } catch (RemoteRpcException e) {
                     logger.error("redirect retry count {}", tryTime);
@@ -111,10 +118,10 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             if (StringUtils.isEmpty(sessionId)) {
                 throw new ParameterException(StatusCode.PARAM_ERROR, "sessionId is null");
             }
-            int dataSize = produceRequest.getSerializedSize();
+
             context.setActionType(ActionType.MSG_DOWNLOAD.getAlias());
             context.setRouterInfo(null);
-            context.setDataSize(dataSize);
+
             transferQueue = ServiceContainer.transferQueueManager.getQueue(topic);
             CreateQueueResult createQueueResult = null;
             if (transferQueue == null) {
@@ -124,12 +131,12 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                 }
                 transferQueue = createQueueResult.getTransferQueue();
             }
-            String resource = TransferUtil.buildResource(produceRequest);
+
 
 
             if (transferQueue != null) {
-                ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
-                ServiceContainer.flowCounterManager.pass(resource, dataSize);
+//                ServiceContainer.tokenApplyService.applyToken(context, resource, dataSize);
+//                ServiceContainer.flowCounterManager.pass(resource, dataSize);
                 context.putData(Dict.TRANSFER_QUEUE, transferQueue);
                 String msgCode = produceRequest.getMetadataMap().get(Osx.Metadata.MessageCode.name());
                 String retryCountString = produceRequest.getMetadataMap().get(Osx.Metadata.RetryCount.name());

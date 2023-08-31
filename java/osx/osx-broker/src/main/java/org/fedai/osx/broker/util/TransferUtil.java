@@ -211,6 +211,7 @@ public class TransferUtil {
     }
 
     public static void assableContextFromInbound(Context context, Osx.Inbound request) {
+        //initContext
         Map<String, String> metaDataMap = request.getMetadataMap();
         String version = metaDataMap.get(Osx.Header.Version.name());
         String jobId = metaDataMap.get(Osx.Metadata.JobId.name());
@@ -453,7 +454,7 @@ public class TransferUtil {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+
                 logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n"
                         , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), JsonUtil.object2Json(produceRequest.getPayload()), e);
                 ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);

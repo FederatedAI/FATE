@@ -35,11 +35,14 @@ def get_dtype(max_int):
     
 
 def all_reach_leaf(pos: np.array):
+    if isinstance(pos, list):
+        pos = np.array(pos)
     return np.all(pos < 0)
 
 
 def not_finished(pos: np.array):
-    assert isinstance(pos, np.ndarray), f"pos should be np.ndarray, but got {type(pos)}"
+    if isinstance(pos, list):
+        pos = np.array(pos)
     return not np.all(pos < 0)
 
 
@@ -92,6 +95,8 @@ def _merge_pos_arr(s: pd.Series):
     
     arr_1 = s['sample_pos']
     arr_2 = s['host_sample_pos']
+    arr_1 = np.array(arr_1)
+    arr_2 = np.array(arr_2)
     assert len(arr_1) == len(arr_2)
     merge_rs = np.copy(arr_1)
     on_leaf = (arr_2 < 0)
@@ -138,7 +143,6 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
         map_func = functools.partial(traverse_tree, trees=tree_list, sitename=sitename)
         new_pos = sample_with_pos.create_frame()
         new_pos['sample_pos'] = sample_with_pos.apply_row(map_func)
-        
         done_sample_idx = new_pos.apply_row(lambda x: all_reach_leaf(x['sample_pos']))  # samples that reach leaf node in all trees
         not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos']))  # samples that not reach leaf node in all trees
         indexer = done_sample_idx.get_indexer('sample_id')

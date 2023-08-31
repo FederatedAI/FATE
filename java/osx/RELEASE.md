@@ -1,4 +1,4 @@
-# Release 1.0.0-alpha
+# Release 1.0.0-beta
 ## Major Features and Improvements
 * Support grpc synchronous transmission and streaming transmission. Compatible with eggroll interface and can replace FATE1. x rollsite component
 * Support asynchronous message transmission, which can replace rabbitmq and pulsar components in FATE1. x
