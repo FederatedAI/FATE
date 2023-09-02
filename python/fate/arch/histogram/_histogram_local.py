@@ -17,8 +17,8 @@ class Histogram:
         return self._data.show(self._indexer)
 
     @classmethod
-    def create(cls, node_size, feature_bin_sizes, values_schema: dict):
-        indexer = HistogramIndexer(node_size, feature_bin_sizes)
+    def create(cls, num_node, feature_bin_sizes, values_schema: dict):
+        indexer = HistogramIndexer(num_node, feature_bin_sizes)
         size = indexer.total_data_size()
         return cls(indexer, HistogramValuesContainer.create(values_schema, size))
 
@@ -40,8 +40,6 @@ class Histogram:
         return Histogram(self._indexer, self._data.decode(coder_map))
 
     def i_shuffle(self, seed, reverse=False):
-        if seed is None:
-            return self
         shuffler = Shuffler(self._indexer.get_node_size(), self._indexer.get_node_axis_stride(), seed)
         self._data.i_shuffle(shuffler, reverse=reverse)
         return self

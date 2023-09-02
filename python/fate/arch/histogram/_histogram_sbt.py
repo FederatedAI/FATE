@@ -3,42 +3,55 @@ from ._histogram_local import Histogram
 
 
 class HistogramBuilder:
-    def __init__(self, node_size, feature_bin_sizes, value_schemas, seed):
-        self._node_size = node_size
+    def __init__(
+        self, num_node, feature_bin_sizes, value_schemas, global_seed=None, seed=None, node_mapping=None, k=None
+    ):
+        self._num_node = num_node
         self._feature_bin_sizes = feature_bin_sizes
         self._node_data_size = sum(feature_bin_sizes)
         self._value_schemas = value_schemas
+        self._global_seed = global_seed
         self._seed = seed
+        self._node_mapping = node_mapping
+        self._k = k
 
     def __str__(self):
-        return f"<{self.__class__.__name__} node_size={self._node_size}, feature_bin_sizes={self._feature_bin_sizes}, node_data_size={self._node_data_size}, seed={self._seed}>"
+        return f"<{self.__class__.__name__} node_size={self._num_node}, feature_bin_sizes={self._feature_bin_sizes}, node_data_size={self._node_data_size}, seed={self._global_seed}>"
 
-    def statistic(self, data, k=None, node_mapping=None) -> "DistributedHistogram":
+    def statistic(self, data) -> "DistributedHistogram":
         """
         Update the histogram with the data.
         Args:
             data: table with the following schema:
-            k: number of output splits of the histogram
         Returns:
-            ShuffledHistogram, the shuffled(if seed is not None) histogram
+            ShuffledHistogram, the shuffled histogram
         """
-        if k is None:
-            k = data.partitions ** 2
+        if self._k is None:
+            self._k = data.partitions**2
         mapper = get_partition_hist_build_mapper(
-            self._node_size, self._feature_bin_sizes, self._value_schemas, self._seed, k, node_mapping,
+            self._num_node,
+            self._feature_bin_sizes,
+            self._value_schemas,
+            self._global_seed,
+            self._k,
+            self._node_mapping,
         )
         table = data.mapReducePartitions(mapper, lambda x, y: x.iadd(y))
-        return DistributedHistogram(table, self._node_size, self._node_data_size)
+        data = DistributedHistogram(
+            table, self._k, self._num_node, self._node_data_size, global_seed=self._global_seed, seed=self._seed
+        )
+        return data
 
 
-def get_partition_hist_build_mapper(node_size, feature_bin_sizes, value_schemas, seed, k, node_mapping):
+def get_partition_hist_build_mapper(num_node, feature_bin_sizes, value_schemas, global_seed, k, node_mapping):
     def _partition_hist_build_mapper(part):
-        hist = Histogram.create(node_size, feature_bin_sizes, value_schemas)
+        hist = Histogram.create(num_node, feature_bin_sizes, value_schemas)
         for _, raw in part:
-            fids, nids, targets = raw
-            hist.i_update(fids, nids, targets, node_mapping)
+            feature_ids, node_ids, targets = raw
+            hist.i_update(feature_ids, node_ids, targets, node_mapping)
         hist.i_cumsum_bins()
-        hist.i_shuffle(seed)
+        if global_seed is not None:
+            hist.i_shuffle(global_seed)
         splits = hist.to_splits(k)
         return splits
 

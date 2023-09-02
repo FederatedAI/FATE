@@ -19,8 +19,8 @@ class Shuffler:
 
     def _get_perm_indexes(self):
         return [
-            torch.randperm(self.node_size, generator=torch.Generator().manual_seed(self.seed)) for _ in
-            range(self.num_node)
+            torch.randperm(self.node_size, generator=torch.Generator().manual_seed(self.seed))
+            for _ in range(self.num_node)
         ]
 
     def _get_global_perm_index(self):

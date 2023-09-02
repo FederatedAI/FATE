@@ -23,10 +23,9 @@ class HistogramValuesContainer(object):
                 values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, stride)
             elif items["type"] == "tensor":
                 import torch
+
                 dtype = items.get("dtype", torch.float64)
-                values_mapping[name] = HistogramPlainValues.zeros(
-                    size, stride=stride, dtype=dtype
-                )
+                values_mapping[name] = HistogramPlainValues.zeros(size, stride=stride, dtype=dtype)
             else:
                 raise NotImplementedError
         return HistogramValuesContainer(values_mapping)

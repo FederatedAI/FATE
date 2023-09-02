@@ -29,7 +29,7 @@ class HistogramSplits:
         return self
 
     def compute_child_splits(
-            self: "HistogramSplits", weak_child_splits: "HistogramSplits", mapping: List[Tuple[int, int, int, int]]
+        self: "HistogramSplits", weak_child_splits: "HistogramSplits", mapping: List[Tuple[int, int, int, int]]
     ):
         assert self.num_node == weak_child_splits.num_node
         assert self.end == weak_child_splits.end
