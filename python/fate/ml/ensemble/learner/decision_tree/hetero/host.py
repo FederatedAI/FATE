@@ -145,7 +145,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             self._update_host_feature_importance(sub_ctx, cur_layer_node, train_df)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
-            train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
+            train_df, sample_pos, en_grad_and_hess = self._drop_samples_on_leaves(sample_pos, train_df, en_grad_and_hess)
             self._nodes += cur_layer_node
             cur_layer_node = next_layer_nodes
             logger.info('layer {} done: next layer will split {} nodes, active samples num {}'.format(cur_depth, len(cur_layer_node), len(sample_pos)))
