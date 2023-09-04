@@ -35,7 +35,6 @@ def load_config_from_properties(configs, properties_dict):
         for s in k.split("."):
             lens, _ = lens_and_setter
             if not s.endswith("]"):
-                print("in", lens)
                 if lens.get(s) is None:
                     lens[s] = {}
                 lens_and_setter = lens[s], _setter(lens, s)

@@ -17,6 +17,7 @@
 import hashlib
 import itertools
 import logging
+import logging.config
 import os
 import pickle as c_pickle
 import shutil
@@ -62,17 +63,18 @@ else:
     LOGGER.debug(f"env STANDALONE_DATA_PATH is not set, using {_data_dir} as data dir")
 
 
-def _watch_thread_react_to_parent_die(ppid):
+def _watch_thread_react_to_parent_die(ppid, logger_config):
     """
-    this function is used to watch parent process, if parent process is dead, then kill self
-    the trick is to use os.kill(ppid, 0) to check if parent process is alive periodically
-    and if parent process is dead, then kill self
-
-    Note: this trick is modified from the answer by aaron: https://stackoverflow.com/a/71369760/14697733
+    this function is call when a process is created, and it will watch parent process and initialize loggers
     Args:
         ppid: parent process id
-
     """
+
+    # watch parent process, if parent process is dead, then kill self
+    # the trick is to use os.kill(ppid, 0) to check if parent process is alive periodically
+    # and if parent process is dead, then kill self
+    #
+    # Note: this trick is modified from the answer by aaron: https://stackoverflow.com/a/71369760/14697733
     pid = os.getpid()
 
     def f():
@@ -85,6 +87,47 @@ def _watch_thread_react_to_parent_die(ppid):
 
     thread = threading.Thread(target=f, daemon=True)
     thread.start()
+
+    # initialize loggers
+    if logger_config is not None:
+        logging.config.dictConfig(logger_config)
+    # else:
+    #     level = os.getenv("DEBUG_MODE_LOG_LEVEL", "DEBUG")
+    #     try:
+    #         import rich.logging
+    #
+    #         logging_class = "rich.logging.RichHandler"
+    #         logging_formatters = {}
+    #         handlers = {
+    #             "console": {
+    #                 "class": logging_class,
+    #                 "level": level,
+    #                 "filters": [],
+    #             }
+    #         }
+    #     except ImportError:
+    #         logging_class = "logging.StreamHandler"
+    #         logging_formatters = {
+    #             "console": {
+    #                 "format": "[%(levelname)s][%(asctime)-8s][%(process)s][%(module)s.%(funcName)s][line:%(lineno)d]: %(message)s"
+    #             }
+    #         }
+    #         handlers = {
+    #             "console": {
+    #                 "class": logging_class,
+    #                 "level": level,
+    #                 "formatter": "console",
+    #             }
+    #         }
+    #     logging.config.dictConfig(dict(
+    #         version=1,
+    #         formatters=logging_formatters,
+    #         handlers=handlers,
+    #         filters={},
+    #         loggers={},
+    #         root=dict(handlers=["console"], level="DEBUG"),
+    #         disable_existing_loggers=False,
+    #     ))
 
 
 # noinspection PyPep8Naming
@@ -384,10 +427,15 @@ class Table(object):
 
 # noinspection PyMethodMayBeStatic
 class Session(object):
-    def __init__(self, session_id, max_workers=None):
+    def __init__(self, session_id, max_workers=None, logger_config=None):
         self.session_id = session_id
         self._pool = Executor(
-            max_workers=max_workers, initializer=_watch_thread_react_to_parent_die, initargs=(os.getpid(),)
+            max_workers=max_workers,
+            initializer=_watch_thread_react_to_parent_die,
+            initargs=(
+                os.getpid(),
+                logger_config,
+            ),
         )
 
     def __getstate__(self):

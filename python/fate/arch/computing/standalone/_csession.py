@@ -27,13 +27,15 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CSession(CSessionABC):
-    def __init__(self, session_id: Optional[str] = None, options: Optional[dict] = None):
+    def __init__(
+        self, session_id: Optional[str] = None, logger_config: Optional[dict] = None, options: Optional[dict] = None
+    ):
         if session_id is None:
             session_id = generate_computing_uuid()
         if options is None:
             options = {}
         max_workers = options.get("task_cores", None)
-        self._session = Session(session_id, max_workers=max_workers)
+        self._session = Session(session_id, max_workers=max_workers, logger_config=logger_config)
 
     def get_standalone_session(self):
         return self._session
