@@ -160,7 +160,7 @@ def _make_decision(feat_val, bid, missing_dir=None, use_missing=None, zero_as_mi
 
 def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict, sitename=None):
 
-    node_id = s[-1]
+    node_id = s.iloc[-1]
     node = cur_layer_node[node_map[node_id]]
     if node.is_leaf:
         return -(node.nid + 1)  # use negative index to represent leaves, + 1 to avoid root node 0
@@ -176,7 +176,7 @@ def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict,
 
 def _get_sample_on_local_nodes(s: pd.Series, cur_layer_node: List[Node], node_map: dict, sitename):
 
-    node_id = s[-1]
+    node_id = s.iloc[-1]
     node = cur_layer_node[node_map[node_id]]
     on_local_node = (node.sitename == sitename)
     return on_local_node
@@ -199,7 +199,7 @@ def _merge_sample_pos(s: pd.Series):
 
 def _convert_sample_pos_to_score(s: pd.Series, tree_nodes: List[Node]):
     
-    node_idx = s[0]
+    node_idx = s.iloc[0]
     if node_idx < 0:
         node_idx = -(node_idx + 1)
     target_node = tree_nodes[node_idx]

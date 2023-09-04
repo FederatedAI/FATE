@@ -1,9 +1,7 @@
 from typing import List
 
-from typing_extensions import Protocol
 
-
-class ArtifactType(Protocol):
+class ArtifactType:
     type_name: str
     path_type: str
     uri_types: List[str]

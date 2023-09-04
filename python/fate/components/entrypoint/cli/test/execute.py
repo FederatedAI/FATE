@@ -7,7 +7,8 @@ import click
 @click.command()
 @click.option("--config-path", type=click.Path(exists=True), required=True)
 @click.option("--data-path", type=click.Path(exists=True), required=True)
-def execute(config_path, data_path):
+@click.option("--properties", "-p", multiple=True, help="properties config")
+def execute(config_path, data_path, properties):
     """
     execute component from existing config file and data path, for debug purpose
     Args:
@@ -18,8 +19,7 @@ def execute(config_path, data_path):
 
     """
     os.environ["STANDALONE_DATA_PATH"] = str(data_path)
-    os.environ["COMPONENT_DEBUG_MODE"] = "true"
-    sys.argv = [__name__, "--config", f"{config_path}"]
+    sys.argv = [__name__, "--config", f"{config_path}", "--debug"] + [f"--properties={p}" for p in properties]
     from fate.components.entrypoint.cli.component.execute_cli import execute
 
     execute()
