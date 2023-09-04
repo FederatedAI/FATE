@@ -1,38 +1,41 @@
 import os
-
 import fate
 from setuptools import find_packages, setup
 
-packages = find_packages(".")
+# Base requirements
 install_requires = [
+    "lmdb==1.3.0",
+    "torch==1.13.1",
+    "fate_utils",
+    "pydantic==1.10.12",
+    "cloudpickle==2.1.0",
+    "click>=8.0.0",
+    "ruamel.yaml==0.16",
     "scikit-learn",
-    "pandas",
-    "protobuf",
-    "pydantic",
-    "click",
-    "typing-extensions",
-    "ruamel.yaml",
-    "requests",
-    "cloudpickle",
-    "lmdb",
     "numpy",
-    "torch",
-    "rust_paillier",
-    "urllib3",
-    "grpcio",
-    "ml_metadata",
+    "pandas",
+    "transformers",
+    "accelerate",
     "beautifultable",
+    "requests",
+    "grpcio",
+    "protobuf",
 ]
+
+# Extra requirements
 extras_require = {
     "rabbitmq": ["pika==1.2.1"],
-    "pulsar": ["pulsar-client==2.10.2"],
+    "pulsar": [
+        "pulsar-client==2.10.2; sys_platform != 'darwin'",
+        "pulsar-client==2.10.1; sys_platform == 'darwin'",
+        "urllib3==1.26.5"
+    ],
     "spark": ["pyspark"],
     "eggroll": [
         "grpcio==1.46.3",
         "grpcio-tools==1.46.3",
         "numba==0.56.4",
         "protobuf==3.19.6",
-        "pyarrow==6.0.1",
         "mmh3==3.0.0",
         "cachetools>=3.0.0",
         "cloudpickle==2.1.0",
@@ -41,6 +44,7 @@ extras_require = {
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],
 }
 
+# Long description from README.md
 readme_path = os.path.abspath(os.path.join(__file__, os.path.pardir, os.path.pardir, "README.md"))
 if os.path.exists(readme_path):
     with open(readme_path, "r") as f:
@@ -48,6 +52,7 @@ if os.path.exists(readme_path):
 else:
     long_description = "fate"
 
+# Setup function
 setup(
     name="pyfate",
     version=fate.__version__,
@@ -58,7 +63,7 @@ setup(
     long_description=long_description,
     license="Apache-2.0 License",
     url="https://fate.fedai.org/",
-    packages=packages,
+    packages=find_packages("."),
     install_requires=install_requires,
     extras_require=extras_require,
     python_requires=">=3.8",
