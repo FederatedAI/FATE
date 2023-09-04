@@ -91,6 +91,16 @@ def slice_f(input, arg):
     raise NotImplementedError(f"slice_f: {input}")
 
 
+def encode_as_int_f(input, precision: int):
+    if isinstance(input, torch.Tensor):
+        return (input * 2 ** precision).astype(torch.int64)
+    else:
+        # torch tensor-like
+        if hasattr(input, "__torch_function__"):
+            return input.__torch_function__(encode_as_int_f, (type(input),), (input, precision), None)
+    raise NotImplementedError("")
+
+
 # hook custom ops to torch
 torch.encrypt_f = encrypt_f
 torch.encrypt_encoded_f = encrypt_encoded_f
@@ -101,3 +111,4 @@ torch.decode_f = decode_f
 torch.rmatmul_f = rmatmul_f
 torch.to_local_f = to_local_f
 torch.slice_f = slice_f
+torch.encode_as_int_f = encode_as_int_f

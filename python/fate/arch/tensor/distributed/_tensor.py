@@ -251,11 +251,13 @@ class Shardings:
         axis: Optional[int] = None,
         dtype_promote_to: Optional[torch.dtype] = None,
         type: Optional[str] = None,
+        dtype: Optional[torch.dtype] = None,
     ):
-        if dtype_promote_to is not None:
-            dtype = torch.promote_types(self.dtype, dtype_promote_to)
-        else:
-            dtype = self._dtype
+        if dtype is None:
+            if dtype_promote_to is not None:
+                dtype = torch.promote_types(self.dtype, dtype_promote_to)
+            else:
+                dtype = self._dtype
         if shapes is None:
             shapes = self.shapes.shapes
         if axis is None:
