@@ -272,7 +272,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
             # if sample reaches leaf nodes, drop them
             sample_on_leaves = self._get_samples_on_leaves(sample_pos)
-            train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
+            train_df, sample_pos, grad_and_hess = self._drop_samples_on_leaves(sample_pos, train_df, grad_and_hess)
             self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_on_leaves])
             # next layer nodes
             cur_layer_node = next_layer_nodes

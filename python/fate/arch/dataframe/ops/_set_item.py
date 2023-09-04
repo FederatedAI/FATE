@@ -88,6 +88,8 @@ def _set_new_item(df: "DataFrame", keys, items):
         for bid, offset in r_blocks_loc:
             if dm.blocks[l_bid].is_phe_tensor():
                 ret_blocks.append(r_blocks[bid])
+            elif r_blocks[bid].shape[1] == 1:
+                ret_blocks.append(r_blocks[bid])
             else:
                 ret_blocks.append(r_blocks[bid][:, [offset]])
             l_bid += 1

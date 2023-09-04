@@ -259,8 +259,7 @@ class DecisionTree(object):
     def _convert_sample_pos_to_weight(self, sample_pos: DataFrame, tree_nodes: List[Node]):
         import functools
         map_func = functools.partial(_convert_sample_pos_to_score, tree_nodes=tree_nodes)
-        sample_weight = sample_pos.create_frame()
-        sample_weight['score'] = sample_pos.apply_row(map_func)
+        sample_weight = sample_pos.apply_row(map_func, columns=["score"])
         return sample_weight
 
     def _convert_bin_idx_to_split_val(self, ctx: Context, tree_nodes: List[Node], binning_dict: dict, schema):
@@ -377,14 +376,20 @@ class DecisionTree(object):
  
         return next_layer_node
     
-    def _drop_samples_on_leaves(self, new_sample_pos: DataFrame, data: DataFrame):
+    def _drop_samples_on_leaves(self, new_sample_pos: DataFrame, data: DataFrame, grad_and_hess: DataFrame):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
         x = (new_sample_pos >= 0)
-        indexer = x.get_indexer('sample_id')
+        pack_data = DataFrame.hstack([data, new_sample_pos, grad_and_hess]).iloc(x)
+        new_data = pack_data[data.schema.columns]
+        update_pos = pack_data[new_sample_pos.schema.columns]
+        grad_and_hess = pack_data[grad_and_hess.schema.columns]
+        """
+        new_data = data.iloc(x)
         update_pos = new_sample_pos.iloc(x)
-        new_data = data.loc(indexer, preserve_order=True).iloc(x)
+        grad_and_hess = grad_and_hess.iloc(x)
+        """
         logger.info('drop leaf samples, new sample count is {}, {} samples dropped'.format(len(new_sample_pos), len(data) - len(new_data)))
-        return new_data, update_pos
+        return new_data, update_pos, grad_and_hess
         
     def _get_samples_on_leaves(self, sample_pos: DataFrame):
         x = (sample_pos < 0)
