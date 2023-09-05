@@ -12,13 +12,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import List
 import torch
 import numpy as np
 import logging
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
-from fate.arch.histogram.histogram import ShuffledHistogram
+from fate.arch.histogram import DistributedHistogram
 
 
 logger = logging.getLogger(__name__)
@@ -492,14 +491,14 @@ class FedSBTSplitter(object):
 
         return splits
     
-    def _recover_pack_split(self, hist: ShuffledHistogram, schema, decode_schema=None):
-        
-        if decode_schema is not None:
-            host_hist = hist.decrypt_(schema[0])
-            host_hist = host_hist.unpack_decode(decode_schema)
-            host_hist = host_hist.union()
-        else:
-            host_hist = hist.decrypt(schema[0], schema[1])
+    def _recover_pack_split(self, hist: DistributedHistogram, schema, decode_schema=None):
+        host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
+        # if decode_schema is not None:
+        #     host_hist = hist.decrypt_(schema[0])
+        #     host_hist = host_hist.unpack_decode(decode_schema)
+        #     host_hist = host_hist.union()
+        # else:
+        #     host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
         return host_hist
     
     def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack, pack_info):
@@ -507,7 +506,7 @@ class FedSBTSplitter(object):
         if sk is None or coder is None:
             raise ValueError('sk or coder is None, not able to decode host split points')
 
-        histogram = stat_rs.decrypt({}, {})
+        histogram = stat_rs.decrypt({}, {}, None)
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         reverse_node_map = {v: k for k, v in node_map.items()}
 
