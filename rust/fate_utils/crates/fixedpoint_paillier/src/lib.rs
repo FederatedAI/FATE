@@ -681,8 +681,8 @@ impl CiphertextVector {
         CiphertextVector { data }
     }
 
-    pub fn tolist(&self) -> Vec<Ciphertext> {
-        self.data.iter().map(|x| x.clone()).collect()
+    pub fn tolist(&self) -> Vec<CiphertextVector> {
+        self.data.iter().map(|x| CiphertextVector{ data: vec![x.clone()]}).collect()
     }
 
     pub fn add(&self, pk: &PK, other: &CiphertextVector) -> CiphertextVector {

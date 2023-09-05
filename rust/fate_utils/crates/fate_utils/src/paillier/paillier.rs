@@ -330,8 +330,8 @@ impl CiphertextVector {
         CiphertextVector(self.0.intervals_sum_with_step(&pk.0, intervals, step))
     }
 
-    fn tolist(&self) -> Vec<Ciphertext> {
-        self.0.tolist().iter().map(|x| Ciphertext(x.clone())).collect()
+    fn tolist(&self) -> Vec<CiphertextVector> {
+        self.0.tolist().iter().map(|x| CiphertextVector(x.clone())).collect()
     }
 
     fn add(&self, pk: &PK, other: &CiphertextVector) -> CiphertextVector {
