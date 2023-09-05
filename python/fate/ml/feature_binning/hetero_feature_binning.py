@@ -17,8 +17,8 @@ import logging
 
 import numpy as np
 import pandas as pd
-from fate.arch import Context
 
+from fate.arch import Context
 from ..abc.module import HeteroModule, Module
 
 logger = logging.getLogger(__name__)
@@ -26,20 +26,22 @@ logger = logging.getLogger(__name__)
 
 class HeteroBinningModuleGuest(HeteroModule):
     def __init__(
-        self,
-        method="quantile",
-        n_bins=10,
-        split_pt_dict=None,
-        bin_col=None,
-        transform_method=None,
-        category_col=None,
-        local_only=False,
-        error_rate=1e-3,
-        adjustment_factor=0.5,
+            self,
+            method="quantile",
+            n_bins=10,
+            split_pt_dict=None,
+            bin_col=None,
+            transform_method=None,
+            category_col=None,
+            local_only=False,
+            error_rate=1e-6,
+            adjustment_factor=0.5,
+            key_length=1024
     ):
         self.method = method
         self.bin_col = bin_col
         self.category_col = category_col
+        self.key_length = key_length
         self._federation_bin_obj = None
         # param check
         if self.method in ["quantile", "bucket", "manual"]:
@@ -74,7 +76,7 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
-        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=dict(key_length=self.key_length))
         encryptor = kit.get_tensor_encryptor()
         decryptor = kit.get_tensor_decryptor()
         label_tensor = binned_data.label.as_tensor()
@@ -104,6 +106,7 @@ class HeteroBinningModuleGuest(HeteroModule):
                 "bin_col": self.bin_col,
                 "category_col": self.category_col,
                 "model_type": "binning",
+                "key_length": self.key_length,
             },
         }
         return model
@@ -117,6 +120,7 @@ class HeteroBinningModuleGuest(HeteroModule):
             method=model["meta"]["method"],
             bin_col=model["meta"]["bin_col"],
             category_col=model["meta"]["category_col"],
+            key_length=model["meta"]["key_length"],
         )
         bin_obj.restore(model["data"])
         return bin_obj
@@ -124,16 +128,16 @@ class HeteroBinningModuleGuest(HeteroModule):
 
 class HeteroBinningModuleHost(HeteroModule):
     def __init__(
-        self,
-        method="quantile",
-        n_bins=10,
-        split_pt_dict=None,
-        bin_col=None,
-        transform_method=None,
-        category_col=None,
-        local_only=False,
-        error_rate=1e-3,
-        adjustment_factor=0.5,
+            self,
+            method="quantile",
+            n_bins=10,
+            split_pt_dict=None,
+            bin_col=None,
+            transform_method=None,
+            category_col=None,
+            local_only=False,
+            error_rate=1e-6,
+            adjustment_factor=0.5,
     ):
         self.method = method
         self._federation_bin_obj = None
@@ -277,7 +281,7 @@ class StandardBinning(Module):
         self._bin_count_dict = bin_count.to_dict()
 
     def bucketize_data(self, train_data):
-        logger.debug(f"split pt dict: {self._split_pt_dict}")
+        # logger.debug(f"split pt dict: {self._split_pt_dict}")
         binned_df = train_data.bucketize(boundaries=self._split_pt_dict)
         return binned_df
 

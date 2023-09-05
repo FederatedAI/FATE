@@ -31,12 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLinRModuleGuest(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None):
+    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer_param = optimizer_param
         self.learning_rate_param = learning_rate_param
         self.init_param = init_param
+        self.floating_point_precision = floating_point_precision
 
         self.estimator = None
 
@@ -65,6 +67,7 @@ class CoordinatedLinRModuleGuest(HeteroModule):
                 optimizer=optimizer,
                 learning_rate_scheduler=lr_scheduler,
                 init_param=self.init_param,
+                floating_point_precision=self.floating_point_precision
             )
             self.estimator = estimator
         encryptor = ctx.arbiter("encryptor").get()
@@ -83,6 +86,7 @@ class CoordinatedLinRModuleGuest(HeteroModule):
                 "learning_rate_param": self.learning_rate_param,
                 "init_param": self.init_param,
                 "optimizer_param": self.optimizer_param,
+                "floating_point_precision": self.floating_point_precision,
             },
         }
 
@@ -93,11 +97,13 @@ class CoordinatedLinRModuleGuest(HeteroModule):
             learning_rate_param=model["meta"]["learning_rate_param"],
             batch_size=model["meta"]["batch_size"],
             init_param=model["meta"]["init_param"],
+            floating_point_precision=model["meta"]["floating_point_precision"]
         )
         estimator = CoordinatedLinREstimatorGuest(
             epochs=model["meta"]["epochs"],
             batch_size=model["meta"]["batch_size"],
             init_param=model["meta"]["init_param"],
+            floating_point_precision=model["meta"]["floating_point_precision"]
         )
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
@@ -106,12 +112,15 @@ class CoordinatedLinRModuleGuest(HeteroModule):
 
 
 class CoordinatedLinREstimatorGuest(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
+    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.init_param = init_param
+        self.floating_point_precision = floating_point_precision
+        self._fixpoint_precision = 2 ** floating_point_precision
 
         self.w = None
         self.start_epoch = 0
@@ -130,7 +139,11 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         Xw_h = batch_ctx.hosts.get("Xw_h")[0]
         if weight:
             Xw_h = Xw_h * weight
-        host_half_g = torch.matmul(X.T, Xw_h)
+        if self.floating_point_precision:
+            host_half_g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), Xw_h)
+            host_half_g = 1 / self._fixpoint_precision * host_half_g
+        else:
+            host_half_g = torch.matmul(X.T, Xw_h)
 
         loss = 0.5 / h * torch.matmul(half_d.T, half_d)
         if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
@@ -164,7 +177,11 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
         batch_ctx.hosts.put(d=d)
 
         # gradient
-        g = 1 / h * torch.matmul(X.T, d)
+        if self.floating_point_precision:
+            g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), d)
+            g = 1 / (self._fixpoint_precision * h) * g
+        else:
+            g = 1 / h * torch.matmul(X.T, d)
         return g
 
     def fit_model(self, ctx, encryptor, train_data, validate_data=None):

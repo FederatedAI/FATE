@@ -55,7 +55,7 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(linr_0)
     pipeline.add_task(evaluation_0)
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
 
     pipeline.deploy([psi_0, linr_0])

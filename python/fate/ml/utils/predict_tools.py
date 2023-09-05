@@ -74,7 +74,8 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
             neg_class, pos_class = classes[0], classes[1]
             dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row( \
                 lambda v: [int(v[PREDICT_SCORE] > threshold),
-                           predict_detail_dict_to_str({neg_class: 1 - v[PREDICT_SCORE], pos_class: v[PREDICT_SCORE]})],
+                           predict_detail_dict_to_str({neg_class: 1 - float(v[PREDICT_SCORE]),
+                                                       pos_class: float(v[PREDICT_SCORE])})],
                 enable_type_align_checking=False)
         else:
             raise ValueError(
@@ -82,7 +83,8 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
         
     elif task_type == REGRESSION:
         dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row( \
-                lambda v: [v[PREDICT_SCORE], predict_detail_dict_to_str({PREDICT_SCORE: v[PREDICT_SCORE]})], enable_type_align_checking=False)
+            lambda v: [v[PREDICT_SCORE], predict_detail_dict_to_str({PREDICT_SCORE: float(v[PREDICT_SCORE])})],
+            enable_type_align_checking=False)
 
     elif task_type == MULTI:
 
@@ -90,7 +92,7 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
             predict_result = np.argmax(v[PREDICT_SCORE])
             assert len(v[PREDICT_SCORE]) == len(classes), 'predict score length is not equal to classes length,\
                 predict score is {}, but classes are {}, please check the data you provided'.format(v[PREDICT_SCORE], classes)
-            predict_details = {classes[j]: v[PREDICT_SCORE][j] for j in range(len(classes))}
+            predict_details = {classes[j]: float(v[PREDICT_SCORE][j]) for j in range(len(classes))}
             return [predict_result, predict_detail_dict_to_str(predict_details)]
 
         dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row(handle_multi, enable_type_align_checking=False)

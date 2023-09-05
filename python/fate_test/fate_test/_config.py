@@ -43,7 +43,7 @@ min_test_data_config: examples/data/upload_config/min_test_data_testsuite.json
 all_examples_data_config: examples/data/upload_config/all_examples_data_testsuite.json
 
 # directory where FATE code locates, default installation location={FATE}/fate
-# python/federatedml -> $fate_base/python/federatedml
+# python/ml -> $fate_base/python/ml
 fate_base: path(FATE)/fate
 
 # whether to delete data in suites after all jobs done
