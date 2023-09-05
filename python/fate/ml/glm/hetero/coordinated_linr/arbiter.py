@@ -15,6 +15,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -25,13 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLinRModuleArbiter(HeteroModule):
-    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param):
+    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param, key_length):
         self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
+        self.key_length = key_length
 
         self.estimator = None
 
@@ -44,7 +46,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
         self.estimator.epochs = epochs
 
     def fit(self, ctx: Context) -> None:
-        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=dict(key_length=self.key_length))
         encryptor = kit.get_tensor_encryptor()
         decryptor = kit.get_tensor_decryptor()
         ctx.hosts("encryptor").put(encryptor)
@@ -80,6 +82,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
                 "batch_size": self.batch_size,
                 "learning_rate_param": self.learning_rate_param,
                 "optimizer_param": self.optimizer_param,
+                "key_length": self.key_length
             },
         }
 
@@ -92,6 +95,7 @@ class CoordinatedLinRModuleArbiter(HeteroModule):
             model["meta"]["batch_size"],
             model["meta"]["optimizer_param"],
             model["meta"]["learning_rate_param"],
+            model["meta"]["key_length"],
         )
         estimator = HeteroLinREstimatorArbiter()
         estimator.restore(model["data"]["estimator"])
@@ -171,7 +175,6 @@ class HeteroLinREstimatorArbiter(HeteroModule):
                     logger.info("Multiple hosts exist, do not compute loss.")
 
             if iter_loss is not None:
-                # logger.info(f"step={i}: linr_loss={iter_loss.tolist()}")
                 iter_ctx.metrics.log_loss("linr_loss", iter_loss.tolist()[0])
             if self.early_stop == "weight_diff":
                 self.is_converged = self.converge_func.is_converge(iter_g)

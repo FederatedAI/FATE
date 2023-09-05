@@ -44,22 +44,27 @@ def train(
         "refer to torch.optim.lr_scheduler",
     ),
     epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
-    batch_size: cpn.parameter(
-        type=params.conint(ge=10),
-        default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
-    ),
-    optimizer: cpn.parameter(
-        type=params.optimizer_param(),
-        default=params.OptimizerParam(
-            method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
+        batch_size: cpn.parameter(
+            type=params.conint(ge=10),
+            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
         ),
-    ),
+        optimizer: cpn.parameter(
+            type=params.optimizer_param(),
+            default=params.OptimizerParam(
+                method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
+            ),
+        ),
+        floating_point_precision: cpn.parameter(
+            type=params.conint(ge=0),
+            default=23,
+            desc="floating point precision, "),
         tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
         early_stop: cpn.parameter(
             type=params.string_choice(["weight_diff", "diff", "abs"]),
             default="diff",
             desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
         ),
+        key_length: cpn.parameter(type=params.conint(ge=0), default=1024, desc="key length"),
         init_param: cpn.parameter(
             type=params.init_param(),
             default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
@@ -92,6 +97,7 @@ def train(
             learning_rate_scheduler,
             init_param,
             threshold,
+            floating_point_precision,
             warm_start_model
         )
     elif role.is_host:
@@ -106,6 +112,7 @@ def train(
             optimizer,
             learning_rate_scheduler,
             init_param,
+            floating_point_precision,
             warm_start_model
         )
     elif role.is_arbiter:
@@ -115,6 +122,7 @@ def train(
                       tol, batch_size,
                       optimizer,
                       learning_rate_scheduler,
+                      key_length,
                       output_model,
                       warm_start_model)
 
@@ -172,6 +180,11 @@ def cross_validation(
         threshold: cpn.parameter(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
+        key_length: cpn.parameter(type=params.conint(ge=0), default=1024, desc="key length"),
+        floating_point_precision: cpn.parameter(
+            type=params.conint(ge=0),
+            default=23,
+            desc="floating point precision, "),
         cv_param: cpn.parameter(type=params.cv_param(),
                                 default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
                                 desc="cross validation param"),
@@ -195,6 +208,7 @@ def cross_validation(
                 batch_size=batch_size,
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
+                key_length=key_length,
             )
             module.fit(fold_ctx)
             i += 1
@@ -213,6 +227,7 @@ def cross_validation(
                 learning_rate_param=learning_rate_scheduler,
                 init_param=init_param,
                 threshold=threshold,
+                floating_point_precision=floating_point_precision,
             )
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
@@ -241,6 +256,7 @@ def cross_validation(
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
                 init_param=init_param,
+                floating_point_precision=floating_point_precision
             )
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
@@ -253,8 +269,8 @@ def cross_validation(
 
 def train_guest(
     ctx,
-    train_data,
-    validate_data,
+        train_data,
+        validate_data,
         train_output_data,
         output_model,
         epochs,
@@ -263,6 +279,7 @@ def train_guest(
         learning_rate_param,
         init_param,
         threshold,
+        floating_point_precision,
         input_model
 ):
     if input_model is not None:
@@ -280,6 +297,7 @@ def train_guest(
             learning_rate_param=learning_rate_param,
             init_param=init_param,
             threshold=threshold,
+            floating_point_precision=floating_point_precision
         )
     # optimizer = optimizer_factory(optimizer_param)
     logger.info(f"coordinated lr guest start train")
@@ -318,8 +336,8 @@ def train_guest(
 
 
 def train_host(
-    ctx,
-    train_data,
+        ctx,
+        train_data,
         validate_data,
         train_output_data,
         output_model,
@@ -328,6 +346,7 @@ def train_host(
         optimizer_param,
         learning_rate_param,
         init_param,
+        floating_point_precision,
         input_model
 ):
     if input_model is not None:
@@ -343,6 +362,7 @@ def train_host(
             optimizer_param=optimizer_param,
             learning_rate_param=learning_rate_param,
             init_param=init_param,
+            floating_point_precision=floating_point_precision
         )
     logger.info(f"coordinated lr host start train")
     sub_ctx = ctx.sub_ctx("train")
@@ -362,7 +382,8 @@ def train_host(
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, output_model,
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, key_length,
+                  output_model,
                   input_model):
     if input_model is not None:
         logger.info(f"warm start model provided")
@@ -378,6 +399,7 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, lea
             batch_size=batch_size,
             optimizer_param=optimizer_param,
             learning_rate_param=learning_rate_scheduler,
+            key_length=key_length
         )
     logger.info(f"coordinated lr arbiter start train")
     sub_ctx = ctx.sub_ctx("train")

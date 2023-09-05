@@ -30,13 +30,15 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLinRModuleHost(HeteroModule):
-    def __init__(self, epochs, batch_size, optimizer_param, learning_rate_param, init_param):
+    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.optimizer_param = optimizer_param
         self.learning_rate_param = learning_rate_param
         self.batch_size = batch_size
         self.init_param = init_param or {}
         self.init_param["fit_intercept"] = False
+        self.floating_point_precision = 23
 
         self.estimator = None
 
@@ -66,6 +68,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
                 optimizer=optimizer,
                 learning_rate_scheduler=lr_scheduler,
                 init_param=self.init_param,
+                floating_point_precision=self.floating_point_precision
             )
             self.estimator = estimator
 
@@ -83,6 +86,7 @@ class CoordinatedLinRModuleHost(HeteroModule):
                 "learning_rate_param": self.learning_rate_param,
                 "init_param": self.init_param,
                 "optimizer_param": self.optimizer_param,
+                "floating_point_precision": self.floating_point_precision,
             },
         }
 
@@ -94,11 +98,13 @@ class CoordinatedLinRModuleHost(HeteroModule):
             epochs=model["meta"]["epochs"],
             batch_size=model["meta"]["batch_size"],
             init_param=model["meta"]["init_param"],
+            floating_point_precision=model["meta"]["floating_point_precision"]
         )
         estimator = CoordinatedLinREstimatorHost(
             epochs=model["meta"]["epochs"],
             batch_size=model["meta"]["batch_size"],
             init_param=model["meta"]["init_param"],
+            floating_point_precision=model["meta"]["floating_point_precision"]
         )
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
@@ -107,12 +113,15 @@ class CoordinatedLinRModuleHost(HeteroModule):
 
 
 class CoordinatedLinREstimatorHost(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
+    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.batch_size = batch_size
         self.init_param = init_param
+        self.floating_point_precision = floating_point_precision
+        self._fixpoint_precision = 2 ** floating_point_precision
 
         self.w = None
         self.start_epoch = 0
@@ -125,7 +134,11 @@ class CoordinatedLinREstimatorHost(HeteroModule):
         batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
         half_g = torch.matmul(X.T, Xw_h)
         guest_half_d = batch_ctx.guest.get("half_d")
-        guest_half_g = torch.matmul(X.T, guest_half_d)
+        if self.floating_point_precision:
+            guest_half_g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), guest_half_d)
+            guest_half_g = 1 / self._fixpoint_precision * guest_half_g
+        else:
+            guest_half_g = torch.matmul(X.T, guest_half_d)
 
         batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
         loss_norm = self.optimizer.loss_norm(w)
@@ -143,7 +156,11 @@ class CoordinatedLinREstimatorHost(HeteroModule):
         batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
 
         d = batch_ctx.guest.get("d")
-        g = 1 / h * torch.matmul(X.T, d)
+        if self.floating_point_precision:
+            g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), d)
+            g = 1 / (self._fixpoint_precision * h) * g
+        else:
+            g = 1 / h * torch.matmul(X.T, d)
         return g
 
     def fit_model(self, ctx: Context, encryptor, train_data, validate_data=None) -> None:
