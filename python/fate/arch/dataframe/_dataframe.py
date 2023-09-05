@@ -165,7 +165,10 @@ class DataFrame(object):
             enable_type_align_checking=enable_type_align_checking,
         )
 
-    def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
+    def create_frame(self, with_label=False, with_weight=False, columns: Union[list, pd.Index] = None) -> "DataFrame":
+        if columns is not None and isinstance(columns, pd.Index):
+            columns = columns.tolist()
+
         return self.__extract_fields(
             with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
         )
