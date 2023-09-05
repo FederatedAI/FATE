@@ -5,8 +5,7 @@ build-backend = "maturin"
 [project]
 name = "fate_utils"
 requires-python = ">=3.6"
-description = "paillier tensor implemented using rust"
-long_description_content_type = "text/markdown"
+readme = "README.md"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",

@@ -24,7 +24,6 @@ import numpy as np
 import pandas as pd
 import torch
 from fate.arch.tensor.phe._tensor import PHETensor
-from fate_utils.paillier import CiphertextVector
 
 from .schema_manager import SchemaManager
 
@@ -245,33 +244,30 @@ class Block(object):
 
         return converted_block
 
-    @classmethod
-    def retrieval_row(cls, block, indexes):
-        if isinstance(block, CiphertextVector):
-            return block.slice_indexes(indexes)
-        elif isinstance(block, pd.Index):
-            if isinstance(indexes, list):
-                return block[indexes]
-            else:
-                return pd.Index(block[indexes])
-        else:
-            return block[indexes]
+    # @classmethod
+    # def retrieval_row(cls, block, indexes):
+    #     if isinstance(block, CiphertextVector):
+    #         return block.slice_indexes(indexes)
+    #     elif isinstance(block, pd.Index):
+    #         if isinstance(indexes, list):
+    #             return block[indexes]
+    #         else:
+    #             return pd.Index(block[indexes])
+    #     else:
+    #         return block[indexes]
 
     @classmethod
     def transform_block_to_list(cls, block):
-        if isinstance(block, CiphertextVector):
-            return [block.slice_indexes([i]) for i in range(len(block))]
-        else:
-            return block.tolist()
+        return block.tolist()
 
-    @classmethod
-    def transform_row_to_raw(cls, block, index):
-        if isinstance(block, pd.Index):
-            return block[index]
-        elif isinstance(block, CiphertextVector):
-            return block.slice_indexes([index])
-        else:
-            return block[index].tolist()
+    # @classmethod
+    # def transform_row_to_raw(cls, block, index):
+    #     if isinstance(block, pd.Index):
+    #         return block[index]
+    #     elif isinstance(block, CiphertextVector):
+    #         return block.slice_indexes([index])
+    #     else:
+    #         return block[index].tolist()
 
     @classmethod
     def vstack(cls, blocks):
@@ -385,10 +381,9 @@ class PHETensorBlock(Block):
         self._dtype = dtype
         self._device = device
 
-    @staticmethod
-    def convert_block(block):
+    def convert_block(self, block):
         if isinstance(block, list):
-            block = block[0].cat(block[1:])
+            block = self._evaluator.cat(block)
         return block
 
     def convert_to_phe_tensor(self, block, shape):

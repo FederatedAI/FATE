@@ -51,14 +51,6 @@ class PHECipherBuilder:
         kind = options.get("kind", self.kind)
         key_size = options.get("key_length", 1024)
 
-        if kind == "paillier_old":
-            import fate_utils
-            from fate.arch.tensor.paillier import PaillierTensorCipher
-
-            pk, sk = fate_utils.tensor.keygen(key_size)
-            tensor_cipher = PaillierTensorCipher.from_raw_cipher(pk, None, sk)
-            return PHECipher(key_size, pk, sk, None, None, tensor_cipher)
-
         if kind == "paillier":
             from fate.arch.protocol.phe.paillier import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
@@ -67,19 +59,21 @@ class PHECipherBuilder:
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
 
-        if kind == "heu":
-            from fate.arch.protocol.phe.heu import evaluator, keygen
+        # if kind == "heu":
+        #     from fate.arch.protocol.phe.heu import evaluator, keygen
+        #     from fate.arch.tensor.phe import PHETensorCipher
+        #
+        #     sk, pk, coder = keygen(key_size)
+        #     tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+        #     return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
+        # #
+        elif kind == "mock":
+            from fate.arch.protocol.phe.mock import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
-
-        elif kind == "mock":
-            from fate.arch.tensor.mock import PaillierTensorCipher
-
-            tensor_cipher = PaillierTensorCipher(**options)
-            return PHECipher(key_size, None, None, None, None, tensor_cipher)
 
         else:
             raise ValueError(f"Unknown PHE keygen kind: {self.kind}")
@@ -93,7 +87,7 @@ class PHECipher:
         self._coder = coder
         self._evaluator = evaluator
         self._tensor_cipher = tensor_cipher
-    
+
     @property
     def key_size(self):
         return self._key_size

@@ -1,3 +1,3 @@
-## rust_paillier
+## fate_utils
 
-paillier tensor implemented using rust.
+utils for fate, write in rust
