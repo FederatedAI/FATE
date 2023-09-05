@@ -135,6 +135,16 @@ def _set_new_item(df: "DataFrame", keys, items):
             raise ValueError("Setitem with rhs=DataFrame must have equal len keys")
         data_manager.append_columns(keys, block_types)
 
+        l = len(keys)
+        for idx, (other_block_id, _) in enumerate(operable_blocks_loc):
+            if data_manager.blocks[-l + idx].is_phe_tensor():
+                other_block = other_dm.blocks[other_block_id]
+                data_manager.blocks[-l + idx].set_extra_kwargs(pk=other_block._pk,
+                                                               evaluator=other_block._evaluator,
+                                                               coder=other_block._coder,
+                                                               dtype=other_block._dtype,
+                                                               device=other_block._device)
+
         _append_func = functools.partial(_append_df, r_blocks_loc=operable_blocks_loc, dm=data_manager)
         block_table = df.block_table.join(items.block_table, _append_func)
     elif isinstance(items, DTensor):
