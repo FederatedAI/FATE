@@ -96,11 +96,12 @@ class Coder:
         raise NotImplementedError(f"{dtype} not supported")
 
     def encode(self, val, dtype=None) -> FV:
-        if isinstance(val, torch.Tensor):
-            assert val.ndim == 0, "only scalar supported"
-            if dtype is None:
-                dtype = val.dtype
-            val = val.item()
+        if not isinstance(val, torch.Tensor):
+            val = torch.tensor(val)
+        assert val.ndim == 0, "only scalar supported"
+        if dtype is None:
+            dtype = val.dtype
+        val = val.item()
         if dtype == torch.float64:
             return self.encode_f64(val)
         if dtype == torch.float32:
@@ -109,7 +110,7 @@ class Coder:
             return self.encode_i64(val)
         if dtype == torch.int32:
             return self.encode_i32(val)
-        raise NotImplementedError(f"{dtype} not supported")
+        raise NotImplementedError(f"{dtype} not supported, val={val}, type={type(val)}")
 
     def encode_f64(self, val: float) -> FV:
         return torch.tensor(val, dtype=torch.float64)
