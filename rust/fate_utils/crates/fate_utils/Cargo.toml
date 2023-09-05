@@ -27,7 +27,6 @@ anyhow = { workspace = true }
 quantile = { path = "../quantile" }
 math = { path = "../math" }
 fixedpoint = { path = "../fixedpoint" }
-paillier_tensor = { path = "../paillier_tensor" }
 paillier = { path = "../paillier" }
 fixedpoint_paillier = { path = "../fixedpoint_paillier" }
 

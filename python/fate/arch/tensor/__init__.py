@@ -14,11 +14,9 @@
 #  limitations under the License.
 from ._custom_ops import *
 from .distributed import DTensor
-from .paillier import PaillierTensor
 
 __all__ = [
     "DTensor",
-    "PaillierTensor",
     "encrypt_f",
     "decrypt_f",
 ]
