@@ -14,6 +14,7 @@
 #  limitations under the License.
 import functools
 import pandas as pd
+import torch
 
 from collections import Iterable
 
@@ -39,6 +40,17 @@ def apply_row(df: "DataFrame", func,
     non_operable_field_names = dst_data_manager.get_field_name_list()
     non_operable_blocks = [data_manager.loc_block(field_name,
                                                   with_offset=False) for field_name in non_operable_field_names]
+    operable_blocks = data_manager.infer_operable_blocks()
+    is_numeric = True
+    for bid in operable_blocks:
+        if not data_manager.get_block(bid).is_numeric():
+            is_numeric = False
+            break
+    block_column_in_orders = list()
+    if is_numeric:
+        for bid in operable_blocks:
+            field_indexes = data_manager.get_block(bid).field_indexes
+            block_column_in_orders.extend([data_manager.get_field_name(field_index) for field_index in field_indexes])
 
     fields_loc = data_manager.get_fields_loc(with_sample_id=False, with_match_id=False,
                                              with_label=with_label, with_weight=with_weight)
@@ -48,9 +60,11 @@ def apply_row(df: "DataFrame", func,
                                                    with_label=with_label,
                                                    with_weight=with_weight)
 
-    _apply_func = functools.partial(_apply, func=func, src_field_names=fields_name,
+    _apply_func = functools.partial(_apply, func=func, src_operable_blocks=operable_blocks, src_field_names=fields_name,
                                     src_fields_loc=fields_loc, src_non_operable_blocks=non_operable_blocks,
-                                    ret_columns=columns, dst_dm=dst_data_manager,
+                                    ret_columns=columns, dst_dm=dst_data_manager, is_numeric=is_numeric,
+                                    need_shuffle=True if block_column_in_orders == fields_name else False,
+                                    block_column_in_orders=block_column_in_orders,
                                     enable_type_align_checking=enable_type_align_checking)
 
     dst_block_table_with_dm = df.block_table.mapValues(_apply_func)
@@ -65,20 +79,32 @@ def apply_row(df: "DataFrame", func,
     )
 
 
-def _apply(blocks, func=None, src_field_names=None,
+def _apply(blocks, func=None, src_operable_blocks=None, src_field_names=None,
            src_fields_loc=None, src_non_operable_blocks=None, ret_columns=None,
-           dst_dm: "DataManager"=None, enable_type_align_checking=True):
+           dst_dm: "DataManager"=None, is_numeric=True,
+           block_column_in_orders=None,
+           need_shuffle=False, enable_type_align_checking=True):
     dm = dst_dm.duplicate()
     apply_blocks = []
-    lines = len(blocks[0])
 
-    flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
-    apply_data = [[] for _ in range(lines)]
-    for bid, offset in src_fields_loc:
-        for lid in range(lines):
-            apply_data[lid].append(flat_blocks[bid][lid][offset])
+    if is_numeric:
+        apply_data = []
+        for bid in src_operable_blocks:
+            apply_data.append(blocks[bid])
+        apply_data = torch.hstack(apply_data)
+        apply_data = pd.DataFrame(apply_data, columns=block_column_in_orders)
+        if need_shuffle:
+            apply_data = apply_data[src_field_names]
+    else:
+        lines = len(blocks[0])
+        flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+        apply_data = [[] for _ in range(lines)]
+        for bid, offset in src_fields_loc:
+            for lid in range(lines):
+                apply_data[lid].append(flat_blocks[bid][lid][offset])
 
-    apply_data = pd.DataFrame(apply_data, columns=src_field_names)
+        apply_data = pd.DataFrame(apply_data, columns=src_field_names)
+
     apply_ret = apply_data.apply(lambda row: func(row), axis=1).values.tolist()
 
     if isinstance(apply_ret[0], Iterable):

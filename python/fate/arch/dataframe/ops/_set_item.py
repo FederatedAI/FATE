@@ -109,7 +109,7 @@ def _set_new_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
-    data_manager = df.data_manager
+    data_manager = df.data_manager.duplicate()
     if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         bids = data_manager.append_columns(keys, BlockType.get_block_type(items))
         _append_func = functools.partial(_append_single, item=items, col_len=len(keys), bid=bids[0], dm=data_manager)
@@ -220,7 +220,7 @@ def _set_old_item(df: "DataFrame", keys, items):
 
         return ret_blocks
 
-    data_manager = df.data_manager
+    data_manager = df.data_manager.duplicate()
     if isinstance(items, (bool, int, float, str, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         narrow_blocks, dst_blocks = data_manager.split_columns(keys, BlockType.get_block_type(items))
         replace_func = functools.partial(_replace_single, item=items, narrow_loc=narrow_blocks,

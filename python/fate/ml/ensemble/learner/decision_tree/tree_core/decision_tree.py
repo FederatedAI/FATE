@@ -380,9 +380,9 @@ class DecisionTree(object):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
         x = (new_sample_pos >= 0)
         pack_data = DataFrame.hstack([data, new_sample_pos, grad_and_hess]).iloc(x)
-        new_data = pack_data[data.schema.columns]
-        update_pos = pack_data[new_sample_pos.schema.columns]
-        grad_and_hess = pack_data[grad_and_hess.schema.columns]
+        new_data = pack_data.create_frame(columns=data.schema.columns)
+        update_pos = pack_data.create_frame(columns=new_sample_pos.schema.columns)
+        grad_and_hess = pack_data.create_frame(columns=grad_and_hess.schema.columns)
         """
         new_data = data.iloc(x)
         update_pos = new_sample_pos.iloc(x)
