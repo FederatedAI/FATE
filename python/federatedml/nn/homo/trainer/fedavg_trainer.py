@@ -283,7 +283,6 @@ class FedAVGTrainer(TrainerBase):
                         LOGGER.debug(f"Training progress of epoch {epoch_idx}: {percentage:.1f}%")
                 else:
                     LOGGER.debug("Training epoch {}:batch {}".format(epoch_idx, batch_idx))
-        
         epoch_loss = epoch_loss / len(train_set)
         return epoch_loss
 
