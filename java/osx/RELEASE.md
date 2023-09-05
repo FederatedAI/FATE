@@ -8,7 +8,7 @@
 
 # Release 1.0.0-beta
 ## Major Features and Improvements
-* Improve HTTP/1. X protocol support, support GRPC to HTTP transmission
+* Improve HTTP/1. X protocol support, support GRPC to HTTP1.X transmission
 * Support TLS secure transmission protocol
 * Add a routing table configuration interface
 * Automatic connectivity check for routing tables
