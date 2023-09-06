@@ -489,6 +489,13 @@ impl CiphertextVector {
         }
     }
 
+    pub fn shuffle(&self, indexes: Vec<usize>) -> Self {
+        let data = self.data.clone();
+        let mut result = CiphertextVector { data };
+        result.i_shuffle(indexes);
+        result
+    }
+
     pub fn intervals_slice(&mut self, intervals: Vec<(usize, usize)>) -> Result<Self> {
         let mut data = vec![];
         for (start, end) in intervals {
@@ -772,7 +779,7 @@ impl CiphertextVector {
     }
 
     pub fn tolist(&self) -> Vec<CiphertextVector> {
-        self.data.iter().map(|x| CiphertextVector{ data: vec![x.clone()]}).collect()
+        self.data.iter().map(|x| CiphertextVector { data: vec![x.clone()] }).collect()
     }
 
     pub fn add(&self, pk: &PK, other: &CiphertextVector) -> CiphertextVector {
