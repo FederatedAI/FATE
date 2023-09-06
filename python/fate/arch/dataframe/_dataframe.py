@@ -307,8 +307,18 @@ class DataFrame(object):
 
         return hist(self, targets)
 
-    def distributed_hist_stat(self, histogram_builder: "HistogramBuilder", position: "DataFrame", targets: Union[dict, "DataFrame"]) -> "DistributedHistogram":
+    def distributed_hist_stat(self,
+                              histogram_builder: "HistogramBuilder",
+                              position: "DataFrame" = None,
+                              targets: Union[dict, "DataFrame"] = None,
+                              ) -> "DistributedHistogram":
         from .ops._histogram import distributed_hist_stat
+
+        if targets is None:
+            raise ValueError("To use distributed hist stat, targets should not be None")
+        if position is None:
+            position = df.create_frame()
+            position["node_idx"] = 0
 
         return distributed_hist_stat(self, histogram_builder, position, targets)
 
