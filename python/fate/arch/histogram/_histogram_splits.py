@@ -28,6 +28,10 @@ class HistogramSplits:
         self._data.iadd(other._data)
         return self
 
+    def i_sub_on_key(self, from_key, to_key):
+        self._data.i_sub_on_key(from_key, to_key)
+        return self
+
     def compute_child_splits(
         self: "HistogramSplits", weak_child_splits: "HistogramSplits", mapping: List[Tuple[int, int, int, int]]
     ):

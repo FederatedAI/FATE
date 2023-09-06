@@ -48,6 +48,31 @@ class HistogramValuesContainer(object):
                 self._data[name] = values
         return self
 
+    def i_sub_on_key(self, from_key, to_key):
+        left_value = self._data[from_key]
+        right_value = self._data[to_key]
+        if isinstance(left_value, HistogramEncryptedValues):
+            if isinstance(right_value, HistogramEncryptedValues):
+                assert left_value.stride == right_value.stride
+                left_value.data = left_value.evaluator.sub(left_value.pk, left_value.data, right_value.data)
+            elif isinstance(right_value, HistogramPlainValues):
+                assert left_value.stride == right_value.stride
+                left_value.data = left_value.evaluator.sub_plain(left_value.pk, left_value.data, right_value.data)
+            else:
+                raise NotImplementedError
+        elif isinstance(left_value, HistogramPlainValues):
+            if isinstance(right_value, HistogramEncryptedValues):
+                assert left_value.stride == right_value.stride
+                data = right_value.evaluator.rsub_plain(right_value.pk, left_value.data, right_value.data)
+                self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data)
+            elif isinstance(right_value, HistogramPlainValues):
+                assert left_value.stride == right_value.stride
+                left_value.data = left_value.data - right_value.data
+            else:
+                raise NotImplementedError
+        else:
+            raise NotImplementedError
+
     def decrypt(self, sk_map: dict):
         values_mapping = {}
         for name, values in self._data.items():
