@@ -119,6 +119,16 @@ class DistributedHistogram:
             splits, weak_child._k, self._node_size * 2, self._node_data_size, weak_child._global_seed, weak_child._seed
         )
 
+    def i_sub_on_key(self, from_key: str, to_key: str):
+        """
+        Subtract the histogram splits values on the given key.
+
+        Args:
+            from_key: the start key
+            to_key: the end key
+        """
+        self._splits = self._splits.mapValues(lambda split: split.i_sub_on_key(from_key, to_key))
+
     def recover_feature_bins(
         self, feature_bin_sizes, split_points: typing.Dict[int, int]
     ) -> typing.Dict[int, typing.Tuple[int, int]]:

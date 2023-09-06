@@ -51,9 +51,7 @@ class Coder:
         return torch.LongTensor(self.coder.unpack_u64_vec(vec, num_shift_bit, num_elem_each_pack, total_num))
 
     def encode_tensor(self, tensor: V, dtype: torch.dtype = None) -> FV:
-        if dtype is None:
-            dtype = tensor.dtype
-        return self.encode_vec(tensor.flatten(), dtype=dtype)
+        return self.encode_vec(tensor.flatten(), dtype=tensor.dtype)
 
     def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None, device=None) -> V:
         data = self.decode_vec(tensor, dtype)
@@ -93,8 +91,7 @@ class Coder:
     def encode(self, val, dtype=None) -> FV:
         if isinstance(val, torch.Tensor):
             assert val.ndim == 0, "only scalar supported"
-            if dtype is None:
-                dtype = val.dtype
+            dtype = val.dtype
             val = val.item()
         if dtype == torch.float64:
             return self.encode_f64(val)
