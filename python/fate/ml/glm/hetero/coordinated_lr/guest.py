@@ -260,7 +260,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         half_d = 0.25 * Xw - 0.5 * Y
         if weight:
             half_d = half_d * weight
-        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d))
+        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d, obfuscate=True))
         half_g = torch.matmul(X.T, half_d)
 
         Xw_h = batch_ctx.hosts.get("Xw_h")[0]

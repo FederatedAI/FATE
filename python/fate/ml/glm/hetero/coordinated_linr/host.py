@@ -131,7 +131,7 @@ class CoordinatedLinREstimatorHost(HeteroModule):
     def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h, obfuscate=True))
         half_g = torch.matmul(X.T, Xw_h)
         guest_half_d = batch_ctx.guest.get("half_d")
         if self.floating_point_precision:
@@ -153,7 +153,7 @@ class CoordinatedLinREstimatorHost(HeteroModule):
     def centralized_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h, obfuscate=True))
 
         d = batch_ctx.guest.get("d")
         if self.floating_point_precision:
@@ -180,19 +180,6 @@ class CoordinatedLinREstimatorHost(HeteroModule):
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, batch_data in iter_ctx.on_batches.ctxs_zip(batch_loader):
                 X = batch_data.x
-                """h = X.shape[0]
-                Xw_h = torch.matmul(X, w.detach())
-                batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
-                batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
-
-                loss_norm = self.optimizer.loss_norm(w)
-                if loss_norm is not None:
-                    batch_ctx.guest.put("h_loss", encryptor.encrypt_tensor(loss_norm))
-                else:
-                    batch_ctx.guest.put(h_loss=loss_norm)
-
-                d = batch_ctx.guest.get("d")
-                g = 1 / h * torch.matmul(X.T, d)"""
                 if is_centralized:
                     g = self.centralized_compute_gradient(batch_ctx, encryptor, w, X)
                 else:

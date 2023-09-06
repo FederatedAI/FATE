@@ -217,7 +217,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
     def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = 0.25 * torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h, obfuscate=True))
 
         half_g = torch.matmul(X.T, Xw_h)
 
@@ -244,7 +244,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
     def centralized_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = 0.25 * torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h, obfuscate=True))
 
         d = batch_ctx.guest.get("d")
         if self.floating_point_precision:
