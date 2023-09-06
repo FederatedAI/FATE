@@ -20,7 +20,8 @@ class HistogramValuesContainer(object):
             if items["type"] == "paillier":
                 pk = items["pk"]
                 evaluator = items["evaluator"]
-                values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, stride)
+                coder = items["coder"]
+                values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, coder, stride)
             elif items["type"] == "tensor":
                 import torch
 
@@ -57,13 +58,13 @@ class HistogramValuesContainer(object):
                 left_value.data = left_value.evaluator.sub(left_value.pk, left_value.data, right_value.data)
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride
-                left_value.data = left_value.evaluator.sub_plain(left_value.pk, left_value.data, right_value.data)
+                left_value.data = left_value.evaluator.sub_plain(left_value.data, right_value.data, left_value.pk, left_value.coder)
             else:
                 raise NotImplementedError
         elif isinstance(left_value, HistogramPlainValues):
             if isinstance(right_value, HistogramEncryptedValues):
                 assert left_value.stride == right_value.stride
-                data = right_value.evaluator.rsub_plain(right_value.pk, left_value.data, right_value.data)
+                data = right_value.evaluator.rsub_plain(left_value.data, right_value.data, right_value.pk, right_value.coder)
                 self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data)
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride
