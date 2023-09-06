@@ -255,6 +255,10 @@ impl CiphertextVector {
     fn i_shuffle(&mut self, indexes: Vec<usize>) {
         self.0.i_shuffle(indexes);
     }
+
+    fn shuffle(&self, indexes: Vec<usize>) -> PyResult<Self> {
+        Ok(CiphertextVector(self.0.shuffle(indexes)))
+    }
     fn intervals_slice(&mut self, intervals: Vec<(usize, usize)>) -> PyResult<Self> {
         Ok(CiphertextVector(self.0.intervals_slice(intervals).map_err(|e| e.to_py_err())?))
     }

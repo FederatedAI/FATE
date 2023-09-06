@@ -29,6 +29,9 @@ class HistogramValues:
     def i_shuffle(self, shuffler: "Shuffler", reverse=False):
         raise NotImplementedError
 
+    def shuffle(self, shuffler: "Shuffler", reverse=False):
+        raise NotImplementedError
+
     def slice(self, start, end):
         raise NotImplementedError
 

@@ -303,6 +303,17 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         a.i_shuffle(indices)
 
     @staticmethod
+    def shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> EV:
+        """
+        shuffle, out = a[indices]
+        Args:
+            pk: public key, not used
+            a: the vector to shuffle
+            indices: the indices to shuffle
+        """
+        return a.shuffle(indices)
+
+    @staticmethod
     def i_update(pk: PK, a: EV, b: EV, positions, stride: int) -> None:
         """
         inplace update, a[positions] += b[::stride]

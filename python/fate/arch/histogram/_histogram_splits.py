@@ -35,7 +35,7 @@ class HistogramSplits:
     def compute_child_splits(
         self: "HistogramSplits", weak_child_splits: "HistogramSplits", mapping: List[Tuple[int, int, int, int]]
     ):
-        assert self.num_node == weak_child_splits.num_node
+        assert len(mapping) == weak_child_splits.num_node
         assert self.end == weak_child_splits.end
         assert self.start == weak_child_splits.start
         assert self.sid == weak_child_splits.sid
@@ -63,7 +63,7 @@ class HistogramSplits:
                 )
             )
         data = self._data.compute_child(weak_child_splits._data, positions, size * len(mapping) * 2)
-        return HistogramSplits(self.sid, 2 * len(mapping), self.start, self.end, data)
+        return HistogramSplits(self.sid, 2 * weak_child_splits.num_node, self.start, self.end, data)
 
     def i_decrypt(self, sk_map):
         self._data = self._data.decrypt(sk_map)
@@ -93,6 +93,11 @@ class HistogramSplits:
         shuffler = Shuffler(self.num_node, self.end - self.start, seed)
         self._data.i_shuffle(shuffler, reverse=reverse)
         return self
+
+    def shuffle(self, seed, reverse=False):
+        shuffler = Shuffler(self.num_node, self.end - self.start, seed)
+        data = self._data.shuffle(shuffler, reverse=reverse)
+        return HistogramSplits(self.sid, self.num_node, self.start, self.end, data)
 
     @classmethod
     def cat(cls, splits: typing.List["HistogramSplits"]) -> "HistogramValuesContainer":

@@ -59,6 +59,11 @@ class HistogramEncryptedValues(HistogramValues):
         self.evaluator.i_shuffle(self.pk, self.data, indices)
         return self
 
+    def shuffle(self, shuffler: "Shuffler", reverse=False):
+        indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
+        data = self.evaluator.shuffle(self.pk, self.data, indices)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.stride)
+
     def chunking_sum(self, intervals: typing.List[typing.Tuple[int, int]]):
         """
         sum bins in the given logical intervals

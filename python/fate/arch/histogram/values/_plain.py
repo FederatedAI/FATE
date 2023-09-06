@@ -72,6 +72,11 @@ class HistogramPlainValues(HistogramValues):
         indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
         self.data = self.data[indices]
 
+    def shuffle(self, shuffler: "Shuffler", reverse=False):
+        indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
+        data = self.data[indices]
+        return HistogramPlainValues(data, self.size, self.stride)
+
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         data_view = self.data.view(-1, self.stride)
         start = 0

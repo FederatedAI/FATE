@@ -208,7 +208,7 @@ class SBTHistogramBuilder(object):
             self._cache_parent_hist = stat_obj
             self._last_layer_node_map = node_map
 
-        stat_obj.i_shuffle_splits()
+        stat_obj = stat_obj.shuffle_splits()
 
         return hist, stat_obj
 

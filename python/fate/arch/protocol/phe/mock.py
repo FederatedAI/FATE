@@ -260,7 +260,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         """
         if size is None:
             size = min(a.data.numel() - sa, b.data.numel() - sb)
-        a.data[sa:sa + size] += b.data[sb:sb + size]
+        a.data[sa : sa + size] += b.data[sb : sb + size]
 
     @staticmethod
     def slice(a: EV, start: int, size: int) -> EV:
@@ -274,7 +274,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         Returns:
             the sliced vector
         """
-        return EV(a.data[start:start + size])
+        return EV(a.data[start : start + size])
 
     @staticmethod
     def i_shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> None:
@@ -287,6 +287,18 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         """
         shuffled = a.data[indices]
         a.data.copy_(shuffled)
+
+    @staticmethod
+    def shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> EV:
+        """
+        inplace shuffle, a = a[indices]
+        Args:
+            pk: public key, not used
+            a: the vector to shuffle
+            indices: the indices to shuffle
+        """
+        shuffled = a.data[indices]
+        return EV(shuffled)
 
     @staticmethod
     def i_update(pk: PK, a: EV, b: EV, positions, stride: int) -> None:
@@ -359,7 +371,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         start = 0
         for num in chunk_sizes:
             num = num // step
-            data_view[start: start + num, :] = data_view[start: start + num, :].cumsum(dim=0)
+            data_view[start : start + num, :] = data_view[start : start + num, :].cumsum(dim=0)
             start += num
 
     @staticmethod

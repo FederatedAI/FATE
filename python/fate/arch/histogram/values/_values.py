@@ -116,6 +116,12 @@ class HistogramValuesContainer(object):
         for name, values in self._data.items():
             values.i_shuffle(shuffler, reverse=reverse)
 
+    def shuffle(self, shuffler, reverse=False):
+        data = {}
+        for name, values in self._data.items():
+            data[name] = values.shuffle(shuffler, reverse=reverse)
+        return HistogramValuesContainer(data)
+
     def i_cumsum_bins(self, intervals: list):
         for name, values in self._data.items():
             values.i_chunking_cumsum(intervals)
