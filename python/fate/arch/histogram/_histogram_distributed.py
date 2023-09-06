@@ -112,7 +112,9 @@ class DistributedHistogram:
             >>> ]
             >>> child = parent.compute_child(weak_child, mapping) # data for nodes stored in order [#6, #7, #8, #9, #10, #11]
         """
-        assert self._node_size == weak_child._node_size
+        assert self._node_size == weak_child._node_size, 'node size not match, {} != {}'.format(
+            self._node_size, weak_child._node_size
+        )
         assert self._node_data_size == weak_child._node_data_size
         splits = self._splits.join(weak_child._splits, lambda x, y: x.compute_child_splits(y, mapping))
         return DistributedHistogram(
