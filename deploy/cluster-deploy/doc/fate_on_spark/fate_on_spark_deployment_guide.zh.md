@@ -183,7 +183,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
-注意: 当前文档需要部署的FATE version>=1.7.0，${version}替换为如1.11.2，不带v字符
+注意: 当前文档需要部署的FATE version>=1.7.0，${version}替换为如1.11.3，不带v字符
 ### 5.2 操作系统参数检查
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
