@@ -16,6 +16,34 @@ class Histogram:
     def __str__(self):
         return self._data.show(self._indexer)
 
+    def to_dict(self, feature_names: typing.List[str] = None):
+        """
+        Convert the histogram to a dict.
+
+        the dict is structured as:
+        {
+            node_id: {
+                name: {
+                    feature_id: {
+                        bid: value
+                    }
+                }
+            }
+        }
+        """
+        histogram_dict = self._data.to_structured_dict(self._indexer)
+        if feature_names is not None:
+            histogram_dict_with_names = {}
+            for nid, node_data in histogram_dict.items():
+                histogram_dict_with_names[nid] = {}
+                for name, feature_data in node_data.items():
+                    histogram_dict_with_names[nid][name] = {}
+                    for fid, bid_data in feature_data.items():
+                        histogram_dict_with_names[nid][name][feature_names[fid]] = bid_data
+            return histogram_dict_with_names
+        else:
+            return histogram_dict
+
     @classmethod
     def create(cls, num_node, feature_bin_sizes, values_schema: dict):
         indexer = HistogramIndexer(num_node, feature_bin_sizes)
