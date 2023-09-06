@@ -64,7 +64,8 @@ def train(
             default="diff",
             desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
         ),
-        key_length: cpn.parameter(type=params.conint(ge=0), default=1024, desc="key length"),
+        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
+                                desc="homomorphic encryption param"),
         init_param: cpn.parameter(
             type=params.init_param(),
             default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
@@ -82,6 +83,7 @@ def train(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
+    he_param = he_param.dict()
     # temp code end
 
     if role.is_guest:
@@ -122,7 +124,7 @@ def train(
                       tol, batch_size,
                       optimizer,
                       learning_rate_scheduler,
-                      key_length,
+                      he_param,
                       output_model,
                       warm_start_model)
 
@@ -180,7 +182,8 @@ def cross_validation(
         threshold: cpn.parameter(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
-        key_length: cpn.parameter(type=params.conint(ge=0), default=1024, desc="key length"),
+        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
+                                desc="homomorphic encryption param"),
         floating_point_precision: cpn.parameter(
             type=params.conint(ge=0),
             default=23,
@@ -196,6 +199,7 @@ def cross_validation(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
+    he_param = he_param.dict()
     # temp code end
     if role.is_arbiter:
         i = 0
@@ -208,7 +212,7 @@ def cross_validation(
                 batch_size=batch_size,
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
-                key_length=key_length,
+                he_param=he_param,
             )
             module.fit(fold_ctx)
             i += 1
@@ -382,9 +386,8 @@ def train_host(
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, key_length,
-                  output_model,
-                  input_model):
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, he_param,
+                  output_model, input_model):
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
@@ -399,7 +402,7 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, lea
             batch_size=batch_size,
             optimizer_param=optimizer_param,
             learning_rate_param=learning_rate_scheduler,
-            key_length=key_length
+            he_param=he_param
         )
     logger.info(f"coordinated lr arbiter start train")
     sub_ctx = ctx.sub_ctx("train")
@@ -431,24 +434,3 @@ def predict_host(ctx, input_model, test_data, test_output_data):
     module = CoordinatedLRModuleHost.from_model(model)
     test_data = test_data.read()
     module.predict(sub_ctx, test_data)
-
-
-"""def transform_to_predict_result(test_data, predict_score, labels, threshold=0.5, is_ovr=False, data_type="test"):
-    if is_ovr:
-        df = test_data.create_frame(with_label=True, with_weight=False)
-        df[["predict_result", "predict_score", "predict_detail", "type"]] = predict_score.apply_row(
-            lambda v: [labels[v.argmax()],
-                       v[v.argmax()],
-                       json.dumps({str(label): v[i] for i, label in enumerate(labels)}),
-                       data_type],
-            enable_type_align_checking=False)
-    else:
-        df = test_data.create_frame(with_label=True, with_weight=False)
-        pred_res = test_data.create_frame(with_label=False, with_weight=False)
-        pred_res["predict_result"] = predict_score
-        # logger.info(f"predict score: {list(predict_score.shardings._data.collect())}")
-        df[["predict_result", "predict_score", "predict_detail", "type"]] = pred_res.apply_row(
-            lambda v: [int(v[0] > threshold), v[0], json.dumps({1: v[0], 0: 1 - v[0]}), data_type],
-            enable_type_align_checking=False,
-        )
-    return df"""

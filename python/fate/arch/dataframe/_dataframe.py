@@ -20,8 +20,8 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from fate.arch.tensor import DTensor
 
+from fate.arch.tensor import DTensor
 from .manager import DataManager, Schema
 
 if typing.TYPE_CHECKING:
@@ -317,7 +317,7 @@ class DataFrame(object):
         if targets is None:
             raise ValueError("To use distributed hist stat, targets should not be None")
         if position is None:
-            position = df.create_frame()
+            position = self.create_frame()
             position["node_idx"] = 0
 
         return distributed_hist_stat(self, histogram_builder, position, targets)

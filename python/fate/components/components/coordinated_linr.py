@@ -59,7 +59,8 @@ def train(
             default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
             desc="Model param init setting.",
         ),
-        key_length: cpn.parameter(type=params.conint(ge=0), default=1024, desc="key length"),
+        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
+                                desc="homomorphic encryption param"),
         floating_point_precision: cpn.parameter(
             type=params.conint(ge=0),
             default=23,
@@ -74,6 +75,7 @@ def train(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
+    he_param = he_param.dict()
     # temp code end
     if role.is_guest:
         train_guest(
@@ -89,7 +91,7 @@ def train(
         )
     elif role.is_arbiter:
         train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler,
-                      key_length, output_model, warm_start_model)
+                      he_param, output_model, warm_start_model)
 
 
 @coordinated_linr.predict()
@@ -148,7 +150,8 @@ def cross_validation(
             type=params.conint(ge=0),
             default=23,
             desc="floating point precision, "),
-        key_length: cpn.parameter(type=params.conint(ge=0), default=1024, desc="key length"),
+        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
+                                desc="homomorphic encryption param"),
         metrics: cpn.parameter(type=params.metrics_param(), default=["mse"]),
         output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
         cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
@@ -157,6 +160,7 @@ def cross_validation(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
+    he_param = he_param.dict()
     # temp code end
     if role.is_arbiter:
         i = 0
@@ -169,7 +173,7 @@ def cross_validation(
                 batch_size=batch_size,
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
-                key_length=key_length,
+                he_param=he_param,
             )
             module.fit(fold_ctx)
             i += 1
@@ -297,7 +301,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
 
 
 def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
-                  learning_rate_param, key_length, output_model, input_model):
+                  learning_rate_param, he_param, output_model, input_model):
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
@@ -307,7 +311,7 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
     else:
         module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
                                               optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                              key_length=key_length)
+                                              he_param=he_param)
     logger.info(f"coordinated linr arbiter start train")
 
     sub_ctx = ctx.sub_ctx("train")

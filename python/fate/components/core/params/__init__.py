@@ -25,6 +25,7 @@ from ._filter_param import (
     manual_filter_param,
     statistic_filter_param,
 )
+from ._he_param import he_param, HEParam
 from ._init_param import InitParam, init_param
 from ._learning_rate import LRSchedulerParam, lr_scheduler_param
 from ._metrics import metrics_param, statistic_metrics_param, legal_percentile
