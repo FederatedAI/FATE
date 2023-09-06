@@ -164,3 +164,17 @@ class HistogramValuesContainer(object):
                         result += f"\t\t{name}: {values}"
                     result += "\n"
         return result
+
+    def to_structured_dict(self, indexer):
+        indexes = indexer.unflatten_indexes()
+        result = {}
+        for nid, fids in indexes.items():
+            result[nid] = {}
+            for name, value_container in self._data.items():
+                result[nid][name] = {}
+                for fid, bids in fids.items():
+                    result[nid][name][fid] = {}
+                    for start in bids:
+                        values = value_container.slice(start, start + 1)
+                        result[nid][name][fid][start] = values
+        return result
