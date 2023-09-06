@@ -103,10 +103,9 @@ def rmatmul_f(a: DTensor, b: DTensor):
 
 
 def promote_torch_matmul(a: torch.Tensor, b: torch.Tensor):
-    target_dtype = torch.promote_types(a.dtype, b.dtype)
-    if target_dtype != a.dtype:
+    if isinstance(a, torch.Tensor) and isinstance(b, torch.Tensor):
+        target_dtype = torch.promote_types(a.dtype, b.dtype)
         a = a.type(target_dtype)
-    if target_dtype != b.dtype:
         b = b.type(target_dtype)
     return torch.matmul(_maybe_detach(a), _maybe_detach(b))
 
