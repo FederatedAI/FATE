@@ -69,6 +69,10 @@ class HistogramSplits:
         self._data = self._data.decrypt(sk_map)
         return self
 
+    def decrypt(self, sk_map):
+        data = self._data.decrypt(sk_map)
+        return HistogramSplits(self.sid, self.num_node, self.start, self.end, data)
+
     def i_decode(self, coder_map):
         self._data = self._data.decode(coder_map)
         return self

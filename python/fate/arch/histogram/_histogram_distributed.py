@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def _decrypt_func(sk_map, coder_map, squeezed, unpacker_map):
     def _decrypt(split: HistogramSplits):
-        split.i_decrypt(sk_map)
+        split = split.decrypt(sk_map)
         if unpacker_map is not None:
             split.i_unpack_decode(unpacker_map, squeezed)
             return split
@@ -179,6 +179,8 @@ class DistributedHistogram:
         return fid_bid
 
     def _recover_from_global_shuffle(self, split_points: MutableMapping[int, int]):
+        if self._global_seed is None:
+            return split_points
         shuffler = Shuffler(self._node_size, self._node_data_size, self._global_seed)
         points = list(split_points.items())
         real_indexes = shuffler.get_reverse_indexes(step=1, indexes=[p[1] for p in points])

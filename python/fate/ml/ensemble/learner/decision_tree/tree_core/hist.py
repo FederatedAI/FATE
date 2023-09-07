@@ -72,7 +72,7 @@ class SBTHistogramBuilder(object):
         columns = bin_train_data.schema.columns
         self.random_seed = random_seed
         self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
-        self._cache_parent_hist = None
+        self._cache_parent_hist: DistributedHistogram = None
         self._last_layer_node_map = None
         self._hist_sub = hist_sub
 
@@ -180,29 +180,37 @@ class SBTHistogramBuilder(object):
                 else:
                     schema = self._get_enc_hist_schema(pk, evaluator)
 
-        hist = HistogramBuilder(
-            num_node=node_num,
-            feature_bin_sizes=self.feat_bin_num,
-            value_schemas=schema,
-            global_seed=self.random_seed,
-            seed=self.random_seed
-        )
-
-        print('cwj map sample pos is {}'.format(sample_pos.as_pd_df()))
+        # print('cwj map sample pos is {}'.format(sample_pos.as_pd_df()))
         if need_hist_sub_process:
-            weak_sample_pos = self._get_samples_on_weak_nodes(sample_pos, weak_nodes=weak_nodes)
-            map_sample_pos = weak_sample_pos.apply_row(lambda x: new_node_map[x['node_idx']])
+            hist = HistogramBuilder(
+                num_node=node_num,
+                feature_bin_sizes=self.feat_bin_num,
+                value_schemas=schema,
+                global_seed=None,
+                seed=self.random_seed,
+                node_mapping={node_map[k]: v for k, v in new_node_map.items()}
+            )
+            # raise ValueError(new_node_map, node_num, node_map)
+            # weak_sample_pos = self._get_samples_on_weak_nodes(sample_pos, weak_nodes=weak_nodes)
+            # map_sample_pos = weak_sample_pos.apply_row(lambda x: new_node_map[x['node_idx']])
         else:
-            map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
-        print('transformed sample pos {}'.format(map_sample_pos.as_pd_df()))
-        
+            hist = HistogramBuilder(
+                num_node=node_num,
+                feature_bin_sizes=self.feat_bin_num,
+                value_schemas=schema,
+                global_seed=None,
+                seed=self.random_seed,
+            )
+
+        map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
+        # print('transformed sample pos {}'.format(map_sample_pos.as_pd_df()))
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)
 
         if need_hist_sub_process:
             stat_obj = self._cache_parent_hist.compute_child(stat_obj, mapping)
         
-        if ctx.is_on_guest:
-            print('computed hist', stat_obj.decrypt({}, {}, None))
+        # if ctx.is_on_guest:
+        #     print('computed hist', stat_obj.decrypt({}, {}, None))
 
         if self._hist_sub:
             self._cache_parent_hist = stat_obj

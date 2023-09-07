@@ -32,17 +32,17 @@ class HistogramPlainValues(HistogramValues):
         start = 0
         for s, e in intervals:
             end = start + (e - s) * self.stride
-            result[start:end] = self.data[s * self.stride : e * self.stride]
+            result[start:end] = self.data[s * self.stride: e * self.stride]
             start = end
         return HistogramPlainValues(result, size, self.stride)
 
     def iadd_slice(self, value, sa, sb, size):
         size = size * self.stride
         value = value.view(-1)
-        self.data[sa : sa + size] += value[sb : sb + size]
+        self.data[sa: sa + size] += value[sb: sb + size]
 
     def slice(self, start, end):
-        return HistogramPlainValues(self.data[start * self.stride : end * self.stride], end - start, self.stride)
+        return HistogramPlainValues(self.data[start * self.stride: end * self.stride], end - start, self.stride)
 
     def iadd(self, other):
         self.data += other.data
@@ -59,6 +59,28 @@ class HistogramPlainValues(HistogramValues):
             value = (
                 value.view(-1, self.stride)
                 .unsqueeze(1)
+                .expand(-1, index.shape[1], self.stride)
+                .reshape(-1, self.stride)
+            )
+            index = index.flatten().unsqueeze(1).expand(-1, self.stride)
+        if self.data.dtype != value.dtype:
+            logger.warning(f"update value dtype {value.dtype} is not equal to data dtype {self.data.dtype}")
+            value = value.to(data.dtype)
+        data.scatter_add_(0, index, value)
+
+    def i_update_with_masks(self, value, positions, masks):
+        if self.stride == 1:
+            value = value[masks]
+            index = torch.LongTensor(positions)
+            value = value.view(-1, 1).expand(-1, index.shape[1]).flatten()
+            index = index.flatten()
+            data = self.data
+        else:
+            index = torch.LongTensor(positions)
+            data = self.data.view(-1, self.stride)
+            value = value.view(-1, self.stride)[masks]
+            value = (
+                value.unsqueeze(1)
                 .expand(-1, index.shape[1], self.stride)
                 .reshape(-1, self.stride)
             )

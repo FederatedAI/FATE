@@ -36,10 +36,16 @@ class HistogramValuesContainer(object):
         result = ""
         for name, value in self._data.items():
             result += f"{name}: {value}\n"
+        return result
 
     def i_update(self, targets, positions):
         for name, value in targets.items():
             self._data[name].i_update(value, positions)
+        return self
+
+    def i_update_with_masks(self, targets, positions, masks):
+        for name, value in targets.items():
+            self._data[name].i_update_with_masks(value, positions, masks)
         return self
 
     def iadd(self, other: "HistogramValuesContainer"):

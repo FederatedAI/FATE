@@ -327,6 +327,19 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         a.iupdate(b, positions, stride, pk.pk)
 
     @staticmethod
+    def i_update_with_masks(pk: PK, a: EV, b: EV, positions, masks, stride: int) -> None:
+        """
+        inplace update, a[positions] += b[::stride]
+        Args:
+            pk: public key, not used
+            a: the vector to update
+            b: the vector to update with
+            positions: the positions to update
+            stride: the stride to update
+        """
+        a.iupdate_with_masks(b, positions, masks, stride, pk.pk)
+
+    @staticmethod
     def intervals_slice(a: EV, intervals: List[Tuple[int, int]]) -> EV:
         """
         slice in the given intervals

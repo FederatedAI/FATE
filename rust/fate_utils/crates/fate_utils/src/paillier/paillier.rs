@@ -314,6 +314,10 @@ impl CiphertextVector {
         self.0.iupdate(&other.0, indexes, stride, &pk.0).map_err(|e| e.to_py_err())?;
         Ok(())
     }
+    fn iupdate_with_masks(&mut self, other: &CiphertextVector, indexes: Vec<Vec<usize>>, masks: Vec<bool>, stride: usize, pk: &PK) -> PyResult<()> {
+        self.0.iupdate_with_masks(&other.0, indexes, masks, stride, &pk.0).map_err(|e| e.to_py_err())?;
+        Ok(())
+    }
     fn iadd(&mut self, pk: &PK, other: &CiphertextVector) {
         self.0.iadd(&pk.0, &other.0);
     }

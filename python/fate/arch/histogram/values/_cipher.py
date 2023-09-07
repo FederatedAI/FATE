@@ -29,12 +29,15 @@ class HistogramEncryptedValues(HistogramValues):
         if isinstance(value, PHETensor):
             value = value.data
 
-        if hasattr(self.evaluator, "i_update"):
-            return self.evaluator.i_update(self.pk, self.data, value, positions, self.stride)
-        else:
-            for i, feature_positions in enumerate(positions):
-                for pos in feature_positions:
-                    self.evaluator.i_add(self.pk, self.data, value, pos * self.stride, i * self.stride, self.stride)
+        return self.evaluator.i_update(self.pk, self.data, value, positions, self.stride)
+
+    def i_update_with_masks(self, value, positions, masks):
+        from fate.arch.tensor.phe import PHETensor
+
+        if isinstance(value, PHETensor):
+            value = value.data
+
+        return self.evaluator.i_update_with_masks(self.pk, self.data, value, positions, masks, self.stride)
 
     def iadd(self, other):
         self.evaluator.i_add(self.pk, self.data, other.data)
@@ -90,9 +93,12 @@ class HistogramEncryptedValues(HistogramValues):
             weak_child_data_end,
         ) in positions:
             s = (parent_data_end - parent_data_start) * self.stride
-            self.evaluator.i_add(self.pk, data, weak_child.data, target_weak_child_start, weak_child_data_start, s)
-            self.evaluator.i_add(self.pk, data, self.data, target_strong_child_start, parent_data_start, s)
-            self.evaluator.i_sub(self.pk, data, weak_child.data, target_strong_child_start, weak_child_data_start, s)
+            self.evaluator.i_add(self.pk, data, weak_child.data, target_weak_child_start * self.stride,
+                                 weak_child_data_start * self.stride, s)
+            self.evaluator.i_add(self.pk, data, self.data, target_strong_child_start * self.stride,
+                                 parent_data_start * self.stride, s)
+            self.evaluator.i_sub(self.pk, data, weak_child.data, target_strong_child_start * self.stride,
+                                 weak_child_data_start * self.stride, s)
 
         return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.stride)
 

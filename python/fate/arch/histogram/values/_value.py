@@ -14,6 +14,9 @@ class HistogramValues:
     def i_update(self, value, positions):
         raise NotImplementedError
 
+    def i_update_with_masks(self, value, positions, masks):
+        raise NotImplementedError
+
     def iadd(self, other):
         raise NotImplementedError
 
