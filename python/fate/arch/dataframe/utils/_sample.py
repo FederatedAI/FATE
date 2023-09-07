@@ -115,7 +115,7 @@ def _sample_guest(
             regenerated_sample_id_prefix = generate_sample_id_prefix()
             choice_with_regenerated_ids = None
             for label, f in frac.items():
-                label_df = df[(df.label == label).as_tensor()]
+                label_df = df.iloc(df.label == label)
                 label_n = max(1, int(label_df.shape[0] * f))
                 choices = resample(list(range(label_df.shape[0])), replace=True,
                                    n_samples=label_n, random_state=random_state)
@@ -139,7 +139,7 @@ def _sample_guest(
         else:
             sample_df = None
             for label, f in frac.items():
-                label_df = df[(df.label == label).as_tensor()]
+                label_df = df.iloc(df.label == label)
                 label_n = max(1, int(label_df.shape[0] * f))
                 sample_label_df = label_df.sample(n=label_n, random_state=random_state)
 

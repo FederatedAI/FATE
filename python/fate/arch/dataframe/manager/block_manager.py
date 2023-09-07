@@ -294,10 +294,13 @@ class Int32Block(Block):
     def convert_block(block):
         if isinstance(block, torch.Tensor):
             if block.dtype == torch.int32:
-                return block.clone().detach()
+                return block
             else:
                 return block.to(torch.int32)
-        return torch.tensor(np.array(block, dtype="int32"), dtype=torch.int32)
+        try:
+            return torch.tensor(block, dtype=torch.int32)
+        except ValueError:
+            return torch.tensor(np.array(block, dtype="int32"), dtype=torch.int32)
 
 
 class Int64Block(Block):
@@ -307,6 +310,11 @@ class Int64Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.int64:
+                return block
+            else:
+                return block.to(torch.int64)
         try:
             return torch.tensor(block, dtype=torch.int64)
         except ValueError:
@@ -320,6 +328,11 @@ class Float32Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.float32:
+                return block
+            else:
+                return block.to(torch.float32)
         try:
             return torch.tensor(block, dtype=torch.float32)
         except ValueError:
@@ -333,6 +346,11 @@ class Float64Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.float64:
+                return block
+            else:
+                return block.to(torch.float64)
         try:
             return torch.tensor(block, dtype=torch.float64)
         except ValueError:
@@ -346,6 +364,11 @@ class BoolBlock(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.bool:
+                return block
+            else:
+                return block.to(torch.bool)
         try:
             return torch.tensor(block, dtype=torch.bool)
         except ValueError:
