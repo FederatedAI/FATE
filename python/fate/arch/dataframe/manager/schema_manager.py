@@ -544,12 +544,12 @@ class SchemaManager(object):
             if isinstance(columns, str):
                 columns = [columns]
 
-            column_set = set(columns)
             derived_columns = []
             derived_anonymous_columns = []
-            for column, anonymous_column in zip(self._schema.columns, self._schema.anonymous_columns):
-                if column not in column_set:
-                    continue
+
+            anonymous_mappings = dict(zip(self._schema.columns, self._schema.anonymous_columns))
+            for column in columns:
+                anonymous_column = anonymous_mappings[column]
                 derived_columns.append(column)
                 derived_anonymous_columns.append(anonymous_column)
 
