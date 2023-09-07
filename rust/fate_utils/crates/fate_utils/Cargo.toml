@@ -29,6 +29,8 @@ math = { path = "../math" }
 fixedpoint = { path = "../fixedpoint" }
 paillier = { path = "../paillier" }
 fixedpoint_paillier = { path = "../fixedpoint_paillier" }
+fixedpoint_ou = { path = "../fixedpoint_ou" }
+
 
 [features]
 default = ["rug", "rayon", "std", "u64_backend", "extension-module"]

@@ -1,56 +1,45 @@
 from typing import List, Optional, Tuple
 
 import torch
+from fate_utils.ou import PK as _PK
+from fate_utils.ou import SK as _SK
+from fate_utils.ou import Coder as _Coder
+from fate_utils.ou import Evaluator as _Evaluator
+from fate_utils.ou import CiphertextVector, PlaintextVector
+from fate_utils.ou import keygen as _keygen
 
 from .type import TensorEvaluator
 
 V = torch.Tensor
-
-
-class EV:
-    def __init__(self, data):
-        self.data = data
-
-    def __str__(self):
-        return f"<EV {self.data}>"
-
-    def __repr__(self):
-        return str(self)
-
-    def tolist(self):
-        return [EV(x.clone().detach()) for x in self.data]
-
-
-class FV:
-    def __init__(self, data):
-        self.data = data
+EV = CiphertextVector
+FV = PlaintextVector
 
 
 class SK:
-    def __init__(self):
-        ...
+    def __init__(self, sk: _SK):
+        self.sk = sk
 
     def decrypt_to_encoded(self, vec: EV) -> FV:
-        return FV(vec.data)
+        return self.sk.decrypt_to_encoded(vec)
 
 
 class PK:
-    def __init__(self):
-        ...
+    def __init__(self, pk: _PK):
+        self.pk = pk
 
     def encrypt_encoded(self, vec: FV, obfuscate: bool) -> EV:
-        return EV(vec.data)
+        return self.pk.encrypt_encoded(vec, obfuscate)
 
     def encrypt_encoded_scalar(self, val, obfuscate) -> EV:
-        return EV(val)
+        return self.pk.encrypt_encoded_scalar(val, obfuscate)
 
 
 class Coder:
-    def __init__(self):
-        ...
+    def __init__(self, coder: _Coder):
+        self.coder = coder
 
     def pack_floats(self, float_tensor: V, offset_bit: int, pack_num: int, precision: int) -> FV:
-        return float_tensor
+        return self.coder.pack_floats(float_tensor.detach().tolist(), offset_bit, pack_num, precision)
 
     def unpack_floats(self, packed: FV, offset_bit: int, pack_num: int, precision: int, total_num: int) -> V:
         return torch.tensor(self.coder.unpack_floats(packed, offset_bit, pack_num, precision, total_num))
@@ -62,9 +51,7 @@ class Coder:
         return torch.LongTensor(self.coder.unpack_u64_vec(vec, num_shift_bit, num_elem_each_pack, total_num))
 
     def encode_tensor(self, tensor: V, dtype: torch.dtype = None) -> FV:
-        if dtype is None:
-            dtype = tensor.dtype
-        return self.encode_vec(tensor.flatten(), dtype=dtype)
+        return self.encode_vec(tensor.flatten(), dtype=tensor.dtype)
 
     def decode_tensor(self, tensor: FV, dtype: torch.dtype, shape: torch.Size = None, device=None) -> V:
         data = self.decode_vec(tensor, dtype)
@@ -102,12 +89,10 @@ class Coder:
         raise NotImplementedError(f"{dtype} not supported")
 
     def encode(self, val, dtype=None) -> FV:
-        if not isinstance(val, torch.Tensor):
-            val = torch.tensor(val)
-        assert val.ndim == 0, "only scalar supported"
-        if dtype is None:
+        if isinstance(val, torch.Tensor):
+            assert val.ndim == 0, "only scalar supported"
             dtype = val.dtype
-        val = val.item()
+            val = val.item()
         if dtype == torch.float64:
             return self.encode_f64(val)
         if dtype == torch.float32:
@@ -116,155 +101,147 @@ class Coder:
             return self.encode_i64(val)
         if dtype == torch.int32:
             return self.encode_i32(val)
-        raise NotImplementedError(f"{dtype} not supported, val={val}, type={type(val)}")
+        raise NotImplementedError(f"{dtype} not supported")
 
-    def encode_f64(self, val: float) -> FV:
-        return torch.tensor(val, dtype=torch.float64)
+    def encode_f64(self, val: float):
+        return self.coder.encode_f64(val)
 
     def decode_f64(self, val):
-        return val.item()
+        return self.coder.decode_f64(val)
 
     def encode_i64(self, val: int):
-        return torch.tensor(val, dtype=torch.int64)
+        return self.coder.encode_i64(val)
 
     def decode_i64(self, val):
-        return val.item()
+        return self.coder.decode_i64(val)
 
     def encode_f32(self, val: float):
-        return torch.tensor(val, dtype=torch.float32)
+        return self.coder.encode_f32(val)
 
     def decode_f32(self, val):
-        return val.item()
+        return self.coder.decode_f32(val)
 
     def encode_i32(self, val: int):
-        return torch.tensor(val, dtype=torch.int32)
+        return self.coder.encode_i32(val)
 
     def decode_i32(self, val):
-        return val.item()
+        return self.coder.decode_i32(val)
 
     def encode_f64_vec(self, vec: torch.Tensor):
-        return FV(vec.detach().flatten())
+        vec = vec.detach().flatten()
+        return self.coder.encode_f64_vec(vec.detach().numpy())
 
     def decode_f64_vec(self, vec):
-        return vec.data
+        return torch.tensor(self.coder.decode_f64_vec(vec))
 
     def encode_i64_vec(self, vec: torch.Tensor):
-        return FV(vec.detach().flatten())
+        vec = vec.detach().flatten()
+        return self.coder.encode_i64_vec(vec.detach().numpy())
 
     def decode_i64_vec(self, vec):
-        return vec.data
+        return torch.tensor(self.coder.decode_i64_vec(vec))
 
     def encode_f32_vec(self, vec: torch.Tensor):
-        return FV(vec.detach().flatten())
+        vec = vec.detach().flatten()
+        return self.coder.encode_f32_vec(vec.detach().numpy())
 
     def decode_f32_vec(self, vec):
-        return vec.data
+        return torch.tensor(self.coder.decode_f32_vec(vec))
 
     def encode_i32_vec(self, vec: torch.Tensor):
-        return FV(vec.detach().flatten())
+        vec = vec.detach().flatten()
+        return self.coder.encode_i32_vec(vec.detach().numpy())
 
     def decode_i32_vec(self, vec):
-        return vec.data
+        return torch.tensor(self.coder.decode_i32_vec(vec))
 
 
 def keygen(key_size):
-    return SK(), PK(), Coder()
+    sk, pk, coder = _keygen(key_size)
+    return SK(sk), PK(pk), Coder(coder)
 
 
 class evaluator(TensorEvaluator[EV, V, PK, Coder]):
     @staticmethod
     def add(a: EV, b: EV, pk: PK):
-        return EV(torch.add(a.data, b.data))
+        return a.add(pk.pk, b)
 
     @staticmethod
     def add_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
-        return EV(torch.add(a.data, pk.encrypt_encoded(coder.encode_tensor(b), obfuscate=False).data))
+        if output_dtype is None:
+            output_dtype = b.dtype
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
+        return a.add(pk.pk, encrypted)
 
     @staticmethod
     def add_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
-        return EV(torch.add(a.data, pk.encrypt_encoded_scalar(coder.encode(b), obfuscate=False).data))
+        encoded = coder.encode(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
+        return a.add_scalar(pk.pk, encrypted)
 
     @staticmethod
     def sub(a: EV, b: EV, pk: PK):
-        return EV(torch.sub(a.data, b.data))
+        return a.sub(pk.pk, b)
 
     @staticmethod
     def sub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
-        data = torch.sub(a.data, pk.encrypt_encoded(coder.encode_tensor(b), obfuscate=False).data)
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        if output_dtype is None:
+            output_dtype = b.dtype
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
+        return a.sub(pk.pk, encrypted)
 
     @staticmethod
     def sub_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
-        data = torch.sub(a.data, pk.encrypt_encoded_scalar(coder.encode(b), obfuscate=False).data)
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        encoded = coder.encode(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
+        return a.sub_scalar(pk.pk, encrypted)
 
     @staticmethod
     def rsub(a: EV, b: EV, pk: PK):
-        return EV(torch.rsub(a.data, b.data))
+        return a.rsub(pk.pk, b)
 
     @staticmethod
     def rsub_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
-        data = torch.rsub(a.data, pk.encrypt_encoded(coder.encode_tensor(b), obfuscate=False).data)
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        if output_dtype is None:
+            output_dtype = b.dtype
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded(encoded, obfuscate=False)
+        return a.rsub(pk.pk, encrypted)
 
     @staticmethod
     def rsub_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
-        data = torch.rsub(a.data, pk.encrypt_encoded_scalar(coder.encode(b), obfuscate=False).data)
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        encoded = coder.encode(b, dtype=output_dtype)
+        encrypted = pk.encrypt_encoded_scalar(encoded, obfuscate=False)
+        return a.rsub_scalar(pk.pk, encrypted)
 
     @staticmethod
     def mul_plain(a: EV, b: V, pk: PK, coder: Coder, output_dtype=None):
-        data = torch.mul(a.data, coder.encode_tensor(b).data)
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        if output_dtype is None:
+            output_dtype = b.dtype
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
+        return a.mul(pk.pk, encoded)
 
     @staticmethod
     def mul_plain_scalar(a: EV, b, pk: PK, coder: Coder, output_dtype):
-        data = torch.mul(a.data, coder.encode(b).data)
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        encoded = coder.encode(b, dtype=output_dtype)
+        return a.mul_scalar(pk.pk, encoded)
 
     @staticmethod
     def matmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
-        left = a.data.reshape(a_shape)
-        right = b.data.reshape(b_shape)
-        target_type = torch.promote_types(a.data.dtype, b.data.dtype)
-        if left.dtype != target_type:
-            left = left.to(dtype=target_type)
-        if right.dtype != target_type:
-            right = right.to(dtype=target_type)
-        data = torch.matmul(left, right).flatten()
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
+        # TODO: move this to python side so other protocols can use it without matmul support?
+        return a.matmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
     def rmatmul(a: EV, b: V, a_shape, b_shape, pk: PK, coder: Coder, output_dtype):
-        right = a.data.reshape(a_shape)
-        left = b.data.reshape(b_shape)
-        target_type = torch.promote_types(a.data.dtype, b.data.dtype)
-        if left.dtype != target_type:
-            left = left.to(dtype=target_type)
-        if right.dtype != target_type:
-            right = right.to(dtype=target_type)
-        data = torch.matmul(left, right).flatten()
-        if output_dtype is not None:
-            data = data.to(dtype=output_dtype)
-        return EV(data)
+        encoded = coder.encode_tensor(b, dtype=output_dtype)
+        return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
     def zeros(size) -> EV:
-        return EV(torch.zeros(size))
+        return CiphertextVector.zeros(size)
 
     @staticmethod
     def i_add(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
@@ -278,14 +255,15 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             sb: the start index of b
             size: the size to add
         """
-        if size is None:
-            size = min(a.data.numel() - sa, b.data.numel() - sb)
-        a.data[sa: sa + size] += b.data[sb: sb + size]
+        if a is b:
+            a.iadd_vec_self(sa, sb, size, pk.pk)
+        else:
+            a.iadd_vec(b, sa, sb, size, pk.pk)
 
     @staticmethod
     def i_sub(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
         """
-        inplace add, a[sa:sa+size] += b[sb:sb+size], if size is None, then size = min(a.size - sa, b.size - sb)
+        inplace sub, a[sa:sa+size] += b[sb:sb+size], if size is None, then size = min(a.size - sa, b.size - sb)
         Args:
             pk: the public key
             a: the vector to add to
@@ -294,9 +272,10 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             sb: the start index of b
             size: the size to add
         """
-        if size is None:
-            size = min(a.data.numel() - sa, b.data.numel() - sb)
-        a.data[sa: sa + size] -= b.data[sb: sb + size]
+        if a is b:
+            a.isub_vec_self(sa, sb, size, pk.pk)
+        else:
+            a.isub_vec(b, sa, sb, size, pk.pk)
 
     @staticmethod
     def slice(a: EV, start: int, size: int) -> EV:
@@ -310,7 +289,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         Returns:
             the sliced vector
         """
-        return EV(a.data[start: start + size])
+        return a.slice(start, size)
 
     @staticmethod
     def i_shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> None:
@@ -321,20 +300,18 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             a: the vector to shuffle
             indices: the indices to shuffle
         """
-        shuffled = a.data[indices]
-        a.data.copy_(shuffled)
+        a.i_shuffle(indices)
 
     @staticmethod
     def shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> EV:
         """
-        inplace shuffle, a = a[indices]
+        shuffle, out = a[indices]
         Args:
             pk: public key, not used
             a: the vector to shuffle
             indices: the indices to shuffle
         """
-        shuffled = a.data[indices]
-        return EV(shuffled)
+        return a.shuffle(indices)
 
     @staticmethod
     def i_update(pk: PK, a: EV, b: EV, positions, stride: int) -> None:
@@ -347,17 +324,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             positions: the positions to update
             stride: the stride to update
         """
-        if stride == 1:
-            index = torch.LongTensor(positions)
-            value = b.data.view(-1, 1).expand(-1, index.shape[1]).flatten()
-            index = index.flatten()
-            data = a.data
-        else:
-            index = torch.LongTensor(positions)
-            data = a.data.view(-1, stride)
-            value = b.data.view(-1, stride).unsqueeze(1).expand(-1, index.shape[1], stride).reshape(-1, stride)
-            index = index.flatten().unsqueeze(1).expand(-1, stride)
-        data.scatter_add_(0, index, value)
+        a.iupdate(b, positions, stride, pk.pk)
 
     @staticmethod
     def i_update_with_masks(pk: PK, a: EV, b: EV, positions, masks, stride: int) -> None:
@@ -370,19 +337,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             positions: the positions to update
             stride: the stride to update
         """
-        if stride == 1:
-            b = b.data[masks]
-            index = torch.LongTensor(positions)
-            value = b.data.view(-1, 1).expand(-1, index.shape[1]).flatten()
-            index = index.flatten()
-            data = a.data
-        else:
-            index = torch.LongTensor(positions)
-            data = a.data.view(-1, stride)
-            value = b.data.view(-1, stride)[masks]
-            value = value.unsqueeze(1).expand(-1, index.shape[1], stride).reshape(-1, stride)
-            index = index.flatten().unsqueeze(1).expand(-1, stride)
-        data.scatter_add_(0, index, value)
+        a.iupdate_with_masks(b, positions, masks, stride, pk.pk)
 
     @staticmethod
     def intervals_slice(a: EV, intervals: List[Tuple[int, int]]) -> EV:
@@ -393,10 +348,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             intervals=[(0, 4), (6, 12)], a = [a0, a1, a2, a3, a4, a5, a6, a7,...]
             then the result is [a0, a1, a2, a3, a6, a7, a8, a9, a10, a11]
         """
-        slices = []
-        for start, end in intervals:
-            slices.append(a.data[start:end])
-        return EV(torch.cat(slices))
+        return a.intervals_slice(intervals)
 
     @staticmethod
     def cat(list: List[EV]) -> EV:
@@ -407,10 +359,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
 
         Returns: the concatenated vector
         """
-
-        if list[0].data.dim() == 0:
-            return EV(torch.tensor([x.data for x in list]))
-        return EV(torch.cat([x.data for x in list]))
+        return _Evaluator.cat(list)
 
     @staticmethod
     def chunking_cumsum_with_step(pk: PK, a: EV, chunk_sizes: List[int], step: int):
@@ -428,13 +377,39 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         Returns:
             the cumsum result
         """
-        data_view = a.data.view(-1, step)
-        start = 0
-        for num in chunk_sizes:
-            num = num // step
-            data_view[start: start + num, :] = data_view[start: start + num, :].cumsum(dim=0)
-            start += num
+        return a.chunking_cumsum_with_step(pk.pk, chunk_sizes, step)
 
     @staticmethod
     def pack_squeeze(a: EV, pack_num: int, shift_bit: int, pk: PK) -> EV:
         return a.pack_squeeze(pack_num, shift_bit, pk.pk)
+
+
+def test_pack_float():
+    offset_bit = 32
+    precision = 16
+    coder = Coder(_Coder())
+    vec = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
+    packed = coder.pack_floats(vec, offset_bit, 2, precision)
+    unpacked = coder.unpack_floats(packed, offset_bit, 2, precision, 5)
+    assert torch.allclose(vec, unpacked, rtol=1e-3, atol=1e-3)
+
+
+def test_pack_squeeze():
+    offset_bit = 32
+    precision = 16
+    pack_num = 2
+    pack_packed_num = 2
+    vec1 = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
+    vec2 = torch.tensor([0.6, 0.7, 0.8, 0.9, 1.0])
+    sk, pk, coder = keygen(1024)
+    a = coder.pack_floats(vec1, offset_bit, pack_num, precision)
+    ea = pk.encrypt_encoded(a, obfuscate=False)
+    b = coder.pack_floats(vec2, offset_bit, pack_num, precision)
+    eb = pk.encrypt_encoded(b, obfuscate=False)
+    ec = evaluator.add(ea, eb, pk)
+
+    # pack packed encrypted
+    ec_pack = evaluator.pack_squeeze(ec, pack_packed_num, offset_bit * 2, pk)
+    c_pack = sk.decrypt_to_encoded(ec_pack)
+    c = coder.unpack_floats(c_pack, offset_bit, pack_num * pack_packed_num, precision, 5)
+    assert torch.allclose(vec1 + vec2, c, rtol=1e-3, atol=1e-3)

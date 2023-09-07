@@ -59,6 +59,14 @@ class PHECipherBuilder:
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
             return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
 
+        if kind == "ou":
+            from fate.arch.protocol.phe.ou import evaluator, keygen
+            from fate.arch.tensor.phe import PHETensorCipher
+
+            sk, pk, coder = keygen(key_size)
+            tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
+
         # if kind == "heu":
         #     from fate.arch.protocol.phe.heu import evaluator, keygen
         #     from fate.arch.tensor.phe import PHETensorCipher
