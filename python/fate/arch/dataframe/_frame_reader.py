@@ -122,7 +122,6 @@ class ImageReader(object):
 
 class CSVReader(object):
     # TODO: fast data read
-    # TODO: a. support match_id, b. more id type
     def __init__(
         self,
         sample_id_name: Union[None, str] = None,

@@ -20,47 +20,6 @@ from ..manager import Block, DataManager
 from .._dataframe import DataFrame
 
 
-def aggregate_indexer(indexer):
-    """
-    indexer: table, each row is ((old_block_id, old_row_id), (new_block_id, new_row_id))
-
-    Returns:
-
-    agg_indexer: key=old_block_id, value=(old_row_id, (new_block_id, new_row_id))
-    """
-    def _aggregate(kvs):
-        flat_values = []
-        for k, values in kvs:
-            old_msg, new_msg = values
-
-            flat_values.append((old_msg[0], [old_msg[1], new_msg]))
-
-        flat_values.sort()
-        i = 0
-        l = len(flat_values)
-        while i < l:
-            j = i
-            while j < l and flat_values[i][0] == flat_values[j][0]:
-                j += 1
-
-            agg_ret = [flat_values[k][1] for k in range(i, j)]
-            yield flat_values[i][0], agg_ret
-            i = j
-
-    agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
-
-    return agg_indexer
-
-
-def _convert_to_frame_block(blocks, data_manager):
-    convert_blocks = []
-    for idx, block_schema in enumerate(data_manager.blocks):
-        block_content = [row_data[1][idx] for row_data in blocks]
-        convert_blocks.append(block_schema.convert_block(block_content))
-
-    return convert_blocks
-
-
 def transform_to_table(block_table, block_index, partition_order_mappings):
     def _convert_to_order_index(kvs):
         for block_id, blocks in kvs:
@@ -75,23 +34,27 @@ def get_partition_order_mappings_by_block_table(block_table, block_row_size):
     def _block_counter(kvs):
         partition_key = None
         size = 0
-        first_block_id = 0
+        first_block_id = ''
+
         for k, v in kvs:
             if size == 0 and len(v[0]):
                 partition_key = v[0][0]
+
+            if first_block_id == '':
+                first_block_id = k
 
             size += len(v[0])
 
         if size == 0:
             partition_key = str(first_block_id) + "_" + str(uuid.uuid1())
 
-        return first_block_id, (partition_key, size)
+        return partition_key, size
 
     block_info = sorted([summary[1] for summary in block_table.applyPartitions(_block_counter).collect()])
     block_order_mappings = dict()
     start_index = 0
     acc_block_num = 0
-    for block_id, (block_key, block_size) in block_info:
+    for block_key, block_size in block_info:
         block_num = (block_size + block_row_size - 1) // block_row_size
         block_order_mappings[block_key] = dict(
             start_index=start_index,
@@ -197,58 +160,6 @@ def _merge_list(lhs, rhs):
         k += 1
 
     return ret
-
-
-# def loc(df: DataFrame, indexer, target, preserve_order=False):
-#     self_indexer = df.get_indexer(target)
-#     if preserve_order:
-#         indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, rhs))
-#     else:
-#         indexer = self_indexer.join(indexer, lambda lhs, rhs: (lhs, lhs))
-
-#     if indexer.count() == 0:
-#         return df.empty_frame()
-
-#     agg_indexer = aggregate_indexer(indexer)
-
-#     if not preserve_order:
-#         def _convert_block(blocks, retrieval_indexes):
-#             row_indexes = [retrieval_index[0] for retrieval_index in retrieval_indexes]
-#             return [Block.retrieval_row(block, row_indexes) for block in blocks]
-
-#         block_table = df.block_table.join(agg_indexer, _convert_block)
-#     else:
-#         def _convert_to_row(kvs):
-#             ret_dict = {}
-#             for block_id, (blocks, block_indexer) in kvs:
-#                 """
-#                 block_indexer: row_id, (new_block_id, new_row_id)
-#                 """
-#                 flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
-#                 block_num = len(flat_blocks)
-#                 for src_row_id, (dst_block_id, dst_row_id) in block_indexer:
-#                     if dst_block_id not in ret_dict:
-#                         ret_dict[dst_block_id] = []
-
-#                     ret_dict[dst_block_id].append(
-#                         (dst_row_id, [flat_blocks[i][src_row_id] for i in range(block_num)])
-#                     )
-
-#             for dst_block_id, value_list in ret_dict.items():
-#                 yield dst_block_id, sorted(value_list)
-
-#         block_table = df.block_table.join(agg_indexer, lambda lhs, rhs: (lhs, rhs))
-#         block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
-
-#         _convert_to_frame_block_func = functools.partial(_convert_to_frame_block, data_manager=df.data_manager)
-#         block_table = block_table.mapValues(_convert_to_frame_block_func)
-
-#     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, df.data_manager.block_row_size)
-#     return DataFrame(
-#         df._ctx,
-#         block_table,
-#         partition_order_mappings,
-#         df.data_manager.duplicate())
 
 
 def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
@@ -456,20 +367,18 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
         for dst_block_id, value_list in ret_dict.items():
             yield dst_block_id, sorted(value_list)
 
-    """
-    def _convert_to_frame_block(blocks):
+    agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
+    block_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2))
+    block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
+
+    def _convert_to_frame_block(blocks, data_manager):
         convert_blocks = []
         for idx, block_schema in enumerate(data_manager.blocks):
             block_content = [row_data[1][idx] for row_data in blocks]
             convert_blocks.append(block_schema.convert_block(block_content))
 
         return convert_blocks
-    """
 
-    agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
-    block_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2))
-    block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
-    
     _convert_to_frame_block_func = functools.partial(_convert_to_frame_block, data_manager=data_manager)
     block_table = block_table.mapValues(_convert_to_frame_block_func)
 

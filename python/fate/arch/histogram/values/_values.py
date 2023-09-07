@@ -1,9 +1,8 @@
 import typing
 from typing import MutableMapping
-
-from ._cipher import HistogramEncryptedValues
-from ._plain import HistogramPlainValues
 from ._value import HistogramValues
+from ._plain import HistogramPlainValues
+from ._cipher import HistogramEncryptedValues
 
 if typing.TYPE_CHECKING:
     from ..indexer import HistogramIndexer
@@ -21,7 +20,7 @@ class HistogramValuesContainer(object):
             if items["type"] == "paillier":
                 pk = items["pk"]
                 evaluator = items["evaluator"]
-                coder = items["coder"]
+                coder = items.get("coder")
                 values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, coder, stride)
             elif items["type"] == "tensor":
                 import torch
@@ -36,10 +35,16 @@ class HistogramValuesContainer(object):
         result = ""
         for name, value in self._data.items():
             result += f"{name}: {value}\n"
+        return result
 
     def i_update(self, targets, positions):
         for name, value in targets.items():
             self._data[name].i_update(value, positions)
+        return self
+
+    def i_update_with_masks(self, targets, positions, masks):
+        for name, value in targets.items():
+            self._data[name].i_update_with_masks(value, positions, masks)
         return self
 
     def iadd(self, other: "HistogramValuesContainer"):
@@ -59,16 +64,18 @@ class HistogramValuesContainer(object):
                 left_value.data = left_value.evaluator.sub(left_value.pk, left_value.data, right_value.data)
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride
+                if left_value.coder is None:
+                    raise ValueError(f"coder is None, please set coder for i_sub_on_key({from_key}, {to_key})")
                 left_value.data = left_value.evaluator.sub_plain(left_value.data, right_value.data, left_value.pk, left_value.coder)
             else:
                 raise NotImplementedError
         elif isinstance(left_value, HistogramPlainValues):
             if isinstance(right_value, HistogramEncryptedValues):
                 assert left_value.stride == right_value.stride
-                data = right_value.evaluator.rsub_plain(right_value.data, left_value.data, right_value.pk,
-                                                        right_value.coder)
-                self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data,
-                                                                right_value.coder, right_value.stride)
+                if right_value.coder is None:
+                    raise ValueError(f"coder is None, please set coder for i_sub_on_key({from_key}, {to_key})")
+                data = right_value.evaluator.rsub_plain(right_value.data, left_value.data, right_value.pk, right_value.coder)
+                self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data, right_value.coder, right_value.stride)
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride
                 left_value.data = left_value.data - right_value.data
@@ -115,6 +122,12 @@ class HistogramValuesContainer(object):
     def i_shuffle(self, shuffler, reverse=False):
         for name, values in self._data.items():
             values.i_shuffle(shuffler, reverse=reverse)
+
+    def shuffle(self, shuffler, reverse=False):
+        data = {}
+        for name, values in self._data.items():
+            data[name] = values.shuffle(shuffler, reverse=reverse)
+        return HistogramValuesContainer(data)
 
     def i_cumsum_bins(self, intervals: list):
         for name, values in self._data.items():

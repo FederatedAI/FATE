@@ -35,10 +35,6 @@ class DataFrame(object):
         self._partition_order_mappings = partition_order_mappings
         self._data_manager = data_manager
 
-        """
-        the following is cached
-        index: [(id, (partition_id, index_in_block)]
-        """
         self._sample_id_indexer = None
         self._match_id_indexer = None
         self._sample_id = None
@@ -375,14 +371,6 @@ class DataFrame(object):
         return invert(self)
 
     def __arithmetic_operate(self, op, other) -> "DataFrame":
-        """
-        df * 1.5, int -> float
-        可能的情况：
-        a. columns类型统一：此时，block只有一个
-        b. columns类型不一致，多block，但要求单个block里面所有列都是被使用的。
-
-        需要注意的是：int/float可能会统一上升成float，所以涉及到block类型的变化和压缩
-        """
         from .ops._arithmetic import arith_operate
 
         return arith_operate(self, other, op)
@@ -391,14 +379,6 @@ class DataFrame(object):
         from .ops._cmp import cmp_operate
 
         return cmp_operate(self, other, op)
-
-    """
-    def __getattr__(self, attr):
-        if attr not in self._data_manager.schema.columns:
-            raise ValueError(f"DataFrame does not has attribute {attr}")
-
-        return self.__getitem__(attr)
-    """
 
     def __setattr__(self, key, value):
         property_attr_mapping = dict(block_table="_block_table", data_manager="_data_manager")
@@ -551,9 +531,6 @@ class DataFrame(object):
 
     @classmethod
     def from_flatten_data(cls, ctx, flatten_table, data_manager, key_type) -> "DataFrame":
-        """
-        key=random_key, value=(sample_id, data)
-        """
         from .ops._indexer import transform_flatten_data_to_df
         return transform_flatten_data_to_df(ctx, flatten_table, data_manager, key_type)
 

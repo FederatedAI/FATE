@@ -68,7 +68,7 @@ class PHECipherBuilder:
         #     return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
         # #
         elif kind == "mock":
-            from fate.arch.protocol.phe.mock import evaluator, keygen
+            # from fate.arch.protocol.phe.mock import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 
             sk, pk, coder = keygen(key_size)

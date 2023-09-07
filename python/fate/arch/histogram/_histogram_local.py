@@ -51,10 +51,20 @@ class Histogram:
         return cls(indexer, HistogramValuesContainer.create(values_schema, size))
 
     def i_update(self, fids, nids, targets, node_mapping):
-        positions = self._indexer.get_positions(
-            nids.flatten().detach().numpy().tolist(), fids.detach().numpy().tolist(), node_mapping
-        )
-        self._data.i_update(targets, positions)
+        if node_mapping is None:
+            positions = self._indexer.get_positions(
+                nids.flatten().detach().numpy().tolist(), fids.detach().numpy().tolist()
+            )
+            if len(positions) == 0:
+                return self
+            self._data.i_update(targets, positions)
+        else:
+            positions, masks = self._indexer.get_positions_with_node_mapping(
+                nids.flatten().detach().numpy().tolist(), fids.detach().numpy().tolist(), node_mapping
+            )
+            if len(positions) == 0:
+                return self
+            self._data.i_update_with_masks(targets, positions, masks)
         return self
 
     def iadd(self, hist: "Histogram"):

@@ -22,9 +22,10 @@ from .._dataframe import DataFrame
 
 def isin(df: DataFrame, values):
     """
-    支持的value类型为scalar、list、series、dict
-    注意的问题：torch.isin和np.isin不支持nan，所以需要使用torch.isnan和np.isnan来辅助
-              value为set/list的行为是不一样的，比如{1.0}和[1.0]可能会导致不同的结果，所以当前阶段暂时不转成set
+    support types are: scalar、list、series、dict
+    note: torch.isin and np.isin does not support nan, so use torch.isnan and np.isnan.
+          value type of set and list are not same, e.g.: {1.0}/[1.0] may lead to different result,
+              so does ont change to set now
     """
     if isinstance(values, (list, dict, pd.Series)):
         data_manager = df.data_manager

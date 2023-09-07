@@ -118,9 +118,6 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
         l_block_table = promote_partial_block_types(l_block_table, narrow_blocks=narrow_blocks, dst_blocks=dst_blocks,
                                                     data_manager=data_manager, dst_fields_loc=changed_fields_loc)
 
-    # l_flatten_func = functools.partial(_flatten_partition, block_num=data_manager.block_num)
-    # l_flatten = l_block_table.mapPartitions(l_flatten_func, use_previous_behavior=False)
-
     for r_df in data_frames[1:]:
         r_field_names = r_df.data_manager.get_field_name_list()
         r_fields_loc = r_df.data_manager.get_fields_loc()
@@ -144,9 +141,6 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
                                             full_block_migrate_set=full_migrate_set, dst_dm=data_manager)
             r_block_table = r_block_table.mapValues(_align_func)
 
-        # r_flatten_func = functools.partial(_flatten_partition, block_num=data_manager.block_num)
-        # r_flatten = r_block_table.mapPartitions(r_flatten_func, use_previous_behavior=False)
-        # l_flatten = l_flatten.union(r_flatten)
         l_block_table = l_block_table.union(
             r_block_table,
             lambda l_blocks, r_blocks: [
@@ -154,10 +148,6 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
             ]
         )
 
-    # partition_order_mappings = get_partition_order_by_raw_table(l_flatten, data_manager.block_row_size)
-    # _convert_to_block_func = functools.partial(to_blocks, dm=data_manager, partition_mappings=partition_order_mappings)
-    # block_table = l_flatten.mapPartitions(_convert_to_block_func, use_previous_behavior=False)
-    # block_table, data_manager = compress_blocks(block_table, data_manager)
     partition_order_mappings = get_partition_order_mappings_by_block_table(l_block_table, data_manager.block_row_size)
     _balance_block_func = functools.partial(_balance_blocks,
                                             partition_order_mappings=partition_order_mappings,
@@ -247,43 +237,13 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
     return sample_frame
 
 
-"""
-def retrieval_row(df: "DataFrame", indexer: "DTensor"):
-    if indexer.shape[1] != 1:
-        raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
-
-    block_num = df.data_manager.block_num
-    def _flatten_data(kvs):
-        for _, (blocks, t) in kvs:
-            flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
-            for i, v in enumerate(t):
-                v = v.item()
-                if not v:
-                    continue
-                yield flat_blocks[0][i], [flat_blocks[j][i] for j in range(1, block_num)]
-
-
-    block_table_with_index = df.block_table.join(indexer.shardings._data, lambda v1, v2: (v1, v2))
-    retrieval_raw_table = block_table_with_index.mapPartitions(_flatten_data, use_previous_behavior=False)
-
-    if retrieval_raw_table.count() == 0:
-        return df.empty_frame()
-
-    partition_order_mappings = get_partition_order_by_raw_table(retrieval_raw_table, df.data_manager.block_row_size)
-    to_blocks_func = functools.partial(to_blocks, dm=df.data_manager, partition_mappings=partition_order_mappings)
-
-    block_table = retrieval_raw_table.mapPartitions(to_blocks_func, use_previous_behavior=False)
-
-    return DataFrame(
-        df._ctx,
-        block_table,
-        partition_order_mappings,
-        df.data_manager
-    )
-"""
 def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
-    if indexer.shape[1] != 1:
+    if isinstance(indexer, DTensor) and indexer.shape[1] != 1:
         raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
+    elif isinstance(indexer, DataFrame):
+        operable_field_len = len(indexer.data_manager.infer_operable_field_names())
+        if operable_field_len != 1:
+            raise ValueError("Row indexing by DataFrame should have only one column filling with True/False")
 
     data_manager = df.data_manager.duplicate()
 
