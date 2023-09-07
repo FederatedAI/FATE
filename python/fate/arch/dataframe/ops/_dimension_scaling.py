@@ -282,8 +282,12 @@ def retrieval_row(df: "DataFrame", indexer: "DTensor"):
     )
 """
 def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
-    if indexer.shape[1] != 1:
+    if isinstance(indexer, DTensor) and indexer.shape[1] != 1:
         raise ValueError("Row indexing by DTensor should have only one column filling with True/False")
+    elif isinstance(indexer, DataFrame):
+        operable_field_len = len(indexer.data_manager.infer_operable_field_names())
+        if operable_field_len != 1:
+            raise ValueError("Row indexing by DataFrame should have only one column filling with True/False")
 
     data_manager = df.data_manager.duplicate()
 
