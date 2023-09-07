@@ -264,6 +264,9 @@ class SchemaManager(object):
             self._schema.columns = pd.Index(n_columns)
 
     def _rename_single_column(self, src, dst):
+        if src == dst:
+            return
+
         self._type_mapping[dst] = self._type_mapping[src]
         self._type_mapping.pop(src)
 
