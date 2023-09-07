@@ -90,11 +90,15 @@ class HeteroBinningModuleGuest(HeteroModule):
         ctx.hosts.put("coder", coder)
         host_col_bin = ctx.hosts.get("anonymous_col_bin")
         host_event_non_event_count = ctx.hosts.get("event_non_event_count")
-        for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):
+        host_bin_sizes = ctx.hosts.get("feature_bin_sizes")
+        for i, (col_bin_list, bin_sizes, en_host_count_res) in enumerate(zip(host_col_bin,
+                                                                             host_bin_sizes,
+                                                                             host_event_non_event_count)):
             host_event_non_event_count_hist = en_host_count_res.decrypt({"event_count": sk,
                                                                          "non_event_count": sk},
                                                                         {"event_count": (coder, torch.int32),
                                                                          "non_event_count": (coder, torch.int32)})
+            host_event_non_event_count_hist = host_event_non_event_count_hist.reshape(bin_sizes)
             summary_metrics, _ = self._bin_obj.compute_all_col_metrics(host_event_non_event_count_hist,
                                                                        col_bin_list)
             self._bin_obj.set_host_metrics(ctx.hosts[i], summary_metrics)
@@ -185,13 +189,10 @@ class HeteroBinningModuleHost(HeteroModule):
         # event count:
         to_compute_col = self.bin_col + self.category_col
         feature_bin_sizes = [self._bin_obj._bin_count_dict[col] for col in self.bin_col]
-        columns = binned_data.schema.columns.to_list()
         if self.category_col:
             for col in self.category_col:
                 category_bin_size = binned_data[col].get_dummies().shape[1]
-                # feature_bin_sizes.append(category_bin_size)
-                col_idx = columns.index(col)
-                feature_bin_sizes.insert(col_idx, category_bin_size)
+                feature_bin_sizes.append(category_bin_size)
         to_compute_data = binned_data[to_compute_col]
         to_compute_data.rename(
             columns=dict(zip(to_compute_data.schema.columns, to_compute_data.schema.anonymous_columns))
@@ -216,6 +217,7 @@ class HeteroBinningModuleHost(HeteroModule):
                                                                            targets=hist_targets)
         event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")
         ctx.guest.put("event_non_event_count", (event_non_event_count_hist))
+        ctx.guest.put("feature_bin_sizes", feature_bin_sizes)
 
     def transform(self, ctx: Context, test_data):
         return self._bin_obj.transform(ctx, test_data)
@@ -366,12 +368,10 @@ class StandardBinning(Module):
         to_compute_data = binned_data[to_compute_col]
 
         feature_bin_sizes = [self._bin_count_dict[col] for col in self.bin_col]
-        columns = binned_data.schema.columns.to_list()
         if self.category_col:
             for col in self.category_col:
                 category_bin_size = binned_data[col].get_dummies().shape[1]
-                col_idx = columns.index(col)
-                feature_bin_sizes.insert(col_idx, category_bin_size)
+                feature_bin_sizes.append(category_bin_size)
 
         hist_targets = binned_data.create_frame()
         hist_targets["event_count"] = binned_data.label
@@ -389,7 +389,7 @@ class StandardBinning(Module):
         event_non_event_count_hist = to_compute_data.distributed_hist_stat(histogram_builder=hist,
                                                                            targets=hist_targets)
         event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")
-        event_non_event_count_hist = event_non_event_count_hist.decrypt({}, {})
+        event_non_event_count_hist = event_non_event_count_hist.decrypt({}, {}).reshape(feature_bin_sizes)
         self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_non_event_count_hist,
                                                                              to_compute_col)
 

@@ -178,7 +178,7 @@ class HistogramValuesContainer(object):
                 result[nid][name] = {}
                 for fid, bids in fids.items():
                     result[nid][name][fid] = {}
-                    for start in bids:
+                    for bid, start in enumerate(bids):
                         values = value_container.slice(start, start + 1)
-                        result[nid][name][fid][start] = values
+                        result[nid][name][fid][bid] = values
         return result
