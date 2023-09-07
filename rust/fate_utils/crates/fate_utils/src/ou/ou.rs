@@ -1,5 +1,4 @@
-use ndarray::prelude::*;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
+use numpy::PyReadonlyArray1;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use anyhow::Error as AnyhowError;
@@ -100,26 +99,26 @@ impl SK {
 
 #[pymethods]
 impl Coder {
-    fn encode_f64(&self, data: f64) -> Plaintext {
-        Plaintext(self.0.encode_f64(data))
+    // fn encode_f64(&self, data: f64) -> Plaintext {
+    //     Plaintext(self.0.encode_f64(data))
+    // }
+    // fn decode_f64(&self, data: &Plaintext) -> f64 {
+    //     self.0.decode_f64(&data.0)
+    // }
+    // fn encode_f32(&self, data: f32) -> Plaintext {
+    //     Plaintext(self.0.encode_f32(data))
+    // }
+    fn encode_u64(&self, data: u64) -> Plaintext {
+        Plaintext(self.0.encode_u64(data))
     }
-    fn decode_f64(&self, data: &Plaintext) -> f64 {
-        self.0.decode_f64(&data.0)
+    fn decode_u64(&self, data: &Plaintext) -> u64 {
+        self.0.decode_u64(&data.0)
     }
-    fn encode_f32(&self, data: f32) -> Plaintext {
-        Plaintext(self.0.encode_f32(data))
+    fn encode_u32(&self, data: u32) -> Plaintext {
+        Plaintext(self.0.encode_u32(data))
     }
-    fn encode_i64(&self, data: i64) -> Plaintext {
-        Plaintext(self.0.encode_i64(data))
-    }
-    fn decode_i64(&self, data: &Plaintext) -> i64 {
-        self.0.decode_i64(&data.0)
-    }
-    fn encode_i32(&self, data: i32) -> Plaintext {
-        Plaintext(self.0.encode_i32(data))
-    }
-    fn decode_i32(&self, data: &Plaintext) -> i32 {
-        self.0.decode_i32(&data.0)
+    fn decode_u32(&self, data: &Plaintext) -> u32 {
+        self.0.decode_u32(&data.0)
     }
     #[new]
     fn __new__() -> PyResult<Self> {
@@ -142,64 +141,64 @@ impl Coder {
     fn unpack_floats(&self, packed: &PlaintextVector, offset_bit: usize, pack_num: usize, precision: u32, total_num: usize) -> Vec<f64> {
         self.0.unpack_floats(&packed.0.data, offset_bit, pack_num, precision, total_num)
     }
-    fn encode_f64_vec(&self, data: PyReadonlyArray1<f64>) -> PlaintextVector {
+    // fn encode_f64_vec(&self, data: PyReadonlyArray1<f64>) -> PlaintextVector {
+    //     let data = data
+    //         .as_array()
+    //         .iter()
+    //         .map(|x| self.0.encode_f64(*x))
+    //         .collect();
+    //     PlaintextVector(fixedpoint_ou::PlaintextVector { data })
+    // }
+    // fn decode_f64_vec<'py>(&self, data: &PlaintextVector, py: Python<'py>) -> &'py PyArray1<f64> {
+    //     Array1::from(
+    //         data.0.data
+    //             .iter()
+    //             .map(|x| self.0.decode_f64(x))
+    //             .collect::<Vec<f64>>(),
+    //     )
+    //         .into_pyarray(py)
+    // }
+    // fn encode_f32_vec(&self, data: PyReadonlyArray1<f32>) -> PlaintextVector {
+    //     let data = data
+    //         .as_array()
+    //         .iter()
+    //         .map(|x| self.0.encode_f32(*x))
+    //         .collect();
+    //     PlaintextVector(fixedpoint_ou::PlaintextVector { data })
+    // }
+    // fn decode_f32(&self, data: &Plaintext) -> f32 {
+    //     self.0.decode_f32(&data.0)
+    // }
+    // fn decode_f32_vec<'py>(&self, data: &PlaintextVector, py: Python<'py>) -> &'py PyArray1<f32> {
+    //     Array1::from(
+    //         data.0.data
+    //             .iter()
+    //             .map(|x| self.0.decode_f32(x))
+    //             .collect::<Vec<f32>>(),
+    //     )
+    //         .into_pyarray(py)
+    // }
+    fn encode_u64_vec(&self, data: PyReadonlyArray1<u64>) -> PlaintextVector {
         let data = data
             .as_array()
             .iter()
-            .map(|x| self.0.encode_f64(*x))
+            .map(|x| self.0.encode_u64(*x))
             .collect();
         PlaintextVector(fixedpoint_ou::PlaintextVector { data })
     }
-    fn decode_f64_vec<'py>(&self, data: &PlaintextVector, py: Python<'py>) -> &'py PyArray1<f64> {
-        Array1::from(
-            data.0.data
-                .iter()
-                .map(|x| self.0.decode_f64(x))
-                .collect::<Vec<f64>>(),
-        )
-            .into_pyarray(py)
+    fn decode_u64_vec(&self, data: &PlaintextVector) -> Vec<u64> {
+        data.0.data.iter().map(|x| self.0.decode_u64(x)).collect()
     }
-    fn encode_f32_vec(&self, data: PyReadonlyArray1<f32>) -> PlaintextVector {
+    fn encode_u32_vec(&self, data: PyReadonlyArray1<u32>) -> PlaintextVector {
         let data = data
             .as_array()
             .iter()
-            .map(|x| self.0.encode_f32(*x))
+            .map(|x| self.0.encode_u32(*x))
             .collect();
         PlaintextVector(fixedpoint_ou::PlaintextVector { data })
     }
-    fn decode_f32(&self, data: &Plaintext) -> f32 {
-        self.0.decode_f32(&data.0)
-    }
-    fn decode_f32_vec<'py>(&self, data: &PlaintextVector, py: Python<'py>) -> &'py PyArray1<f32> {
-        Array1::from(
-            data.0.data
-                .iter()
-                .map(|x| self.0.decode_f32(x))
-                .collect::<Vec<f32>>(),
-        )
-            .into_pyarray(py)
-    }
-    fn encode_i64_vec(&self, data: PyReadonlyArray1<i64>) -> PlaintextVector {
-        let data = data
-            .as_array()
-            .iter()
-            .map(|x| self.0.encode_i64(*x))
-            .collect();
-        PlaintextVector(fixedpoint_ou::PlaintextVector { data })
-    }
-    fn decode_i64_vec(&self, data: &PlaintextVector) -> Vec<i64> {
-        data.0.data.iter().map(|x| self.0.decode_i64(x)).collect()
-    }
-    fn encode_i32_vec(&self, data: PyReadonlyArray1<i32>) -> PlaintextVector {
-        let data = data
-            .as_array()
-            .iter()
-            .map(|x| self.0.encode_i32(*x))
-            .collect();
-        PlaintextVector(fixedpoint_ou::PlaintextVector { data })
-    }
-    fn decode_i32_vec(&self, data: &PlaintextVector) -> Vec<i32> {
-        data.0.data.iter().map(|x| self.0.decode_i32(x)).collect()
+    fn decode_u32_vec(&self, data: &PlaintextVector) -> Vec<u32> {
+        data.0.data.iter().map(|x| self.0.decode_u32(x)).collect()
     }
 }
 

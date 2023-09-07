@@ -67,10 +67,10 @@ class Coder:
         else:
             if dtype != vec.dtype:
                 vec = vec.to(dtype=dtype)
-        if dtype == torch.float64:
-            return self.encode_f64_vec(vec)
-        if dtype == torch.float32:
-            return self.encode_f32_vec(vec)
+        # if dtype == torch.float64:
+        #     return self.encode_f64_vec(vec)
+        # if dtype == torch.float32:
+        #     return self.encode_f32_vec(vec)
         if dtype == torch.int64:
             return self.encode_i64_vec(vec)
         if dtype == torch.int32:
@@ -78,10 +78,10 @@ class Coder:
         raise NotImplementedError(f"{vec.dtype} not supported")
 
     def decode_vec(self, vec: FV, dtype: torch.dtype) -> V:
-        if dtype == torch.float64:
-            return self.decode_f64_vec(vec)
-        if dtype == torch.float32:
-            return self.decode_f32_vec(vec)
+        # if dtype == torch.float64:
+        #     return self.decode_f64_vec(vec)
+        # if dtype == torch.float32:
+        #     return self.decode_f32_vec(vec)
         if dtype == torch.int64:
             return self.decode_i64_vec(vec)
         if dtype == torch.int32:
@@ -93,67 +93,67 @@ class Coder:
             assert val.ndim == 0, "only scalar supported"
             dtype = val.dtype
             val = val.item()
-        if dtype == torch.float64:
-            return self.encode_f64(val)
-        if dtype == torch.float32:
-            return self.encode_f32(val)
+        # if dtype == torch.float64:
+        #     return self.encode_f64(val)
+        # if dtype == torch.float32:
+        #     return self.encode_f32(val)
         if dtype == torch.int64:
             return self.encode_i64(val)
         if dtype == torch.int32:
             return self.encode_i32(val)
         raise NotImplementedError(f"{dtype} not supported")
 
-    def encode_f64(self, val: float):
-        return self.coder.encode_f64(val)
-
-    def decode_f64(self, val):
-        return self.coder.decode_f64(val)
+    # def encode_f64(self, val: float):
+    #     return self.coder.encode_f64(val)
+    #
+    # def decode_f64(self, val):
+    #     return self.coder.decode_f64(val)
 
     def encode_i64(self, val: int):
-        return self.coder.encode_i64(val)
+        return self.coder.encode_u64(val)
 
     def decode_i64(self, val):
-        return self.coder.decode_i64(val)
+        return self.coder.decode_u64(val)
 
-    def encode_f32(self, val: float):
-        return self.coder.encode_f32(val)
-
-    def decode_f32(self, val):
-        return self.coder.decode_f32(val)
+    # def encode_f32(self, val: float):
+    #     return self.coder.encode_f32(val)
+    #
+    # def decode_f32(self, val):
+    #     return self.coder.decode_f32(val)
 
     def encode_i32(self, val: int):
-        return self.coder.encode_i32(val)
+        return self.coder.encode_u32(val)
 
     def decode_i32(self, val):
-        return self.coder.decode_i32(val)
+        return self.coder.decode_u32(val)
 
-    def encode_f64_vec(self, vec: torch.Tensor):
-        vec = vec.detach().flatten()
-        return self.coder.encode_f64_vec(vec.detach().numpy())
-
-    def decode_f64_vec(self, vec):
-        return torch.tensor(self.coder.decode_f64_vec(vec))
+    # def encode_f64_vec(self, vec: torch.Tensor):
+    #     vec = vec.detach().flatten()
+    #     return self.coder.encode_f64_vec(vec.detach().numpy())
+    #
+    # def decode_f64_vec(self, vec):
+    #     return torch.tensor(self.coder.decode_f64_vec(vec))
 
     def encode_i64_vec(self, vec: torch.Tensor):
         vec = vec.detach().flatten()
-        return self.coder.encode_i64_vec(vec.detach().numpy())
+        return self.coder.encode_u64_vec(vec.detach().numpy())
 
     def decode_i64_vec(self, vec):
-        return torch.tensor(self.coder.decode_i64_vec(vec))
+        return torch.tensor(self.coder.decode_u64_vec(vec))
 
-    def encode_f32_vec(self, vec: torch.Tensor):
-        vec = vec.detach().flatten()
-        return self.coder.encode_f32_vec(vec.detach().numpy())
-
-    def decode_f32_vec(self, vec):
-        return torch.tensor(self.coder.decode_f32_vec(vec))
+    # def encode_f32_vec(self, vec: torch.Tensor):
+    #     vec = vec.detach().flatten()
+    #     return self.coder.encode_f32_vec(vec.detach().numpy())
+    #
+    # def decode_f32_vec(self, vec):
+    #     return torch.tensor(self.coder.decode_f32_vec(vec))
 
     def encode_i32_vec(self, vec: torch.Tensor):
         vec = vec.detach().flatten()
-        return self.coder.encode_i32_vec(vec.detach().numpy())
+        return self.coder.encode_u32_vec(vec.detach().numpy())
 
     def decode_i32_vec(self, vec):
-        return torch.tensor(self.coder.decode_i32_vec(vec))
+        return torch.tensor(self.coder.decode_u32_vec(vec))
 
 
 def keygen(key_size):

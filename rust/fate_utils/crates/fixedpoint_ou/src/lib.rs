@@ -8,17 +8,17 @@ use serde::{Deserialize, Serialize};
 
 mod frexp;
 
-use frexp::Frexp;
+// use frexp::Frexp;
 
 const BASE: u32 = 16;
-const MAX_INT_FRACTION: u8 = 2;
-const FLOAT_MANTISSA_BITS: u32 = 53;
+// const MAX_INT_FRACTION: u8 = 2;
+// const FLOAT_MANTISSA_BITS: u32 = 53;
 const LOG2_BASE: u32 = 4;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct PK {
     pub pk: ou::PK,
-    pub max_int: BInt,
+    // pub max_int: BInt,
 }
 
 impl PK {
@@ -52,25 +52,15 @@ impl SK {
 
 /// fixedpoint encoder
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Coder {
-    pub n: BInt,
-    pub max_int: BInt,
-}
+pub struct Coder {}
 
 impl Coder {
-    pub fn new(n: &BInt) -> Self {
-        Coder {
-            n: n.clone(),
-            max_int: n / MAX_INT_FRACTION,
-        }
+    pub fn new() -> Self {
+        Coder {}
     }
 
-    pub fn encode_i64(&self, plaintext: i64) -> Plaintext {
-        let significant = ou::PT(if plaintext < 0 {
-            BInt::from(&self.n + plaintext)
-        } else {
-            BInt::from(plaintext)
-        });
+    pub fn encode_u64(&self, plaintext: u64) -> Plaintext {
+        let significant = ou::PT(BInt::from(plaintext));
         Plaintext {
             significant,
             exp: 0,
@@ -116,121 +106,70 @@ impl Coder {
 
         result
     }
-    pub fn encode_i32(&self, plaintext: i32) -> Plaintext {
-        let significant = ou::PT(if plaintext < 0 {
-            BInt::from(&self.n + plaintext)
-        } else {
+    pub fn encode_u32(&self, plaintext: u32) -> Plaintext {
+        let significant = ou::PT(
             BInt::from(plaintext)
-        });
+        );
         Plaintext {
             significant,
             exp: 0,
         }
     }
-    pub fn decode_i64(&self, encoded: &Plaintext) -> i64 {
+    pub fn decode_u64(&self, encoded: &Plaintext) -> u64 {
         let significant = encoded.significant.0.clone();
-        let mantissa = if significant > self.n {
-            panic!("Attempted to decode corrupted number")
-        } else if significant <= self.max_int {
-            significant
-        } else if significant >= BInt::from(&self.n - &self.max_int) {
-            significant - &self.n
-        } else {
-            panic!("Overflow detected in decrypted number")
-        };
-        (mantissa << (LOG2_BASE as i32 * encoded.exp)).to_i128() as i64
+        let mantissa = significant;
+        (mantissa << (LOG2_BASE as i32 * encoded.exp)).to_i128() as u64
     }
-    pub fn decode_i32(&self, encoded: &Plaintext) -> i32 {
+    pub fn decode_u32(&self, encoded: &Plaintext) -> u32 {
         // Todo: could be improved
-        self.decode_f64(encoded) as i32
+        self.decode_u64(encoded) as u32
     }
 
-    pub fn encode_f64(&self, plaintext: f64) -> Plaintext {
-        let bin_flt_exponent = plaintext.frexp().1;
-        let bin_lsb_exponent = bin_flt_exponent - (FLOAT_MANTISSA_BITS as i32);
-        let exp = (bin_lsb_exponent as f64 / LOG2_BASE as f64).floor() as i32;
-        let significant = BInt(
-            (plaintext * rug::Float::with_val(FLOAT_MANTISSA_BITS, BASE).pow(-exp))
-                .round()
-                .to_integer()
-                .unwrap(),
-        );
-        if significant.abs_ref() > self.max_int {
-            panic!(
-                "Integer needs to be within +/- {} but got {}",
-                self.max_int.0, &significant.0
-            )
-        }
-        Plaintext {
-            significant: ou::PT(significant),
-            exp,
-        }
-    }
-    pub fn decode_f64(&self, encoded: &Plaintext) -> f64 {
-        let significant = encoded.significant.0.clone();
-        let mantissa = if significant > self.n {
-            panic!("Attempted to decode corrupted number")
-        } else if significant <= self.max_int {
-            significant
-        } else if significant >= BInt::from(&self.n - &self.max_int) {
-            significant - &self.n
-        } else {
-            format!("Overflow detected in decrypted number: {:?}", significant);
-            panic!("Overflow detected in decrypted number")
-        };
-        if encoded.exp >= 0 {
-            (mantissa << (LOG2_BASE as i32 * encoded.exp)).to_f64()
-        } else {
-            (mantissa * rug::Float::with_val(FLOAT_MANTISSA_BITS, BASE).pow(encoded.exp)).to_f64()
-        }
-    }
-    pub fn encode_f32(&self, plaintext: f32) -> Plaintext {
-        self.encode_f64(plaintext as f64)
-    }
-    pub fn decode_f32(&self, encoded: &Plaintext) -> f32 {
-        self.decode_f64(encoded) as f32
-    }
-}
-
-pub trait CouldCode {
-    fn encode(&self, coder: &Coder) -> Plaintext;
-    fn decode(plaintext: &Plaintext, coder: &Coder) -> Self;
-}
-
-impl CouldCode for f64 {
-    fn encode(&self, coder: &Coder) -> Plaintext {
-        coder.encode_f64(*self)
-    }
-    fn decode(plaintext: &Plaintext, coder: &Coder) -> Self {
-        coder.decode_f64(plaintext)
-    }
-}
-
-impl CouldCode for i64 {
-    fn encode(&self, coder: &Coder) -> Plaintext {
-        coder.encode_i64(*self)
-    }
-    fn decode(plaintext: &Plaintext, coder: &Coder) -> Self {
-        coder.decode_i64(plaintext)
-    }
-}
-
-impl CouldCode for i32 {
-    fn encode(&self, coder: &Coder) -> Plaintext {
-        coder.encode_i32(*self)
-    }
-    fn decode(plaintext: &Plaintext, coder: &Coder) -> Self {
-        coder.decode_i32(plaintext)
-    }
-}
-
-impl CouldCode for f32 {
-    fn encode(&self, coder: &Coder) -> Plaintext {
-        coder.encode_f32(*self)
-    }
-    fn decode(plaintext: &Plaintext, coder: &Coder) -> Self {
-        coder.decode_f32(plaintext)
-    }
+    // pub fn encode_f64(&self, plaintext: f64) -> Plaintext {
+    //     let bin_flt_exponent = plaintext.frexp().1;
+    //     let bin_lsb_exponent = bin_flt_exponent - (FLOAT_MANTISSA_BITS as i32);
+    //     let exp = (bin_lsb_exponent as f64 / LOG2_BASE as f64).floor() as i32;
+    //     let significant = BInt(
+    //         (plaintext * rug::Float::with_val(FLOAT_MANTISSA_BITS, BASE).pow(-exp))
+    //             .round()
+    //             .to_integer()
+    //             .unwrap(),
+    //     );
+    //     if significant.abs_ref() > self.max_int {
+    //         panic!(
+    //             "Integer needs to be within +/- {} but got {}",
+    //             self.max_int.0, &significant.0
+    //         )
+    //     }
+    //     Plaintext {
+    //         significant: ou::PT(significant),
+    //         exp,
+    //     }
+    // }
+    // pub fn decode_f64(&self, encoded: &Plaintext) -> f64 {
+    //     let significant = encoded.significant.0.clone();
+    //     let mantissa = if significant > self.n {
+    //         panic!("Attempted to decode corrupted number")
+    //     } else if significant <= self.max_int {
+    //         significant
+    //     } else if significant >= BInt::from(&self.n - &self.max_int) {
+    //         significant - &self.n
+    //     } else {
+    //         format!("Overflow detected in decrypted number: {:?}", significant);
+    //         panic!("Overflow detected in decrypted number")
+    //     };
+    //     if encoded.exp >= 0 {
+    //         (mantissa << (LOG2_BASE as i32 * encoded.exp)).to_f64()
+    //     } else {
+    //         (mantissa * rug::Float::with_val(FLOAT_MANTISSA_BITS, BASE).pow(encoded.exp)).to_f64()
+    //     }
+    // }
+    // pub fn encode_f32(&self, plaintext: f32) -> Plaintext {
+    //     self.encode_f64(plaintext as f64)
+    // }
+    // pub fn decode_f32(&self, encoded: &Plaintext) -> f32 {
+    //     self.decode_f64(encoded) as f32
+    // }
 }
 
 
@@ -332,16 +271,7 @@ impl Ciphertext {
         }
     }
     pub fn mul(&self, b: &Plaintext, pk: &PK) -> Ciphertext {
-        let inside = if &pk.pk.n - &pk.max_int <= b.significant.0 {
-            // large plaintext
-            let neg_c = self.significant_encryped.0.invert_ref(&pk.pk.n);
-            let neg_scalar = &pk.pk.n - &b.significant.0;
-            neg_c.pow_mod_ref(&neg_scalar, &pk.pk.n)
-        } else if b.significant.0 <= pk.max_int {
-            (&self.significant_encryped.0).pow_mod_ref(&b.significant.0, &pk.pk.n)
-        } else {
-            panic!("invalid plaintext: {:?}", b)
-        };
+        let inside = (&self.significant_encryped.0).pow_mod_ref(&b.significant.0, &pk.pk.n);
         Ciphertext {
             significant_encryped: ou::CT(inside),
             exp: self.exp + b.exp,
@@ -406,11 +336,10 @@ impl SK {
 }
 
 pub fn keygen(bit_length: u32) -> (SK, PK, Coder) {
-    //TODO: for test, coder should be generated from pk
     let (sk, pk) = ou::keygen(bit_length);
-    let coder = Coder::new(&sk.p);
-    let max_int = &sk.p / MAX_INT_FRACTION;
-    (SK { sk }, PK { pk: pk, max_int: max_int }, coder)
+    let coder = Coder::new();
+    // let max_int = &sk.p / MAX_INT_FRACTION;
+    (SK { sk }, PK { pk: pk }, coder)
 }
 
 impl CiphertextVector {
