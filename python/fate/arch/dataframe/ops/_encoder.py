@@ -221,7 +221,7 @@ def bucketize(df: DataFrame, boundaries: Union[pd.DataFrame, dict]):
             if isinstance(blocks[src_bid], torch.Tensor):
                 ret = torch.bucketize(blocks[src_bid][:, [src_offset]], boundary, out_int32=False)
             else:
-                ret = torch.bucketize(blocks[src_bid][:, [src_offset]], boundary)
+                ret = np.digitize(blocks[src_bid][:, [src_offset]], boundary)
 
             ret_blocks[dst_bid] = dm.blocks[dst_bid].convert_block(ret)
 
