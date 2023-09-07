@@ -17,8 +17,10 @@ import logging
 
 import numpy as np
 import pandas as pd
+import torch
 
 from fate.arch import Context
+from fate.arch.histogram import HistogramBuilder
 from ..abc.module import HeteroModule, Module
 
 logger = logging.getLogger(__name__)
@@ -36,12 +38,13 @@ class HeteroBinningModuleGuest(HeteroModule):
             local_only=False,
             error_rate=1e-6,
             adjustment_factor=0.5,
-            key_length=1024
+            he_param=None
     ):
         self.method = method
         self.bin_col = bin_col
         self.category_col = category_col
-        self.key_length = key_length
+        self.he_param = he_param
+        self.n_bins = n_bins
         self._federation_bin_obj = None
         # param check
         if self.method in ["quantile", "bucket", "manual"]:
@@ -69,26 +72,35 @@ class HeteroBinningModuleGuest(HeteroModule):
         self._bin_obj.fit(ctx, train_data)
 
     def compute_metrics(self, ctx: Context, binned_data):
-        label_tensor = binned_data.label.as_tensor()
-        self._bin_obj.compute_metrics(binned_data, label_tensor)
+        # label_tensor = binned_data.label.as_tensor()
+        self._bin_obj.compute_metrics(binned_data)
         if not self.local_only:
             self.compute_federated_metrics(ctx, binned_data)
 
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
-        kit = ctx.cipher.phe.setup(options=dict(key_length=self.key_length))
+        kit = ctx.cipher.phe.setup(options=self.he_param)
         encryptor = kit.get_tensor_encryptor()
-        decryptor = kit.get_tensor_decryptor()
+        sk, pk, evaluator, coder = kit.sk, kit.pk, kit.evaluator, kit.coder
+
         label_tensor = binned_data.label.as_tensor()
         ctx.hosts.put("enc_y", encryptor.encrypt_tensor(label_tensor))
+        ctx.hosts.put("pk", pk)
+        ctx.hosts.put("evaluator", evaluator)
+        ctx.hosts.put("coder", coder)
         host_col_bin = ctx.hosts.get("anonymous_col_bin")
         host_event_non_event_count = ctx.hosts.get("event_non_event_count")
-        for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):
-            host_event_count_hist = en_host_count_res[0].decrypt(decryptor)
-            host_non_event_count_hist = en_host_count_res[1].decrypt(decryptor)
-            summary_metrics, _ = self._bin_obj.compute_all_col_metrics(
-                host_event_count_hist, host_non_event_count_hist
-            )
+        host_bin_sizes = ctx.hosts.get("feature_bin_sizes")
+        for i, (col_bin_list, bin_sizes, en_host_count_res) in enumerate(zip(host_col_bin,
+                                                                             host_bin_sizes,
+                                                                             host_event_non_event_count)):
+            host_event_non_event_count_hist = en_host_count_res.decrypt({"event_count": sk,
+                                                                         "non_event_count": sk},
+                                                                        {"event_count": (coder, torch.int32),
+                                                                         "non_event_count": (coder, torch.int32)})
+            host_event_non_event_count_hist = host_event_non_event_count_hist.reshape(bin_sizes)
+            summary_metrics, _ = self._bin_obj.compute_all_col_metrics(host_event_non_event_count_hist,
+                                                                       col_bin_list)
             self._bin_obj.set_host_metrics(ctx.hosts[i], summary_metrics)
 
     def transform(self, ctx: Context, test_data):
@@ -106,7 +118,8 @@ class HeteroBinningModuleGuest(HeteroModule):
                 "bin_col": self.bin_col,
                 "category_col": self.category_col,
                 "model_type": "binning",
-                "key_length": self.key_length,
+                "n_bins": self.n_bins,
+                "he_param": self.he_param,
             },
         }
         return model
@@ -120,7 +133,8 @@ class HeteroBinningModuleGuest(HeteroModule):
             method=model["meta"]["method"],
             bin_col=model["meta"]["bin_col"],
             category_col=model["meta"]["category_col"],
-            key_length=model["meta"]["key_length"],
+            he_param=model["meta"]["he_param"],
+            n_bins=model["meta"]["n_bins"],
         )
         bin_obj.restore(model["data"])
         return bin_obj
@@ -140,6 +154,7 @@ class HeteroBinningModuleHost(HeteroModule):
             adjustment_factor=0.5,
     ):
         self.method = method
+        self.n_bins = n_bins
         self._federation_bin_obj = None
         if self.method in ["quantile", "bucket", "manual"]:
             self._bin_obj = StandardBinning(
@@ -162,7 +177,9 @@ class HeteroBinningModuleHost(HeteroModule):
 
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
-
+        pk = ctx.guest.get("pk")
+        evaluator = ctx.guest.get("evaluator")
+        coder = ctx.guest.get("coder")
         columns = binned_data.schema.columns.to_list()
         # logger.info(f"self.bin_col: {self.bin_col}")
         anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)] for col in self.bin_col]
@@ -171,21 +188,36 @@ class HeteroBinningModuleHost(HeteroModule):
         encrypt_y = ctx.guest.get("enc_y")
         # event count:
         to_compute_col = self.bin_col + self.category_col
+        feature_bin_sizes = [self._bin_obj._bin_count_dict[col] for col in self.bin_col]
+        if self.category_col:
+            for col in self.category_col:
+                category_bin_size = binned_data[col].get_dummies().shape[1]
+                feature_bin_sizes.append(category_bin_size)
         to_compute_data = binned_data[to_compute_col]
         to_compute_data.rename(
             columns=dict(zip(to_compute_data.schema.columns, to_compute_data.schema.anonymous_columns))
         )
-        event_count_hist = to_compute_data.hist(targets=encrypt_y)
-        # bin count(entries per bin):
-        to_compute_data["targets_binning"] = 1
-        targets = to_compute_data["targets_binning"].as_tensor()
-        to_compute_data = binned_data[to_compute_col]
-        to_compute_data.rename(
-            columns=dict(zip(to_compute_data.schema.columns, to_compute_data.schema.anonymous_columns))
-        )
-        bin_count = to_compute_data.hist(targets=targets)
-        non_event_count_hist = bin_count - event_count_hist
-        ctx.guest.put("event_non_event_count", (event_count_hist, non_event_count_hist))
+        hist_targets = binned_data.create_frame()
+        hist_targets["event_count"] = encrypt_y
+        hist_targets["non_event_count"] = 1
+        hist_schema = {"event_count": {"type": "paillier",
+                                       "stride": 1,
+                                       "pk": pk,
+                                       "evaluator": evaluator,
+                                       "coder": coder
+                                       },
+                       "non_event_count": {"type": "tensor",
+                                           "stride": 1,
+                                           "dtype": torch.int32}
+                       }
+        hist = HistogramBuilder(num_node=1,
+                                feature_bin_sizes=feature_bin_sizes,
+                                value_schemas=hist_schema)
+        event_non_event_count_hist = to_compute_data.distributed_hist_stat(histogram_builder=hist,
+                                                                           targets=hist_targets)
+        event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")
+        ctx.guest.put("event_non_event_count", (event_non_event_count_hist))
+        ctx.guest.put("feature_bin_sizes", feature_bin_sizes)
 
     def transform(self, ctx: Context, test_data):
         return self._bin_obj.transform(ctx, test_data)
@@ -198,6 +230,7 @@ class HeteroBinningModuleHost(HeteroModule):
                 "method": self.method,
                 "bin_col": self.bin_col,
                 "category_col": self.category_col,
+                "n_bins": self.n_bins,
                 "model_type": "binning",
             },
         }
@@ -212,6 +245,7 @@ class HeteroBinningModuleHost(HeteroModule):
             method=model["meta"]["method"],
             bin_col=model["meta"]["bin_col"],
             category_col=model["meta"]["category_col"],
+            n_bins=model["meta"]["n_bins"],
         )
         bin_obj.restore(model["data"])
         return bin_obj
@@ -260,13 +294,9 @@ class StandardBinning(Module):
         if self.method == "quantile":
             q = np.arange(0, 1, 1 / self.n_bins)
             split_pt_df = select_data.quantile(q=q, relative_error=self.relative_error)
-            # pd.DataFrame
-            # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "bucket":
             split_pt_df = select_data.qcut(q=self.n_bins)
-            # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "manual":
-            # self._split_pt_dict = self._manual_split_pt_dict
             split_pt_df = pd.DataFrame.from_dict(self._manual_split_pt_dict)
         else:
             raise ValueError(f"Unknown binning method {self.method} encountered. Please check")
@@ -285,12 +315,10 @@ class StandardBinning(Module):
         binned_df = train_data.bucketize(boundaries=self._split_pt_dict)
         return binned_df
 
-    def compute_all_col_metrics(self, event_count_hist, non_event_count_hist):
-        # pd.DataFrame ver
-        event_count_dict = event_count_hist.to_dict()
-        # logger.debug(f"event_count dict: {event_count_dict}")
-        non_event_count_dict = non_event_count_hist.to_dict()
-        # logger.debug(f"non_event_count dict: {non_event_count_dict}")
+    def compute_all_col_metrics(self, event_non_event_count_hist, columns):
+        event_non_event_count = event_non_event_count_hist.to_dict(columns)[0]
+        non_event_count_dict = event_non_event_count.get("non_event_count")
+        event_count_dict = event_non_event_count.get("event_count")
 
         event_count, non_event_count = {}, {}
         event_rate, non_event_rate = {}, {}
@@ -298,10 +326,10 @@ class StandardBinning(Module):
         total_event_count, total_non_event_count = None, None
         for col_name in event_count_dict.keys():
             col_event_count = pd.Series(
-                {bin_num: bin_count.tolist()[0] for bin_num, bin_count in event_count_dict[col_name].items()}
+                {bin_num: int(bin_count.data) for bin_num, bin_count in event_count_dict[col_name].items()}
             )
             col_non_event_count = pd.Series(
-                {bin_num: bin_count.tolist()[0] for bin_num, bin_count in non_event_count_dict[col_name].items()}
+                {bin_num: int(bin_count.data) for bin_num, bin_count in non_event_count_dict[col_name].items()}
             )
             if total_event_count is None:
                 total_event_count = col_event_count.sum() or 1
@@ -320,7 +348,7 @@ class StandardBinning(Module):
             non_event_rate[col_name] = col_non_event_rate.to_dict()
             bin_woe[col_name] = col_bin_woe.to_dict()
             bin_iv[col_name] = col_bin_iv.to_dict()
-            is_monotonic[col_name] = col_bin_woe.is_monotonic
+            is_monotonic[col_name] = col_bin_woe.is_monotonic_increasing or col_bin_woe.is_monotonic_decreasing
             iv[col_name] = col_bin_iv.sum()
 
         metrics_summary = {}
@@ -335,16 +363,35 @@ class StandardBinning(Module):
         metrics_summary["iv"] = iv
         return metrics_summary, bin_woe
 
-    def compute_metrics(self, binned_data, label_col):
+    def compute_metrics(self, binned_data):
         to_compute_col = self.bin_col + self.category_col
         to_compute_data = binned_data[to_compute_col]
-        event_count_hist = to_compute_data.hist(targets=label_col)
-        to_compute_data["targets_binning"] = 1
-        targets = to_compute_data["targets_binning"].as_tensor()
-        to_compute_data = binned_data[to_compute_col]
-        bin_count_hist = to_compute_data.hist(targets=targets)
-        non_event_count_hist = bin_count_hist - event_count_hist
-        self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_count_hist, non_event_count_hist)
+
+        feature_bin_sizes = [self._bin_count_dict[col] for col in self.bin_col]
+        if self.category_col:
+            for col in self.category_col:
+                category_bin_size = binned_data[col].get_dummies().shape[1]
+                feature_bin_sizes.append(category_bin_size)
+
+        hist_targets = binned_data.create_frame()
+        hist_targets["event_count"] = binned_data.label
+        hist_targets["non_event_count"] = 1
+        hist_schema = {"event_count": {"type": "tensor",
+                                       "stride": 1,
+                                       "dtype": torch.int32},
+                       "non_event_count": {"type": "tensor",
+                                           "stride": 1,
+                                           "dtype": torch.int32}
+                       }
+        hist = HistogramBuilder(num_node=1,
+                                feature_bin_sizes=feature_bin_sizes,
+                                value_schemas=hist_schema)
+        event_non_event_count_hist = to_compute_data.distributed_hist_stat(histogram_builder=hist,
+                                                                           targets=hist_targets)
+        event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")
+        event_non_event_count_hist = event_non_event_count_hist.decrypt({}, {}).reshape(feature_bin_sizes)
+        self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_non_event_count_hist,
+                                                                             to_compute_col)
 
     def transform(self, ctx: Context, binned_data):
         logger.debug(f"Given transform method: {self.transform_method}.")
