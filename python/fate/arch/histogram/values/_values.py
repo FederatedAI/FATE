@@ -1,8 +1,9 @@
 import typing
 from typing import MutableMapping
-from ._value import HistogramValues
-from ._plain import HistogramPlainValues
+
 from ._cipher import HistogramEncryptedValues
+from ._plain import HistogramPlainValues
+from ._value import HistogramValues
 
 if typing.TYPE_CHECKING:
     from ..indexer import HistogramIndexer
@@ -64,8 +65,10 @@ class HistogramValuesContainer(object):
         elif isinstance(left_value, HistogramPlainValues):
             if isinstance(right_value, HistogramEncryptedValues):
                 assert left_value.stride == right_value.stride
-                data = right_value.evaluator.rsub_plain(left_value.data, right_value.data, right_value.pk, right_value.coder)
-                self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data)
+                data = right_value.evaluator.rsub_plain(right_value.data, left_value.data, right_value.pk,
+                                                        right_value.coder)
+                self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data,
+                                                                right_value.coder, right_value.stride)
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride
                 left_value.data = left_value.data - right_value.data

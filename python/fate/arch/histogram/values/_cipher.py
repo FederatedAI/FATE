@@ -20,7 +20,7 @@ class HistogramEncryptedValues(HistogramValues):
         self.evaluator = evaluator
 
     @classmethod
-    def zeros(cls, pk, evaluator, coder, size: int, stride: int = 1):
+    def zeros(cls, pk, evaluator, size: int, coder, stride: int = 1):
         return cls(pk, evaluator, evaluator.zeros(size * stride), coder, stride)
 
     def i_update(self, value, positions):
