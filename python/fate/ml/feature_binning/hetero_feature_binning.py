@@ -292,7 +292,7 @@ class StandardBinning(Module):
         select_data = train_data[self.bin_col]
 
         if self.method == "quantile":
-            q = np.arange(0, 1, 1 / self.n_bins)
+            q = list(np.arange(0, 1, 1 / self.n_bins)) + [1.0]
             split_pt_df = select_data.quantile(q=q, relative_error=self.relative_error)
         elif self.method == "bucket":
             split_pt_df = select_data.qcut(q=self.n_bins)
@@ -328,9 +328,11 @@ class StandardBinning(Module):
             col_event_count = pd.Series(
                 {bin_num: int(bin_count.data) for bin_num, bin_count in event_count_dict[col_name].items()}
             )
+            col_event_count = col_event_count - col_event_count.shift(1).fillna(0)
             col_non_event_count = pd.Series(
                 {bin_num: int(bin_count.data) for bin_num, bin_count in non_event_count_dict[col_name].items()}
             )
+            col_non_event_count = col_non_event_count - col_non_event_count.shift(1).fillna(0)
             if total_event_count is None:
                 total_event_count = col_event_count.sum() or 1
                 total_non_event_count = col_non_event_count.sum() or 1
@@ -349,7 +351,7 @@ class StandardBinning(Module):
             bin_woe[col_name] = col_bin_woe.to_dict()
             bin_iv[col_name] = col_bin_iv.to_dict()
             is_monotonic[col_name] = col_bin_woe.is_monotonic_increasing or col_bin_woe.is_monotonic_decreasing
-            iv[col_name] = col_bin_iv.sum()
+            iv[col_name] = col_bin_iv[1:].sum()
 
         metrics_summary = {}
 
@@ -372,7 +374,6 @@ class StandardBinning(Module):
             for col in self.category_col:
                 category_bin_size = binned_data[col].get_dummies().shape[1]
                 feature_bin_sizes.append(category_bin_size)
-
         hist_targets = binned_data.create_frame()
         hist_targets["event_count"] = binned_data.label
         hist_targets["non_event_count"] = 1
@@ -386,6 +387,7 @@ class StandardBinning(Module):
         hist = HistogramBuilder(num_node=1,
                                 feature_bin_sizes=feature_bin_sizes,
                                 value_schemas=hist_schema)
+        df = to_compute_data.as_pd_df()
         event_non_event_count_hist = to_compute_data.distributed_hist_stat(histogram_builder=hist,
                                                                            targets=hist_targets)
         event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")
