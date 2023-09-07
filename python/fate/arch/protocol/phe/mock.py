@@ -11,6 +11,12 @@ class EV:
     def __init__(self, data):
         self.data = data
 
+    def __str__(self):
+        return f"<EV {self.data}>"
+
+    def __repr__(self):
+        return str(self)
+
     def tolist(self):
         return [EV(x.clone().detach()) for x in self.data]
 
@@ -260,7 +266,23 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         """
         if size is None:
             size = min(a.data.numel() - sa, b.data.numel() - sb)
-        a.data[sa:sa + size] += b.data[sb:sb + size]
+        a.data[sa: sa + size] += b.data[sb: sb + size]
+
+    @staticmethod
+    def i_sub(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
+        """
+        inplace add, a[sa:sa+size] += b[sb:sb+size], if size is None, then size = min(a.size - sa, b.size - sb)
+        Args:
+            pk: the public key
+            a: the vector to add to
+            b: the vector to add
+            sa: the start index of a
+            sb: the start index of b
+            size: the size to add
+        """
+        if size is None:
+            size = min(a.data.numel() - sa, b.data.numel() - sb)
+        a.data[sa: sa + size] -= b.data[sb: sb + size]
 
     @staticmethod
     def slice(a: EV, start: int, size: int) -> EV:
@@ -274,7 +296,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         Returns:
             the sliced vector
         """
-        return EV(a.data[start:start + size])
+        return EV(a.data[start: start + size])
 
     @staticmethod
     def i_shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> None:
@@ -287,6 +309,18 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         """
         shuffled = a.data[indices]
         a.data.copy_(shuffled)
+
+    @staticmethod
+    def shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> EV:
+        """
+        inplace shuffle, a = a[indices]
+        Args:
+            pk: public key, not used
+            a: the vector to shuffle
+            indices: the indices to shuffle
+        """
+        shuffled = a.data[indices]
+        return EV(shuffled)
 
     @staticmethod
     def i_update(pk: PK, a: EV, b: EV, positions, stride: int) -> None:
@@ -308,6 +342,31 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             index = torch.LongTensor(positions)
             data = a.data.view(-1, stride)
             value = b.data.view(-1, stride).unsqueeze(1).expand(-1, index.shape[1], stride).reshape(-1, stride)
+            index = index.flatten().unsqueeze(1).expand(-1, stride)
+        data.scatter_add_(0, index, value)
+
+    @staticmethod
+    def i_update_with_masks(pk: PK, a: EV, b: EV, positions, masks, stride: int) -> None:
+        """
+        inplace update, a[positions] += b[::stride]
+        Args:
+            pk: public key, not used
+            a: the vector to update
+            b: the vector to update with
+            positions: the positions to update
+            stride: the stride to update
+        """
+        if stride == 1:
+            b = b.data[masks]
+            index = torch.LongTensor(positions)
+            value = b.data.view(-1, 1).expand(-1, index.shape[1]).flatten()
+            index = index.flatten()
+            data = a.data
+        else:
+            index = torch.LongTensor(positions)
+            data = a.data.view(-1, stride)
+            value = b.data.view(-1, stride)[masks]
+            value = value.unsqueeze(1).expand(-1, index.shape[1], stride).reshape(-1, stride)
             index = index.flatten().unsqueeze(1).expand(-1, stride)
         data.scatter_add_(0, index, value)
 

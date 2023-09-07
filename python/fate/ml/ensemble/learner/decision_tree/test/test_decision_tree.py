@@ -35,7 +35,7 @@ def create_ctx(local):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-    max_depth = 3
+    max_depth = 5
     if party == 'guest':
         ctx = create_ctx(guest)
 

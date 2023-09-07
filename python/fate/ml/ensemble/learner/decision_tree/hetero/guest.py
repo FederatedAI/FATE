@@ -190,7 +190,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def _mask_node(self, ctx: Context, nodes: List[Node]):
         new_nodes = []
         for n in nodes:
-            new_nodes.append(Node(nid=n.nid, is_leaf=n.is_leaf,  l=n.l, r=n.r, is_left_node=n.is_left_node, split_id=n.split_id, sitename=n.sitename, sample_num=n.sample_num))
+            new_nodes.append(Node(nid=n.nid, is_leaf=n.is_leaf,  l=n.l, r=n.r, is_left_node=n.is_left_node, split_id=n.split_id, sitename=n.sitename, 
+                                  sibling_nodeid=n.sibling_nodeid, parent_nodeid=n.parent_nodeid,
+                                  sample_num=n.sample_num))
         return new_nodes
 
     def _check_assign_result(self, sample_pos: DataFrame, cur_layer_node: List[Node]):

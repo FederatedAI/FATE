@@ -105,7 +105,28 @@ class HistogramIndexer:
         """
         return nid * self.node_axis_stride + self.feature_axis_stride[fid] + bid
 
-    def get_positions(self, nids: List[int], bids: List[List[int]], nid_mapping: Dict[int, int]):
+    def get_positions_with_node_mapping(self, nids: List[int], bids: List[List[int]], node_mapping: Dict[int, int]):
+        """
+        get data positions by node_ids and bin_ids
+        Args:
+            nids: node ids
+            bids: bin ids
+            node_mapping: node mapping
+
+        Returns: data positions
+        """
+        assert len(nids) == len(bids), f"nids length {len(nids)} is not equal to bids length {len(bids)}"
+        positions = []
+        masks = []
+        for nid, bids in zip(nids, bids):
+            if nid in node_mapping:
+                positions.append([self.get_position(node_mapping[nid], fid, bid) for fid, bid in enumerate(bids)])
+                masks.append(True)
+            else:
+                masks.append(False)
+        return positions, masks
+
+    def get_positions(self, nids: List[int], bids: List[List[int]]):
         """
         get data positions by node_ids and bin_ids
         Args:
@@ -115,12 +136,9 @@ class HistogramIndexer:
         Returns: data positions
         """
         positions = []
-        if nid_mapping is not None:
-            for nid, bids in zip(nids, bids):
-                positions.append([self.get_position(nid_mapping[nid], fid, bid) for fid, bid in enumerate(bids)])
-        else:
-            for nid, bids in zip(nids, bids):
-                positions.append([self.get_position(nid, fid, bid) for fid, bid in enumerate(bids)])
+        assert len(nids) == len(bids), f"nids length {len(nids)} is not equal to bids length {len(bids)}"
+        for nid, bids in zip(nids, bids):
+            positions.append([self.get_position(nid, fid, bid) for fid, bid in enumerate(bids)])
         return positions
 
     def get_reverse_position(self, position) -> Tuple[int, int, int]:

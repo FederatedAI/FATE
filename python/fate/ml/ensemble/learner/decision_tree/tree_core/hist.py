@@ -64,46 +64,17 @@ class SklearnHistBuilder(object):
             return hists, data_indices
         else:
             return hists
-
-
-# def get_hist_builder(bin_train_data, grad_and_hess, root_node, max_bin, bin_info, hist_type='distributed'):
-
-#     assert hist_type in HIST_TYPE, 'hist_type should be in {}'.format(HIST_TYPE)
-
-#     if hist_type == 'distributed':
-#         pass
-
-#     if hist_type == 'sklearn':
-
-#         if isinstance(bin_train_data, DataFrame):
-#             data = bin_train_data.as_pd_df()
-#         elif isinstance(bin_train_data, pd.DataFrame):
-#             data = bin_train_data
-
-#         if isinstance(grad_and_hess, DataFrame):
-#             gh = grad_and_hess.as_pd_df()
-#         elif isinstance(grad_and_hess, pd.DataFrame):
-#             gh = grad_and_hess
-
-#         data['sample_id'] = data['sample_id'].astype(np.uint32)
-#         gh['sample_id'] = gh['sample_id'].astype(np.uint32)
-#         collect_data = data.sort_values(by='sample_id')
-#         collect_gh = gh.sort_values(by='sample_id')
-#         if bin_train_data.schema.label_name is None:
-#             feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.match_id_name]).values
-#         else:
-#             feat_arr = collect_data.drop(columns=[bin_train_data.schema.sample_id_name, bin_train_data.schema.label_name, bin_train_data.schema.match_id_name]).values
-#         g = collect_gh['g'].values
-#         h = collect_gh['h'].values
-#         feat_arr = np.asfortranarray(feat_arr.astype(np.uint8))
-#         return SklearnHistBuilder(feat_arr, max_bin, g, h)
-
+        
 
 class SBTHistogramBuilder(object):
-    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=None) -> None:
+
+    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=None, hist_sub=True) -> None:
         columns = bin_train_data.schema.columns
         self.random_seed = random_seed
         self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
+        self._cache_parent_hist: DistributedHistogram = None
+        self._last_layer_node_map = None
+        self._hist_sub = hist_sub
 
     def _get_plain_text_schema(self):
         return {
@@ -124,6 +95,54 @@ class SBTHistogramBuilder(object):
             "gh": {"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
             "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
         }
+    
+    def _prepare_hist_sub(self, nodes: List[Node], cur_layer_node_map:dict, parent_node_map: dict):
+        weak_nodes_ids = []
+        mapping = []
+        n_map = {n.nid: n for n in nodes}
+        new_node_map = {}
+        hist_pos = 0
+        for n in nodes:
+            if n.nid == 0:
+                # root node
+                weak_nodes_ids.append(0)
+                # root node, just return
+                return set(weak_nodes_ids), None, mapping
+            
+            if n.is_left_node:
+                sib = n_map[n.sibling_nodeid]
+                
+                if sib.sample_num < n.sample_num:
+                    weak_node = sib
+                else:
+                    weak_node = n
+                
+                mapping_list = []
+                parent_nid = weak_node.parent_nodeid
+                weak_nodes_ids.append(weak_node.nid)
+                mapping_list = (parent_node_map[parent_nid], hist_pos, cur_layer_node_map[weak_node.nid], cur_layer_node_map[weak_node.sibling_nodeid])
+                mapping.append(mapping_list)
+                new_node_map[weak_node.nid] = hist_pos
+                hist_pos += 1
+                
+            else:
+                continue
+        return set(weak_nodes_ids), new_node_map, mapping
+    
+    def _get_samples_on_weak_nodes(self, sample_pos: DataFrame, weak_nodes: set):
+        
+        # root node
+        if 0 in weak_nodes:
+            return sample_pos
+        is_on_weak = sample_pos.apply_row(lambda s: s['node_idx'] in weak_nodes)
+        weak_sample_pos = sample_pos.iloc(is_on_weak)
+        return weak_sample_pos
+    
+    def _is_first_layer(self, nodes):
+        if len(nodes) == 1 and nodes[0].nid == 0:
+            return True
+        else:
+            return False
 
     def compute_hist(
         self,
@@ -135,9 +154,21 @@ class SBTHistogramBuilder(object):
         node_map={},
         pk=None,
         evaluator=None,
-        gh_pack=False,
+        gh_pack=False
     ):
+        
         node_num = len(nodes)
+        node_sample_count = {n.nid: n.sample_num for n in nodes}
+        is_first_layer = self._is_first_layer(nodes)
+        need_hist_sub_process = (not is_first_layer) and self._hist_sub
+
+        print('cwj', node_sample_count)
+        weak_nodes, new_node_map, mapping = None, None, None
+        if need_hist_sub_process:
+            weak_nodes, new_node_map, mapping = self._prepare_hist_sub(nodes, node_map, self._last_layer_node_map)
+            node_num = len(weak_nodes)
+            print('cwj weak nodes {}, new_node_map {}, mapping {}'.format(weak_nodes, new_node_map, mapping))
+
         if ctx.is_on_guest:
             schema = self._get_plain_text_schema()
         elif ctx.is_on_host:
@@ -149,22 +180,43 @@ class SBTHistogramBuilder(object):
                 else:
                     schema = self._get_enc_hist_schema(pk, evaluator)
 
-        hist = HistogramBuilder(
-            num_node=node_num,
-            feature_bin_sizes=self.feat_bin_num,
-            value_schemas=schema,
-            global_seed=self.random_seed,
-            seed=self.random_seed,
-        )
-        # indexer = bin_train_data.get_indexer('sample_id')
-        # gh = gh.loc(indexer, preserve_order=True)
-        # gh["cnt"] = 1
-        # sample_pos = sample_pos.loc(indexer, preserve_order=True)
-        # map_sample_pos = sample_pos.create_frame()
-        map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
+        # print('cwj map sample pos is {}'.format(sample_pos.as_pd_df()))
+        if need_hist_sub_process:
+            hist = HistogramBuilder(
+                num_node=node_num,
+                feature_bin_sizes=self.feat_bin_num,
+                value_schemas=schema,
+                global_seed=None,
+                seed=self.random_seed,
+                node_mapping={node_map[k]: v for k, v in new_node_map.items()}
+            )
+            # raise ValueError(new_node_map, node_num, node_map)
+            # weak_sample_pos = self._get_samples_on_weak_nodes(sample_pos, weak_nodes=weak_nodes)
+            # map_sample_pos = weak_sample_pos.apply_row(lambda x: new_node_map[x['node_idx']])
+        else:
+            hist = HistogramBuilder(
+                num_node=node_num,
+                feature_bin_sizes=self.feat_bin_num,
+                value_schemas=schema,
+                global_seed=None,
+                seed=self.random_seed,
+            )
 
+        map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
+        # print('transformed sample pos {}'.format(map_sample_pos.as_pd_df()))
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)
-        stat_obj.i_shuffle_splits()
+
+        if need_hist_sub_process:
+            stat_obj = self._cache_parent_hist.compute_child(stat_obj, mapping)
+        
+        # if ctx.is_on_guest:
+        #     print('computed hist', stat_obj.decrypt({}, {}, None))
+
+        if self._hist_sub:
+            self._cache_parent_hist = stat_obj
+            self._last_layer_node_map = node_map
+
+        stat_obj = stat_obj.shuffle_splits()
 
         return hist, stat_obj
 

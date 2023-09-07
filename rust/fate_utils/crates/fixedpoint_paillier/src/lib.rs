@@ -489,6 +489,13 @@ impl CiphertextVector {
         }
     }
 
+    pub fn shuffle(&self, indexes: Vec<usize>) -> Self {
+        let data = self.data.clone();
+        let mut result = CiphertextVector { data };
+        result.i_shuffle(indexes);
+        result
+    }
+
     pub fn intervals_slice(&mut self, intervals: Vec<(usize, usize)>) -> Result<Self> {
         let mut data = vec![];
         for (start, end) in intervals {
@@ -726,6 +733,18 @@ impl CiphertextVector {
         }
         Ok(())
     }
+    pub fn iupdate_with_masks(&mut self, other: &CiphertextVector, indexes: Vec<Vec<usize>>, masks: Vec<bool>, stride: usize, pk: &PK) -> Result<()> {
+        for (value_pos, x) in masks.iter().enumerate().filter(|(_, &mask)| mask).map(|(i, _)| i).zip(indexes.iter()) {
+            let sb = value_pos * stride;
+            for pos in x.iter() {
+                let sa = pos * stride;
+                for i in 0..stride {
+                    self.data[sa + i].add_assign(&other.data[sb + i], &pk);
+                }
+            }
+        }
+        Ok(())
+    }
 
     pub fn iadd(&mut self, pk: &PK, other: &CiphertextVector) {
         self.data
@@ -772,7 +791,7 @@ impl CiphertextVector {
     }
 
     pub fn tolist(&self) -> Vec<CiphertextVector> {
-        self.data.iter().map(|x| CiphertextVector{ data: vec![x.clone()]}).collect()
+        self.data.iter().map(|x| CiphertextVector { data: vec![x.clone()] }).collect()
     }
 
     pub fn add(&self, pk: &PK, other: &CiphertextVector) -> CiphertextVector {

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def _decrypt_func(sk_map, coder_map, squeezed, unpacker_map):
     def _decrypt(split: HistogramSplits):
-        split.i_decrypt(sk_map)
+        split = split.decrypt(sk_map)
         if unpacker_map is not None:
             split.i_unpack_decode(unpacker_map, squeezed)
             return split
@@ -78,6 +78,18 @@ class DistributedHistogram:
         self._splits = self._splits.mapValues(lambda split: split.i_shuffle(seed, False))
         self._shuffled = True
 
+    def shuffle_splits(self):
+        """
+        Shuffle the histogram splits values, return a new DistributedHistogram.
+        """
+        seed = self._seed
+        if seed is None:
+            return self
+        splits = self._splits.mapValues(lambda split: split.shuffle(seed, False))
+        return DistributedHistogram(
+            splits, self._k, self._node_size, self._node_data_size, self._global_seed, self._seed, self._squeezed, True
+        )
+
     def compute_child(self, weak_child: "DistributedHistogram", mapping: List[Tuple[int, int, int, int]]):
         """
         Compute the child histogram.
@@ -112,11 +124,18 @@ class DistributedHistogram:
             >>> ]
             >>> child = parent.compute_child(weak_child, mapping) # data for nodes stored in order [#6, #7, #8, #9, #10, #11]
         """
-        assert self._node_size == weak_child._node_size
+        # assert self._node_size == weak_child._node_size, 'node size not match, {} != {}'.format(
+        #     self._node_size, weak_child._node_size
+        # )
         assert self._node_data_size == weak_child._node_data_size
         splits = self._splits.join(weak_child._splits, lambda x, y: x.compute_child_splits(y, mapping))
         return DistributedHistogram(
-            splits, weak_child._k, self._node_size * 2, self._node_data_size, weak_child._global_seed, weak_child._seed
+            splits,
+            weak_child._k,
+            len(mapping) * 2,
+            weak_child._node_data_size,
+            weak_child._global_seed,
+            weak_child._seed,
         )
 
     def i_sub_on_key(self, from_key: str, to_key: str):
@@ -160,6 +179,8 @@ class DistributedHistogram:
         return fid_bid
 
     def _recover_from_global_shuffle(self, split_points: MutableMapping[int, int]):
+        if self._global_seed is None:
+            return split_points
         shuffler = Shuffler(self._node_size, self._node_data_size, self._global_seed)
         points = list(split_points.items())
         real_indexes = shuffler.get_reverse_indexes(step=1, indexes=[p[1] for p in points])

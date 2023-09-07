@@ -14,6 +14,9 @@ class HistogramValues:
     def i_update(self, value, positions):
         raise NotImplementedError
 
+    def i_update_with_masks(self, value, positions, masks):
+        raise NotImplementedError
+
     def iadd(self, other):
         raise NotImplementedError
 
@@ -27,6 +30,9 @@ class HistogramValues:
         raise NotImplementedError
 
     def i_shuffle(self, shuffler: "Shuffler", reverse=False):
+        raise NotImplementedError
+
+    def shuffle(self, shuffler: "Shuffler", reverse=False):
         raise NotImplementedError
 
     def slice(self, start, end):

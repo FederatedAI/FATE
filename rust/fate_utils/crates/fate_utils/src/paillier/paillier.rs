@@ -255,6 +255,10 @@ impl CiphertextVector {
     fn i_shuffle(&mut self, indexes: Vec<usize>) {
         self.0.i_shuffle(indexes);
     }
+
+    fn shuffle(&self, indexes: Vec<usize>) -> PyResult<Self> {
+        Ok(CiphertextVector(self.0.shuffle(indexes)))
+    }
     fn intervals_slice(&mut self, intervals: Vec<(usize, usize)>) -> PyResult<Self> {
         Ok(CiphertextVector(self.0.intervals_slice(intervals).map_err(|e| e.to_py_err())?))
     }
@@ -308,6 +312,10 @@ impl CiphertextVector {
 
     fn iupdate(&mut self, other: &CiphertextVector, indexes: Vec<Vec<usize>>, stride: usize, pk: &PK) -> PyResult<()> {
         self.0.iupdate(&other.0, indexes, stride, &pk.0).map_err(|e| e.to_py_err())?;
+        Ok(())
+    }
+    fn iupdate_with_masks(&mut self, other: &CiphertextVector, indexes: Vec<Vec<usize>>, masks: Vec<bool>, stride: usize, pk: &PK) -> PyResult<()> {
+        self.0.iupdate_with_masks(&other.0, indexes, masks, stride, &pk.0).map_err(|e| e.to_py_err())?;
         Ok(())
     }
     fn iadd(&mut self, pk: &PK, other: &CiphertextVector) {
