@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleArbiter(HeteroModule):
-    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param, he_param):
+    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param):
         self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
@@ -34,7 +34,6 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
         self.lr_param = learning_rate_param
-        self.he_param = he_param
 
         self.estimator = None
         self.ovr = False
@@ -56,7 +55,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             self.estimator.epochs = epochs
 
     def fit(self, ctx: Context) -> None:
-        kit = ctx.cipher.phe.setup(options=self.he_param)
+        kit = ctx.cipher.phe.setup()
         encryptor = kit.get_tensor_encryptor()
         decryptor = kit.get_tensor_decryptor()
         ctx.hosts("encryptor").put(encryptor)
@@ -138,7 +137,6 @@ class CoordinatedLRModuleArbiter(HeteroModule):
                 "batch_size": self.batch_size,
                 "learning_rate_param": self.learning_rate_param,
                 "optimizer_param": self.optimizer_param,
-                "he_param": self.he_param,
             },
         }
 
@@ -151,7 +149,6 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             batch_size=model["meta"]["batch_size"],
             optimizer_param=model["meta"]["optimizer_param"],
             learning_rate_param=model["meta"]["learning_rate_param"],
-            he_param=model["meta"]["he_param"],
         )
         all_estimator = model["data"]["estimator"]
         lr.estimator = {}

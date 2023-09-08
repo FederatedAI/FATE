@@ -87,10 +87,10 @@ def feature_binning_train(
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
-    he_param = he_param.dict()
+    ctx.cipher.set_phe(ctx.device, he_param.dict())
     train(ctx, train_data, train_output_data, output_model, role, method, n_bins, split_pt_dict,
           bin_col, bin_idx, category_col, category_idx, use_anonymous, transform_method,
-          skip_metrics, local_only, relative_error, adjustment_factor, he_param)
+          skip_metrics, local_only, relative_error, adjustment_factor)
 
 
 @hetero_feature_binning.predict()
@@ -114,7 +114,7 @@ def feature_binning_predict(
 
 def train(ctx, train_data, train_output_data, output_model, role, method, n_bins, split_pt_dict,
           bin_col, bin_idx, category_col, category_idx, use_anonymous, transform_method,
-          skip_metrics, local_only, relative_error, adjustment_factor, he_param):
+          skip_metrics, local_only, relative_error, adjustment_factor):
     logger.info(f"start binning train")
     sub_ctx = ctx.sub_ctx("train")
     train_data = train_data.read()
@@ -130,8 +130,7 @@ def train(ctx, train_data, train_output_data, output_model, role, method, n_bins
 
     if role.is_guest:
         binning = HeteroBinningModuleGuest(method, n_bins, split_pt_dict, to_bin_cols, transform_method,
-                                           merged_category_col, local_only, relative_error, adjustment_factor,
-                                           he_param)
+                                           merged_category_col, local_only, relative_error, adjustment_factor)
     elif role.is_host:
         binning = HeteroBinningModuleHost(method, n_bins, split_pt_dict, to_bin_cols, transform_method,
                                           merged_category_col, local_only, relative_error, adjustment_factor)
