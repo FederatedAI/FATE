@@ -96,11 +96,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             # make sure cipher is initialized
             kit = ctx.cipher.phe.setup()
             self._encrypt_kit = kit
-        # check encrypt function
-        logger.info('encrypt kit info: can support negative number: {}, can support compress: {}, can support pack: {}'.format(
-            self._encrypt_kit.can_support_negative_number, self._encrypt_kit.can_support_squeeze, self._encrypt_kit.can_support_pack
-        ))
-        
+
         if not self._encrypt_kit.can_support_negative_number:
             self._gh_pack = True  
             logger.info('current encrypt method cannot support neg num, gh pack is forced to be True')

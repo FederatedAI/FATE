@@ -108,9 +108,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         
         return bin_len, max_max_value
     
-    def _update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
+    def _update_sample_pos(self, ctx: Context, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
 
-        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        sitename = ctx.local.name
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(_update_sample_pos_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
         updated_sample_pos = data_with_pos.apply_row(map_func, columns=["g_on_local", "g_node_idx"])
@@ -292,7 +292,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         if len(cur_layer_node) != 0:
             for node in cur_layer_node:
                 node.is_leaf = True
-                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1] # leaf always on guest
+                node.sitename = ctx.local.name # leaf always on guest
                 self._nodes.append(node)
             self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_pos])
 
