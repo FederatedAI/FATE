@@ -135,8 +135,8 @@ class HeteroDecisionTreeHost(DecisionTree):
             # compute histogram with encrypted grad and hess
             logger.info('train_df is {} grad hess is {}, {}, gh pack {}'.format(train_df, en_grad_and_hess, en_grad_and_hess.columns, self._gh_pack))
             hist_inst, statistic_histogram = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, pk=self._pk, evaluator=self._evaluator, gh_pack=self._gh_pack)
-            # if self._gh_pack:
-            #     statistic_histogram.i_squeeze({'gh': (self._pack_info['total_pack_num'], self._pack_info['split_point_shift_bit'])})
+            if self._gh_pack:
+                statistic_histogram.i_squeeze({'gh': (self._pack_info['total_pack_num'], self._pack_info['split_point_shift_bit'])})
             self.splitter.split(sub_ctx, statistic_histogram, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
             self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, statistic_histogram, self.splitter, train_df)
