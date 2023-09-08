@@ -120,6 +120,12 @@ class BlockType(str, Enum):
     def is_integer(block_type):
         return block_type in [BlockType.int32, BlockType.int64]
 
+    @staticmethod
+    def is_arr(block_value):
+        if isinstance(block_value, (torch.Tensor, np.ndarray)) and block_value.shape:
+            return True
+        return isinstance(block_value, list)
+
 
 class Block(object):
     def __init__(self, field_indexes, block_type=None, should_compress=True):
