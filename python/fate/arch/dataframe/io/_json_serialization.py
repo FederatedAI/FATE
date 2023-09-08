@@ -40,9 +40,8 @@ def deserialize(ctx, data):
 
     data_manager = DataManager.deserialize(schema_meta)
 
-    role = ctx.local.party[0]
-    party_id = ctx.local.party[1]
-    data_manager.fill_anonymous_role_and_party_id(role, party_id)
+    site_name = ctx.local.name
+    data_manager.fill_anonymous_site_name(site_name)
 
     from ..ops._transformer import transform_list_to_block_table
 

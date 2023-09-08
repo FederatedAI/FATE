@@ -83,7 +83,7 @@ class DataManager(object):
 
     def init_from_local_file(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name,
                              label_type, weight_type, dtype, default_type=types.DEFAULT_DATA_TYPE,
-                             anonymous_role=None, anonymous_party_id=None):
+                             anonymous_site_name=None):
         schema_manager = SchemaManager()
         retrieval_index_dict = schema_manager.parse_local_file_schema(sample_id_name,
                                                                       columns,
@@ -91,8 +91,7 @@ class DataManager(object):
                                                                       match_id_name,
                                                                       label_name,
                                                                       weight_name,
-                                                                      anonymous_role=anonymous_role,
-                                                                      anonymous_party_id=anonymous_party_id)
+                                                                      anonymous_site_name=anonymous_site_name)
         schema_manager.init_field_types(label_type, weight_type, dtype,
                                         default_type=default_type)
         block_manager = BlockManager()
@@ -136,8 +135,8 @@ class DataManager(object):
 
             return loc_ret
 
-    def fill_anonymous_role_and_party_id(self, role, party_id):
-        self._schema_manager.fill_anonymous_role_and_party_id(role, party_id)
+    def fill_anonymous_site_name(self, site_name):
+        self._schema_manager.fill_anonymous_site_name(site_name)
 
     def get_fields_loc(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
         field_block_mapping = self._block_manager.field_block_mapping

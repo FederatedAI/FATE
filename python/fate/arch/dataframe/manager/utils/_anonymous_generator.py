@@ -21,20 +21,18 @@ ANONYMOUS_COLUMN_PREFIX = "x"
 ANONYMOUS_LABEL = "y"
 ANONYMOUS_WEIGHT = "weight"
 SPLICES = "_"
-ANONYMOUS_ROLE = "AnonymousRole"
-ANONYMOUS_PARTY_ID = "AnonymousPartyId"
+DEFAULT_SITE_NAME = "AnonymousRole_AnonymousPartyId"
 
 
 class AnonymousGenerator(object):
-    def __init__(self, role=None, party_id=None):
-        self._role = role
-        self._party_id = party_id
+    def __init__(self, site_name=None):
+        self._site_name = site_name
 
     def _generate_anonymous_column(self, suf):
-        if self._role and self._party_id:
-            return SPLICES.join([self._role, self._party_id, suf])
+        if self._site_name:
+            return SPLICES.join([self._site_name, suf])
         else:
-            return SPLICES.join([ANONYMOUS_ROLE, ANONYMOUS_PARTY_ID, suf])
+            return SPLICES.join([DEFAULT_SITE_NAME, suf])
 
     def generate_anonymous_names(self, schema):
         column_len = len(schema.columns.tolist())
@@ -55,19 +53,15 @@ class AnonymousGenerator(object):
             anonymous_weight_name=anonymous_weight_name,
             anonymous_columns=anonymous_columns,
             anonymous_summary=dict(column_len=column_len,
-                                   role=self._role,
-                                   party_id=self._party_id)
+                                   site_name=self._site_name
+                                   )
         )
 
-    def _check_role_party_id_consistency(self, anonymous_summary):
-        anonymous_role = anonymous_summary["role"]
-        anonymous_party_id = anonymous_summary["party_id"]
+    def _check_site_name_consistency(self, anonymous_summary):
+        anonymous_site_name = anonymous_summary["site_name"]
 
-        if anonymous_role and self._role is not None and anonymous_role != self._role:
-            raise ValueError(f"previous_role={anonymous_role} != current_role={self._role}")
-
-        if anonymous_party_id and self._party_id is not None and anonymous_party_id != self._party_id:
-            raise ValueError(f"previous_party_id={anonymous_party_id} != current_role={self._party_id}")
+        if anonymous_site_name and self._site_name is not None and anonymous_site_name != self._site_name:
+            raise ValueError(f"previous_site_name={anonymous_site_name} != current_site_name={self._site_name}")
 
     def add_anonymous_label(self):
         return self._generate_anonymous_column(ANONYMOUS_LABEL)
@@ -76,7 +70,7 @@ class AnonymousGenerator(object):
         return self._generate_anonymous_column(ANONYMOUS_WEIGHT)
 
     def add_anonymous_columns(self, columns, anonymous_summary: dict):
-        self._check_role_party_id_consistency(anonymous_summary)
+        self._check_site_name_consistency(anonymous_summary)
         anonymous_summary = copy.deepcopy(anonymous_summary)
 
         column_len = anonymous_summary["column_len"]
@@ -86,18 +80,17 @@ class AnonymousGenerator(object):
         anonymous_summary["column_len"] = column_len + len(columns)
         return anonymous_columns, anonymous_summary
 
-    def fill_role_and_party_id(self, anonymous_label_name, anonymous_weight_name,
-                               anonymous_columns, anonymous_summary):
+    def fill_anonymous_site_name(self, anonymous_label_name, anonymous_weight_name,
+                        anonymous_columns, anonymous_summary):
         anonymous_summary = copy.deepcopy(anonymous_summary)
 
-        self._check_role_party_id_consistency(anonymous_summary)
+        self._check_site_name_consistency(anonymous_summary)
 
-        if anonymous_summary["role"] is None and anonymous_summary["party_id"] is None:
-            anonymous_label_name = self._fill_role_and_party_id(anonymous_label_name)
-            anonymous_weight_name = self._fill_role_and_party_id(anonymous_weight_name)
-            anonymous_columns = self._fill_role_and_party_id(anonymous_columns)
-            anonymous_summary["role"] = self._role
-            anonymous_summary["party_id"] = self._party_id
+        if anonymous_summary["site_name"] is None:
+            anonymous_label_name = self._fill_site_name(anonymous_label_name)
+            anonymous_weight_name = self._fill_site_name(anonymous_weight_name)
+            anonymous_columns = self._fill_site_name(anonymous_columns)
+            anonymous_summary["site_name"] = self._site_name
 
         return dict(
             anonymous_label_name=anonymous_label_name,
@@ -106,22 +99,26 @@ class AnonymousGenerator(object):
             anonymous_summary=anonymous_summary
         )
 
-    def _fill_role_and_party_id(self, name):
+    def _fill_site_name(self, name):
         if name is None:
             return name
 
         if isinstance(name, str):
-            role, party_id, suf = name.split(SPLICES, 2)
-            if role != ANONYMOUS_ROLE or party_id != ANONYMOUS_PARTY_ID:
-                raise ValueError(f"To fill anonymous names with role and party_id, it shouldn't be fill before")
+            site_name_pre, site_name_suf, suf = name.split(SPLICES, 2)
+            site_name = SPLICES.join([site_name_pre, site_name_suf])
+
+            if site_name != DEFAULT_SITE_NAME:
+                raise ValueError(f"To fill anonymous names with site_name, it shouldn't be fill before")
             return self._generate_anonymous_column(suf)
         else:
             name = list(name)
             ret = []
             for _name in name:
-                role, party_id, suf = _name.split(SPLICES, 2)
-                if role != ANONYMOUS_ROLE or party_id != ANONYMOUS_PARTY_ID:
-                    raise ValueError(f"To fill anonymous names with role and party_id, it shouldn't be fill before")
+                site_name_pre, site_name_suf, suf = _name.split(SPLICES, 2)
+                site_name = SPLICES.join([site_name_pre, site_name_suf])
+
+                if site_name != DEFAULT_SITE_NAME:
+                    raise ValueError(f"To fill anonymous names with site_name, it shouldn't be fill before")
 
                 ret.append(self._generate_anonymous_column(suf))
 

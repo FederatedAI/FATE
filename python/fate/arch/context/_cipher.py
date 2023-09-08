@@ -73,7 +73,7 @@ class PHECipherBuilder:
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
-            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher, True, True, True)
+            return PHECipher(kind, key_size, pk, sk, evaluator, coder, tensor_cipher, True, True, True)
 
         if kind == "ou":
             from fate.arch.protocol.phe.ou import evaluator, keygen
@@ -81,7 +81,7 @@ class PHECipherBuilder:
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
-            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher, False, False, True)
+            return PHECipher(kind, key_size, pk, sk, evaluator, coder, tensor_cipher, False, False, True)
 
         elif kind == "mock":
             from fate.arch.protocol.phe.mock import evaluator, keygen
@@ -89,7 +89,7 @@ class PHECipherBuilder:
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
-            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher, True, False, False)
+            return PHECipher(kind, key_size, pk, sk, evaluator, coder, tensor_cipher, True, False, False)
 
         else:
             raise ValueError(f"Unknown PHE keygen kind: {self.kind}")
@@ -98,6 +98,7 @@ class PHECipherBuilder:
 class PHECipher:
     def __init__(
         self,
+        kind,
         key_size,
         pk,
         sk,
@@ -108,6 +109,7 @@ class PHECipher:
         can_support_squeeze,
         can_support_pack,
     ) -> None:
+        self._kind = kind
         self._key_size = key_size
         self._pk = pk
         self._sk = sk
@@ -117,6 +119,10 @@ class PHECipher:
         self._can_support_negative_number = can_support_negative_number
         self._can_support_squeeze = can_support_squeeze
         self._can_support_pack = can_support_pack
+
+    @property
+    def kind(self):
+        return self._kind
 
     @property
     def can_support_negative_number(self):

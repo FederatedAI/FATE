@@ -16,6 +16,7 @@
 import copy
 import json
 import logging
+import math
 import random
 
 import numpy as np
@@ -108,7 +109,7 @@ class HeteroSelectionModuleGuest(HeteroModule):
     def sync_select_federated(ctx: Context, selection_obj):
         logger.info(f"Sync federated selection.")
         for i, host in enumerate(ctx.hosts):
-            federated_mask = selection_obj._host_selected_mask[host.party_id]
+            federated_mask = selection_obj._host_selected_mask[host.name]
             ctx.hosts[i].put(f"selected_mask_{selection_obj.method}", federated_mask)
 
     def transform(self, ctx: Context, test_data):
@@ -305,8 +306,8 @@ class ManualSelection(Module):
         if len(filter_out_col) >= len(header):
             raise ValueError("`filter_out_col` should not be all columns")
         filter_out_col = set(filter_out_col)
-        keep_col = set(keep_col)
-        missing_col = (filter_out_col.union(keep_col)).difference(set(self._prev_selected_mask.index))
+        # keep_col = set(keep_col)
+        missing_col = (filter_out_col.union(set(keep_col))).difference(set(self._prev_selected_mask.index))
         if missing_col:
             raise ValueError(
                 f"columns {missing_col} given in `filter_out_col` & `keep_col` " f"not found in `select_col` or header"
@@ -518,10 +519,8 @@ class StandardSelection(Module):
 
     @staticmethod
     def filter_by_percentile(metrics, percentile, take_high=True):
-        if take_high:
-            return metrics >= metrics.quantile(percentile)
-        else:
-            return metrics <= metrics.quantile(1 - percentile)
+        top_k = math.ceil(len(metrics) * percentile)
+        return StandardSelection.filter_by_top_k(metrics, top_k, take_high)
 
     def transform(self, ctx: Context, transform_data):
         logger.debug(f"Start transform")

@@ -68,6 +68,7 @@ def apply_row(df: "DataFrame", func,
                                     enable_type_align_checking=enable_type_align_checking)
 
     dst_block_table_with_dm = df.block_table.mapValues(_apply_func)
+
     dst_data_manager = dst_block_table_with_dm.first()[1][1]
     dst_block_table = dst_block_table_with_dm.mapValues(lambda blocks_with_dm: blocks_with_dm[0])
 
@@ -110,24 +111,24 @@ def _apply(blocks, func=None, src_operable_blocks=None, src_field_names=None,
     if isinstance(apply_ret[0], Iterable):
         first_row = list(apply_ret[0])
         ret_column_len = len(first_row)
-        block_types = [BlockType.get_block_type(value) for value in first_row]
+        block_types = [BlockType.np_object if BlockType.is_arr(value) else BlockType.get_block_type(value) for value in first_row]
         apply_blocks = [[] for _ in range(ret_column_len)]
         for ret in apply_ret:
             for idx, value in enumerate(ret):
                 apply_blocks[idx].append([value])
 
                 if enable_type_align_checking:
-                    block_type = BlockType.get_block_type(value)
+                    block_type = BlockType.np_object if BlockType.is_arr(value) else BlockType.get_block_type(value)
                     if block_types[idx] < block_type:
                         block_types[idx] = block_type
     else:
-        block_types = [BlockType.get_block_type(apply_ret[0])]
+        block_types = [BlockType.np_object if BlockType.is_arr(apply_ret[0]) else BlockType.get_block_type(apply_ret[0])]
         apply_blocks.append([[ret] for ret in apply_ret])
         ret_column_len = 1
 
         if enable_type_align_checking:
             for ret in apply_ret:
-                block_type = BlockType.get_block_type(ret)
+                block_type = BlockType.np_object if BlockType.is_arr(ret) else BlockType.get_block_type(ret)
                 if block_types[0] < block_type:
                     block_types[0] = block_type
 

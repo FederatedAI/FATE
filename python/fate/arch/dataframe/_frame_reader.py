@@ -37,8 +37,7 @@ class TableReader(object):
         header: str = None,
         delimiter: str = ",",
         dtype: Union[str, dict] = "float32",
-        anonymous_role: str = None,
-        anonymous_party_id: str = None,
+        anonymous_site_name: str = None,
         na_values: Union[str, list, dict] = None,
         input_format: str = "dense",
         tag_with_value: bool = False,
@@ -56,8 +55,7 @@ class TableReader(object):
         self._delimiter = delimiter
         self._header = header
         self._dtype = dtype
-        self._anonymous_role = anonymous_role
-        self._anonymous_party_id = anonymous_party_id
+        self._anonymous_site_name = anonymous_site_name
         self._na_values = na_values
         self._input_format = input_format
         self._tag_with_value = tag_with_value
@@ -232,11 +230,11 @@ class PandasReader(object):
             label_type=self._label_type, weight_type=self._weight_type,
             dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
 
+        site_name = ctx.local.name
         local_role = ctx.local.party[0]
-        local_party_id = ctx.local.party[1]
 
         if local_role != "local":
-            data_manager.fill_anonymous_role_and_party_id(role=local_role, party_id=local_party_id)
+            data_manager.fill_anonymous_site_name(site_name=site_name)
 
         buf = zip(df.index.tolist(), df.values.tolist())
         table = ctx.computing.parallelize(

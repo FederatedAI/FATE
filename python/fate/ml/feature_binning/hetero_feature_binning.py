@@ -280,7 +280,7 @@ class StandardBinning(Module):
     def set_host_metrics(self, host, metrics_summary):
         if self._host_metrics_summary is None:
             self._host_metrics_summary = {}
-        self._host_metrics_summary[host.party_id] = metrics_summary
+        self._host_metrics_summary[host.name] = metrics_summary
 
     def fit(self, ctx: Context, train_data, validate_data=None, skip_none=False):
         # only bin given `col_bin` cols
