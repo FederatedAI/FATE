@@ -119,15 +119,15 @@ class PHECipher:
 
     @property
     def can_support_negative_number(self):
-        return self._tensor_cipher.can_support_negative_number
+        return self._can_support_negative_number
 
     @property
     def can_support_squeeze(self):
-        return self._tensor_cipher.can_support_squeeze
+        return self._can_support_squeeze
 
     @property
     def can_support_pack(self):
-        return self._tensor_cipher.can_support_pack
+        return self._can_support_pack
 
     @property
     def key_size(self):
