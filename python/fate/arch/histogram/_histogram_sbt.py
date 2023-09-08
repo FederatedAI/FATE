@@ -4,7 +4,15 @@ from ._histogram_local import Histogram
 
 class HistogramBuilder:
     def __init__(
-        self, num_node, feature_bin_sizes, value_schemas, global_seed=None, seed=None, node_mapping=None, k=None, enable_cumsum=True
+        self,
+        num_node,
+        feature_bin_sizes,
+        value_schemas,
+        global_seed=None,
+        seed=None,
+        node_mapping=None,
+        k=None,
+        enable_cumsum=True,
     ):
         self._num_node = num_node
         self._feature_bin_sizes = feature_bin_sizes
@@ -45,7 +53,9 @@ class HistogramBuilder:
         return data
 
 
-def get_partition_hist_build_mapper(num_node, feature_bin_sizes, value_schemas, global_seed, k, node_mapping, enable_cumsum):
+def get_partition_hist_build_mapper(
+    num_node, feature_bin_sizes, value_schemas, global_seed, k, node_mapping, enable_cumsum
+):
     def _partition_hist_build_mapper(part):
         hist = Histogram.create(num_node, feature_bin_sizes, value_schemas)
         for _, raw in part:

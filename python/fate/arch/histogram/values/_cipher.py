@@ -11,8 +11,6 @@ logger = logging.getLogger(__name__)
 
 class HistogramEncryptedValues(HistogramValues):
     def __init__(self, pk, evaluator, data, coder, stride=1):
-        if stride > 1:
-            raise NotImplementedError
         self.stride = stride
         self.data = data
         self.pk = pk
@@ -93,12 +91,25 @@ class HistogramEncryptedValues(HistogramValues):
             weak_child_data_end,
         ) in positions:
             s = (parent_data_end - parent_data_start) * self.stride
-            self.evaluator.i_add(self.pk, data, weak_child.data, target_weak_child_start * self.stride,
-                                 weak_child_data_start * self.stride, s)
-            self.evaluator.i_add(self.pk, data, self.data, target_strong_child_start * self.stride,
-                                 parent_data_start * self.stride, s)
-            self.evaluator.i_sub(self.pk, data, weak_child.data, target_strong_child_start * self.stride,
-                                 weak_child_data_start * self.stride, s)
+            self.evaluator.i_add(
+                self.pk,
+                data,
+                weak_child.data,
+                target_weak_child_start * self.stride,
+                weak_child_data_start * self.stride,
+                s,
+            )
+            self.evaluator.i_add(
+                self.pk, data, self.data, target_strong_child_start * self.stride, parent_data_start * self.stride, s
+            )
+            self.evaluator.i_sub(
+                self.pk,
+                data,
+                weak_child.data,
+                target_strong_child_start * self.stride,
+                weak_child_data_start * self.stride,
+                s,
+            )
 
         return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.stride)
 
