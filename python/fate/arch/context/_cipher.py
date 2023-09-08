@@ -37,13 +37,14 @@ class CipherKit:
     def _set_default_phe(self):
         if "phe" not in self._cipher_mapping:
             self._cipher_mapping["phe"] = {}
-        if self._device == device.CPU:
-            self._cipher_mapping["phe"][device.CPU] = {"kind": "paillier", "key_length": 1024}
-        else:
-            logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
-            self._cipher_mapping["phe"][device.CPU] = self._cipher_mapping["phe"].get(
-                device.CPU, {"kind": "paillier", "key_length": 1024}
-            )
+        if self._device not in self._cipher_mapping["phe"]:
+            if self._device == device.CPU:
+                self._cipher_mapping["phe"][device.CPU] = {"kind": "paillier", "key_length": 1024}
+            else:
+                logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
+                self._cipher_mapping["phe"][device.CPU] = self._cipher_mapping["phe"].get(
+                    device.CPU, {"kind": "paillier", "key_length": 1024}
+                )
 
     @property
     def phe(self):

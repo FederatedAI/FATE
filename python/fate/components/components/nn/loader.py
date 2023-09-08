@@ -95,7 +95,6 @@ class Loader(AbstractLoader):
         if spec is None:
             # Search for similar module names
             suggestion = self._find_similar_module_names()
-            print('suggestion is {}'.format(suggestion))
             if suggestion:
                 raise ValueError(
                     "Module: {} not found in the import path. Do you mean {}?".format(

@@ -265,7 +265,7 @@ class DecisionTree(object):
     def _convert_bin_idx_to_split_val(self, ctx: Context, tree_nodes: List[Node], binning_dict: dict, schema):
         
         columns = schema.columns
-        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        sitename = ctx.local.name
         for node in tree_nodes:
             if node.sitename == sitename:
                 if not node.is_leaf:
@@ -279,7 +279,7 @@ class DecisionTree(object):
 
     def _initialize_root_node(self, ctx: Context, train_df: DataFrame, gh: DataFrame = None):
         
-        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        sitename = ctx.local.name
         if gh is None:
             sum_g, sum_h = 0, 0
         else:
@@ -291,7 +291,7 @@ class DecisionTree(object):
         return root_node
     
     def _update_feature_importance(self, ctx: Context, split_info: List[SplitInfo], data: DataFrame):
-        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        sitename = ctx.local.name
         for info in split_info:
             if info is not None and info.sitename == sitename:
                 feat_name = self._fid_to_feature_name(info.best_fid, data)
@@ -317,7 +317,7 @@ class DecisionTree(object):
 
             if split_info[idx] is None:
                 node.is_leaf = True
-                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]  # leaf always belongs to guest
+                node.sitename = ctx.guest.name  # leaf always belongs to guest
                 self._nodes.append(node)
                 logger.info('set node {} to leaf'.format(node))
                 continue

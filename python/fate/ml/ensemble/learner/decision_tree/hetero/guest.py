@@ -35,7 +35,9 @@ FIX_POINT_PRECISION = 52
 class HeteroDecisionTreeGuest(DecisionTree):
 
     def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, goss=False, l1=0.1, l2=0, 
-                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, gh_pack=True, objective=None):
+                 min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, objective=None, gh_pack=True, split_info_pack=True,
+                 hist_sub=True
+                 ):
 
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self.host_sitenames = None
@@ -56,6 +58,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         # other
         self._valid_features = valid_features
+        self._hist_sub = hist_sub
 
         # homographic encryption
         self._encrypt_kit = None
@@ -69,6 +72,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         # for g, h packing
         self._en_key_length = None
         self._gh_pack = gh_pack
+        self._split_info_pack = split_info_pack
         self._g_offset = 0
         self._g_abs_max = 0
         self._h_abs_max = 0
@@ -86,7 +90,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._decryptor = kit.get_tensor_decryptor()
         logger.info('encrypt kit setup through setter')
 
-    def _init_encrypt_kit(self, ctx):
+    def _init_encrypt_kit(self, ctx: Context):
         kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
         self._en_key_length = kit.key_size
         self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
@@ -104,9 +108,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         
         return bin_len, max_max_value
     
-    def _update_sample_pos(self, ctx, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
+    def _update_sample_pos(self, ctx: Context, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict):
 
-        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        sitename = ctx.local.name
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(_update_sample_pos_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
         updated_sample_pos = data_with_pos.apply_row(map_func, columns=["g_on_local", "g_node_idx"])
@@ -173,10 +177,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self._pack_info['pack_num'] = pack_num
             self._pack_info['total_pack_num'] = total_pack_num
             self._pack_info['split_point_shift_bit'] = shift_bit * pack_num
+            logger.info('gh are packed')
         else:
-            logger.info('not using gh pack')
+            
             en_grad_hess['g'] = self._encryptor.encrypt_tensor(grad_and_hess['g'].as_tensor())
             en_grad_hess['h'] = self._encryptor.encrypt_tensor(grad_and_hess['h'].as_tensor())
+            logger.info('not using gh pack')
 
         return en_grad_hess
 
@@ -218,6 +224,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, binning_dict: dict):
         
+        logger.info
         # Initialization
         train_df = bin_train_data
         sample_pos = self._init_sample_pos(train_df)
@@ -231,12 +238,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._send_gh(ctx, grad_and_hess)
 
         # send pack info
-        send_pack_info = {'total_pack_num': self._pack_info['total_pack_num'], 'split_point_shift_bit': self._pack_info['split_point_shift_bit']} \
+        send_pack_info = {'total_pack_num': self._pack_info['total_pack_num'], 'split_point_shift_bit': self._pack_info['split_point_shift_bit'], 'split_info_pack': self._split_info_pack} \
             if self._gh_pack else {}
         ctx.hosts.put('pack_info', send_pack_info)
 
         # init histogram builder
-        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None)
+        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None, hist_sub=self._hist_sub)
 
         # init splitter
         self.splitter = FedSBTSplitter(bin_train_data, binning_dict, l2=self.l2, l1=self.l1, 
@@ -285,7 +292,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         if len(cur_layer_node) != 0:
             for node in cur_layer_node:
                 node.is_leaf = True
-                node.sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1] # leaf always on guest
+                node.sitename = ctx.local.name # leaf always on guest
                 self._nodes.append(node)
             self._sample_on_leaves = DataFrame.vstack([self._sample_on_leaves, sample_pos])
 

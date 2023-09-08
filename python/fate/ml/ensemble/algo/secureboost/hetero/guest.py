@@ -31,9 +31,10 @@ logger = logging.getLogger(__name__)
 
 class HeteroSecureBoostGuest(HeteroBoostingTree):
 
-    def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, objective='binary:bce', num_class=3,
-                 max_bin=32, encrypt_key_length=2048, l2=0.1, l1=0, min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1
-                 ) -> None:
+    def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, objective='binary:bce', num_class=3, max_bin=32, 
+                 l2=0.1, l1=0, min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, gh_pack=True, split_info_pack=True, 
+                 hist_sub=True
+                 ):
         
         super().__init__()
         self.num_trees = num_trees
@@ -56,10 +57,12 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._tree_dim = 1  # tree dimension, if is multilcass task, tree dim > 1
         self._loss_func = None
         self._train_predict = None
+        self._hist_sub = hist_sub
 
         # encryption
         self._encrypt_kit = None
-        self._encrypt_key_length = encrypt_key_length
+        self._gh_pack = gh_pack
+        self._split_info_pack = split_info_pack
 
         # reg score
         self._init_score = None
@@ -87,8 +90,23 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         loss_func.compute_hess(gh, label, predict)
         return gh
     
-    def _init_encrypt_kit(self, ctx):
-        kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": self._encrypt_key_length})
+    def _check_encrypt_kit(self, ctx: Context):
+
+        if self._encrypt_kit is None:
+            # make sure cipher is initialized
+            kit = ctx.cipher.phe.setup()
+            self._encrypt_kit = kit
+
+        if not self._encrypt_kit.can_support_negative_number:
+            self._gh_pack = True  
+            logger.info('current encrypt method cannot support neg num, gh pack is forced to be True')
+        if not self._encrypt_kit.can_support_squeeze:
+            self._split_info_pack = False
+            logger.info('current encrypt method cannot support compress, split info pack is forced to be False')
+        if not self._encrypt_kit.can_support_pack:
+            self._gh_pack = False
+            self._split_info_pack = False
+            logger.info('current encrypt method cannot support pack, gh pack is forced to be False')
         return kit
     
     def get_train_predict(self):
@@ -168,7 +186,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._init_sample_scores(ctx, label, train_data)
 
         # init encryption kit
-        self._encrypt_kit= self._init_encrypt_kit(ctx)
+        self._encrypt_kit= self._check_encrypt_kit(ctx)
 
         # start tree fittingf
         for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees)+self.num_trees):
@@ -177,7 +195,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             gh = self._compute_gh(bin_data, self._accumulate_scores, self._loss_func)
             tree = HeteroDecisionTreeGuest(max_depth=self.max_depth, l2=self.l2, l1=self.l1, 
                                            min_impurity_split=self.min_impurity_split, min_sample_split=self.min_sample_split, 
-                                           min_leaf_node=self.min_leaf_node, min_child_weight=self.min_child_weight, objective=self.objective, gh_pack=True)
+                                           min_leaf_node=self.min_leaf_node, min_child_weight=self.min_child_weight, objective=self.objective, gh_pack=self._gh_pack, 
+                                           split_info_pack=self._split_info_pack, hist_sub=self._hist_sub)
             tree.set_encrypt_kit(self._encrypt_kit)
             tree.booster_fit(tree_ctx, bin_data, gh, bin_info)
             # accumulate scores of cur boosting round

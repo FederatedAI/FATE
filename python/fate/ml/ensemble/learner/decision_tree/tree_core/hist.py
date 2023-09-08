@@ -20,6 +20,11 @@ from typing import List
 import numpy as np
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 HIST_TYPE = ["distributed", "sklearn"]
 
@@ -160,16 +165,14 @@ class SBTHistogramBuilder(object):
     ):
 
         node_num = len(nodes)
-        node_sample_count = {n.nid: n.sample_num for n in nodes}
         is_first_layer = self._is_first_layer(nodes)
         need_hist_sub_process = (not is_first_layer) and self._hist_sub
 
-        print('cwj', node_sample_count)
         weak_nodes, new_node_map, mapping = None, None, None
         if need_hist_sub_process:
             weak_nodes, new_node_map, mapping = self._prepare_hist_sub(nodes, node_map, self._last_layer_node_map)
             node_num = len(weak_nodes)
-            print('cwj weak nodes {}, new_node_map {}, mapping {}'.format(weak_nodes, new_node_map, mapping))
+            logger.debug('weak nodes {}, new_node_map {}, mapping {}'.format(weak_nodes, new_node_map, mapping))
 
         if ctx.is_on_guest:
             schema = self._get_plain_text_schema()
@@ -182,7 +185,6 @@ class SBTHistogramBuilder(object):
                 else:
                     schema = self._get_enc_hist_schema(pk, evaluator)
 
-        # print('cwj map sample pos is {}'.format(sample_pos.as_pd_df()))
         if need_hist_sub_process:
             hist = HistogramBuilder(
                 num_node=node_num,
@@ -192,9 +194,7 @@ class SBTHistogramBuilder(object):
                 seed=self.random_seed,
                 node_mapping={node_map[k]: v for k, v in new_node_map.items()}
             )
-            # raise ValueError(new_node_map, node_num, node_map)
-            # weak_sample_pos = self._get_samples_on_weak_nodes(sample_pos, weak_nodes=weak_nodes)
-            # map_sample_pos = weak_sample_pos.apply_row(lambda x: new_node_map[x['node_idx']])
+
         else:
             hist = HistogramBuilder(
                 num_node=node_num,
@@ -205,14 +205,10 @@ class SBTHistogramBuilder(object):
             )
 
         map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
-        # print('transformed sample pos {}'.format(map_sample_pos.as_pd_df()))
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)
 
         if need_hist_sub_process:
             stat_obj = self._cache_parent_hist.compute_child(stat_obj, mapping)
-
-        # if ctx.is_on_guest:
-        #     print('computed hist', stat_obj.decrypt({}, {}, None))
 
         if self._hist_sub:
             self._cache_parent_hist = stat_obj
@@ -231,6 +227,5 @@ class SBTHistogramBuilder(object):
             reverse_node_map = {v: k for k, v in node_map.items()}
             nid_split_id_ = {node_map[k]: v for k, v in nid_split_id.items()}
             recover = statistic_histogram.recover_feature_bins(self.feat_bin_num, nid_split_id_)
-            print("recover rs is", recover)
             recover_rs = {reverse_node_map[k]: v for k, v in recover.items()}
             return recover_rs

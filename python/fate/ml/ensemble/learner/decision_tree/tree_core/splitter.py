@@ -175,7 +175,7 @@ class SklearnSplitter(Splitter):
         splits = []
         logger.info('got {} hist'.format(len(histogram)))
         for node_hist in histogram:
-            split_info = self._find_guest_best_splits(node_hist, self.hist_mask, sitename=ctx.guest.party[0] + '_'  + ctx.guest.party[1])
+            split_info = self._find_guest_best_splits(node_hist, self.hist_mask, sitename=ctx.guest.name)
             splits.append(split_info)
         logger.info('split info is {}'.format(split_info))
         assert len(splits) == len(cur_layer_node), 'split info length {} != node length {}'.format(len(splits), len(cur_layer_node))
@@ -238,7 +238,7 @@ class FedSklearnSplitter(SklearnSplitter):
 
     def _guest_split(self, ctx: Context, histogram, cur_layer_node):
         
-        sitename = ctx.guest.party[0] + '_' + ctx.guest.party[1]
+        sitename = ctx.guest.name
         guest_best_splits = []
         gh_sum = []
         logger.info('got {} hist'.format(len(histogram)))
@@ -252,7 +252,7 @@ class FedSklearnSplitter(SklearnSplitter):
         host_splits_list = self._get_host_splits(ctx)
         all_host_splits = []
         for host_idx in range(len(host_splits_list)):
-            host_sitename = ctx.hosts[host_idx].party[0] + '_' + ctx.hosts[host_idx].party[1]
+            host_sitename = ctx.hosts[host_idx].name
             host_splits = host_splits_list[host_idx]
             assert len(host_splits) == len(cur_layer_node)
             best_split = []
@@ -406,7 +406,6 @@ class FedSBTSplitter(object):
 
         # filter split
         # leaf count
-        
         union_mask_0 = self._compute_min_leaf_mask(l_cnt, r_cnt)
         # min child weight
         min_child_weight_mask_l = l_h < self.min_child_weight
@@ -493,12 +492,6 @@ class FedSBTSplitter(object):
     
     def _recover_pack_split(self, hist: DistributedHistogram, schema, decode_schema=None):
         host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
-        # if decode_schema is not None:
-        #     host_hist = hist.decrypt_(schema[0])
-        #     host_hist = host_hist.unpack_decode(decode_schema)
-        #     host_hist = host_hist.union()
-        # else:
-        #     host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
         return host_hist
     
     def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack, pack_info):
@@ -507,7 +500,7 @@ class FedSBTSplitter(object):
             raise ValueError('sk or coder is None, not able to decode host split points')
 
         histogram = stat_rs.decrypt({}, {}, None)
-        sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+        sitename = ctx.local.name
         reverse_node_map = {v: k for k, v in node_map.items()}
 
         # find local best splits
@@ -528,7 +521,7 @@ class FedSBTSplitter(object):
             decode_schema = None
 
         for idx, hist in enumerate(host_histograms):
-            host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
+            host_sitename = ctx.hosts[idx].name
             host_hist = self._recover_pack_split(hist, decrypt_schema, decode_schema)
             logger.debug('splitting host')
             host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False, pack_info=pack_info)

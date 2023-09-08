@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeHost(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, random_seed=42):
+    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, random_seed=42, hist_sub=True):
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self._tree_node_num = 0
         self.hist_builder = None
@@ -38,6 +38,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._evaluator = None
         self._gh_pack = True
         self._pack_info = None
+        self._hist_sub = hist_sub
 
     def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, statistic_histogram: DistributedHistogram, splitter: FedSBTSplitter, data: DataFrame):
 
@@ -115,10 +116,12 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._gh_pack = ret[1]
         self._pk, self._evaluator = ctx.guest.get('en_kit')
         self._pack_info = ctx.guest.get('pack_info')
+        split_info_pack = self._pack_info.get('split_info_pack', False)
         root_node = self._initialize_root_node(ctx, train_df)
         
         # init histogram builder
-        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, random_seed=self._random_seed)
+        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, random_seed=self._random_seed,
+                                                hist_sub=self._hist_sub)
         # splitter
         self.splitter = FedSBTSplitter(bin_train_data, binning_dict)
 
@@ -135,8 +138,11 @@ class HeteroDecisionTreeHost(DecisionTree):
             # compute histogram with encrypted grad and hess
             logger.info('train_df is {} grad hess is {}, {}, gh pack {}'.format(train_df, en_grad_and_hess, en_grad_and_hess.columns, self._gh_pack))
             hist_inst, statistic_histogram = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, pk=self._pk, evaluator=self._evaluator, gh_pack=self._gh_pack)
-            if self._gh_pack:
+
+            if split_info_pack:
+                logger.debug('packing split info')
                 statistic_histogram.i_squeeze({'gh': (self._pack_info['total_pack_num'], self._pack_info['split_point_shift_bit'])})
+                
             self.splitter.split(sub_ctx, statistic_histogram, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
             self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, statistic_histogram, self.splitter, train_df)

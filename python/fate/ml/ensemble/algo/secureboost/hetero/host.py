@@ -28,13 +28,16 @@ logger = logging.getLogger(__name__)
 
 class HeteroSecureBoostHost(HeteroBoostingTree):
 
-    def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, max_bin=32) -> None:
+    def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, max_bin=32, split_point_shuffle_random_seed=42,
+                 hist_sub=True) -> None:
         super().__init__()
         self.num_trees = num_trees
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.max_bin = max_bin
         self._model_loaded = False
+        self._hist_sub = hist_sub
+        self._random_seed = split_point_shuffle_random_seed
 
     def get_tree(self, idx):
         return self._trees[idx]
@@ -51,7 +54,7 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
             self.predict(pred_ctx, train_data)
         for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees)+self.num_trees):
             logger.info('start to fit a host tree')
-            tree = HeteroDecisionTreeHost(max_depth=self.max_depth)
+            tree = HeteroDecisionTreeHost(max_depth=self.max_depth, hist_sub=self._hist_sub, random_seed=self._random_seed)
             tree.booster_fit(tree_ctx, bin_data, bin_info)
             self._trees.append(tree)
             self._saved_tree.append(tree.get_model())

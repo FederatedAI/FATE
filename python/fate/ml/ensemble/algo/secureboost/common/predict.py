@@ -130,7 +130,7 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
     sample_pos['sample_pos'] = data.apply_row(lambda x: map_func())
     result_sample_pos = sample_pos.empty_frame()
     
-    sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+    sitename = ctx.local.name
 
     # start loop here
     comm_round = 0
@@ -175,7 +175,7 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
 def predict_leaf_host(ctx: Context, trees: List[DecisionTree], data: DataFrame):
     
     tree_list = [tree.get_nodes() for tree in trees]
-    sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
+    sitename = ctx.local.name
     map_func = functools.partial(traverse_tree, trees=tree_list, sitename=sitename)
 
     # help guest to traverse tree

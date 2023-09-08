@@ -39,13 +39,13 @@ if __name__ == '__main__':
 
     party = sys.argv[1]
     max_depth = 3
-    num_tree = 1
+    num_tree = 2
     from sklearn.metrics import roc_auc_score as auc
     if party == 'guest':
   
         ctx = create_ctx(guest)
         df = pd.read_csv(
-            './../../../../../../../examples/data/default_credit_hetero_guest.csv')
+            './../../../../../../../examples/data/breast_hetero_guest.csv')
         df['sample_id'] = [i for i in range(len(df))]
 
         reader = PandasReader(
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         ctx = create_ctx(host)
 
         df_host = pd.read_csv(
-            './../../../../../../../examples/data/default_credit_hetero_host.csv')
+            './../../../../../../../examples/data/breast_hetero_host.csv')
         df_host['sample_id'] = [i for i in range(len(df_host))]
 
         reader_host = PandasReader(
