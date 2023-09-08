@@ -182,12 +182,12 @@ class HeteroBinningModuleHost(HeteroModule):
         coder = ctx.guest.get("coder")
         columns = binned_data.schema.columns.to_list()
         # logger.info(f"self.bin_col: {self.bin_col}")
-        anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)] for col in self.bin_col]
+        to_compute_col = self.bin_col + self.category_col
+        anonymous_col_bin = [binned_data.schema.anonymous_columns[columns.index(col)] for col in to_compute_col]
 
         ctx.guest.put("anonymous_col_bin", anonymous_col_bin)
         encrypt_y = ctx.guest.get("enc_y")
         # event count:
-        to_compute_col = self.bin_col + self.category_col
         feature_bin_sizes = [self._bin_obj._bin_count_dict[col] for col in self.bin_col]
         if self.category_col:
             for col in self.category_col:
@@ -200,19 +200,20 @@ class HeteroBinningModuleHost(HeteroModule):
         hist_targets = binned_data.create_frame()
         hist_targets["event_count"] = encrypt_y
         hist_targets["non_event_count"] = 1
-        hist_schema = {"event_count": {"type": "paillier",
+        hist_schema = {"event_count": {"type": "ciphertext",
                                        "stride": 1,
                                        "pk": pk,
                                        "evaluator": evaluator,
                                        "coder": coder
                                        },
-                       "non_event_count": {"type": "tensor",
+                       "non_event_count": {"type": "plaintext",
                                            "stride": 1,
                                            "dtype": torch.int32}
                        }
         hist = HistogramBuilder(num_node=1,
                                 feature_bin_sizes=feature_bin_sizes,
-                                value_schemas=hist_schema)
+                                value_schemas=hist_schema,
+                                enable_cumsum=False)
         event_non_event_count_hist = to_compute_data.distributed_hist_stat(histogram_builder=hist,
                                                                            targets=hist_targets)
         event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")
@@ -292,8 +293,8 @@ class StandardBinning(Module):
         select_data = train_data[self.bin_col]
 
         if self.method == "quantile":
-            q = np.arange(0, 1, 1 / self.n_bins)
-            split_pt_df = select_data.quantile(q=q, relative_error=self.relative_error)
+            q = list(np.arange(0, 1, 1 / self.n_bins)) + [1.0]
+            split_pt_df = select_data.quantile(q=q, relative_error=self.relative_error).drop(0)
         elif self.method == "bucket":
             split_pt_df = select_data.qcut(q=self.n_bins)
         elif self.method == "manual":
@@ -311,7 +312,6 @@ class StandardBinning(Module):
         self._bin_count_dict = bin_count.to_dict()
 
     def bucketize_data(self, train_data):
-        # logger.debug(f"split pt dict: {self._split_pt_dict}")
         binned_df = train_data.bucketize(boundaries=self._split_pt_dict)
         return binned_df
 
@@ -349,7 +349,7 @@ class StandardBinning(Module):
             bin_woe[col_name] = col_bin_woe.to_dict()
             bin_iv[col_name] = col_bin_iv.to_dict()
             is_monotonic[col_name] = col_bin_woe.is_monotonic_increasing or col_bin_woe.is_monotonic_decreasing
-            iv[col_name] = col_bin_iv.sum()
+            iv[col_name] = col_bin_iv[1:].sum()
 
         metrics_summary = {}
 
@@ -372,20 +372,20 @@ class StandardBinning(Module):
             for col in self.category_col:
                 category_bin_size = binned_data[col].get_dummies().shape[1]
                 feature_bin_sizes.append(category_bin_size)
-
         hist_targets = binned_data.create_frame()
         hist_targets["event_count"] = binned_data.label
         hist_targets["non_event_count"] = 1
-        hist_schema = {"event_count": {"type": "tensor",
+        hist_schema = {"event_count": {"type": "plaintext",
                                        "stride": 1,
                                        "dtype": torch.int32},
-                       "non_event_count": {"type": "tensor",
+                       "non_event_count": {"type": "plaintext",
                                            "stride": 1,
                                            "dtype": torch.int32}
                        }
         hist = HistogramBuilder(num_node=1,
                                 feature_bin_sizes=feature_bin_sizes,
-                                value_schemas=hist_schema)
+                                value_schemas=hist_schema,
+                                enable_cumsum=False)
         event_non_event_count_hist = to_compute_data.distributed_hist_stat(histogram_builder=hist,
                                                                            targets=hist_targets)
         event_non_event_count_hist.i_sub_on_key("non_event_count", "event_count")

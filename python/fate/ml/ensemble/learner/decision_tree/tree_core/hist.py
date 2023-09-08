@@ -44,7 +44,8 @@ class SklearnHistBuilder(object):
         self.hist_builder = hist_builder
 
     def compute_hist(
-        self, nodes: List[Node], bin_train_data=None, gh=None, sample_pos: DataFrame = None, node_map={}, debug=False
+            self, nodes: List[Node], bin_train_data=None, gh=None, sample_pos: DataFrame = None, node_map={},
+            debug=False
     ):
         grouped = sample_pos.as_pd_df().groupby("node_idx")["sample_id"].apply(np.array).apply(np.uint32)
         data_indices = [None for i in range(len(nodes))]
@@ -69,7 +70,7 @@ class SklearnHistBuilder(object):
             return hists, data_indices
         else:
             return hists
-        
+
 
 class SBTHistogramBuilder(object):
 
@@ -83,25 +84,25 @@ class SBTHistogramBuilder(object):
 
     def _get_plain_text_schema(self):
         return {
-            "g": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-            "h": {"type": "tensor", "stride": 1, "dtype": torch.float32},
-            "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
+            "g": {"type": "plaintext", "stride": 1, "dtype": torch.float32},
+            "h": {"type": "plaintext", "stride": 1, "dtype": torch.float32},
+            "cnt": {"type": "plaintext", "stride": 1, "dtype": torch.int32},
         }
 
     def _get_enc_hist_schema(self, pk, evaluator):
         return {
-            "g": {"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
-            "h": {"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
-            "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
+            "g": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator},
+            "h": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator},
+            "cnt": {"type": "plaintext", "stride": 1, "dtype": torch.int32},
         }
 
     def _get_pack_en_hist_schema(self, pk, evaluator):
         return {
-            "gh": {"type": "paillier", "stride": 1, "pk": pk, "evaluator": evaluator},
-            "cnt": {"type": "tensor", "stride": 1, "dtype": torch.int32},
+            "gh": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator},
+            "cnt": {"type": "plaintext", "stride": 1, "dtype": torch.int32},
         }
-    
-    def _prepare_hist_sub(self, nodes: List[Node], cur_layer_node_map:dict, parent_node_map: dict):
+
+    def _prepare_hist_sub(self, nodes: List[Node], cur_layer_node_map: dict, parent_node_map: dict):
         weak_nodes_ids = []
         mapping = []
         n_map = {n.nid: n for n in nodes}
@@ -113,36 +114,37 @@ class SBTHistogramBuilder(object):
                 weak_nodes_ids.append(0)
                 # root node, just return
                 return set(weak_nodes_ids), None, mapping
-            
+
             if n.is_left_node:
                 sib = n_map[n.sibling_nodeid]
-                
+
                 if sib.sample_num < n.sample_num:
                     weak_node = sib
                 else:
                     weak_node = n
-                
+
                 mapping_list = []
                 parent_nid = weak_node.parent_nodeid
                 weak_nodes_ids.append(weak_node.nid)
-                mapping_list = (parent_node_map[parent_nid], hist_pos, cur_layer_node_map[weak_node.nid], cur_layer_node_map[weak_node.sibling_nodeid])
+                mapping_list = (parent_node_map[parent_nid], hist_pos, cur_layer_node_map[weak_node.nid],
+                                cur_layer_node_map[weak_node.sibling_nodeid])
                 mapping.append(mapping_list)
                 new_node_map[weak_node.nid] = hist_pos
                 hist_pos += 1
-                
+
             else:
                 continue
         return set(weak_nodes_ids), new_node_map, mapping
-    
+
     def _get_samples_on_weak_nodes(self, sample_pos: DataFrame, weak_nodes: set):
-        
+
         # root node
         if 0 in weak_nodes:
             return sample_pos
         is_on_weak = sample_pos.apply_row(lambda s: s['node_idx'] in weak_nodes)
         weak_sample_pos = sample_pos.iloc(is_on_weak)
         return weak_sample_pos
-    
+
     def _is_first_layer(self, nodes):
         if len(nodes) == 1 and nodes[0].nid == 0:
             return True
@@ -150,18 +152,18 @@ class SBTHistogramBuilder(object):
             return False
 
     def compute_hist(
-        self,
-        ctx: Context,
-        nodes: List[Node],
-        bin_train_data: DataFrame,
-        gh: DataFrame,
-        sample_pos: DataFrame = None,
-        node_map={},
-        pk=None,
-        evaluator=None,
-        gh_pack=False
+            self,
+            ctx: Context,
+            nodes: List[Node],
+            bin_train_data: DataFrame,
+            gh: DataFrame,
+            sample_pos: DataFrame = None,
+            node_map={},
+            pk=None,
+            evaluator=None,
+            gh_pack=False
     ):
-        
+
         node_num = len(nodes)
         is_first_layer = self._is_first_layer(nodes)
         need_hist_sub_process = (not is_first_layer) and self._hist_sub
@@ -217,7 +219,7 @@ class SBTHistogramBuilder(object):
         return hist, stat_obj
 
     def recover_feature_bins(
-        self, statistic_histogram: DistributedHistogram, nid_split_id: Dict[int, int], node_map: dict
+            self, statistic_histogram: DistributedHistogram, nid_split_id: Dict[int, int], node_map: dict
     ) -> Dict[int, int]:
         if self.random_seed is None:
             return nid_split_id  # randome seed has no shuffle, no need to recover

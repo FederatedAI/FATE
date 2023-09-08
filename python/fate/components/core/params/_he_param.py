@@ -20,7 +20,7 @@ from ._fields import string_choice
 
 
 class HEParam(pydantic.BaseModel):
-    kind: string_choice(["paillier"])
+    kind: string_choice(["paillier", "ou", "mock"])
     key_length: int = 1024
 
 

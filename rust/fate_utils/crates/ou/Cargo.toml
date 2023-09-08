@@ -1,0 +1,16 @@
+[package]
+name = "ou"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+math = { path = "../math" }
+serde = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+iai = { workspace = true}
+
+[[bench]]
+name = "ou_bench"
+harness = false

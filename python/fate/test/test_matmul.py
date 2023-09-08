@@ -1,5 +1,4 @@
 import torch
-from fate.arch import Context, tensor
 from fate.arch.computing.standalone import CSession
 from fate.arch.context import Context
 from fate.arch.federation.standalone import StandaloneFederation

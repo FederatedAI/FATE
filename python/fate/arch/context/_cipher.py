@@ -57,36 +57,62 @@ class PHECipherBuilder:
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
-            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
+            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher, True, True, True)
 
-        # if kind == "heu":
-        #     from fate.arch.protocol.phe.heu import evaluator, keygen
-        #     from fate.arch.tensor.phe import PHETensorCipher
-        #
-        #     sk, pk, coder = keygen(key_size)
-        #     tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
-        #     return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
-        # #
-        elif kind == "mock":
-            # from fate.arch.protocol.phe.mock import evaluator, keygen
+        if kind == "ou":
+            from fate.arch.protocol.phe.ou import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
-            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher)
+            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher, False, False, True)
+
+        elif kind == "mock":
+            from fate.arch.protocol.phe.mock import evaluator, keygen
+            from fate.arch.tensor.phe import PHETensorCipher
+
+            sk, pk, coder = keygen(key_size)
+            tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+            return PHECipher(key_size, pk, sk, evaluator, coder, tensor_cipher, True, False, False)
 
         else:
             raise ValueError(f"Unknown PHE keygen kind: {self.kind}")
 
 
 class PHECipher:
-    def __init__(self, key_size, pk, sk, evaluator, coder, tensor_cipher) -> None:
+    def __init__(
+            self,
+            key_size,
+            pk,
+            sk,
+            evaluator,
+            coder,
+            tensor_cipher,
+            can_support_negative_number,
+            can_support_squeeze,
+            can_support_pack,
+    ) -> None:
         self._key_size = key_size
         self._pk = pk
         self._sk = sk
         self._coder = coder
         self._evaluator = evaluator
         self._tensor_cipher = tensor_cipher
+        self._can_support_negative_number = can_support_negative_number
+        self._can_support_squeeze = can_support_squeeze
+        self._can_support_pack = can_support_pack
+
+    @property
+    def can_support_negative_number(self):
+        return self._tensor_cipher.can_support_negative_number
+
+    @property
+    def can_support_squeeze(self):
+        return self._tensor_cipher.can_support_squeeze
+
+    @property
+    def can_support_pack(self):
+        return self._tensor_cipher.can_support_pack
 
     @property
     def key_size(self):

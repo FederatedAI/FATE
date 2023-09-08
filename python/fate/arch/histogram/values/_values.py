@@ -17,12 +17,12 @@ class HistogramValuesContainer(object):
         values_mapping = {}
         for name, items in values_schema.items():
             stride = items.get("stride", 1)
-            if items["type"] == "paillier":
+            if items["type"] == "ciphertext":
                 pk = items["pk"]
                 evaluator = items["evaluator"]
                 coder = items.get("coder")
                 values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, coder, stride)
-            elif items["type"] == "tensor":
+            elif items["type"] == "plaintext":
                 import torch
 
                 dtype = items.get("dtype", torch.float64)
@@ -66,7 +66,9 @@ class HistogramValuesContainer(object):
                 assert left_value.stride == right_value.stride
                 if left_value.coder is None:
                     raise ValueError(f"coder is None, please set coder for i_sub_on_key({from_key}, {to_key})")
-                left_value.data = left_value.evaluator.sub_plain(left_value.data, right_value.data, left_value.pk, left_value.coder)
+                left_value.data = left_value.evaluator.sub_plain(
+                    left_value.data, right_value.data, left_value.pk, left_value.coder
+                )
             else:
                 raise NotImplementedError
         elif isinstance(left_value, HistogramPlainValues):
@@ -74,8 +76,12 @@ class HistogramValuesContainer(object):
                 assert left_value.stride == right_value.stride
                 if right_value.coder is None:
                     raise ValueError(f"coder is None, please set coder for i_sub_on_key({from_key}, {to_key})")
-                data = right_value.evaluator.rsub_plain(right_value.data, left_value.data, right_value.pk, right_value.coder)
-                self._data[from_key] = HistogramEncryptedValues(right_value.pk, right_value.evaluator, data, right_value.coder, right_value.stride)
+                data = right_value.evaluator.rsub_plain(
+                    right_value.data, left_value.data, right_value.pk, right_value.coder
+                )
+                self._data[from_key] = HistogramEncryptedValues(
+                    right_value.pk, right_value.evaluator, data, right_value.coder, right_value.stride
+                )
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride
                 left_value.data = left_value.data - right_value.data
