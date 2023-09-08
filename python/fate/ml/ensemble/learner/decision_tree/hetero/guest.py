@@ -90,7 +90,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._decryptor = kit.get_tensor_decryptor()
         logger.info('encrypt kit setup through setter')
 
-    def _init_encrypt_kit(self, ctx):
+    def _init_encrypt_kit(self, ctx: Context):
         kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
         self._en_key_length = kit.key_size
         self._sk, self._pk, self._coder, self._evaluator, self._encryptor = kit.sk, kit.pk, kit.coder, kit.evaluator, kit.get_tensor_encryptor()
