@@ -1,3 +1,10 @@
+## Release 1.11.3
+### Major Features and Improvements
+> FederatedML
+* FedAVGTrainer update code strcuture: support OffsitetTuningTrainer
+* FedAVGTrainer update log format: report batch progress instead of batch index
+
+
 ## Release 1.11.2
 ### Major Features and Improvements
 > FederatedML

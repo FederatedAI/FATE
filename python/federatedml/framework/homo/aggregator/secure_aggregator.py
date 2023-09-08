@@ -14,11 +14,22 @@ AGG_TYPE = ['weighted_mean', 'sum', 'mean']
 
 class SecureAggregatorClient(AggregatorBaseClient):
 
-    def __init__(self, secure_aggregate=True, aggregate_type='weighted_mean', aggregate_weight=1.0,
-                 communicate_match_suffix=None):
+    def __init__(
+            self,
+            secure_aggregate=True,
+            aggregate_type='weighted_mean',
+            aggregate_weight=1.0,
+            communicate_match_suffix=None,
+            server=(
+                consts.ARBITER,
+            ),
+            clients=(
+                consts.GUEST,
+                consts.HOST),
+            lm_aggregate=False):
 
         super(SecureAggregatorClient, self).__init__(
-            communicate_match_suffix=communicate_match_suffix)
+            communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
         self.secure_aggregate = secure_aggregate
         self.suffix = {
             "local_loss": AutoSuffix("local_loss"),
@@ -31,7 +42,10 @@ class SecureAggregatorClient(AggregatorBaseClient):
         # init secure aggregate random padding:
         if self.secure_aggregate:
             self._random_padding_cipher: PadsCipher = RandomPaddingCipherClient(
-                trans_var=RandomPaddingCipherTransVar(prefix=communicate_match_suffix)).create_cipher()
+                trans_var=RandomPaddingCipherTransVar(
+                    prefix=communicate_match_suffix,
+                    clients=clients,
+                    server=server)).create_cipher()
             LOGGER.info('initialize secure aggregator done')
 
         # compute weight
@@ -50,8 +64,19 @@ class SecureAggregatorClient(AggregatorBaseClient):
             self._weight = 1
 
         self._set_table_amplify_factor = False
+        self._lm_aggregate = lm_aggregate
 
         LOGGER.debug('aggregate compute weight is {}'.format(self._weight))
+
+    def _handle_table_data(self, model):
+
+        model = model.mapValues(lambda x: x * self._weight)
+        if self.secure_aggregate:
+            if not self._set_table_amplify_factor:
+                self._random_padding_cipher.set_amplify_factor(
+                    consts.SECURE_AGG_AMPLIFY_FACTOR)
+            model = self._random_padding_cipher.encrypt_table(model)
+        return model
 
     def _process_model(self, model):
 
@@ -70,19 +95,21 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
         # is FATE distrubed Table
         elif is_table(model):
-            model = model.mapValues(lambda x: x * self._weight)
-
-            if self.secure_aggregate:
-                if not self._set_table_amplify_factor:
-                    self._random_padding_cipher.set_amplify_factor(
-                        consts.SECURE_AGG_AMPLIFY_FACTOR)
-                model = self._random_padding_cipher.encrypt_table(model)
-            return model
+            return self._handle_table_data(model)
 
         if isinstance(model, t.nn.Module):
-            parameters = list(model.parameters())
-            tmp_list = [[np.array(p.cpu().detach().tolist()) for p in parameters if p.requires_grad]]
-            LOGGER.debug('Aggregate trainable parameters: {}/{}'.format(len(tmp_list[0]), len(parameters)))
+            if self._lm_aggregate:
+                # if model is large, cannot send large object, need to break into key/value
+                # and aggregate them in the format of distributed table
+                from fate_arch.session import computing_session as session
+                parameters = list(model.named_parameters())
+                tmp_list = [(k, v.cpu().detach().numpy()) for k, v in parameters if v.requires_grad]
+                table = session.parallelize(tmp_list, include_key=True, partition=4)
+                return self._handle_table_data(table)
+            else:
+                parameters = list(model.parameters())
+                tmp_list = [[np.array(p.cpu().detach().tolist()) for p in parameters if p.requires_grad]]
+                LOGGER.debug('Aggregate trainable parameters: {}/{}'.format(len(tmp_list[0]), len(parameters)))
         elif isinstance(model, t.optim.Optimizer):
             tmp_list = [[np.array(p.cpu().detach().tolist()) for p in group["params"]]
                         for group in model.param_groups]
@@ -112,7 +139,15 @@ class SecureAggregatorClient(AggregatorBaseClient):
         elif isinstance(model, Weights):
             return agg_model
         elif is_table(agg_model):
-            return agg_model
+            if self._lm_aggregate and isinstance(model, t.nn.Module):
+                # recover weights from table
+                parameters = dict(agg_model.collect())
+                for k, v in model.named_parameters():
+                    if k in parameters and v.requires_grad:
+                        v.data.copy_(t.Tensor(parameters[k]))
+                return model
+            else:
+                return agg_model
         else:
             if self.secure_aggregate:
                 agg_model = [[np_weight.unboxed for np_weight in arr_list]
@@ -186,9 +221,20 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
 class SecureAggregatorServer(AggregatorBaseServer):
 
-    def __init__(self, secure_aggregate=True, communicate_match_suffix=None):
+    def __init__(
+        self,
+        secure_aggregate=True,
+        communicate_match_suffix=None,
+        server=(
+            consts.ARBITER,
+        ),
+        clients=(
+            consts.GUEST,
+            consts.HOST)
+    ):
+
         super(SecureAggregatorServer, self).__init__(
-            communicate_match_suffix=communicate_match_suffix)
+            communicate_match_suffix=communicate_match_suffix, clients=clients, server=server)
         self.suffix = {
             "local_loss": AutoSuffix("local_loss"),
             "agg_loss": AutoSuffix("agg_loss"),
@@ -199,7 +245,7 @@ class SecureAggregatorServer(AggregatorBaseServer):
         self.secure_aggregate = secure_aggregate
         if self.secure_aggregate:
             RandomPaddingCipherServer(trans_var=RandomPaddingCipherTransVar(
-                prefix=communicate_match_suffix)).exchange_secret_keys()
+                prefix=communicate_match_suffix, clients=clients, server=server)).exchange_secret_keys()
             LOGGER.info('initialize secure aggregator done')
 
         agg_weights = self.collect(suffix=('agg_weight', ))

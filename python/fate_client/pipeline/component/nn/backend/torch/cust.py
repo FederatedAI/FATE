@@ -3,9 +3,12 @@ import importlib
 from pipeline.component.nn.backend.torch.base import FateTorchLayer, FateTorchLoss
 import difflib
 
+ML_PATH = 'federatedml.nn'
+LLM_PATH = "fate_llm"
 
-MODEL_PATH = None
-LOSS_PATH = None
+LLM_MODEL_PATH = '{}.model_zoo'.format(LLM_PATH)
+MODEL_PATH = '{}.model_zoo'.format(ML_PATH)
+LOSS_PATH = '{}.loss'.format(ML_PATH)
 
 
 def str_simi(str_a, str_b):
@@ -45,9 +48,14 @@ class CustModel(FateTorchLayer, nn.Module):
 
     def __init__(self, module_name, class_name, **kwargs):
         super(CustModel, self).__init__()
-        assert isinstance(module_name, str), 'name must be a str, specify the module in the model_zoo'
-        assert isinstance(class_name, str), 'class name must be a str, specify the class in the module'
-        self.param_dict = {'module_name': module_name, 'class_name': class_name, 'param': kwargs}
+        assert isinstance(
+            module_name, str), 'name must be a str, specify the module in the model_zoo'
+        assert isinstance(
+            class_name, str), 'class name must be a str, specify the class in the module'
+        self.param_dict = {
+            'module_name': module_name,
+            'class_name': class_name,
+            'param': kwargs}
         self._model = None
 
     def init_model(self):
@@ -62,11 +70,18 @@ class CustModel(FateTorchLayer, nn.Module):
     def get_pytorch_model(self, module_path=None):
 
         if module_path is None:
-            return get_class(
-                self.param_dict['module_name'],
-                self.param_dict['class_name'],
-                self.param_dict['param'],
-                MODEL_PATH)
+            try:
+                return get_class(
+                    self.param_dict['module_name'],
+                    self.param_dict['class_name'],
+                    self.param_dict['param'],
+                    MODEL_PATH)
+            except BaseException:
+                return get_class(
+                    self.param_dict['module_name'],
+                    self.param_dict['class_name'],
+                    self.param_dict['param'],
+                    LLM_MODEL_PATH)
         else:
             return get_class(
                 self.param_dict['module_name'],
