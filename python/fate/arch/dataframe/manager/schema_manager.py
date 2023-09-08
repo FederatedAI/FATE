@@ -71,8 +71,7 @@ class Schema(object):
         self._weight_name = weight_name
 
         if self.anonymous_weight_name is None:
-            anonymous_generator = AnonymousGenerator(role=self._anonymous_summary["role"],
-                                                     party_id=self._anonymous_summary["party_id"])
+            anonymous_generator = AnonymousGenerator(site_name=self._anonymous_summary["site_name"])
 
             self._anonymous_weight_name = anonymous_generator.add_anonymous_weight()
 
@@ -93,8 +92,7 @@ class Schema(object):
         self._label_name = label_name
 
         if self._anonymous_label_name is None:
-            anonymous_generator = AnonymousGenerator(role=self._anonymous_summary["role"],
-                                                     party_id=self._anonymous_summary["party_id"])
+            anonymous_generator = AnonymousGenerator(site_name=self._anonymous_summary["site_name"])
             self._anonymous_label_name = anonymous_generator.add_anonymous_label()
 
     @property
@@ -132,21 +130,20 @@ class Schema(object):
     def append_columns(self, names):
         self._columns = self._columns.append(pd.Index(names))
         # TODO: extend anonymous column
-        anonymous_generator = AnonymousGenerator(role=self._anonymous_summary["role"],
-                                                 party_id=self._anonymous_summary["party_id"])
+        anonymous_generator = AnonymousGenerator(site_name=self._anonymous_summary["site_name"])
 
         anonymous_columns, anonymous_summary = anonymous_generator.add_anonymous_columns(names, self._anonymous_summary)
         self._anonymous_columns = self._anonymous_columns.append(pd.Index(anonymous_columns))
         self._anonymous_summary = anonymous_summary
 
-    def init_anonymous_names(self, anonymous_role, anonymous_party_id):
-        anonymous_generator = AnonymousGenerator(anonymous_role, anonymous_party_id)
+    def init_anonymous_names(self, anonymous_site_name):
+        anonymous_generator = AnonymousGenerator(anonymous_site_name)
         anonymous_ret_dict = anonymous_generator.generate_anonymous_names(self)
         self._set_anonymous_info_by_dict(anonymous_ret_dict)
 
-    def fill_anonymous_role_and_party_id(self, anonymous_role, anonymous_party_id):
-        anonymous_generator = AnonymousGenerator(anonymous_role, anonymous_party_id)
-        anonymous_ret_dict = anonymous_generator.fill_role_and_party_id(
+    def fill_anonymous_site_name(self, anonymous_site_name):
+        anonymous_generator = AnonymousGenerator(anonymous_site_name)
+        anonymous_ret_dict = anonymous_generator.fill_anonymous_site_name(
             anonymous_label_name=self.anonymous_label_name,
             anonymous_weight_name=self._anonymous_weight_name,
             anonymous_columns=self._anonymous_columns,
@@ -368,7 +365,7 @@ class SchemaManager(object):
         return list(self._name_offset_mapping.keys())
 
     def parse_local_file_schema(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name,
-                                anonymous_role=None, anonymous_party_id=None):
+                                anonymous_site_name=None):
         column_indexes = list(range(len(columns)))
 
         match_id_index, label_index, weight_index = None, None, None
@@ -403,7 +400,7 @@ class SchemaManager(object):
             columns=columns
         )
 
-        self._schema.init_anonymous_names(anonymous_role, anonymous_party_id)
+        self._schema.init_anonymous_names(anonymous_site_name)
         self.init_name_mapping()
 
         return dict(
@@ -413,8 +410,8 @@ class SchemaManager(object):
             column_indexes=column_indexes
         )
 
-    def fill_anonymous_role_and_party_id(self, anonymous_role, anonymous_party_id):
-        self._schema.fill_anonymous_role_and_party_id(anonymous_role, anonymous_party_id)
+    def fill_anonymous_site_name(self, anonymous_site_name):
+        self._schema.fill_anonymous_site_name(anonymous_site_name)
 
     @staticmethod
     def extract_column_index_by_name(columns, column_indexes, name, drop=True):
