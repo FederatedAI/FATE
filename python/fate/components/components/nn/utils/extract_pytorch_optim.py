@@ -75,4 +75,4 @@ if __name__ == '__main__':
             code = code_assembly(param, k)
             module_str += code
 
-    open('../fate_torch/optim.py', 'w').write(module_str)
+    open('../patched_torch/optim.py', 'w').write(module_str)

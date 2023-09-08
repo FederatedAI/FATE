@@ -1,8 +1,8 @@
 from torch import optim
-from fate.components.components.nn.fate_torch.base import FateTorchOptimizer
+from fate.components.components.nn.patched_torch.base import PatchedTorchOptimizer
 
 
-class ASGD(optim.ASGD, FateTorchOptimizer):
+class ASGD(optim.ASGD, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -15,7 +15,7 @@ class ASGD(optim.ASGD, FateTorchOptimizer):
         foreach=None,
         maximize=False,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['lambd'] = lambd
         self.param_dict['alpha'] = alpha
@@ -42,7 +42,7 @@ class ASGD(optim.ASGD, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class Adadelta(optim.Adadelta, FateTorchOptimizer):
+class Adadelta(optim.Adadelta, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -53,7 +53,7 @@ class Adadelta(optim.Adadelta, FateTorchOptimizer):
         weight_decay=0,
         foreach=None,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['rho'] = rho
         self.param_dict['eps'] = eps
@@ -78,7 +78,7 @@ class Adadelta(optim.Adadelta, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class Adagrad(optim.Adagrad, FateTorchOptimizer):
+class Adagrad(optim.Adagrad, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -90,7 +90,7 @@ class Adagrad(optim.Adagrad, FateTorchOptimizer):
         eps=1e-10,
         foreach=None,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['lr_decay'] = lr_decay
         self.param_dict['weight_decay'] = weight_decay
@@ -116,7 +116,7 @@ class Adagrad(optim.Adagrad, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class Adam(optim.Adam, FateTorchOptimizer):
+class Adam(optim.Adam, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -129,7 +129,7 @@ class Adam(optim.Adam, FateTorchOptimizer):
         weight_decay=0,
         amsgrad=False,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps
@@ -154,7 +154,7 @@ class Adam(optim.Adam, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class AdamW(optim.AdamW, FateTorchOptimizer):
+class AdamW(optim.AdamW, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -167,7 +167,7 @@ class AdamW(optim.AdamW, FateTorchOptimizer):
         weight_decay=0.01,
         amsgrad=False,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps
@@ -192,7 +192,7 @@ class AdamW(optim.AdamW, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class Adamax(optim.Adamax, FateTorchOptimizer):
+class Adamax(optim.Adamax, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -205,7 +205,7 @@ class Adamax(optim.Adamax, FateTorchOptimizer):
         weight_decay=0,
         foreach=None,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps
@@ -230,7 +230,7 @@ class Adamax(optim.Adamax, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class LBFGS(optim.LBFGS, FateTorchOptimizer):
+class LBFGS(optim.LBFGS, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -243,7 +243,7 @@ class LBFGS(optim.LBFGS, FateTorchOptimizer):
         history_size=100,
         line_search_fn=None,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['max_iter'] = max_iter
         self.param_dict['max_eval'] = max_eval
@@ -270,7 +270,7 @@ class LBFGS(optim.LBFGS, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class NAdam(optim.NAdam, FateTorchOptimizer):
+class NAdam(optim.NAdam, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -284,7 +284,7 @@ class NAdam(optim.NAdam, FateTorchOptimizer):
         momentum_decay=0.004,
         foreach=None,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps
@@ -310,7 +310,7 @@ class NAdam(optim.NAdam, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class RAdam(optim.RAdam, FateTorchOptimizer):
+class RAdam(optim.RAdam, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -323,7 +323,7 @@ class RAdam(optim.RAdam, FateTorchOptimizer):
         weight_decay=0,
         foreach=None,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps
@@ -348,7 +348,7 @@ class RAdam(optim.RAdam, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class RMSprop(optim.RMSprop, FateTorchOptimizer):
+class RMSprop(optim.RMSprop, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -363,7 +363,7 @@ class RMSprop(optim.RMSprop, FateTorchOptimizer):
         maximize=False,
         differentiable=False,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['alpha'] = alpha
         self.param_dict['eps'] = eps
@@ -392,13 +392,13 @@ class RMSprop(optim.RMSprop, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class Rprop(optim.Rprop, FateTorchOptimizer):
+class Rprop(optim.Rprop, PatchedTorchOptimizer):
 
     def __init__(
         self, params=None, lr=0.01, etas=(
             0.5, 1.2), step_sizes=(
             1e-06, 50), foreach=None, maximize=False, ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['etas'] = etas
         self.param_dict['step_sizes'] = step_sizes
@@ -423,7 +423,7 @@ class Rprop(optim.Rprop, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class SGD(optim.SGD, FateTorchOptimizer):
+class SGD(optim.SGD, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -434,7 +434,7 @@ class SGD(optim.SGD, FateTorchOptimizer):
         weight_decay=0,
         nesterov=False,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['momentum'] = momentum
         self.param_dict['dampening'] = dampening
@@ -459,7 +459,7 @@ class SGD(optim.SGD, FateTorchOptimizer):
                 type(self).__name__)
 
 
-class SparseAdam(optim.SparseAdam, FateTorchOptimizer):
+class SparseAdam(optim.SparseAdam, PatchedTorchOptimizer):
 
     def __init__(
         self,
@@ -471,7 +471,7 @@ class SparseAdam(optim.SparseAdam, FateTorchOptimizer):
         eps=1e-08,
         maximize=False,
     ):
-        FateTorchOptimizer.__init__(self)
+        PatchedTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps

@@ -229,6 +229,7 @@ class DefaultRunner(NNRunner):
             raise ValueError(f"algo {self.algo} not supported")
 
         ctx = self.get_context()
+        print(self.model_conf)
         model = self._loader_load_from_conf(self.model_conf)
         if model is None:
             raise ValueError(

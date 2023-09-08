@@ -10,7 +10,7 @@ import numpy as np
 from fate.arch.dataframe._dataframe import DataFrame
 from fate.components.components.utils import consts
 import logging
-from fate.ml.utils.predict_tools import to_fate_df, array_to_predict_df
+from fate.ml.utils.predict_tools import to_dist_df, array_to_predict_df
 from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION, OTHER, LABEL, PREDICT_SCORE
 
 
@@ -172,7 +172,7 @@ class NNRunner(object):
             df[PREDICT_SCORE] = predictions.to_list()
             df[match_id_name] = match_ids.flatten()
             df[sample_id_name] = sample_ids.flatten()
-            df = to_fate_df(ctx, sample_id_name, match_id_name, df)
+            df = to_dist_df(ctx, sample_id_name, match_id_name, df)
             return df
         elif dataframe_format == 'fate_std' and task_type in [BINARY, MULTI, REGRESSION]:
             df = array_to_predict_df(ctx, task_type, predictions, match_ids, sample_ids, match_id_name, sample_id_name, labels, threshold, classes)
