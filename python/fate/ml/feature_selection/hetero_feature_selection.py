@@ -16,6 +16,7 @@
 import copy
 import json
 import logging
+import math
 import random
 
 import numpy as np
@@ -518,10 +519,8 @@ class StandardSelection(Module):
 
     @staticmethod
     def filter_by_percentile(metrics, percentile, take_high=True):
-        if take_high:
-            return metrics >= metrics.quantile(percentile)
-        else:
-            return metrics <= metrics.quantile(1 - percentile)
+        top_k = math.ceil(len(metrics) * percentile)
+        return StandardSelection.filter_by_top_k(metrics, top_k, take_high)
 
     def transform(self, ctx: Context, transform_data):
         logger.debug(f"Start transform")

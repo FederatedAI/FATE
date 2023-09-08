@@ -17,7 +17,7 @@ from typing import Union, List
 
 import pydantic
 
-from ._fields import string_choice, Parameter
+from ._fields import string_choice, Parameter, conint, confloat
 from ._metrics import statistic_metrics_param
 
 
@@ -25,7 +25,7 @@ class StandardFilterParam(pydantic.BaseModel, Parameter):
     metrics: List[str]
 
     filter_type: List[string_choice({'threshold', 'top_k', 'top_percentile'})] = ['threshold']
-    threshold: List[Union[int, float]] = [1.0]
+    threshold: List[Union[confloat(ge=0.0, le=1.0), conint(ge=1)]] = [1.0]
     take_high: List[bool] = [True]
 
     @pydantic.validator('metrics', 'filter_type', 'threshold', 'take_high', pre=True, allow_reuse=True)
@@ -45,7 +45,7 @@ class StandardFilterParam(pydantic.BaseModel, Parameter):
 
 class FederatedStandardFilterParam(StandardFilterParam, Parameter):
     host_filter_type: List[string_choice({'threshold', 'top_k', 'top_percentile'})] = ['threshold']
-    host_threshold: List[Union[int, float]] = [1.0]
+    host_threshold: List[Union[confloat(ge=0.0, le=1.0), conint(ge=1)]] = [1.0]
     host_take_high: List[bool] = [True]
 
     select_federated: bool = True
