@@ -17,7 +17,6 @@ import functools
 import typing
 from typing import Union
 
-from fate.arch.tensor.inside import Hist
 
 from .._dataframe import DataFrame
 from ..manager import BlockType, DataManager
@@ -25,27 +24,6 @@ from ._compress_block import compress_blocks
 
 if typing.TYPE_CHECKING:
     from fate.arch.histogram import DistributedHistogram, HistogramBuilder
-
-
-def hist(df: DataFrame, targets):
-    data_manager = df.data_manager
-    column_names = data_manager.infer_operable_field_names()
-
-    block_table, data_manager = _try_to_compress_table(df.block_table, data_manager, force_compress=True)
-    block_id = data_manager.infer_operable_blocks()[0]
-
-    def _mapper(blocks, target, bid: int = None):
-        histogram = Hist(column_names)
-        histogram.update(blocks[bid], target)
-
-        return histogram
-
-    def _reducer(l_histogram, r_histogram):
-        return l_histogram.merge(r_histogram)
-
-    _mapper_func = functools.partial(_mapper, bid=block_id)
-
-    return block_table.join(targets.shardings._data, _mapper_func).reduce(_reducer)
 
 
 def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", position: DataFrame, targets: Union[dict, DataFrame]) -> "DistributedHistogram":
