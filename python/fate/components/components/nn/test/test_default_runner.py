@@ -1,6 +1,6 @@
 from fate.components.components.nn.runner.default_runner import DefaultRunner
-from fate_client.pipeline.components.fate.nn.fate_torch import nn, optim
-from fate_client.pipeline.components.fate.nn.fate_torch.base import Sequential
+from fate.components.components.nn.patched_torch import nn, optim
+from fate.components.components.nn.patched_torch.base import Sequential
 from fate_client.pipeline.components.fate.homo_nn import get_config_of_default_runner
 from fate_client.pipeline.components.fate.nn.loader import DatasetLoader
 from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments, FedAVGArguments
