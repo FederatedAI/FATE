@@ -14,8 +14,9 @@
 #  limitations under the License.
 import functools
 import pandas as pd
+import torch
 
-from collections import Iterable
+from collections.abc import Iterable
 
 from .._dataframe import DataFrame
 from ..manager.block_manager import Block, BlockType
@@ -39,6 +40,17 @@ def apply_row(df: "DataFrame", func,
     non_operable_field_names = dst_data_manager.get_field_name_list()
     non_operable_blocks = [data_manager.loc_block(field_name,
                                                   with_offset=False) for field_name in non_operable_field_names]
+    operable_blocks = data_manager.infer_operable_blocks()
+    is_numeric = True
+    for bid in operable_blocks:
+        if not data_manager.get_block(bid).is_numeric():
+            is_numeric = False
+            break
+    block_column_in_orders = list()
+    if is_numeric:
+        for bid in operable_blocks:
+            field_indexes = data_manager.get_block(bid).field_indexes
+            block_column_in_orders.extend([data_manager.get_field_name(field_index) for field_index in field_indexes])
 
     fields_loc = data_manager.get_fields_loc(with_sample_id=False, with_match_id=False,
                                              with_label=with_label, with_weight=with_weight)
@@ -48,9 +60,11 @@ def apply_row(df: "DataFrame", func,
                                                    with_label=with_label,
                                                    with_weight=with_weight)
 
-    _apply_func = functools.partial(_apply, func=func, src_field_names=fields_name,
+    _apply_func = functools.partial(_apply, func=func, src_operable_blocks=operable_blocks, src_field_names=fields_name,
                                     src_fields_loc=fields_loc, src_non_operable_blocks=non_operable_blocks,
-                                    ret_columns=columns, dst_dm=dst_data_manager,
+                                    ret_columns=columns, dst_dm=dst_data_manager, is_numeric=is_numeric,
+                                    need_shuffle=True if block_column_in_orders == fields_name else False,
+                                    block_column_in_orders=block_column_in_orders,
                                     enable_type_align_checking=enable_type_align_checking)
 
     dst_block_table_with_dm = df.block_table.mapValues(_apply_func)
@@ -65,46 +79,58 @@ def apply_row(df: "DataFrame", func,
     )
 
 
-def _apply(blocks, func=None, src_field_names=None,
+def _apply(blocks, func=None, src_operable_blocks=None, src_field_names=None,
            src_fields_loc=None, src_non_operable_blocks=None, ret_columns=None,
-           dst_dm: "DataManager"=None, enable_type_align_checking=True):
+           dst_dm: "DataManager"=None, is_numeric=True,
+           block_column_in_orders=None,
+           need_shuffle=False, enable_type_align_checking=True):
     dm = dst_dm.duplicate()
     apply_blocks = []
-    lines = len(blocks[0])
-    ret_column_len = len(ret_columns) if ret_columns is not None else None
-    block_types = []
 
-    flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
-    for lid in range(lines):
-        apply_row_data = [flat_blocks[bid][lid][offset] for bid, offset in src_fields_loc]
-        apply_ret = func(pd.Series(apply_row_data, index=src_field_names))
+    if is_numeric:
+        apply_data = []
+        for bid in src_operable_blocks:
+            apply_data.append(blocks[bid])
+        apply_data = torch.hstack(apply_data)
+        apply_data = pd.DataFrame(apply_data, columns=block_column_in_orders)
+        if need_shuffle:
+            apply_data = apply_data[src_field_names]
+    else:
+        lines = len(blocks[0])
+        flat_blocks = [Block.transform_block_to_list(block) for block in blocks]
+        apply_data = [[] for _ in range(lines)]
+        for bid, offset in src_fields_loc:
+            for lid in range(lines):
+                apply_data[lid].append(flat_blocks[bid][lid][offset])
 
-        if isinstance(apply_ret, Iterable):
-            apply_ret = list(apply_ret)
-            if ret_column_len is None:
-                ret_column_len = len(apply_ret)
-            elif ret_column_len != len(apply_ret):
-                raise ValueError("Result of apply row should have equal length")
-        else:
-            if ret_column_len and ret_column_len != 1:
-                raise ValueError("Result of apply row should have equal length")
-            apply_ret = [apply_ret]
+        apply_data = pd.DataFrame(apply_data, columns=src_field_names)
 
-        if ret_column_len is None:
-            ret_column_len = len(apply_ret)
+    apply_ret = apply_data.apply(lambda row: func(row), axis=1).values.tolist()
 
-        if not block_types:
-            block_types = [BlockType.get_block_type(value) for value in apply_ret]
-            apply_blocks = [[] for _ in range(ret_column_len)]
+    if isinstance(apply_ret[0], Iterable):
+        first_row = list(apply_ret[0])
+        ret_column_len = len(first_row)
+        block_types = [BlockType.get_block_type(value) for value in first_row]
+        apply_blocks = [[] for _ in range(ret_column_len)]
+        for ret in apply_ret:
+            for idx, value in enumerate(ret):
+                apply_blocks[idx].append([value])
 
-        for idx, value in enumerate(apply_ret):
-            apply_blocks[idx].append([value])
+                if enable_type_align_checking:
+                    block_type = BlockType.get_block_type(value)
+                    if block_types[idx] < block_type:
+                        block_types[idx] = block_type
+    else:
+        block_types = [BlockType.get_block_type(apply_ret[0])]
+        apply_blocks.append([[ret] for ret in apply_ret])
+        ret_column_len = 1
 
         if enable_type_align_checking:
-            for idx, value in enumerate(apply_ret):
-                block_type = BlockType.get_block_type(value)
-                if block_types[idx] < block_type:
-                    block_types[idx] = block_type
+            for ret in apply_ret:
+                block_type = BlockType.get_block_type(ret)
+                if block_types[0] < block_type:
+                    block_types[0] = block_type
+
 
     if not ret_columns:
         ret_columns = generated_default_column_names(ret_column_len)
@@ -118,6 +144,17 @@ def _apply(blocks, func=None, src_field_names=None,
         ret_blocks[idx] = blocks[bid]
 
     for idx, bid in enumerate(block_indexes):
-        ret_blocks[bid] = dm.blocks[bid].convert_block(apply_blocks[idx])
+        if dm.blocks[bid].is_phe_tensor():
+            single_value = apply_blocks[idx][0][0]
+            dm.blocks[bid].set_extra_kwargs(pk=single_value.pk,
+                                            evaluator=single_value.evaluator,
+                                            coder=single_value.coder,
+                                            dtype=single_value.dtype,
+                                            device=single_value.device)
+            ret = [v[0]._data for v in apply_blocks[idx]]
+            ret_blocks[bid] = dm.blocks[bid].convert_block(ret)
+            # ret_blocks[bid] = dm.blocks[bid].convert_to_phe_tensor(ret, shape=(len(ret), 1))
+        else:
+            ret_blocks[bid] = dm.blocks[bid].convert_block(apply_blocks[idx])
 
     return ret_blocks, dm

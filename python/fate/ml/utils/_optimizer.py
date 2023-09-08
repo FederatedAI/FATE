@@ -281,7 +281,7 @@ class Optimizer(object):
         delta_grad = grad
         model_weights = self.regularization_update(
             model_weights, delta_grad, fit_intercept, lr, prev_round_weights)
-        logger.info(f"after update, model weights: {model_weights}")
+        # (f"after update, model weights: {model_weights}")
 
         return model_weights
 

@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-def load_computing(computing):
+def load_computing(computing, logger_config=None):
     from fate.components.core.spec.computing import (
         EggrollComputingSpec,
         SparkComputingSpec,
@@ -22,7 +22,9 @@ def load_computing(computing):
     if isinstance(computing, StandaloneComputingSpec):
         from fate.arch.computing.standalone import CSession
 
-        return CSession(computing.metadata.computing_id, options=computing.metadata.options)
+        return CSession(
+            computing.metadata.computing_id, logger_config=logger_config, options=computing.metadata.options
+        )
     if isinstance(computing, EggrollComputingSpec):
         from fate.arch.computing.eggroll import CSession
 

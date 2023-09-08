@@ -5,19 +5,20 @@ mod histogram;
 mod psi;
 mod quantile;
 mod secure_aggregation_helper;
-mod tensor;
 mod paillier;
+
+mod ou;
 
 use pyo3::prelude::*;
 
 #[pymodule]
 fn fate_utils(py: Python, m: &PyModule) -> PyResult<()> {
-    tensor::register(py, m)?;
     quantile::register(py, m)?;
     hash::register(py, m)?;
     psi::register(py, m)?;
     histogram::register(py, m)?;
     paillier::register(py, m)?;
+    ou::register(py, m)?;
     secure_aggregation_helper::register(py, m)?;
     Ok(())
 }

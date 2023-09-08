@@ -24,7 +24,6 @@ import numpy as np
 import pandas as pd
 import torch
 from fate.arch.tensor.phe._tensor import PHETensor
-from fate_utils.paillier import FixedpointPaillierVector
 
 from .schema_manager import SchemaManager
 
@@ -245,28 +244,45 @@ class Block(object):
 
         return converted_block
 
-    @classmethod
-    def retrieval_row(cls, block, indexes):
-        if isinstance(block, FixedpointPaillierVector):
-            return block.slice_indexes(indexes)
-        else:
-            return block[indexes]
+    # @classmethod
+    # def retrieval_row(cls, block, indexes):
+    #     if isinstance(block, CiphertextVector):
+    #         return block.slice_indexes(indexes)
+    #     elif isinstance(block, pd.Index):
+    #         if isinstance(indexes, list):
+    #             return block[indexes]
+    #         else:
+    #             return pd.Index(block[indexes])
+    #     else:
+    #         return block[indexes]
 
     @classmethod
     def transform_block_to_list(cls, block):
-        if isinstance(block, FixedpointPaillierVector):
-            return [block.slice_indexes([i]) for i in range(len(block))]
-        else:
-            return block.tolist()
+        return block.tolist()
+
+    # @classmethod
+    # def transform_row_to_raw(cls, block, index):
+    #     if isinstance(block, pd.Index):
+    #         return block[index]
+    #     elif isinstance(block, CiphertextVector):
+    #         return block.slice_indexes([index])
+    #     else:
+    #         return block[index].tolist()
 
     @classmethod
-    def transform_row_to_raw(cls, block, index):
-        if isinstance(block, pd.Index):
-            return block[index]
-        elif isinstance(block, FixedpointPaillierVector):
-            return block.slice_indexes([index])
+    def vstack(cls, blocks):
+        ret = blocks[0]
+        if isinstance(ret, pd.Index):
+            for block in blocks[1:]:
+                ret = ret.append(block)
+        elif isinstance(ret, torch.Tensor):
+            ret = torch.vstack(blocks)
+        elif isinstance(ret, np.ndarray):
+            ret = np.vstack(blocks)
         else:
-            return block[index].tolist()
+            raise ValueError(f"Not implemented block vstack for type {type(ret)}")
+
+        return ret
 
 
 class Int32Block(Block):
@@ -276,6 +292,11 @@ class Int32Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.int32:
+                return block
+            else:
+                return block.to(torch.int32)
         try:
             return torch.tensor(block, dtype=torch.int32)
         except ValueError:
@@ -289,6 +310,11 @@ class Int64Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.int64:
+                return block
+            else:
+                return block.to(torch.int64)
         try:
             return torch.tensor(block, dtype=torch.int64)
         except ValueError:
@@ -302,6 +328,11 @@ class Float32Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.float32:
+                return block
+            else:
+                return block.to(torch.float32)
         try:
             return torch.tensor(block, dtype=torch.float32)
         except ValueError:
@@ -315,6 +346,11 @@ class Float64Block(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.float64:
+                return block
+            else:
+                return block.to(torch.float64)
         try:
             return torch.tensor(block, dtype=torch.float64)
         except ValueError:
@@ -328,6 +364,11 @@ class BoolBlock(Block):
 
     @staticmethod
     def convert_block(block):
+        if isinstance(block, torch.Tensor):
+            if block.dtype == torch.bool:
+                return block
+            else:
+                return block.to(torch.bool)
         try:
             return torch.tensor(block, dtype=torch.bool)
         except ValueError:
@@ -363,8 +404,9 @@ class PHETensorBlock(Block):
         self._dtype = dtype
         self._device = device
 
-    @staticmethod
-    def convert_block(block):
+    def convert_block(self, block):
+        if isinstance(block, list):
+            block = self._evaluator.cat(block)
         return block
 
     def convert_to_phe_tensor(self, block, shape):

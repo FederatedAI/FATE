@@ -33,13 +33,18 @@ class PHETensor:
         self._data = data
         self._shape = shape
         self._dtype = dtype
-        self._device = device
+        if isinstance(device, torch.device):
+            from fate.arch import unify
 
-    def type(self):
-        return f"phe.{self.dtype}"
+            self._device = unify.device.from_torch_device(device)
+        else:
+            self._device = device
+
+    def type(self, dtype):
+        return self.with_template(self._data, dtype)
 
     def __repr__(self) -> str:
-        return f"<PHETensor shape={self.shape}, dtype={self.dtype}>"
+        return f"<PHETensor shape={self.shape}, dtype={self.dtype}, data={self._data}>"
 
     def __str__(self) -> str:
         return self.__repr__()

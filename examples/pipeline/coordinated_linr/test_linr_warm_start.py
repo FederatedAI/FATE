@@ -43,7 +43,8 @@ def main(config="../config.yaml", namespace=""):
     linr_0 = CoordinatedLinR("linr_0",
                              epochs=4,
                              batch_size=None,
-                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01}},
+                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01},
+                                        "alpha": 0.001},
                              init_param={"fit_intercept": True, "method": "zeros"},
                              train_data=psi_0.outputs["output_data"],
                              learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
@@ -52,19 +53,20 @@ def main(config="../config.yaml", namespace=""):
                              warm_start_model=linr_0.outputs["output_model"],
                              epochs=2,
                              batch_size=None,
-                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01}},
+                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01},
+                                        "alpha": 0.001},
                              )
 
     linr_2 = CoordinatedLinR("linr_2", epochs=6,
                              batch_size=None,
-                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01}},
+                             optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01},
+                                        "alpha": 0.001},
                              init_param={"fit_intercept": True, "method": "zeros"},
                              train_data=psi_0.outputs["output_data"],
                              learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
                                                                                                  "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="motor_speed",
                               runtime_roles=["guest"],
                               default_eval_setting="regression",
                               input_data=[linr_1.outputs["train_output_data"], linr_2.outputs["train_output_data"]])

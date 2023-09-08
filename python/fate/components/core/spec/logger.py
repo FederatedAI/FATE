@@ -15,6 +15,7 @@
 
 import logging
 import logging.config
+import os
 from typing import Optional
 
 import pydantic
@@ -23,22 +24,42 @@ import pydantic
 class LoggerConfig(pydantic.BaseModel):
     config: Optional[dict] = None
 
-    def install(self):
-        if self.config is None:
-            handler_name = "rich_handler"
-            self.config = dict(
-                version=1,
-                formatters={},
-                handlers={
-                    handler_name: {
-                        "class": "rich.logging.RichHandler",
-                        "level": "DEBUG",
+    def install(self, debug=False):
+        if debug or self.config is None:
+            level = os.getenv("DEBUG_MODE_LOG_LEVEL", "DEBUG")
+            try:
+                import rich.logging
+
+                logging_class = "rich.logging.RichHandler"
+                logging_formatters = {}
+                handlers = {
+                    "console": {
+                        "class": logging_class,
+                        "level": level,
                         "filters": [],
                     }
-                },
+                }
+            except ImportError:
+                logging_class = "logging.StreamHandler"
+                logging_formatters = {
+                    "console": {
+                        "format": "[%(levelname)s][%(asctime)-8s][%(process)s][%(module)s.%(funcName)s][line:%(lineno)d]: %(message)s"
+                    }
+                }
+                handlers = {
+                    "console": {
+                        "class": logging_class,
+                        "level": level,
+                        "formatter": "console",
+                    }
+                }
+            self.config = dict(
+                version=1,
+                formatters=logging_formatters,
+                handlers=handlers,
                 filters={},
                 loggers={},
-                root=dict(handlers=[handler_name], level="DEBUG"),
+                root=dict(handlers=["console"], level="DEBUG"),
                 disable_existing_loggers=False,
             )
         logging.config.dictConfig(self.config)

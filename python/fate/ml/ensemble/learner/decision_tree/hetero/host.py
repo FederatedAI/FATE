@@ -12,12 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _get_sample_on_local_nodes, _update_sample_pos, FeatureImportance
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import DecisionTree, Node, _update_sample_pos_on_local_nodes, FeatureImportance
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder, DistributedHistogram
 from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
-import numpy as np
 from typing import List
 import functools
 import logging
@@ -37,8 +36,10 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._random_seed = random_seed
         self._pk = None
         self._evaluator = None
+        self._gh_pack = True
+        self._pack_info = None
 
-    def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, hist_inst: DistributedHistogram, splitter: FedSBTSplitter, data: DataFrame):
+    def _convert_split_id(self, ctx: Context, cur_layer_nodes: List[Node], node_map: dict, hist_builder: SBTHistogramBuilder, statistic_histogram: DistributedHistogram, splitter: FedSBTSplitter, data: DataFrame):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         to_recover = {}
@@ -57,7 +58,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                     node.fid = self._fid_to_feature_name(int(fid), data)
                     node.bid = int(bid)
             else:
-                recover_rs = hist_builder.recover_feature_bins(hist_inst, to_recover, node_map)
+                recover_rs = hist_builder.recover_feature_bins(statistic_histogram, to_recover, node_map)
                 for node_id, split_tuple in recover_rs.items():
                     node = cur_layer_nodes[node_map[node_id]]
                     fid, bid = split_tuple
@@ -78,37 +79,23 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         data_with_pos = DataFrame.hstack([data, sample_pos])
-        map_func = functools.partial(_get_sample_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
-        local_sample_idx = data_with_pos.apply_row(map_func).values.as_tensor()
-        local_samples = data_with_pos[local_sample_idx]
-        logger.info('{} samples on local nodes'.format(len(local_samples)))
+        map_func = functools.partial(_update_sample_pos_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename)
+        update_sample_pos = data_with_pos.apply_row(map_func, columns=["h_on_local", "h_node_idx"])
 
-        if len(local_samples) == 0:
-            updated_sample_pos = None
-        else:
-            updated_sample_pos = sample_pos.loc(local_samples.get_indexer(target="sample_id"), preserve_order=True).create_frame()
-            update_func = functools.partial(_update_sample_pos, cur_layer_node=cur_layer_nodes, node_map=node_map)
-            updated_sample_pos['node_idx'] = local_samples.apply_row(update_func)
-
-        # synchronize sample pos
-        if updated_sample_pos is None:
-            update_data = (False, None)
-        else:
-            pos_data = updated_sample_pos.as_tensor()
-            pos_index = updated_sample_pos.get_indexer(target='sample_id')
-            update_data = (True, (pos_data, pos_index))
-        ctx.guest.put('updated_data', update_data)
-        new_pos_data, new_pos_indexer = ctx.guest.get('new_sample_pos')
-        new_sample_pos = sample_pos.create_frame()
-        new_sample_pos = new_sample_pos.loc(new_pos_indexer, preserve_order=True)
-        new_sample_pos['node_idx'] = new_pos_data
+        ctx.guest.put('updated_data', update_sample_pos)
+        new_sample_pos = ctx.guest.get('new_sample_pos')
 
         return new_sample_pos
     
     def _get_gh(self, ctx: Context):
-        grad_and_hess = ctx.guest.get('en_gh')
-        
-        return grad_and_hess
+        grad_and_hess: DataFrame = ctx.guest.get('en_gh')
+        if len(grad_and_hess.columns) == 1:
+            gh_pack = True
+        elif len(grad_and_hess.columns) == 2:
+            gh_pack = False
+        else:
+            raise ValueError('error columns, got {}'.format(len(grad_and_hess.columns)))
+        return grad_and_hess, gh_pack
     
     def _sync_nodes(self, ctx: Context):
         
@@ -123,8 +110,11 @@ class HeteroDecisionTreeHost(DecisionTree):
         sample_pos = self._init_sample_pos(train_df)
 
         # Get Encrypted Grad And Hess
-        en_grad_and_hess: DataFrame = ctx.guest.get('en_gh')
+        ret = self._get_gh(ctx)
+        en_grad_and_hess: DataFrame = ret[0] 
+        self._gh_pack = ret[1]
         self._pk, self._evaluator = ctx.guest.get('en_kit')
+        self._pack_info = ctx.guest.get('pack_info')
         root_node = self._initialize_root_node(ctx, train_df)
         
         # init histogram builder
@@ -134,6 +124,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         node_map = {}
         cur_layer_node = [root_node]
+        en_grad_and_hess["cnt"] = 1
         for cur_depth, sub_ctx in ctx.on_iterations.ctxs_range(self.max_depth):
             
             if len(cur_layer_node) == 0:
@@ -142,16 +133,17 @@ class HeteroDecisionTreeHost(DecisionTree):
                     
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
-            logger.info('train_df is {} grad hess is {}'.format(train_df, en_grad_and_hess))
-            hist_inst, en_statistic_result = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, \
-                                                                            pk=self._pk, evaluator=self._evaluator)
-            self.splitter.split(sub_ctx, en_statistic_result, cur_layer_node, node_map)
+            logger.info('train_df is {} grad hess is {}, {}, gh pack {}'.format(train_df, en_grad_and_hess, en_grad_and_hess.columns, self._gh_pack))
+            hist_inst, statistic_histogram = self.hist_builder.compute_hist(sub_ctx, cur_layer_node, train_df, en_grad_and_hess, sample_pos, node_map, pk=self._pk, evaluator=self._evaluator, gh_pack=self._gh_pack)
+            if self._gh_pack:
+                statistic_histogram.i_squeeze({'gh': (self._pack_info['total_pack_num'], self._pack_info['split_point_shift_bit'])})
+            self.splitter.split(sub_ctx, statistic_histogram, cur_layer_node, node_map)
             cur_layer_node, next_layer_nodes = self._sync_nodes(sub_ctx)
-            self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, hist_inst, self.splitter, train_df)
+            self._convert_split_id(sub_ctx, cur_layer_node, node_map, self.hist_builder, statistic_histogram, self.splitter, train_df)
             self._update_host_feature_importance(sub_ctx, cur_layer_node, train_df)
             logger.info('cur layer node num: {}, next layer node num: {}'.format(len(cur_layer_node), len(next_layer_nodes)))
             sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
-            train_df, sample_pos = self._drop_samples_on_leaves(sample_pos, train_df)
+            train_df, sample_pos, en_grad_and_hess = self._drop_samples_on_leaves(sample_pos, train_df, en_grad_and_hess)
             self._nodes += cur_layer_node
             cur_layer_node = next_layer_nodes
             logger.info('layer {} done: next layer will split {} nodes, active samples num {}'.format(cur_depth, len(cur_layer_node), len(sample_pos)))

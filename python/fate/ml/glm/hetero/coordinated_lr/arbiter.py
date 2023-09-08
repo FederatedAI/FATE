@@ -15,6 +15,7 @@
 import logging
 
 import torch
+
 from fate.arch import Context
 from fate.arch.dataframe import DataLoader
 from fate.ml.abc.module import HeteroModule
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleArbiter(HeteroModule):
-    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param):
+    def __init__(self, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param, he_param):
         self.epochs = epochs
         self.batch_size = batch_size
         self.early_stop = early_stop
@@ -33,6 +34,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
         self.lr_param = learning_rate_param
+        self.he_param = he_param
 
         self.estimator = None
         self.ovr = False
@@ -54,7 +56,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             self.estimator.epochs = epochs
 
     def fit(self, ctx: Context) -> None:
-        kit = ctx.cipher.phe.setup(options=dict(key_length=2048))
+        kit = ctx.cipher.phe.setup(options=self.he_param)
         encryptor = kit.get_tensor_encryptor()
         decryptor = kit.get_tensor_decryptor()
         ctx.hosts("encryptor").put(encryptor)
@@ -136,6 +138,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
                 "batch_size": self.batch_size,
                 "learning_rate_param": self.learning_rate_param,
                 "optimizer_param": self.optimizer_param,
+                "he_param": self.he_param,
             },
         }
 
@@ -148,6 +151,7 @@ class CoordinatedLRModuleArbiter(HeteroModule):
             batch_size=model["meta"]["batch_size"],
             optimizer_param=model["meta"]["optimizer_param"],
             learning_rate_param=model["meta"]["learning_rate_param"],
+            he_param=model["meta"]["he_param"],
         )
         all_estimator = model["data"]["estimator"]
         lr.estimator = {}
@@ -230,7 +234,7 @@ class CoordinatedLREstimatorArbiter(HeteroModule):
                 if len(host_g) == 1:
                     loss = decryptor.decrypt_tensor(batch_ctx.guest.get("loss"))
                     iter_loss = 0 if iter_loss is None else iter_loss
-                    iter_loss += loss
+                    iter_loss = iter_loss + loss
                 else:
                     logger.info("Multiple hosts exist, do not compute loss.")
 

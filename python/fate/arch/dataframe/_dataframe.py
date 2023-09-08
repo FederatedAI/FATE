@@ -15,13 +15,17 @@
 #
 import copy
 import operator
+import typing
 from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from fate.arch.tensor import DTensor
 
+from fate.arch.tensor import DTensor
 from .manager import DataManager, Schema
+
+if typing.TYPE_CHECKING:
+    from fate.arch.histogram import DistributedHistogram, HistogramBuilder
 
 
 class DataFrame(object):
@@ -31,10 +35,6 @@ class DataFrame(object):
         self._partition_order_mappings = partition_order_mappings
         self._data_manager = data_manager
 
-        """
-        the following is cached
-        index: [(id, (partition_id, index_in_block)]
-        """
         self._sample_id_indexer = None
         self._match_id_indexer = None
         self._sample_id = None
@@ -165,7 +165,10 @@ class DataFrame(object):
             enable_type_align_checking=enable_type_align_checking,
         )
 
-    def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
+    def create_frame(self, with_label=False, with_weight=False, columns: Union[list, pd.Index] = None) -> "DataFrame":
+        if columns is not None and isinstance(columns, pd.Index):
+            columns = columns.tolist()
+
         return self.__extract_fields(
             with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
         )
@@ -300,10 +303,20 @@ class DataFrame(object):
 
         return hist(self, targets)
 
-    def distributed_hist_stat(self, distributed_hist, position: "DataFrame", targets: dict):
+    def distributed_hist_stat(self,
+                              histogram_builder: "HistogramBuilder",
+                              position: "DataFrame" = None,
+                              targets: Union[dict, "DataFrame"] = None,
+                              ) -> "DistributedHistogram":
         from .ops._histogram import distributed_hist_stat
 
-        return distributed_hist_stat(self, distributed_hist, position, targets)
+        if targets is None:
+            raise ValueError("To use distributed hist stat, targets should not be None")
+        if position is None:
+            position = self.create_frame()
+            position["node_idx"] = 0
+
+        return distributed_hist_stat(self, histogram_builder, position, targets)
 
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace
@@ -358,14 +371,6 @@ class DataFrame(object):
         return invert(self)
 
     def __arithmetic_operate(self, op, other) -> "DataFrame":
-        """
-        df * 1.5, int -> float
-        可能的情况：
-        a. columns类型统一：此时，block只有一个
-        b. columns类型不一致，多block，但要求单个block里面所有列都是被使用的。
-
-        需要注意的是：int/float可能会统一上升成float，所以涉及到block类型的变化和压缩
-        """
         from .ops._arithmetic import arith_operate
 
         return arith_operate(self, other, op)
@@ -374,14 +379,6 @@ class DataFrame(object):
         from .ops._cmp import cmp_operate
 
         return cmp_operate(self, other, op)
-
-    """
-    def __getattr__(self, attr):
-        if attr not in self._data_manager.schema.columns:
-            raise ValueError(f"DataFrame does not has attribute {attr}")
-
-        return self.__getitem__(attr)
-    """
 
     def __setattr__(self, key, value):
         property_attr_mapping = dict(block_table="_block_table", data_manager="_data_manager")
@@ -503,6 +500,10 @@ class DataFrame(object):
 
         return loc(self, indexer, target=target, preserve_order=preserve_order)
 
+    def iloc(self, indexer: "DataFrame") -> "DataFrame":
+        from .ops._dimension_scaling import retrieval_row
+        return retrieval_row(self, indexer)
+
     def loc_with_sample_id_replacement(self, indexer):
         """
         indexer: table,
@@ -529,12 +530,9 @@ class DataFrame(object):
         )
 
     @classmethod
-    def from_flatten_data(cls, ctx, flatten_table, data_manager) -> "DataFrame":
-        """
-        key=random_key, value=(sample_id, data)
-        """
+    def from_flatten_data(cls, ctx, flatten_table, data_manager, key_type) -> "DataFrame":
         from .ops._indexer import transform_flatten_data_to_df
-        return transform_flatten_data_to_df(ctx, flatten_table, data_manager)
+        return transform_flatten_data_to_df(ctx, flatten_table, data_manager, key_type)
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
@@ -583,4 +581,4 @@ class DataFrame(object):
     def data_overview(self, num=100):
         from .ops._data_overview import collect_data
 
-        return collect_data(self, num=100)
+        return collect_data(self, num=num)

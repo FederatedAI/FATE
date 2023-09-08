@@ -13,5 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-DATAFRAME_BLOCK_ROW_SIZE = 2**6
-
+DATAFRAME_BLOCK_ROW_SIZE = 2**7
+BLOCK_COMPRESS_THRESHOLD = 5

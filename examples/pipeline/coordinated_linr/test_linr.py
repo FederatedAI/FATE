@@ -42,11 +42,11 @@ def main(config="../config.yaml", namespace=""):
     linr_0 = CoordinatedLinR("linr_0",
                              epochs=10,
                              batch_size=100,
-                             optimizer={"method": "rmsprop", "optimizer_params": {"lr": 0.01}},
+                             optimizer={"method": "rmsprop", "optimizer_params": {"lr": 0.01},
+                                        "alpha": 0.001},
                              init_param={"fit_intercept": True},
                              train_data=psi_0.outputs["output_data"])
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="motor_speed",
                               runtime_roles=["guest"],
                               default_eval_setting="regression",
                               input_data=linr_0.outputs["train_output_data"])
@@ -55,7 +55,7 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(linr_0)
     pipeline.add_task(evaluation_0)
     pipeline.compile()
-    print(pipeline.get_dag())
+    # print(pipeline.get_dag())
     pipeline.fit()
 
     pipeline.deploy([psi_0, linr_0])

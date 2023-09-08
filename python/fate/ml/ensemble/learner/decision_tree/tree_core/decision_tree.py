@@ -160,7 +160,7 @@ def _make_decision(feat_val, bid, missing_dir=None, use_missing=None, zero_as_mi
 
 def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict, sitename=None):
 
-    node_id = s[-1]
+    node_id = s.iloc[-1]
     node = cur_layer_node[node_map[node_id]]
     if node.is_leaf:
         return -(node.nid + 1)  # use negative index to represent leaves, + 1 to avoid root node 0
@@ -176,15 +176,30 @@ def _update_sample_pos(s: pd.Series, cur_layer_node: List[Node], node_map: dict,
 
 def _get_sample_on_local_nodes(s: pd.Series, cur_layer_node: List[Node], node_map: dict, sitename):
 
-    node_id = s[-1]
+    node_id = s.iloc[-1]
     node = cur_layer_node[node_map[node_id]]
     on_local_node = (node.sitename == sitename)
     return on_local_node
 
 
+def _update_sample_pos_on_local_nodes(s: pd.Series, cur_layer_node: List[Node], node_map: dict, sitename):
+    on_local_node = _get_sample_on_local_nodes(s, cur_layer_node, node_map, sitename)
+    if not on_local_node:
+        return False, -1
+    else:
+        return True, _update_sample_pos(s, cur_layer_node, node_map, sitename)
+
+
+def _merge_sample_pos(s: pd.Series):
+    if s['g_on_local']:
+        return s['g_on_local'], s['g_node_idx']
+    else:
+        return s['h_on_local'], s['h_node_idx']
+
+
 def _convert_sample_pos_to_score(s: pd.Series, tree_nodes: List[Node]):
     
-    node_idx = s[0]
+    node_idx = s.iloc[0]
     if node_idx < 0:
         node_idx = -(node_idx + 1)
     target_node = tree_nodes[node_idx]
@@ -244,8 +259,7 @@ class DecisionTree(object):
     def _convert_sample_pos_to_weight(self, sample_pos: DataFrame, tree_nodes: List[Node]):
         import functools
         map_func = functools.partial(_convert_sample_pos_to_score, tree_nodes=tree_nodes)
-        sample_weight = sample_pos.create_frame()
-        sample_weight['score'] = sample_pos.apply_row(map_func)
+        sample_weight = sample_pos.apply_row(map_func, columns=["score"])
         return sample_weight
 
     def _convert_bin_idx_to_split_val(self, ctx: Context, tree_nodes: List[Node], binning_dict: dict, schema):
@@ -269,8 +283,9 @@ class DecisionTree(object):
         if gh is None:
             sum_g, sum_h = 0, 0
         else:
-            sum_g = float(gh['g'].sum())
-            sum_h = float(gh['h'].sum())
+            sum_gh = gh.sum()
+            sum_g = float(sum_gh['g'])
+            sum_h = float(sum_gh['h'])
         root_node = Node(nid=0, grad=sum_g, hess=sum_h, sitename=sitename, sample_num=len(train_df))
 
         return root_node
@@ -361,19 +376,24 @@ class DecisionTree(object):
  
         return next_layer_node
     
-    def _drop_samples_on_leaves(self, new_sample_pos: DataFrame, data: DataFrame):
+    def _drop_samples_on_leaves(self, new_sample_pos: DataFrame, data: DataFrame, grad_and_hess: DataFrame):
         assert len(new_sample_pos) == len(data), 'sample pos num not match data num, got {} sample pos vs {} data'.format(len(new_sample_pos), len(data))
         x = (new_sample_pos >= 0)
-        indexer = x.get_indexer('sample_id')
-        update_pos = new_sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]
-        new_data = data.loc(indexer, preserve_order=True)[x.as_tensor()]
+        pack_data = DataFrame.hstack([data, new_sample_pos, grad_and_hess]).iloc(x)
+        new_data = pack_data.create_frame(columns=data.schema.columns)
+        update_pos = pack_data.create_frame(columns=new_sample_pos.schema.columns)
+        grad_and_hess = pack_data.create_frame(columns=grad_and_hess.schema.columns)
+        """
+        new_data = data.iloc(x)
+        update_pos = new_sample_pos.iloc(x)
+        grad_and_hess = grad_and_hess.iloc(x)
+        """
         logger.info('drop leaf samples, new sample count is {}, {} samples dropped'.format(len(new_sample_pos), len(data) - len(new_data)))
-        return new_data, update_pos
+        return new_data, update_pos, grad_and_hess
         
     def _get_samples_on_leaves(self, sample_pos: DataFrame):
         x = (sample_pos < 0)
-        indexer = x.get_indexer('sample_id')
-        samples_on_leaves = sample_pos.loc(indexer, preserve_order=True)[x.as_tensor()]
+        samples_on_leaves = sample_pos.iloc(x)
         return samples_on_leaves
 
     def _get_column_max_bin(self, result_dict):

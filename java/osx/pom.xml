@@ -19,8 +19,8 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <guava.version>31.1-jre</guava.version>
-        <grpc.version>1.51.1</grpc.version>
+        <guava.version>32.1.2-jre</guava.version>
+        <grpc.version>1.55.1</grpc.version>
         <lombok.version>1.18.24</lombok.version>
         <protobuf.version>3.21.12</protobuf.version>
 

@@ -43,7 +43,8 @@ def main(config="../config.yaml", namespace=""):
     lr_0 = CoordinatedLR("lr_0",
                          epochs=4,
                          batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01}},
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.01},
+                                    "alpha": 0.001},
                          init_param={"fit_intercept": True, "method": "zeros"},
                          train_data=psi_0.outputs["output_data"],
                          learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
@@ -64,7 +65,6 @@ def main(config="../config.yaml", namespace=""):
                                                                                              "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="y",
                               runtime_roles=["guest"],
                               default_eval_setting="binary",
                               input_data=[lr_1.outputs["train_output_data"], lr_2.outputs["train_output_data"]])

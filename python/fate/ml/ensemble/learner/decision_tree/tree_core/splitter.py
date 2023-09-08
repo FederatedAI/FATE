@@ -12,12 +12,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import List
 import torch
 import numpy as np
 import logging
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
+from fate.arch.histogram import DistributedHistogram
 
 
 logger = logging.getLogger(__name__)
@@ -139,7 +139,7 @@ class SklearnSplitter(Splitter):
         feat_best_split = rs.argmax(axis=1)
         feat_best_gain = rs.max(axis=1)
 
-        print('best gain', feat_best_gain)
+        logger.debug('best gain {}'.format(feat_best_gain))
         # best split
         best_split_idx = feat_best_gain.argmax()
         best_gain = feat_best_gain.max()
@@ -346,13 +346,24 @@ class FedSBTSplitter(object):
         weight = -(sum_grad / (sum_hess + self.l2))
         return weight
 
-    def _extract_hist(self, histogram):
+    def _extract_hist(self, histogram, pack_info=None):
         tensor_hist: dict = histogram.extract_data()
         g_all, h_all, cnt_all = None, None, None
         for k, v in tensor_hist.items():
-            g = v['g'].reshape((1, -1))
-            h = v['h'].reshape((1, -1))
+
             cnt = v['cnt'].reshape((1, -1))
+
+            # if gh pack
+            if 'gh' in v:
+                g = v['gh'][::, 0].reshape((1, -1))
+                h = v['gh'][::, 1].reshape((1, -1))
+                if pack_info is None:
+                    raise ValueError('must provide pack info for gh packing computing')
+                g = g - pack_info['g_offset'] * cnt
+            else:
+                g = v['g'].reshape((1, -1))
+                h = v['h'].reshape((1, -1))
+                
             if g_all is None:
                 g_all = g
             else:
@@ -415,14 +426,14 @@ class FedSBTSplitter(object):
 
         return rs
     
-    def _find_best_splits(self, node_hist, sitename, cur_layer_nodes, reverse_node_map, recover_bucket=True):
+    def _find_best_splits(self, node_hist, sitename, cur_layer_nodes, reverse_node_map, recover_bucket=True, pack_info=None):
         
         """
         recover_bucket: if node_hist is guest hist, can get the fid and bid of the split info
                         but for node_hist from host sites, histograms are shuffled, so can not get the fid and bid,
                         only hosts know them.
         """
-        l_g, l_h, l_cnt = self._extract_hist(node_hist)
+        l_g, l_h, l_cnt = self._extract_hist(node_hist, pack_info)
         g_sum, h_sum, cnt_sum = self._make_sum_tensor(cur_layer_nodes)
         rs = self._compute_gains(l_g, l_h, l_cnt, g_sum, h_sum, cnt_sum)
 
@@ -430,8 +441,8 @@ class FedSBTSplitter(object):
         best = rs.max(dim=-1)
         best_gain = best[0]
         best_idx = best[1]
-        print('best_idx: ', best_idx)
-        print('best_gain: ', best_gain)
+        logger.debug('best_idx: {}'.format(best_idx))
+        logger.debug('best_gain: {}'.format(best_gain))
 
         split_infos = []
         node_idx = 0
@@ -480,12 +491,22 @@ class FedSBTSplitter(object):
 
         return splits
     
-    def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder):
+    def _recover_pack_split(self, hist: DistributedHistogram, schema, decode_schema=None):
+        host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
+        # if decode_schema is not None:
+        #     host_hist = hist.decrypt_(schema[0])
+        #     host_hist = host_hist.unpack_decode(decode_schema)
+        #     host_hist = host_hist.union()
+        # else:
+        #     host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
+        return host_hist
+    
+    def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack, pack_info):
         
         if sk is None or coder is None:
             raise ValueError('sk or coder is None, not able to decode host split points')
 
-        histogram = stat_rs.decrypt({}, {})
+        histogram = stat_rs.decrypt({}, {}, None)
         sitename = ctx.local.party[0] + '_' + ctx.local.party[1]
         reverse_node_map = {v: k for k, v in node_map.items()}
 
@@ -495,27 +516,42 @@ class FedSBTSplitter(object):
         host_histograms = ctx.hosts.get('hist')
         
         host_splits = []
+        if gh_pack:
+            decrypt_schema = ({"gh":sk}, {"gh": (coder, torch.int64)})   
+            # (coder, pack_num, offset_bit, precision, total_num)
+            if pack_info is not None:
+                decode_schema = {"gh": (coder, pack_info['pack_num'], pack_info['shift_bit'], pack_info['precision'], pack_info['total_pack_num'])}
+            else:
+                raise ValueError('pack info is not provided')
+        else:
+            decrypt_schema = ({"g":sk, "h":sk}, {"g": (coder, torch.float32), "h": (coder, torch.float32)})
+            decode_schema = None
+
         for idx, hist in enumerate(host_histograms):
             host_sitename = ctx.hosts[idx].party[0] + '_' + ctx.hosts[idx].party[1]
-            host_hist = hist.decrypt({"g":sk, "h":sk}, {"g": (coder, torch.float32), "h": (coder, torch.float32)})
-            print('splitting host')
-            host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False)
+            host_hist = self._recover_pack_split(hist, decrypt_schema, decode_schema)
+            logger.debug('splitting host')
+            host_split = self._find_best_splits(host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False, pack_info=pack_info)
             host_splits.append(host_split)
 
-        print('host splits are {}'.format(host_splits))
+        logger.debug('host splits are {}'.format(host_splits))
         best_splits = self._merge_splits(guest_best_splits, host_splits)
-        print('guest splits are {}'.format(guest_best_splits))
-        print('best splits are {}'.format(best_splits))
+        logger.debug('guest splits are {}'.format(guest_best_splits))
+        logger.debug('best splits are {}'.format(best_splits))
         return best_splits
     
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):
-
         ctx.guest.put('hist', en_histogram)
     
-    def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map, sk=None, coder=None):
+    def split(self, ctx: Context, histogram_statistic_result, cur_layer_node, node_map, sk=None, coder=None, gh_pack=None, pack_info=None):
         
         if ctx.is_on_guest:
-            return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder)
+            if sk is None or coder is None:
+                raise ValueError('sk or coder is None, not able to decode host split points')
+            assert gh_pack is not None and isinstance(gh_pack, bool), 'gh_pack should be bool, indicating if the gh is packed'
+            if not gh_pack:
+                logger.info('not using gh pack to split')
+            return self._guest_split(ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder, gh_pack, pack_info)
         elif ctx.is_on_host:
             return self._host_split(ctx, histogram_statistic_result, cur_layer_node)
         else:

@@ -48,7 +48,8 @@ def main(config="../config.yaml", namespace=""):
     lr_0 = CoordinatedLR("lr_0",
                          epochs=10,
                          batch_size=300,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}},
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21},
+                                    "alpha": 0.001},
                          init_param={"fit_intercept": True, "method": "random_uniform"},
                          train_data=data_split_0.outputs["train_output_data"],
                          validate_data=data_split_0.outputs["validate_output_data"],
@@ -56,7 +57,6 @@ def main(config="../config.yaml", namespace=""):
                                                                                            "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="y",
                               runtime_roles=["guest"],
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])

@@ -73,7 +73,6 @@ def add(input: PHETensor, other):
 
 @implements(torch.rsub)
 def rsub(input, other):
-    # assert input is PaillierTensor
     if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return sub(other, input)
 
@@ -111,7 +110,6 @@ def rsub(input, other):
 
 @implements(torch.sub)
 def sub(input, other):
-    # assert input is PaillierTensor
     if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return rsub(other, input)
 
@@ -149,7 +147,6 @@ def sub(input, other):
 
 @implements(torch.mul)
 def mul(input, other):
-    # assert input is PaillierTensor
     if not isinstance(input, PHETensor) and isinstance(other, PHETensor):
         return mul(other, input)
 
@@ -190,11 +187,11 @@ def rmatmul_f(input, other):
         return matmul(other, input)
 
     if input.ndim > 2 or input.ndim < 1:
-        raise ValueError(f"can't rmatmul `PaillierTensor` with `torch.Tensor` with dim `{input.ndim}`")
+        raise ValueError(f"can't rmatmul `PHETensor` with `torch.Tensor` with dim `{input.ndim}`")
 
     if isinstance(other, PHETensor):
         raise NotImplementedError(
-            f"rmatmul {input} with {other} not supported, paillier is not multiplicative homomorphic"
+            f"rmatmul {input} with {other} not supported, phe is not multiplicative homomorphic"
         )
 
     if not isinstance(other, torch.Tensor):
@@ -218,10 +215,10 @@ def matmul(input, other):
         return rmatmul_f(other, input)
 
     if input.ndim > 2 or input.ndim < 1:
-        raise ValueError(f"can't matmul `PaillierTensor` with `torch.Tensor` with dim `{input.ndim}`")
+        raise ValueError(f"can't matmul `PHETensor` with `torch.Tensor` with dim `{input.ndim}`")
 
     if isinstance(other, PHETensor):
-        raise ValueError("can't matmul `PaillierTensor` with `PaillierTensor`")
+        raise ValueError("can't matmul `PHETensor` with `PHETensor`")
 
     if not isinstance(other, torch.Tensor):
         return NotImplemented

@@ -115,7 +115,7 @@ def _sample_guest(
             regenerated_sample_id_prefix = generate_sample_id_prefix()
             choice_with_regenerated_ids = None
             for label, f in frac.items():
-                label_df = df[(df.label == label).as_tensor()]
+                label_df = df.iloc(df.label == label)
                 label_n = max(1, int(label_df.shape[0] * f))
                 choices = resample(list(range(label_df.shape[0])), replace=True,
                                    n_samples=label_n, random_state=random_state)
@@ -139,7 +139,7 @@ def _sample_guest(
         else:
             sample_df = None
             for label, f in frac.items():
-                label_df = df[(df.label == label).as_tensor()]
+                label_df = df.iloc(df.label == label)
                 label_n = max(1, int(label_df.shape[0] * f))
                 sample_label_df = label_df.sample(n=label_n, random_state=random_state)
 
@@ -168,6 +168,9 @@ def _federated_sample_host(
         regenerated_ids = ctx.guest.get(REGENERATED_IDS)
         regenerated_raw_table = _regenerated_sample_ids(df, regenerated_ids)
         sample_df = _convert_raw_table_to_df(df._ctx, regenerated_raw_table, df.data_manager)
+
+        sample_indexer = ctx.guest.get(SAMPLE_INDEX_TAG)
+        sample_df = sample_df.loc(sample_indexer, preserve_order=True)
 
     return sample_df
 

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from fate.arch.protocol.phe.paillier import evaluator, keygen
 

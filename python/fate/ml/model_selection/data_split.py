@@ -167,7 +167,7 @@ def sample_per_label(train_data, sample_count=None, random_state=None):
     sampled_n = 0
     data_n = train_data.shape[0]
     for i, label in enumerate(labels):
-        label_data = train_data[(train_data.label == int(label)).as_tensor()]
+        label_data = train_data.iloc(train_data.label == int(label))
         if i == len(labels) - 1:
             # last label:
             to_sample_n = sample_count - sampled_n

@@ -139,7 +139,7 @@ def guest_run(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
 
     intersect_guest_data = intersect_with_offset_ids.mapValues(lambda v: v[0])
 
-    guest_df =  DataFrame.from_flatten_data(ctx, intersect_guest_data, df.data_manager)
+    guest_df =  DataFrame.from_flatten_data(ctx, intersect_guest_data, df.data_manager, key_type="block_id")
     ctx.metrics.log_metrics({"intersect_count": guest_df.shape[0]}, name="intersect_id_count", type="custom")
 
     """

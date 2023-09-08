@@ -35,12 +35,17 @@ def get_dtype(max_int):
     
 
 def all_reach_leaf(pos: np.array):
+    if isinstance(pos, list):
+        pos = np.array(pos)
     return np.all(pos < 0)
 
 
+"""
 def not_finished(pos: np.array):
-    assert isinstance(pos, np.ndarray), f"pos should be np.ndarray, but got {type(pos)}"
+    if isinstance(pos, list):
+        pos = np.array(pos)
     return not np.all(pos < 0)
+"""
 
 
 def generate_pos_array(tree_num, max_node_num):
@@ -92,6 +97,8 @@ def _merge_pos_arr(s: pd.Series):
     
     arr_1 = s['sample_pos']
     arr_2 = s['host_sample_pos']
+    arr_1 = np.array(arr_1)
+    arr_2 = np.array(arr_2)
     assert len(arr_1) == len(arr_2)
     merge_rs = np.copy(arr_1)
     on_leaf = (arr_2 < 0)
@@ -132,26 +139,25 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
         
         sub_ctx = ctx.sub_ctx('predict_round').indexed_ctx(comm_round)
 
-        predict_data = predict_data.loc(indexer=sample_pos.get_indexer(target='sample_id'), preserve_order=True)
+        if comm_round:
+            predict_data = predict_data.loc(indexer=sample_pos.get_indexer(target='sample_id'), preserve_order=True)
         sample_with_pos = DataFrame.hstack([predict_data, sample_pos])
         logger.info('predict round {} has {} samples to predict'.format(comm_round, len(sample_with_pos)))
         map_func = functools.partial(traverse_tree, trees=tree_list, sitename=sitename)
         new_pos = sample_with_pos.create_frame()
         new_pos['sample_pos'] = sample_with_pos.apply_row(map_func)
-        
         done_sample_idx = new_pos.apply_row(lambda x: all_reach_leaf(x['sample_pos']))  # samples that reach leaf node in all trees
-        not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos']))  # samples that not reach leaf node in all trees
-        indexer = done_sample_idx.get_indexer('sample_id')
-        
-        done_sample = new_pos.loc(indexer, preserve_order=True)[done_sample_idx.as_tensor()]
+        not_finished_sample_idx = ~done_sample_idx
+        # not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos']))  # samples that not reach leaf node in all trees
+
+        done_sample = new_pos.iloc(done_sample_idx)
         result_sample_pos = DataFrame.vstack([result_sample_pos, done_sample])
         if len(result_sample_pos) == len(data):
             sub_ctx.hosts.put('need_stop', True)
             break
         
         sub_ctx.hosts.put('need_stop', False)
-        indexer = not_finished_sample_idx.get_indexer('sample_id')
-        pending_samples = new_pos.loc(indexer, preserve_order=True)[not_finished_sample_idx.as_tensor()]
+        pending_samples = new_pos.iloc(not_finished_sample_idx)
 
         # send not-finished samples to host
         sub_ctx.hosts.put('pending_samples', (pending_samples))

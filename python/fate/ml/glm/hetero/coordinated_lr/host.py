@@ -31,12 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleHost(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None):
+    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
         self.batch_size = batch_size
         self.init_param = init_param
+        self.floating_point_precision = floating_point_precision
 
         # host never has fit intercept
         self.init_param["fit_intercept"] = False
@@ -90,6 +92,7 @@ class CoordinatedLRModuleHost(HeteroModule):
                         optimizer=optimizer,
                         learning_rate_scheduler=lr_scheduler,
                         init_param=self.init_param,
+                        floating_point_precision=self.floating_point_precision,
                     )
                 else:
                     logger.info("estimator is not none, will train with warm start")
@@ -115,6 +118,7 @@ class CoordinatedLRModuleHost(HeteroModule):
                     optimizer=optimizer,
                     learning_rate_scheduler=lr_scheduler,
                     init_param=self.init_param,
+                    floating_point_precision=self.floating_point_precision,
                 )
             else:
                 logger.info("estimator is not none, will train with warm start")
@@ -149,6 +153,7 @@ class CoordinatedLRModuleHost(HeteroModule):
                 "learning_rate_param": self.learning_rate_param,
                 "optimizer_param": self.optimizer_param,
                 "init_param": self.init_param,
+                "floating_point_precision": self.floating_point_precision,
             },
         }
 
@@ -160,6 +165,7 @@ class CoordinatedLRModuleHost(HeteroModule):
             learning_rate_param=model["meta"]["learning_rate_param"],
             optimizer_param=model["meta"]["optimizer_param"],
             init_param=model["meta"]["init_param"],
+            floating_point_precision=model["meta"]["floating_point_precision"],
         )
         lr.label_count = model["meta"]["label_count"]
         lr.ovr = model["meta"]["ovr"]
@@ -174,6 +180,7 @@ class CoordinatedLRModuleHost(HeteroModule):
                     epochs=model["meta"]["epochs"],
                     batch_size=model["meta"]["batch_size"],
                     init_param=model["meta"]["init_param"],
+                    floating_point_precision=model["meta"]["floating_point_precision"],
                 )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
@@ -182,6 +189,7 @@ class CoordinatedLRModuleHost(HeteroModule):
                 epochs=model["meta"]["epochs"],
                 batch_size=model["meta"]["batch_size"],
                 init_param=model["meta"]["init_param"],
+                floating_point_precision=model["meta"]["floating_point_precision"],
             )
             estimator.restore(all_estimator)
             lr.estimator = estimator
@@ -191,12 +199,15 @@ class CoordinatedLRModuleHost(HeteroModule):
 
 
 class CoordinatedLREstimatorHost(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
+    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.batch_size = batch_size
         self.init_param = init_param
+        self.floating_point_precision = floating_point_precision
+        self._fixpoint_precision = 2 ** floating_point_precision
 
         self.w = None
         self.start_epoch = 0
@@ -206,11 +217,18 @@ class CoordinatedLREstimatorHost(HeteroModule):
     def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = 0.25 * torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h, obfuscate=True))
+
         half_g = torch.matmul(X.T, Xw_h)
 
         guest_half_d = batch_ctx.guest.get("half_d")
-        guest_half_g = torch.matmul(X.T, guest_half_d)
+        logger.info(f"guest half d received")
+        if self.floating_point_precision:
+            guest_half_g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), guest_half_d)
+            guest_half_g = 1 / self._fixpoint_precision * guest_half_g
+        else:
+            guest_half_g = torch.matmul(X.T, guest_half_d)
+        logger.info(f"guest half g obtained")
 
         batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
         loss_norm = self.optimizer.loss_norm(w)
@@ -226,17 +244,14 @@ class CoordinatedLREstimatorHost(HeteroModule):
     def centralized_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
         Xw_h = 0.25 * torch.matmul(X, w.detach())
-        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h))
-        batch_ctx.guest.put("Xw2_h", encryptor.encrypt_tensor(torch.matmul(Xw_h.T, Xw_h)))
-
-        loss_norm = self.optimizer.loss_norm(w)
-        if loss_norm is not None:
-            batch_ctx.guest.put("h_loss", encryptor.encrypt_tensor(loss_norm))
-        else:
-            batch_ctx.guest.put(h_loss=loss_norm)
+        batch_ctx.guest.put("Xw_h", encryptor.encrypt_tensor(Xw_h, obfuscate=True))
 
         d = batch_ctx.guest.get("d")
-        g = 1 / h * torch.matmul(X.T, d)
+        if self.floating_point_precision:
+            g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), d)
+            g = 1 / (h * self._fixpoint_precision) * g
+        else:
+            g = 1 / h * torch.matmul(X.T, d)
         return g
 
     def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None) -> None:

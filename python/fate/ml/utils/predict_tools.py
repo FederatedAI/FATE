@@ -1,10 +1,11 @@
 import json
-import pandas as pd
-from fate.arch.dataframe import PandasReader
-import numpy as np
-from typing import Union
-from fate.arch.dataframe import DataFrame
 from typing import Literal
+
+import numpy as np
+import pandas as pd
+
+from fate.arch.dataframe import DataFrame
+from fate.arch.dataframe import PandasReader
 
 # DATA SET COLUMNS
 TRAIN_SET = 'train_set'
@@ -52,25 +53,29 @@ def to_fate_df(ctx, sample_id_name, match_id_name, result_df: pd.DataFrame):
 
 def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', 'multi', 'regression'], classes: list = None, threshold=0.5):
 
-    assert task_type in [BINARY, MULTI, REGRESSION, OTHER], 'task_type must be one of {} as a std task, but got {}'.format(
+    assert task_type in [BINARY, MULTI, REGRESSION,
+                         OTHER], 'task_type must be one of {} as a std task, but got {}'.format(
         [BINARY, MULTI, REGRESSION, OTHER], task_type)
-    
+
     assert threshold >= 0 and threshold <= 1, 'threshold must be float in [0, 1], but got {}'.format(threshold)
-    
+
     if not isinstance(dataframe, DataFrame):
         raise ValueError('dataframe must be a fate DataFrame, but got {}'.format(type(dataframe)))
-    
+    if dataframe.schema.label_name is not None:
+        dataframe.rename(label_name=LABEL)
     assert PREDICT_SCORE in dataframe.schema.columns, 'column {} is not found in input dataframe'.format(PREDICT_SCORE)
 
     if task_type == BINARY and task_type == MULTI:
         if classes is None or (not isinstance(classes, list) and len(classes) < 2):
             raise ValueError('task_type is binary or multi, but classes is None, or classes length is less than 2')
-    
+
     if task_type == BINARY:
         if len(classes) == 2:
             neg_class, pos_class = classes[0], classes[1]
             dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row( \
-                lambda v: [int(v[PREDICT_SCORE] > threshold), predict_detail_dict_to_str({neg_class: 1 - v[PREDICT_SCORE], pos_class: v[PREDICT_SCORE]})], 
+                lambda v: [int(v[PREDICT_SCORE] > threshold),
+                           predict_detail_dict_to_str({neg_class: 1 - float(v[PREDICT_SCORE]),
+                                                       pos_class: float(v[PREDICT_SCORE])})],
                 enable_type_align_checking=False)
         else:
             raise ValueError(
@@ -78,7 +83,8 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
         
     elif task_type == REGRESSION:
         dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row( \
-                lambda v: [v[PREDICT_SCORE], predict_detail_dict_to_str({PREDICT_SCORE: v[PREDICT_SCORE]})], enable_type_align_checking=False)
+            lambda v: [v[PREDICT_SCORE], predict_detail_dict_to_str({PREDICT_SCORE: float(v[PREDICT_SCORE])})],
+            enable_type_align_checking=False)
 
     elif task_type == MULTI:
 
@@ -86,7 +92,7 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
             predict_result = np.argmax(v[PREDICT_SCORE])
             assert len(v[PREDICT_SCORE]) == len(classes), 'predict score length is not equal to classes length,\
                 predict score is {}, but classes are {}, please check the data you provided'.format(v[PREDICT_SCORE], classes)
-            predict_details = {classes[j]: v[PREDICT_SCORE][j] for j in range(len(classes))}
+            predict_details = {classes[j]: float(v[PREDICT_SCORE][j]) for j in range(len(classes))}
             return [predict_result, predict_detail_dict_to_str(predict_details)]
 
         dataframe[[PREDICT_RESULT, PREDICT_DETAIL]] = dataframe.apply_row(handle_multi, enable_type_align_checking=False)

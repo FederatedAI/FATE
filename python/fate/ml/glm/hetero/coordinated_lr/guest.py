@@ -15,6 +15,7 @@
 
 import logging
 
+import numpy as np
 import torch
 
 from fate.arch import Context, dataframe
@@ -40,6 +41,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         learning_rate_param=None,
         init_param=None,
         threshold=0.5,
+            floating_point_precision=23
     ):
         self.epochs = epochs
         self.batch_size = batch_size
@@ -47,6 +49,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
         self.optimizer_param = optimizer_param
         self.init_param = init_param
         self.threshold = threshold
+        self.floating_point_precision = floating_point_precision
 
         self.estimator = None
         self.ovr = False
@@ -104,6 +107,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                         optimizer=optimizer,
                         learning_rate_scheduler=lr_scheduler,
                         init_param=self.init_param,
+                        floating_point_precision=self.floating_point_precision
                     )
                 else:
                     # warm start
@@ -137,6 +141,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     optimizer=optimizer,
                     learning_rate_scheduler=lr_scheduler,
                     init_param=self.init_param,
+                    floating_point_precision=self.floating_point_precision
                 )
             else:
                 logger.info("estimator is not none, will train with warm start")
@@ -189,6 +194,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 "labels": self.labels,
                 "ovr": self.ovr,
                 "threshold": self.threshold,
+                "floating_point_precision": self.floating_point_precision,
             },
         }
 
@@ -201,6 +207,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
             optimizer_param=model["meta"]["optimizer_param"],
             threshold=model["meta"]["threshold"],
             init_param=model["meta"]["init_param"],
+            floating_point_precision=model["meta"]["floating_point_precision"],
         )
         lr.ovr = model["meta"]["ovr"]
         lr.labels = model["meta"]["labels"]
@@ -213,6 +220,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                     epochs=model["meta"]["epochs"],
                     batch_size=model["meta"]["batch_size"],
                     init_param=model["meta"]["init_param"],
+                    floating_point_precision=model["meta"]["floating_point_precision"],
                 )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
@@ -221,6 +229,7 @@ class CoordinatedLRModuleGuest(HeteroModule):
                 epochs=model["meta"]["epochs"],
                 batch_size=model["meta"]["batch_size"],
                 init_param=model["meta"]["init_param"],
+                floating_point_precision=model["meta"]["floating_point_precision"],
             )
             estimator.restore(all_estimator)
             lr.estimator = estimator
@@ -229,12 +238,15 @@ class CoordinatedLRModuleGuest(HeteroModule):
 
 
 class CoordinatedLREstimatorGuest(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None):
+    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None,
+                 floating_point_precision=23):
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.init_param = init_param
+        self.floating_point_precision = floating_point_precision
+        self._fixpoint_precision = 2 ** floating_point_precision
 
         self.w = None
         self.start_epoch = 0
@@ -248,21 +260,26 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         half_d = 0.25 * Xw - 0.5 * Y
         if weight:
             half_d = half_d * weight
-        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d))
+        batch_ctx.hosts.put("half_d", encryptor.encrypt_tensor(half_d, obfuscate=True))
         half_g = torch.matmul(X.T, half_d)
 
         Xw_h = batch_ctx.hosts.get("Xw_h")[0]
         if weight:
             Xw_h = Xw_h * weight
-        host_half_g = torch.matmul(X.T, Xw_h)
 
-        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
+        if self.floating_point_precision:
+            host_half_g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), Xw_h)
+            host_half_g = 1 / self._fixpoint_precision * host_half_g
+        else:
+            host_half_g = torch.matmul(X.T, Xw_h)
+
+        loss = np.log(2) - 1 + 0.125 / h * torch.matmul(Xw.T, Xw) - 2 / h * torch.matmul(half_d.T, Y)
 
         if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
             loss_norm = self.optimizer.loss_norm(w)
             loss += loss_norm
 
-        loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
+        loss += torch.matmul((1 / h * Xw).T, Xw_h) - torch.matmul((2 / h * Y).T, Xw_h)
 
         for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
             loss += 0.125 / h * Xw2_h
@@ -292,26 +309,12 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             d = d * weight
         batch_ctx.hosts.put("d", d)
 
-        loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
-        if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
-            loss_norm = self.optimizer.loss_norm(w)
-            loss += loss_norm
-        for Xw_h in Xw_h_all:
-            loss += torch.matmul((0.25 / h * Xw - 0.5 / h * Y).T, Xw_h)
-
-        for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
-            loss += 0.125 / h * Xw2_h
-
-        h_loss_list = batch_ctx.hosts.get("h_loss")
-        for h_loss in h_loss_list:
-            if h_loss is not None:
-                loss += h_loss
-
-        if len(Xw_h_all) == 1:
-            batch_ctx.arbiter.put(loss=loss)
-
         # gradient
-        g = 1 / h * torch.matmul(X.T, d)
+        if self.floating_point_precision:
+            g = torch.matmul(torch.encode_as_int_f(X.T, self.floating_point_precision), d)
+            g = 1 / (h * self._fixpoint_precision) * g
+        else:
+            g = 1 / h * torch.matmul(X.T, d)
         return g
 
     def fit_single_model(self, ctx: Context, encryptor, train_data, validate_data=None):

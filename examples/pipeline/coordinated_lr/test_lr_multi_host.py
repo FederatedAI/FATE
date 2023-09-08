@@ -43,14 +43,14 @@ def main(config="../config.yaml", namespace=""):
                          epochs=5,
                          batch_size=None,
                          early_stop="weight_diff",
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}},
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1},
+                                    "alpha": 0.001},
                          init_param={"fit_intercept": True, "method": "random_uniform"},
                          train_data=psi_0.outputs["output_data"],
                          learning_rate_scheduler={"method": "constant", "scheduler_params": {"factor": 1.0,
                                                                                              "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              label_column_name="y",
                               runtime_roles=["guest"],
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])

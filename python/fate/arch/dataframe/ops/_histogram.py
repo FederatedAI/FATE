@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 import functools
+import typing
+from typing import Union
 
 from fate.arch.tensor.inside import Hist
 
@@ -21,12 +23,15 @@ from .._dataframe import DataFrame
 from ..manager import BlockType, DataManager
 from ._compress_block import compress_blocks
 
+if typing.TYPE_CHECKING:
+    from fate.arch.histogram import DistributedHistogram, HistogramBuilder
+
 
 def hist(df: DataFrame, targets):
     data_manager = df.data_manager
     column_names = data_manager.infer_operable_field_names()
 
-    block_table, data_manager = _try_to_compress_table(df.block_table, data_manager)
+    block_table, data_manager = _try_to_compress_table(df.block_table, data_manager, force_compress=True)
     block_id = data_manager.infer_operable_blocks()[0]
 
     def _mapper(blocks, target, bid: int = None):
@@ -43,33 +48,58 @@ def hist(df: DataFrame, targets):
     return block_table.join(targets.shardings._data, _mapper_func).reduce(_reducer)
 
 
-def distributed_hist_stat(df: DataFrame, distributed_hist, position: DataFrame, targets: dict):
-    block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager)
+def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", position: DataFrame, targets: Union[dict, DataFrame]) -> "DistributedHistogram":
+    block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager, force_compress=True)
     data_block_id = data_manager.infer_operable_blocks()[0]
     position_block_id = position.data_manager.infer_operable_blocks()[0]
 
-    def _pack_data_with_position(l_blocks, r_blocks, l_block_id=None, r_block_id=None):
-        return l_blocks[l_block_id], r_blocks[r_block_id], dict()
+    if isinstance(targets, dict):
+        def _pack_data_with_position(l_blocks, r_blocks, l_block_id=None, r_block_id=None):
+            return l_blocks[l_block_id], r_blocks[r_block_id], dict()
 
-    def _pack_with_target(l_values, r_value, target_name):
-        l_values[2][target_name] = r_value
+        def _pack_with_target(l_values, r_value, target_name):
+            l_values[2][target_name] = r_value
 
-        return l_values
+            return l_values
 
-    _pack_func = functools.partial(_pack_data_with_position,
-                                   l_block_id=data_block_id,
-                                   r_block_id=position_block_id)
+        _pack_func = functools.partial(_pack_data_with_position,
+                                       l_block_id=data_block_id,
+                                       r_block_id=position_block_id)
 
-    data_with_position = block_table.join(position.block_table, _pack_func)
+        data_with_position = block_table.join(position.block_table, _pack_func)
 
-    for name, target in targets.items():
-        _pack_with_target_func = functools.partial(_pack_with_target, target_name=name)
-        data_with_position = data_with_position.join(target.shardings._data, _pack_with_target_func)
+        for name, target in targets.items():
+            _pack_with_target_func = functools.partial(_pack_with_target, target_name=name)
+            data_with_position = data_with_position.join(target.shardings._data, _pack_with_target_func)
+    else:
+        data_with_position = block_table.join(
+            position.block_table,
+            lambda l_blocks, r_blocks: (l_blocks[data_block_id], r_blocks[position_block_id])
+        )
 
-    return distributed_hist.i_update(data_with_position)
+        target_data_manager = targets.data_manager
+        target_field_names = target_data_manager.infer_operable_field_names()
+        fields_loc = target_data_manager.loc_block(target_field_names, with_offset=True)
+
+        def _pack_with_targets(l_blocks, r_blocks):
+            target_blocks = dict()
+            for field_name, (block_id, offset) in zip(target_field_names, fields_loc):
+                if (block := target_data_manager.get_block(block_id)).is_phe_tensor():
+                    target_blocks[field_name] = block.convert_to_phe_tensor(
+                        r_blocks[block_id],
+                        shape=(len(r_blocks[0]), 1)
+                    )
+                else:
+                    target_blocks[field_name] = r_blocks[block_id][:, [offset]]
+
+            return l_blocks[0], l_blocks[1], target_blocks
+
+        data_with_position = data_with_position.join(targets.block_table, _pack_with_targets)
+
+    return histogram_builder.statistic(data_with_position)
 
 
-def _try_to_compress_table(block_table, data_manager: DataManager):
+def _try_to_compress_table(block_table, data_manager: DataManager, force_compress=False):
     block_indexes = data_manager.infer_operable_blocks()
     if len(block_indexes) == 1:
         return block_table, data_manager
@@ -90,8 +120,6 @@ def _try_to_compress_table(block_table, data_manager: DataManager):
         to_promote_types.append((bid, block_type))
 
     data_manager.promote_types(to_promote_types)
-    block_table, data_manager = compress_blocks(block_table, data_manager)
+    block_table, data_manager = compress_blocks(block_table, data_manager, force_compress=force_compress)
 
     return block_table, data_manager
-
-
