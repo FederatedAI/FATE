@@ -175,6 +175,7 @@ class Block(object):
         return: BlockObject, RetrievalIndexInOriBlock: list
         """
         src_field_indexes, dst_field_indexes = [], []
+        field_indexes = sorted(field_indexes, key=lambda v: v[1])
         for src_field_index, dst_field_index in field_indexes:
             src_field_indexes.append(src_field_index)
             dst_field_indexes.append(dst_field_index)
@@ -187,8 +188,16 @@ class Block(object):
         # TODO: can be optimize as sub_field_indexes is ordered, but this is not a bottle neck
         changed = True
         if len(src_field_indexes) == len(self._field_indexes):
-            retrieval_indexes = [i for i in range(len(self._field_indexes))]
-            changed = False
+            is_monotonous = True
+            for i in range(1, len(src_field_indexes)):
+                if src_field_indexes[i] < src_field_indexes[i - 1]:
+                    is_monotonous = False
+
+            if is_monotonous:
+                retrieval_indexes = [i for i in range(len(self._field_indexes))]
+                changed = False
+            else:
+                retrieval_indexes = [bisect.bisect_left(self._field_indexes, col) for col in src_field_indexes]
         else:
             retrieval_indexes = [bisect.bisect_left(self._field_indexes, col) for col in src_field_indexes]
 
