@@ -33,7 +33,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
 
     def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, objective='binary:bce', num_class=3, max_bin=32, 
                  l2=0.1, l1=0, min_impurity_split=1e-2, min_sample_split=2, min_leaf_node=1, min_child_weight=1, gh_pack=True, split_info_pack=True, 
-                 hist_sub=True, encrypt_kit=None
+                 hist_sub=True
                  ):
         
         super().__init__()
@@ -60,7 +60,6 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._hist_sub = hist_sub
 
         # encryption
-        self._encrypt_kit = encrypt_kit
         self._gh_pack = gh_pack
         self._split_info_pack = split_info_pack
 
@@ -94,7 +93,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
 
         if self._encrypt_kit is None:
             # make sure cipher is initialized
-            kit = ctx.cipher.phe.setup(options={"kind": "paillier", "key_length": 1024})
+            kit = ctx.cipher.phe.setup()
+            self._encrypt_kit = kit
         # check encrypt function
         if not self._encrypt_kit.can_support_negative_number:
             self._gh_pack = True  

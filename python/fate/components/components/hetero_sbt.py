@@ -54,7 +54,7 @@ def train(
     gh_pack: cpn.parameter(type=bool, default=True, desc='whether to pack gradient and hessian together'),
     split_info_pack: cpn.parameter(type=bool, default=True, desc='for host side, whether to pack split info together'),
     hist_sub: cpn.parameter(type=bool, default=True, desc='whether to use histogram subtraction'),
-    he_param: cpn.parameter(type=params.he_param, default=params.HEParam(kind='paillier', key_length=1024), desc='homomorphic encryption param, support paillier, ou and mock in current version'),
+    he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind='paillier', key_length=1024), desc='homomorphic encryption param, support paillier, ou and mock in current version'),
     train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
     train_model_output: cpn.json_model_output(roles=[GUEST, HOST], optional=True),
     train_model_input: cpn.json_model_input(roles=[GUEST, HOST], optional=True)
@@ -70,14 +70,12 @@ def train(
     if role.is_guest:
         
         # initialize encrypt kit
-        option = {"kind": he_param.kind, "key_length": he_param.key_length}
-        en_kit = ctx.cipher.phe.setup(options=option)
+        ctx.cipher.set_phe(ctx.device, he_param.dict())
 
         booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin,
                                          l2=l2, min_impurity_split=min_impurity_split, min_sample_split=min_sample_split,
                                         min_leaf_node=min_leaf_node, min_child_weight=min_child_weight, encrypt_key_length=encrypt_key_length,
-                                        objective=objective, num_class=num_class, gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub,
-                                        encrypt_kit=en_kit
+                                        objective=objective, num_class=num_class, gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub
                                         )
         if train_model_input is not None:
             booster.from_model(train_model_input)
