@@ -83,8 +83,7 @@ def train(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
-    he_param = he_param.dict()
-    # temp code end
+    ctx.cipher.set_phe(he_param.dict())
 
     if role.is_guest:
         train_guest(
@@ -124,7 +123,6 @@ def train(
                       tol, batch_size,
                       optimizer,
                       learning_rate_scheduler,
-                      he_param,
                       output_model,
                       warm_start_model)
 
@@ -195,12 +193,11 @@ def cross_validation(
         output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
         cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
 ):
-    # temp code start
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
-    he_param = he_param.dict()
-    # temp code end
+    ctx.cipher.set_phe(he_param.dict())
+
     if role.is_arbiter:
         i = 0
         for fold_ctx, _ in ctx.on_cross_validations.ctxs_zip(zip(range(cv_param.n_splits))):
@@ -212,7 +209,6 @@ def cross_validation(
                 batch_size=batch_size,
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
-                he_param=he_param,
             )
             module.fit(fold_ctx)
             i += 1
@@ -386,7 +382,7 @@ def train_host(
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler, he_param,
+def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler,
                   output_model, input_model):
     if input_model is not None:
         logger.info(f"warm start model provided")
@@ -402,7 +398,6 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param, lea
             batch_size=batch_size,
             optimizer_param=optimizer_param,
             learning_rate_param=learning_rate_scheduler,
-            he_param=he_param
         )
     logger.info(f"coordinated lr arbiter start train")
     sub_ctx = ctx.sub_ctx("train")
