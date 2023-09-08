@@ -298,11 +298,6 @@ class DataFrame(object):
 
         return bucketize(self, boundaries)
 
-    def hist(self, targets):
-        from .ops._histogram import hist
-
-        return hist(self, targets)
-
     def distributed_hist_stat(self,
                               histogram_builder: "HistogramBuilder",
                               position: "DataFrame" = None,
