@@ -1,7 +1,0 @@
-colorama>0.4.4
-prettytable<2.0.0,>=1.0.0
-loguru>=0.6.0
-poetry>=0.12
-pandas==1.1.5
-ruamel-yaml==0.16.10
-click >=8.0.0
