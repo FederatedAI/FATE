@@ -108,7 +108,7 @@ class HeteroSelectionModuleGuest(HeteroModule):
     def sync_select_federated(ctx: Context, selection_obj):
         logger.info(f"Sync federated selection.")
         for i, host in enumerate(ctx.hosts):
-            federated_mask = selection_obj._host_selected_mask[host.party_id]
+            federated_mask = selection_obj._host_selected_mask[host.name]
             ctx.hosts[i].put(f"selected_mask_{selection_obj.method}", federated_mask)
 
     def transform(self, ctx: Context, test_data):
@@ -305,8 +305,8 @@ class ManualSelection(Module):
         if len(filter_out_col) >= len(header):
             raise ValueError("`filter_out_col` should not be all columns")
         filter_out_col = set(filter_out_col)
-        keep_col = set(keep_col)
-        missing_col = (filter_out_col.union(keep_col)).difference(set(self._prev_selected_mask.index))
+        # keep_col = set(keep_col)
+        missing_col = (filter_out_col.union(set(keep_col))).difference(set(self._prev_selected_mask.index))
         if missing_col:
             raise ValueError(
                 f"columns {missing_col} given in `filter_out_col` & `keep_col` " f"not found in `select_col` or header"
