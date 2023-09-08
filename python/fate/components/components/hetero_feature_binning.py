@@ -90,7 +90,7 @@ def feature_binning_train(
     ctx.cipher.set_phe(ctx.device, he_param.dict())
     train(ctx, train_data, train_output_data, output_model, role, method, n_bins, split_pt_dict,
           bin_col, bin_idx, category_col, category_idx, use_anonymous, transform_method,
-          skip_metrics, local_only, relative_error, adjustment_factor, he_param)
+          skip_metrics, local_only, relative_error, adjustment_factor)
 
 
 @hetero_feature_binning.predict()

@@ -91,7 +91,7 @@ def train(
         )
     elif role.is_arbiter:
         train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler,
-                      he_param, output_model, warm_start_model)
+                      output_model, warm_start_model)
 
 
 @coordinated_linr.predict()
@@ -300,7 +300,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
 
 
 def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
-                  learning_rate_param, he_param, output_model, input_model):
+                  learning_rate_param, output_model, input_model):
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
@@ -309,8 +309,7 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
         module.set_batch_size(batch_size)
     else:
         module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
-                                              optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                              he_param=he_param)
+                                              optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
     logger.info(f"coordinated linr arbiter start train")
 
     sub_ctx = ctx.sub_ctx("train")

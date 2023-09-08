@@ -83,7 +83,7 @@ def train(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
-    ctx.cipher.set_phe(he_param.dict())
+    ctx.cipher.set_phe(ctx.device, he_param.dict())
 
     if role.is_guest:
         train_guest(
@@ -196,7 +196,7 @@ def cross_validation(
     optimizer = optimizer.dict()
     learning_rate_scheduler = learning_rate_scheduler.dict()
     init_param = init_param.dict()
-    ctx.cipher.set_phe(he_param.dict())
+    ctx.cipher.set_phe(ctx.device, he_param.dict())
 
     if role.is_arbiter:
         i = 0
