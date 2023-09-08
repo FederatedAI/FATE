@@ -50,7 +50,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [EggRoll](https://github.com/WeBankFinTech/eggroll): A simple high-performance computing framework for (federated) machine learning.
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
-- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md)
+- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md) : A framework to support federated learning for large language models(LLMs)
 ## Documentation 
 
 ### FATE Design 
