@@ -16,7 +16,7 @@ def convert_tuples_to_lists(data):
         return data
 
 
-class FateTorch(object):
+class PatchedTorchModule(object):
 
     def __init__(self):
         t.nn.Module.__init__(self)
@@ -32,7 +32,7 @@ class FateTorch(object):
         return ret_dict
 
 
-class FateTorchOptimizer(object):
+class PatchedTorchOptimizer(object):
 
     def __init__(self):
         self.param_dict = dict()
@@ -50,7 +50,7 @@ class FateTorchOptimizer(object):
 
         if isinstance(
                 params,
-                FateTorch) or isinstance(
+                PatchedTorchModule) or isinstance(
                 params,
                 Sequential):
             params.add_optimizer(self)
@@ -71,7 +71,7 @@ class FateTorchOptimizer(object):
             return
         if isinstance(
                 input_,
-                FateTorch) or isinstance(
+                PatchedTorchModule) or isinstance(
                 input_,
                 Sequential):
             input_.add_optimizer(self)
@@ -104,7 +104,7 @@ class Sequential(tSequential):
             layer_confs[ordered_name] = self._modules[k].to_dict()
             idx += 1
         ret_dict = {
-            'module_name': 'fate.components.components.nn.fate_torch.base',
+            'module_name': 'fate.components.components.nn.patched_torch.base',
             'item_name': load_seq.__name__,
             'kwargs': {'seq_conf': layer_confs}
         }
