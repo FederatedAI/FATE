@@ -81,6 +81,10 @@ class Party:
     def party_id(self) -> str:
         return self.party[1]
 
+    @property
+    def name(self) -> str:
+        return f"{self.party[0]}_{self.party[1]}"
+
     def put(self, *args, **kwargs):
         if args:
             assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
