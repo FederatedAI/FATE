@@ -24,7 +24,7 @@ def dataframe_transformer(
     dataframe_output: cpn.dataframe_output(roles=[LOCAL]),
     namespace: cpn.parameter(type=str, default=None, optional=True),
     name: cpn.parameter(type=str, default=None, optional=True),
-    anonymous_site_name: cpn.parameter(type=str, default=None, optional=True),
+    site_name: cpn.parameter(type=str, default=None, optional=True),
 ):
     from fate.arch.dataframe import TableReader
 
@@ -42,7 +42,7 @@ def dataframe_transformer(
         header=metadata.get("header", None),
         na_values=metadata.get("na_values", None),
         dtype=metadata.get("dtype", "float32"),
-        anonymous_site_name=anonymous_site_name,
+        anonymous_site_name=site_name,
         delimiter=metadata.get("delimiter", ","),
         input_format=metadata.get("input_format", "dense"),
         tag_with_value=metadata.get("tag_with_value", False),
