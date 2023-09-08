@@ -16,7 +16,7 @@ import functools
 import pandas as pd
 import torch
 
-from collections import Iterable
+from collections.abc import Iterable
 
 from .._dataframe import DataFrame
 from ..manager.block_manager import Block, BlockType
