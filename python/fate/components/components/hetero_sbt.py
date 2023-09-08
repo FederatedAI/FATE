@@ -52,6 +52,9 @@ def train(
     min_sample_split: cpn.parameter(type=params.conint(gt=0), default=2, desc='min sample to split a tree node'),
     min_leaf_node: cpn.parameter(type=params.conint(gt=0), default=1, desc='mininum sample contained in a leaf node'),
     min_child_weight: cpn.parameter(type=params.confloat(gt=0), default=1, desc='minumum hessian contained in a leaf node'),
+    gh_pack: cpn.parameter(type=bool, default=True, desc='whether to pack gradient and hessian together'),
+    split_info_pack: cpn.parameter(type=bool, default=True, desc='for host side, whether to pack split info together'),
+    hist_sub: cpn.parameter(type=bool, default=True, desc='whether to use histogram subtraction'),
     train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
     train_model_output: cpn.json_model_output(roles=[GUEST, HOST], optional=True),
     train_model_input: cpn.json_model_input(roles=[GUEST, HOST], optional=True)
@@ -69,7 +72,7 @@ def train(
         booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin,
                                          l2=l2, min_impurity_split=min_impurity_split, min_sample_split=min_sample_split,
                                         min_leaf_node=min_leaf_node, min_child_weight=min_child_weight, encrypt_key_length=encrypt_key_length,
-                                        objective=objective, num_class=num_class)
+                                        objective=objective, num_class=num_class, gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub)
         if train_model_input is not None:
             booster.from_model(train_model_input)
             logger.info('sbt input model loaded, will start warmstarting')
@@ -84,7 +87,7 @@ def train(
 
     elif role.is_host:
         
-        booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin)
+        booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin, hist_sub=hist_sub)
         if train_model_input is not None:
             booster.from_model(train_model_input)
             logger.info('sbt input model loaded, will start warmstarting')

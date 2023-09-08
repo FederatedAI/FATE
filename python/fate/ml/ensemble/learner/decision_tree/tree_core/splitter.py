@@ -406,7 +406,6 @@ class FedSBTSplitter(object):
 
         # filter split
         # leaf count
-        
         union_mask_0 = self._compute_min_leaf_mask(l_cnt, r_cnt)
         # min child weight
         min_child_weight_mask_l = l_h < self.min_child_weight
@@ -493,12 +492,6 @@ class FedSBTSplitter(object):
     
     def _recover_pack_split(self, hist: DistributedHistogram, schema, decode_schema=None):
         host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
-        # if decode_schema is not None:
-        #     host_hist = hist.decrypt_(schema[0])
-        #     host_hist = host_hist.unpack_decode(decode_schema)
-        #     host_hist = host_hist.union()
-        # else:
-        #     host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
         return host_hist
     
     def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack, pack_info):
