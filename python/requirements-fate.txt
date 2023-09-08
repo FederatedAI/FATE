@@ -9,9 +9,9 @@ click>=7.1.2,<8.0.0
 ruamel-yaml==0.16
 scikit-learn
 numpy
-pandas
+pandas==2.0.3
 transformers==4.30.2
-accelerate==0.20.1
+accelerate==0.20.2
 beautifultable
 requests<2.26.0
 grpcio==1.46.3
