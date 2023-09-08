@@ -38,12 +38,10 @@ class HeteroBinningModuleGuest(HeteroModule):
             local_only=False,
             error_rate=1e-6,
             adjustment_factor=0.5,
-            he_param=None
     ):
         self.method = method
         self.bin_col = bin_col
         self.category_col = category_col
-        self.he_param = he_param
         self.n_bins = n_bins
         self._federation_bin_obj = None
         # param check
@@ -79,7 +77,7 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def compute_federated_metrics(self, ctx: Context, binned_data):
         logger.info(f"Start computing federated metrics.")
-        kit = ctx.cipher.phe.setup(options=self.he_param)
+        kit = ctx.cipher.phe.setup()
         encryptor = kit.get_tensor_encryptor()
         sk, pk, evaluator, coder = kit.sk, kit.pk, kit.evaluator, kit.coder
 
@@ -119,7 +117,6 @@ class HeteroBinningModuleGuest(HeteroModule):
                 "category_col": self.category_col,
                 "model_type": "binning",
                 "n_bins": self.n_bins,
-                "he_param": self.he_param,
             },
         }
         return model
@@ -133,7 +130,6 @@ class HeteroBinningModuleGuest(HeteroModule):
             method=model["meta"]["method"],
             bin_col=model["meta"]["bin_col"],
             category_col=model["meta"]["category_col"],
-            he_param=model["meta"]["he_param"],
             n_bins=model["meta"]["n_bins"],
         )
         bin_obj.restore(model["data"])

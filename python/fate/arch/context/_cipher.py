@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 import logging
+import typing
 
 from ..unify import device
 
@@ -21,35 +22,49 @@ logger = logging.getLogger(__name__)
 
 
 class CipherKit:
-    def __init__(self, device: device, cipher_mapping=None) -> None:
+    def __init__(self, device: device, cipher_mapping: typing.Optional[dict] = None) -> None:
         self._device = device
-        self._cipher_mapping = cipher_mapping
+        if cipher_mapping is None:
+            self._cipher_mapping = {}
+        else:
+            self._cipher_mapping = cipher_mapping
+
+    def set_phe(self, device: device, options: typing.Optional[dict]):
+        if "phe" not in self._cipher_mapping:
+            self._cipher_mapping["phe"] = {}
+        self._cipher_mapping["phe"][device] = options
+
+    def _set_default_phe(self):
+        if "phe" not in self._cipher_mapping:
+            self._cipher_mapping["phe"] = {}
+        if self._device == device.CPU:
+            self._cipher_mapping["phe"][device.CPU] = {"kind": "paillier", "key_length": 1024}
+        else:
+            logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
+            self._cipher_mapping["phe"][device.CPU] = self._cipher_mapping["phe"].get(
+                device.CPU, {"kind": "paillier", "key_length": 1024}
+            )
 
     @property
     def phe(self):
-        if self._cipher_mapping is None:
-            if self._device == device.CPU:
-                return PHECipherBuilder("paillier")
-            else:
-                logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
-                return PHECipherBuilder("paillier")
-
-        if "phe" not in self._cipher_mapping:
-            raise ValueError("phe is not set")
-
+        self._set_default_phe()
         if self._device not in self._cipher_mapping["phe"]:
-            raise ValueError(f"phe is not set for device {self._device}")
-
-        return PHECipherBuilder(self._cipher_mapping["phe"][self._device])
+            raise ValueError(f"no impl exists for device {self._device}")
+        return PHECipherBuilder(**self._cipher_mapping["phe"][self._device])
 
 
 class PHECipherBuilder:
-    def __init__(self, kind) -> None:
+    def __init__(self, kind, key_length) -> None:
         self.kind = kind
+        self.key_length = key_length
 
-    def setup(self, options):
-        kind = options.get("kind", self.kind)
-        key_size = options.get("key_length", 1024)
+    def setup(self, options: typing.Optional[dict] = None):
+        if options is None:
+            kind = self.kind
+            key_size = self.key_length
+        else:
+            kind = options.get("kind", self.kind)
+            key_size = options.get("key_length", 1024)
 
         if kind == "paillier":
             from fate.arch.protocol.phe.paillier import evaluator, keygen
@@ -81,16 +96,16 @@ class PHECipherBuilder:
 
 class PHECipher:
     def __init__(
-            self,
-            key_size,
-            pk,
-            sk,
-            evaluator,
-            coder,
-            tensor_cipher,
-            can_support_negative_number,
-            can_support_squeeze,
-            can_support_pack,
+        self,
+        key_size,
+        pk,
+        sk,
+        evaluator,
+        coder,
+        tensor_cipher,
+        can_support_negative_number,
+        can_support_squeeze,
+        can_support_pack,
     ) -> None:
         self._key_size = key_size
         self._pk = pk
