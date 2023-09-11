@@ -16,6 +16,8 @@ def main(config="../../config.yaml", param="./xgb_breast_config.yaml"):
     data_host = param["data_host"]
     idx = param["idx"]
     label_name = param["label_name"]
+    max_depth = param['max_depth']
+    max_bin = param['max_bin']
 
     if isinstance(config, str):
         config = JobConfig.load_from_file(config)
@@ -25,12 +27,12 @@ def main(config="../../config.yaml", param="./xgb_breast_config.yaml"):
         data_base_dir = config.data_base_dir
 
     config_param = {
-        "objective": "binary:logistic",
+        "objective": param.get('objective', 'binary:logistic'),
         "learning_rate": param["learning_rate"],
         "n_estimators": param["n_estimators"],
-        "max_bin": 32,
-        "max_depth": 3,
-        "tree_method": "hist"  # 使用直方图计算分裂点
+        "max_bin": max_bin,
+        "max_depth": max_depth,
+        "tree_method": "hist" 
     }
 
     # prepare data

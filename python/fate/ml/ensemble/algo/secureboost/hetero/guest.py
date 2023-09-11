@@ -19,7 +19,7 @@ from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
 from fate.ml.ensemble.learner.decision_tree.hetero.guest import HeteroDecisionTreeGuest
 from fate.ml.ensemble.utils.binning import binning
-from fate.ml.ensemble.learner.decision_tree.tree_core.loss import OBJECTIVE, get_task_info
+from fate.ml.ensemble.learner.decision_tree.tree_core.loss import OBJECTIVE, get_task_info, MULTI_CE
 from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_guest
 from fate.ml.utils.predict_tools import compute_predict_details, PREDICT_SCORE, LABEL, BINARY, MULTI, REGRESSION
 import logging
@@ -76,6 +76,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
     def _get_loss_func(self, objective: str) -> Optional[object]:
         # to lowercase
         objective = objective.lower()
+        if objective == MULTI_CE:
+            raise ValueError('multi:ce objective is not supported in the beta version, will be added in the next version')
         assert objective in OBJECTIVE, f"objective {objective} not found, supported objective: {list(OBJECTIVE.keys())}"
         obj_class = OBJECTIVE[objective]
         loss_func = obj_class()
