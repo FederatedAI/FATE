@@ -12,6 +12,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import typing
+
 import torch
 from typing import Dict
 from fate.arch.histogram import HistogramBuilder, DistributedHistogram
@@ -74,11 +76,12 @@ class SklearnHistBuilder(object):
 
 class SBTHistogramBuilder(object):
 
-    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=None, hist_sub=True) -> None:
+    def __init__(self, bin_train_data: DataFrame, bin_info: dict, random_seed=None, global_random_seed=None, hist_sub=True) -> None:
         columns = bin_train_data.schema.columns
         self.random_seed = random_seed
+        self.global_random_seed = global_random_seed
         self.feat_bin_num = [len(bin_info[feat]) for feat in columns]
-        self._cache_parent_hist: DistributedHistogram = None
+        self._cache_parent_hist: typing.Optional[DistributedHistogram] = None
         self._last_layer_node_map = None
         self._hist_sub = hist_sub
 
@@ -184,25 +187,22 @@ class SBTHistogramBuilder(object):
                     schema = self._get_pack_en_hist_schema(pk, evaluator)
                 else:
                     schema = self._get_enc_hist_schema(pk, evaluator)
+        else:
+            raise ValueError("not support called on role: {}".format(ctx.local))
 
         if need_hist_sub_process:
-            hist = HistogramBuilder(
-                num_node=node_num,
-                feature_bin_sizes=self.feat_bin_num,
-                value_schemas=schema,
-                global_seed=None,
-                seed=self.random_seed,
-                node_mapping={node_map[k]: v for k, v in new_node_map.items()}
-            )
-
+            node_mapping = {node_map[k]: v for k, v in new_node_map.items()}
         else:
-            hist = HistogramBuilder(
-                num_node=node_num,
-                feature_bin_sizes=self.feat_bin_num,
-                value_schemas=schema,
-                global_seed=None,
-                seed=self.random_seed,
-            )
+            node_mapping = None
+
+        hist = HistogramBuilder(
+            num_node=node_num,
+            feature_bin_sizes=self.feat_bin_num,
+            value_schemas=schema,
+            global_seed=self.global_random_seed,
+            seed=self.random_seed,
+            node_mapping=node_mapping,
+        )
 
         map_sample_pos = sample_pos.apply_row(lambda x: node_map[x['node_idx']])
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)

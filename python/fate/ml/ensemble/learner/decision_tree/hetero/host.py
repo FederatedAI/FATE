@@ -27,13 +27,14 @@ logger = logging.getLogger(__name__)
 
 class HeteroDecisionTreeHost(DecisionTree):
 
-    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, random_seed=42, hist_sub=True):
+    def __init__(self, max_depth=3, valid_features=None, use_missing=False, zero_as_missing=False, random_seed=None, global_random_seed=None, hist_sub=True):
         super().__init__(max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features)
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
         self._valid_features = valid_features
         self._random_seed = random_seed
+        self._global_random_seed = global_random_seed
         self._pk = None
         self._evaluator = None
         self._gh_pack = True
@@ -120,7 +121,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         root_node = self._initialize_root_node(ctx, train_df)
         
         # init histogram builder
-        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, random_seed=self._random_seed,
+        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, random_seed=self._random_seed, global_random_seed=self._global_random_seed,
                                                 hist_sub=self._hist_sub)
         # splitter
         self.splitter = FedSBTSplitter(bin_train_data, binning_dict)

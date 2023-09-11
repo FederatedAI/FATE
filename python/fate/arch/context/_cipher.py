@@ -28,6 +28,8 @@ class CipherKit:
             self._cipher_mapping = {}
         else:
             self._cipher_mapping = cipher_mapping
+        self._allow_custom_random_seed = False
+        self._custom_random_seed = 42
 
     def set_phe(self, device: device, options: typing.Optional[dict]):
         if "phe" not in self._cipher_mapping:
@@ -52,6 +54,19 @@ class CipherKit:
         if self._device not in self._cipher_mapping["phe"]:
             raise ValueError(f"no impl exists for device {self._device}")
         return PHECipherBuilder(**self._cipher_mapping["phe"][self._device])
+
+    @property
+    def allow_custom_random_seed(self):
+        return self._allow_custom_random_seed
+
+    def set_allow_custom_random_seed(self, allow_custom_random_seed):
+        self._allow_custom_random_seed = allow_custom_random_seed
+
+    def set_custom_random_seed(self, custom_random_seed):
+        self._custom_random_seed = custom_random_seed
+
+    def get_custom_random_seed(self):
+        return self._custom_random_seed
 
 
 class PHECipherBuilder:
