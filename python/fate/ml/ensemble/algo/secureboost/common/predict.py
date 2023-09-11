@@ -40,12 +40,10 @@ def all_reach_leaf(pos: np.array):
     return np.all(pos < 0)
 
 
-"""
 def not_finished(pos: np.array):
     if isinstance(pos, list):
         pos = np.array(pos)
     return not np.all(pos < 0)
-"""
 
 
 def generate_pos_array(tree_num, max_node_num):
@@ -147,8 +145,8 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
         new_pos = sample_with_pos.create_frame()
         new_pos['sample_pos'] = sample_with_pos.apply_row(map_func)
         done_sample_idx = new_pos.apply_row(lambda x: all_reach_leaf(x['sample_pos']))  # samples that reach leaf node in all trees
-        not_finished_sample_idx = ~done_sample_idx
-        # not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos']))  # samples that not reach leaf node in all trees
+        # not_finished_sample_idx = ~done_sample_idx
+        not_finished_sample_idx = new_pos.apply_row(lambda x: not_finished(x['sample_pos']))  # samples that not reach leaf node in all trees
 
         done_sample = new_pos.iloc(done_sample_idx)
         result_sample_pos = DataFrame.vstack([result_sample_pos, done_sample])
