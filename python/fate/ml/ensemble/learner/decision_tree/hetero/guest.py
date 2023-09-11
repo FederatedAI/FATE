@@ -243,7 +243,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         ctx.hosts.put('pack_info', send_pack_info)
 
         # init histogram builder
-        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None, hist_sub=self._hist_sub)
+        self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None, None, hist_sub=self._hist_sub)
 
         # init splitter
         self.splitter = FedSBTSplitter(bin_train_data, binning_dict, l2=self.l2, l1=self.l1, 
