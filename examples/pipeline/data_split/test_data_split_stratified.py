@@ -56,7 +56,7 @@ def main(config="../config.yaml", namespace=""):
     data_split_1 = DataSplit("data_split_1",
                              train_size=200,
                              test_size=50,
-                             stratified=True,
+                             stratified=False,
                              hetero_sync=False,
                              input_data=psi_0.outputs["output_data"]
                              )
