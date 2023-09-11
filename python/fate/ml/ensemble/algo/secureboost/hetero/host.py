@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class HeteroSecureBoostHost(HeteroBoostingTree):
-
     def __init__(self, num_trees=3, learning_rate=0.3, max_depth=3, max_bin=32, hist_sub=True) -> None:
         super().__init__()
         self.num_trees = num_trees
@@ -49,31 +48,33 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
         else:
             while True:
                 random_seed = os.urandom(8)
-                yield int.from_bytes(random_seed, byteorder='big')
+                yield int.from_bytes(random_seed, byteorder="big")
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
-
         # data binning
         bin_info = binning(train_data, max_bin=self.max_bin)
         bin_data: DataFrame = train_data.bucketize(boundaries=bin_info)
-        logger.info('data binning done')
+        logger.info("data binning done")
         # predict to help guest to get the warmstart scores
         if self._model_loaded:
-            pred_ctx = ctx.sub_ctx('warmstart_predict')
+            pred_ctx = ctx.sub_ctx("warmstart_predict")
             self.predict(pred_ctx, train_data)
 
         random_seeds = self._get_seeds(ctx)
         global_random_seed = next(random_seeds)
         for tree_idx, tree_ctx in ctx.on_iterations.ctxs_range(len(self._trees), len(self._trees) + self.num_trees):
-            logger.info('start to fit a host tree')
-            tree = HeteroDecisionTreeHost(max_depth=self.max_depth, hist_sub=self._hist_sub,
-                                          global_random_seed=global_random_seed,
-                                          random_seed=next(random_seeds))
+            logger.info("start to fit a host tree")
+            tree = HeteroDecisionTreeHost(
+                max_depth=self.max_depth,
+                hist_sub=self._hist_sub,
+                global_random_seed=global_random_seed,
+                random_seed=next(random_seeds),
+            )
             tree.booster_fit(tree_ctx, bin_data, bin_info)
             self._trees.append(tree)
             self._saved_tree.append(tree.get_model())
             self._update_feature_importance(tree.get_feature_importance())
-            logger.info('fitting host decision tree {} done'.format(tree_idx))
+            logger.info("fitting host decision tree {} done".format(tree_idx))
 
     def predict(self, ctx: Context, predict_data: DataFrame) -> None:
         predict_leaf_host(ctx, self._trees, predict_data)
@@ -83,11 +84,11 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
             "num_trees": self.num_trees,
             "learning_rate": self.learning_rate,
             "max_depth": self.max_depth,
-            "max_bin": self.max_bin
+            "max_bin": self.max_bin,
         }
 
     def from_model(self, model: dict):
-        trees = model['trees']
+        trees = model["trees"]
         self._saved_tree = trees
         self._trees = [HeteroDecisionTreeHost.from_model(tree) for tree in trees]
         self._model_loaded = True

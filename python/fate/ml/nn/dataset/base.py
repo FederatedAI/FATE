@@ -4,7 +4,6 @@ import pandas as pd
 
 
 class Dataset(Dataset_):
-
     def __init__(self, **kwargs):
         super(Dataset, self).__init__()
 
@@ -12,8 +11,8 @@ class Dataset(Dataset_):
     @abc.abstractmethod
     def load(self, data_or_path):
         raise NotImplementedError(
-            'You must implement load function so that Client can pass file-path to this '
-            'class')
+            "You must implement load function so that Client can pass file-path to this " "class"
+        )
 
     def __getitem__(self, item):
         raise NotImplementedError()

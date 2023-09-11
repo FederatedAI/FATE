@@ -18,22 +18,21 @@ import numpy as np
 
 
 def goss_sampling(train_data: DataFrame, gh: DataFrame, top_rate=0.1, other_rate=0.1):
-    
     sample_num = len(train_data)
-    gh_df: pd.DataFrame = gh.as_pd_df() 
-    id_list = np.array(gh_df['sample_id'])
-    g_arr = np.array(gh_df['g']).astype(np.float64)
-    h_arr = np.array(gh_df['h']).astype(np.float64)
+    gh_df: pd.DataFrame = gh.as_pd_df()
+    id_list = np.array(gh_df["sample_id"])
+    g_arr = np.array(gh_df["g"]).astype(np.float64)
+    h_arr = np.array(gh_df["h"]).astype(np.float64)
 
     g_sum_arr = np.abs(g_arr).sum(axis=1)  # if it is multi-classification case, we need to sum g
     abs_g_list_arr = g_sum_arr
-    sorted_idx = np.argsort(-abs_g_list_arr, kind='stable')  # stable sample result
+    sorted_idx = np.argsort(-abs_g_list_arr, kind="stable")  # stable sample result
 
     a_part_num = int(sample_num * top_rate)
     b_part_num = int(sample_num * other_rate)
 
     if a_part_num == 0 or b_part_num == 0:
-        raise ValueError('subsampled result is 0: top sample {}, other sample {}'.format(a_part_num, b_part_num))
+        raise ValueError("subsampled result is 0: top sample {}, other sample {}".format(a_part_num, b_part_num))
 
     # index of a part
     a_sample_idx = sorted_idx[:a_part_num]

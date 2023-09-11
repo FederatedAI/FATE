@@ -2,7 +2,8 @@ import argparse
 import os
 import xgboost as xgb
 import pandas as pd
-from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve
+import math
+from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve, mean_absolute_error, mean_squared_error
 from fate_client.pipeline.utils.test_utils import JobConfig
 
 
@@ -46,28 +47,38 @@ def main(config="../../config.yaml", param="./xgb_breast_config.yaml"):
     x_train, x_test, y_train, y_test = X, X, y, y  # no split here
 
     # Train the model
-    clf = xgb.XGBClassifier(**config_param)
-    clf.fit(x_train, y_train)
+    if config_param['objective'] == "reg:squarederror":
+        model = xgb.XGBRegressor(**config_param)
+        model.fit(x_train, y_train)
+        y_pred = model.predict(x_test)
 
-    # Prediction
-    y_pred = clf.predict(x_test)
-    y_prob = clf.predict_proba(x_test)[:, 1]
+        # compute mse rmse mae
+        mse = mean_squared_error(y_test, y_pred)
+        rmse = math.sqrt(mse)
+        mae = mean_absolute_error(y_test, y_pred)
+        print("mse: {}, rmse: {}, mae: {}".format(mse, rmse, mae))
+    else:
+        model = xgb.XGBClassifier(**config_param)
+        model.fit(x_train, y_train)
+        y_pred = model.predict(x_test)
+        y_prob = model.predict_proba(x_test)[:, 1]
 
-    try:
-        auc_score = roc_auc_score(y_test, y_prob)
-    except BaseException:
-        print("no auc score available")
-        return
 
-    recall = recall_score(y_test, y_pred, average="macro")
-    pr = precision_score(y_test, y_pred, average="macro")
-    acc = accuracy_score(y_test, y_pred)
-    fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+        try:
+            auc_score = roc_auc_score(y_test, y_prob)
+        except BaseException:
+            print("no auc score available")
+            return
 
-    ks = max(tpr - fpr)
-    result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc}
-    print(result)
-    return {}, result
+        recall = recall_score(y_test, y_pred, average="macro")
+        pr = precision_score(y_test, y_pred, average="macro")
+        acc = accuracy_score(y_test, y_pred)
+        fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+
+        ks = max(tpr - fpr)
+        result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc}
+        print(result)
+        return {}, result
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY XGBoost JOB")

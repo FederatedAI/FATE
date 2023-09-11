@@ -62,14 +62,24 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     }
     hetero_sbt_0 = HeteroSBT('sbt_0', train_data=psi_0.outputs['output_data'], num_trees=config_param["num_trees"], 
                              max_bin=config_param["max_bin"], max_depth=config_param["max_depth"], he_param={'kind': 'paillier', 'key_length': 2048},
-                             objective=config_param["objective"])
+                             objective=config_param["objective"], hist_sub=False, gh_pack=False, split_info_pack=False)
 
-    evaluation_0 = Evaluation(
-        'eval_0',
-        runtime_roles=['guest'],
-        metrics=['auc'],
-        input_data=[hetero_sbt_0.outputs['train_data_output']]
-    )
+    if config_param['objective'] == 'regression:l2':
+        evaluation_0 = Evaluation(
+            'eval_0',
+            runtime_roles=['guest'],
+            input_data=[hetero_sbt_0.outputs['train_data_output']],
+            default_eval_setting='regression',
+        )
+
+
+    else:
+        evaluation_0 = Evaluation(
+            'eval_0',
+            runtime_roles=['guest'],
+            metrics=['auc'],
+            input_data=[hetero_sbt_0.outputs['train_data_output']]
+        )
 
     pipeline.add_task(psi_0)
     pipeline.add_task(hetero_sbt_0)
