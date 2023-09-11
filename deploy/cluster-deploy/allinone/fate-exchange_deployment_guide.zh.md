@@ -20,10 +20,6 @@
 | -------- | -------- | ------------- | ----------- | ----------------------- | -------- | ---- |
 | exchange | exchange | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 18.04 | eggroll  | osx  |
 
-架构图：
-
-|![](../../images/proxy_zh.png)|
-|:--:|
 
 # 3.组件说明
 
@@ -148,7 +144,7 @@ cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u345.tar.xz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
-注意：version不带字符v，如fate_install_1.x.x_release.tar.gz
+注意：version不带字符v，如fate_install_2.x.x_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查

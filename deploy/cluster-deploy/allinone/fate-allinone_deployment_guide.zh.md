@@ -262,7 +262,7 @@ cd /data/projects/
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_cluster_install_${version}_release.tar.gz
 tar xzf fate_cluster_install_${version}_release.tar.gz
 
-注意：version不带字符v，如fate_cluster_install_1.x.x_release.tar.gz
+注意：version不带字符v，如fate_cluster_install_2.x.x_release.tar.gz
 ```
 
 ### 5.2. 部署前检查
