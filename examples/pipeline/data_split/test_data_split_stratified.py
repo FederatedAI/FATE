@@ -56,9 +56,9 @@ def main(config="../config.yaml", namespace=""):
     data_split_1 = DataSplit("data_split_1",
                              train_size=200,
                              test_size=50,
-                             stratified=False,
-                             hetero_sync=False,
-                             input_data=psi_0.outputs["output_data"]
+                             stratified=True,
+                             hetero_sync=True,
+                             input_data=psi_1.outputs["output_data"]
                              )
 
     pipeline.add_task(psi_0)
