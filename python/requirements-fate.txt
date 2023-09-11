@@ -5,7 +5,7 @@ torch==1.13.1
 fate_utils
 pydantic==1.10.12
 cloudpickle==2.1.0
-click>=8.0.0
+click
 ruamel-yaml==0.16
 scikit-learn
 numpy
