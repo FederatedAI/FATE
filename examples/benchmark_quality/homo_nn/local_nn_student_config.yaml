@@ -1,0 +1,10 @@
+data_guest: "examples/data/student_homo_guest.csv"
+data_host: "examples/data/student_homo_host.csv"
+data_test: "examples/data/student_homo_test.csv"
+idx: "id"
+label_name: "y"
+in_feat: 13
+out_feat: 8
+lr: 0.01
+batch_size: 32
+epochs: 50

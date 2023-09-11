@@ -26,88 +26,87 @@ REGRESSION_L2 = "regression:l2"
 
 
 def apply_weight(loss: DataFrame, weight: DataFrame):
-    return loss['loss'] * weight['weight']
+    return loss["loss"] * weight["weight"]
 
 
 class BCELoss(object):
-
     @staticmethod
     def initialize(label: DataFrame):
         init_score = label.create_frame()
-        init_score['score'] = 0.0
+        init_score["score"] = 0.0
         return init_score
 
     @staticmethod
     def predict(score: DataFrame):
         pred_rs = score.create_frame()
-        pred_rs['score'] = score.apply_row(lambda s: sigmoid(s))
+        pred_rs["score"] = score.apply_row(lambda s: sigmoid(s))
         return pred_rs
 
     @staticmethod
     def compute_loss(label: DataFrame, pred: DataFrame):
-        
         sample_num = len(label)
         label_pred = DataFrame.hstack([label, pred])
-        label_pred['loss'] = label_pred.apply_row(lambda s: -(s[0] * np.log(s[1]) + (1 - s[0]) * np.log(1 - s[1])), with_label=True)
-        loss_rs = label_pred['loss'].fillna(1)
-        reduce_loss = loss_rs['loss'].sum() / sample_num
+        label_pred["loss"] = label_pred.apply_row(
+            lambda s: -(s[0] * np.log(s[1]) + (1 - s[0]) * np.log(1 - s[1])), with_label=True
+        )
+        loss_rs = label_pred["loss"].fillna(1)
+        reduce_loss = loss_rs["loss"].sum() / sample_num
         return reduce_loss
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
-        gh['g'] = predict_score - label
+        gh["g"] = predict_score - label
 
     @staticmethod
     def compute_hess(gh: DataFrame, label: DataFrame, predict_score: DataFrame):
-        gh['h'] = predict_score * (1 - predict_score)
+        gh["h"] = predict_score * (1 - predict_score)
 
 
 class CELoss(object):
-
     @staticmethod
     def initialize(label, class_num=3):
         init_score = label.create_frame()
-        init_score['score'] = [0.0 for i in range(class_num)]
+        init_score["score"] = [0.0 for i in range(class_num)]
         return init_score
 
     @staticmethod
     def predict(score: DataFrame):
         def softmax(s):
-            s = np.array(s['score']).astype(np.float64)
+            s = np.array(s["score"]).astype(np.float64)
             ret = (np.exp(s) / np.exp(s).sum()).tolist()
             return [ret]
+
         pred_rs = score.create_frame()
-        pred_rs['score'] = score.apply_row(lambda s: softmax(s))
+        pred_rs["score"] = score.apply_row(lambda s: softmax(s))
         return pred_rs
- 
+
     @staticmethod
     def compute_loss(label: DataFrame, pred: DataFrame, weight: DataFrame):
         loss_col = label.create_frame()
         label_pred = label.hstack(pred)
         sample_num = len(label)
-        loss_col['loss'] = label_pred.apply_row(lambda s: np.log(s[1:][int(s[0])]))
-        loss_col['loss'].fillna(1)
+        loss_col["loss"] = label_pred.apply_row(lambda s: np.log(s[1:][int(s[0])]))
+        loss_col["loss"].fillna(1)
         if weight:
-            loss_col['loss'] = apply_weight(loss_col, weight)
-        reduce_loss = loss_col['loss'].sum() / sample_num
+            loss_col["loss"] = apply_weight(loss_col, weight)
+        reduce_loss = loss_col["loss"].sum() / sample_num
         return reduce_loss
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, score: DataFrame):
-        gh['g'] = score.apply_row(lambda s: [[i - 1 for i in s['score']]])
+        gh["g"] = score.apply_row(lambda s: [[i - 1 for i in s["score"]]])
 
     @staticmethod
     def compute_hess(gh: DataFrame, y, score):
-        gh['h'] = score.apply_row(lambda s: [[2 * i * (1 - i) for i in s['score']]])
+        gh["h"] = score.apply_row(lambda s: [[2 * i * (1 - i) for i in s["score"]]])
 
 
 class L2Loss(object):
-
     @staticmethod
     def initialize(label):
         init_score = label.create_frame()
         mean_score = float(label.mean())
-        init_score['score'] = mean_score
+        init_score["score"] = mean_score
         return init_score, mean_score
 
     @staticmethod
@@ -118,27 +117,22 @@ class L2Loss(object):
     def compute_loss(label: DataFrame, pred: DataFrame):
         loss_col = label.create_frame()
         sample_num = len(label)
-        loss_col['loss'] = (label - pred['score']) ** 2
-        reduce_loss = loss_col['loss'].sum() / sample_num
+        loss_col["loss"] = (label - pred["score"]) ** 2
+        reduce_loss = loss_col["loss"].sum() / sample_num
         return reduce_loss
 
     @staticmethod
     def compute_grad(gh: DataFrame, label, score):
-        gh['g'] = 2 * (label - score['score'])
+        gh["g"] = 2 * (score["score"] - label)
 
     @staticmethod
     def compute_hess(gh: DataFrame, label, score):
-        gh['h'] = 2
+        gh["h"] = 2
 
 
-
-OBJECTIVE = {
-    BINARY_BCE: BCELoss,
-    MULTI_CE: CELoss,
-    REGRESSION_L2: L2Loss
-}
+OBJECTIVE = {BINARY_BCE: BCELoss, MULTI_CE: CELoss, REGRESSION_L2: L2Loss}
 
 
 def get_task_info(objective):
-    task_type = objective.split(':')[0]
+    task_type = objective.split(":")[0]
     return task_type

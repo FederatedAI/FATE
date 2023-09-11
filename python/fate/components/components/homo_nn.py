@@ -153,12 +153,9 @@ def train(
     train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True)
 ):
 
-    runner: NNRunner = prepare_runner_class(
-        runner_module, runner_class, runner_conf, source)
-    prepare_context_and_role(runner, ctx, role, consts.TRAIN)
 
     if role.is_guest or role.is_host:  # is client
-
+        
         if train_model_input is not None:
             model_conf = train_model_input.get_metadata()
             runner_conf, source, runner_class, runner_module = prepared_saved_conf(
@@ -166,6 +163,10 @@ def train(
             saved_model_path = str(train_model_input.get_directory())
         else:
             saved_model_path = None
+
+        runner: NNRunner = prepare_runner_class(
+            runner_module, runner_class, runner_conf, source)
+        prepare_context_and_role(runner, ctx, role, consts.TRAIN)
 
         output_dir = str(train_model_output.get_directory())
         train_data_, validate_data_ = get_input_data(
@@ -201,6 +202,9 @@ def train(
         train_model_output.write_metadata(output_conf)
 
     elif role.is_arbiter:  # is server
+        runner: NNRunner = prepare_runner_class(
+            runner_module, runner_class, runner_conf, source)
+        prepare_context_and_role(runner, ctx, role, consts.TRAIN)
         runner.train()
 
 

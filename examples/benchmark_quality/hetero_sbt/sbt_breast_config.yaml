@@ -1,0 +1,7 @@
+data_guest: "breast_hetero_guest"
+data_host: "breast_hetero_host"
+idx: "id"
+label_name: "y"
+num_trees: 10
+max_depth: 3
+max_bin: 32

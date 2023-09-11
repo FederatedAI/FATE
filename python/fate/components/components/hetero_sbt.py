@@ -69,8 +69,6 @@ def train(
     if role.is_guest:
         
         # initialize encrypt kit
-
-        logger.info('cwj he param is {}'.format(he_param.dict()))
         ctx.cipher.set_phe(ctx.device, he_param.dict())
 
         booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin,

@@ -1,0 +1,10 @@
+data_guest: "examples/data/breast_homo_guest.csv"
+data_host: "examples/data/breast_homo_host.csv"
+data_test: "examples/data/breast_homo_test.csv"
+idx: "id"
+label_name: "y"
+in_feat: 30
+out_feat: 10
+lr: 0.01
+batch_size: 32
+epochs: 50

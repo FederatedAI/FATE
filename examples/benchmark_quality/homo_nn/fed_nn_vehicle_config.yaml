@@ -1,0 +1,11 @@
+data_guest: "vehicle_scale_homo_guest"
+data_host: "vehicle_scale_homo_host"
+data_test: "vehicle_scale_homo_test"
+idx: "id"
+label_name: "y"
+in_feat: 18
+out_feat: 8
+lr: 0.01
+batch_size: 32
+epochs: 100
+class_num: 4

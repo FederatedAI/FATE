@@ -1,0 +1,10 @@
+data_guest: "give_credit_homo_guest"
+data_host: "give_credit_homo_host"
+data_test: "give_credit_homo_test"
+idx: "id"
+label_name: "y"
+in_feat: 10
+out_feat: 4
+lr: 0.001
+batch_size: 128
+epochs: 100

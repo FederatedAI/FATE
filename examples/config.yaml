@@ -7,4 +7,4 @@ parties: # parties default id
   arbiter:
     - 10000
 
-data_base_dir: "" # path to project base where data is located
+data_base_dir: "~/FATE/FATE-2.0-pure/FATE/"

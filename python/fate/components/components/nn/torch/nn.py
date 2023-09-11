@@ -1,8 +1,8 @@
 from torch import nn
-from fate.components.components.nn.patched_torch.base import PatchedTorchModule
+from fate.components.components.nn.torch.base import TorchModule
 
 
-class Bilinear(nn.modules.linear.Bilinear, PatchedTorchModule):
+class Bilinear(nn.modules.linear.Bilinear, TorchModule):
 
     def __init__(
             self,
@@ -13,7 +13,7 @@ class Bilinear(nn.modules.linear.Bilinear, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
@@ -24,15 +24,15 @@ class Bilinear(nn.modules.linear.Bilinear, PatchedTorchModule):
         nn.modules.linear.Bilinear.__init__(self, **self.param_dict)
 
 
-class Identity(nn.modules.linear.Identity, PatchedTorchModule):
+class Identity(nn.modules.linear.Identity, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.linear.Identity.__init__(self, **self.param_dict)
 
 
-class LazyLinear(nn.modules.linear.LazyLinear, PatchedTorchModule):
+class LazyLinear(nn.modules.linear.LazyLinear, TorchModule):
 
     def __init__(
             self,
@@ -41,7 +41,7 @@ class LazyLinear(nn.modules.linear.LazyLinear, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
@@ -50,7 +50,7 @@ class LazyLinear(nn.modules.linear.LazyLinear, PatchedTorchModule):
         nn.modules.linear.LazyLinear.__init__(self, **self.param_dict)
 
 
-class Linear(nn.modules.linear.Linear, PatchedTorchModule):
+class Linear(nn.modules.linear.Linear, TorchModule):
 
     def __init__(
             self,
@@ -60,7 +60,7 @@ class Linear(nn.modules.linear.Linear, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
@@ -72,7 +72,7 @@ class Linear(nn.modules.linear.Linear, PatchedTorchModule):
 
 class NonDynamicallyQuantizableLinear(
         nn.modules.linear.NonDynamicallyQuantizableLinear,
-        PatchedTorchModule):
+        TorchModule):
 
     def __init__(
             self,
@@ -82,7 +82,7 @@ class NonDynamicallyQuantizableLinear(
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
@@ -93,15 +93,15 @@ class NonDynamicallyQuantizableLinear(
             self, **self.param_dict)
 
 
-class GRU(nn.modules.rnn.GRU, PatchedTorchModule):
+class GRU(nn.modules.rnn.GRU, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.rnn.GRU.__init__(self, **self.param_dict)
 
 
-class GRUCell(nn.modules.rnn.GRUCell, PatchedTorchModule):
+class GRUCell(nn.modules.rnn.GRUCell, TorchModule):
 
     def __init__(
             self,
@@ -111,7 +111,7 @@ class GRUCell(nn.modules.rnn.GRUCell, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
@@ -121,15 +121,15 @@ class GRUCell(nn.modules.rnn.GRUCell, PatchedTorchModule):
         nn.modules.rnn.GRUCell.__init__(self, **self.param_dict)
 
 
-class LSTM(nn.modules.rnn.LSTM, PatchedTorchModule):
+class LSTM(nn.modules.rnn.LSTM, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.rnn.LSTM.__init__(self, **self.param_dict)
 
 
-class LSTMCell(nn.modules.rnn.LSTMCell, PatchedTorchModule):
+class LSTMCell(nn.modules.rnn.LSTMCell, TorchModule):
 
     def __init__(
             self,
@@ -139,7 +139,7 @@ class LSTMCell(nn.modules.rnn.LSTMCell, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
@@ -149,15 +149,15 @@ class LSTMCell(nn.modules.rnn.LSTMCell, PatchedTorchModule):
         nn.modules.rnn.LSTMCell.__init__(self, **self.param_dict)
 
 
-class RNN(nn.modules.rnn.RNN, PatchedTorchModule):
+class RNN(nn.modules.rnn.RNN, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.rnn.RNN.__init__(self, **self.param_dict)
 
 
-class RNNBase(nn.modules.rnn.RNNBase, PatchedTorchModule):
+class RNNBase(nn.modules.rnn.RNNBase, TorchModule):
 
     def __init__(
             self,
@@ -173,7 +173,7 @@ class RNNBase(nn.modules.rnn.RNNBase, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['num_layers'] = num_layers
         self.param_dict['bias'] = bias
         self.param_dict['batch_first'] = batch_first
@@ -189,7 +189,7 @@ class RNNBase(nn.modules.rnn.RNNBase, PatchedTorchModule):
         nn.modules.rnn.RNNBase.__init__(self, **self.param_dict)
 
 
-class RNNCell(nn.modules.rnn.RNNCell, PatchedTorchModule):
+class RNNCell(nn.modules.rnn.RNNCell, TorchModule):
 
     def __init__(
             self,
@@ -200,7 +200,7 @@ class RNNCell(nn.modules.rnn.RNNCell, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['nonlinearity'] = nonlinearity
         self.param_dict['device'] = device
@@ -211,7 +211,7 @@ class RNNCell(nn.modules.rnn.RNNCell, PatchedTorchModule):
         nn.modules.rnn.RNNCell.__init__(self, **self.param_dict)
 
 
-class RNNCellBase(nn.modules.rnn.RNNCellBase, PatchedTorchModule):
+class RNNCellBase(nn.modules.rnn.RNNCellBase, TorchModule):
 
     def __init__(
             self,
@@ -222,7 +222,7 @@ class RNNCellBase(nn.modules.rnn.RNNCellBase, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
         self.param_dict['input_size'] = input_size
@@ -233,7 +233,7 @@ class RNNCellBase(nn.modules.rnn.RNNCellBase, PatchedTorchModule):
         nn.modules.rnn.RNNCellBase.__init__(self, **self.param_dict)
 
 
-class Embedding(nn.modules.sparse.Embedding, PatchedTorchModule):
+class Embedding(nn.modules.sparse.Embedding, TorchModule):
 
     def __init__(
             self,
@@ -248,7 +248,7 @@ class Embedding(nn.modules.sparse.Embedding, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding_idx'] = padding_idx
         self.param_dict['max_norm'] = max_norm
         self.param_dict['norm_type'] = norm_type
@@ -263,7 +263,7 @@ class Embedding(nn.modules.sparse.Embedding, PatchedTorchModule):
         nn.modules.sparse.Embedding.__init__(self, **self.param_dict)
 
 
-class EmbeddingBag(nn.modules.sparse.EmbeddingBag, PatchedTorchModule):
+class EmbeddingBag(nn.modules.sparse.EmbeddingBag, TorchModule):
 
     def __init__(
             self,
@@ -280,7 +280,7 @@ class EmbeddingBag(nn.modules.sparse.EmbeddingBag, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['max_norm'] = max_norm
         self.param_dict['norm_type'] = norm_type
         self.param_dict['scale_grad_by_freq'] = scale_grad_by_freq
@@ -297,60 +297,60 @@ class EmbeddingBag(nn.modules.sparse.EmbeddingBag, PatchedTorchModule):
         nn.modules.sparse.EmbeddingBag.__init__(self, **self.param_dict)
 
 
-class AlphaDropout(nn.modules.dropout.AlphaDropout, PatchedTorchModule):
+class AlphaDropout(nn.modules.dropout.AlphaDropout, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout.AlphaDropout.__init__(self, **self.param_dict)
 
 
-class Dropout(nn.modules.dropout.Dropout, PatchedTorchModule):
+class Dropout(nn.modules.dropout.Dropout, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout.Dropout.__init__(self, **self.param_dict)
 
 
-class Dropout1d(nn.modules.dropout.Dropout1d, PatchedTorchModule):
+class Dropout1d(nn.modules.dropout.Dropout1d, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout.Dropout1d.__init__(self, **self.param_dict)
 
 
-class Dropout2d(nn.modules.dropout.Dropout2d, PatchedTorchModule):
+class Dropout2d(nn.modules.dropout.Dropout2d, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout.Dropout2d.__init__(self, **self.param_dict)
 
 
-class Dropout3d(nn.modules.dropout.Dropout3d, PatchedTorchModule):
+class Dropout3d(nn.modules.dropout.Dropout3d, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout.Dropout3d.__init__(self, **self.param_dict)
 
 
-class FeatureAlphaDropout(nn.modules.dropout.FeatureAlphaDropout, PatchedTorchModule):
+class FeatureAlphaDropout(nn.modules.dropout.FeatureAlphaDropout, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
@@ -358,82 +358,82 @@ class FeatureAlphaDropout(nn.modules.dropout.FeatureAlphaDropout, PatchedTorchMo
             self, **self.param_dict)
 
 
-class _DropoutNd(nn.modules.dropout._DropoutNd, PatchedTorchModule):
+class _DropoutNd(nn.modules.dropout._DropoutNd, TorchModule):
 
     def __init__(self, p=0.5, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout._DropoutNd.__init__(self, **self.param_dict)
 
 
-class CELU(nn.modules.activation.CELU, PatchedTorchModule):
+class CELU(nn.modules.activation.CELU, TorchModule):
 
     def __init__(self, alpha=1.0, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['alpha'] = alpha
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.CELU.__init__(self, **self.param_dict)
 
 
-class ELU(nn.modules.activation.ELU, PatchedTorchModule):
+class ELU(nn.modules.activation.ELU, TorchModule):
 
     def __init__(self, alpha=1.0, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['alpha'] = alpha
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.ELU.__init__(self, **self.param_dict)
 
 
-class GELU(nn.modules.activation.GELU, PatchedTorchModule):
+class GELU(nn.modules.activation.GELU, TorchModule):
 
     def __init__(self, approximate='none', **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['approximate'] = approximate
         self.param_dict.update(kwargs)
         nn.modules.activation.GELU.__init__(self, **self.param_dict)
 
 
-class GLU(nn.modules.activation.GLU, PatchedTorchModule):
+class GLU(nn.modules.activation.GLU, TorchModule):
 
     def __init__(self, dim=-1, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dim'] = dim
         self.param_dict.update(kwargs)
         nn.modules.activation.GLU.__init__(self, **self.param_dict)
 
 
-class Hardshrink(nn.modules.activation.Hardshrink, PatchedTorchModule):
+class Hardshrink(nn.modules.activation.Hardshrink, TorchModule):
 
     def __init__(self, lambd=0.5, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['lambd'] = lambd
         self.param_dict.update(kwargs)
         nn.modules.activation.Hardshrink.__init__(self, **self.param_dict)
 
 
-class Hardsigmoid(nn.modules.activation.Hardsigmoid, PatchedTorchModule):
+class Hardsigmoid(nn.modules.activation.Hardsigmoid, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.Hardsigmoid.__init__(self, **self.param_dict)
 
 
-class Hardswish(nn.modules.activation.Hardswish, PatchedTorchModule):
+class Hardswish(nn.modules.activation.Hardswish, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.Hardswish.__init__(self, **self.param_dict)
 
 
-class Hardtanh(nn.modules.activation.Hardtanh, PatchedTorchModule):
+class Hardtanh(nn.modules.activation.Hardtanh, TorchModule):
 
     def __init__(
             self,
@@ -443,7 +443,7 @@ class Hardtanh(nn.modules.activation.Hardtanh, PatchedTorchModule):
             min_value=None,
             max_value=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['min_val'] = min_val
         self.param_dict['max_val'] = max_val
         self.param_dict['inplace'] = inplace
@@ -453,43 +453,43 @@ class Hardtanh(nn.modules.activation.Hardtanh, PatchedTorchModule):
         nn.modules.activation.Hardtanh.__init__(self, **self.param_dict)
 
 
-class LeakyReLU(nn.modules.activation.LeakyReLU, PatchedTorchModule):
+class LeakyReLU(nn.modules.activation.LeakyReLU, TorchModule):
 
     def __init__(self, negative_slope=0.01, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['negative_slope'] = negative_slope
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.LeakyReLU.__init__(self, **self.param_dict)
 
 
-class LogSigmoid(nn.modules.activation.LogSigmoid, PatchedTorchModule):
+class LogSigmoid(nn.modules.activation.LogSigmoid, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.activation.LogSigmoid.__init__(self, **self.param_dict)
 
 
-class LogSoftmax(nn.modules.activation.LogSoftmax, PatchedTorchModule):
+class LogSoftmax(nn.modules.activation.LogSoftmax, TorchModule):
 
     def __init__(self, dim=None, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dim'] = dim
         self.param_dict.update(kwargs)
         nn.modules.activation.LogSoftmax.__init__(self, **self.param_dict)
 
 
-class Mish(nn.modules.activation.Mish, PatchedTorchModule):
+class Mish(nn.modules.activation.Mish, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.Mish.__init__(self, **self.param_dict)
 
 
-class MultiheadAttention(nn.modules.activation.MultiheadAttention, PatchedTorchModule):
+class MultiheadAttention(nn.modules.activation.MultiheadAttention, TorchModule):
 
     def __init__(
             self,
@@ -505,7 +505,7 @@ class MultiheadAttention(nn.modules.activation.MultiheadAttention, PatchedTorchM
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dropout'] = dropout
         self.param_dict['bias'] = bias
         self.param_dict['add_bias_kv'] = add_bias_kv
@@ -522,7 +522,7 @@ class MultiheadAttention(nn.modules.activation.MultiheadAttention, PatchedTorchM
             self, **self.param_dict)
 
 
-class PReLU(nn.modules.activation.PReLU, PatchedTorchModule):
+class PReLU(nn.modules.activation.PReLU, TorchModule):
 
     def __init__(
             self,
@@ -531,7 +531,7 @@ class PReLU(nn.modules.activation.PReLU, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['num_parameters'] = num_parameters
         self.param_dict['init'] = init
         self.param_dict['device'] = device
@@ -540,7 +540,7 @@ class PReLU(nn.modules.activation.PReLU, PatchedTorchModule):
         nn.modules.activation.PReLU.__init__(self, **self.param_dict)
 
 
-class RReLU(nn.modules.activation.RReLU, PatchedTorchModule):
+class RReLU(nn.modules.activation.RReLU, TorchModule):
 
     def __init__(
             self,
@@ -548,7 +548,7 @@ class RReLU(nn.modules.activation.RReLU, PatchedTorchModule):
             upper=0.3333333333333333,
             inplace=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['lower'] = lower
         self.param_dict['upper'] = upper
         self.param_dict['inplace'] = inplace
@@ -556,123 +556,123 @@ class RReLU(nn.modules.activation.RReLU, PatchedTorchModule):
         nn.modules.activation.RReLU.__init__(self, **self.param_dict)
 
 
-class ReLU(nn.modules.activation.ReLU, PatchedTorchModule):
+class ReLU(nn.modules.activation.ReLU, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.ReLU.__init__(self, **self.param_dict)
 
 
-class ReLU6(nn.modules.activation.ReLU6, PatchedTorchModule):
+class ReLU6(nn.modules.activation.ReLU6, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.ReLU6.__init__(self, **self.param_dict)
 
 
-class SELU(nn.modules.activation.SELU, PatchedTorchModule):
+class SELU(nn.modules.activation.SELU, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.SELU.__init__(self, **self.param_dict)
 
 
-class SiLU(nn.modules.activation.SiLU, PatchedTorchModule):
+class SiLU(nn.modules.activation.SiLU, TorchModule):
 
     def __init__(self, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.SiLU.__init__(self, **self.param_dict)
 
 
-class Sigmoid(nn.modules.activation.Sigmoid, PatchedTorchModule):
+class Sigmoid(nn.modules.activation.Sigmoid, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.activation.Sigmoid.__init__(self, **self.param_dict)
 
 
-class Softmax(nn.modules.activation.Softmax, PatchedTorchModule):
+class Softmax(nn.modules.activation.Softmax, TorchModule):
 
     def __init__(self, dim=None, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dim'] = dim
         self.param_dict.update(kwargs)
         nn.modules.activation.Softmax.__init__(self, **self.param_dict)
 
 
-class Softmax2d(nn.modules.activation.Softmax2d, PatchedTorchModule):
+class Softmax2d(nn.modules.activation.Softmax2d, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.activation.Softmax2d.__init__(self, **self.param_dict)
 
 
-class Softmin(nn.modules.activation.Softmin, PatchedTorchModule):
+class Softmin(nn.modules.activation.Softmin, TorchModule):
 
     def __init__(self, dim=None, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dim'] = dim
         self.param_dict.update(kwargs)
         nn.modules.activation.Softmin.__init__(self, **self.param_dict)
 
 
-class Softplus(nn.modules.activation.Softplus, PatchedTorchModule):
+class Softplus(nn.modules.activation.Softplus, TorchModule):
 
     def __init__(self, beta=1, threshold=20, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['beta'] = beta
         self.param_dict['threshold'] = threshold
         self.param_dict.update(kwargs)
         nn.modules.activation.Softplus.__init__(self, **self.param_dict)
 
 
-class Softshrink(nn.modules.activation.Softshrink, PatchedTorchModule):
+class Softshrink(nn.modules.activation.Softshrink, TorchModule):
 
     def __init__(self, lambd=0.5, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['lambd'] = lambd
         self.param_dict.update(kwargs)
         nn.modules.activation.Softshrink.__init__(self, **self.param_dict)
 
 
-class Softsign(nn.modules.activation.Softsign, PatchedTorchModule):
+class Softsign(nn.modules.activation.Softsign, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.activation.Softsign.__init__(self, **self.param_dict)
 
 
-class Tanh(nn.modules.activation.Tanh, PatchedTorchModule):
+class Tanh(nn.modules.activation.Tanh, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.activation.Tanh.__init__(self, **self.param_dict)
 
 
-class Tanhshrink(nn.modules.activation.Tanhshrink, PatchedTorchModule):
+class Tanhshrink(nn.modules.activation.Tanhshrink, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.activation.Tanhshrink.__init__(self, **self.param_dict)
 
 
-class Threshold(nn.modules.activation.Threshold, PatchedTorchModule):
+class Threshold(nn.modules.activation.Threshold, TorchModule):
 
     def __init__(self, threshold, value, inplace=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['inplace'] = inplace
         self.param_dict['threshold'] = threshold
         self.param_dict['value'] = value
@@ -680,7 +680,7 @@ class Threshold(nn.modules.activation.Threshold, PatchedTorchModule):
         nn.modules.activation.Threshold.__init__(self, **self.param_dict)
 
 
-class Conv1d(nn.modules.conv.Conv1d, PatchedTorchModule):
+class Conv1d(nn.modules.conv.Conv1d, TorchModule):
 
     def __init__(
             self,
@@ -696,7 +696,7 @@ class Conv1d(nn.modules.conv.Conv1d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -712,7 +712,7 @@ class Conv1d(nn.modules.conv.Conv1d, PatchedTorchModule):
         nn.modules.conv.Conv1d.__init__(self, **self.param_dict)
 
 
-class Conv2d(nn.modules.conv.Conv2d, PatchedTorchModule):
+class Conv2d(nn.modules.conv.Conv2d, TorchModule):
 
     def __init__(
             self,
@@ -728,7 +728,7 @@ class Conv2d(nn.modules.conv.Conv2d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -744,7 +744,7 @@ class Conv2d(nn.modules.conv.Conv2d, PatchedTorchModule):
         nn.modules.conv.Conv2d.__init__(self, **self.param_dict)
 
 
-class Conv3d(nn.modules.conv.Conv3d, PatchedTorchModule):
+class Conv3d(nn.modules.conv.Conv3d, TorchModule):
 
     def __init__(
             self,
@@ -760,7 +760,7 @@ class Conv3d(nn.modules.conv.Conv3d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -776,7 +776,7 @@ class Conv3d(nn.modules.conv.Conv3d, PatchedTorchModule):
         nn.modules.conv.Conv3d.__init__(self, **self.param_dict)
 
 
-class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, PatchedTorchModule):
+class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, TorchModule):
 
     def __init__(
             self,
@@ -793,7 +793,7 @@ class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['output_padding'] = output_padding
@@ -810,7 +810,7 @@ class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, PatchedTorchModule):
         nn.modules.conv.ConvTranspose1d.__init__(self, **self.param_dict)
 
 
-class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, PatchedTorchModule):
+class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, TorchModule):
 
     def __init__(
             self,
@@ -827,7 +827,7 @@ class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['output_padding'] = output_padding
@@ -844,7 +844,7 @@ class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, PatchedTorchModule):
         nn.modules.conv.ConvTranspose2d.__init__(self, **self.param_dict)
 
 
-class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, PatchedTorchModule):
+class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, TorchModule):
 
     def __init__(
             self,
@@ -861,7 +861,7 @@ class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['output_padding'] = output_padding
@@ -878,7 +878,7 @@ class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, PatchedTorchModule):
         nn.modules.conv.ConvTranspose3d.__init__(self, **self.param_dict)
 
 
-class LazyConv1d(nn.modules.conv.LazyConv1d, PatchedTorchModule):
+class LazyConv1d(nn.modules.conv.LazyConv1d, TorchModule):
 
     def __init__(
             self,
@@ -893,7 +893,7 @@ class LazyConv1d(nn.modules.conv.LazyConv1d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -908,7 +908,7 @@ class LazyConv1d(nn.modules.conv.LazyConv1d, PatchedTorchModule):
         nn.modules.conv.LazyConv1d.__init__(self, **self.param_dict)
 
 
-class LazyConv2d(nn.modules.conv.LazyConv2d, PatchedTorchModule):
+class LazyConv2d(nn.modules.conv.LazyConv2d, TorchModule):
 
     def __init__(
             self,
@@ -923,7 +923,7 @@ class LazyConv2d(nn.modules.conv.LazyConv2d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -938,7 +938,7 @@ class LazyConv2d(nn.modules.conv.LazyConv2d, PatchedTorchModule):
         nn.modules.conv.LazyConv2d.__init__(self, **self.param_dict)
 
 
-class LazyConv3d(nn.modules.conv.LazyConv3d, PatchedTorchModule):
+class LazyConv3d(nn.modules.conv.LazyConv3d, TorchModule):
 
     def __init__(
             self,
@@ -953,7 +953,7 @@ class LazyConv3d(nn.modules.conv.LazyConv3d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -968,7 +968,7 @@ class LazyConv3d(nn.modules.conv.LazyConv3d, PatchedTorchModule):
         nn.modules.conv.LazyConv3d.__init__(self, **self.param_dict)
 
 
-class LazyConvTranspose1d(nn.modules.conv.LazyConvTranspose1d, PatchedTorchModule):
+class LazyConvTranspose1d(nn.modules.conv.LazyConvTranspose1d, TorchModule):
 
     def __init__(
             self,
@@ -984,7 +984,7 @@ class LazyConvTranspose1d(nn.modules.conv.LazyConvTranspose1d, PatchedTorchModul
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['output_padding'] = output_padding
@@ -1000,7 +1000,7 @@ class LazyConvTranspose1d(nn.modules.conv.LazyConvTranspose1d, PatchedTorchModul
         nn.modules.conv.LazyConvTranspose1d.__init__(self, **self.param_dict)
 
 
-class LazyConvTranspose2d(nn.modules.conv.LazyConvTranspose2d, PatchedTorchModule):
+class LazyConvTranspose2d(nn.modules.conv.LazyConvTranspose2d, TorchModule):
 
     def __init__(
             self,
@@ -1016,7 +1016,7 @@ class LazyConvTranspose2d(nn.modules.conv.LazyConvTranspose2d, PatchedTorchModul
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['output_padding'] = output_padding
@@ -1032,7 +1032,7 @@ class LazyConvTranspose2d(nn.modules.conv.LazyConvTranspose2d, PatchedTorchModul
         nn.modules.conv.LazyConvTranspose2d.__init__(self, **self.param_dict)
 
 
-class LazyConvTranspose3d(nn.modules.conv.LazyConvTranspose3d, PatchedTorchModule):
+class LazyConvTranspose3d(nn.modules.conv.LazyConvTranspose3d, TorchModule):
 
     def __init__(
             self,
@@ -1048,7 +1048,7 @@ class LazyConvTranspose3d(nn.modules.conv.LazyConvTranspose3d, PatchedTorchModul
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['output_padding'] = output_padding
@@ -1064,7 +1064,7 @@ class LazyConvTranspose3d(nn.modules.conv.LazyConvTranspose3d, PatchedTorchModul
         nn.modules.conv.LazyConvTranspose3d.__init__(self, **self.param_dict)
 
 
-class _ConvNd(nn.modules.conv._ConvNd, PatchedTorchModule):
+class _ConvNd(nn.modules.conv._ConvNd, TorchModule):
 
     def __init__(
             self,
@@ -1082,7 +1082,7 @@ class _ConvNd(nn.modules.conv._ConvNd, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
@@ -1100,15 +1100,15 @@ class _ConvNd(nn.modules.conv._ConvNd, PatchedTorchModule):
         nn.modules.conv._ConvNd.__init__(self, **self.param_dict)
 
 
-class _ConvTransposeMixin(nn.modules.conv._ConvTransposeMixin, PatchedTorchModule):
+class _ConvTransposeMixin(nn.modules.conv._ConvTransposeMixin, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.conv._ConvTransposeMixin.__init__(self, **self.param_dict)
 
 
-class _ConvTransposeNd(nn.modules.conv._ConvTransposeNd, PatchedTorchModule):
+class _ConvTransposeNd(nn.modules.conv._ConvTransposeNd, TorchModule):
 
     def __init__(
             self,
@@ -1126,7 +1126,7 @@ class _ConvTransposeNd(nn.modules.conv._ConvTransposeNd, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['device'] = device
         self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
@@ -1144,15 +1144,15 @@ class _ConvTransposeNd(nn.modules.conv._ConvTransposeNd, PatchedTorchModule):
         nn.modules.conv._ConvTransposeNd.__init__(self, **self.param_dict)
 
 
-class _LazyConvXdMixin(nn.modules.conv._LazyConvXdMixin, PatchedTorchModule):
+class _LazyConvXdMixin(nn.modules.conv._LazyConvXdMixin, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.conv._LazyConvXdMixin.__init__(self, **self.param_dict)
 
 
-class Transformer(nn.modules.transformer.Transformer, PatchedTorchModule):
+class Transformer(nn.modules.transformer.Transformer, TorchModule):
 
     def __init__(
             self,
@@ -1170,7 +1170,7 @@ class Transformer(nn.modules.transformer.Transformer, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['d_model'] = d_model
         self.param_dict['nhead'] = nhead
         self.param_dict['num_encoder_layers'] = num_encoder_layers
@@ -1188,10 +1188,10 @@ class Transformer(nn.modules.transformer.Transformer, PatchedTorchModule):
         nn.modules.transformer.Transformer.__init__(self, **self.param_dict)
 
 
-class TransformerDecoder(nn.modules.transformer.TransformerDecoder, PatchedTorchModule):
+class TransformerDecoder(nn.modules.transformer.TransformerDecoder, TorchModule):
 
     def __init__(self, decoder_layer, num_layers, norm=None, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['norm'] = norm
         self.param_dict['decoder_layer'] = decoder_layer
         self.param_dict['num_layers'] = num_layers
@@ -1202,7 +1202,7 @@ class TransformerDecoder(nn.modules.transformer.TransformerDecoder, PatchedTorch
 
 class TransformerDecoderLayer(
         nn.modules.transformer.TransformerDecoderLayer,
-        PatchedTorchModule):
+        TorchModule):
 
     def __init__(
             self,
@@ -1216,7 +1216,7 @@ class TransformerDecoderLayer(
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dim_feedforward'] = dim_feedforward
         self.param_dict['dropout'] = dropout
         self.param_dict['layer_norm_eps'] = layer_norm_eps
@@ -1231,7 +1231,7 @@ class TransformerDecoderLayer(
             self, **self.param_dict)
 
 
-class TransformerEncoder(nn.modules.transformer.TransformerEncoder, PatchedTorchModule):
+class TransformerEncoder(nn.modules.transformer.TransformerEncoder, TorchModule):
 
     def __init__(
             self,
@@ -1241,7 +1241,7 @@ class TransformerEncoder(nn.modules.transformer.TransformerEncoder, PatchedTorch
             enable_nested_tensor=True,
             mask_check=True,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['norm'] = norm
         self.param_dict['enable_nested_tensor'] = enable_nested_tensor
         self.param_dict['mask_check'] = mask_check
@@ -1254,7 +1254,7 @@ class TransformerEncoder(nn.modules.transformer.TransformerEncoder, PatchedTorch
 
 class TransformerEncoderLayer(
         nn.modules.transformer.TransformerEncoderLayer,
-        PatchedTorchModule):
+        TorchModule):
 
     def __init__(
             self,
@@ -1268,7 +1268,7 @@ class TransformerEncoderLayer(
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['dim_feedforward'] = dim_feedforward
         self.param_dict['dropout'] = dropout
         self.param_dict['layer_norm_eps'] = layer_norm_eps
@@ -1283,64 +1283,64 @@ class TransformerEncoderLayer(
             self, **self.param_dict)
 
 
-class AdaptiveAvgPool1d(nn.modules.pooling.AdaptiveAvgPool1d, PatchedTorchModule):
+class AdaptiveAvgPool1d(nn.modules.pooling.AdaptiveAvgPool1d, TorchModule):
 
     def __init__(self, output_size, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling.AdaptiveAvgPool1d.__init__(self, **self.param_dict)
 
 
-class AdaptiveAvgPool2d(nn.modules.pooling.AdaptiveAvgPool2d, PatchedTorchModule):
+class AdaptiveAvgPool2d(nn.modules.pooling.AdaptiveAvgPool2d, TorchModule):
 
     def __init__(self, output_size, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling.AdaptiveAvgPool2d.__init__(self, **self.param_dict)
 
 
-class AdaptiveAvgPool3d(nn.modules.pooling.AdaptiveAvgPool3d, PatchedTorchModule):
+class AdaptiveAvgPool3d(nn.modules.pooling.AdaptiveAvgPool3d, TorchModule):
 
     def __init__(self, output_size, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling.AdaptiveAvgPool3d.__init__(self, **self.param_dict)
 
 
-class AdaptiveMaxPool1d(nn.modules.pooling.AdaptiveMaxPool1d, PatchedTorchModule):
+class AdaptiveMaxPool1d(nn.modules.pooling.AdaptiveMaxPool1d, TorchModule):
 
     def __init__(self, output_size, return_indices=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['return_indices'] = return_indices
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling.AdaptiveMaxPool1d.__init__(self, **self.param_dict)
 
 
-class AdaptiveMaxPool2d(nn.modules.pooling.AdaptiveMaxPool2d, PatchedTorchModule):
+class AdaptiveMaxPool2d(nn.modules.pooling.AdaptiveMaxPool2d, TorchModule):
 
     def __init__(self, output_size, return_indices=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['return_indices'] = return_indices
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling.AdaptiveMaxPool2d.__init__(self, **self.param_dict)
 
 
-class AdaptiveMaxPool3d(nn.modules.pooling.AdaptiveMaxPool3d, PatchedTorchModule):
+class AdaptiveMaxPool3d(nn.modules.pooling.AdaptiveMaxPool3d, TorchModule):
 
     def __init__(self, output_size, return_indices=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['return_indices'] = return_indices
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling.AdaptiveMaxPool3d.__init__(self, **self.param_dict)
 
 
-class AvgPool1d(nn.modules.pooling.AvgPool1d, PatchedTorchModule):
+class AvgPool1d(nn.modules.pooling.AvgPool1d, TorchModule):
 
     def __init__(
             self,
@@ -1350,7 +1350,7 @@ class AvgPool1d(nn.modules.pooling.AvgPool1d, PatchedTorchModule):
             ceil_mode=False,
             count_include_pad=True,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['ceil_mode'] = ceil_mode
@@ -1360,7 +1360,7 @@ class AvgPool1d(nn.modules.pooling.AvgPool1d, PatchedTorchModule):
         nn.modules.pooling.AvgPool1d.__init__(self, **self.param_dict)
 
 
-class AvgPool2d(nn.modules.pooling.AvgPool2d, PatchedTorchModule):
+class AvgPool2d(nn.modules.pooling.AvgPool2d, TorchModule):
 
     def __init__(
             self,
@@ -1371,7 +1371,7 @@ class AvgPool2d(nn.modules.pooling.AvgPool2d, PatchedTorchModule):
             count_include_pad=True,
             divisor_override=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['ceil_mode'] = ceil_mode
@@ -1382,7 +1382,7 @@ class AvgPool2d(nn.modules.pooling.AvgPool2d, PatchedTorchModule):
         nn.modules.pooling.AvgPool2d.__init__(self, **self.param_dict)
 
 
-class AvgPool3d(nn.modules.pooling.AvgPool3d, PatchedTorchModule):
+class AvgPool3d(nn.modules.pooling.AvgPool3d, TorchModule):
 
     def __init__(
             self,
@@ -1393,7 +1393,7 @@ class AvgPool3d(nn.modules.pooling.AvgPool3d, PatchedTorchModule):
             count_include_pad=True,
             divisor_override=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['ceil_mode'] = ceil_mode
@@ -1404,7 +1404,7 @@ class AvgPool3d(nn.modules.pooling.AvgPool3d, PatchedTorchModule):
         nn.modules.pooling.AvgPool3d.__init__(self, **self.param_dict)
 
 
-class FractionalMaxPool2d(nn.modules.pooling.FractionalMaxPool2d, PatchedTorchModule):
+class FractionalMaxPool2d(nn.modules.pooling.FractionalMaxPool2d, TorchModule):
 
     def __init__(
             self,
@@ -1414,7 +1414,7 @@ class FractionalMaxPool2d(nn.modules.pooling.FractionalMaxPool2d, PatchedTorchMo
             return_indices=False,
             _random_samples=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['output_size'] = output_size
         self.param_dict['output_ratio'] = output_ratio
         self.param_dict['return_indices'] = return_indices
@@ -1425,7 +1425,7 @@ class FractionalMaxPool2d(nn.modules.pooling.FractionalMaxPool2d, PatchedTorchMo
             self, **self.param_dict)
 
 
-class FractionalMaxPool3d(nn.modules.pooling.FractionalMaxPool3d, PatchedTorchModule):
+class FractionalMaxPool3d(nn.modules.pooling.FractionalMaxPool3d, TorchModule):
 
     def __init__(
             self,
@@ -1435,7 +1435,7 @@ class FractionalMaxPool3d(nn.modules.pooling.FractionalMaxPool3d, PatchedTorchMo
             return_indices=False,
             _random_samples=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['output_size'] = output_size
         self.param_dict['output_ratio'] = output_ratio
         self.param_dict['return_indices'] = return_indices
@@ -1446,7 +1446,7 @@ class FractionalMaxPool3d(nn.modules.pooling.FractionalMaxPool3d, PatchedTorchMo
             self, **self.param_dict)
 
 
-class LPPool1d(nn.modules.pooling.LPPool1d, PatchedTorchModule):
+class LPPool1d(nn.modules.pooling.LPPool1d, TorchModule):
 
     def __init__(
             self,
@@ -1455,7 +1455,7 @@ class LPPool1d(nn.modules.pooling.LPPool1d, PatchedTorchModule):
             stride=None,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['ceil_mode'] = ceil_mode
         self.param_dict['norm_type'] = norm_type
@@ -1464,7 +1464,7 @@ class LPPool1d(nn.modules.pooling.LPPool1d, PatchedTorchModule):
         nn.modules.pooling.LPPool1d.__init__(self, **self.param_dict)
 
 
-class LPPool2d(nn.modules.pooling.LPPool2d, PatchedTorchModule):
+class LPPool2d(nn.modules.pooling.LPPool2d, TorchModule):
 
     def __init__(
             self,
@@ -1473,7 +1473,7 @@ class LPPool2d(nn.modules.pooling.LPPool2d, PatchedTorchModule):
             stride=None,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['ceil_mode'] = ceil_mode
         self.param_dict['norm_type'] = norm_type
@@ -1482,7 +1482,7 @@ class LPPool2d(nn.modules.pooling.LPPool2d, PatchedTorchModule):
         nn.modules.pooling.LPPool2d.__init__(self, **self.param_dict)
 
 
-class MaxPool1d(nn.modules.pooling.MaxPool1d, PatchedTorchModule):
+class MaxPool1d(nn.modules.pooling.MaxPool1d, TorchModule):
 
     def __init__(
             self,
@@ -1493,7 +1493,7 @@ class MaxPool1d(nn.modules.pooling.MaxPool1d, PatchedTorchModule):
             return_indices=False,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -1504,7 +1504,7 @@ class MaxPool1d(nn.modules.pooling.MaxPool1d, PatchedTorchModule):
         nn.modules.pooling.MaxPool1d.__init__(self, **self.param_dict)
 
 
-class MaxPool2d(nn.modules.pooling.MaxPool2d, PatchedTorchModule):
+class MaxPool2d(nn.modules.pooling.MaxPool2d, TorchModule):
 
     def __init__(
             self,
@@ -1515,7 +1515,7 @@ class MaxPool2d(nn.modules.pooling.MaxPool2d, PatchedTorchModule):
             return_indices=False,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -1526,7 +1526,7 @@ class MaxPool2d(nn.modules.pooling.MaxPool2d, PatchedTorchModule):
         nn.modules.pooling.MaxPool2d.__init__(self, **self.param_dict)
 
 
-class MaxPool3d(nn.modules.pooling.MaxPool3d, PatchedTorchModule):
+class MaxPool3d(nn.modules.pooling.MaxPool3d, TorchModule):
 
     def __init__(
             self,
@@ -1537,7 +1537,7 @@ class MaxPool3d(nn.modules.pooling.MaxPool3d, PatchedTorchModule):
             return_indices=False,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -1548,10 +1548,10 @@ class MaxPool3d(nn.modules.pooling.MaxPool3d, PatchedTorchModule):
         nn.modules.pooling.MaxPool3d.__init__(self, **self.param_dict)
 
 
-class MaxUnpool1d(nn.modules.pooling.MaxUnpool1d, PatchedTorchModule):
+class MaxUnpool1d(nn.modules.pooling.MaxUnpool1d, TorchModule):
 
     def __init__(self, kernel_size, stride=None, padding=0, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['kernel_size'] = kernel_size
@@ -1559,10 +1559,10 @@ class MaxUnpool1d(nn.modules.pooling.MaxUnpool1d, PatchedTorchModule):
         nn.modules.pooling.MaxUnpool1d.__init__(self, **self.param_dict)
 
 
-class MaxUnpool2d(nn.modules.pooling.MaxUnpool2d, PatchedTorchModule):
+class MaxUnpool2d(nn.modules.pooling.MaxUnpool2d, TorchModule):
 
     def __init__(self, kernel_size, stride=None, padding=0, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['kernel_size'] = kernel_size
@@ -1570,10 +1570,10 @@ class MaxUnpool2d(nn.modules.pooling.MaxUnpool2d, PatchedTorchModule):
         nn.modules.pooling.MaxUnpool2d.__init__(self, **self.param_dict)
 
 
-class MaxUnpool3d(nn.modules.pooling.MaxUnpool3d, PatchedTorchModule):
+class MaxUnpool3d(nn.modules.pooling.MaxUnpool3d, TorchModule):
 
     def __init__(self, kernel_size, stride=None, padding=0, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['kernel_size'] = kernel_size
@@ -1581,34 +1581,34 @@ class MaxUnpool3d(nn.modules.pooling.MaxUnpool3d, PatchedTorchModule):
         nn.modules.pooling.MaxUnpool3d.__init__(self, **self.param_dict)
 
 
-class _AdaptiveAvgPoolNd(nn.modules.pooling._AdaptiveAvgPoolNd, PatchedTorchModule):
+class _AdaptiveAvgPoolNd(nn.modules.pooling._AdaptiveAvgPoolNd, TorchModule):
 
     def __init__(self, output_size, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling._AdaptiveAvgPoolNd.__init__(self, **self.param_dict)
 
 
-class _AdaptiveMaxPoolNd(nn.modules.pooling._AdaptiveMaxPoolNd, PatchedTorchModule):
+class _AdaptiveMaxPoolNd(nn.modules.pooling._AdaptiveMaxPoolNd, TorchModule):
 
     def __init__(self, output_size, return_indices=False, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['return_indices'] = return_indices
         self.param_dict['output_size'] = output_size
         self.param_dict.update(kwargs)
         nn.modules.pooling._AdaptiveMaxPoolNd.__init__(self, **self.param_dict)
 
 
-class _AvgPoolNd(nn.modules.pooling._AvgPoolNd, PatchedTorchModule):
+class _AvgPoolNd(nn.modules.pooling._AvgPoolNd, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.pooling._AvgPoolNd.__init__(self, **self.param_dict)
 
 
-class _LPPoolNd(nn.modules.pooling._LPPoolNd, PatchedTorchModule):
+class _LPPoolNd(nn.modules.pooling._LPPoolNd, TorchModule):
 
     def __init__(
             self,
@@ -1617,7 +1617,7 @@ class _LPPoolNd(nn.modules.pooling._LPPoolNd, PatchedTorchModule):
             stride=None,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['ceil_mode'] = ceil_mode
         self.param_dict['norm_type'] = norm_type
@@ -1626,7 +1626,7 @@ class _LPPoolNd(nn.modules.pooling._LPPoolNd, PatchedTorchModule):
         nn.modules.pooling._LPPoolNd.__init__(self, **self.param_dict)
 
 
-class _MaxPoolNd(nn.modules.pooling._MaxPoolNd, PatchedTorchModule):
+class _MaxPoolNd(nn.modules.pooling._MaxPoolNd, TorchModule):
 
     def __init__(
             self,
@@ -1637,7 +1637,7 @@ class _MaxPoolNd(nn.modules.pooling._MaxPoolNd, PatchedTorchModule):
             return_indices=False,
             ceil_mode=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
         self.param_dict['dilation'] = dilation
@@ -1648,15 +1648,15 @@ class _MaxPoolNd(nn.modules.pooling._MaxPoolNd, PatchedTorchModule):
         nn.modules.pooling._MaxPoolNd.__init__(self, **self.param_dict)
 
 
-class _MaxUnpoolNd(nn.modules.pooling._MaxUnpoolNd, PatchedTorchModule):
+class _MaxUnpoolNd(nn.modules.pooling._MaxUnpoolNd, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.pooling._MaxUnpoolNd.__init__(self, **self.param_dict)
 
 
-class BatchNorm1d(nn.modules.batchnorm.BatchNorm1d, PatchedTorchModule):
+class BatchNorm1d(nn.modules.batchnorm.BatchNorm1d, TorchModule):
 
     def __init__(
             self,
@@ -1668,7 +1668,7 @@ class BatchNorm1d(nn.modules.batchnorm.BatchNorm1d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1680,7 +1680,7 @@ class BatchNorm1d(nn.modules.batchnorm.BatchNorm1d, PatchedTorchModule):
         nn.modules.batchnorm.BatchNorm1d.__init__(self, **self.param_dict)
 
 
-class BatchNorm2d(nn.modules.batchnorm.BatchNorm2d, PatchedTorchModule):
+class BatchNorm2d(nn.modules.batchnorm.BatchNorm2d, TorchModule):
 
     def __init__(
             self,
@@ -1692,7 +1692,7 @@ class BatchNorm2d(nn.modules.batchnorm.BatchNorm2d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1704,7 +1704,7 @@ class BatchNorm2d(nn.modules.batchnorm.BatchNorm2d, PatchedTorchModule):
         nn.modules.batchnorm.BatchNorm2d.__init__(self, **self.param_dict)
 
 
-class BatchNorm3d(nn.modules.batchnorm.BatchNorm3d, PatchedTorchModule):
+class BatchNorm3d(nn.modules.batchnorm.BatchNorm3d, TorchModule):
 
     def __init__(
             self,
@@ -1716,7 +1716,7 @@ class BatchNorm3d(nn.modules.batchnorm.BatchNorm3d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1728,7 +1728,7 @@ class BatchNorm3d(nn.modules.batchnorm.BatchNorm3d, PatchedTorchModule):
         nn.modules.batchnorm.BatchNorm3d.__init__(self, **self.param_dict)
 
 
-class LazyBatchNorm1d(nn.modules.batchnorm.LazyBatchNorm1d, PatchedTorchModule):
+class LazyBatchNorm1d(nn.modules.batchnorm.LazyBatchNorm1d, TorchModule):
 
     def __init__(
             self,
@@ -1739,7 +1739,7 @@ class LazyBatchNorm1d(nn.modules.batchnorm.LazyBatchNorm1d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1750,7 +1750,7 @@ class LazyBatchNorm1d(nn.modules.batchnorm.LazyBatchNorm1d, PatchedTorchModule):
         nn.modules.batchnorm.LazyBatchNorm1d.__init__(self, **self.param_dict)
 
 
-class LazyBatchNorm2d(nn.modules.batchnorm.LazyBatchNorm2d, PatchedTorchModule):
+class LazyBatchNorm2d(nn.modules.batchnorm.LazyBatchNorm2d, TorchModule):
 
     def __init__(
             self,
@@ -1761,7 +1761,7 @@ class LazyBatchNorm2d(nn.modules.batchnorm.LazyBatchNorm2d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1772,7 +1772,7 @@ class LazyBatchNorm2d(nn.modules.batchnorm.LazyBatchNorm2d, PatchedTorchModule):
         nn.modules.batchnorm.LazyBatchNorm2d.__init__(self, **self.param_dict)
 
 
-class LazyBatchNorm3d(nn.modules.batchnorm.LazyBatchNorm3d, PatchedTorchModule):
+class LazyBatchNorm3d(nn.modules.batchnorm.LazyBatchNorm3d, TorchModule):
 
     def __init__(
             self,
@@ -1783,7 +1783,7 @@ class LazyBatchNorm3d(nn.modules.batchnorm.LazyBatchNorm3d, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1794,7 +1794,7 @@ class LazyBatchNorm3d(nn.modules.batchnorm.LazyBatchNorm3d, PatchedTorchModule):
         nn.modules.batchnorm.LazyBatchNorm3d.__init__(self, **self.param_dict)
 
 
-class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, PatchedTorchModule):
+class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, TorchModule):
 
     def __init__(
             self,
@@ -1807,7 +1807,7 @@ class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1820,7 +1820,7 @@ class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, PatchedTorchModule):
         nn.modules.batchnorm.SyncBatchNorm.__init__(self, **self.param_dict)
 
 
-class _BatchNorm(nn.modules.batchnorm._BatchNorm, PatchedTorchModule):
+class _BatchNorm(nn.modules.batchnorm._BatchNorm, TorchModule):
 
     def __init__(
             self,
@@ -1832,7 +1832,7 @@ class _BatchNorm(nn.modules.batchnorm._BatchNorm, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1844,7 +1844,7 @@ class _BatchNorm(nn.modules.batchnorm._BatchNorm, PatchedTorchModule):
         nn.modules.batchnorm._BatchNorm.__init__(self, **self.param_dict)
 
 
-class _LazyNormBase(nn.modules.batchnorm._LazyNormBase, PatchedTorchModule):
+class _LazyNormBase(nn.modules.batchnorm._LazyNormBase, TorchModule):
 
     def __init__(
             self,
@@ -1855,7 +1855,7 @@ class _LazyNormBase(nn.modules.batchnorm._LazyNormBase, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1866,7 +1866,7 @@ class _LazyNormBase(nn.modules.batchnorm._LazyNormBase, PatchedTorchModule):
         nn.modules.batchnorm._LazyNormBase.__init__(self, **self.param_dict)
 
 
-class _NormBase(nn.modules.batchnorm._NormBase, PatchedTorchModule):
+class _NormBase(nn.modules.batchnorm._NormBase, TorchModule):
 
     def __init__(
             self,
@@ -1878,7 +1878,7 @@ class _NormBase(nn.modules.batchnorm._NormBase, PatchedTorchModule):
             device=None,
             dtype=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
@@ -1890,125 +1890,125 @@ class _NormBase(nn.modules.batchnorm._NormBase, PatchedTorchModule):
         nn.modules.batchnorm._NormBase.__init__(self, **self.param_dict)
 
 
-class ConstantPad1d(nn.modules.padding.ConstantPad1d, PatchedTorchModule):
+class ConstantPad1d(nn.modules.padding.ConstantPad1d, TorchModule):
 
     def __init__(self, padding, value, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict['value'] = value
         self.param_dict.update(kwargs)
         nn.modules.padding.ConstantPad1d.__init__(self, **self.param_dict)
 
 
-class ConstantPad2d(nn.modules.padding.ConstantPad2d, PatchedTorchModule):
+class ConstantPad2d(nn.modules.padding.ConstantPad2d, TorchModule):
 
     def __init__(self, padding, value, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict['value'] = value
         self.param_dict.update(kwargs)
         nn.modules.padding.ConstantPad2d.__init__(self, **self.param_dict)
 
 
-class ConstantPad3d(nn.modules.padding.ConstantPad3d, PatchedTorchModule):
+class ConstantPad3d(nn.modules.padding.ConstantPad3d, TorchModule):
 
     def __init__(self, padding, value, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict['value'] = value
         self.param_dict.update(kwargs)
         nn.modules.padding.ConstantPad3d.__init__(self, **self.param_dict)
 
 
-class ReflectionPad1d(nn.modules.padding.ReflectionPad1d, PatchedTorchModule):
+class ReflectionPad1d(nn.modules.padding.ReflectionPad1d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReflectionPad1d.__init__(self, **self.param_dict)
 
 
-class ReflectionPad2d(nn.modules.padding.ReflectionPad2d, PatchedTorchModule):
+class ReflectionPad2d(nn.modules.padding.ReflectionPad2d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReflectionPad2d.__init__(self, **self.param_dict)
 
 
-class ReflectionPad3d(nn.modules.padding.ReflectionPad3d, PatchedTorchModule):
+class ReflectionPad3d(nn.modules.padding.ReflectionPad3d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReflectionPad3d.__init__(self, **self.param_dict)
 
 
-class ReplicationPad1d(nn.modules.padding.ReplicationPad1d, PatchedTorchModule):
+class ReplicationPad1d(nn.modules.padding.ReplicationPad1d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReplicationPad1d.__init__(self, **self.param_dict)
 
 
-class ReplicationPad2d(nn.modules.padding.ReplicationPad2d, PatchedTorchModule):
+class ReplicationPad2d(nn.modules.padding.ReplicationPad2d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReplicationPad2d.__init__(self, **self.param_dict)
 
 
-class ReplicationPad3d(nn.modules.padding.ReplicationPad3d, PatchedTorchModule):
+class ReplicationPad3d(nn.modules.padding.ReplicationPad3d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReplicationPad3d.__init__(self, **self.param_dict)
 
 
-class ZeroPad2d(nn.modules.padding.ZeroPad2d, PatchedTorchModule):
+class ZeroPad2d(nn.modules.padding.ZeroPad2d, TorchModule):
 
     def __init__(self, padding, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ZeroPad2d.__init__(self, **self.param_dict)
 
 
-class _ConstantPadNd(nn.modules.padding._ConstantPadNd, PatchedTorchModule):
+class _ConstantPadNd(nn.modules.padding._ConstantPadNd, TorchModule):
 
     def __init__(self, value, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['value'] = value
         self.param_dict.update(kwargs)
         nn.modules.padding._ConstantPadNd.__init__(self, **self.param_dict)
 
 
-class _ReflectionPadNd(nn.modules.padding._ReflectionPadNd, PatchedTorchModule):
+class _ReflectionPadNd(nn.modules.padding._ReflectionPadNd, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.padding._ReflectionPadNd.__init__(self, **self.param_dict)
 
 
-class _ReplicationPadNd(nn.modules.padding._ReplicationPadNd, PatchedTorchModule):
+class _ReplicationPadNd(nn.modules.padding._ReplicationPadNd, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.padding._ReplicationPadNd.__init__(self, **self.param_dict)
 
 
-class BCELoss(nn.modules.loss.BCELoss, PatchedTorchModule):
+class BCELoss(nn.modules.loss.BCELoss, TorchModule):
 
     def __init__(
             self,
@@ -2017,7 +2017,7 @@ class BCELoss(nn.modules.loss.BCELoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
@@ -2026,7 +2026,7 @@ class BCELoss(nn.modules.loss.BCELoss, PatchedTorchModule):
         nn.modules.loss.BCELoss.__init__(self, **self.param_dict)
 
 
-class BCEWithLogitsLoss(nn.modules.loss.BCEWithLogitsLoss, PatchedTorchModule):
+class BCEWithLogitsLoss(nn.modules.loss.BCEWithLogitsLoss, TorchModule):
 
     def __init__(
             self,
@@ -2036,7 +2036,7 @@ class BCEWithLogitsLoss(nn.modules.loss.BCEWithLogitsLoss, PatchedTorchModule):
             reduction='mean',
             pos_weight=None,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
@@ -2046,7 +2046,7 @@ class BCEWithLogitsLoss(nn.modules.loss.BCEWithLogitsLoss, PatchedTorchModule):
         nn.modules.loss.BCEWithLogitsLoss.__init__(self, **self.param_dict)
 
 
-class CTCLoss(nn.modules.loss.CTCLoss, PatchedTorchModule):
+class CTCLoss(nn.modules.loss.CTCLoss, TorchModule):
 
     def __init__(
             self,
@@ -2054,7 +2054,7 @@ class CTCLoss(nn.modules.loss.CTCLoss, PatchedTorchModule):
             reduction='mean',
             zero_infinity=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['blank'] = blank
         self.param_dict['reduction'] = reduction
         self.param_dict['zero_infinity'] = zero_infinity
@@ -2062,7 +2062,7 @@ class CTCLoss(nn.modules.loss.CTCLoss, PatchedTorchModule):
         nn.modules.loss.CTCLoss.__init__(self, **self.param_dict)
 
 
-class CosineEmbeddingLoss(nn.modules.loss.CosineEmbeddingLoss, PatchedTorchModule):
+class CosineEmbeddingLoss(nn.modules.loss.CosineEmbeddingLoss, TorchModule):
 
     def __init__(
             self,
@@ -2071,7 +2071,7 @@ class CosineEmbeddingLoss(nn.modules.loss.CosineEmbeddingLoss, PatchedTorchModul
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['margin'] = margin
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
@@ -2080,7 +2080,7 @@ class CosineEmbeddingLoss(nn.modules.loss.CosineEmbeddingLoss, PatchedTorchModul
         nn.modules.loss.CosineEmbeddingLoss.__init__(self, **self.param_dict)
 
 
-class CrossEntropyLoss(nn.modules.loss.CrossEntropyLoss, PatchedTorchModule):
+class CrossEntropyLoss(nn.modules.loss.CrossEntropyLoss, TorchModule):
 
     def __init__(
             self,
@@ -2091,7 +2091,7 @@ class CrossEntropyLoss(nn.modules.loss.CrossEntropyLoss, PatchedTorchModule):
             reduction='mean',
             label_smoothing=0.0,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['ignore_index'] = ignore_index
@@ -2102,15 +2102,15 @@ class CrossEntropyLoss(nn.modules.loss.CrossEntropyLoss, PatchedTorchModule):
         nn.modules.loss.CrossEntropyLoss.__init__(self, **self.param_dict)
 
 
-class GaussianNLLLoss(nn.modules.loss.GaussianNLLLoss, PatchedTorchModule):
+class GaussianNLLLoss(nn.modules.loss.GaussianNLLLoss, TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.loss.GaussianNLLLoss.__init__(self, **self.param_dict)
 
 
-class HingeEmbeddingLoss(nn.modules.loss.HingeEmbeddingLoss, PatchedTorchModule):
+class HingeEmbeddingLoss(nn.modules.loss.HingeEmbeddingLoss, TorchModule):
 
     def __init__(
             self,
@@ -2119,7 +2119,7 @@ class HingeEmbeddingLoss(nn.modules.loss.HingeEmbeddingLoss, PatchedTorchModule)
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['margin'] = margin
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
@@ -2128,17 +2128,17 @@ class HingeEmbeddingLoss(nn.modules.loss.HingeEmbeddingLoss, PatchedTorchModule)
         nn.modules.loss.HingeEmbeddingLoss.__init__(self, **self.param_dict)
 
 
-class HuberLoss(nn.modules.loss.HuberLoss, PatchedTorchModule):
+class HuberLoss(nn.modules.loss.HuberLoss, TorchModule):
 
     def __init__(self, reduction='mean', delta=1.0, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['reduction'] = reduction
         self.param_dict['delta'] = delta
         self.param_dict.update(kwargs)
         nn.modules.loss.HuberLoss.__init__(self, **self.param_dict)
 
 
-class KLDivLoss(nn.modules.loss.KLDivLoss, PatchedTorchModule):
+class KLDivLoss(nn.modules.loss.KLDivLoss, TorchModule):
 
     def __init__(
             self,
@@ -2147,7 +2147,7 @@ class KLDivLoss(nn.modules.loss.KLDivLoss, PatchedTorchModule):
             reduction='mean',
             log_target=False,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2156,7 +2156,7 @@ class KLDivLoss(nn.modules.loss.KLDivLoss, PatchedTorchModule):
         nn.modules.loss.KLDivLoss.__init__(self, **self.param_dict)
 
 
-class L1Loss(nn.modules.loss.L1Loss, PatchedTorchModule):
+class L1Loss(nn.modules.loss.L1Loss, TorchModule):
 
     def __init__(
             self,
@@ -2164,7 +2164,7 @@ class L1Loss(nn.modules.loss.L1Loss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2172,7 +2172,7 @@ class L1Loss(nn.modules.loss.L1Loss, PatchedTorchModule):
         nn.modules.loss.L1Loss.__init__(self, **self.param_dict)
 
 
-class MSELoss(nn.modules.loss.MSELoss, PatchedTorchModule):
+class MSELoss(nn.modules.loss.MSELoss, TorchModule):
 
     def __init__(
             self,
@@ -2180,7 +2180,7 @@ class MSELoss(nn.modules.loss.MSELoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2188,7 +2188,7 @@ class MSELoss(nn.modules.loss.MSELoss, PatchedTorchModule):
         nn.modules.loss.MSELoss.__init__(self, **self.param_dict)
 
 
-class MarginRankingLoss(nn.modules.loss.MarginRankingLoss, PatchedTorchModule):
+class MarginRankingLoss(nn.modules.loss.MarginRankingLoss, TorchModule):
 
     def __init__(
             self,
@@ -2197,7 +2197,7 @@ class MarginRankingLoss(nn.modules.loss.MarginRankingLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['margin'] = margin
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
@@ -2206,7 +2206,7 @@ class MarginRankingLoss(nn.modules.loss.MarginRankingLoss, PatchedTorchModule):
         nn.modules.loss.MarginRankingLoss.__init__(self, **self.param_dict)
 
 
-class MultiLabelMarginLoss(nn.modules.loss.MultiLabelMarginLoss, PatchedTorchModule):
+class MultiLabelMarginLoss(nn.modules.loss.MultiLabelMarginLoss, TorchModule):
 
     def __init__(
             self,
@@ -2214,7 +2214,7 @@ class MultiLabelMarginLoss(nn.modules.loss.MultiLabelMarginLoss, PatchedTorchMod
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2224,7 +2224,7 @@ class MultiLabelMarginLoss(nn.modules.loss.MultiLabelMarginLoss, PatchedTorchMod
 
 class MultiLabelSoftMarginLoss(
         nn.modules.loss.MultiLabelSoftMarginLoss,
-        PatchedTorchModule):
+        TorchModule):
 
     def __init__(
             self,
@@ -2233,7 +2233,7 @@ class MultiLabelSoftMarginLoss(
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
@@ -2243,7 +2243,7 @@ class MultiLabelSoftMarginLoss(
             self, **self.param_dict)
 
 
-class MultiMarginLoss(nn.modules.loss.MultiMarginLoss, PatchedTorchModule):
+class MultiMarginLoss(nn.modules.loss.MultiMarginLoss, TorchModule):
 
     def __init__(
             self,
@@ -2254,7 +2254,7 @@ class MultiMarginLoss(nn.modules.loss.MultiMarginLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['p'] = p
         self.param_dict['margin'] = margin
         self.param_dict['weight'] = weight
@@ -2265,7 +2265,7 @@ class MultiMarginLoss(nn.modules.loss.MultiMarginLoss, PatchedTorchModule):
         nn.modules.loss.MultiMarginLoss.__init__(self, **self.param_dict)
 
 
-class NLLLoss(nn.modules.loss.NLLLoss, PatchedTorchModule):
+class NLLLoss(nn.modules.loss.NLLLoss, TorchModule):
 
     def __init__(
             self,
@@ -2275,7 +2275,7 @@ class NLLLoss(nn.modules.loss.NLLLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['ignore_index'] = ignore_index
@@ -2285,7 +2285,7 @@ class NLLLoss(nn.modules.loss.NLLLoss, PatchedTorchModule):
         nn.modules.loss.NLLLoss.__init__(self, **self.param_dict)
 
 
-class NLLLoss2d(nn.modules.loss.NLLLoss2d, PatchedTorchModule):
+class NLLLoss2d(nn.modules.loss.NLLLoss2d, TorchModule):
 
     def __init__(
             self,
@@ -2295,7 +2295,7 @@ class NLLLoss2d(nn.modules.loss.NLLLoss2d, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['ignore_index'] = ignore_index
@@ -2305,7 +2305,7 @@ class NLLLoss2d(nn.modules.loss.NLLLoss2d, PatchedTorchModule):
         nn.modules.loss.NLLLoss2d.__init__(self, **self.param_dict)
 
 
-class PoissonNLLLoss(nn.modules.loss.PoissonNLLLoss, PatchedTorchModule):
+class PoissonNLLLoss(nn.modules.loss.PoissonNLLLoss, TorchModule):
 
     def __init__(
             self,
@@ -2316,7 +2316,7 @@ class PoissonNLLLoss(nn.modules.loss.PoissonNLLLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['log_input'] = log_input
         self.param_dict['full'] = full
         self.param_dict['size_average'] = size_average
@@ -2327,7 +2327,7 @@ class PoissonNLLLoss(nn.modules.loss.PoissonNLLLoss, PatchedTorchModule):
         nn.modules.loss.PoissonNLLLoss.__init__(self, **self.param_dict)
 
 
-class SmoothL1Loss(nn.modules.loss.SmoothL1Loss, PatchedTorchModule):
+class SmoothL1Loss(nn.modules.loss.SmoothL1Loss, TorchModule):
 
     def __init__(
             self,
@@ -2336,7 +2336,7 @@ class SmoothL1Loss(nn.modules.loss.SmoothL1Loss, PatchedTorchModule):
             reduction='mean',
             beta=1.0,
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2345,7 +2345,7 @@ class SmoothL1Loss(nn.modules.loss.SmoothL1Loss, PatchedTorchModule):
         nn.modules.loss.SmoothL1Loss.__init__(self, **self.param_dict)
 
 
-class SoftMarginLoss(nn.modules.loss.SoftMarginLoss, PatchedTorchModule):
+class SoftMarginLoss(nn.modules.loss.SoftMarginLoss, TorchModule):
 
     def __init__(
             self,
@@ -2353,7 +2353,7 @@ class SoftMarginLoss(nn.modules.loss.SoftMarginLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2361,7 +2361,7 @@ class SoftMarginLoss(nn.modules.loss.SoftMarginLoss, PatchedTorchModule):
         nn.modules.loss.SoftMarginLoss.__init__(self, **self.param_dict)
 
 
-class TripletMarginLoss(nn.modules.loss.TripletMarginLoss, PatchedTorchModule):
+class TripletMarginLoss(nn.modules.loss.TripletMarginLoss, TorchModule):
 
     def __init__(
             self,
@@ -2373,7 +2373,7 @@ class TripletMarginLoss(nn.modules.loss.TripletMarginLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['margin'] = margin
         self.param_dict['p'] = p
         self.param_dict['eps'] = eps
@@ -2387,16 +2387,16 @@ class TripletMarginLoss(nn.modules.loss.TripletMarginLoss, PatchedTorchModule):
 
 class TripletMarginWithDistanceLoss(
         nn.modules.loss.TripletMarginWithDistanceLoss,
-        PatchedTorchModule):
+        TorchModule):
 
     def __init__(self, **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict.update(kwargs)
         nn.modules.loss.TripletMarginWithDistanceLoss.__init__(
             self, **self.param_dict)
 
 
-class _Loss(nn.modules.loss._Loss, PatchedTorchModule):
+class _Loss(nn.modules.loss._Loss, TorchModule):
 
     def __init__(
             self,
@@ -2404,7 +2404,7 @@ class _Loss(nn.modules.loss._Loss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
@@ -2412,7 +2412,7 @@ class _Loss(nn.modules.loss._Loss, PatchedTorchModule):
         nn.modules.loss._Loss.__init__(self, **self.param_dict)
 
 
-class _WeightedLoss(nn.modules.loss._WeightedLoss, PatchedTorchModule):
+class _WeightedLoss(nn.modules.loss._WeightedLoss, TorchModule):
 
     def __init__(
             self,
@@ -2421,7 +2421,7 @@ class _WeightedLoss(nn.modules.loss._WeightedLoss, PatchedTorchModule):
             reduce=None,
             reduction='mean',
             **kwargs):
-        PatchedTorchModule.__init__(self)
+        TorchModule.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
