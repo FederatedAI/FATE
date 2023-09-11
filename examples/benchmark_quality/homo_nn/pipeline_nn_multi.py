@@ -17,18 +17,19 @@
 import argparse
 from fate_test.utils import parse_summary_result
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
-from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
-from fate_client.pipeline.components.fate.hetero_sbt import HeteroSBT
-from fate_client.pipeline.components.fate.psi import PSI
 from fate_client.pipeline.components.fate.evaluation import Evaluation
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.interface import DataWarehouseChannel
+from fate_client.pipeline.components.fate.nn.torch import nn, optim
+from fate_client.pipeline.components.fate.nn.loader import ModelLoader
+from fate_client.pipeline.components.fate.homo_nn import HomoNN, get_config_of_default_runner
+from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments, FedAVGArguments
 
 
-def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace=""):
+
+def main(config="../../config.yaml", param="", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
@@ -42,44 +43,67 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
 
     assert isinstance(param, dict)
 
+    epochs = param.get('epochs')
+    batch_size = param.get('batch_size')
+    in_feat = param.get('in_feat')
+    out_feat = param.get('out_feat')
+    class_num = param.get('class_num')
+    lr = param.get('lr')
+
     guest_data_table = param.get("data_guest")
     host_data_table = param.get("data_host")
+    test_data_table = param.get("data_test")
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
+    test_data = {"name": test_data_table, "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                                  namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                     namespace=host_train_data["namespace"]))
-    config_param = {
-        "num_trees": param["num_trees"],
-        "max_depth": param["max_depth"],
-        "max_bin": param["max_bin"],
-    }
-    hetero_sbt_0 = HeteroSBT('sbt_0', train_data=psi_0.outputs['output_data'], num_trees=config_param["num_trees"], 
-                             max_bin=config_param["max_bin"], max_depth=config_param["max_depth"], he_param={'kind': 'mock', 'key_length': 2048})
+    conf = get_config_of_default_runner(
+        algo='fedavg',
+        model=ModelLoader('multi_model', 'Multi', feat=in_feat, class_num=class_num), 
+        loss=nn.CrossEntropyLoss(),
+        optimizer=optim.Adam(lr=lr),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size),
+        fed_args=FedAVGArguments(),
+        task_type='multi'
+        )
+
+
+    homo_nn_0 = HomoNN(
+        'nn_0',
+        runner_conf=conf
+    )
+
+    homo_nn_1 = HomoNN(
+        'nn_1',
+        test_data=DataWarehouseChannel(name=test_data["name"], namespace=test_data["namespace"]),
+        predict_model_input=homo_nn_0.outputs['train_model_output']
+    )
+
+    homo_nn_0.guest.component_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
+    homo_nn_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
+        default_eval_setting='multi',
         runtime_roles=['guest'],
-        metrics=['auc'],
-        input_data=[hetero_sbt_0.outputs['train_data_output']]
+        input_data=[homo_nn_1.outputs['predict_data_output'], homo_nn_0.outputs['train_data_output']]
     )
-
-    pipeline.add_task(psi_0)
-    pipeline.add_task(hetero_sbt_0)
-    pipeline.add_task(evaluation_0)
 
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
+
+    pipeline.add_task(homo_nn_0)
+    pipeline.add_task(homo_nn_1)
+    pipeline.add_task(evaluation_0)
+
     pipeline.compile()
     pipeline.fit()
 
+    print(pipeline.get_task_info("eval_0").get_output_metric())
     result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
     print(f"result_summary: {result_summary}")
 
@@ -95,6 +119,6 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", type=str,
                         help="config file", default="../../config.yaml")
     parser.add_argument("-p", "--param", type=str,
-                        help="config file for params", default="./sbt_breast_config.yaml")
+                        help="config file for params", default="")
     args = parser.parse_args()
     main(args.config, args.param)

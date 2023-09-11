@@ -4,5 +4,5 @@ idx: "id"
 label_name: "y"
 num_leaves: 8
 learning_rate: 0.3
-n_estimators: 1
+n_estimators: 30
 max_bin: 32

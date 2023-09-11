@@ -3,7 +3,8 @@ import os
 import lightgbm as lgb
 import pandas as pd
 from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve
-from fate_client.pipeline.utils.test_utils import JobConfig  # 假设这个库在你的环境中存在
+from fate_client.pipeline.utils.test_utils import JobConfig
+
 
 def main(config="../../config.yaml", param="./lgb_breast_config.yaml"):
 

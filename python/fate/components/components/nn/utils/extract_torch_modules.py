@@ -120,4 +120,4 @@ if __name__ == '__main__':
 
     module_str = module_str
 
-    open('../patched_torch/nn.py', 'w').write(module_str)
+    open('../torch/nn.py', 'w').write(module_str)

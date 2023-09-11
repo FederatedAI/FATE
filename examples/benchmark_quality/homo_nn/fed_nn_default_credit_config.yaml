@@ -1,0 +1,10 @@
+data_guest: "default_credit_homo_guest"
+data_host: "default_credit_homo_host"
+data_test: "default_credit_homo_test"
+idx: "id"
+label_name: "y"
+in_feat: 23
+out_feat: 10
+lr: 0.01
+batch_size: 32
+epochs: 50
