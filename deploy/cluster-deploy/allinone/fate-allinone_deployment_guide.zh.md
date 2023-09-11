@@ -1,11 +1,6 @@
 # FATE AllinOne部署指南
 
-[English](./fate-allinone_deployment_guide..md)
-
-> 警告：本文档仅用于快速开始，生产环境推荐使用其他部署方式，如 [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)。
->
-> 依照本文档同时部署多个 party 会导致 party 间各服务器可以通过 ssh 互相访问，从而产生严重的安全问题。
-
+[English](./fate-allinone_deployment_guide.zh.md)
 ## 1. 服务器配置
 
 |  服务器  |                                                              |
