@@ -263,8 +263,8 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         return EV(data)
 
     @staticmethod
-    def zeros(size) -> EV:
-        return EV(torch.zeros(size))
+    def zeros(size, dtype) -> EV:
+        return EV(torch.zeros(size, dtype=dtype))
 
     @staticmethod
     def i_add(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
@@ -280,7 +280,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         """
         if size is None:
             size = min(a.data.numel() - sa, b.data.numel() - sb)
-        a.data[sa: sa + size] += b.data[sb: sb + size]
+        a.data[sa : sa + size] += b.data[sb : sb + size]
 
     @staticmethod
     def i_sub(pk: PK, a: EV, b: EV, sa=0, sb=0, size: Optional[int] = None) -> None:
@@ -296,7 +296,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         """
         if size is None:
             size = min(a.data.numel() - sa, b.data.numel() - sb)
-        a.data[sa: sa + size] -= b.data[sb: sb + size]
+        a.data[sa : sa + size] -= b.data[sb : sb + size]
 
     @staticmethod
     def slice(a: EV, start: int, size: int) -> EV:
@@ -310,7 +310,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         Returns:
             the sliced vector
         """
-        return EV(a.data[start: start + size])
+        return EV(a.data[start : start + size])
 
     @staticmethod
     def i_shuffle(pk: PK, a: EV, indices: torch.LongTensor) -> None:
@@ -357,7 +357,10 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
             data = a.data.view(-1, stride)
             value = b.data.view(-1, stride).unsqueeze(1).expand(-1, index.shape[1], stride).reshape(-1, stride)
             index = index.flatten().unsqueeze(1).expand(-1, stride)
-        data.scatter_add_(0, index, value)
+        try:
+            data.scatter_add_(0, index, value)
+        except Exception as e:
+            raise ValueError(f"data: {data.dtype}, value: {value.dtype}") from e
 
     @staticmethod
     def i_update_with_masks(pk: PK, a: EV, b: EV, positions, masks, stride: int) -> None:
@@ -432,7 +435,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         start = 0
         for num in chunk_sizes:
             num = num // step
-            data_view[start: start + num, :] = data_view[start: start + num, :].cumsum(dim=0)
+            data_view[start : start + num, :] = data_view[start : start + num, :].cumsum(dim=0)
             start += num
 
     @staticmethod

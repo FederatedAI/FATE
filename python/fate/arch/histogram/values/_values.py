@@ -21,7 +21,8 @@ class HistogramValuesContainer(object):
                 pk = items["pk"]
                 evaluator = items["evaluator"]
                 coder = items.get("coder")
-                values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, coder, stride)
+                dtype = items.get("dtype")
+                values_mapping[name] = HistogramEncryptedValues.zeros(pk, evaluator, size, coder, dtype, stride)
             elif items["type"] == "plaintext":
                 import torch
 

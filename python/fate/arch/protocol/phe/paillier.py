@@ -240,7 +240,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
-    def zeros(size) -> EV:
+    def zeros(size, dtype) -> EV:
         return CiphertextVector.zeros(size)
 
     @staticmethod

@@ -18,8 +18,8 @@ class HistogramEncryptedValues(HistogramValues):
         self.evaluator = evaluator
 
     @classmethod
-    def zeros(cls, pk, evaluator, size: int, coder, stride: int = 1):
-        return cls(pk, evaluator, evaluator.zeros(size * stride), coder, stride)
+    def zeros(cls, pk, evaluator, size: int, coder, dtype, stride: int = 1):
+        return cls(pk, evaluator, evaluator.zeros(size * stride, dtype), coder, stride)
 
     def i_update(self, value, positions):
         from fate.arch.tensor.phe import PHETensor
