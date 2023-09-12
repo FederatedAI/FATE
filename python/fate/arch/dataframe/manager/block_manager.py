@@ -317,6 +317,10 @@ class Int32Block(Block):
         except ValueError:
             return torch.tensor(np.array(block, dtype="int32"), dtype=torch.int32)
 
+    @property
+    def dtype(self):
+        return torch.int32
+
 
 class Int64Block(Block):
     def __init__(self, *args, **kwargs):
@@ -334,6 +338,10 @@ class Int64Block(Block):
             return torch.tensor(block, dtype=torch.int64)
         except ValueError:
             return torch.tensor(np.array(block, dtype="int64"), dtype=torch.int64)
+
+    @property
+    def dtype(self):
+        return torch.int64
 
 
 class Float32Block(Block):
@@ -353,6 +361,10 @@ class Float32Block(Block):
         except ValueError:
             return torch.tensor(np.array(block, dtype="float32"), dtype=torch.float32)
 
+    @property
+    def dtype(self):
+        return torch.float32
+
 
 class Float64Block(Block):
     def __init__(self, *args, **kwargs):
@@ -370,6 +382,10 @@ class Float64Block(Block):
             return torch.tensor(block, dtype=torch.float64)
         except ValueError:
             return torch.tensor(np.array(block, dtype="float64"), dtype=torch.float64)
+
+    @property
+    def dtype(self):
+        return torch.float64
 
 
 class BoolBlock(Block):
@@ -389,6 +405,10 @@ class BoolBlock(Block):
         except ValueError:
             return torch.tensor(np.array(block, dtype="bool"), dtype=torch.bool)
 
+    @property
+    def dtype(self):
+        return torch.bool
+
 
 class IndexBlock(Block):
     def __init__(self, *args, **kwargs):
@@ -398,6 +418,10 @@ class IndexBlock(Block):
     @staticmethod
     def convert_block(block):
         return pd.Index(block, dtype=str)
+
+    @property
+    def dtype(self):
+        return np.dtype("O")
 
 
 class PHETensorBlock(Block):
@@ -458,6 +482,10 @@ class NPObjectBlock(Block):
     @staticmethod
     def convert_block(block):
         return np.array(block, dtype=object)
+
+    @property
+    def dtype(self):
+        return np.dtype("O")
 
 
 class BlockManager(object):

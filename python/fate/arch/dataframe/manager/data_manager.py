@@ -17,6 +17,7 @@ import numpy as np
 from .schema_manager import SchemaManager
 from .block_manager import BlockManager
 from .block_manager import BlockType
+import pandas as pd
 from ..entity import types
 from typing import Union, List, Tuple
 from ..conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
@@ -48,6 +49,16 @@ class DataManager(object):
     @property
     def schema(self):
         return self._schema_manager.schema
+
+    @property
+    def dtypes(self):
+        field_name_list = self.get_field_name_list()
+        dtype_dict = dict()
+        for name in field_name_list:
+            block_id = self.loc_block(name, with_offset=False)
+            dtype_dict[name] = self._block_manager.blocks[block_id].dtype
+
+        return pd.Series(dtype_dict)
 
     def add_label_or_weight(self, key_type, name, block_type):
         field_index, field_index_changes = self._schema_manager.add_label_or_weight(key_type, name, block_type)
