@@ -81,7 +81,13 @@ class HistogramValuesContainer(object):
                     right_value.data, left_value.data, right_value.pk, right_value.coder
                 )
                 self._data[from_key] = HistogramEncryptedValues(
-                    right_value.pk, right_value.evaluator, data, right_value.coder, right_value.stride
+                    right_value.pk,
+                    right_value.evaluator,
+                    data,
+                    right_value.coder,
+                    right_value.dtype,
+                    right_value.size,
+                    right_value.stride,
                 )
             elif isinstance(right_value, HistogramPlainValues):
                 assert left_value.stride == right_value.stride

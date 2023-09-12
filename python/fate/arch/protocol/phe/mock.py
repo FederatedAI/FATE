@@ -122,49 +122,49 @@ class Coder:
         return torch.tensor(val, dtype=torch.float64)
 
     def decode_f64(self, val):
-        return val.item()
+        return float(val.item())
 
     def encode_i64(self, val: int):
         return torch.tensor(val, dtype=torch.int64)
 
     def decode_i64(self, val):
-        return val.item()
+        return int(val.item())
 
     def encode_f32(self, val: float):
         return torch.tensor(val, dtype=torch.float32)
 
     def decode_f32(self, val):
-        return val.item()
+        return float(val.item())
 
     def encode_i32(self, val: int):
         return torch.tensor(val, dtype=torch.int32)
 
     def decode_i32(self, val):
-        return val.item()
+        return int(val.item())
 
     def encode_f64_vec(self, vec: torch.Tensor):
         return FV(vec.detach().flatten())
 
     def decode_f64_vec(self, vec):
-        return vec.data
+        return vec.data.type(torch.float64)
 
     def encode_i64_vec(self, vec: torch.Tensor):
         return FV(vec.detach().flatten())
 
     def decode_i64_vec(self, vec):
-        return vec.data
+        return vec.data.type(torch.int64)
 
     def encode_f32_vec(self, vec: torch.Tensor):
         return FV(vec.detach().flatten())
 
     def decode_f32_vec(self, vec):
-        return vec.data
+        return vec.data.type(torch.float32)
 
     def encode_i32_vec(self, vec: torch.Tensor):
         return FV(vec.detach().flatten())
 
     def decode_i32_vec(self, vec):
-        return vec.data
+        return vec.data.type(torch.int32)
 
 
 def keygen(key_size):

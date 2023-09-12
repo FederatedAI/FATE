@@ -2,6 +2,8 @@ import logging
 import typing
 from typing import List, Tuple
 
+import torch
+
 from ._encoded import HistogramEncodedValues
 from ._value import HistogramValues
 from ..indexer import Shuffler
@@ -10,16 +12,18 @@ logger = logging.getLogger(__name__)
 
 
 class HistogramEncryptedValues(HistogramValues):
-    def __init__(self, pk, evaluator, data, coder, stride=1):
+    def __init__(self, pk, evaluator, data, coder, dtype: torch.dtype, size: int, stride: int):
         self.stride = stride
         self.data = data
         self.pk = pk
         self.coder = coder
+        self.dtype = dtype
+        self.size = size
         self.evaluator = evaluator
 
     @classmethod
-    def zeros(cls, pk, evaluator, size: int, coder, dtype, stride: int = 1):
-        return cls(pk, evaluator, evaluator.zeros(size * stride, dtype), coder, stride)
+    def zeros(cls, pk, evaluator, size: int, coder, dtype, stride: int):
+        return cls(pk, evaluator, evaluator.zeros(size * stride, dtype), coder, dtype, size, stride)
 
     def i_update(self, value, positions):
         from fate.arch.tensor.phe import PHETensor
@@ -47,13 +51,15 @@ class HistogramEncryptedValues(HistogramValues):
             self.evaluator,
             self.evaluator.slice(self.data, start * self.stride, (end - start) * self.stride),
             self.coder,
+            self.dtype,
+            self.size,
             self.stride,
         )
 
     def intervals_slice(self, intervals: typing.List[typing.Tuple[int, int]]) -> "HistogramEncryptedValues":
         intervals = [(start * self.stride, end * self.stride) for start, end in intervals]
         data = self.evaluator.intervals_slice(self.data, intervals)
-        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.stride)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.dtype, self.size, self.stride)
 
     def i_shuffle(self, shuffler: "Shuffler", reverse=False):
         indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
@@ -63,7 +69,7 @@ class HistogramEncryptedValues(HistogramValues):
     def shuffle(self, shuffler: "Shuffler", reverse=False):
         indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
         data = self.evaluator.shuffle(self.pk, self.data, indices)
-        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.stride)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.dtype, self.size, self.stride)
 
     def chunking_sum(self, intervals: typing.List[typing.Tuple[int, int]]):
         """
@@ -71,7 +77,7 @@ class HistogramEncryptedValues(HistogramValues):
         """
         intervals = [(start * self.stride, end * self.stride) for start, end in intervals]
         data = self.evaluator.intervals_sum_with_step(self.pk, self.data, intervals, self.stride)
-        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.stride)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.dtype, self.size, self.stride)
 
     def compute_child(
         self,
@@ -111,15 +117,15 @@ class HistogramEncryptedValues(HistogramValues):
                 s,
             )
 
-        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.stride)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.dtype, self.size, self.stride)
 
     def decrypt(self, sk):
         data = sk.decrypt_to_encoded(self.data)
-        return HistogramEncodedValues(data, self.stride)
+        return HistogramEncodedValues(data, self.size, self.dtype, self.stride)
 
     def squeeze(self, pack_num, offset_bit):
         data = self.evaluator.pack_squeeze(self.data, pack_num, offset_bit, self.pk)
-        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.stride)
+        return HistogramEncryptedValues(self.pk, self.evaluator, data, self.coder, self.dtype, self.size, self.stride)
 
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         chunk_sizes = [num * self.stride for num in chunk_sizes]
