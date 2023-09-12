@@ -57,13 +57,9 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(binning_0)
     pipeline.add_task(binning_1)
 
-    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
-
-    # print(pipeline.get_task_info("binning_1").get_output_model())
-    # print(pipeline.get_task_info("feature_scale_1").get_output_model())
 
     pipeline.deploy([psi_0, binning_0])
 
