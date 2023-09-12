@@ -105,12 +105,10 @@ def main(config="../../config.yaml", param="", namespace=""):
 
     print(pipeline.get_task_info("eval_0").get_output_metric())
     result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
-    print(f"result_summary: {result_summary}")
-
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
-
+    
     return data_summary, result_summary
 
 

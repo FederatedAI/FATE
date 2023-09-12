@@ -87,6 +87,8 @@ def main(config="../../config.yaml", param="./local_nn_breast_config.yaml", name
     auc_train = roc_auc_score(y.numpy(), y_train_pred)
     print('auc is {}'.format(auc_train))
 
+    return {}, {'auc': auc_train}
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
     parser.add_argument("-c", "--config", type=str,

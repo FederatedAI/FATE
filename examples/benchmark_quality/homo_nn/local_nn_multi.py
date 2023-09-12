@@ -89,6 +89,12 @@ def main(config="../../config.yaml", param="", namespace=""):
     recall = MultiRecall()(y_train_pred, y)
     print(f"recall: {recall}")
 
+    result = {"multi_accuracy": acc,
+            "multi_precision": precision,
+            "multi_recall": recall}
+
+    return {}, result
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
     parser.add_argument("-c", "--config", type=str,

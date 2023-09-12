@@ -5,7 +5,7 @@ idx: "id"
 label_name: "y"
 in_feat: 18
 out_feat: 8
-lr: 0.01
+lr: 0.1
 batch_size: 32
 epochs: 100
 class_num: 4

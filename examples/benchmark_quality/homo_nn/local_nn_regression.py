@@ -84,11 +84,8 @@ def main(config="../../config.yaml", param="", namespace=""):
         y_train_pred = model(X).numpy()
         
     mse = mean_squared_error(y, y_train_pred)
-    mae = mean_absolute_error(y, y_train_pred)
     rmse = mse ** 0.5
-    print('rmse is {}'.format(rmse))
-    print('mse is {}'.format(mse))
-    print('mae is {}'.format(mae))
+    return {}, {'rmse': rmse}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
