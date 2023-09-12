@@ -136,6 +136,10 @@ class DataFrame(object):
     def data_manager(self, data_manager):
         self._data_manager = data_manager
 
+    @property
+    def dtypes(self):
+        return self._data_manager.dtypes
+
     def as_tensor(self, dtype=None):
         """
         df.weight.as_tensor()
