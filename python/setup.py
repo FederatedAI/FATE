@@ -1,6 +1,8 @@
 import os
-import fate
+
 from setuptools import find_packages, setup
+
+import fate
 
 # Base requirements
 install_requires = [
@@ -11,7 +13,7 @@ install_requires = [
     "cloudpickle==2.1.0",
     "click",
     "ruamel.yaml==0.16",
-    "scikit-learn",
+    "scikit-learn==1.0.1",
     "numpy",
     "pandas",
     "transformers",

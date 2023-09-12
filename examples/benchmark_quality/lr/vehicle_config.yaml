@@ -6,6 +6,7 @@ epochs: 10
 init_param:
   fit_intercept: True
   method: "random_uniform"
+  random_state: 42
 learning_rate_scheduler:
   method: "linear"
   scheduler_params:
