@@ -17,7 +17,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-import torch
 
 from fate.arch import Context
 from fate.arch.histogram import HistogramBuilder
@@ -94,8 +93,8 @@ class HeteroBinningModuleGuest(HeteroModule):
                                                                              host_event_non_event_count)):
             host_event_non_event_count_hist = en_host_count_res.decrypt({"event_count": sk,
                                                                          "non_event_count": sk},
-                                                                        {"event_count": (coder, torch.int32),
-                                                                         "non_event_count": (coder, torch.int32)})
+                                                                        {"event_count": (coder, None),
+                                                                         "non_event_count": (coder, None)})
             host_event_non_event_count_hist = host_event_non_event_count_hist.reshape(bin_sizes)
             summary_metrics, _ = self._bin_obj.compute_all_col_metrics(host_event_non_event_count_hist,
                                                                        col_bin_list)
@@ -196,16 +195,18 @@ class HeteroBinningModuleHost(HeteroModule):
         hist_targets = binned_data.create_frame()
         hist_targets["event_count"] = encrypt_y
         hist_targets["non_event_count"] = 1
+        dtypes = hist_targets.dtypes
+
         hist_schema = {"event_count": {"type": "ciphertext",
                                        "stride": 1,
                                        "pk": pk,
                                        "evaluator": evaluator,
                                        "coder": coder,
-                                       "dtype": torch.int32,
+                                       "dtype": dtypes["event_count"],
                                        },
                        "non_event_count": {"type": "plaintext",
                                            "stride": 1,
-                                           "dtype": torch.int32}
+                                           "dtype": dtypes["non_event_count"]}
                        }
         hist = HistogramBuilder(num_node=1,
                                 feature_bin_sizes=feature_bin_sizes,
@@ -372,12 +373,13 @@ class StandardBinning(Module):
         hist_targets = binned_data.create_frame()
         hist_targets["event_count"] = binned_data.label
         hist_targets["non_event_count"] = 1
+        dtypes = hist_targets.dtypes
         hist_schema = {"event_count": {"type": "plaintext",
                                        "stride": 1,
-                                       "dtype": torch.int32},
+                                       "dtype": dtypes["event_count"]},
                        "non_event_count": {"type": "plaintext",
                                            "stride": 1,
-                                           "dtype": torch.int32}
+                                           "dtype": dtypes["non_event_count"]}
                        }
         hist = HistogramBuilder(num_node=1,
                                 feature_bin_sizes=feature_bin_sizes,
