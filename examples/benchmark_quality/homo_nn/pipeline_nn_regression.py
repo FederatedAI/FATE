@@ -67,7 +67,7 @@ def main(config="../../config.yaml", param="", namespace=""):
         ), 
         loss=nn.MSELoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514),
         fed_args=FedAVGArguments(),
         task_type='regression'
         )

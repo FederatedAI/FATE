@@ -5,5 +5,5 @@ label_name: "y"
 max_depth: 3
 max_bin: 32
 learning_rate: 0.3
-n_estimators: 20
+n_estimators: 50
 objective: "reg:squarederror"

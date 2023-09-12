@@ -56,13 +56,12 @@ def main(config="../../config.yaml", param="./xgb_breast_config.yaml"):
         mse = mean_squared_error(y_test, y_pred)
         rmse = math.sqrt(mse)
         mae = mean_absolute_error(y_test, y_pred)
-        print("mse: {}, rmse: {}, mae: {}".format(mse, rmse, mae))
+        return {}, {"rmse": rmse}
     else:
         model = xgb.XGBClassifier(**config_param)
         model.fit(x_train, y_train)
         y_pred = model.predict(x_test)
         y_prob = model.predict_proba(x_test)[:, 1]
-
 
         try:
             auc_score = roc_auc_score(y_test, y_prob)

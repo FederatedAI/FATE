@@ -26,6 +26,10 @@ from sklearn.metrics import roc_auc_score
 import tqdm
 
 
+seed = 114514
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 def main(config="../../config.yaml", param="./local_nn_breast_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
@@ -86,6 +90,8 @@ def main(config="../../config.yaml", param="./local_nn_breast_config.yaml", name
         
     auc_train = roc_auc_score(y.numpy(), y_train_pred)
     print('auc is {}'.format(auc_train))
+
+    return {}, {'auc': auc_train}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
