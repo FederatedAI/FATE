@@ -7,7 +7,7 @@ pydantic==1.10.12
 cloudpickle==2.1.0
 click
 ruamel-yaml==0.16
-scikit-learn
+scikit-learn==1.0.1
 numpy
 pandas==2.0.3
 transformers==4.30.2
