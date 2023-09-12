@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 class HistogramPlainValues(HistogramValues):
-    def __init__(self, data, size, stride):
+    def __init__(self, data, dtype: torch.dtype, size: int, stride: int):
         self.data = data
+        self.dtype = dtype
         self.size = size
         self.stride = stride
 
@@ -24,7 +25,7 @@ class HistogramPlainValues(HistogramValues):
 
     @classmethod
     def zeros(cls, size, stride, dtype=torch.float64):
-        return cls(torch.zeros(size * stride, dtype=dtype), size, stride)
+        return cls(torch.zeros(size * stride, dtype=dtype), dtype, size, stride)
 
     def intervals_slice(self, intervals: typing.List[typing.Tuple[int, int]]):
         size = sum(e - s for s, e in intervals)
@@ -34,7 +35,7 @@ class HistogramPlainValues(HistogramValues):
             end = start + (e - s) * self.stride
             result[start:end] = self.data[s * self.stride : e * self.stride]
             start = end
-        return HistogramPlainValues(result, size, self.stride)
+        return HistogramPlainValues(result, self.dtype, size, self.stride)
 
     def iadd_slice(self, value, sa, sb, size):
         size = size * self.stride
@@ -42,7 +43,9 @@ class HistogramPlainValues(HistogramValues):
         self.data[sa : sa + size] += value[sb : sb + size]
 
     def slice(self, start, end):
-        return HistogramPlainValues(self.data[start * self.stride : end * self.stride], end - start, self.stride)
+        return HistogramPlainValues(
+            self.data[start * self.stride : end * self.stride], self.dtype, end - start, self.stride
+        )
 
     def iadd(self, other):
         self.data += other.data
@@ -93,7 +96,7 @@ class HistogramPlainValues(HistogramValues):
     def shuffle(self, shuffler: "Shuffler", reverse=False):
         indices = shuffler.get_shuffle_index(step=self.stride, reverse=reverse)
         data = self.data[indices]
-        return HistogramPlainValues(data, self.size, self.stride)
+        return HistogramPlainValues(data, self.dtype, self.size, self.stride)
 
     def i_chunking_cumsum(self, chunk_sizes: typing.List[int]):
         data_view = self.data.view(-1, self.stride)
@@ -108,7 +111,7 @@ class HistogramPlainValues(HistogramValues):
         data_view = self.data.view(-1, self.stride)
         for i, (start, end) in enumerate(intervals):
             result[i * self.stride : (i + 1) * self.stride] = data_view[start:end, :].sum(dim=0)
-        return HistogramPlainValues(result, size, self.stride)
+        return HistogramPlainValues(result, self.dtype, size, self.stride)
 
     def compute_child(
         self, weak_child: "HistogramPlainValues", positions: List[Tuple[int, int, int, int, int, int, int, int]], size
@@ -138,7 +141,7 @@ class HistogramPlainValues(HistogramValues):
                 parent_data_view[parent_data_start:parent_data_end]
                 - weak_child_data_view[weak_child_data_start:weak_child_data_end]
             )
-        return HistogramPlainValues(data, size, self.stride)
+        return HistogramPlainValues(data, self.dtype, size, self.stride)
 
     @classmethod
     def cat(cls, chunks_info: List[Tuple[int, int]], values: List["HistogramPlainValues"]):
@@ -147,8 +150,9 @@ class HistogramPlainValues(HistogramValues):
             data.append(value.data.reshape(num_chunk, chunk_size, value.stride))
         data = torch.cat(data, dim=1)
         size = data.shape[0]
+        dtype = data.dtype
         data = data.flatten()
-        return cls(data, size, values[0].stride)
+        return cls(data, dtype, size, values[0].stride)
 
     def extract_node_data(self, node_data_size, node_size):
         return list(self.data.reshape(node_size, node_data_size, self.stride))

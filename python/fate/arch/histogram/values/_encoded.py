@@ -9,9 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class HistogramEncodedValues(HistogramValues):
-    def __init__(self, data, size, stride=1):
+    def __init__(self, data, size: int, dtype: torch.dtype, stride: int):
         self.data = data
         self.size = size
+        self.dtype = dtype
         self.stride = stride
 
     def decode_f64(self, coder):
@@ -27,6 +28,8 @@ class HistogramEncodedValues(HistogramValues):
         return HistogramPlainValues(coder.decode_i32_vec(self.data), self.size, self.stride)
 
     def decode(self, coder, dtype):
+        if dtype is None:
+            dtype = self.dtype
         if dtype == torch.float64:
             return self.decode_f64(coder)
         elif dtype == torch.float32:
