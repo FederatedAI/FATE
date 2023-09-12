@@ -85,7 +85,7 @@ class HistogramEncryptedValues(HistogramValues):
         positions: List[Tuple[int, int, int, int, int, int, int, int]],
         size: int,
     ):
-        data = self.evaluator.zeros(size * self.stride)
+        data = self.evaluator.zeros(size * self.stride, self.dtype)
         for (
             target_weak_child_start,
             target_weak_child_end,
