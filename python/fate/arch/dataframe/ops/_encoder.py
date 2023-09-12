@@ -194,10 +194,10 @@ def bucketize(df: DataFrame, boundaries: Union[pd.DataFrame, dict]):
     _boundaries_list = []
     for name, (_bid, _) in zip(field_names, blocks_loc):
         if BlockType.is_tensor(data_manager.blocks[_bid].block_type):
-            _boundary = torch.tensor(boundaries[name])
+            _boundary = torch.tensor(boundaries[name], dtype=torch.float64)
             _boundary[-1] = torch.inf
         else:
-            _boundary = np.array(boundaries[name])
+            _boundary = np.array(boundaries[name], dtype=np.float64)
             _boundary[-1] = np.inf
 
         _boundaries_list.append((_bid, _, _boundary))
