@@ -137,6 +137,7 @@ def train(ctx, train_data, train_output_data, output_model, role, method, n_bins
     else:
         raise ValueError(f"unknown role: {role}")
     binning.fit(sub_ctx, train_data)
+    binned_data = None
     if not skip_metrics:
         binned_data = binning._bin_obj.bucketize_data(train_data)
         binning.compute_metrics(sub_ctx, binned_data)
@@ -146,7 +147,8 @@ def train(ctx, train_data, train_output_data, output_model, role, method, n_bins
     sub_ctx = ctx.sub_ctx("predict")
     output_data = train_data
     if transform_method is not None:
-        binned_data = binning._bin_obj.bucketize_data(train_data)
+        if binned_data is None:
+            binned_data = binning._bin_obj.bucketize_data(train_data)
         output_data = binning.transform(sub_ctx, binned_data)
     train_output_data.write(output_data)
 
