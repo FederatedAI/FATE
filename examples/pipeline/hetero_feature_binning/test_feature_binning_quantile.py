@@ -42,27 +42,25 @@ def main(config="../config.yaml", namespace=""):
     binning_0 = HeteroFeatureBinning("binning_0",
                                      method="quantile",
                                      n_bins=10,
-                                     bin_col=["x0"],
                                      transform_method="bin_idx",
                                      train_data=psi_0.outputs["output_data"]
                                      )
+    binning_0.hosts[0].component_setting(bin_idx=[1])
+    binning_0.guest.component_setting(bin_col=["x0"])
     binning_1 = HeteroFeatureBinning("binning_1",
                                      transform_method="bin_idx",
                                      method="quantile",
-                                     category_col=["x0"],
                                      train_data=binning_0.outputs["train_output_data"])
+    binning_1.hosts[0].component_setting(category_idx=[1])
+    binning_1.guest.component_setting(category_col=["x0"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(binning_0)
     pipeline.add_task(binning_1)
 
-    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
-
-    # print(pipeline.get_task_info("binning_1").get_output_model())
-    # print(pipeline.get_task_info("feature_scale_1").get_output_model())
 
     pipeline.deploy([psi_0, binning_0])
 
