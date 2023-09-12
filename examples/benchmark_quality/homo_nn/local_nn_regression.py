@@ -25,6 +25,10 @@ from fate_client.pipeline.utils.test_utils import JobConfig
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import tqdm
 
+seed = 114514
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 
 def main(config="../../config.yaml", param="", namespace=""):
     # obtain config

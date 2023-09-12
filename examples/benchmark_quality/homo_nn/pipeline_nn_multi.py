@@ -64,7 +64,7 @@ def main(config="../../config.yaml", param="", namespace=""):
         model=ModelLoader('multi_model', 'Multi', feat=in_feat, class_num=class_num), 
         loss=nn.CrossEntropyLoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514),
         fed_args=FedAVGArguments(),
         task_type='multi'
         )
@@ -103,7 +103,6 @@ def main(config="../../config.yaml", param="", namespace=""):
     pipeline.compile()
     pipeline.fit()
 
-    print(pipeline.get_task_info("eval_0").get_output_metric())
     result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

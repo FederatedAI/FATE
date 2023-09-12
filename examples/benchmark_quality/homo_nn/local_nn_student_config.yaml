@@ -6,5 +6,5 @@ label_name: "y"
 in_feat: 13
 out_feat: 8
 lr: 0.01
-batch_size: 32
-epochs: 50
+batch_size: 1024
+epochs: 100

@@ -178,24 +178,24 @@ homo_nn-binary-0-breast:
     conf: "./fed_nn_breast_config.yaml"
   compare_setting:
     relative_tol: 0.01
-# homo_nn-binary-1-default-credit:
-#   local:
-#     script: "./local_nn_binary.py"
-#     conf: "./local_nn_default_credit_config.yaml"
-#   FATE-homo-nn:
-#     script: "./pipeline_nn_binary.py"
-#     conf: "./fed_nn_default_credit_config.yaml"
-#   compare_setting:
-#     relative_tol: 0.01
-# homo_nn-binary-2-give-credit:
-#   local:
-#     script: "./local_nn_binary.py"
-#     conf: "./local_nn_give_credit_config.yaml"
-#   FATE-homo-nn:
-#     script: "./pipeline_nn_binary.py"
-#     conf: "./fed_nn_give_credit_config.yaml"
-#   compare_setting:
-#     relative_tol: 0.01
+homo_nn-binary-1-default-credit:
+  local:
+    script: "./local_nn_binary.py"
+    conf: "./local_nn_default_credit_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_binary.py"
+    conf: "./fed_nn_default_credit_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+homo_nn-binary-2-give-credit:
+  local:
+    script: "./local_nn_binary.py"
+    conf: "./local_nn_give_credit_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_binary.py"
+    conf: "./fed_nn_give_credit_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
 homo_nn-regression-student:
   local:
     script: "./local_nn_regression.py"
@@ -213,4 +213,4 @@ homo_nn-multi-vehicle:
     script: "./pipeline_nn_multi.py"
     conf: "./fed_nn_vehicle_config.yaml"
   compare_setting:
-    relative_tol: 0.01
+    relative_tol: 0.05

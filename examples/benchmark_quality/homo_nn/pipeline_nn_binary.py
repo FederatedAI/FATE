@@ -68,7 +68,7 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
         ), 
         loss=nn.BCELoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514),
         fed_args=FedAVGArguments(),
         task_type='binary'
         )

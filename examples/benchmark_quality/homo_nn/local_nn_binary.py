@@ -26,6 +26,10 @@ from sklearn.metrics import roc_auc_score
 import tqdm
 
 
+seed = 114514
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 def main(config="../../config.yaml", param="./local_nn_breast_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):

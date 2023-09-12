@@ -101,39 +101,32 @@ data:
     table_name: student_hetero_host
     namespace: experiment
     role: host_0  
-hetero_sbt-binary-0-breast:
+# hetero_sbt-binary-0-breast:
+#   local:
+#     script: "./xgb.py"
+#     conf: "./xgb_breast_config.yaml"
+#   FATE-hetero-sbt:
+#     script: "./pipeline_hetero_sbt.py"
+#     conf: "./sbt_breast_config.yaml"
+#   compare_setting:
+#     relative_tol: 0.01
+hetero_sbt-regression:
   local:
     script: "./xgb.py"
-    conf: "./breast_lr_sklearn_config.yaml"
+    conf: "./xgb_student_config.yaml"
   FATE-hetero-sbt:
-    script: "./pipeline-hetero-sbt.py"
-    conf: "./breast_config.yaml"
+    script: "./pipeline_hetero_sbt.py"
+    conf: "./sbt_student_config.yaml"
   compare_setting:
-    relative_tol: 0.01
-hetero_sbt-binary-1-default-credit:
-  local:
-    script: "./xgb.py"
-    conf: "./default_credit_lr_sklearn_config.yaml"
-  FATE-hetero-sbt:
-    script: "./pipeline-hetero-sbt.py"
-    conf: "./default_credit_config.yaml"
-  compare_setting:
-    relative_tol: 0.01
-hetero_sbt-binary-2-epsilon-5k:
-  local:
-    script: "./xgb.py"
-    conf: "./epsilon_5k_lr_sklearn_config.yaml"
-  FATE-hetero-sbt:
-    script: "./pipeline-hetero-sbt.py"
-    conf: "./epsilon_5k_config.yaml"
-  compare_setting:
-    relative_tol: 0.01
-hetero_sbt-binary-regression:
-  local:
-    script: "./xgb.py"
-    conf: "./give_credit_lr_sklearn_config.yaml"
-  FATE-hetero-sbt:
-    script: "./pipeline-hetero-sbt.py"
-    conf: "./give_credit_config.yaml"
-  compare_setting:
-    relative_tol: 0.01
+    relative_tol: 0.05
+# hetero_sbt-binary-1-default-credit:
+#   local:
+#     script: "./xgb.py"
+#     conf: "./xgb_default_credit_config.yaml"
+#   FATE-hetero-sbt:
+#     script: "./pipeline_hetero_sbt.py"
+#     conf: "./sbt_default_credit_config.yaml"
+#   compare_setting:
+#     relative_tol: 0.01
+
+

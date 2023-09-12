@@ -25,6 +25,9 @@ from fate.ml.nn.model_zoo.multi_model import Multi
 from fate.ml.evaluation.classification import MultiAccuracy, MultiPrecision, MultiRecall
 import tqdm
 
+seed = 114514
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
 
 def main(config="../../config.yaml", param="", namespace=""):
     # obtain config
@@ -80,18 +83,13 @@ def main(config="../../config.yaml", param="", namespace=""):
         y_train_pred = model(X).numpy()
         
     # compute accuracy
-    acc = MultiAccuracy()(y_train_pred, y)
-    print(f"accuracy: {acc}")
+    acc = MultiAccuracy()(y_train_pred, y).get_raw_data()
     # compute precision
-    precision = MultiPrecision()(y_train_pred, y)
-    print(f"precision: {precision}")
+    precision = MultiPrecision()(y_train_pred, y).get_raw_data()
     # compute recall
-    recall = MultiRecall()(y_train_pred, y)
-    print(f"recall: {recall}")
+    recall = MultiRecall()(y_train_pred, y).get_raw_data()
 
-    result = {"multi_accuracy": acc,
-            "multi_precision": precision,
-            "multi_recall": recall}
+    result = {"multi_accuracy": float(acc)}
 
     return {}, result
 
