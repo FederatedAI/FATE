@@ -136,7 +136,7 @@ class Coder:
 
     def encode_i64_vec(self, vec: torch.Tensor):
         vec = vec.detach().flatten()
-        return self.coder.encode_u64_vec(vec.detach().numpy())
+        return self.coder.encode_u64_vec(vec.detach().numpy().astype("uint64"))
 
     def decode_i64_vec(self, vec):
         return torch.tensor(self.coder.decode_u64_vec(vec))
@@ -150,7 +150,7 @@ class Coder:
 
     def encode_i32_vec(self, vec: torch.Tensor):
         vec = vec.detach().flatten()
-        return self.coder.encode_u32_vec(vec.detach().numpy())
+        return self.coder.encode_u32_vec(vec.detach().numpy().astype("uint32"))
 
     def decode_i32_vec(self, vec):
         return torch.tensor(self.coder.decode_u32_vec(vec))
@@ -240,7 +240,7 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
         return a.rmatmul(pk.pk, encoded, a_shape, b_shape)
 
     @staticmethod
-    def zeros(size) -> EV:
+    def zeros(size, dtype) -> EV:
         return CiphertextVector.zeros(size)
 
     @staticmethod

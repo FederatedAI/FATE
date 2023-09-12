@@ -200,7 +200,8 @@ class HeteroBinningModuleHost(HeteroModule):
                                        "stride": 1,
                                        "pk": pk,
                                        "evaluator": evaluator,
-                                       "coder": coder
+                                       "coder": coder,
+                                       "dtype": torch.int32,
                                        },
                        "non_event_count": {"type": "plaintext",
                                            "stride": 1,

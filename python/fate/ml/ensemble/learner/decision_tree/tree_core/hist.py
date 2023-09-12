@@ -92,14 +92,14 @@ class SBTHistogramBuilder(object):
 
     def _get_enc_hist_schema(self, pk, evaluator):
         return {
-            "g": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator},
-            "h": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator},
+            "g": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator, "dtype": torch.float32},
+            "h": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator, "dtype": torch.float32},
             "cnt": {"type": "plaintext", "stride": 1, "dtype": torch.int32},
         }
 
     def _get_pack_en_hist_schema(self, pk, evaluator):
         return {
-            "gh": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator},
+            "gh": {"type": "ciphertext", "stride": 1, "pk": pk, "evaluator": evaluator, "dtype": torch.float32},
             "cnt": {"type": "plaintext", "stride": 1, "dtype": torch.int32},
         }
 
