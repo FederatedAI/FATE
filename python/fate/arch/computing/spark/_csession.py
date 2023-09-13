@@ -75,7 +75,7 @@ class CSession(CSessionABC):
                 in_serialized=in_serialized,
                 id_delimiter=id_delimiter,
             )
-            table.scheme = schema
+            table.schema = schema
             return table
 
         raise NotImplementedError(f"uri type {uri} not supported with spark backend")
