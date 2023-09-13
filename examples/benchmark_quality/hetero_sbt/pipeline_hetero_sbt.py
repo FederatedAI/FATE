@@ -61,8 +61,8 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
         "objective": param.get("objective", "binary:bce"),
     }
     hetero_sbt_0 = HeteroSBT('sbt_0', train_data=psi_0.outputs['output_data'], num_trees=config_param["num_trees"], 
-                             max_bin=config_param["max_bin"], max_depth=config_param["max_depth"], he_param={'kind': 'paillier', 'key_length': 2048},
-                             objective=config_param["objective"], hist_sub=False, gh_pack=False, split_info_pack=False)
+                             max_bin=config_param["max_bin"], max_depth=config_param["max_depth"], he_param={'kind': 'ou', 'key_length': 1024},
+                             objective=config_param["objective"])
 
     if config_param['objective'] == 'regression:l2':
         evaluation_0 = Evaluation(
