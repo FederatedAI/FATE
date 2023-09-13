@@ -164,11 +164,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             node_map = {n.nid: idx for idx, n in enumerate(cur_layer_node)}
             # compute histogram with encrypted grad and hess
-            logger.info(
-                "train_df is {} grad hess is {}, {}, gh pack {}".format(
-                    train_df, en_grad_and_hess, en_grad_and_hess.columns, self._gh_pack
-                )
-            )
             hist_inst, statistic_histogram = self.hist_builder.compute_hist(
                 sub_ctx,
                 cur_layer_node,

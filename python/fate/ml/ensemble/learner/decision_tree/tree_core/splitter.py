@@ -574,16 +574,16 @@ class FedSBTSplitter(object):
         for idx, hist in enumerate(host_histograms):
             host_sitename = ctx.hosts[idx].name
             host_hist = self._recover_pack_split(hist, decrypt_schema, decode_schema)
-            logger.debug("splitting host")
+            # logger.debug("splitting host")
             host_split = self._find_best_splits(
                 host_hist, host_sitename, cur_layer_node, reverse_node_map, recover_bucket=False, pack_info=pack_info
             )
             host_splits.append(host_split)
 
-        logger.debug("host splits are {}".format(host_splits))
+        # logger.debug("host splits are {}".format(host_splits))
         best_splits = self._merge_splits(guest_best_splits, host_splits)
-        logger.debug("guest splits are {}".format(guest_best_splits))
-        logger.debug("best splits are {}".format(best_splits))
+        # logger.debug("guest splits are {}".format(guest_best_splits))
+        # logger.debug("best splits are {}".format(best_splits))
         return best_splits
 
     def _host_split(self, ctx: Context, en_histogram, cur_layer_node):

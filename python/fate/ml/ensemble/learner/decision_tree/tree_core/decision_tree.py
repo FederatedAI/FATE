@@ -362,7 +362,7 @@ class DecisionTree(object):
             l_g, l_h = split_info[idx].sum_grad, split_info[idx].sum_hess
             l_cnt = split_info[idx].sample_count
 
-            logger.info("splitting node {}, split info is {}".format(node, split_info[idx]))
+            # logger.info("splitting node {}, split info is {}".format(node, split_info[idx]))
 
             # create new left node and new right node
             left_node = Node(
