@@ -1,3 +1,46 @@
+## Release 2.0.0-beta
+### Major Features and Improvements
+> Arch 2.0：Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
+* Framework: PSI-ECDH protocol support, single entry for histogram statistical computation 
+* Protocol: Support for ECDH, Secure Aggregation protocols
+* Tensor: abstracted PHETensor, smooth switch between various underlying PHE implementations through standard interface
+* DataFrame: New data block manager supports mixed-type columns & feature anonymization; added 30+ operator interfaces for statistics, including comparison, indexing, data binning, and transformation, etc.
+* Enhanced workflow: Support for Cross Validation workflow
+
+> Components 2.0: Building Standardized Algorithm Components for different Scheduling Engines
+* Input-Output: Further decoupling of FATE-Flow, providing standardized black-box calling processes 
+* Component Definition: Support for typing-based definition, automatic checking for component parameters, support for multiple types of data and model input and output, in addition to multiple inputs
+
+> ML:-2.0:  Major functionality migration from FATE-v1.x, decoupling call hierarchy 
+* Data preprocessing: Added DataFrame Transformer, Union and DataSplit migration completed
+* Feature Engineering: Migrated HeteroFederatedBinning, HeteroFeatureSelection, DataStatistics, Sampling, FeatureScale
+3. Federated Training: Migrated HeteroSecureBoost, HomoNN, vertical CoordinatedLogisticRegression, and CoordinatedLinearRegression
+4. Evaluation: Migrated Evaluation
+
+> OSX(Open Site Exchange) 1.0: Building Open Platform for Cross-Site Communication Interconnection 
+* Improved HTTP/1.X protocol support, support for GRPC-to-HTTP transmission 
+* Support for TLS secure transmission protocol 
+* Added routing table configuration interface 
+* Added routing table connectivity automatic check 
+* Improved transmission function in cluster mode 
+* Enhanced flow control in cluster mode 
+* Support for simple interface authentication
+
+> FATE Flow 2.0: Building Open and Standardized Scheduling Platform for Scheduling Interconnection
+* Migrated functions: data upload/download, process scheduling, component output data/model/metric management, multi-storage adaptation for models, authentication, authorization, feature anonymization, multi-computing/storage/communication engine adaptation, and system high availability
+* Optimized process scheduling, with scheduling separated and customizable, and added priority scheduling
+* Optimized algorithm component scheduling, dividing execution steps into preprocessing, running, and post-processing
+* Optimized multi-version algorithm component registration, supporting registration for mode of components
+* Optimized client authentication logic, supporting permission management for multiple clients
+* Adapted to federated communication engine OSX
+* Optimized RESTful interface, making parameter fields and types, return fields, and status codes clearer
+* Decoupling the system layer from the algorithm layer, with system configuration moved from the FATE repository to the Flow repository
+* Published FATE Flow package to PyPI and added service-level CLI for service management
+
+> Fate-Test: FATE Automated Testing Tool
+* Migrated automated testing for functionality, performance, and correctness
+
+
 ## Release 2.0.0-alpha
 ### Feature Highlights
 > Arch 2.0：Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
