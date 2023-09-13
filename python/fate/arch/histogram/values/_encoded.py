@@ -16,16 +16,16 @@ class HistogramEncodedValues(HistogramValues):
         self.stride = stride
 
     def decode_f64(self, coder):
-        return HistogramPlainValues(coder.decode_f64_vec(self.data), self.size, self.stride)
+        return HistogramPlainValues(coder.decode_f64_vec(self.data), self.dtype, self.size, self.stride)
 
     def decode_i64(self, coder):
-        return HistogramPlainValues(coder.decode_i64_vec(self.data), self.size, self.stride)
+        return HistogramPlainValues(coder.decode_i64_vec(self.data), self.dtype, self.size, self.stride)
 
     def decode_f32(self, coder):
-        return HistogramPlainValues(coder.decode_f32_vec(self.data), self.size, self.stride)
+        return HistogramPlainValues(coder.decode_f32_vec(self.data), self.dtype, self.size, self.stride)
 
     def decode_i32(self, coder):
-        return HistogramPlainValues(coder.decode_i32_vec(self.data), self.size, self.stride)
+        return HistogramPlainValues(coder.decode_i32_vec(self.data), self.dtype, self.size, self.stride)
 
     def decode(self, coder, dtype):
         if dtype is None:
@@ -43,7 +43,7 @@ class HistogramEncodedValues(HistogramValues):
 
     def unpack(self, coder, pack_num, offset_bit, precision, total_num, stride):
         data = coder.unpack_floats(self.data, offset_bit, pack_num, precision, total_num)
-        return HistogramPlainValues(data, self.size, stride)
+        return HistogramPlainValues(data, self.dtype, self.size, stride)
 
     def slice(self, start, end):
         if hasattr(self.data, "slice"):

@@ -101,15 +101,15 @@ data:
     table_name: student_hetero_host
     namespace: experiment
     role: host_0  
-# hetero_sbt-binary-0-breast:
-#   local:
-#     script: "./xgb.py"
-#     conf: "./xgb_breast_config.yaml"
-#   FATE-hetero-sbt:
-#     script: "./pipeline_hetero_sbt.py"
-#     conf: "./sbt_breast_config.yaml"
-#   compare_setting:
-#     relative_tol: 0.01
+hetero_sbt-binary-0-breast:
+  local:
+    script: "./xgb.py"
+    conf: "./xgb_breast_config.yaml"
+  FATE-hetero-sbt:
+    script: "./pipeline_hetero_sbt.py"
+    conf: "./sbt_breast_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
 hetero_sbt-regression:
   local:
     script: "./xgb.py"
@@ -119,14 +119,14 @@ hetero_sbt-regression:
     conf: "./sbt_student_config.yaml"
   compare_setting:
     relative_tol: 0.05
-# hetero_sbt-binary-1-default-credit:
-#   local:
-#     script: "./xgb.py"
-#     conf: "./xgb_default_credit_config.yaml"
-#   FATE-hetero-sbt:
-#     script: "./pipeline_hetero_sbt.py"
-#     conf: "./sbt_default_credit_config.yaml"
-#   compare_setting:
-#     relative_tol: 0.01
+hetero_sbt-binary-1-default-credit:
+  local:
+    script: "./xgb.py"
+    conf: "./xgb_default_credit_config.yaml"
+  FATE-hetero-sbt:
+    script: "./pipeline_hetero_sbt.py"
+    conf: "./sbt_default_credit_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
 
 
