@@ -26,7 +26,7 @@ FATE 2.0以前的版本在[发布页](https://github.com/FederatedAI/FATE/releas
 ### 2.0.0-beta 版本
 #### 单机版部署
 在单节点上部署FATE单机版，支持从 PyPI 直接安装，docker，主机安装包三种方式。
-[单机版部署教程](./deploy/standalone-deploy)
+- [单机版部署教程](./deploy/standalone-deploy)
 #### 集群
 - [原生集群安装](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
 
