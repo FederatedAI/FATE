@@ -23,8 +23,16 @@ FATE于2019年2月首次对外开源，并成立
 ### 2.0以前的版本
 FATE 2.0以前的版本在[发布页](https://github.com/FederatedAI/FATE/releases), 下载资源汇总页在[wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
+### 2.0.0-beta 版本
+#### 单机版部署
+在单节点上部署FATE单机版，支持从 PyPI 直接安装，docker，主机安装包三种方式。
+- [单机版部署教程](./deploy/standalone-deploy)
+#### 集群
+- [原生集群安装](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
+
 ### 快速开始
-- [从Pypi下载安装并启动训练任务示例](doc/2.0/quick_start.md)
+- [从 PyPI 下载安装 FATE 和 FATE-Flow 并启动训练任务示例](doc/2.0/quick_start.md)
+- [从 PyPI 下载安装 FATE，并启动训练任务示例](doc/2.0/fate/ml)
 
 ## 关联仓库
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE)
