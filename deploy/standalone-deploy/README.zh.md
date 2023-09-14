@@ -17,6 +17,7 @@
 - 使用 Docker 镜像安装 FATE
 - 在主机中安装 FATE (使用已编译的安装包)
 
+## 2. 从 PyPI 安装 FATE
 ### 2.1 安装Python环境
 - [conda](https://docs.conda.io/projects/miniconda/en/latest/) 环境准备及安装
 - 创建虚拟环境
