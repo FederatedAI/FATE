@@ -25,8 +25,18 @@ FATE is an open source project hosted by Linux Foundation. The [Technical Charte
 ### Version < 2.0
 Releases history can be found in [releases](https://github.com/FederatedAI/FATE/releases), deployment resources can be found on [wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
+### Version == 2.0.0-beta
+#### Standalone deployment
+- Deploying FATE on a single node via PyPI, pre-built docker images or installers. It is for simple testing purposes. Refer to this [guide](./deploy/standalone-deploy/).
+
+### Cluster deployment
+Deploying FATE to multiple nodes to achieve scalability, reliability and manageability.
+
+- [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
+
 ### Quick Start
-- [Training Demo With Installing From Pypi](doc/2.0/quick_start.md)
+- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/quick_start.md)
+- [Training Demo With Installing FATE Only From Pypi](doc/2.0/fate/ml)
 
 ## Related Repositories (Projects)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
