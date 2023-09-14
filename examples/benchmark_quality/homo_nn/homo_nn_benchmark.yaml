@@ -1,5 +1,5 @@
 data:
-  - file: "examples/data/breast_hetero_guest.csv"
+  - file: "examples/data/breast_homo_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -14,10 +14,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: breast_hetero_guest
+    table_name: breast_homo_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/breast_hetero_host.csv"
+  - file: "examples/data/breast_homo_host.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -30,10 +30,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: breast_hetero_host
+    table_name: breast_homo_host
     namespace: experiment
     role: host_0
-  - file: "examples/data/default_credit_hetero_guest.csv"
+  - file: "examples/data/default_credit_homo_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -48,10 +48,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: default_credit_hetero_guest
+    table_name: default_credit_homo_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/default_credit_hetero_host.csv"
+  - file: "examples/data/default_credit_homo_host_1.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -64,10 +64,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: default_credit_hetero_host
+    table_name: default_credit_homo_host
     namespace: experiment
     role: host_0
-  - file: "examples/data/give_credit_hetero_guest.csv"
+  - file: "examples/data/give_credit_homo_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -82,10 +82,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: give_credit_hetero_guest
+    table_name: give_credit_homo_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/give_credit_hetero_host.csv"
+  - file: "examples/data/give_credit_homo_host.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -98,10 +98,10 @@ data:
     head: true
     partitions: 4
     extend_sid: true
-    table_name: give_credit_hetero_host
+    table_name: give_credit_homo_host
     namespace: experiment
     role: host_0
-  - file: "examples/data/vehicle_scale_hetero_guest.csv"
+  - file: "examples/data/vehicle_scale_homo_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -116,10 +116,10 @@ data:
     head: true
     partitions: 4
     extend_sid: true
-    table_name: vehicle_scale_hetero_guest
+    table_name: vehicle_scale_homo_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/vehicle_scale_hetero_host.csv"
+  - file: "examples/data/vehicle_scale_homo_host.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -132,10 +132,10 @@ data:
     head: true
     partition: 4
     extend_sid: true
-    table_name: vehicle_scale_hetero_host
+    table_name: vehicle_scale_homo_host
     namespace: experiment
     role: host_0
-  - file: "examples/data/student_hetero_guest.csv"
+  - file: "examples/data/student_homo_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -150,10 +150,10 @@ data:
     head: true
     partitions: 4
     extend_sid: true
-    table_name: student_hetero_guest
+    table_name: student_homo_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/student_hetero_host.csv"
+  - file: "examples/data/student_homo_host.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -166,7 +166,7 @@ data:
     head: true
     partition: 4
     extend_sid: true
-    table_name: student_hetero_host
+    table_name: student_homo_host
     namespace: experiment
     role: host_0
 homo_nn-binary-0-breast:
