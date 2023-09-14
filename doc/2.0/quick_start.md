@@ -47,7 +47,7 @@ data_pipeline.transform_local_file_to_dataframe(file=host_data_path, namespace="
 
 ```python
 from fate_client.pipeline.components.fate import (
-    HeteroSBT,
+    HeteroSecureBoost,
     PSI,
     Evaluation
 )
@@ -68,20 +68,20 @@ psi_0.hosts[0].component_setting(
 )
 
 # create hetero secure_boost component_desc
-hetero_sbt_0 = HeteroSBT(
-    'hetero_sbt_0', num_trees=1, max_depth=5,
+hetero_secureboost_0 = HeteroSecureBoost(
+    'hetero_secureboost_0', num_trees=1, max_depth=5,
     train_data=psi_0.outputs['output_data'],
     validate_data=psi_0.outputs["output_data"]
 )
 
 # create evaluation component_desc
 evaluation_0 = Evaluation(
-    'evaluation_0', runtime_roles=['guest'], metrics=['auc'], input_data=[hetero_sbt_0.outputs['train_data_output']]
+    'evaluation_0', runtime_roles=['guest'], metrics=['auc'], input_data=[hetero_secureboost_0.outputs['train_data_output']]
 )
 
 # add training task
 pipeline.add_task(psi_0)
-pipeline.add_task(hetero_sbt_0)
+pipeline.add_task(hetero_secureboost_0)
 pipeline.add_task(evaluation_0)
 
 # compile and train
@@ -89,11 +89,11 @@ pipeline.compile()
 pipeline.fit()
 
 # print metric and model info
-print (pipeline.get_task_info("hetero_sbt_0").get_output_model())
+print (pipeline.get_task_info("hetero_secureboost_0").get_output_model())
 print (pipeline.get_task_info("evaluation_0").get_output_metric())
 
 # deploy task for inference
-pipeline.deploy([psi_0, hetero_sbt_0])
+pipeline.deploy([psi_0, hetero_secureboost_0])
 
 # create pipeline for predicting
 predict_pipeline = FateFlowPipeline()
