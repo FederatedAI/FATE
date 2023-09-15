@@ -32,7 +32,6 @@
 * Optimized algorithm component scheduling, dividing execution steps into preprocessing, running, and post-processing
 * Optimized multi-version algorithm component registration, supporting registration for mode of components
 * Optimized client authentication logic, supporting permission management for multiple clients
-* Adapted to federated communication engine OSX
 * Optimized RESTful interface, making parameter fields and types, return fields, and status codes clearer
 * Decoupling the system layer from the algorithm layer, with system configuration moved from the FATE repository to the Flow repository
 * Published FATE Flow package to PyPI and added service-level CLI for service management
