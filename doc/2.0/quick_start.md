@@ -2,7 +2,7 @@
 
 1. install `fate_client` with extra package `fate` 
 
-- [fate-install-guide](./../deploy/pypi/README.md)
+- [fate-install-guide](./../../deploy/pypi/README.md)
 
 
 2.  download example data
