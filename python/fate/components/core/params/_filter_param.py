@@ -18,7 +18,7 @@ from typing import Union, List
 import pydantic
 
 from ._fields import string_choice, Parameter, conint, confloat
-from ._metrics import statistic_metrics_param
+from ._metrics import statistic_metrics_param, legal_percentile
 
 
 class StandardFilterParam(pydantic.BaseModel, Parameter):
@@ -71,7 +71,7 @@ class IVFilterParam(FederatedStandardFilterParam, Parameter):
 
 
 class StatisticFilterParam(StandardFilterParam, Parameter):
-    metrics: List[statistic_metrics_param()] = ["mean"]
+    metrics: List[Union[statistic_metrics_param(), legal_percentile()]] = ["mean"]
 
 
 class ManualFilterParam(pydantic.BaseModel, Parameter):
