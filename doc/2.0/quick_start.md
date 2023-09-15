@@ -1,6 +1,6 @@
 ## Quick Start
 
-1. install `fate_client` with extra package `fate` 
+1. install `fate_client` with extra package `fate` and `fate_flow`
 
 - [fate-install-guide](./../../deploy/pypi/README.md)
 
