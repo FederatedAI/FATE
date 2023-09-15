@@ -1,17 +1,8 @@
 ## Quick Start
 
-1. install `fate_client` with extra package `fate`  
+1. install `fate_client` with extra package `fate` 
 
-```sh
-python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.0.0b0
-```
-after installing packages successfully, initialize fate_flow service and fate_client
-
-```sh
-mkdir fate_workspace
-fate_flow init --ip 127.0.0.1 --port 9380 --home $(pwd)/fate_workspace
-pipeline init --ip 127.0.0.1 --port 9380
-```
+- [fate-install-guide](./../deploy/pypi/README.md)
 
 
 2.  download example data
