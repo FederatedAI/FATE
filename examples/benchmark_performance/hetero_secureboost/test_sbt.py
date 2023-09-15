@@ -17,12 +17,10 @@
 import argparse
 from fate_test.utils import parse_summary_result
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
-from fate_client.pipeline.components.fate import HeteroSecureBoost
-from fate_client.pipeline.components.fate import PSI
+from fate_client.pipeline.components.fate import HeteroSecureBoost, PSI
 from fate_client.pipeline.components.fate.evaluation import Evaluation
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.interface import DataWarehouseChannel
@@ -63,6 +61,11 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     hetero_sbt_0 = HeteroSecureBoost('sbt_0', train_data=psi_0.outputs['output_data'], num_trees=config_param["num_trees"], 
                              max_bin=config_param["max_bin"], max_depth=config_param["max_depth"], he_param={'kind': 'paillier', 'key_length': 1024},
                              objective=config_param["objective"])
+    
+    hetero_sbt_1 = HeteroSecureBoost('sbt_1',
+                                     test_data=psi_0.outputs['output_data'],
+                                     predict_model_input=hetero_sbt_0.outputs['train_model_output'],
+                                     )
 
     if config_param['objective'] == 'regression:l2':
         evaluation_0 = Evaluation(
@@ -83,23 +86,21 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
 
     pipeline.add_task(psi_0)
     pipeline.add_task(hetero_sbt_0)
+    pipeline.add_task(hetero_sbt_1)
     pipeline.add_task(evaluation_0)
 
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
+
     pipeline.compile()
     pipeline.fit()
 
     result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
     print(f"result_summary: {result_summary}")
 
-    data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
-                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
-                    }
-
-    return data_summary, result_summary
+    return pipeline.model_info.job_id
 
 
 if __name__ == "__main__":
