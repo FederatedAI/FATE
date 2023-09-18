@@ -17,22 +17,25 @@ import logging
 from collections.abc import Iterable
 from typing import Optional
 
+from fate.arch.abc import CSessionABC
+
 from ..._standalone import Session
-from ...unify import generate_computing_uuid, uuid
-from .._computing import Address, CSessionABC
+from ...unify import URI, generate_computing_uuid, uuid
 from ._table import Table
 
 LOGGER = logging.getLogger(__name__)
 
 
 class CSession(CSessionABC):
-    def __init__(self, session_id: Optional[str] = None, options: Optional[dict] = None):
+    def __init__(
+        self, session_id: Optional[str] = None, logger_config: Optional[dict] = None, options: Optional[dict] = None
+    ):
         if session_id is None:
             session_id = generate_computing_uuid()
         if options is None:
             options = {}
         max_workers = options.get("task_cores", None)
-        self._session = Session(session_id, max_workers=max_workers)
+        self._session = Session(session_id, max_workers=max_workers, logger_config=logger_config)
 
     def get_standalone_session(self):
         return self._session
@@ -41,25 +44,25 @@ class CSession(CSessionABC):
     def session_id(self):
         return self._session.session_id
 
-    def load(self, address: Address, partitions: int, schema: dict, **kwargs):
-        from .._address import StandaloneAddress
-        from ._type import StandaloneStoreType
+    def load(self, uri: URI, schema: dict, options: dict = None):
+        if uri.scheme != "standalone":
+            raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
+        try:
+            *database, namespace, name = uri.path_splits()
+        except Exception as e:
+            raise ValueError(f"uri `{uri}` not valid, demo format: standalone://database_path/namespace/name") from e
 
-        if isinstance(address, StandaloneAddress):
-            raw_table = self._session.load(address.name, address.namespace)
-            if address.storage_type != StandaloneStoreType.ROLLPAIR_IN_MEMORY:
-                partitions = raw_table.partitions if partitions is None else partitions
-                raw_table = raw_table.save_as(
-                    name=f"{address.name}_{uuid()}",
-                    namespace=address.namespace,
-                    partition=partitions,
-                    need_cleanup=True,
-                )
-            table = Table(raw_table)
-            table.schema = schema
-            return table
-
-        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
+        raw_table = self._session.load(name=name, namespace=namespace)
+        partitions = raw_table.partitions
+        raw_table = raw_table.save_as(
+            name=f"{name}_{uuid()}",
+            namespace=namespace,
+            partition=partitions,
+            need_cleanup=True,
+        )
+        table = Table(raw_table)
+        table.schema = schema
+        return table
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)

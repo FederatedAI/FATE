@@ -13,3 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from ._dataloader import DataLoader
+from ._dataloader import BatchEncoding
+from ._k_fold import KFold
+from ._sample import federated_sample
+from ._sample import local_sample

@@ -14,7 +14,8 @@
 #  limitations under the License.
 from typing import Optional, Union
 
-from fate.interface import Context, Dataframe
+from fate.arch import Context
+from fate.arch.dataframe import DataFrame
 
 
 class Model:
@@ -27,19 +28,18 @@ class Module:
     def fit(
         self,
         ctx: Context,
-        train_data: Dataframe,
-        validate_data: Optional[Dataframe] = None,
+        train_data: DataFrame,
+        validate_data: Optional[DataFrame] = None,
     ) -> None:
         ...
 
-    def transform(self, ctx: Context, transform_data: Dataframe) -> Dataframe:
+    def transform(self, ctx: Context, transform_data: DataFrame) -> DataFrame:
         ...
 
-    def predict(self, ctx: Context, predict_data: Dataframe) -> Dataframe:
+    def predict(self, ctx: Context, predict_data: DataFrame) -> DataFrame:
         ...
 
-    @classmethod
-    def from_model(cls, model: Union[dict, Model]) -> "Module":
+    def from_model(cls, model: Union[dict, Model]):
         ...
 
     def get_model(self) -> Union[dict, Model]:

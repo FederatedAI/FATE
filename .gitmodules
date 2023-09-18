@@ -1,12 +1,16 @@
 [submodule "eggroll"]
 	path = eggroll
 	url = https://github.com/WeBankFinTech/eggroll
-	branch = v2.5.0-alpha
+	branch = v3.0.0-beta
 [submodule "fate_client"]
 	path = fate_client
 	url = https://github.com/FederatedAI/FATE-Client
-	branch = v2.0.0-alpha
+	branch = v2.0.0-beta
 [submodule "fate_flow"]
 	path = fate_flow
 	url = https://github.com/FederatedAI/FATE-Flow
-	branch = v2.0.0-alpha
+	branch = v2.0.0-beta
+[submodule "fate_test"]
+	path = fate_test
+	url = https://github.com/FederatedAI/FATE-Test.git
+	branch = v2.0.0-beta

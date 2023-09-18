@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._context import Context, Namespace
+from ._cipher import CipherKit
+from ._context import Context
 
-__all__ = ["Context", "Namespace"]
+__all__ = ["Context", "CipherKit"]

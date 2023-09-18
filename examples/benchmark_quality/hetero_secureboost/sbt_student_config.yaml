@@ -1,0 +1,8 @@
+data_guest: "student_hetero_guest"
+data_host: "student_hetero_host"
+idx: "id"
+label_name: "y"
+num_trees: 50
+max_depth: 3
+max_bin: 32
+objective: 'regression:l2'

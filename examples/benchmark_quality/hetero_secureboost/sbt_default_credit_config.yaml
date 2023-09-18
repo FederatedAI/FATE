@@ -1,0 +1,7 @@
+data_guest: "default_credit_hetero_guest"
+data_host: "default_credit_hetero_host"
+idx: "id"
+label_name: "y"
+num_trees: 30
+max_depth: 3
+max_bin: 32

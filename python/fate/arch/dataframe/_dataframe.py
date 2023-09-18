@@ -12,153 +12,444 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
 import copy
 import operator
+import typing
+from typing import List, Union
 
-import torch
-from fate.arch.computing import is_table
+import numpy as np
+import pandas as pd
 
-from .ops import arith_method, stat_method, transform_to_predict_result
-from .storage import Index, ValueStore
+from fate.arch.tensor import DTensor
+from .manager import DataManager, Schema
+
+if typing.TYPE_CHECKING:
+    from fate.arch.histogram import DistributedHistogram, HistogramBuilder
 
 
-# TODO: record data type, support multiple data types
 class DataFrame(object):
-    def __init__(self, ctx, schema, index=None, match_id=None, values=None, label=None, weight=None):
+    def __init__(self, ctx, block_table, partition_order_mappings, data_manager: DataManager):
         self._ctx = ctx
-        self._index = index
-        self._match_id = match_id
-        self._values = values
-        self._label = label
-        self._weight = weight
-        self._schema = Schema(**schema)
+        self._block_table = block_table
+        self._partition_order_mappings = partition_order_mappings
+        self._data_manager = data_manager
 
-        self.__shape = None
+        self._sample_id_indexer = None
+        self._match_id_indexer = None
+        self._sample_id = None
+        self._match_id = None
+        self._label = None
+        self._weight = None
+
+        self._count = None
         self._columns = None
 
-        self._tensor_label = None
+    @property
+    def sample_id(self):
+        if self._sample_id is None:
+            self._sample_id = self.__extract_fields(
+                with_sample_id=True, with_match_id=False, with_label=False, with_weight=False
+            )
+        return self._sample_id
 
     @property
-    def index(self):
-        return self._index
+    def match_id(self):
+        if self._match_id is None:
+            self._match_id = self.__extract_fields(
+                with_sample_id=False, with_match_id=True, with_label=False, with_weight=False
+            )
+
+        return self._match_id
 
     @property
     def values(self):
-        return self._values
+        """
+        as values maybe bigger than match_id/sample_id/weight/label, we will not cached them
+        """
+        if not len(self.schema.columns):
+            return None
+
+        return self.__extract_fields(
+            with_sample_id=True, with_match_id=True, with_label=False, with_weight=False, columns=self.columns.tolist()
+        )
 
     @property
     def label(self):
+        if not self.schema.label_name:
+            return None
+
+        if self._label is None:
+            self._label = self.__extract_fields(
+                with_sample_id=True, with_match_id=True, with_label=True, with_weight=False
+            )
+
         return self._label
 
     @property
     def weight(self):
+        if not self.schema.weight_name:
+            return None
+
+        if self._weight is None:
+            self._weight = self.__extract_fields(
+                with_sample_id=True, with_match_id=True, with_label=False, with_weight=True
+            )
+
         return self._weight
 
     @property
-    def match_id(self):
-        return self._match_id
+    def shape(self) -> "tuple":
+        if self._count is None:
+            items = 0
+            for _, v in self._partition_order_mappings.items():
+                items += v["end_index"] - v["start_index"] + 1
+            self._count = items
 
-    @property
-    def shape(self):
-        if self.__shape:
-            return self.__shape
-
-        if self._values is None:
-            self.__shape = (self._index.count(), 0)
-        else:
-            self.__shape = (self._index.count(), len(self._schema.header))
-
-        return self.__shape
+        return self._count, len(self._data_manager.schema.columns)
 
     @property
     def schema(self) -> "Schema":
-        return self._schema
+        return self._data_manager.schema
 
     @property
-    def columns(self) -> "ColumnObject":
-        if not self._columns:
-            self._columns = ColumnObject(self._schema.header)
-        else:
-            return self._columns
+    def columns(self):
+        return self.schema.columns
 
-    def max(self, *args, **kwargs) -> "DataFrame":
-        return stat_method(self._values, "max", *args, index=self._schema.header, **kwargs)
+    @property
+    def block_table(self):
+        return self._block_table
 
-    def min(self, *args, **kwargs) -> "DataFrame":
-        return stat_method(self._values, "min", *args, index=self._schema.header, **kwargs)
+    @block_table.setter
+    def block_table(self, block_table):
+        self._block_table = block_table
 
-    def mean(self, *args, **kwargs) -> "DataFrame":
-        return stat_method(self._values, "mean", *args, index=self._schema.header, **kwargs)
+    @property
+    def partition_order_mappings(self):
+        return self._partition_order_mappings
 
-    def sum(self, *args, **kwargs) -> "DataFrame":
-        return stat_method(self._values, "sum", *args, index=self._schema.header, **kwargs)
+    @property
+    def data_manager(self) -> "DataManager":
+        return self._data_manager
 
-    def std(self, *args, **kwargs) -> "DataFrame":
-        return stat_method(self._values, "std", *args, index=self._schema.header, **kwargs)
+    @data_manager.setter
+    def data_manager(self, data_manager):
+        self._data_manager = data_manager
+
+    @property
+    def dtypes(self):
+        return self._data_manager.dtypes
+
+    def as_tensor(self, dtype=None):
+        """
+        df.weight.as_tensor()
+        df.label.as_tensor()
+        df.values.as_tensor()
+        """
+        from .ops._transformer import transform_to_tensor
+
+        return transform_to_tensor(
+            self._block_table, self._data_manager, dtype, partition_order_mappings=self.partition_order_mappings
+        )
+
+    def as_pd_df(self) -> "pd.DataFrame":
+        from .ops._transformer import transform_to_pandas_dataframe
+
+        return transform_to_pandas_dataframe(self._block_table, self._data_manager)
+
+    def apply_row(self, func, columns=None, with_label=False, with_weight=False, enable_type_align_checking=False):
+        from .ops._apply_row import apply_row
+
+        return apply_row(
+            self,
+            func,
+            columns=columns,
+            with_label=with_label,
+            with_weight=with_weight,
+            enable_type_align_checking=enable_type_align_checking,
+        )
+
+    def create_frame(self, with_label=False, with_weight=False, columns: Union[list, pd.Index] = None) -> "DataFrame":
+        if columns is not None and isinstance(columns, pd.Index):
+            columns = columns.tolist()
+
+        return self.__extract_fields(
+            with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
+        )
+
+    def empty_frame(self) -> "DataFrame":
+        return DataFrame(
+            self._ctx,
+            self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions),
+            partition_order_mappings=dict(),
+            data_manager=self._data_manager.duplicate(),
+        )
+
+    def drop(self, index) -> "DataFrame":
+        from .ops._dimension_scaling import drop
+
+        return drop(self, index)
+
+    def fillna(self, value):
+        from .ops._fillna import fillna
+
+        return fillna(self, value)
+
+    def get_dummies(self, dtype="int32"):
+        from .ops._encoder import get_dummies
+
+        return get_dummies(self, dtype=dtype)
+
+    def isna(self):
+        from .ops._missing import isna
+
+        return isna(self)
+
+    def isin(self, values):
+        from .ops._isin import isin
+
+        return isin(self, values)
+
+    def na_count(self):
+        return self.isna().sum()
+
+    def max(self) -> "pd.Series":
+        from .ops._stat import max
+
+        return max(self)
+
+    def min(self, *args, **kwargs) -> "pd.Series":
+        from .ops._stat import min
+
+        return min(self)
+
+    def mean(self, *args, **kwargs) -> "pd.Series":
+        from .ops._stat import mean
+
+        return mean(self)
+
+    def sum(self, *args, **kwargs) -> "pd.Series":
+        from .ops._stat import sum
+
+        return sum(self)
+
+    def std(self, ddof=1, **kwargs) -> "pd.Series":
+        from .ops._stat import std
+
+        return std(self, ddof=ddof)
+
+    def var(self, ddof=1, **kwargs):
+        from .ops._stat import var
+
+        return var(self, ddof=ddof)
+
+    def variation(self, ddof=1):
+        from .ops._stat import variation
+
+        return variation(self, ddof=ddof)
+
+    def skew(self, unbiased=False):
+        from .ops._stat import skew
+
+        return skew(self, unbiased=unbiased)
+
+    def kurt(self, unbiased=False):
+        from .ops._stat import kurt
+
+        return kurt(self, unbiased=unbiased)
+
+    def sigmoid(self) -> "DataFrame":
+        from .ops._activation import sigmoid
+
+        return sigmoid(self)
+
+    def rename(
+        self,
+        sample_id_name: str = None,
+        match_id_name: str = None,
+        label_name: str = None,
+        weight_name: str = None,
+        columns: dict = None,
+    ):
+        self._data_manager.rename(
+            sample_id_name=sample_id_name,
+            match_id_name=match_id_name,
+            label_name=label_name,
+            weight_name=weight_name,
+            columns=columns,
+        )
 
     def count(self) -> "int":
         return self.shape[0]
 
-    def __add__(self, other) -> "DataFrame":
-        return self._arithmetic_operate(operator.add, other)
+    def describe(self, ddof=1, unbiased=False):
+        from .ops._stat import describe
 
-    def __sub__(self, other) -> "DataFrame":
-        return self._arithmetic_operate(operator.sub, other)
+        return describe(self, ddof=ddof, unbiased=unbiased)
+
+    def quantile(self, q, relative_error: float = 1e-4):
+        from .ops._quantile import quantile
+
+        return quantile(self, q, relative_error)
+
+    def qcut(self, q: int):
+        from .ops._quantile import qcut
+
+        return qcut(self, q)
+
+    def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
+        from .ops._encoder import bucketize
+
+        return bucketize(self, boundaries)
+
+    def distributed_hist_stat(self,
+                              histogram_builder: "HistogramBuilder",
+                              position: "DataFrame" = None,
+                              targets: Union[dict, "DataFrame"] = None,
+                              ) -> "DistributedHistogram":
+        from .ops._histogram import distributed_hist_stat
+
+        if targets is None:
+            raise ValueError("To use distributed hist stat, targets should not be None")
+        if position is None:
+            position = self.create_frame()
+            position["node_idx"] = 0
+
+        return distributed_hist_stat(self, histogram_builder, position, targets)
+
+    def replace(self, to_replace=None) -> "DataFrame":
+        from .ops._replace import replace
+
+        return replace(self, to_replace)
+
+    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
+        return self.__arithmetic_operate(operator.add, other)
+
+    def __radd__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
+        return self + other
+
+    def __sub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
+        return self.__arithmetic_operate(operator.sub, other)
+
+    def __rsub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
+        return self * (-1) + other
 
     def __mul__(self, other) -> "DataFrame":
-        return self._arithmetic_operate(operator.mul, other)
+        return self.__arithmetic_operate(operator.mul, other)
+
+    def __rmul__(self, other) -> "DataFrame":
+        return self * other
 
     def __truediv__(self, other) -> "DataFrame":
-        return self._arithmetic_operate(operator.truediv, other)
+        return self.__arithmetic_operate(operator.truediv, other)
 
-    def _arithmetic_operate(self, op, other) -> "DataFrame":
-        ret_value = arith_method(self._values, other, op)
-        attrs_dict = self._retrieval_attr()
-        attrs_dict["values"] = ret_value
-        return DataFrame(**attrs_dict)
+    def __pow__(self, power) -> "DataFrame":
+        return self.__arithmetic_operate(operator.pow, power)
 
-    def __getattr__(self, attr):
-        if attr not in self.schema.header:
-            raise ValueError(f"DataFrame does not has attribute {attr}")
+    def __lt__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.lt, other)
 
-        if isinstance(self._values, ValueStore):
-            value = getattr(self._values, attr)
+    def __le__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.le, other)
+
+    def __gt__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.gt, other)
+
+    def __ge__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.ge, other)
+
+    def __eq__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.eq, other)
+
+    def __ne__(self, other) -> "DataFrame":
+        return self.__cmp_operate(operator.ne, other)
+
+    def __invert__(self):
+        from .ops._unary_operator import invert
+
+        return invert(self)
+
+    def __arithmetic_operate(self, op, other) -> "DataFrame":
+        from .ops._arithmetic import arith_operate
+
+        return arith_operate(self, other, op)
+
+    def __cmp_operate(self, op, other) -> "DataFrame":
+        from .ops._cmp import cmp_operate
+
+        return cmp_operate(self, other, op)
+
+    def __setattr__(self, key, value):
+        property_attr_mapping = dict(block_table="_block_table", data_manager="_data_manager")
+        if key not in ["label", "weight"] and key not in property_attr_mapping:
+            self.__dict__[key] = value
+            return
+
+        if key in property_attr_mapping:
+            self.__dict__[property_attr_mapping[key]] = value
+            return
+
+        if key == "label":
+            if self._label is not None:
+                self.__dict__["_label"] = None
+            from .ops._set_item import set_label_or_weight
+
+            set_label_or_weight(self, value, key_type=key)
         else:
-            col_idx = self.schema.header.index(attr)
-            value = self._values[:, col_idx]
+            if self._weight is not None:
+                self.__dict__["_weight"] = None
+            from .ops._set_item import set_label_or_weight
 
-        schema = dict(sid=self.schema.sid, header=[attr])
+            set_label_or_weight(self, value, key_type=key)
 
-        return DataFrame(self._ctx, schema=schema, values=value)
+    def __getitem__(self, items) -> "DataFrame":
+        if isinstance(items, DataFrame):
+            from .ops._where import where
 
-    def __getitem__(self, items):
-        indexes = self.__get_index_by_column_names(items)
-        ret_tensor = self._values[:, indexes]
+            return where(self, items)
 
-        header_mapping = dict(zip(self._schema.header, range(len(self._schema.header))))
-        new_schema = copy.deepcopy(self._schema)
-        new_header = items if isinstance(items, list) else [items]
-        new_anonymous_header = []
+        if isinstance(items, DTensor):
+            from .ops._dimension_scaling import retrieval_row
+
+            return retrieval_row(self, items)
+
+        if isinstance(items, pd.Index):
+            items = items.tolist()
+        elif not isinstance(items, list):
+            items = [items]
 
         for item in items:
-            index = header_mapping[item]
-            new_anonymous_header.append(self._schema.anonymous_header[index])
+            if item not in self._data_manager.schema.columns:
+                raise ValueError(f"DataFrame does not has attribute {item}")
 
-        new_schema["header"] = new_header
-        new_schema["anonymous__header"] = new_anonymous_header
+        return self.__extract_fields(with_sample_id=True, with_match_id=True, columns=items)
 
-        return DataFrame(
-            self._ctx, index=self._index, values=ret_tensor, label=self._label, weight=self._weight, schema=new_schema
-        )
+    def __setitem__(self, keys, items):
+        if isinstance(keys, str):
+            keys = [keys]
+        elif isinstance(keys, pd.Series):
+            keys = keys.tolist()
 
-    def __setitem__(self, keys, item):
-        if not isinstance(item, DataFrame):
-            raise ValueError("Using syntax df[[col1, col2...]] = rhs, rhs should be a dataframe")
+        state = 0
+        column_set = set(self._data_manager.schema.columns)
+        for key in keys:
+            if key not in column_set:
+                state |= 1
+            else:
+                state |= 2
 
-        indexes = self.__get_index_by_column_names(keys)
-        self._values[:, indexes] = item._values
+        if state == 3:
+            raise ValueError(f"setitem operation does not support a mix of old and new columns")
 
-        return self
+        from .ops._set_item import set_item
+
+        set_item(self, keys, items, state)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, state_dict):
+        self.__dict__.update(state_dict)
 
     def __len__(self):
         return self.count()
@@ -187,196 +478,106 @@ class DataFrame(object):
 
         return indexes
 
-    def loc(self, ids, with_partition_id=True):
-        # this is very costly, use iloc is better
-        # TODO: if data is not balance, repartition is need?
-        if isinstance(ids, int):
-            ids = [ids]
+    def get_indexer(self, target):
+        if target not in ["sample_id", "match_id"]:
+            raise ValueError(f"Target should be sample_id or match_id, but {target} found")
 
-        indexes = self._index.get_indexer(ids, with_partition_id)
+        if self.shape[0] == 0:
+            return self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions)
 
-        return self.iloc(indexes)
-
-    def iloc(self, indexes):
-        # TODO: if data is not balance, repartition is need?
-        if self.is_local:
-            if is_table(indexes):
-                raise ValueError("Local dataframe does not support table indexer")
-                # indexes = indexes.reduce(lambda l1, l2: l1 + l2)
-
-            weight = self._weight[indexes] if self._weight else None
-            label = self._label[indexes] if self._label else None
-            values = self._values[indexes] if self._values else None
-            match_id = self._match_id[indexes] if self._match_id else None
-            index = self._index[indexes]
-        elif isinstance(indexes, (int, list)) or is_table(indexes):
-            if isinstance(indexes, int):
-                indexes = [indexes]
-
-            """
-            indexer: [(old_partition_id, old_block_index), (new_partition_id, new_block_index)]
-            note: new_block_index may not be continuous
-            """
-            if isinstance(indexes, list):
-                indexes = self._index.change_index_list_to_indexer(indexes)
-            """
-            agg_indexer: key=old_partition_id, value=[old_block_index, (new_partition_id, new_block_index)]
-            """
-            agg_indexer = Index.aggregate_indexer(indexes)
-
-            # TODO: use distributed tensor slice api later
-            def _iloc_tensor(distributed_tensor):
-                blocks = distributed_tensor.storage.blocks
-                dtype = blocks.first()[1].dtype.name
-
-                def _retrieval_func(kvs):
-                    ret = dict()
-                    for partition_id_key, (t, mappings) in kvs:
-                        t = t.to_local().data.tolist()
-                        for old_block_index, (new_partition_id, new_block_index) in mappings:
-                            t_value = t[old_block_index]
-
-                            if new_partition_id not in ret:
-                                ret[new_partition_id] = []
-                            ret[new_partition_id].append((new_block_index, t_value))
-
-                    return list(ret.items())
-
-                blocks = blocks.join(agg_indexer, lambda ten, block_mapping: (ten, block_mapping))
-                blocks = blocks.mapReducePartitions(_retrieval_func, lambda l1, l2: l1 + l2)
-                blocks = blocks.mapValues(lambda block: sorted(block, key=lambda buf: buf[0]))
-                blocks = blocks.mapValues(
-                    lambda block: torch.tensor([value[1] for value in block], dtype=getattr(torch, dtype))
-                )
-                blocks = [block for pid, block in sorted(list(blocks.collect()))]
-
-                from fate.arch import tensor
-
-                return tensor.distributed_tensor(self._ctx, blocks, partitions=len(blocks))
-
-            weight = _iloc_tensor(self._weight) if self._weight else None
-            label = _iloc_tensor(self._label) if self._label else None
-            values = _iloc_tensor(self._values) if self._values else None
-            match_id = _iloc_tensor(self._match_id) if self._match_id else None
-            index = self._index[indexes]
+        target_name = getattr(self.schema, f"{target}_name")
+        indexer = self.__convert_to_table(target_name)
+        if target == "sample_id":
+            self._sample_id_indexer = indexer
         else:
-            raise ValueError(f"iloc function dose not support args type={type(indexes)}")
+            self._match_id_indexer = indexer
 
+        return indexer
+
+    def loc(self, indexer, target="sample_id", preserve_order=False):
+        from .ops._indexer import loc
+
+        return loc(self, indexer, target=target, preserve_order=preserve_order)
+
+    def iloc(self, indexer: "DataFrame") -> "DataFrame":
+        from .ops._dimension_scaling import retrieval_row
+        return retrieval_row(self, indexer)
+
+    def loc_with_sample_id_replacement(self, indexer):
+        """
+        indexer: table,
+            row: (key=random_key,
+            value=(sample_id, (src_block_id, src_block_offset))
+        """
+        from .ops._indexer import loc_with_sample_id_replacement
+
+        return loc_with_sample_id_replacement(self, indexer)
+
+    def flatten(self, key_type="block_id", with_sample_id=True):
+        """
+        flatten data_frame
+        """
+        from .ops._indexer import flatten_data
+        return flatten_data(self, key_type=key_type, with_sample_id=with_sample_id)
+
+    def copy(self) -> "DataFrame":
         return DataFrame(
-            self._ctx, self._schema.dict(), index=index, match_id=match_id, label=label, weight=weight, values=values
+            self._ctx,
+            self._block_table.mapValues(lambda v: v),
+            copy.deepcopy(self.partition_order_mappings),
+            self._data_manager.duplicate(),
         )
 
+    @classmethod
+    def from_flatten_data(cls, ctx, flatten_table, data_manager, key_type) -> "DataFrame":
+        from .ops._indexer import transform_flatten_data_to_df
+        return transform_flatten_data_to_df(ctx, flatten_table, data_manager, key_type)
 
-    @property
-    def is_local(self):
-        if self._values is not None:
-            return not self._values.is_distributed
-        if self._weight is not None:
-            return not self._weight.is_distributed
-        if self.label is not None:
-            return not self._label.is_distributed
-        if self._match_id is not None:
-            return not self._match_id.is_distributed
+    @classmethod
+    def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
+        from .ops._dimension_scaling import hstack
 
-        return False
+        return hstack(stacks)
 
-    def transform_to_predict_result(
-        self, predict_score, data_type="train", task_type="binary", classes=None, threshold=0.5
-    ):
-        """ """
+    @classmethod
+    def vstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
+        from .ops._dimension_scaling import vstack
 
-        ret, header = transform_to_predict_result(
-            self._ctx, predict_score, data_type=data_type, task_type=task_type, classes=classes, threshold=threshold
+        return vstack(stacks)
+
+    def sample(self, n: int = None, frac: float = None, random_state=None) -> "DataFrame":
+        from .ops._dimension_scaling import sample
+
+        return sample(self, n, frac, random_state)
+
+    def __extract_fields(
+        self,
+        with_sample_id=True,
+        with_match_id=True,
+        with_label=True,
+        with_weight=True,
+        columns: Union[str, list] = None,
+    ) -> "DataFrame":
+        from .ops._field_extract import field_extract
+
+        return field_extract(
+            self,
+            with_sample_id=with_sample_id,
+            with_match_id=with_match_id,
+            with_label=with_label,
+            with_weight=with_weight,
+            columns=columns,
         )
 
-        transform_schema = {"header": header, "sid": self._schema.sid}
-        if self._schema.match_id_name:
-            transform_schema["match_id_name"] = self._schema.match_id_name
+    def __convert_to_table(self, target_name):
+        block_loc = self._data_manager.loc_block(target_name)
+        assert block_loc[1] == 0, "support only one indexer in current version"
 
-        if self._label:
-            transform_schema["label_name"] = self.schema.label_name
+        from .ops._indexer import transform_to_table
 
-        return DataFrame(
-            ctx=self._ctx,
-            index=self._index,
-            match_id=self._match_id,
-            label=self.label,
-            values=ValueStore(self._ctx, ret, header),
-            schema=transform_schema,
-        )
+        return transform_to_table(self._block_table, block_loc[0], self._partition_order_mappings)
 
+    def data_overview(self, num=100):
+        from .ops._data_overview import collect_data
 
-class ColumnObject(object):
-    def __init__(self, col_names):
-        self._col_names = col_names
-
-    def __getitem__(self, items):
-        if isinstance(items, int):
-            return self._col_names[items]
-        else:
-            ret_cols = []
-            for item in items:
-                ret_cols.append(self._col_names[item])
-
-            return ColumnObject(ret_cols)
-
-    def tolist(self):
-        return self._col_names
-
-    def __iter__(self):
-        return (col_name for col_name in self._col_names)
-
-
-class Schema(object):
-    def __init__(
-        self, sid=None, match_id_name=None, weight_name=None, label_name=None, header=None, anonymous_header=None
-    ):
-        self._sid = sid
-        self._match_id_name = match_id_name
-        self._weight_name = weight_name
-        self._label_name = label_name
-        self._header = header
-        self._anonymous_header = anonymous_header
-
-    @property
-    def sid(self):
-        return self._sid
-
-    @property
-    def match_id_name(self):
-        return self._match_id_name
-
-    @property
-    def weight_name(self):
-        return self._weight_name
-
-    @property
-    def label_name(self):
-        return self._label_name
-
-    @property
-    def header(self):
-        return self._header
-
-    @property
-    def anonymous_header(self):
-        return self._anonymous_header
-
-    def dict(self):
-        schema = dict(sid=self._sid)
-
-        if self._header:
-            schema["header"] = self._header
-        if self._anonymous_header:
-            schema["anonymous_header"] = self._anonymous_header
-
-        if self._weight_name:
-            schema["weight_name"] = self._weight_name
-
-        if self._label_name:
-            schema["label_name"] = self._label_name
-
-        if self._match_id_name:
-            schema["match_id_name"] = self._match_id_name
-
-        return schema
+        return collect_data(self, num=num)

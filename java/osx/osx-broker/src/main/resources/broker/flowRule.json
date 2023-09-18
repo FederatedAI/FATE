@@ -1,0 +1,12 @@
+[
+  {
+    "resource": "9999_9999",
+    "grade": 1,
+    "count": 2000,
+    "strategy": 0,
+    "controlBehavior": 0,
+    "warmUpPeriodSec": 10,
+    "maxQueueingTimeMs": 50,
+    "clusterMode": true
+  }
+]

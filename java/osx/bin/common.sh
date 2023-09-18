@@ -14,9 +14,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-error_exit ()
-{
+error_exit (){
     echo "ERROR: $1 !!"
     exit 1
 }
@@ -74,6 +72,8 @@ choose_gc_options()
       JAVA_OPT="${JAVA_OPT} -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0"
       JAVA_OPT="${JAVA_OPT} -Xlog:gc*:file=${GC_LOG_DIR}/rmq_srv_gc_%p_%t.log:time,tags:filecount=5,filesize=30M"
     fi
+
+    JAVA_OPT="${JAVA_OPT} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${BASE_DIR}/oom/heapdump.hprof "
 }
 
 choose_gc_log_directory
@@ -84,7 +84,6 @@ JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
 JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
 JAVA_OPT="${JAVA_OPT} -XX:MaxDirectMemorySize=15g"
 JAVA_OPT="${JAVA_OPT} -XX:-UseLargePages -XX:-UseBiasedLocking"
-#JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,address=9555,server=y,suspend=n"
 JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_EXT}"
 
 set -e
@@ -93,7 +92,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
+    count=$(ps -ef | grep $pid |grep 'org.fedai.osx' | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       rm ./bin/broker.pid
       unset pid
@@ -111,56 +110,53 @@ mklogsdir() {
 start() {
   echo "try to start $1"
   module=broker
-  main_class=com.osx.broker.Bootstrap
+  main_class=org.fedai.osx.broker.Bootstrap
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
-#    if [[ -e "${module}.jar" ]]; then
-#      rm ${module}.jar
-#    fi
-#    ln -s ${module}-${module_version}.jar ${module}.jar
-    JAVA_OPT="${JAVA_OPT} -cp conf/broker/:lib/*"
-#    if [ ${module} = "transfer" ]; then
-#      echo "transfer"
-#    elif [ ${module} = "cluster-manager" ] || [ ${module} = "dashboard" ]; then
-#      JAVA_OPT="${JAVA_OPT} -Dspring.config.location=${configpath}/cluster-manager.properties"
-#      JAVA_OPT="${JAVA_OPT} -cp conf/:lib/*:${module}.jar"
-#    else
-#      echo "usage: ${module} {transfer|cluster-manager|dashboard}"
-#    fi
-
+    JAVA_OPT="${JAVA_OPT} -cp conf/broker/:lib/*:extension/*:${BASE_DIR}/${project_name}-${module}-${module_version}.jar"
     JAVA_OPT="${JAVA_OPT} ${main_class}"
-
-    JAVA_OPT="${JAVA_OPT} -c ${configpath}/broker/broker.properties"
-#    if [ ${module} = "broker" -o ${module} = "cli"  ]; then
-#     JAVA_OPT="${JAVA_OPT} -c ${configpath}/broker/broker.properties"
-#    elif [ ${module} = "cluster-manager" ]; then
-#     JAVA_OPT="${JAVA_OPT} -c ${configpath}/cluster-manager/cluster-manager.properties"
-#
-#    elif [ ${module} = "dashboard" ]; then
-#     JAVA_OPT="-jar ${libpath}/dashboard-1.0.0.jar -spring.config.location=${configpath}/dashboard/application.properties"
-#    fi
-
-               if [ ${module} = "cli" ]; then
-                  java ${JAVA_OPT}
-              else
-                 nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
-                  #sleep 5
-                  #id=$(ps -p $! | awk '{print $1}' | sed -n '2p')
-                  inspect_pid 5 $!
-
-                      if [[ "$exist" = 1 ]]; then
-                        echo $! >./bin/${module}.pid
-                        getpid ${module}
-                        echo "service start sucessfully. pid: ${pid}"
-                      else
-                        echo "service start failed"
-                      fi
-                  fi
+    JAVA_OPT="${JAVA_OPT} -c ${configpath} "
+    echo $JAVA ${JAVA_OPT}
+    nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
+    inspect_pid 5 $!
+    if [[ "$exist" = 1 ]]; then
+       echo $! >./bin/${module}.pid
+       getpid ${module}
+       echo "service start sucessfully. pid: ${pid}"
+    else
+       echo "service start failed, "
+    fi
   else
     echo "service already started. pid: ${pid}"
   fi
 }
+
+debug() {
+  echo "try to start $1"
+  module=broker
+  main_class=org.fedai.osx.broker.Bootstrap
+  getpid $module
+  if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
+    mklogsdir
+    JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007 -cp conf/broker/:lib/*:extension/*:${BASE_DIR}/${project_name}-${module}-${module_version}.jar"
+    JAVA_OPT="${JAVA_OPT} ${main_class}"
+    JAVA_OPT="${JAVA_OPT} -c ${configpath} "
+    echo $JAVA ${JAVA_OPT}
+    nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
+    inspect_pid 5 $!
+    if [[ "$exist" = 1 ]]; then
+       echo $! >./bin/${module}.pid
+       getpid ${module}
+       echo "service start sucessfully. pid: ${pid}"
+    else
+       echo "service start failed, "
+    fi
+  else
+    echo "service already started. pid: ${pid}"
+  fi
+}
+
 
 status() {
   getpid $1
@@ -195,11 +191,9 @@ stop() {
   fi
 }
 
-
 inspect_pid() {
   total=0
   exist=0
-  #echo "inspect pid: $2,periods: $1"
   if [[ -n $2 ]]; then
     while [[ $total -le $1 ]]
     do

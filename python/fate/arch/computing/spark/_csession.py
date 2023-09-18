@@ -14,11 +14,16 @@
 #  limitations under the License.
 #
 import logging
+import typing
 from typing import Iterable
 
-from .._computing import Address, CSessionABC
+from fate.arch.abc import CSessionABC
+
+from ...unify import URI
 from ._table import from_hdfs, from_hive, from_localfs, from_rdd
 
+if typing.TYPE_CHECKING:
+    from ._table import Table
 LOGGER = logging.getLogger(__name__)
 
 
@@ -30,43 +35,50 @@ class CSession(CSessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
 
-    def load(self, address: Address, partitions, schema, **kwargs):
-        from .._address import HDFSAddress
+    def load(self, uri: URI, schema, options: dict = None) -> "Table":
+        if not options:
+            options = {}
+        partitions = options.get("partitions", None)
 
-        if isinstance(address, HDFSAddress):
+        if uri.scheme == "hdfs":
+            in_serialized = (options.get("in_serialized", True),)
+            id_delimiter = (options.get("id_delimiter", ","),)
             table = from_hdfs(
-                paths=f"{address.name_node}/{address.path}",
+                paths=uri.original_uri,
                 partitions=partitions,
-                in_serialized=kwargs.get("in_serialized", True),
-                id_delimiter=kwargs.get("id_delimiter", ","),
+                in_serialized=in_serialized,
+                id_delimiter=id_delimiter,
             )
             table.schema = schema
             return table
 
-        from .._address import HiveAddress, LinkisHiveAddress
-
-        if isinstance(address, (HiveAddress, LinkisHiveAddress)):
+        if uri.scheme == "hive":
+            try:
+                (path,) = uri.path_splits()
+                database_name, table_name = path.split(".")
+            except Exception as e:
+                raise ValueError(f"invalid hive uri {uri}, demo uri: hive://localhost:10000/database.table") from e
             table = from_hive(
-                tb_name=address.name,
-                db_name=address.database,
+                tb_name=table_name,
+                db_name=database_name,
                 partitions=partitions,
             )
             table.schema = schema
             return table
 
-        from .._address import LocalFSAddress
-
-        if isinstance(address, LocalFSAddress):
+        if uri.scheme == "file":
+            in_serialized = (options.get("in_serialized", True),)
+            id_delimiter = (options.get("id_delimiter", ","),)
             table = from_localfs(
-                paths=address.path,
+                paths=uri.path,
                 partitions=partitions,
-                in_serialized=kwargs.get("in_serialized", True),
-                id_delimiter=kwargs.get("id_delimiter", ","),
+                in_serialized=in_serialized,
+                id_delimiter=id_delimiter,
             )
             table.schema = schema
             return table
 
-        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
+        raise NotImplementedError(f"uri type {uri} not supported with spark backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         # noinspection PyPackageRequirements

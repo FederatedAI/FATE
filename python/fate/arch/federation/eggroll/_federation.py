@@ -23,7 +23,7 @@ from typing import List
 
 from eggroll.roll_pair.roll_pair import RollPair
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate.interface import FederationEngine, PartyMeta
+from fate.arch.abc import FederationEngine, PartyMeta
 
 from ...computing.eggroll import Table
 from .._gc import GarbageCollector

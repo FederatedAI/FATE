@@ -17,8 +17,8 @@ import json
 import typing
 from logging import getLogger
 
+from fate.arch.abc import PartyMeta
 from fate.arch.federation.osx import osx_pb2
-from fate.interface import PartyMeta
 
 from .._federation import FederationBase
 from .._nretry import nretry
@@ -146,7 +146,7 @@ class OSXFederation(FederationBase):
         LOGGER.debug(f"_query_receive_topic, channel_info={channel_info}")
         topic = channel_info._receive_topic
         if topic not in self._topic_ip_map:
-            LOGGER.info("query topic miss cache")
+            LOGGER.info(f"query topic {topic} miss cache ")
             response = channel_info.query()
             if response.code == "0":
                 topic_info = osx_pb2.TopicInfo()

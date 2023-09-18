@@ -7,6 +7,4 @@ parties: # parties default id
   arbiter:
     - 10000
 
-work_mode: 0 # 0 for standalone, or 1 for cluster
-
-data_base_dir: "/data/projects/fate" # pa th to project base where data is located
+data_base_dir: "~/FATE/FATE-2.0-pure/FATE/"

@@ -1,0 +1,10 @@
+data_guest: "student_homo_guest"
+data_host: "student_homo_host"
+data_test: "student_homo_test"
+idx: "id"
+label_name: "y"
+in_feat: 13
+out_feat: 8
+lr: 0.01
+batch_size: 1024 
+epochs: 60

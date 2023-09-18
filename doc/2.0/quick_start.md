@@ -3,8 +3,16 @@
 1. install `fate_client` with extra package `fate`  
 
 ```sh
-python -m pip install -U pip && python -m pip install fate_client[fate]==2.0.0a0
+python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.0.0b0
 ```
+after installing packages successfully, initialize fate_flow service and fate_client
+
+```sh
+mkdir fate_workspace
+fate_flow init --ip 127.0.0.1 --port 9380 --home $(pwd)/fate_workspace
+pipeline init --ip 127.0.0.1 --port 9380
+```
+
 
 2.  download example data
 
@@ -13,90 +21,96 @@ wget https://raw.githubusercontent.com/wiki/FederatedAI/FATE/example/data/breast
 wget https://raw.githubusercontent.com/wiki/FederatedAI/FATE/example/data/breast_hetero_host.csv
 ```
 
-3. run example with fate_client
-
+3. transform example data to dataframe using in fate
 ```python
 import os
+from fate_client.pipeline import FateFlowPipeline
 
-from fate_client.pipeline import StandalonePipeline
-from fate_client.pipeline.components.fate import (
-    Evaluation,
-    FeatureScale,
-    HeteroLR,
-    Intersection,
-    Reader,
-)
 
 base_path = os.path.abspath(os.path.join(__file__, os.path.pardir))
 guest_data_path = os.path.join(base_path, "breast_hetero_guest.csv")
 host_data_path = os.path.join(base_path, "breast_hetero_host.csv")
 
-# create pipeline
-pipeline = StandalonePipeline().set_roles(guest="9999", host="10000", arbiter="10001")
+data_pipeline = FateFlowPipeline().set_roles(local="0")
+guest_meta = {
+    "delimiter": ",", "dtype": "float64", "label_type": "int64","label_name": "y", "match_id_name": "id"
+}
+host_meta = {
+    "delimiter": ",", "input_format": "dense", "match_id_name": "id"
+}
+data_pipeline.transform_local_file_to_dataframe(file=guest_data_path, namespace="experiment", name="breast_hetero_guest",
+                                                meta=guest_meta, head=True, extend_sid=True)
+data_pipeline.transform_local_file_to_dataframe(file=host_data_path, namespace="experiment", name="breast_hetero_host",
+                                                meta=host_meta, head=True, extend_sid=True)
+```
+4. run example 
 
-# create reader component
-reader_0 = Reader(name="reader_0")
-reader_0.guest.component_param(
-    path=f"file://${guest_data_path}",
-    format="csv",
-    id_name="id",
-    delimiter=",",
-    label_name="y",
-    label_type="float32",
-    dtype="float32",
+```python
+from fate_client.pipeline.components.fate import (
+    HeteroSecureBoost,
+    PSI,
+    Evaluation
 )
-reader_0.hosts[0].component_param(
-    path=f"file://${host_data_path}",
-    format="csv",
-    id_name="id",
-    delimiter=",",
-    label_name=None,
-    dtype="float32",
-)
+from fate_client.pipeline import FateFlowPipeline
+from fate_client.pipeline.interface import DataWarehouseChannel
 
-# create intersection component
-intersection_0 = Intersection(name="intersection_0", method="raw", input_data=reader_0.outputs["output_data"])
-intersection_1 = Intersection(name="intersection_1", method="raw", input_data=reader_0.outputs["output_data"])
 
-# create feature scale component
-feature_scale_0 = FeatureScale(
-    name="feature_scale_0", method="standard", train_data=intersection_0.outputs["output_data"]
-)
-feature_scale_1 = FeatureScale(
-    name="feature_scale_1",
-    test_data=intersection_1.outputs["output_data"],
-    input_model=feature_scale_0.outputs["output_model"],
-)
+# create pipeline for training
+pipeline = FateFlowPipeline().set_roles(guest="9999", host="10000")
 
-# create lr component
-lr_0 = HeteroLR(
-    name="lr_0",
-    train_data=feature_scale_0.outputs["train_output_data"],
-    validate_data=feature_scale_1.outputs["test_output_data"],
-    max_iter=100,
-    learning_rate=0.03,
-    batch_size=-1,
+# create psi component_desc
+psi_0 = PSI("psi_0")
+psi_0.guest.component_setting(
+    input_data=DataWarehouseChannel(name="breast_hetero_guest", namespace="experiment")
+)
+psi_0.hosts[0].component_setting(
+    input_data=DataWarehouseChannel(name="breast_hetero_host", namespace="experiment")
 )
 
-# create evaluation component
-evaluation_0 = Evaluation(name="evaluation_0", runtime_roles="guest", input_data=lr_0.outputs["train_output_data"])
+# create hetero secure_boost component_desc
+hetero_secureboost_0 = HeteroSecureBoost(
+    'hetero_secureboost_0', num_trees=1, max_depth=5,
+    train_data=psi_0.outputs['output_data'],
+    validate_data=psi_0.outputs["output_data"]
+)
 
-# add components
-pipeline.add_task(reader_0)
-pipeline.add_task(feature_scale_0)
-pipeline.add_task(feature_scale_1)
-pipeline.add_task(intersection_0)
-pipeline.add_task(intersection_1)
-pipeline.add_task(lr_0)
+# create evaluation component_desc
+evaluation_0 = Evaluation(
+    'evaluation_0', runtime_roles=['guest'], metrics=['auc'], input_data=[hetero_secureboost_0.outputs['train_data_output']]
+)
+
+# add training task
+pipeline.add_task(psi_0)
+pipeline.add_task(hetero_secureboost_0)
 pipeline.add_task(evaluation_0)
 
-# train
+# compile and train
 pipeline.compile()
-print(pipeline.get_dag())
 pipeline.fit()
-print(pipeline.get_task_info("feature_scale_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_data())
-print(pipeline.get_task_info("evaluation_0").get_output_metrics())
-print(pipeline.deploy([intersection_0, feature_scale_0, lr_0]))
+
+# print metric and model info
+print (pipeline.get_task_info("hetero_secureboost_0").get_output_model())
+print (pipeline.get_task_info("evaluation_0").get_output_metric())
+
+# deploy task for inference
+pipeline.deploy([psi_0, hetero_secureboost_0])
+
+# create pipeline for predicting
+predict_pipeline = FateFlowPipeline()
+
+# add input to deployed_pipeline
+deployed_pipeline = pipeline.get_deployed_pipeline()
+deployed_pipeline.psi_0.guest.component_setting(
+    input_data=DataWarehouseChannel(name="breast_hetero_guest", namespace=f"experiment")
+)
+deployed_pipeline.psi_0.hosts[0].component_setting(
+    input_data=DataWarehouseChannel(name="breast_hetero_host", namespace=f"experiment")
+)
+
+# add task to predict pipeline
+predict_pipeline.add_task(deployed_pipeline)
+
+# compile and predict
+predict_pipeline.compile()
+predict_pipeline.predict()
 ```

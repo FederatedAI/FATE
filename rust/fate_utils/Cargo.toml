@@ -1,0 +1,23 @@
+[workspace]
+members = [
+  "crates/*"
+]
+
+[workspace.dependencies]
+serde = { version = "1.0.137", features = ["derive", "rc"] }
+rug = { version = "1.20.1", features = ["serde"] }
+rand = { version = "0.8.3", features = ["getrandom"] }
+rand_core = "0.5.1"
+ndarray = { version = "0.15.4" }
+numpy = "0.15.1"
+rayon = { version = "1.5.3"}
+pyo3 = { version = "0.15.2" }
+bincode = "1.3.3"
+libsm = "0.5"
+curve25519-dalek = "3.2.1"
+x25519-dalek = "1.2.0"
+sha2 = "0.9.9"
+iai = "0.1.1"
+criterion = { version = "0.3", features = ["html_reports"] }
+rand_chacha = "0.3.1"
+anyhow = "1.0.75"

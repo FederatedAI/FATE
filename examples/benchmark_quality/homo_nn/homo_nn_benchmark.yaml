@@ -1,0 +1,216 @@
+data:
+  - file: "examples/data/breast_homo_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      label_type: int64
+      label_name: y
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_homo_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/breast_homo_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_homo_host
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/default_credit_homo_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_homo_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/default_credit_homo_host_1.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_homo_host
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/give_credit_homo_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: give_credit_homo_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/give_credit_homo_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: give_credit_homo_host
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/vehicle_scale_homo_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: vehicle_scale_homo_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/vehicle_scale_homo_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: vehicle_scale_homo_host
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/student_homo_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: float64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: student_homo_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/student_homo_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: student_homo_host
+    namespace: experiment
+    role: host_0
+homo_nn-binary-0-breast:
+  local:
+    script: "./local_nn_binary.py"
+    conf: "./local_nn_breast_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_binary.py"
+    conf: "./fed_nn_breast_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+homo_nn-binary-1-default-credit:
+  local:
+    script: "./local_nn_binary.py"
+    conf: "./local_nn_default_credit_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_binary.py"
+    conf: "./fed_nn_default_credit_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+homo_nn-binary-2-give-credit:
+  local:
+    script: "./local_nn_binary.py"
+    conf: "./local_nn_give_credit_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_binary.py"
+    conf: "./fed_nn_give_credit_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+homo_nn-regression-student:
+  local:
+    script: "./local_nn_regression.py"
+    conf: "./local_nn_student_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_regression.py"
+    conf: "./fed_nn_student_config.yaml"
+  compare_setting:
+    relative_tol: 0.05
+homo_nn-multi-vehicle:
+  local:
+    script: "./local_nn_multi.py"
+    conf: "./local_nn_vehicle_config.yaml"
+  FATE-homo-nn:
+    script: "./pipeline_nn_multi.py"
+    conf: "./fed_nn_vehicle_config.yaml"
+  compare_setting:
+    relative_tol: 0.05

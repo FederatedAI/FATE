@@ -14,18 +14,20 @@
 #  limitations under the License.
 import io
 import pickle
-from typing import Any, List, Optional, TypeVar, Union
+import struct
+import typing
+from typing import Any, List, Tuple, TypeVar, Union
 
-from fate.interface import FederationEngine
-from fate.interface import Parties as PartiesInterface
-from fate.interface import Party as PartyInterface
-from fate.interface import PartyMeta
+from fate.arch.abc import FederationEngine, PartyMeta
 
 from ..computing import is_table
 from ..federation._gc import IterationGC
-from ._namespace import Namespace
+from ._namespace import NS
 
 T = TypeVar("T")
+
+if typing.TYPE_CHECKING:
+    from fate.arch.context import Context
 
 
 class GC:
@@ -46,30 +48,47 @@ class GC:
 
 class _KeyedParty:
     def __init__(self, party: Union["Party", "Parties"], key) -> None:
-        self.party = party
-        self.key = key
+        self._party = party
+        self._key = key
 
     def put(self, value):
-        return self.party.put(self.key, value)
+        return self._party.put(self._key, value)
 
     def get(self):
-        return self.party.get(self.key)
+        return self._party.get(self._key)
 
 
-class Party(PartyInterface):
-    def __init__(self, federation, party: PartyMeta, namespace, key=None) -> None:
+class Party:
+    def __init__(self, ctx: "Context", federation, party: PartyMeta, rank: int, namespace: NS, key=None) -> None:
+        self._ctx = ctx
+        self._party = party
         self.federation = federation
-        self.party = party
+        self.rank = rank
         self.namespace = namespace
-        self.key = key
 
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
 
+    @property
+    def party(self) -> PartyMeta:
+        return self._party
+
+    @property
+    def role(self) -> str:
+        return self.party[0]
+
+    @property
+    def party_id(self) -> str:
+        return self.party[1]
+
+    @property
+    def name(self) -> str:
+        return f"{self.party[0]}_{self.party[1]}"
+
     def put(self, *args, **kwargs):
         if args:
             assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
-            assert not kwargs, "keywords paramters not allowed when position parameter provided"
+            assert not kwargs, "keywords parameters not allowed when position parameter provided"
             kvs = [args]
         else:
             kvs = kwargs.items()
@@ -78,83 +97,117 @@ class Party(PartyInterface):
             return _push(self.federation, k, self.namespace, [self.party], v)
 
     def get(self, name: str):
-        return _pull(self.federation, name, self.namespace, [self.party])[0]
+        return _pull(self._ctx, self.federation, name, self.namespace, [self.party])[0]
+
+    def get_int(self, name: str):
+        ...
 
 
-class Parties(PartiesInterface):
+class Parties:
     def __init__(
         self,
+        ctx: "Context",
         federation: FederationEngine,
-        party: PartyMeta,
-        parties: List[PartyMeta],
-        namespace: Namespace,
+        parties: List[Tuple[int, PartyMeta]],
+        namespace: NS,
     ) -> None:
+        self._ctx = ctx
         self.federation = federation
-        self.party = party
         self.parties = parties
         self.namespace = namespace
 
+    @property
+    def ranks(self):
+        return [p[0] for p in self.parties]
+
     def __getitem__(self, key: int) -> Party:
-        return Party(self.federation, self.parties[key], self.namespace)
+        rank, party = self.parties[key]
+        return Party(self._ctx, self.federation, party, rank, self.namespace)
+
+    def __iter__(self):
+        return iter([Party(self._ctx, self.federation, party, rank, self.namespace) for rank, party in self.parties])
+
+    def __len__(self) -> int:
+        return len(self.parties)
 
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
 
-    def get_neighbor(self, shift: int, module: bool = False) -> Party:
-        start_index = self.get_local_index()
-        if start_index is None:
-            raise RuntimeError(f"local party `{self.party}` not in `{self.parties}`")
-        target_index = start_index + shift
-        if module:
-            target_index = target_index % module
-
-        if 0 <= target_index < len(self.parties):
-            return self(target_index)
-        else:
-            raise IndexError(f"target index `{target_index}` out of bound")
-
-    def get_neighbors(self) -> "Parties":
-        parties = [party for party in self.parties if party != self.party]
-        return Parties(self.federation, self.party, parties, self.namespace)
-
-    def get_local_index(self) -> Optional[int]:
-        if self.party not in self.parties:
-            return None
-        else:
-            return self.parties.index(self.party)
-
     def put(self, *args, **kwargs):
         if args:
             assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
-            assert not kwargs, "keywords paramters not allowed when position parameter provided"
+            assert not kwargs, "keywords parameters not allowed when position parameter provided"
             kvs = [args]
         else:
             kvs = kwargs.items()
         for k, v in kvs:
-            return _push(self.federation, k, self.namespace, self.parties, v)
+            return _push(self.federation, k, self.namespace, [p[1] for p in self.parties], v)
 
     def get(self, name: str):
-        return _pull(self.federation, name, self.namespace, self.parties)
+        return _pull(self._ctx, self.federation, name, self.namespace, [p[1] for p in self.parties])
 
 
 def _push(
     federation: FederationEngine,
     name: str,
-    namespace: Namespace,
+    namespace: NS,
     parties: List[PartyMeta],
     value,
 ):
-    tag = namespace.fedeation_tag()
+    tag = namespace.federation_tag
     _TableRemotePersistentPickler.push(value, federation, name, tag, parties)
 
 
+class Serde:
+    @classmethod
+    def encode_int(cls, value: int) -> bytes:
+        return struct.pack("!q", value)  # '!q' is for long long (8 bytes)
+
+    @classmethod
+    def decode_int(cls, value: bytes) -> int:
+        return struct.unpack("!q", value)[0]
+
+    @classmethod
+    def encode_str(cls, value: str) -> bytes:
+        utf8_str = value.encode("utf-8")
+        return struct.pack("!I", len(utf8_str)) + utf8_str  # prepend length of string
+
+    @classmethod
+    def decode_str(cls, value: bytes) -> str:
+        length = struct.unpack("!I", value[:4])[0]  # get length of string
+        return value[4 : 4 + length].decode("utf-8")  # decode string
+
+    @classmethod
+    def encode_bytes(cls, value: bytes) -> bytes:
+        return struct.pack("!I", len(value)) + value  # prepend length of bytes
+
+    @classmethod
+    def decode_bytes(cls, value: bytes) -> bytes:
+        length = struct.unpack("!I", value[:4])[0]  # get length of bytes
+        return value[4 : 4 + length]  # extract bytes
+
+    @classmethod
+    def encode_float(cls, value: float) -> bytes:
+        return struct.pack("!d", value)
+
+    @classmethod
+    def decode_float(cls, value: bytes) -> float:
+        return struct.unpack("!d", value)[0]
+
+
+def _push_int(federation: FederationEngine, name: str, namespace: NS, parties: List[PartyMeta], value: int):
+    tag = namespace.federation_tag
+    federation.push(v=Serde.encode_int(value), name=name, tag=tag, parties=parties)
+
+
 def _pull(
+    ctx: "Context",
     federation: FederationEngine,
     name: str,
-    namespace: Namespace,
+    namespace: NS,
     parties: List[PartyMeta],
 ):
-    tag = namespace.fedeation_tag()
+    tag = namespace.federation_tag
     raw_values = federation.pull(
         name=name,
         tag=tag,
@@ -162,11 +215,16 @@ def _pull(
     )
     values = []
     for party, buffers in zip(parties, raw_values):
-        values.append(_TableRmotePersistentUnpickler.pull(buffers, federation, name, tag, party))
+        values.append(_TableRemotePersistentUnpickler.pull(buffers, ctx, federation, name, tag, party))
     return values
 
 
-class _TablePersistantId:
+class _TablePersistentId:
+    def __init__(self, key) -> None:
+        self.key = key
+
+
+class _ContextPersistentId:
     def __init__(self, key) -> None:
         self.key = key
 
@@ -194,11 +252,16 @@ class _TableRemotePersistentPickler(pickle.Pickler):
         return f"{self._name}__table_persistent_{self._table_index}__"
 
     def persistent_id(self, obj: Any) -> Any:
+        from fate.arch.context import Context
+
         if is_table(obj):
             key = self._get_next_table_key()
             self._federation.push(v=obj, name=key, tag=self._tag, parties=self._parties)
             self._table_index += 1
-            return _TablePersistantId(key)
+            return _TablePersistentId(key)
+        if isinstance(obj, Context):
+            key = f"{self._name}__context__"
+            return _ContextPersistentId(key)
 
     @classmethod
     def push(
@@ -215,15 +278,17 @@ class _TableRemotePersistentPickler(pickle.Pickler):
             federation.push(v=f.getvalue(), name=name, tag=tag, parties=parties)
 
 
-class _TableRmotePersistentUnpickler(pickle.Unpickler):
+class _TableRemotePersistentUnpickler(pickle.Unpickler):
     def __init__(
         self,
+        ctx: "Context",
         federation: FederationEngine,
         name: str,
         tag: str,
         party: PartyMeta,
         f,
     ):
+        self._ctx = ctx
         self._federation = federation
         self._name = name
         self._tag = tag
@@ -231,19 +296,22 @@ class _TableRmotePersistentUnpickler(pickle.Unpickler):
         super().__init__(f)
 
     def persistent_load(self, pid: Any) -> Any:
-        if isinstance(pid, _TablePersistantId):
+        if isinstance(pid, _TablePersistentId):
             table = self._federation.pull(pid.key, self._tag, [self._party])[0]
             return table
+        if isinstance(pid, _ContextPersistentId):
+            return self._ctx
 
     @classmethod
     def pull(
         cls,
         buffers,
+        ctx: "Context",
         federation: FederationEngine,
         name: str,
         tag: str,
         party: PartyMeta,
     ):
         with io.BytesIO(buffers) as f:
-            unpickler = _TableRmotePersistentUnpickler(federation, name, tag, party, f)
+            unpickler = _TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
             return unpickler.load()

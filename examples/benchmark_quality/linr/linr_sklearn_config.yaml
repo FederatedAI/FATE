@@ -1,0 +1,11 @@
+data_guest: "examples/data/motor_hetero_guest.csv"
+data_host: "examples/data/motor_hetero_host.csv"
+label_name: "motor_speed"
+penalty: "L2"
+idx: "idx"
+epochs: 20
+fit_intercept: True
+method: "rmsprop"
+eta0: 0.1
+alpha: 0.5
+batch_size: 5000
