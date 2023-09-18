@@ -33,9 +33,9 @@ conda activate fate_env
 #### 2.2.1 安装 FATE，同时携带 FATE-Flow 服务
 FATE-Flow提供了联邦作业生命周期管理，包括调度、数据管理、模型和指标管理等。
 
-##### 2.2.1.1 安装FATE、FATE-FLOW、FATE-Client
+##### 2.2.1.1 安装FATE、FATE-Flow、FATE-Client
 ```shell
-pip安装fate_client[fate,fate_flow]==2.0.0.b0
+pip install fate_client[fate,fate_flow]==2.0.0.b0
 ```
 
 #### 2.2.1.2 服务初始化
