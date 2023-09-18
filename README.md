@@ -48,6 +48,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
 - [FATE-Client](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
+- [FATE-Test](https://github.com/FederatedAI/FATE-Test): An automated testing tool for FATE, including tests and benchmark comparisons.
 
 ## Governance 
 
