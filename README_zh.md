@@ -45,6 +45,7 @@ FATE 2.0以前的版本在[发布页](https://github.com/FederatedAI/FATE/releas
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder)
 - [FATE-Client](https://github.com/FederatedAI/FATE-Client)
+- [FATE-Test](https://github.com/FederatedAI/FATE-Test)
 
 ## 社区治理  
 
