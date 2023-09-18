@@ -41,7 +41,7 @@ pip安装fate_client[fate,fate_flow]==2.0.0.b0
 #### 2.2.1.2 服务初始化
 ```shell
 fate_flow init --ip 127.0.0.1 --port 9380 --home $HOME_DIR
-pipeline --ip 127.0.0.1 --端口 9380
+pipeline --ip 127.0.0.1 --port 9380
 ```
 - `ip`：服务运行的ip
 - `port`：服务运行的 http 端口
@@ -61,7 +61,7 @@ FATE提供多种联邦算法和安全协议， 用户可以在安装 FATE 后直
 
 #### 2.2.1.1 安装 FATE
 ```shell
-pip pyfate==2.0.0.b0
+pip install pyfate==2.0.0.b0
 ```
 
 #### 2.2.2.2 使用指引
