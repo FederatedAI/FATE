@@ -11,6 +11,9 @@ after installing packages successfully, initialize fate_flow service and fate_cl
 mkdir fate_workspace
 fate_flow init --ip 127.0.0.1 --port 9380 --home $(pwd)/fate_workspace
 pipeline init --ip 127.0.0.1 --port 9380
+
+fate_flow start
+fate_flow status # make sure fate_flow service is started
 ```
 
 
