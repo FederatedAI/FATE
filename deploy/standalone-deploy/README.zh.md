@@ -50,6 +50,15 @@ pipeline --ip 127.0.0.1 --port 9380
 #### 2.2.1.3 服务启动
 ```shell
 fate_flow start
+fate_flow status # 通过该指令确认FATE-Flow服务的状态
+```
+
+FATE-Flow还提供了停止服务和重启服务的指令集，可以在必要时使用：
+
+```shell
+# 注意：正常的部署流程不需要执行stop/restart指令
+fate_flow stop
+fate_flow restart
 ```
 
 #### 2.2.1.4 测试

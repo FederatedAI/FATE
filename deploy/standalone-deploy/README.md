@@ -51,6 +51,14 @@ pipeline init --ip 127.0.0.1 --port 9380
 
 ```shell
 fate_flow start
+fate_flow status # make sure fate_flow service is started
+```
+
+FATE-Flow also provides other instructions like stop and restart, use only if users want to stop/restart fate_flow services.
+```shell
+# Warning: Normal installing processing does not need to execute stop/restart instructions.
+fate_flow stop
+fate_flow restart
 ```
 
 #### 2.2.1.4 Testing
