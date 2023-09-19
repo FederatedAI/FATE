@@ -56,7 +56,7 @@ fate_flow status # make sure fate_flow service is started
 
 FATE-Flow also provides other instructions like stop and restart, use only if users want to stop/restart fate_flow services.
 ```shell
-# Warning: Normal installing processing does not need to execute stop/restart instructions.
+# Warning: normal installing processing does not need to execute stop/restart instructions.
 fate_flow stop
 fate_flow restart
 ```
