@@ -70,20 +70,32 @@ def _watch_thread_react_to_parent_die(ppid, logger_config):
         ppid: parent process id
     """
 
-    # watch parent process, if parent process is dead, then kill self
-    # the trick is to use os.kill(ppid, 0) to check if parent process is alive periodically
-    # and if parent process is dead, then kill self
-    #
-    # Note: this trick is modified from the answer by aaron: https://stackoverflow.com/a/71369760/14697733
     pid = os.getpid()
 
-    def f():
-        while True:
-            try:
-                os.kill(ppid, 0)
-            except OSError:
-                os.kill(pid, signal.SIGTERM)
-            time.sleep(1)
+    import platform
+
+    if platform.system() == "Windows":
+        import psutil
+
+        def f():
+            while True:
+                if not psutil.pid_exists(ppid):
+                    os.kill(pid, signal.SIGTERM)
+                time.sleep(1)
+
+    else:
+        # watch parent process, if parent process is dead, then kill self
+        # the trick is to use os.kill(ppid, 0) to check if parent process is alive periodically
+        # and if parent process is dead, then kill self
+        #
+        # Note: this trick is modified from the answer by aaron: https://stackoverflow.com/a/71369760/14697733
+        def f():
+            while True:
+                try:
+                    os.kill(ppid, 0)
+                except OSError:
+                    os.kill(pid, signal.SIGTERM)
+                time.sleep(1)
 
     thread = threading.Thread(target=f, daemon=True)
     thread.start()
