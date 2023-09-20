@@ -15,4 +15,4 @@ beautifultable
 requests<2.26.0
 grpcio==1.46.3
 protobuf==3.19.6
-scikit-learn==1.2.1
+scikit-learn
