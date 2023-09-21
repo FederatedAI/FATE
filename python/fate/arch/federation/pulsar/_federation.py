@@ -30,7 +30,7 @@ from ._pulsar_manager import PulsarManager
 
 LOGGER = logging.getLogger(__name__)
 # default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 104857
+DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 
 class MQ(object):
