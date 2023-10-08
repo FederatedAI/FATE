@@ -15,36 +15,54 @@
  */
 package org.fedai.osx.broker.ptp;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-import org.fedai.osx.broker.ServiceContainer;
+import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
+import org.fedai.osx.broker.queue.TransferQueueManager;
+import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.service.Register;
+import org.fedai.osx.broker.service.TokenApplyService;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptor;
 import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-public class PtpPushService extends AbstractServiceAdaptor<FateContext,StreamObserver, StreamObserver> {
-    Logger  logger = LoggerFactory.getLogger(PtpPushService.class);
 
+import static org.fedai.osx.core.constant.UriConstants.EGGROLL_PUSH;
 
+@Singleton
+//@Register(uri=EGGROLL_PUSH)
+public class EggrollPushService extends AbstractServiceAdaptor<StreamObserver, StreamObserver> {
+    Logger  logger = LoggerFactory.getLogger(EggrollPushService.class);
+    @Inject
+    DefaultFateRouterServiceImpl routerService;
+    @Inject
+    TokenApplyService  tokenApplyService;
+    @Inject
+    TransferQueueManager  transferQueueManager;
+    @Inject
+    ConsumerManager   consumerManager;
 
     @Override
-    protected StreamObserver doService(FateContext context, InboundPackage<StreamObserver> data) {
+    protected StreamObserver doService(OsxContext context, InboundPackage<StreamObserver> data) {
         StreamObserver responseStreamObserver = data.getBody();
         context.setNeedPrintFlowLog(false);
         return  new StreamObserver<Osx.Inbound>() {
-            Logger logger = LoggerFactory.getLogger(PtpPushService.class);
-            QueuePushReqStreamObserver queuePushReqStreamObserver = new  QueuePushReqStreamObserver(context, ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER),
-                    responseStreamObserver,Osx.Outbound.class);
+            Logger logger = LoggerFactory.getLogger(EggrollPushService.class);
+            QueuePushReqStreamObserver queuePushReqStreamObserver = new  QueuePushReqStreamObserver(context, routerService,
+                    transferQueueManager,
+                    responseStreamObserver);
             @Override
             public void onNext(Osx.Inbound inbound) {
                 int dataSize = inbound.getSerializedSize();
-                ServiceContainer.tokenApplyService.applyToken(context, TransferUtil.buildResource(inbound), dataSize);
+                tokenApplyService.applyToken(context, TransferUtil.buildResource(inbound), dataSize);
                 Proxy.Packet  packet =   TransferUtil.parsePacketFromInbound(inbound);
                 if(packet!=null) {
                     queuePushReqStreamObserver.onNext(packet);
@@ -64,7 +82,7 @@ public class PtpPushService extends AbstractServiceAdaptor<FateContext,StreamObs
     }
 
     @Override
-    protected StreamObserver transformExceptionInfo(FateContext context, ExceptionInfo exceptionInfo) {
+    protected StreamObserver transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
         return null;
     }
 }

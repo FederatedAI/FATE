@@ -2,8 +2,8 @@ package org.fedai.osx.broker.consumer;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.stub.StreamObserver;
-import org.fedai.osx.broker.ServiceContainer;
 import org.fedai.osx.broker.message.MessageExt;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.utils.JsonUtil;
@@ -15,13 +15,15 @@ public class SourceGrpcEventHandler extends GrpcEventHandler{
 
     com.google.protobuf.Parser  parser;
     StreamObserver respStreamObserver;
+    TransferQueueManager transferQueueManager;
 
 
-    public  SourceGrpcEventHandler(StreamObserver  respStreamObserver,
+    public  SourceGrpcEventHandler(    TransferQueueManager transferQueueManager,StreamObserver  respStreamObserver,
                                    com.google.protobuf.Parser  parser){
         super(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         this.parser=parser;
         this.respStreamObserver = respStreamObserver;
+        this.transferQueueManager = transferQueueManager;
     }
 
     @Override
@@ -42,7 +44,7 @@ public class SourceGrpcEventHandler extends GrpcEventHandler{
             respStreamObserver.onError(new Throwable(exceptionInfo.getMessage()));
         }finally {
             String  topic =message.getTopic();
-            ServiceContainer.transferQueueManager.onCompleted(topic);
+           transferQueueManager.onCompleted(topic);
         }
 
     }
@@ -53,7 +55,7 @@ public class SourceGrpcEventHandler extends GrpcEventHandler{
             respStreamObserver.onCompleted();
         }finally {
             String  topic =message.getTopic();
-            ServiceContainer.transferQueueManager.onCompleted(topic);
+             transferQueueManager.onCompleted(topic);
         }
 
     }

@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fedai.osx.tech.provider;
+package org.fedai.osx.broker.provider;
 
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ParameterException;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.provider.TechProvider;
+import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.utils.ClassUtils;
 import org.fedai.osx.core.utils.PropertiesUtil;
 import org.slf4j.Logger;
@@ -33,25 +38,45 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * 厂商选择
  */
-public class TechProviderRegister implements Lifecycle {
+@Singleton
+public class TechProviderRegister implements Lifecycle , ApplicationStartedRunner {
 
     Logger logger  = LoggerFactory.getLogger(TechProviderRegister.class);
+    @Inject
+    Injector injector ;
     ConcurrentMap<String, TechProvider> registerMap = new ConcurrentHashMap<>();
     final String  configFileName = "components/provider.properties";
-    final
-    public TechProvider select(String  techProviderCode ) {
+    final public TechProvider select(OsxContext fateContext  ) {
+//        logger.info("tech provider select {}",fateContext.getTechProviderCode());
+        if(StringUtils.isEmpty(fateContext.getTechProviderCode())){
+            throw  new ParameterException("techProviderCode is null");
+        }
+       //  this.registerMap.get(fateContext.getTechProviderCode());
+
+       return  this.select(fateContext.getTechProviderCode());
+    }
+
+    final public TechProvider select(String  techProviderCode  ) {
+        logger.info("tech provider select {}",techProviderCode);
         if(StringUtils.isEmpty(techProviderCode)){
             throw  new ParameterException("techProviderCode is null");
         }
-        return this.registerMap.get(techProviderCode);
+        if(  this.registerMap.containsKey(techProviderCode)){
+            return this.registerMap.get(techProviderCode);
+        }else{
+            return this.registerMap.get(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+        }
     }
+
+
+
     public void init() {
         Properties properties = PropertiesUtil.getProperties(MetaInfo.PROPERTY_CONFIG_DIR+Dict.SLASH+Dict.SLASH+configFileName);
         properties.forEach((k,v)->{
             try {
-                this.registerMap.put(k.toString(), (TechProvider) ClassUtils.newInstance(v.toString()));
+                this.registerMap.put(k.toString(), (TechProvider) injector.getInstance(Class.forName(v.toString())));
             }catch(Exception e){
-                logger.error("provider {} class {} init error",k,v);
+                logger.error("provider {} class {} init error",k,v,e);
             }
         });
         logger.info("tech provider register : {}",this.registerMap);
@@ -66,6 +91,11 @@ public class TechProviderRegister implements Lifecycle {
         this.registerMap.clear();
     }
 
+    @Override
+    public void run(String[] args) throws Exception {
+        logger.info("=========================11111=");
+         start();
+    }
 }
 
 

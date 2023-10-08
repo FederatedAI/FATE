@@ -15,25 +15,38 @@
  */
 package org.fedai.osx.broker;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang3.StringUtils;
+import org.fedai.osx.broker.ptp.PtpUnaryCallService;
+import org.fedai.osx.broker.queue.TransferQueueManager;
+import org.fedai.osx.broker.server.OsxServer;
+import org.fedai.osx.broker.util.ApplicationStartedRunnerUtils;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.jvm.JvmInfoCounter;
 import org.fedai.osx.core.utils.PropertiesUtil;
 import org.fedai.osx.core.utils.ServerUtil;
+import org.fedai.osx.guice.BrokerModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
 public class Bootstrap {
     static Logger logger = LoggerFactory.getLogger(Bootstrap.class);
     static CommandLine commandLine;
     static Object lockObject= new Object();
+    static Injector injector;
     public static void main(String[] args) {
         try {
+             injector = Guice.createInjector(new BrokerModule() );
+            System.err.println(injector.getAllBindings());
             Options options = ServerUtil.buildCommandlineOptions(new Options());
             commandLine = ServerUtil.parseCmdLine("osx", args, buildCommandlineOptions(options),
                     new PosixParser());
@@ -46,6 +59,11 @@ public class Bootstrap {
             parseConfig(configDir);
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.start(args);
+            List<String> packages = new ArrayList<>();
+            packages.add(Bootstrap.class.getPackage().getName());
+            ApplicationStartedRunnerUtils.run(injector, packages, args);
+
+            injector.getInstance(OsxServer.class).start();
             Thread shutDownThread = new Thread(bootstrap::stop);
             Runtime.getRuntime().addShutdownHook(shutDownThread);
             synchronized (lockObject){
@@ -79,14 +97,16 @@ public class Bootstrap {
     }
 
     public void start(String[] args) {
-        ServiceContainer.init();
+//        ServiceContainer.init();
         JvmInfoCounter.start();
     }
 
     public void stop() {
         logger.info("try to shutdown server ...");
-        if (ServiceContainer.transferQueueManager != null) {
-            ServiceContainer.transferQueueManager.destroyAll();
+        if (injector != null) {
+            TransferQueueManager  transferQueueManager = injector.getInstance(TransferQueueManager.class);
+            if(transferQueueManager!=null)
+                    transferQueueManager.destroyAll();
         }
     }
 

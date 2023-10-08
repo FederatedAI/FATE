@@ -15,39 +15,48 @@
  */
 package org.fedai.osx.broker.service;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-import org.fedai.osx.broker.ServiceContainer;
+
+import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
+import org.fedai.osx.broker.queue.TransferQueueManager;
+import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.core.config.MetaInfo;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.exceptions.SysException;
 import org.fedai.osx.core.service.AbstractServiceAdaptor;
 import org.fedai.osx.core.service.InboundPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-public class PushService extends AbstractServiceAdaptor<FateContext,StreamObserver, StreamObserver> {
+@Singleton
+public class PushService extends AbstractServiceAdaptor<StreamObserver, StreamObserver> {
 
     Logger logger = LoggerFactory.getLogger(PushService.class);
 
-
-    
+    @Inject
+    DefaultFateRouterServiceImpl   defaultFateRouterService;
+    @Inject
+    TransferQueueManager  transferQueueManager;
+    @Inject
+    ConsumerManager consumerManager;
     @Override
-    protected StreamObserver doService(FateContext context, InboundPackage<StreamObserver> data
+    protected StreamObserver doService(OsxContext context, InboundPackage<StreamObserver> data
     ) {
 
         StreamObserver backRespSO = data.getBody();
        // context.setNeedPrintFlowLog(false);
         QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context,
-                ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER),
-                backRespSO, Proxy.Metadata.class);
+                defaultFateRouterService,  transferQueueManager,
+                backRespSO);
         return queuePushReqStreamObserver;
     }
 
     @Override
-    protected StreamObserver transformExceptionInfo(FateContext context, ExceptionInfo exceptionInfo) {
+    protected StreamObserver transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
         logger.error("PushService error {}", exceptionInfo);
         throw new SysException(exceptionInfo.toString());
     }

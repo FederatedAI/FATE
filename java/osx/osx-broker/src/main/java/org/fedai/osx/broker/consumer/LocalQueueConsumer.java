@@ -16,20 +16,18 @@
 package org.fedai.osx.broker.consumer;
 
 
-import org.fedai.osx.api.context.Context;
-import org.fedai.osx.broker.ServiceContainer;
 import org.fedai.osx.broker.message.SelectMappedBufferResult;
-import org.fedai.osx.broker.queue.Consumer;
-import org.fedai.osx.broker.queue.TransferQueue;
+import org.fedai.osx.broker.queue.*;
 import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.constant.TransferStatus;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.AckIndexException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueConsumeResult> {
+public class LocalQueueConsumer implements Consumer<TransferQueueConsumeResult> {
 
     Logger logger = LoggerFactory.getLogger(LocalQueueConsumer.class);
     protected long consumerId;
@@ -37,10 +35,12 @@ public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueC
     AtomicLong consumeOffset = new AtomicLong(1);
     volatile TransferStatus transferStatus = TransferStatus.INIT;
     long createTimestamp = System.currentTimeMillis();
+    TransferQueueManager  transferQueueManager;
 
-    public LocalQueueConsumer(long consumerId, String transferId) {
+    public LocalQueueConsumer(TransferQueueManager  transferQueueManager ,long consumerId, String transferId) {
         this.consumerId = consumerId;
         this.transferId = transferId;
+        this.transferQueueManager = transferQueueManager;
     }
 
     public long getConsumerId() {
@@ -60,9 +60,9 @@ public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueC
     }
 
     public boolean checkMsgIsArrive(long consumeOffset) {
-        TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
+        AbstractQueue transferQueue = transferQueueManager.getQueue(transferId);
         if (transferQueue != null) {
-            long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
+            long indexFileOffset = ((TransferQueue)transferQueue).getIndexQueue().getLogicOffset().get();
             logger.info("topic {} need consume {} ,  {} inqueue",transferId,consumeOffset, indexFileOffset);
             return consumeOffset <= indexFileOffset;
         }
@@ -106,20 +106,23 @@ public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueC
         this.consumeOffset = consumeOffset;
     }
 
-    public synchronized TransferQueue.TransferQueueConsumeResult consume(Context context, long beginOffset) {
-        TransferQueue.TransferQueueConsumeResult result;
+    public synchronized TransferQueueConsumeResult consume(OsxContext context, long beginOffset) {
+        TransferQueueConsumeResult result;
         long offset = beginOffset;
-        TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
+        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(transferId);
         if (transferQueue != null) {
             SelectMappedBufferResult selectMappedBufferResult = null;
             if (offset <= 0) {
                 offset = consumeOffset.get();
             }
             result = transferQueue.consumeOneMessage(context, offset);
-
+            //兼容互联互通 ，改成自动ack
+            if(StatusCode.SUCCESS.equals(result.getCode())) {
+                this.ack(offset);
+            }
         } else {
             logger.error("transfer Id {} is not found", transferId);
-            result = new TransferQueue.TransferQueueConsumeResult(StatusCode.TRANSFER_QUEUE_NOT_FIND, null, beginOffset, 0);
+            result = new TransferQueueConsumeResult(StatusCode.TRANSFER_QUEUE_NOT_FIND, null, beginOffset, 0);
         }
         return result;
 

@@ -15,6 +15,8 @@
  */
 package org.fedai.osx.broker.server;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.grpc.ServerInterceptors;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
@@ -27,13 +29,15 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.fedai.osx.broker.grpc.ContextPrepareInterceptor;
 import org.fedai.osx.broker.grpc.PcpGrpcService;
 import org.fedai.osx.broker.grpc.ProxyGrpcService;
 import org.fedai.osx.broker.grpc.ServiceExceptionHandler;
 import org.fedai.osx.broker.http.DispatchServlet;
 import org.fedai.osx.core.config.MetaInfo;
+import org.fedai.osx.core.frame.ContextPrepareInterceptor;
+import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.utils.OSXCertUtils;
 import org.fedai.osx.core.utils.OsxX509TrustManager;
 import org.slf4j.Logger;
@@ -57,20 +61,26 @@ import static org.fedai.osx.core.config.MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER;
 /**
  * http1.X  + grpc
  */
-public class OsxServer {
+@Singleton
+public class OsxServer  {
 
     Logger logger = LoggerFactory.getLogger(OsxServer.class);
     io.grpc.Server server;
     io.grpc.Server tlsServer;
     org.eclipse.jetty.server.Server httpServer;
     org.eclipse.jetty.server.Server httpsServer;
+    @Inject
     ProxyGrpcService proxyGrpcService;
+    @Inject
     PcpGrpcService pcpGrpcService;
+
+    @Inject
+    DispatchServlet  dispatchServlet;
 
     private synchronized void init() {
         try {
-            proxyGrpcService = new ProxyGrpcService();
-            pcpGrpcService = new PcpGrpcService();
+//            proxyGrpcService = new ProxyGrpcService();
+//            pcpGrpcService = new PcpGrpcService();
             server = buildServer();
             if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
                 logger.info("prepare to create http server");
@@ -172,7 +182,8 @@ public class OsxServer {
     ServletContextHandler buildServlet() {
         ServletContextHandler context = new ServletContextHandler();
         context.setContextPath(MetaInfo.PROPERTY_HTTP_CONTEXT_PATH);
-        context.addServlet(DispatchServlet.class, MetaInfo.PROPERTY_HTTP_SERVLET_PATH);
+        ServletHolder  servletHolder= new ServletHolder(dispatchServlet);
+        context.addServlet(servletHolder, MetaInfo.PROPERTY_HTTP_SERVLET_PATH);
         context.setMaxFormContentSize(Integer.MAX_VALUE);
         return context;
     }
@@ -317,4 +328,6 @@ public class OsxServer {
             nettyServerBuilder.maxConnectionAgeGrace(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC, TimeUnit.SECONDS);
         return nettyServerBuilder.build();
     }
+
+
 }

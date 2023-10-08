@@ -15,14 +15,14 @@
  */
 
 package org.fedai.osx.core.service;
-import org.fedai.osx.api.context.Context;
+import org.fedai.osx.core.context.OsxContext;
 
 import java.util.List;
 
-public interface ServiceAdaptor<ctx extends Context ,req, rsp> {
+public interface ServiceAdaptor< req, rsp> {
 
-    public OutboundPackage<rsp> service(ctx context, InboundPackage<req> inboundPackage);
+    public OutboundPackage<rsp> service(OsxContext context, InboundPackage<req> inboundPackage);
 
-    public OutboundPackage<rsp> serviceFail(ctx context, InboundPackage<req> data, List<Throwable> e);
+    public OutboundPackage<rsp> serviceFail(OsxContext context, InboundPackage<req> data, List<Throwable> e);
 
 }

@@ -96,7 +96,7 @@ public class HttpsClientPool {
         return httpClient;
     }
 
-    public static Osx.Outbound sendPtpPost(String url, byte[] body, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+    public static HttpDataWrapper sendPostWithCert(String url, byte[] body, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
 
         HttpPost httpPost = new HttpPost(url);
         HttpClientPool.config(httpPost, headers);
@@ -104,17 +104,17 @@ public class HttpsClientPool {
             ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
             httpPost.setEntity(byteArrayEntity);
         }
-        return getPtpHttpsResponse(httpPost, caPath, clientCertPath, clientKeyPath);
+        return getHttpResponse(httpPost, caPath, clientCertPath, clientKeyPath);
     }
 
-    @SuppressWarnings("unused")
-    public static String sendPost(String url, byte[] body, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) {
-        HttpPost httpPost = new HttpPost(url);
-        HttpClientPool.config(httpPost, headers);
-        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
-        httpPost.setEntity(byteArrayEntity);
-        return getResponse(httpPost, caPath, clientCertPath, clientKeyPath);
-    }
+//    @SuppressWarnings("unused")
+//    public static String sendPost(String url, byte[] body, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) {
+//        HttpPost httpPost = new HttpPost(url);
+//        HttpClientPool.config(httpPost, headers);
+//        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
+//        httpPost.setEntity(byteArrayEntity);
+//        return getResponse(httpPost, caPath, clientCertPath, clientKeyPath);
+//    }
 
     public static String get(String url, Map<String, String> headers, String caPath, String clientCertPath, String clientKeyPath) {
         return sendGet(url, headers, caPath, clientCertPath, clientKeyPath);
@@ -152,8 +152,8 @@ public class HttpsClientPool {
         }
     }
 
-    private static Osx.Outbound getPtpHttpsResponse(HttpRequestBase request, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
-        Osx.Outbound.Builder outboundBuilder = Osx.Outbound.newBuilder();
+    public  static HttpDataWrapper getHttpResponse(HttpRequestBase request, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+        HttpDataWrapper  httpDataWrapper = new  HttpDataWrapper();
         CloseableHttpResponse response = null;
         try {
             response = getConnection(caPath, clientCertPath, clientKeyPath).execute(request, HttpClientContext.create());
@@ -166,15 +166,48 @@ public class HttpsClientPool {
                     headMap.put(temp.getName(), temp.getValue());
                 }
             }
+            httpDataWrapper.setHeaders(headMap);
             if (payload != null)
-                outboundBuilder.setPayload(ByteString.copyFrom(payload));
-            if (headMap.get(PtpHttpHeader.ReturnCode) != null)
-                outboundBuilder.setCode(headMap.get(PtpHttpHeader.ReturnCode));
-            if (headMap.get(PtpHttpHeader.ReturnMessage) != null)
-                outboundBuilder.setMessage(headMap.get(PtpHttpHeader.ReturnMessage));
-
+                httpDataWrapper.setPayload(payload);
             EntityUtils.consume(entity);
-            return outboundBuilder.build();
+            return httpDataWrapper;
+        } catch (IOException ex) {
+            logger.error("get https response failed:", ex);
+            ex.printStackTrace();
+            throw  ex;
+        } finally {
+            try {
+                if (response != null) {
+                    response.close();
+                }
+            } catch (IOException ex) {
+                logger.error("get https response failed:", ex);
+            }
+        }
+    }
+
+
+
+
+    private static HttpDataWrapper getHttpsResponse(HttpRequestBase request, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+        HttpDataWrapper  httpDataWrapper = new  HttpDataWrapper();
+        CloseableHttpResponse response = null;
+        try {
+            response = getConnection(caPath, clientCertPath, clientKeyPath).execute(request, HttpClientContext.create());
+            HttpEntity entity = response.getEntity();
+            byte[] payload = EntityUtils.toByteArray(entity);
+            Header[] headers = response.getAllHeaders();
+            Map<String, String> headMap = Maps.newHashMap();
+            if (headers != null) {
+                for (Header temp : headers) {
+                    headMap.put(temp.getName(), temp.getValue());
+                }
+            }
+            httpDataWrapper.setHeaders(headMap);
+            if (payload != null)
+                httpDataWrapper.setPayload(payload);
+            EntityUtils.consume(entity);
+            return httpDataWrapper;
         } catch (IOException ex) {
             logger.error("get https response failed:", ex);
             ex.printStackTrace();

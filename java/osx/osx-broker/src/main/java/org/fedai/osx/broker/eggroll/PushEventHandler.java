@@ -12,21 +12,23 @@ import com.webank.eggroll.core.transfer.TransferServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.api.constants.Protocol;
-import org.fedai.osx.api.router.RouterInfo;
-import org.fedai.osx.broker.ServiceContainer;
+
+
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.consumer.GrpcEventHandler;
 import org.fedai.osx.broker.message.MessageExt;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.ActionType;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.TransferStatus;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.exceptions.*;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.ptp.TargetMethod;
+import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.utils.ToStringUtils;
 import org.ppc.ptp.Osx;
 import org.ppc.ptp.PrivateTransferProtocolGrpc;
@@ -46,7 +48,7 @@ public class PushEventHandler extends GrpcEventHandler {
         super(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
     }
     TransferStatus transferStatus= TransferStatus.INIT;
-    FateContext context = new FateContext();
+    OsxContext context = new OsxContext();
     RouterInfo routerInfo ;
     Proxy.Metadata metadata;
     String brokerTag;
@@ -60,6 +62,9 @@ public class PushEventHandler extends GrpcEventHandler {
     String srcRole = null;
     String sessionId = null;
     RouterInfo revertRouterInfo;
+    TransferQueueManager  transferQueueManager;
+
+
 
     protected   void handleError(MessageExt messageExt){
         //todo
@@ -71,7 +76,7 @@ public class PushEventHandler extends GrpcEventHandler {
             }
         }finally {
             String topic =  messageExt.getTopic();
-            ServiceContainer.transferQueueManager.onCompleted(topic);
+            transferQueueManager.onCompleted(topic);
         }
     }
 
@@ -82,7 +87,7 @@ public class PushEventHandler extends GrpcEventHandler {
             }
         }finally {
            String topic =  messageExt.getTopic();
-           ServiceContainer.transferQueueManager.onCompleted(topic);
+           transferQueueManager.onCompleted(topic);
         }
 
 
@@ -158,7 +163,8 @@ public class PushEventHandler extends GrpcEventHandler {
         srcRole = metadata.getSrc().getRole();
         srcPartyId = metadata.getSrc().getPartyId();
         //String srcPartyId, String srcRole, String dstPartyId, String desRole
-        revertRouterInfo = ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,desRole,srcPartyId,srcRole);
+        // TODO: 2023/9/20   临时屏蔽
+       // revertRouterInfo = routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,desRole,srcPartyId,srcRole);
         if(revertRouterInfo==null){
             throw new NoRouterInfoException(srcPartyId+" can not found route info");
         }
@@ -236,8 +242,8 @@ public class PushEventHandler extends GrpcEventHandler {
         context.setRouterInfo(routerInfo);
         routerInfo.setHost(egg.getTransferEndpoint().getHost());
         routerInfo.setPort(egg.getTransferEndpoint().getPort());
-        context.setSrcPartyId(routerInfo.getSourcePartyId());
-        context.setDesPartyId(routerInfo.getDesPartyId());
+        context.setSrcNodeId(routerInfo.getSourcePartyId());
+        context.setDesNodeId(routerInfo.getDesPartyId());
         ManagedChannel eggChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,false);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(eggChannel);
         StreamObserver<Proxy.Metadata> eggSiteServicerPushRespSO;

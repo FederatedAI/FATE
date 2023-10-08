@@ -15,20 +15,34 @@
  */
 package org.fedai.osx.broker.ptp;
 
-import org.fedai.osx.api.router.RouterInfo;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import org.fedai.osx.broker.interceptor.RouterInterceptor;
+import org.fedai.osx.broker.interceptor.TokenValidatorInterceptor;
+import org.fedai.osx.broker.service.Register;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.constant.ActionType;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.constant.UriConstants;
+import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.exceptions.ExceptionInfo;
+import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+@Singleton
+//@Register(uri= UriConstants.UNARYCALL)
+@Slf4j
+public class PtpUnaryCallService extends AbstractPtpServiceAdaptor< Osx.Inbound,Osx.Outbound> {
 
-public class PtpUnaryCallService extends AbstractPtpServiceAdaptor {
+    @Inject
+    public  PtpUnaryCallService(TokenValidatorInterceptor tokenValidatorInterceptor ,
+                                RouterInterceptor  routerInterceptor){
+        this.addPreProcessor(tokenValidatorInterceptor);
+        this.addPreProcessor(routerInterceptor);
+    }
 
-    Logger logger = LoggerFactory.getLogger(PtpUnaryCallService.class);
     @Override
-    protected Osx.Outbound doService(FateContext context, InboundPackage<Osx.Inbound> data) {
+    protected Osx.Outbound doService(OsxContext context, InboundPackage<Osx.Inbound> data) {
 
         context.setActionType(ActionType.UNARY_CALL_NEW.getAlias());
         RouterInfo routerInfo = context.getRouterInfo();
@@ -36,6 +50,15 @@ public class PtpUnaryCallService extends AbstractPtpServiceAdaptor {
        // logger.info("PtpUnaryCallService receive : {}",inbound);
         Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo,true);
         return outbound;
+    }
+
+
+    @Override
+    protected Osx.Outbound transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
+        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
+        builder.setCode(exceptionInfo.getCode());
+        builder.setMessage(exceptionInfo.getMessage());
+        return builder.build();
     }
 
 }

@@ -13,27 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fedai.osx.broker.service;
+package org.fedai.osx.core.context;
 
-import org.fedai.osx.broker.zk.CuratorZookeeperClient;
-import org.fedai.osx.broker.zk.ZkConfig;
-
-public class RegisterService {
-
-
-    CuratorZookeeperClient curatorZookeeperClient;
-
-    public RegisterService(ZkConfig zkConfig) {
-        curatorZookeeperClient = new CuratorZookeeperClient(zkConfig);
-    }
-
-    public void registerTransferQueue() {
-
-    }
-
-    public void registerComponent() {
-
-    }
-
-
+public enum Protocol {
+    grpc,
+    http,
 }

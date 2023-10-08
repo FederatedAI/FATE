@@ -2,12 +2,13 @@ package org.fedai.osx.broker.test.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
-import org.fedai.osx.api.router.RouterInfo;
+
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.StatusCode;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
+import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.utils.JsonUtil;
 import org.junit.Test;
 import org.ppc.ptp.Osx;
@@ -35,8 +36,8 @@ public class Grpc_UC {
 
     @Test
     public void run(){
-        FateContext context = JsonUtil.json2Object(contextStr,FateContext.class);
-        RouterInfo routerInfo = JsonUtil.json2Object(routerJson,RouterInfo.class);
+        OsxContext context = JsonUtil.json2Object(contextStr,OsxContext.class);
+        RouterInfo routerInfo = JsonUtil.json2Object(routerJson, RouterInfo.class);
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
         if (context.getData(Dict.BLOCKING_STUB) == null) {
             ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);

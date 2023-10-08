@@ -124,6 +124,7 @@ public class OldFateTest {
         StreamObserver<Proxy.Metadata> responseOb = new StreamObserver<Proxy.Metadata>() {
             @Override
             public void onNext(Proxy.Metadata value) {
+
                 System.err.println("response onNext");
             }
 
@@ -153,7 +154,7 @@ public class OldFateTest {
 
 //                new Thread(() -> {
             StreamObserver<Proxy.Packet> requestOb = stub.push(responseOb);
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 1; i++) {
 
 //                Proxy.Metadata metadata = packet.getHeader();
 //                ByteString encodedRollSiteHeader = metadata.getExt();
@@ -162,11 +163,16 @@ public class OldFateTest {
                 rollSiteHeader.setDstPartyId(desPartyId);
                 rollSiteHeader.setSrcPartyId(srcPartyId);
                 rollSiteHeader.setSrcRole("srcRole");
+                rollSiteHeader.setRollSiteSessionId("testSessionId");
                 Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
-                packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSrc(Proxy.Topic.newBuilder().setPartyId("10000"))
-                        .setDst(Proxy.Topic.newBuilder().setPartyId("9999").setName("kaidengTestTopic").build())
+                packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSeq(System.currentTimeMillis())
+                        .setSrc(Proxy.Topic.newBuilder().setPartyId(srcPartyId))
+                        .setDst(Proxy.Topic.newBuilder().setPartyId(desPartyId).setName("kaidengTestTopic").build())
                                 .setExt(rollSiteHeader.build().toByteString())
+
                         .build());
+
+
 //                Transfer.RollSiteHeader.Builder headerBuilder = Transfer.RollSiteHeader.newBuilder();
 //                headerBuilder.setDstPartyId("10000");
                 //   packetBuilder.setHeader(Proxy.Metadata.newBuilder().setExt(headerBuilder.build().toByteString()));
@@ -178,7 +184,11 @@ public class OldFateTest {
                 if (i == 99) {
                     //     throw  new RuntimeException();
                 }
-                requestOb.onNext(packetBuilder.build());
+
+
+                Proxy.Packet packet = packetBuilder.build();
+                System.err.println("=======packet========"+packet);
+                requestOb.onNext(packet);
                 System.err.println("test send !!!!!!!!!!!!!!!!!!!!!!");
             }
             requestOb.onCompleted();
@@ -194,7 +204,7 @@ public class OldFateTest {
     public static void main(String[] args) {
         System.err.println("===============");
         testPush();
-        //testUnaryCall();
+       // testUnaryCall();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         try {
             countDownLatch.await();

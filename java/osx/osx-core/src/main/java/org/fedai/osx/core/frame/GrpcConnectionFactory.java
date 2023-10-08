@@ -22,11 +22,12 @@ import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.api.router.RouterInfo;
+
 import org.fedai.osx.core.config.GrpcChannelInfo;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.exceptions.NoRouterInfoException;
 import org.fedai.osx.core.exceptions.SysException;
+import org.fedai.osx.core.router.RouterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,7 @@ public class GrpcConnectionFactory {
     private GrpcConnectionFactory() {
     }
 
-    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo,boolean usePooled) {
+    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, boolean usePooled) {
         if(routerInfo==null){
             throw new NoRouterInfoException("no router info");
         }
@@ -98,6 +99,7 @@ public class GrpcConnectionFactory {
                     .maxInboundMessageSize(channelInfo.getMaxInboundMessageSize())
                     .enableRetry()
                     .retryBufferSize(channelInfo.getRetryBufferSize())
+                    .intercept(ContextPrepareInterceptor.INTERCEPTOR)
                     .maxRetryAttempts(channelInfo.getMaxRetryAttemps());
             if (routerInfo.isUseSSL() && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType()) && StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
                 SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()

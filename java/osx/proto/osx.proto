@@ -111,12 +111,16 @@ message TransportOutbound {
 service PrivateTransferProtocol {
   rpc transport (stream Inbound) returns (stream Outbound);
   rpc invoke (Inbound) returns (Outbound);
-  rpc test(stream Inbound)  returns (stream Outbound);
+  rpc clusterTokenApply(stream Inbound)  returns (stream Outbound);
+  rpc clusterTopicApply(stream Inbound)  returns (stream Outbound);
 
   rpc peek (PeekInbound) returns (TransportOutbound);
   rpc pop (PopInbound) returns (TransportOutbound);
   rpc push (PushInbound) returns (TransportOutbound);
   rpc release (ReleaseInbound) returns (TransportOutbound);
+
+
+
 }
 
 

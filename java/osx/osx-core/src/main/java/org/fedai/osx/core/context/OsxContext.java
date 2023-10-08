@@ -17,38 +17,72 @@ package org.fedai.osx.core.context;
 
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.api.constants.Protocol;
-import org.fedai.osx.api.context.Context;
-import org.fedai.osx.api.router.RouterInfo;
+
+
+
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
+import org.fedai.osx.core.router.RouterInfo;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
-public class FateContext implements Context{
+import java.util.Optional;
+@Data
+public class OsxContext {
+
+    public static ThreadLocal<Deque<OsxContext>>   threadLocalContexts = new ThreadLocal<>();
+
+    public static OsxContext  getContextFromThreadLocal(){
+        return Optional.ofNullable(threadLocalContexts.get()).map(Deque::peek).orElseGet(()->{
+            // TODO: 2023/9/13
+           return  new  OsxContext();
+        });
+    }
+    public  static void pushThreadLocalContext(OsxContext context) {
+        if (null == context) {
+            return;
+        }
+        Deque<OsxContext>  deque = threadLocalContexts.get();
+        if(deque==null){
+            threadLocalContexts.set(new ArrayDeque());
+            deque =   threadLocalContexts.get();
+        }
+        deque.push(context);
+    }
+    public static void popThreadLocalContext(  ){
+        Deque<OsxContext>  deque = threadLocalContexts.get();
+        if(deque!=null){
+            deque.pop();
+        }
+    }
+    public  static   void release(){
+        threadLocalContexts.remove();
+    }
+
+
     protected long timestamp = System.currentTimeMillis();
     protected boolean needAssembleException = false;
     protected String actionType;
     protected String sessionId;
     protected Protocol  protocol;
-    protected String  traceId;
+    protected String traceId;
     protected String token;
-    protected String sourceInstId;
+    protected String srcInstId;
     protected String desInstId;
+    protected String srcNodeId;
+    protected String version;
+    protected String uri;
+    protected String desNodeId;
     protected String techProviderCode;
     protected boolean needPrintFlowLog = true;
     protected boolean needCheckRouterInfo = true;
     protected Long dataSize;
-
-    public Integer getSleepTime() {
-        return sleepTime;
-    }
-
-    public void setSleepTime(Integer sleepTime) {
-        this.sleepTime = sleepTime;
-    }
-
-    protected Integer sleepTime;
+    protected String queueType;
 
     public Integer getRetryTime() {
         return retryTime;
@@ -69,7 +103,7 @@ public class FateContext implements Context{
         return jobId;
     }
 
-    @Override
+
     public void setJobId(String jobId) {
         this.jobId = jobId;
     }
@@ -77,16 +111,16 @@ public class FateContext implements Context{
     String jobId;
 
     Throwable t;
-    public  FateContext(){
+    public  OsxContext(){
     }
-    public  FateContext(long  timestamp, Map dataMap){
+    public  OsxContext(long  timestamp, Map dataMap){
         timestamp = timestamp;
         this.dataMap =  dataMap;
     }
 
     public boolean isDestination(){
-        if(StringUtils.isNotEmpty(this.getDesPartyId()))
-            return MetaInfo.PROPERTY_SELF_PARTY.contains(this.getDesPartyId());
+        if(StringUtils.isNotEmpty(this.getDesNodeId()))
+            return MetaInfo.PROPERTY_SELF_PARTY.contains(this.getDesNodeId());
         else
             return false;
     }
@@ -194,9 +228,25 @@ public class FateContext implements Context{
         return timestamp;
     }
 
-    public FateContext subContext() {
-        Map newDataMap = Maps.newHashMap(dataMap);
-        return new FateContext(this.timestamp, newDataMap);
+    public OsxContext subContext() {
+
+
+
+//        Map newDataMap = Maps.newHashMap(dataMap);
+//        OsxContext   osxContext =  new OsxContext(this.timestamp, newDataMap);
+        try {
+            OsxContext  newContext =   (OsxContext) BeanUtils.cloneBean(this);
+            return  newContext;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return  null;
     }
     public boolean needPrintFlowLog() {
         return needPrintFlowLog;
@@ -219,18 +269,18 @@ public class FateContext implements Context{
     public long getCostTime() {
         return costTime;
     }
-    public String getSrcPartyId() {
-        return (String) dataMap.get(Dict.SOURCE_PARTY_ID);
-    }
-    public void setSrcPartyId(String guestAppId) {
-        dataMap.put(Dict.SOURCE_PARTY_ID, guestAppId);
-    }
-    public String getDesPartyId() {
-        return (String) dataMap.get(Dict.DES_PARTY_ID);
-    }
-    public void setDesPartyId(String hostAppid) {
-        dataMap.put(Dict.DES_PARTY_ID, hostAppid);
-    }
+//    public String getSrcPartyId() {
+//        return (String) dataMap.get(Dict.SOURCE_PARTY_ID);
+//    }
+//    public void setSrcPartyId(String guestAppId) {
+//        dataMap.put(Dict.SOURCE_PARTY_ID, guestAppId);
+//    }
+//    public String getDesPartyId() {
+//        return (String) dataMap.get(Dict.DES_PARTY_ID);
+//    }
+//    public void setDesPartyId(String hostAppid) {
+//        dataMap.put(Dict.DES_PARTY_ID, hostAppid);
+//    }
     public  void setSrcComponent(String srcComponent){
         dataMap.put(Dict.SOURCE_COMPONENT,srcComponent);
     }
@@ -331,6 +381,9 @@ public class FateContext implements Context{
         if (this.getActionType() != null) {
             stringBuffer.append(this.getActionType()).append(SPLIT);
         }
+        if(this.getUri()!=null){
+            stringBuffer.append(this.getUri()).append(SPLIT);
+        }
 //        if(context.getSessionId()!=null){
 //            stringBuffer.append("session:").append(context.getSessionId()).append(SPLIT);
 //        }
@@ -353,11 +406,11 @@ public class FateContext implements Context{
         if(this.jobId!=null){
             stringBuffer.append("job-id:").append(this.getJobId()).append(SPLIT);
         }
-        if (this.getSrcPartyId() != null) {
-            stringBuffer.append("src:").append(this.getSrcPartyId()).append(SPLIT);
+        if (this.getSrcNodeId() != null) {
+            stringBuffer.append("src:").append(this.getSrcNodeId()).append(SPLIT);
         }
-        if (this.getDesPartyId() != null) {
-            stringBuffer.append("des:").append(this.getDesPartyId()).append(SPLIT);
+        if (this.getDesNodeId() != null) {
+            stringBuffer.append("des:").append(this.getDesNodeId()).append(SPLIT);
         }
         if (this.getReturnCode() != null) {
             stringBuffer.append("code:").append(this.getReturnCode()).append(SPLIT);
@@ -376,9 +429,6 @@ public class FateContext implements Context{
         if (this.getDataSize() != null) {
             stringBuffer.append("size:").append(this.getDataSize()).append(SPLIT);
         }
-        if(this.getSleepTime()!=null&&this.getSleepTime()>0){
-            stringBuffer.append("sleep:").append(this.getSleepTime()).append(SPLIT);
-        }
         if(this.retryTime>1){
             stringBuffer.append("retry:").append(this.retryTime).append(SPLIT);
         }
@@ -390,5 +440,10 @@ public class FateContext implements Context{
         return  stringBuffer.toString();
     }
     static final String SPLIT= "|";
+
+    public  static  void  main(String[] args){
+           System.err.println( Optional.ofNullable("ggj").orElseGet(()->{return  "my name is new";}));
+    }
+
 
 }

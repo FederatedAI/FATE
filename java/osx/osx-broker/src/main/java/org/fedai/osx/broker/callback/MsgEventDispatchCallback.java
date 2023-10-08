@@ -1,6 +1,6 @@
 package org.fedai.osx.broker.callback;
 
-import org.fedai.osx.broker.ServiceContainer;
+import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.consumer.EventDrivenConsumer;
 import org.fedai.osx.broker.message.MessageExt;
 import org.fedai.osx.broker.queue.TransferQueue;
@@ -10,14 +10,14 @@ public class MsgEventDispatchCallback implements MsgEventCallback{
 
 
     @Override
-    public void callback(TransferQueue transferQueue, MessageExt message) throws Exception {
+    public void callback(ConsumerManager  consumerManager ,TransferQueue transferQueue, MessageExt message) throws Exception {
 
         String topic = transferQueue.getTransferId();
-        EventDrivenConsumer eventDrivenConsumer = ServiceContainer.consumerManager.getEventDrivenConsumer(topic);
+        EventDrivenConsumer eventDrivenConsumer = consumerManager.getEventDrivenConsumer(topic);
         if(eventDrivenConsumer!=null){
             if(!transferQueue.isHasEventMsgDestoryCallback()) {
                 transferQueue.registerDestoryCallback(() -> {
-                    ServiceContainer.consumerManager.onComplete(topic);
+                    consumerManager.onComplete(topic);
                 });
                 transferQueue.setHasEventMsgDestoryCallback(true);
             }

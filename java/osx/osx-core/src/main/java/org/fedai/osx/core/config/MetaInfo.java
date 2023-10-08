@@ -100,7 +100,7 @@ public class MetaInfo {
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
     @Config(confKey = "mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer MAP_FILE_SIZE = 1 << 28;
+    public static Integer MAP_FILE_SIZE = 1 << 25;
     @Config(confKey = "mapped.file.dir")
     public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped/.fate/transfer_file";
 
@@ -153,6 +153,8 @@ public class MetaInfo {
 
     @Config(confKey = "http.request.body.max.size")
     public static Integer PROPERTY_HTTP_REQUEST_BODY_MAX_SIZE = 32 * 1024 * 1024;
+    @Config(confKey = "http.request.body.split.size")
+    public static Integer PROPERTY_HTTP_REQUEST_BODY_SPLIT_SIZE = 128*1024;
     @Config(confKey = "http.context.path")
     public static String PROPERTY_HTTP_CONTEXT_PATH = "/osx";
     @Config(confKey = "http.servlet.path")
@@ -164,7 +166,7 @@ public class MetaInfo {
     @Config(confKey = "zk.url")
     public static String PROPERTY_ZK_URL;
     @Config(confKey = "stream.limit.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 20;
+    public static Integer PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 3;
     @Config(confKey = "produce.msg.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_PRODUCE_MSG_MAX_TRY_TIME = 3;
     @Config(confKey = "produce.msg.max.try.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -174,6 +176,8 @@ public class MetaInfo {
     public static Integer PRODUCE_MSG_CACHE_MAX_SIZE = 1000;
     @Config(confKey = "produce.msg.cache.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PRODUCE_MSG_CACHE_TIMEOUT;
+    @Config(confKey= "consume.msg.waiting.timeout")
+    public static Integer CONSUME_MSG_WAITING_TIMEOUT=10*60*1000;
 
 
     @Config(confKey = "flow.control.sample.count", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -186,6 +190,8 @@ public class MetaInfo {
     public static String PROPERTY_DEPLOY_MODE = DeployMode.standalone.name();
     @Config(confKey = "self.party")
     public static Set<String> PROPERTY_SELF_PARTY = Sets.newHashSet();//
+    @Config(confKey = "self.institution")
+    public static String PROPERTY_INSTITUTION="";
     @Config(confKey = "flow.rule")
     public static String PROPERTY_FLOW_RULE_TABLE = "broker/flowRule.json";
     @Config(confKey = "use.zookeeper", pattern = Dict.BOOLEAN_PATTERN)
@@ -252,6 +258,15 @@ public class MetaInfo {
     @Config(confKey = "protocol.params.print", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROTOCOL_PARAMS_PRINT = false;
 
+    @Config(confKey = "mock.eggpair.ip")
+    public static String  PROPERTY_MOCK_EGGPAIR_IP ;
+    @Config(confKey = "mock.eggpair.port")
+    public static Integer PROPERTY_MOCK_EGGPAIR_PORT;
+
+    @Config(confKey = "mock.eggpair.partyid")
+    public static String PROPERTY_MOCK_EGGPAIR_PARTYID;
+    @Config(confKey = "open.mock.eggpair")
+    public static Boolean PROPERTY_OPEN_MOCK_EGGPAIR =false;
 
     public static boolean isCluster() {
         return PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name());
@@ -277,7 +292,7 @@ public class MetaInfo {
                     Class clazz = field.getType();
                     String confKey = config.confKey();
                     Object value = environment.get(confKey);
-                    System.err.println("key:"+confKey+ " value :"+value);
+                   // System.err.println("key:"+confKey+ " value :"+value);
                     if (value != null) {
                         String pattern = config.pattern();
                         if (StringUtils.isNotEmpty(pattern) && !checkPattern(pattern, value.toString())) {

@@ -15,8 +15,9 @@
  */
 package org.fedai.osx.broker.consumer;
 
-import org.fedai.osx.api.router.RouterInfo;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.core.constant.TransferStatus;
+import org.fedai.osx.core.router.RouterInfo;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,9 +27,9 @@ public class RedirectConsumer extends UnaryConsumer {
     TransferStatus transferStatus;
     AtomicBoolean isWorking = new AtomicBoolean(false);
 
-    public RedirectConsumer(long consumerId, String transferId
+    public RedirectConsumer(TransferQueueManager transferQueueManager,ConsumerManager  consumerManager, long consumerId, String transferId
     ) {
-        super(consumerId, transferId);
+        super(transferQueueManager,consumerManager,consumerId, transferId);
         transferStatus = TransferStatus.TRANSFERING;
     }
 

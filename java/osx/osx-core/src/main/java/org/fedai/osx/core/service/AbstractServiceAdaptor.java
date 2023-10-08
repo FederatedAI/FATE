@@ -20,13 +20,13 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.grpc.stub.AbstractStub;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.fedai.osx.api.context.Context;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.StatusCode;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ErrorMessageUtil;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.utils.FlowLogUtil;
+import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Author
  **/
 
-public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> implements ServiceAdaptor<ctx, req, resp> {
+public abstract class AbstractServiceAdaptor< req, resp> implements ServiceAdaptor< req, resp> {
 
 
     static public AtomicInteger requestInHandle = new AtomicInteger(0);
@@ -48,9 +48,9 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
 //    protected Logger flowLogger = LoggerFactory.getLogger("flow");
     protected String serviceName;
     Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    ServiceAdaptor<ctx, req, resp> serviceAdaptor;
-    InterceptorChain<ctx, req, resp> preChain = new DefaultInterceptorChain<>();
-    InterceptorChain<ctx, req, resp> postChain = new DefaultInterceptorChain<>();
+    ServiceAdaptor< req, resp> serviceAdaptor;
+    InterceptorChain< req, resp> preChain = new DefaultInterceptorChain<>();
+    InterceptorChain< req, resp> postChain = new DefaultInterceptorChain<>();
     private Map<String, Method> methodMap = Maps.newHashMap();
     private AbstractStub serviceStub;
 
@@ -71,7 +71,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
         this.methodMap = methodMap;
     }
 
-    public AbstractServiceAdaptor<ctx, req, resp> addPreProcessor(Interceptor interceptor) {
+    public AbstractServiceAdaptor< req, resp> addPreProcessor(Interceptor interceptor) {
         preChain.addInterceptor(interceptor);
         return this;
     }
@@ -80,7 +80,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
         postChain.addInterceptor(interceptor);
     }
 
-    public ServiceAdaptor<ctx, req, resp> getServiceAdaptor() {
+    public ServiceAdaptor< req, resp> getServiceAdaptor() {
         return serviceAdaptor;
     }
 
@@ -104,7 +104,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
         this.serviceName = serviceName;
     }
 
-    protected abstract resp doService(ctx context, InboundPackage<req> data);
+    protected abstract resp doService(OsxContext context, InboundPackage<req> data);
 
     /**
      * @param context
@@ -113,7 +113,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
      * @throws Exception
      */
     @Override
-    public OutboundPackage<resp> service(ctx context, InboundPackage<req> data) throws RuntimeException {
+    public OutboundPackage<resp> service(OsxContext context, InboundPackage<req> data) throws RuntimeException {
 
         OutboundPackage<resp> outboundPackage = new OutboundPackage<resp>();
         // context.preProcess();
@@ -149,9 +149,9 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
                     outboundPackage = this.serviceFail(context, data, exceptions);
                 }
             } finally {
-                if(context instanceof FateContext )
+                if(context instanceof OsxContext )
                 {
-                    FateContext fateContext =(FateContext )context;
+                    OsxContext fateContext =(OsxContext )context;
                     if(fateContext.needPrintFlowLog()){
                         FlowLogUtil.printFlowLog(context);
                     }
@@ -181,7 +181,7 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
 //        FlowLogUtil.printFlowLog(context);
 //    }
 
-    protected OutboundPackage<resp> serviceFailInner(ctx context, InboundPackage<req> data, Throwable e) {
+    protected OutboundPackage<resp> serviceFailInner(OsxContext context, InboundPackage<req> data, Throwable e) {
         OutboundPackage<resp> outboundPackage = new OutboundPackage<resp>();
         ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
         context.setReturnCode(exceptionInfo.getCode());
@@ -193,13 +193,13 @@ public abstract class AbstractServiceAdaptor<ctx extends Context, req, resp> imp
     }
 
     @Override
-    public OutboundPackage<resp> serviceFail(ctx context, InboundPackage<req> data, List<Throwable> errors) throws RuntimeException {
+    public OutboundPackage<resp> serviceFail(OsxContext context, InboundPackage<req> data, List<Throwable> errors) throws RuntimeException {
         Throwable e = errors.get(0);
         logger.error("service fail ", e);
         return serviceFailInner(context, data, e);
     }
 
-    protected abstract resp transformExceptionInfo(ctx context, ExceptionInfo exceptionInfo);
+    protected abstract resp transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo);
 
 
 }

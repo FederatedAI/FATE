@@ -16,20 +16,22 @@
 package org.fedai.osx.broker.ptp;
 
 
-import org.fedai.osx.core.context.FateContext;
+
+
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptor;
 import org.ppc.ptp.Osx;
 
-public abstract class AbstractPtpServiceAdaptor extends AbstractServiceAdaptor<FateContext,Osx.Inbound, Osx.Outbound> {
+public abstract class AbstractPtpServiceAdaptor< req, resp> extends AbstractServiceAdaptor<req, resp> {
 
-    @Override
-    protected Osx.Outbound transformExceptionInfo(FateContext context, ExceptionInfo exceptionInfo) {
-
-        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
-        builder.setCode(exceptionInfo.getCode());
-        builder.setMessage(exceptionInfo.getMessage());
-        return builder.build();
-    }
+//    @Override
+//    protected Osx.Outbound transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
+//
+//        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
+//        builder.setCode(exceptionInfo.getCode());
+//        builder.setMessage(exceptionInfo.getMessage());
+//        return builder.build();
+//    }
 
 }

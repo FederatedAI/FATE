@@ -15,21 +15,26 @@
  */
 package org.fedai.osx.broker.ptp;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.ServiceContainer;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.core.constant.ActionType;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.exceptions.ParameterException;
 import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-public class PtpClusterTopicApplyService extends AbstractPtpServiceAdaptor {
+@Singleton
+public class PtpClusterTopicApplyService extends AbstractPtpServiceAdaptor<Osx.Inbound, Osx.Outbound> {
     Logger logger = LoggerFactory.getLogger(PtpClusterTopicApplyService.class);
+    @Inject
+    TransferQueueManager transferQueueManager;
     @Override
-    protected Osx.Outbound doService(FateContext context, InboundPackage<Osx.Inbound> data) {
+    protected Osx.Outbound doService(OsxContext context, InboundPackage<Osx.Inbound> data) {
         try {
             context.setActionType(ActionType.TOPIC_APPLY.getAlias());
             Osx.Inbound inbound = data.getBody();
@@ -47,13 +52,18 @@ public class PtpClusterTopicApplyService extends AbstractPtpServiceAdaptor {
             }
             context.setTopic(topic);
             context.setSessionId(sessionId);
-            Osx.Outbound outbound = ServiceContainer.transferQueueManager.applyFromMaster(topic, sessionId, instanceId);
+            Osx.Outbound outbound = transferQueueManager.applyFromMaster(topic, sessionId, instanceId);
             logger.info("====================PtpClusterTopicApplyService================{}=====", outbound);
             return outbound;
         }catch(Exception e){
             e.printStackTrace();
             throw  e;
         }
+    }
+
+    @Override
+    protected Osx.Outbound transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
+        return null;
     }
 
 }

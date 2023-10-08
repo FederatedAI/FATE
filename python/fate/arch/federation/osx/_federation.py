@@ -141,39 +141,40 @@ class OSXFederation(FederationBase):
 
     _topic_ip_map = {}
 
-    @nretry
-    def _query_receive_topic(self, channel_info):
-        LOGGER.debug(f"_query_receive_topic, channel_info={channel_info}")
-        topic = channel_info._receive_topic
-        if topic not in self._topic_ip_map:
-            LOGGER.info(f"query topic {topic} miss cache ")
-            response = channel_info.query()
-            if response.code == "0":
-                topic_info = osx_pb2.TopicInfo()
-                topic_info.ParseFromString(response.payload)
-                self._topic_ip_map[topic] = (topic_info.ip, topic_info.port)
-                LOGGER.info(f"query result {topic} {topic_info}")
-            else:
-                raise LookupError(f"{response}")
-        host, port = self._topic_ip_map[topic]
-
-        new_channel_info = channel_info
-        if channel_info._host != host or channel_info._port != port:
-            LOGGER.info(
-                f"channel info missmatch, host: {channel_info._host} vs {host} and port: {channel_info._port} vs {port}"
-            )
-            new_channel_info = MQChannel(
-                host=host,
-                port=port,
-                namespace=channel_info._namespace,
-                send_topic=channel_info._send_topic,
-                receive_topic=channel_info._receive_topic,
-                src_party_id=channel_info._src_party_id,
-                src_role=channel_info._src_role,
-                dst_party_id=channel_info._dst_party_id,
-                dst_role=channel_info._dst_role,
-            )
-        return new_channel_info
+    # @nretry
+    # def _query_receive_topic(self, channel_info):
+    #     # LOGGER.debug(f"_query_receive_topic, channel_info={channel_info}")
+    #     # topic = channel_info._receive_topic
+    #     # if topic not in self._topic_ip_map:
+    #     #     LOGGER.info(f"query topic {topic} miss cache ")
+    #     #     response = channel_info.query()
+    #     #     if response.code == "0":
+    #     #         topic_info = osx_pb2.TopicInfo()
+    #     #         topic_info.ParseFromString(response.payload)
+    #     #         self._topic_ip_map[topic] = (topic_info.ip, topic_info.port)
+    #     #         LOGGER.info(f"query result {topic} {topic_info}")
+    #     #     else:
+    #     #         raise LookupError(f"{response}")
+    #     # host, port = self._topic_ip_map[topic]
+    #     #
+    #     # new_channel_info = channel_info
+    #     # if channel_info._host != host or channel_info._port != port:
+    #     #     LOGGER.info(
+    #     #         f"channel info missmatch, host: {channel_info._host} vs {host} and port: {channel_info._port} vs {port}"
+    #     #     )
+    #     #     new_channel_info = MQChannel(
+    #     #         host=host,
+    #     #         port=port,
+    #     #         namespace=channel_info._namespace,
+    #     #         send_topic=channel_info._send_topic,
+    #     #         receive_topic=channel_info._receive_topic,
+    #     #         src_party_id=channel_info._src_party_id,
+    #     #         src_role=channel_info._src_role,
+    #     #         dst_party_id=channel_info._dst_party_id,
+    #     #         dst_role=channel_info._dst_role,
+    #     #     )
+    #     # return new_channel_info
+    #       return  channel_info;
 
     def _get_consume_message(self, channel_info):
         LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}")
@@ -184,14 +185,15 @@ class OSXFederation(FederationBase):
             #     continue
             message = osx_pb2.Message()
             message.ParseFromString(response.payload)
-            offset = response.metadata["MessageOffSet"]
+            # offset = response.metadata["MessageOffSet"]
             head_str = str(message.head, encoding="utf-8")
             LOGGER.debug(f"head str {head_str}")
             properties = json.loads(head_str)
             LOGGER.debug(f"osx response properties {properties}")
             body = message.body
-            yield offset, properties, body
+            yield 0, properties, body
 
     def _consume_ack(self, channel_info, id):
-        LOGGER.debug(f"_comsume_ack, channel_info={channel_info}, id={id}")
-        channel_info.ack(offset=id)
+        return
+        # LOGGER.debug(f"_comsume_ack, channel_info={channel_info}, id={id}")
+        # channel_info.ack(offset=id)
