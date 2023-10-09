@@ -6,7 +6,6 @@ from fate.arch.federation.standalone import StandaloneFederation
 from fate.arch.tensor import DTensor
 from pytest import fixture
 
-
 @fixture
 def ctx():
     computing = CSession()

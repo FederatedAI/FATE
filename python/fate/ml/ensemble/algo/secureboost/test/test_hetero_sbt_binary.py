@@ -24,7 +24,7 @@ def create_ctx(local, context_name):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     party = sys.argv[1]
     max_depth = 3
-    num_tree = 1
+    num_tree = 5
 
     if party == "guest":
 
@@ -55,6 +55,8 @@ if __name__ == "__main__":
         trees.fit(ctx, data_guest)
         pred = trees.get_train_predict().as_pd_df()
 
+        pred_ = trees.predict(ctx, data_guest).as_pd_df()
+
     elif party == "host":
 
         ctx = create_ctx(host, get_current_datetime_str())
@@ -67,3 +69,4 @@ if __name__ == "__main__":
 
         trees = HeteroSecureBoostHost(num_tree, max_depth=max_depth)
         trees.fit(ctx, data_host)
+        trees.predict(ctx, data_host)

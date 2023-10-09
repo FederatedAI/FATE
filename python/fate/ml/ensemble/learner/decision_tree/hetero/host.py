@@ -19,7 +19,8 @@ from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import (
     FeatureImportance,
 )
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder, DistributedHistogram
-from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
+from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import SBTSplitter
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import ALL_FEAT, GUEST_FEAT_ONLY
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from typing import List
@@ -40,6 +41,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         random_seed=None,
         global_random_seed=None,
         hist_sub=True,
+        tree_mode=ALL_FEAT
     ):
         super().__init__(
             max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features
@@ -56,6 +58,10 @@ class HeteroDecisionTreeHost(DecisionTree):
         self._pack_info = None
         self._hist_sub = hist_sub
 
+        # feature control
+        self._tree_mode = tree_mode
+        assert self._tree_mode in [ALL_FEAT, GUEST_FEAT_ONLY], "tree mode {} not supported".format(self._tree_mode)
+
     def _convert_split_id(
         self,
         ctx: Context,
@@ -63,7 +69,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         node_map: dict,
         hist_builder: SBTHistogramBuilder,
         statistic_histogram: DistributedHistogram,
-        splitter: FedSBTSplitter,
+        splitter: SBTSplitter,
         data: DataFrame,
     ):
         sitename = ctx.local.party[0] + "_" + ctx.local.party[1]
@@ -130,6 +136,14 @@ class HeteroDecisionTreeHost(DecisionTree):
         return cur_layer_nodes, next_layer_nodes
 
     def booster_fit(self, ctx: Context, bin_train_data: DataFrame, binning_dict: dict):
+
+
+        if self._tree_mode == GUEST_FEAT_ONLY:
+            logger.info('this tree is a guest feat only tree, skip computation')
+            masked_tree, _ = self._sync_nodes(ctx)
+            self._nodes = masked_tree
+            return
+
         train_df = bin_train_data
         feat_max_bin, max_bin = self._get_column_max_bin(binning_dict)
         sample_pos = self._init_sample_pos(train_df)
@@ -152,7 +166,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             hist_sub=self._hist_sub,
         )
         # splitter
-        self.splitter = FedSBTSplitter(bin_train_data, binning_dict)
+        self.splitter = SBTSplitter(bin_train_data, binning_dict)
 
         node_map = {}
         cur_layer_node = [root_node]

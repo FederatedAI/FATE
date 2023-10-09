@@ -25,9 +25,16 @@ from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import SplitInfo
 from typing import List
 import logging
 
-
+# PRECISION
 FLOAT_ZERO = 1e-8
+
+# LEAF IDX
 LEAF_IDX = -1
+
+# TREE MODES
+GUEST_FEAT_ONLY = 'guest'
+ALL_FEAT = 'all'
+# HOST_FEAT_ONLY = 'host'
 
 
 logger = logging.getLogger(__name__)
@@ -104,7 +111,7 @@ class Node(object):
         sitename=None,
         fid=None,
         bid=None,
-        weight=0,
+        weight=0.0,
         is_leaf=False,
         grad=None,
         hess=None,
@@ -260,6 +267,7 @@ class DecisionTree(object):
         self._valid_feature = valid_features
         self._sample_on_leaves = None
         self._sample_weights = None
+        self._splitter = None
 
     def _init_sample_pos(self, train_data: DataFrame):
         sample_pos = train_data.create_frame()
@@ -324,7 +332,7 @@ class DecisionTree(object):
             return None
         return dataframe.schema.columns[fid]
 
-    def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo], data: DataFrame):
+    def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo], data: DataFrame) -> object:
         assert len(cur_layer_nodes) == len(
             split_info
         ), "node num not match split info num, got {} node vs {} split info".format(
@@ -340,7 +348,6 @@ class DecisionTree(object):
                 node.is_leaf = True
                 node.sitename = ctx.guest.name  # leaf always belongs to guest
                 self._nodes.append(node)
-                logger.info("set node {} to leaf".format(node))
                 continue
 
             sum_grad = node.grad
@@ -376,7 +383,7 @@ class DecisionTree(object):
                 sample_num=l_cnt,
             )
 
-            # not gonna happen
+            # this is not going to happen
             assert sum_cnt > l_cnt, "sum cnt {} not greater than l cnt {}".format(sum_cnt, l_cnt)
 
             r_g = float(sum_grad - l_g)

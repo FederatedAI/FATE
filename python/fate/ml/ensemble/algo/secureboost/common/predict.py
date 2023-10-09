@@ -95,8 +95,9 @@ def _merge_pos_arr(s: pd.Series):
     arr_2 = np.array(arr_2)
     assert len(arr_1) == len(arr_2)
     merge_rs = np.copy(arr_1)
+    already_on_leaf = arr_1 < 0
     on_leaf = arr_2 < 0
-    updated = on_leaf | (arr_2 > arr_1)
+    updated = ~already_on_leaf & (on_leaf | (arr_2 > arr_1))
     merge_rs[updated] = arr_2[updated]
     return [merge_rs]
 
@@ -132,6 +133,7 @@ def predict_leaf_guest(ctx: Context, trees: List[DecisionTree], data: DataFrame)
 
         if comm_round:
             predict_data = predict_data.loc(indexer=sample_pos.get_indexer(target="sample_id"), preserve_order=True)
+
         sample_with_pos = DataFrame.hstack([predict_data, sample_pos])
         logger.info("predict round {} has {} samples to predict".format(comm_round, len(sample_with_pos)))
         map_func = functools.partial(traverse_tree, trees=tree_list, sitename=sitename)

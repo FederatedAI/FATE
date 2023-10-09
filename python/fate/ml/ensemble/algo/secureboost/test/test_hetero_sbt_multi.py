@@ -49,15 +49,14 @@ if __name__ == "__main__":
         ctx = create_ctx(guest)
         df = pd.read_csv("./../../../../../../../examples/data/vehicle_scale_hetero_guest.csv")
         df["sample_id"] = [i for i in range(len(df))]
-
         reader = PandasReader(sample_id_name="sample_id", match_id_name="id", label_name="y", dtype="float32")
 
         data_guest = reader.to_frame(ctx, df)
 
         trees = HeteroSecureBoostGuest(
-            num_tree, max_depth=max_depth, l2=0.5, min_impurity_split=200, num_class=4, objective="multi:ce"
+            num_tree, max_depth=max_depth, num_class=4, objective="multi:ce"
         )
-        gh = trees.fit(ctx, data_guest)
+        trees.fit(ctx, data_guest)
         # pred = trees.get_train_predict().as_pd_df()
         # pred['sample_id'] = pred.sample_id.astype(int)
         # df = pd.merge(df, pred, on='sample_id')
@@ -79,14 +78,10 @@ if __name__ == "__main__":
 
     elif party == "host":
         ctx = create_ctx(host)
-
         df_host = pd.read_csv("./../../../../../../../examples/data/vehicle_scale_hetero_host.csv")
         df_host["sample_id"] = [i for i in range(len(df_host))]
-
         reader_host = PandasReader(sample_id_name="sample_id", match_id_name="id", dtype="float32")
-
         data_host = reader_host.to_frame(ctx, df_host)
-
         trees = HeteroSecureBoostHost(num_tree, max_depth=max_depth)
         trees.fit(ctx, data_host)
         # load tree
@@ -95,6 +90,6 @@ if __name__ == "__main__":
         # trees.predict(ctx, data_host)
 
         # fit again
-        new_tree = HeteroSecureBoostHost(1, max_depth=3)
-        new_tree.from_model(trees.get_model())
-        new_tree.fit(ctx, data_host)
+        # new_tree = HeteroSecureBoostHost(1, max_depth=3)
+        # new_tree.from_model(trees.get_model())
+        # new_tree.fit(ctx, data_host)

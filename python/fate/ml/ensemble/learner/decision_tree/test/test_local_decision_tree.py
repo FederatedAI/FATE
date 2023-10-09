@@ -1,12 +1,10 @@
 import pandas as pd
 from fate.ml.ensemble.learner.decision_tree.hetero.guest import HeteroDecisionTreeGuest
 from fate.ml.ensemble.learner.decision_tree.hetero.host import HeteroDecisionTreeHost
-from fate.arch.dataframe import PandasReader, DataFrame
-import numpy as np
+from fate.arch.dataframe import PandasReader
 from fate.ml.ensemble.learner.decision_tree.tree_core.loss import BCELoss
-from fate.arch import Context
 import sys
-
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import GUEST_FEAT_ONLY
 
 arbiter = ("arbiter", "10000")
 guest = ("guest", "10000")
@@ -78,7 +76,7 @@ if __name__ == "__main__":
         # computed_hist = stat_obj.decrypt({}, {})
         # splitter = FedSBTSplitter(data_guest, bin_info)
         # rs = splitter._find_guest_best_splits(computed_hist, '123', root_node, node_map)
-        tree = HeteroDecisionTreeGuest(max_depth, objective="binary:bce", gh_pack=True)
+        tree = HeteroDecisionTreeGuest(max_depth, objective="binary:bce", gh_pack=True, tree_mode=GUEST_FEAT_ONLY)
         tree.set_encrypt_kit(kit)
         ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
 
@@ -97,5 +95,5 @@ if __name__ == "__main__":
         bin_info = binning(data_host, max_bin=32)
         bin_data = data_host.bucketize(boundaries=bin_info)
 
-        tree = HeteroDecisionTreeHost(max_depth, random_seed=114)
+        tree = HeteroDecisionTreeHost(max_depth, random_seed=114, tree_mode=GUEST_FEAT_ONLY)
         ret = tree.booster_fit(ctx, bin_data, bin_info)

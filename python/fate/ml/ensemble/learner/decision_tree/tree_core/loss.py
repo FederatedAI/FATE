@@ -29,7 +29,11 @@ def apply_weight(loss: DataFrame, weight: DataFrame):
     return loss["loss"] * weight["weight"]
 
 
-class BCELoss(object):
+class Loss(object):
+    pass
+
+
+class BCELoss(Loss):
     @staticmethod
     def initialize(label: DataFrame):
         init_score = label.create_frame()
@@ -62,11 +66,15 @@ class BCELoss(object):
         gh["h"] = predict_score * (1 - predict_score)
 
 
-class CELoss(object):
-    @staticmethod
-    def initialize(label, class_num=3):
+class CELoss(Loss):
+
+    def __init__(self, class_num) -> None:
+        super().__init__()
+        self.class_num = class_num
+
+    def initialize(self, label):
         init_score = label.create_frame()
-        init_score["score"] = [0.0 for i in range(class_num)]
+        init_score["score"] = [0.0 for i in range(self.class_num)]
         return init_score
 
     @staticmethod
@@ -94,14 +102,27 @@ class CELoss(object):
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, score: DataFrame):
-        gh["g"] = score.apply_row(lambda s: [[i - 1 for i in s["score"]]])
+
+        label_name = label.schema.label_name
+        label = label.loc(score.get_indexer('sample_id'), preserve_order=True)
+        print('len g {} len label {} len score {}'.format(len(gh), len(label), len(score)))
+        new_label = label.create_frame()
+        new_label[label_name] = label.label
+        stack_df = DataFrame.hstack([score, new_label])
+        stack_df = stack_df.loc(gh.get_indexer('sample_id'), preserve_order=True)
+        print('cwj', stack_df.as_pd_df())
+        def grad(s):
+            grads = [i for i in s["score"]]
+            grads[s[label_name]] -= 1
+            return [grads]
+        gh["g"] = stack_df.apply_row(lambda s: grad(s))
 
     @staticmethod
     def compute_hess(gh: DataFrame, y, score):
         gh["h"] = score.apply_row(lambda s: [[2 * i * (1 - i) for i in s["score"]]])
 
 
-class L2Loss(object):
+class L2Loss(Loss):
     @staticmethod
     def initialize(label):
         init_score = label.create_frame()
