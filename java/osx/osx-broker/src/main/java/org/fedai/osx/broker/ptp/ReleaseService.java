@@ -26,13 +26,14 @@ import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
+import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 
 import java.util.List;
 @Singleton
 //@Register(uri= UriConstants.RELEASE,allowInterUse = false)
-public class ReleaseService extends AbstractPtpServiceAdaptor< Osx.ReleaseInbound, Osx.TransportOutbound> {
+public class ReleaseService extends AbstractServiceAdaptorNew< Osx.ReleaseInbound, Osx.TransportOutbound> {
 
     public ReleaseService() {
         this.setServiceName("cancel-unary");
@@ -44,10 +45,10 @@ public class ReleaseService extends AbstractPtpServiceAdaptor< Osx.ReleaseInboun
     ConsumerManager  consumerManager;
 
     @Override
-    protected Osx.TransportOutbound doService(OsxContext context, InboundPackage<Osx.ReleaseInbound> data) {
+    protected Osx.TransportOutbound doService(OsxContext context, Osx.ReleaseInbound data) {
 
         String sessionId = context.getSessionId();
-        String topic = context.getTopic();
+        String topic = data.getTopic();
         List<String> cleanedTransferId = transferQueueManager.cleanByParam(sessionId, topic);
         if (cleanedTransferId != null) {
             for (String transferIdClean : cleanedTransferId) {
@@ -65,4 +66,13 @@ public class ReleaseService extends AbstractPtpServiceAdaptor< Osx.ReleaseInboun
     }
 
 
+    @Override
+    public Osx.ReleaseInbound decode(Object object) {
+        return null;
+    }
+
+    @Override
+    public Osx.Outbound toOutbound(Osx.TransportOutbound response) {
+        return null;
+    }
 }

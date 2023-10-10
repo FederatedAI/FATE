@@ -22,7 +22,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.ptp.PtpUnaryCallService;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.server.OsxServer;
 import org.fedai.osx.broker.util.ApplicationStartedRunnerUtils;

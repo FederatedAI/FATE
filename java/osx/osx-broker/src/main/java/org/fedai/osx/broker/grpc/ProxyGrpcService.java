@@ -38,10 +38,8 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
     UnaryCallService unaryCallService;
     @Inject
     PushService pushService;
-
     @Inject
     EggrollPushService eggrollPushService;
-
 
     public io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> push(
             io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Metadata> responseObserver) {
@@ -50,8 +48,8 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             context.setNeedPrintFlowLog(false);
             InboundPackage<StreamObserver> data = new InboundPackage<>();
             data.setBody(responseObserver);
-            OutboundPackage<StreamObserver> outboundPackage = pushService.service(context, data);
-            return outboundPackage.getData();
+            StreamObserver result = pushService.service(context, data);
+            return result;
         } catch (Exception e) {
             logger.error("push error",e);
         }
@@ -61,18 +59,16 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
 
     public void unaryCall(com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet request,
                           io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> responseObserver) {
-        OsxContext context = ContextUtil.buildFateContext(Protocol.grpc);
-        InboundPackage<Proxy.Packet> data = new InboundPackage<>();
-        data.setBody(request);
-        context.setDataSize(request.getSerializedSize());
-        OutboundPackage<Proxy.Packet> outboundPackage = unaryCallService.service(context, data);
-        Proxy.Packet result = outboundPackage.getData();
-        Throwable throwable = outboundPackage.getThrowable();
-        if (throwable != null) {
-            responseObserver.onError(throwable);
-        } else {
+        try {
+            OsxContext context = ContextUtil.buildFateContext(Protocol.grpc);
+            InboundPackage<Proxy.Packet> data = new InboundPackage<>();
+            data.setBody(request);
+            context.setDataSize(request.getSerializedSize());
+            Proxy.Packet result = unaryCallService.service(context, request);
             responseObserver.onNext(result);
             responseObserver.onCompleted();
+        }catch (Exception e){
+            responseObserver.onError(e);
         }
     }
 

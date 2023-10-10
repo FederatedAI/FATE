@@ -182,8 +182,10 @@ public class FateTechProvider implements TechProvider {
             //this.writeHttpRespose(response, exceptionInfo.getCode(),exceptionInfo.getMessage(),null);
             context.setReturnCode(exceptionInfo.getCode());
             context.setReturnMsg(exceptionInfo.getMessage());
-
-            result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
+            Osx.Outbound.Builder  builder = Osx.Outbound.newBuilder();
+            if(exceptionInfo.getCode()!=null)
+                builder.setCode(exceptionInfo.getCode());
+            result = builder .setMessage(exceptionInfo.getMessage()).build();
         }
         finally {
             FlowLogUtil.printFlowLog(context);
@@ -259,6 +261,8 @@ public class FateTechProvider implements TechProvider {
                     context.setActionType(MSG_REDIRECT.name());
                     Osx.Inbound.Builder   inboundBuilder =  Osx.Inbound.newBuilder();
                     inboundBuilder.setPayload(inbound.toByteString());
+                    context.setUri(UriConstants.PUSH);
+                    context.setTopic(inbound.getTopic());
                     Osx.Outbound  outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
                     Osx.TransportOutbound.Builder   transportOutboundBuilder = Osx.TransportOutbound.newBuilder();
                     context.setReturnCode(outbound.getCode());

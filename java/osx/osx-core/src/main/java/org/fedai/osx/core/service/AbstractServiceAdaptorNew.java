@@ -27,13 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAdaptorNew< req, resp> {
 
-
-    static public AtomicInteger requestInHandle = new AtomicInteger(0);
-    public static boolean isOpen = true;
-    //    protected Logger flowLogger = LoggerFactory.getLogger("flow");
     protected String serviceName;
     Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    ServiceAdaptor< req, resp> serviceAdaptor;
+//    ServiceAdaptor< req, resp> serviceAdaptor;
     InterceptorChainNew< req, resp> preChain = new DefaultInterceptorChainNew<>();
     InterceptorChainNew< req, resp> postChain = new DefaultInterceptorChainNew<>();
     private Map<String, Method> methodMap = Maps.newHashMap();
@@ -65,13 +61,6 @@ public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAd
         postChain.addInterceptor(interceptor);
     }
 
-    public ServiceAdaptor< req, resp> getServiceAdaptor() {
-        return serviceAdaptor;
-    }
-
-    public void setServiceAdaptor(ServiceAdaptor serviceAdaptor) {
-        this.serviceAdaptor = serviceAdaptor;
-    }
 
     public AbstractStub getServiceStub() {
         return serviceStub;
@@ -112,7 +101,7 @@ public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAd
 //        }
 
         try {
-            requestInHandle.addAndGet(1);
+
 
             context.setServiceName(this.serviceName);
             try {
@@ -128,7 +117,7 @@ public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAd
             exceptions.add(e);
             logger.error("service error", e);
         } finally {
-            requestInHandle.decrementAndGet();
+
             try {
                 if (exceptions.size() != 0) {
                     result = this.serviceFail(context, data, exceptions);

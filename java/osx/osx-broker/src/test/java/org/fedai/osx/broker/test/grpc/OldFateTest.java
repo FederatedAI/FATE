@@ -203,8 +203,8 @@ public class OldFateTest {
 
     public static void main(String[] args) {
         System.err.println("===============");
-        testPush();
-       // testUnaryCall();
+       // testPush();
+        testUnaryCall();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         try {
             countDownLatch.await();

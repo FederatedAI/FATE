@@ -21,13 +21,9 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.fedai.osx.broker.constants.ServiceType;
-import org.fedai.osx.broker.ptp.AbstractPtpServiceAdaptor;
-import org.fedai.osx.broker.zk.CuratorZookeeperClient;
-import org.fedai.osx.broker.zk.ZkConfig;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.InvalidRequestException;
-import org.fedai.osx.core.service.AbstractServiceAdaptor;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.reflections.Reflections;
@@ -43,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServiceRegisterManager implements ApplicationStartedRunner {
 
     ConcurrentHashMap<String , List<ServiceRegisterInfo>>   serviceRegisterMap = new ConcurrentHashMap<>();
-
 
     @Inject
     Injector injector;

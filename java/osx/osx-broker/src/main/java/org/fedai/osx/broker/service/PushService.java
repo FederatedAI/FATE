@@ -28,21 +28,20 @@ import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.exceptions.SysException;
-import org.fedai.osx.core.service.AbstractServiceAdaptor;
+import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.fedai.osx.core.service.InboundPackage;
+import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 @Singleton
-public class PushService extends AbstractServiceAdaptor<StreamObserver, StreamObserver> {
+public class PushService extends AbstractServiceAdaptorNew<InboundPackage<StreamObserver>, StreamObserver> {
 
     Logger logger = LoggerFactory.getLogger(PushService.class);
-
     @Inject
     DefaultFateRouterServiceImpl   defaultFateRouterService;
     @Inject
     TransferQueueManager  transferQueueManager;
-    @Inject
-    ConsumerManager consumerManager;
+
     @Override
     protected StreamObserver doService(OsxContext context, InboundPackage<StreamObserver> data
     ) {
@@ -59,5 +58,15 @@ public class PushService extends AbstractServiceAdaptor<StreamObserver, StreamOb
     protected StreamObserver transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
         logger.error("PushService error {}", exceptionInfo);
         throw new SysException(exceptionInfo.toString());
+    }
+
+    @Override
+    public InboundPackage<StreamObserver> decode(Object object) {
+        return null;
+    }
+
+    @Override
+    public Osx.Outbound toOutbound(StreamObserver response) {
+        return null;
     }
 }

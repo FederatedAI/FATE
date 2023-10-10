@@ -93,7 +93,6 @@ public class TechProviderRegister implements Lifecycle , ApplicationStartedRunne
 
     @Override
     public void run(String[] args) throws Exception {
-        logger.info("=========================11111=");
          start();
     }
 }

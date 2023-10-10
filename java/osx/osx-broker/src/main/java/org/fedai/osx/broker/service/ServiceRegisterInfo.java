@@ -11,15 +11,10 @@ public class ServiceRegisterInfo {
     String uri;
     ServiceType serviceType;
     Protocol protocol;
-//    String host;
-//    String ip;
-//    int port;
-
     RouterInfo routerInfo;
     String nodeId;
     boolean  allowInterUse;
     AbstractServiceAdaptorNew serviceAdaptor;
-
 
     public String  buildRegisterKey(){
 

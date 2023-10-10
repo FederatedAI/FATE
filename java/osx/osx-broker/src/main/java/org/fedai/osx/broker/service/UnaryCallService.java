@@ -35,7 +35,7 @@ import org.fedai.osx.core.exceptions.NoRouterInfoException;
 import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.router.RouterInfo;
-import org.fedai.osx.core.service.AbstractServiceAdaptor;
+import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * 用于兼容旧版FATE
  */
 @Singleton
-public class UnaryCallService extends AbstractServiceAdaptor<Proxy.Packet, Proxy.Packet> {
+public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Proxy.Packet> {
 
     Logger logger = LoggerFactory.getLogger(UnaryCallService.class);
 
@@ -54,21 +54,26 @@ public class UnaryCallService extends AbstractServiceAdaptor<Proxy.Packet, Proxy
 
 
     public UnaryCallService() {
-        this .addPreProcessor(new UnaryCallHandleInterceptor());
-
     }
 
     @Override
-    protected Proxy.Packet doService(OsxContext context, InboundPackage data) {
-        context.setActionType(ActionType.UNARY_CALL.getAlias());
-        Proxy.Packet req = (Proxy.Packet) data.getBody();
+    protected Proxy.Packet doService(OsxContext context, Proxy.Packet req) {
+        TransferUtil.assableContextFromProxyPacket(context, req);
         RouterInfo routerInfo = routerService.route(req);
         context.setRouterInfo(routerInfo);
-
         Proxy.Packet resp = unaryCall(context, req);
-        //logger.info("uncary req {} resp {}", req, resp);
         return resp;
     }
+
+//    @Override
+//    protected Proxy.Packet doService(OsxContext context, InboundPackage data) {
+//        context.setActionType(ActionType.UNARY_CALL.getAlias());
+//        Proxy.Packet req = (Proxy.Packet) data.getBody();
+//        RouterInfo routerInfo = routerService.route(req);
+//        context.setRouterInfo(routerInfo);
+//        Proxy.Packet resp = unaryCall(context, req);
+//        return resp;
+//    }
 
 
     protected Proxy.Packet transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
@@ -117,4 +122,13 @@ public class UnaryCallService extends AbstractServiceAdaptor<Proxy.Packet, Proxy
     }
 
 
+    @Override
+    public Proxy.Packet decode(Object object) {
+        return null;
+    }
+
+    @Override
+    public Osx.Outbound toOutbound(Proxy.Packet response) {
+        return null;
+    }
 }

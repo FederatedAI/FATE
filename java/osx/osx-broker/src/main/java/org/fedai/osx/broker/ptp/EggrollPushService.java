@@ -19,17 +19,17 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.service.Register;
 import org.fedai.osx.broker.service.TokenApplyService;
 import org.fedai.osx.broker.util.TransferUtil;
-import org.fedai.osx.core.config.MetaInfo;
+
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
-import org.fedai.osx.core.service.AbstractServiceAdaptor;
+
+import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import static org.fedai.osx.core.constant.UriConstants.EGGROLL_PUSH;
 
 @Singleton
 //@Register(uri=EGGROLL_PUSH)
-public class EggrollPushService extends AbstractServiceAdaptor<StreamObserver, StreamObserver> {
+public class EggrollPushService extends AbstractServiceAdaptorNew<StreamObserver, StreamObserver> {
     Logger  logger = LoggerFactory.getLogger(EggrollPushService.class);
     @Inject
     DefaultFateRouterServiceImpl routerService;
@@ -47,18 +47,15 @@ public class EggrollPushService extends AbstractServiceAdaptor<StreamObserver, S
     TokenApplyService  tokenApplyService;
     @Inject
     TransferQueueManager  transferQueueManager;
-    @Inject
-    ConsumerManager   consumerManager;
 
     @Override
-    protected StreamObserver doService(OsxContext context, InboundPackage<StreamObserver> data) {
-        StreamObserver responseStreamObserver = data.getBody();
+    protected StreamObserver doService(OsxContext context, StreamObserver data) {
         context.setNeedPrintFlowLog(false);
         return  new StreamObserver<Osx.Inbound>() {
             Logger logger = LoggerFactory.getLogger(EggrollPushService.class);
             QueuePushReqStreamObserver queuePushReqStreamObserver = new  QueuePushReqStreamObserver(context, routerService,
                     transferQueueManager,
-                    responseStreamObserver);
+                    data);
             @Override
             public void onNext(Osx.Inbound inbound) {
                 int dataSize = inbound.getSerializedSize();
@@ -79,10 +76,21 @@ public class EggrollPushService extends AbstractServiceAdaptor<StreamObserver, S
                 queuePushReqStreamObserver.onCompleted();
             }
         };
+
     }
 
     @Override
     protected StreamObserver transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
+        return null;
+    }
+
+    @Override
+    public StreamObserver decode(Object object) {
+        return null;
+    }
+
+    @Override
+    public Osx.Outbound toOutbound(StreamObserver response) {
         return null;
     }
 }
