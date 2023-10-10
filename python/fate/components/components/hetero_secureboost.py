@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
-def hetero_sbt(ctx, role):
+def hetero_secureboost(ctx, role):
     ...
 
 
-@hetero_sbt.train()
+@hetero_secureboost.train()
 def train(
     ctx: Context,
     role: Role,
@@ -106,7 +106,7 @@ def train(
 
 
 
-@hetero_sbt.predict()
+@hetero_secureboost.predict()
 def predict(
     ctx,
     role: Role,
