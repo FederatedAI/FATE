@@ -112,6 +112,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 raise ValueError("objective must be specified when gh_pack is True")
         self._pack_info = {}
 
+        # param checking
+        assert l1 >= 0 and l2 >= 0, "l1 and l2 should be non-negative, got l1: {}, l2: {}".format(l1, l2)
+
     def set_encrypt_kit(self, kit):
         self._encrypt_kit = kit
         self._en_key_length = kit.key_size

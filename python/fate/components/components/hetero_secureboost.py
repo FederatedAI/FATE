@@ -46,7 +46,8 @@ def train(
     objective: cpn.parameter(type=params.string_choice(choice=[BINARY_BCE, MULTI_CE, REGRESSION_L2]), default=BINARY_BCE, \
                                        desc='objective function, available: {}'.format([BINARY_BCE, MULTI_CE, REGRESSION_L2])),
     num_class: cpn.parameter(type=params.conint(gt=0), default=2, desc='class number of multi classification, active when objective is {}'.format(MULTI_CE)),
-    l2: cpn.parameter(type=params.confloat(gt=0), default=0.1, desc='L2 regularization'),
+    l1: cpn.parameter(type=params.confloat(ge=0), default=0, desc='L1 regularization'),
+    l2: cpn.parameter(type=params.confloat(ge=0), default=0.1, desc='L2 regularization'),
     min_impurity_split: cpn.parameter(type=params.confloat(gt=0), default=1e-2, desc='min impurity when splitting a tree node'),
     min_sample_split: cpn.parameter(type=params.conint(gt=0), default=2, desc='min sample to split a tree node'),
     min_leaf_node: cpn.parameter(type=params.conint(gt=0), default=1, desc='mininum sample contained in a leaf node'),
@@ -73,7 +74,7 @@ def train(
         ctx.cipher.set_phe(ctx.device, he_param.dict())
 
         booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
-                                         learning_rate=learning_rate, max_bin=max_bin,
+                                         learning_rate=learning_rate, max_bin=max_bin, l1=l1,
                                          l2=l2, min_impurity_split=min_impurity_split, min_sample_split=min_sample_split,
                                         min_leaf_node=min_leaf_node, min_child_weight=min_child_weight, objective=objective, num_class=num_class, 
                                         gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub

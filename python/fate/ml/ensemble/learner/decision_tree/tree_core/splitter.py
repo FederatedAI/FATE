@@ -115,14 +115,33 @@ class SBTSplitter(Splitter):
     def truncate(f, n=TREE_DECIMAL_ROUND):
         return np.floor(f * 10 ** n) / 10 ** n
 
+    def _l1_reg(self, g):
+
+        if self.l1 == 0:
+            return  g
+        if isinstance(g, torch.Tensor):
+            g[g < -self.l1] += self.l1
+            g[g > self.l1] -= self.l1
+            g[(g <= self.l1) & (g >= -self.l1)] = 0
+        else:
+            if g < - self.l1:
+                return g + self.l1
+            elif g > self.l1:
+                return g - self.l1
+            else:
+                return 0
+        return g
+
     def node_gain(self, g, h):
         g, h = self.truncate(g), self.truncate(h)
+        g = self._l1_reg(g)
         if isinstance(h, np.ndarray):
             h[h == 0] = np.nan
-        score = g * g / (h + self.l2)
+        score = (g * g ) / (h + self.l2)
         return score
 
     def node_weight(self, sum_grad, sum_hess):
+        sum_grad = self._l1_reg(sum_grad)
         weight = -(sum_grad / (sum_hess + self.l2))
         return self.truncate(weight)
 
