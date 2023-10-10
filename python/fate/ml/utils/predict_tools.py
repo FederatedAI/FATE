@@ -87,7 +87,6 @@ def compute_predict_details(dataframe: DataFrame, task_type: Literal['binary', '
             enable_type_align_checking=False)
 
     elif task_type == MULTI:
-
         def handle_multi(v: pd.Series):
             predict_result = np.argmax(v[PREDICT_SCORE])
             assert len(v[PREDICT_SCORE]) == len(classes), 'predict score length is not equal to classes length,\

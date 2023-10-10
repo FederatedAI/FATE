@@ -116,15 +116,15 @@ class SBTSplitter(Splitter):
         return np.floor(f * 10 ** n) / 10 ** n
 
     def node_gain(self, g, h):
+        g, h = self.truncate(g), self.truncate(h)
         if isinstance(h, np.ndarray):
             h[h == 0] = np.nan
         score = g * g / (h + self.l2)
         return score
 
     def node_weight(self, sum_grad, sum_hess):
-
         weight = -(sum_grad / (sum_hess + self.l2))
-        return weight
+        return self.truncate(weight)
 
     def _extract_hist(self, histogram, pack_info=None):
         tensor_hist: dict = histogram.extract_data()
@@ -179,7 +179,6 @@ class SBTSplitter(Splitter):
 
     def _compute_gains(self, g, h, cnt, g_sum, h_sum, cnt_sum, hist_mask=None):
         l_g, l_h, l_cnt = g, h, cnt
-
         r_g, r_h = g_sum - l_g, h_sum - l_h
         r_cnt = cnt_sum - l_cnt
 
@@ -196,10 +195,10 @@ class SBTSplitter(Splitter):
             mask = union_mask_0
         mask = torch.logical_or(mask, union_mask_1)
         rs = self.node_gain(l_g, l_h) + self.node_gain(r_g, r_h) - self.node_gain(g_sum, h_sum)
+        rs = self.truncate(rs)
         rs[torch.isnan(rs)] = float("-inf")
         rs[rs < self.min_impurity_split] = float("-inf")
         rs[mask] = float("-inf")
-
         return rs
 
     def _find_best_splits(

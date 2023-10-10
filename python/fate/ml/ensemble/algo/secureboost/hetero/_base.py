@@ -35,17 +35,20 @@ class HeteroBoostingTree(HeteroModule):
             else:
                 self._global_feature_importance[fid] = self._global_feature_importance[fid] + fi
 
-    def _sum_leaf_weights(self, leaf_pos: DataFrame, trees, learing_rate: float, loss_func):
-        def _compute_score(leaf_pos: np.array, trees: List[List[Node]], learning_rate: float):
-            score = 0
-            leaf_pos = leaf_pos["sample_pos"]
-            for node_idx, tree in zip(leaf_pos, trees):
+    def _sum_leaf_weights(self, leaf_pos: DataFrame, trees, learing_rate: float, loss_func, num_dim=1):
+        def _compute_score(leaf_pos_: np.array, trees_: List[List[Node]], learning_rate: float, num_dim_=1):
+            score = np.zeros(num_dim_)
+            leaf_pos_ = leaf_pos_["sample_pos"]
+            tree_idx = 0
+            for node_idx, tree in zip(leaf_pos_, trees_):
                 recovered_idx = -(node_idx + 1)
-                score += tree[recovered_idx].weight * learning_rate
-            return score
+                score[tree_idx % num_dim_] += tree[recovered_idx].weight * learning_rate
+                tree_idx += 1
+
+            return float(score[0]) if num_dim_ == 1 else [score]
 
         tree_list = [tree.get_nodes() for tree in trees]
-        apply_func = functools.partial(_compute_score, trees=tree_list, learning_rate=learing_rate)
+        apply_func = functools.partial(_compute_score, trees_=tree_list, learning_rate=learing_rate, num_dim_=num_dim)
         predict_score = leaf_pos.create_frame()
         predict_score["score"] = leaf_pos.apply_row(apply_func)
         return loss_func.predict(predict_score)

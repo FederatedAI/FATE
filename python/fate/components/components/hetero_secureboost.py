@@ -16,7 +16,6 @@
 import logging
 
 from fate.arch import Context
-from fate.components.components.utils import consts
 from fate.components.core import GUEST, HOST, Role, cpn, params
 from fate.ml.ensemble import HeteroSecureBoostGuest, HeteroSecureBoostHost, BINARY_BCE, MULTI_CE, REGRESSION_L2
 from fate.components.components.utils.tools import add_dataset_type
@@ -41,6 +40,8 @@ def train(
                           desc="max tree num"),
     learning_rate: cpn.parameter(type=params.confloat(gt=0), default=0.3, desc='decay factor of each tree'),
     max_depth: cpn.parameter(type=params.conint(gt=0), default=3, desc='max depth of a tree'),
+    complete_secure: cpn.parameter(type=params.conint(ge=0), default=0, desc='number of trees to use guest features only in the complete secure mode, '
+                                                                             '0 means no complete secure'),
     max_bin: cpn.parameter(type=params.conint(gt=0), default=32, desc='max bin number of feature binning'),
     objective: cpn.parameter(type=params.string_choice(choice=[BINARY_BCE, MULTI_CE, REGRESSION_L2]), default=BINARY_BCE, \
                                        desc='objective function, available: {}'.format([BINARY_BCE, MULTI_CE, REGRESSION_L2])),
@@ -71,12 +72,13 @@ def train(
         # initialize encrypt kit
         ctx.cipher.set_phe(ctx.device, he_param.dict())
 
-        booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin,
+        booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
+                                         learning_rate=learning_rate, max_bin=max_bin,
                                          l2=l2, min_impurity_split=min_impurity_split, min_sample_split=min_sample_split,
                                         min_leaf_node=min_leaf_node, min_child_weight=min_child_weight, objective=objective, num_class=num_class, 
                                         gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub
                                         )
-        if train_model_input is not None:
+        if train_model_input:
             booster.from_model(train_model_input)
             logger.info('sbt input model loaded, will start warmstarting')
         booster.fit(ctx, train_data, validate_data)
@@ -90,7 +92,8 @@ def train(
 
     elif role.is_host:
         
-        booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, learning_rate=learning_rate, max_bin=max_bin, hist_sub=hist_sub)
+        booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
+                                        max_bin=max_bin, hist_sub=hist_sub)
         if train_model_input is not None:
             booster.from_model(train_model_input)
             logger.info('sbt input model loaded, will start warmstarting')

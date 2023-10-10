@@ -105,12 +105,10 @@ class CELoss(Loss):
 
         label_name = label.schema.label_name
         label = label.loc(score.get_indexer('sample_id'), preserve_order=True)
-        print('len g {} len label {} len score {}'.format(len(gh), len(label), len(score)))
         new_label = label.create_frame()
         new_label[label_name] = label.label
         stack_df = DataFrame.hstack([score, new_label])
         stack_df = stack_df.loc(gh.get_indexer('sample_id'), preserve_order=True)
-        print('cwj', stack_df.as_pd_df())
         def grad(s):
             grads = [i for i in s["score"]]
             grads[s[label_name]] -= 1

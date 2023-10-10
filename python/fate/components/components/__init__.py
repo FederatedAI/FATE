@@ -80,7 +80,7 @@ class LazyBuildInComponentsLoader:
     
     @_lazy_cpn
     def hetero_sbt(self):
-        from .hetero_sbt import hetero_sbt
+        from .hetero_secureboost import hetero_sbt
 
         return hetero_sbt
 

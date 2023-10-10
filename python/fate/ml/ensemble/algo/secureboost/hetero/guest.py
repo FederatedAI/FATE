@@ -67,14 +67,22 @@ def _select_gh_by_tree_dim(gh: DataFrame, tree_idx: int):
     return target_gh
 
 
-def _accumulate_scores(acc_scores: DataFrame, new_scores: DataFrame, learning_rate: float, multi_class=False):
+def _accumulate_scores(acc_scores: DataFrame, new_scores: DataFrame, learning_rate: float,
+                       multi_class=False, class_num=None, dim=0):
 
+    def _extend_score(s: pd.Series, class_num, dim):
+        new_s = pd.Series()
+        new_s['score'] = np.zeros(class_num)
+        new_s['score'][dim] = s['score']
+        return new_s
+
+    new_scores = new_scores.loc(acc_scores.get_indexer(target="sample_id"), preserve_order=True)
     if not multi_class:
         acc_scores = acc_scores + new_scores * learning_rate
     else:
-        pass
+        extend_scores = new_scores.apply_row(lambda s: _extend_score(s, class_num, dim), columns=["score"])
+        acc_scores = acc_scores + extend_scores * learning_rate
     return acc_scores
-
 
 class HeteroSecureBoostGuest(HeteroBoostingTree):
     def __init__(
@@ -84,7 +92,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         complete_secure=0,
         learning_rate=0.3,
         objective="binary:bce",
-        num_class=3,
+        num_class=1,
         max_bin=32,
         l2=0.1,
         l1=0,
@@ -213,6 +221,10 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             classes = [0, 1]
         elif task_type == REGRESSION:
             classes = None
+        elif task_type == MULTI:
+            classes = [i for i in range(self.num_class)]
+        else:
+            raise RuntimeError(f"unknown task type {task_type}")
         return task_type, classes
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
@@ -279,8 +291,10 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 assert len(scores) == len(
                     self._accumulate_scores
                 ), f"tree predict scores length {len(scores)} not equal to accumulate scores length {len(self._accumulate_scores)}."
-                scores = scores.loc(self._accumulate_scores.get_indexer(target="sample_id"), preserve_order=True)
-                self._accumulate_scores = self._accumulate_scores + scores * self.learning_rate
+                self._accumulate_scores = _accumulate_scores(
+                    self._accumulate_scores, scores, self.learning_rate, self.objective == MULTI_CE, class_num=self.num_class,
+                    dim=tree_dim
+                )
                 self._trees.append(tree)
                 self._saved_tree.append(tree.get_model())
                 self._update_feature_importance(tree.get_feature_importance())
@@ -314,7 +328,10 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         leaf_pos = predict_leaf_guest(ctx, self._trees, predict_data)
         if predict_leaf:
             return leaf_pos
-        result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func)
+        result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func,
+                                        num_dim=self._tree_dim)
+
+        print('result df is {}'.format(result.as_pd_df()))
 
         if task_type == REGRESSION:
             logger.debug("regression task, add init score")
