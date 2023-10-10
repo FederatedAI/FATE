@@ -141,7 +141,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             }
         } else {
 
-            context.setActionType(ActionType.PUSH_REMOTE.getAlias());
+            context.setActionType(ActionType.PUSH_REMOTE.name());
             context.setRouterInfo(routerInfo);
             context.setSrcNodeId(routerInfo.getSourcePartyId());
             context.setDesNodeId(routerInfo.getDesPartyId());
@@ -223,7 +223,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         metadata = firstRequest.getHeader();
         String oneLineStringMetadata = ToStringUtils.toOneLineString(metadata);
-        context.setActionType(ActionType.PUSH_EGGROLL.getAlias());
+        context.setActionType(ActionType.PUSH_EGGROLL.name());
         String rsKey = rsHeader.getRsKey("#", "__rsk");
         String sessionId = String.join("_", rsHeader.getRollSiteSessionId(), rsHeader.getDstRole(), rsHeader.getDstPartyId());
         context.setSessionId(sessionId);

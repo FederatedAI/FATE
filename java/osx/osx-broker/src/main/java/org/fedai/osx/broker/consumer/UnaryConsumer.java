@@ -104,7 +104,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 }
 
                 OsxContext context = longPullingHold.getContext();
-                context.setActionType(ActionType.LONG_PULLING_ANSWER.getAlias());
+                context.setActionType(ActionType.LONG_PULLING_ANSWER.name());
                 TransferQueueConsumeResult consumeResult = null;
                 if (needOffset <= 0) {
                     long consumeOffset = this.consumeOffset.get();

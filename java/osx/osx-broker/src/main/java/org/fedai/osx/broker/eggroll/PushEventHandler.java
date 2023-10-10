@@ -154,7 +154,7 @@ public class PushEventHandler extends GrpcEventHandler {
         Integer partitionId = rsHeader.getPartitionId();
         brokerTag = "putBatch-" + rsHeader.getRsKey("#", "__rsk") + "-" + partitionId;
         String oneLineStringMetadata = ToStringUtils.toOneLineString(metadata);
-        context.setActionType(ActionType.PUSH_EGGROLL.getAlias());
+        context.setActionType(ActionType.PUSH_EGGROLL.name());
         String rsKey = rsHeader.getRsKey("#", "__rsk");
         sessionId = String.join("_", rsHeader.getRollSiteSessionId(), rsHeader.getDstRole(), rsHeader.getDstPartyId());
         context.setSessionId(sessionId);

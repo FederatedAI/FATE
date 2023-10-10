@@ -121,7 +121,7 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
                 throw new ParameterException(StatusCode.PARAM_ERROR, "sessionId is null");
             }
             int dataSize = produceRequest.getPayload().length;
-            context.setActionType(ActionType.MSG_DOWNLOAD.getAlias());
+            context.setActionType(ActionType.MSG_DOWNLOAD.name());
             context.setRouterInfo(null);
             context.setDataSize(dataSize);
 

@@ -68,7 +68,7 @@ public class QueueStreamBuilder {
         String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX +now+ "_"+sessionId+"_"+temp;
         String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX +now+"_"+sessionId+"_"+temp;
         context.setTopic(sendTopic);
-        context.setActionType(ActionType.MSG_REDIRECT.getAlias());
+        context.setActionType(ActionType.MSG_REDIRECT.name());
         context.setQueueType(QueueType.DIRECT.name());
         CreateQueueResult createQueueResult = transferQueueManager.createNewQueue(backTopic, sessionId, true, QueueType.DIRECT);
         if (createQueueResult.getQueue() == null) {

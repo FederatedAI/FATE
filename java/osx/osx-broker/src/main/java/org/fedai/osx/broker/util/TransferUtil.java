@@ -421,14 +421,14 @@ public class TransferUtil {
 
     static public Osx.TransportOutbound redirectPop(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-        context.setActionType(ActionType.REDIRECT_CONSUME.getAlias());
+        context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);
     }
 
     static public Osx.TransportOutbound redirectPeek(OsxContext context, RouterInfo routerInfo, Osx.PeekInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-        context.setActionType(ActionType.REDIRECT_CONSUME.getAlias());
+        context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
         return stub.peek(inbound);
     }

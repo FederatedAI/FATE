@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
     @Override
     protected ConsumerResponse doService(OsxContext context, ConsumeRequest inbound) {
 
-        context.setActionType(ActionType.DEFUALT_CONSUME.getAlias());
+        context.setActionType(ActionType.DEFUALT_CONSUME.name());
         String topic = inbound.getTopic();
         int timeout =  inbound.getTimeout()>0?inbound.getTimeout():MetaInfo.CONSUME_MSG_WAITING_TIMEOUT;
         context.setTopic(topic);
@@ -138,7 +138,7 @@ import org.slf4j.LoggerFactory;
 
      private Osx.TransportOutbound redirect(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
-        context.setActionType(ActionType.REDIRECT_CONSUME.getAlias());
+        context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);
     }
