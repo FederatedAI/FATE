@@ -104,8 +104,8 @@ def _nlargest_exactly(df: DataFrame, n, columns, keep) -> DataFrame:
     block_row_size = df.data_manager.block_row_size
     blocks_with_id = []
 
-    for block_id in range(0, n, block_row_size):
-        block_indexes = indexes[block_id * block_row_size : min(n, (block_id + 1) * block_row_size)]
+    for block_id in range((n + block_row_size - 1) // block_row_size):
+        block_indexes = indexes[block_id * block_row_size : (block_id + 1) * block_row_size]
 
         blocks = [[] for _ in range(block_num)]
 
