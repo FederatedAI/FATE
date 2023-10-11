@@ -80,7 +80,7 @@ if __name__ == "__main__":
         # rs = splitter._find_guest_best_splits(computed_hist, '123', root_node, node_map)
         tree = HeteroDecisionTreeGuest(max_depth, objective="binary:bce", gh_pack=True)
         tree.set_encrypt_kit(kit)
-        ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
+        # ret = tree.booster_fit(ctx, bin_data, empty_gh, bin_info)
 
     elif party == "host":
         ctx = create_ctx(host)

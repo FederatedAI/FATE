@@ -100,6 +100,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         min_sample_split=2,
         min_leaf_node=1,
         min_child_weight=1,
+        goss=False,
+        goss_start_iter=0,
         gh_pack=True,
         split_info_pack=True,
         hist_sub=True
