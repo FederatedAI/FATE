@@ -14,10 +14,9 @@
 #  limitations under the License.
 
 import logging
-from collections.abc import Iterable
 from typing import Optional
 
-from fate.arch.abc import CSessionABC
+from ..table import KVTableContext
 
 from ..._standalone import Session
 from ...unify import URI, generate_computing_uuid, uuid
@@ -26,7 +25,7 @@ from ._table import Table
 LOGGER = logging.getLogger(__name__)
 
 
-class CSession(CSessionABC):
+class CSession(KVTableContext):
     def __init__(
         self, session_id: Optional[str] = None, logger_config: Optional[dict] = None, options: Optional[dict] = None
     ):
@@ -44,7 +43,12 @@ class CSession(CSessionABC):
     def session_id(self):
         return self._session.session_id
 
-    def load(self, uri: URI, schema: dict, options: dict = None):
+    def _load(
+        self,
+        uri: URI,
+        schema: dict,
+        options: dict,
+    ):
         if uri.scheme != "standalone":
             raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
         try:
@@ -57,15 +61,32 @@ class CSession(CSessionABC):
         raw_table = raw_table.save_as(
             name=f"{name}_{uuid()}",
             namespace=namespace,
-            partition=partitions,
+            partitions=partitions,
             need_cleanup=True,
         )
         table = Table(raw_table)
         table.schema = schema
         return table
 
-    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
-        table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
+    def _parallelize(
+        self,
+        data,
+        total_partitions,
+        key_serdes,
+        key_serdes_type,
+        value_serdes,
+        value_serdes_type,
+        partitioner,
+        partitioner_type,
+    ):
+        table = self._session.parallelize(
+            data=data,
+            partition=total_partitions,
+            partitioner=partitioner,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+        )
         return Table(table)
 
     def cleanup(self, name, namespace):

@@ -15,16 +15,17 @@
 import logging
 from typing import List, Tuple
 
-from fate.arch.abc import FederationEngine, PartyMeta
+from fate.arch.abc import PartyMeta
 
 from ..._standalone import Federation as RawFederation
 from ..._standalone import Table as RawTable
 from ...computing.standalone import Table
+from ..federation import Federation
 
 LOGGER = logging.getLogger(__name__)
 
 
-class StandaloneFederation(FederationEngine):
+class StandaloneFederation(Federation):
     def __init__(
         self,
         standalone_session,
@@ -54,7 +55,7 @@ class StandaloneFederation(FederationEngine):
     def session_id(self) -> str:
         return self._session_id
 
-    def push(
+    def _push(
         self,
         v,
         name: str,
@@ -71,7 +72,7 @@ class StandaloneFederation(FederationEngine):
             v = v._table
         return self._federation.remote(v=v, name=name, tag=tag, parties=parties)
 
-    def pull(
+    def _pull(
         self,
         name: str,
         tag: str,
@@ -82,6 +83,7 @@ class StandaloneFederation(FederationEngine):
                 raise ValueError(f"get from {party} with duplicate tag: {name}.{tag}")
             self._get_history.add((name, tag, party))
         rtn = self._federation.get(name=name, tag=tag, parties=parties)
+
         return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
 
     def destroy(self):
