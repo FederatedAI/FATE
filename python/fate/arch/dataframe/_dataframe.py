@@ -550,6 +550,11 @@ class DataFrame(object):
 
         return sample(self, n, frac, random_state)
 
+    def nlargest(self, n, columns, keep="first", error=1e-4):
+        from .ops._sort import nlargest
+
+        return nlargest(self, n, columns, keep=keep, error=error)
+
     def __extract_fields(
         self,
         with_sample_id=True,
