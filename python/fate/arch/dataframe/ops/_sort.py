@@ -105,7 +105,7 @@ def _nlargest_exactly(df: DataFrame, n, columns, keep) -> DataFrame:
     blocks_with_id = []
 
     for block_id in range(0, n, block_row_size):
-        block_indexes = indexes[block_id * block_row_size : (block_id + 1) * block_row_size]
+        block_indexes = indexes[block_id * block_row_size : min(n, (block_id + 1) * block_row_size)]
 
         blocks = [[] for _ in range(block_num)]
 
