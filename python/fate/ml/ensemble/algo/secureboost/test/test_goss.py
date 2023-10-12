@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 from fate.arch.dataframe import PandasReader
 import sys
-from fate.ml.ensemble.algo.secureboost.hetero.guest import HeteroSecureBoostGuest
-from fate.ml.ensemble.algo.secureboost.hetero.host import HeteroSecureBoostHost
 from datetime import datetime
 
 
@@ -51,6 +49,12 @@ h = np.random.rand(sample_num)
 df_gh = pd.DataFrame({"sample_id": sample_id, "id": id, "g": g, "h": h})
 data_gh = reader.to_frame(ctx, df_gh)
 
+sample_pos = np.array([0 for i in range(sample_num)])
+sample_pos_df = pd.DataFrame({"sample_id": sample_id, "id": id, "node_idx": sample_pos})
+sample_pos = reader.to_frame(ctx, sample_pos_df)
+
+from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.utils.sample import goss_sample
 
 rs = goss_sample(data_gh, 0.2, 0.1, random_seed=42)
+selected_sample = sample_pos.loc(rs.get_indexer(target='sample_id'))

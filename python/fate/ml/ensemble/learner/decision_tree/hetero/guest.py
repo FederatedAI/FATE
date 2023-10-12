@@ -335,7 +335,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         )
 
         # Prepare for training
-        node_map = {}
         cur_layer_node = [root_node]
         grad_and_hess["cnt"] = 1
 

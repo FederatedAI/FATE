@@ -24,6 +24,7 @@ from fate.ml.ensemble.learner.decision_tree.tree_core.loss import OBJECTIVE, get
 from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_guest
 from fate.ml.utils.predict_tools import compute_predict_details, PREDICT_SCORE, BINARY, MULTI, REGRESSION
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import GUEST_FEAT_ONLY, ALL_FEAT
+from fate.ml.ensemble.utils.sample import goss_sample
 import logging
 
 
@@ -102,9 +103,12 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         min_child_weight=1,
         goss=False,
         goss_start_iter=0,
+        top_rate=0.2,
+        other_rate=0.1,
         gh_pack=True,
         split_info_pack=True,
-        hist_sub=True
+        hist_sub=True,
+        random_seed=42
     ):
         super().__init__()
         self.num_trees = num_trees
@@ -112,6 +116,11 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self.max_depth = max_depth
         self.objective = objective
         self.max_bin = max_bin
+        self.goss = goss
+        self.goss_start_iter = goss_start_iter
+        self.top_rate = top_rate
+        self.other_rate = other_rate
+        self.random_seed = random_seed
 
         # regularization
         self.l2 = l2
@@ -287,6 +296,12 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                     tree_mode=tree_mode
                 )
                 tree.set_encrypt_kit(self._encrypt_kit)
+
+                if self.goss:
+                    if iter_dix >= self.goss_start_iter:
+                        target_gh = goss_sample(target_gh, self.top_rate, self.other_rate, self.random_seed)
+                        logger.debug('goss sample done, got {} samples'.format(len(target_gh)))
+
                 tree.booster_fit(tree_ctx_, bin_data, target_gh, bin_info)
                 # accumulate scores of cur boosting round
                 scores = tree.get_sample_predict_weights()
