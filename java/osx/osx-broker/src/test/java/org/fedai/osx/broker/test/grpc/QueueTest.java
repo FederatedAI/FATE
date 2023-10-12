@@ -31,7 +31,7 @@ public class QueueTest {
     Logger logger = LoggerFactory.getLogger(QueueTest.class);
     static String ip = "localhost";
     //int port = 8250;//nginx
-    static int port = 9370;//nginx
+    static int port = 7304;//nginx
     static String desPartyId = "9999";
     static String desRole = "";
     static String srcPartyId = "10000";
@@ -43,7 +43,7 @@ public class QueueTest {
     static {
         routerInfo.setHost(ip);
         routerInfo.setPort(port);
-        routerInfo.setProtocol(Protocol.http);
+        routerInfo.setProtocol(Protocol.grpc);
         routerInfo.setUrl("http://localhost:8087/osx/inbound");
         //HttpClientPool.initPool();
 
@@ -191,7 +191,7 @@ public class QueueTest {
 
         @Test
         public void testPush() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
 //            new Thread(new Runnable() {
 //                @Override
 //                public void run() {
@@ -202,12 +202,12 @@ public class QueueTest {
             inboundBuilder.setPayload(pushInbound.build().toByteString());
 
             OsxContext  fateContext= new OsxContext();
-            fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
+            fateContext.setTraceId("fate-test-"+System.currentTimeMillis());
             fateContext.setSessionId("test_session");
             fateContext.setTopic("test_topic");
-            fateContext.setDesInstId("webank");
-            fateContext.setDesNodeId("9999");
-            fateContext.setUri(UriConstants.PUSH);
+            fateContext.setDesInstId("FATEINST9999");
+            fateContext.setDesNodeId("FATENODE9999");
+//            fateContext.setUri(UriConstants.PUSH);
             fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             OsxContext.pushThreadLocalContext(fateContext);
             Osx.TransportOutbound outbound =TransferUtil.redirectPush(fateContext,pushInbound.build(),routerInfo,true);
