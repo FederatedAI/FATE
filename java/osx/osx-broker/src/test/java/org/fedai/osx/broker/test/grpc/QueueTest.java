@@ -195,11 +195,11 @@ public class QueueTest {
 //            new Thread(new Runnable() {
 //                @Override
 //                public void run() {
-            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+//            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             Osx.PushInbound.Builder pushInbound = Osx.PushInbound.newBuilder();
             pushInbound.setTopic("test_topic");
             pushInbound.setPayload(ByteString.copyFrom(("my name is "+i).getBytes(StandardCharsets.UTF_8)));
-            inboundBuilder.setPayload(pushInbound.build().toByteString());
+            //inboundBuilder.setPayload(pushInbound.build().toByteString());
 
             OsxContext  fateContext= new OsxContext();
             fateContext.setTraceId("fate-test-"+System.currentTimeMillis());
