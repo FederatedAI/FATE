@@ -412,22 +412,26 @@ class DecisionTree(object):
             data
         ), "sample pos num not match data num, got {} sample pos vs {} data".format(len(new_sample_pos), len(data))
         x = new_sample_pos >= 0
-        pack_data = DataFrame.hstack([data, new_sample_pos, grad_and_hess]).iloc(x)
-        new_data = pack_data.create_frame(columns=data.schema.columns)
-        update_pos = pack_data.create_frame(columns=new_sample_pos.schema.columns)
-        grad_and_hess = pack_data.create_frame(columns=grad_and_hess.schema.columns)
-        """
-        new_data = data.iloc(x)
-        update_pos = new_sample_pos.iloc(x)
-        grad_and_hess = grad_and_hess.iloc(x)
-        """
-        logger.info(
-            "drop leaf samples, new sample count is {}, {} samples dropped".format(
-                len(new_sample_pos), len(data) - len(new_data)
+        if len(new_sample_pos) == len(grad_and_hess):
+            pack_data = DataFrame.hstack([data, new_sample_pos, grad_and_hess]).iloc(x)
+            new_data = pack_data.create_frame(columns=data.schema.columns)
+            update_pos = pack_data.create_frame(columns=new_sample_pos.schema.columns)
+            grad_and_hess = pack_data.create_frame(columns=grad_and_hess.schema.columns)
+            logger.info(
+                "drop leaf samples, new sample count is {}, {} samples dropped".format(
+                    len(new_sample_pos), len(data) - len(new_data)
+                )
             )
-        )
-        return new_data, update_pos, grad_and_hess
+            return new_data, update_pos, grad_and_hess
+        else:
+            # Goss
+            pack_data = DataFrame.hstack([data, new_sample_pos]).iloc(x)
+            new_data = pack_data.create_frame(columns=data.schema.columns)
+            update_pos = pack_data.create_frame(columns=new_sample_pos.schema.columns)
+            x = x.loc(grad_and_hess.get_indexer(target='sample_id'), preserve_order=True)
+            grad_and_hess = grad_and_hess.iloc(x)
 
+            return new_data, update_pos, grad_and_hess
     def _get_samples_on_leaves(self, sample_pos: DataFrame):
         x = sample_pos < 0
         samples_on_leaves = sample_pos.iloc(x)

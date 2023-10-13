@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
         reader = PandasReader(sample_id_name="sample_id", match_id_name="id", label_name="y", dtype="float32")
         data_guest = reader.to_frame(ctx, df)
-        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, goss=True, top_rate=0.2, other_rate=0.1)
+        trees = HeteroSecureBoostGuest(num_tree, max_depth=max_depth, goss=False, top_rate=0.2, other_rate=0.1)
         trees.fit(ctx, data_guest)
         pred = trees.get_train_predict().as_pd_df()
         pred_ = trees.predict(ctx, data_guest).as_pd_df()

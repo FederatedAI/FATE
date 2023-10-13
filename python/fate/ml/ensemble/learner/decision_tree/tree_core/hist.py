@@ -204,22 +204,12 @@ class SBTHistogramBuilder(object):
             node_mapping=node_mapping,
         )
 
-        print('check sample id set')
-        set_a = set(gh.as_pd_df().sample_id)
-        set_b = set(sample_pos.as_pd_df().sample_id)
-        print(len(set_a))
-        print(len(set_b))
-        print(set_a.issubset(set_b))
-
         # if goss is enabled
         if len(sample_pos) > len(gh):
-            sample_pos = sample_pos.loc(gh.get_indexer(target='sample_id'))
-            print('sample pos len is {}'.format(len(sample_pos)))
+            sample_pos = sample_pos.loc(gh.get_indexer(target='sample_id'), preserve_order=True)
 
         map_sample_pos = sample_pos.apply_row(lambda x: node_map[x["node_idx"]])
-
-        print('block 0 sample pos', list(map_sample_pos.block_table.collect())[0])
-        print('block 0 gh', list(gh.block_table.collect())[0])
+        bin_train_data = bin_train_data.loc(gh.get_indexer(target='sample_id'), preserve_order=True)
         stat_obj = bin_train_data.distributed_hist_stat(hist, map_sample_pos, gh)
 
         if need_hist_sub_process:
