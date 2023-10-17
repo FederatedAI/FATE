@@ -15,12 +15,12 @@
 
 import logging
 import typing
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, Tuple
 
 from ...unify import URI
 from .._profile import computing_profile
 from .._type import ComputingEngine
-from ..table import KVTable, V
+from ..table import KVTable, V, K
 from ..._standalone import Table as StandaloneTable
 
 LOGGER = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ class Table(KVTable):
             key_serdes_type=table.key_serdes_type,
             value_serdes_type=table.value_serdes_type,
             partitioner_type=table.partitioner_type,
+            num_partitions=table.partitions,
         )
 
     @property
@@ -48,15 +49,22 @@ class Table(KVTable):
 
     def _map_reduce_partitions_with_index(
         self,
-        map_partition_op: Callable[[int, Iterable], Iterable],
+        map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
         reduce_partition_op: Callable[[Any, Any], Any],
-        shuffle,
+        shuffle: bool,
+        input_key_serdes,
+        input_key_serdes_type: int,
+        input_value_serdes,
+        input_value_serdes_type: int,
+        input_partitioner,
+        input_partitioner_type: int,
         output_key_serdes,
-        output_key_serdes_type,
+        output_key_serdes_type: int,
         output_value_serdes,
-        output_value_serdes_type,
+        output_value_serdes_type: int,
         output_partitioner,
-        output_partitioner_type,
+        output_partitioner_type: int,
+        output_num_partitions: int,
     ):
         return Table(
             table=self._table.map_reduce_partitions_with_index(
@@ -67,6 +75,32 @@ class Table(KVTable):
                 output_key_serdes_type=output_key_serdes_type,
                 output_value_serdes_type=output_value_serdes_type,
                 output_partitioner_type=output_partitioner_type,
+                output_num_partitions=output_num_partitions,
+            ),
+        )
+
+    def _binary_sorted_map_partitions_with_index(
+        self,
+        other: "Table",
+        binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        key_serdes,
+        key_serdes_type,
+        partitioner,
+        partitioner_type,
+        first_input_value_serdes,
+        first_input_value_serdes_type,
+        second_input_value_serdes,
+        second_input_value_serdes_type,
+        output_value_serdes,
+        output_value_serdes_type,
+    ):
+        return Table(
+            table=self._table.binary_sorted_map_partitions_with_index(
+                other=other._table,
+                binary_map_partitions_with_index_op=binary_map_partitions_with_index_op,
+                key_serdes_type=key_serdes_type,
+                partitioner_type=partitioner_type,
+                output_value_serdes_type=output_value_serdes_type,
             ),
         )
 
@@ -78,50 +112,6 @@ class Table(KVTable):
 
     def _count(self):
         return self._table.count()
-
-    def _join(
-        self,
-        other: "Table",
-        merge_op: Callable[[V, V], V],
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        return Table(
-            table=self._table.join(other._table, merge_op=merge_op),
-        )
-
-    def _union(
-        self,
-        other: "Table",
-        merge_op: Callable[[V, V], V],
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        return Table(
-            table=self._table.union(other._table, merge_op=merge_op),
-        )
-
-    def _subtract_by_key(
-        self,
-        other: "Table",
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        return Table(
-            table=self._table.subtract_by_key(other._table),
-        )
 
     def _reduce(self, func, **kwargs):
         return self._table.reduce(func)

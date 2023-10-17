@@ -157,6 +157,10 @@ class Table(object):
         self._partitioner_type = partitioner_type
 
     @property
+    def num_partitions(self):
+        return self._partitions
+
+    @property
     def key_serdes_type(self):
         return self._key_serdes_type
 
@@ -194,7 +198,7 @@ class Table(object):
         return self.__str__()
 
     def destroy(self):
-        for p in range(self._partitions):
+        for p in range(self.num_partitions):
             with self._get_env_for_partition(p, write=True) as env:
                 db = env.open_db()
                 with env.begin(write=True) as txn:
@@ -208,7 +212,7 @@ class Table(object):
 
     def count(self):
         cnt = 0
-        for p in range(self._partitions):
+        for p in range(self.num_partitions):
             with self._get_env_for_partition(p) as env:
                 cnt += env.stat()["entries"]
         return cnt
@@ -217,7 +221,7 @@ class Table(object):
     def collect(self, **kwargs):
         iterators = []
         with ExitStack() as s:
-            for p in range(self._partitions):
+            for p in range(self.num_partitions):
                 env = s.enter_context(self._get_env_for_partition(p))
                 txn = s.enter_context(env.begin())
                 iterators.append(s.enter_context(txn.cursor()))
@@ -240,7 +244,45 @@ class Table(object):
 
     def reduce(self, func):
         return self._session.submit_reduce(
-            func, num_partitions=self._partitions, name=self._name, namespace=self._namespace
+            func, num_partitions=self.num_partitions, name=self._name, namespace=self._namespace
+        )
+
+    def binary_sorted_map_partitions_with_index(
+        self,
+        other: "Table",
+        binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        key_serdes_type,
+        partitioner_type,
+        output_value_serdes_type,
+        need_cleanup=True,
+        output_namespace=None,
+        output_name=None,
+    ):
+        if output_name is None:
+            output_name = str(uuid.uuid1())
+        if output_namespace is None:
+            output_namespace = self._namespace
+
+        self._session._submit_sorted_binary_map_partitions_with_index(
+            func=binary_map_partitions_with_index_op,
+            do_func=_do_binary_sorted_map_with_index,
+            num_partitions=self.num_partitions,
+            first_input_name=self._name,
+            first_input_namespace=self._namespace,
+            second_input_name=other._name,
+            second_input_namespace=other._namespace,
+            output_name=output_name,
+            output_namespace=output_namespace,
+        )
+        return _create_table(
+            session=self._session,
+            name=output_name,
+            namespace=output_namespace,
+            partitions=self.num_partitions,
+            need_cleanup=need_cleanup,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=output_value_serdes_type,
+            partitioner_type=partitioner_type,
         )
 
     def map_reduce_partitions_with_index(
@@ -252,22 +294,29 @@ class Table(object):
         output_key_serdes_type,
         output_value_serdes_type,
         output_partitioner_type,
+        output_num_partitions,
         need_cleanup=True,
         output_name=None,
         output_namespace=None,
     ):
+        if output_name is None:
+            output_name = str(uuid.uuid1())
+        if output_namespace is None:
+            output_namespace = self._namespace
         if not shuffle:
+            assert output_num_partitions == self.num_partitions and output_partitioner_type == self.partitioner_type
             # noinspection PyProtectedMember
             results = self._session._submit_map_reduce_partitions_with_index(
                 _do_mrwi_no_shuffle,
-                map_partition_op,
-                reduce_partition_op,
-                self._partitions,
-                self._name,
-                self._namespace,
-                output_partitioner=output_partitioner,
+                mapper=map_partition_op,
+                reducer=reduce_partition_op,
+                input_num_partitions=self.num_partitions,
+                input_name=self._name,
+                input_namespace=self._namespace,
+                output_num_partitions=output_num_partitions,
                 output_name=output_name,
                 output_namespace=output_namespace,
+                output_partitioner=output_partitioner,
             )
             result = results[0]
             # noinspection PyProtectedMember
@@ -275,24 +324,26 @@ class Table(object):
                 session=self._session,
                 name=result.name,
                 namespace=result.namespace,
-                partitions=self._partitions,
+                partitions=self.num_partitions,
                 need_cleanup=need_cleanup,
                 key_serdes_type=output_key_serdes_type,
                 value_serdes_type=output_value_serdes_type,
                 partitioner_type=output_partitioner_type,
             )
+
         if reduce_partition_op is None:
             # noinspection PyProtectedMember
             results = self._session._submit_map_reduce_partitions_with_index(
                 _do_mrwi_shuffle_no_reduce,
                 map_partition_op,
                 reduce_partition_op,
-                self._partitions,
-                self._name,
-                self._namespace,
-                output_partitioner=output_partitioner,
+                input_num_partitions=self.num_partitions,
+                input_name=self._name,
+                input_namespace=self._namespace,
+                output_num_partitions=output_num_partitions,
                 output_name=output_name,
                 output_namespace=output_namespace,
+                output_partitioner=output_partitioner,
             )
             result = results[0]
             # noinspection PyProtectedMember
@@ -300,7 +351,7 @@ class Table(object):
                 session=self._session,
                 name=result.name,
                 namespace=result.namespace,
-                partitions=self._partitions,
+                partitions=self.num_partitions,
                 need_cleanup=need_cleanup,
                 key_serdes_type=output_key_serdes_type,
                 value_serdes_type=output_value_serdes_type,
@@ -309,32 +360,38 @@ class Table(object):
 
         # Step 1: do map and write intermediate results to cache table
         # noinspection PyProtectedMember
-        intermediate = self._session._submit_map_reduce_partitions_with_index(
+        intermediate_name = str(uuid.uuid1())
+        intermediate_namespace = self._namespace
+        self._session._submit_map_reduce_partitions_with_index(
             _do_mrwi_map_and_shuffle_write,
-            map_partition_op,
-            None,
-            self._partitions,
-            self._name,
-            self._namespace,
+            mapper=map_partition_op,
+            reducer=None,
+            input_num_partitions=self.num_partitions,
+            input_name=self._name,
+            input_namespace=self._namespace,
+            output_num_partitions=self.num_partitions,
+            output_name=intermediate_name,
+            output_namespace=intermediate_namespace,
             output_partitioner=output_partitioner,
-        )[0]
+        )
         # Step 2: do shuffle read and reduce
         # noinspection PyProtectedMember
-        result = self._session._submit_map_reduce_partitions_with_index(
+        self._session._submit_map_reduce_partitions_with_index(
             _do_mrwi_shuffle_read_and_reduce,
-            None,
-            reduce_partition_op,
-            self._partitions,
-            intermediate.name,
-            intermediate.namespace,
-            output_name,
-            output_namespace,
-        )[0]
+            mapper=None,
+            reducer=reduce_partition_op,
+            input_num_partitions=self.num_partitions,
+            input_name=intermediate_name,
+            input_namespace=intermediate_namespace,
+            output_num_partitions=output_num_partitions,
+            output_name=output_name,
+            output_namespace=output_namespace,
+        )
         output = _create_table(
             session=self._session,
-            name=result.name,
-            namespace=result.namespace,
-            partitions=self._partitions,
+            name=output_name,
+            namespace=output_namespace,
+            partitions=self.num_partitions,
             need_cleanup=need_cleanup,
             key_serdes_type=output_key_serdes_type,
             value_serdes_type=output_value_serdes_type,
@@ -343,84 +400,17 @@ class Table(object):
 
         # drop cache table
         for p in range(self._partitions):
-            with _get_env(intermediate.namespace, intermediate.name, str(p), write=True) as env:
+            with _get_env(intermediate_namespace, intermediate_name, str(p), write=True) as env:
                 db = env.open_db()
                 with env.begin(write=True) as txn:
                     txn.drop(db)
 
-        path = _data_dir.joinpath(intermediate.namespace, intermediate.name)
+        path = _data_dir.joinpath(intermediate_namespace, intermediate_name)
         shutil.rmtree(path, ignore_errors=True)
         return output
 
-    def join(self, other: "Table", merge_op):
-        return self._binary(
-            other,
-            merge_op,
-            _do_join,
-            need_cleanup=True,
-            key_serdes_type=self._key_serdes_type,
-            value_serdes_type=self._value_serdes_type,
-            partitioner_type=self._partitioner_type,
-        )
-
-    def subtract_by_key(self, other: "Table"):
-        return self._binary(
-            other,
-            None,
-            _do_subtract_by_key,
-            need_cleanup=True,
-            key_serdes_type=self._key_serdes_type,
-            value_serdes_type=self._value_serdes_type,
-            partitioner_type=self._partitioner_type,
-        )
-
-    def union(self, other: "Table", merge_op=lambda v1, v2: v1):
-        return self._binary(
-            other,
-            merge_op,
-            _do_union,
-            need_cleanup=True,
-            key_serdes_type=self._key_serdes_type,
-            value_serdes_type=self._value_serdes_type,
-            partitioner_type=self._partitioner_type,
-        )
-
-    def _binary(
-        self, other: "Table", func, do_func, need_cleanup, key_serdes_type, value_serdes_type, partitioner_type
-    ):
-        session_id = self._session.session_id
-        left, right = self, other
-        if left._partitions != right._partitions:
-            if other.count() > self.count():
-                left = left._repartition(partitions=right._partitions)
-            else:
-                right = right._repartition(partitions=left._partitions)
-
-        # noinspection PyProtectedMember
-        results = self._session._submit_binary(
-            func,
-            do_func,
-            left._partitions,
-            left._name,
-            left._namespace,
-            right._name,
-            right._namespace,
-        )
-        result: _Operand = results[0]
-        # noinspection PyProtectedMember
-        return _create_table(
-            session=self._session,
-            name=result.name,
-            namespace=result.namespace,
-            partitions=left._partitions,
-            need_cleanup=need_cleanup,
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=value_serdes_type,
-            partitioner_type=partitioner_type,
-        )
-
     def save_as(self, name, namespace, partitions=None, need_cleanup=True):
-        if partitions is not None and partitions != self._partitions:
+        if partitions is not None and partitions != self.num_partitions:
             return self._repartition(partitions=partitions, need_cleanup=True).copy_as(name, namespace, need_cleanup)
 
         return self.copy_as(name, namespace, need_cleanup)
@@ -437,19 +427,8 @@ class Table(object):
             output_key_serdes_type=self._key_serdes_type,
             output_value_serdes_type=self._value_serdes_type,
             output_partitioner_type=self._partitioner_type,
+            output_num_partitions=self.num_partitions,
         )
-
-    def _repartition(self, partitions, name=None, namespace=None, need_cleanup=True):
-        # TODO: optimize repartition
-        if partitions == self._partitions:
-            return self
-        if name is None:
-            name = str(uuid.uuid1())
-        if namespace is None:
-            namespace = self._namespace
-        dup = _create_table(self._session, name, namespace, partitions, need_cleanup)
-        dup.put_all(self.collect())
-        return dup
 
     def _get_env_for_partition(self, p: int, write=False):
         return _get_env(self._namespace, self._name, str(p), write=write)
@@ -611,51 +590,75 @@ class Session(object):
         _do_func,
         mapper,
         reducer,
-        num_partitions,
+        input_num_partitions,
         input_name,
         input_namespace,
-        output_name=None,
-        output_namespace=None,
+        output_num_partitions,
+        output_name,
+        output_namespace,
         output_partitioner=None,
     ):
-        input_info = _TaskInputInfo(input_namespace, input_name, num_partitions)
+        input_info = _TaskInputInfo(input_namespace, input_name, input_num_partitions)
         output_info = _TaskOutputInfo(
-            namespace=output_namespace if output_namespace is not None else self.session_id,
-            name=output_name if output_name is not None else str(uuid.uuid1()),
-            num_partitions=num_partitions,
+            namespace=output_namespace,
+            name=output_name,
+            num_partitions=output_num_partitions,
             partitioner=output_partitioner,
         )
+        return self._submit_process(
+            _do_func,
+            (
+                _MapReduceProcess(
+                    partition_id=p,
+                    input_info=input_info,
+                    output_info=output_info,
+                    operator_info=_MapReduceFunctorInfo(mapper=mapper, reducer=reducer),
+                )
+                for p in range(max(input_num_partitions, output_num_partitions))
+            ),
+        )
+
+    def _submit_sorted_binary_map_partitions_with_index(
+        self,
+        func,
+        do_func,
+        num_partitions,
+        first_input_name,
+        first_input_namespace,
+        second_input_name,
+        second_input_namespace,
+        output_name,
+        output_namespace,
+    ):
+        first_input_info = _TaskInputInfo(first_input_namespace, first_input_name, num_partitions)
+        second_input_info = _TaskInputInfo(second_input_namespace, second_input_name, num_partitions)
+        output_info = _TaskOutputInfo(
+            namespace=output_namespace, name=output_name, num_partitions=num_partitions, partitioner=None
+        )
+        return self._submit_process(
+            do_func,
+            (
+                _BinarySortedMapProcess(
+                    partition_id=p,
+                    first_input_info=first_input_info,
+                    second_input_info=second_input_info,
+                    output_info=output_info,
+                    operator_info=_BinarySortedMapFunctorInfo(func),
+                )
+                for p in range(num_partitions)
+            ),
+        )
+
+    def _submit_process(self, do_func, process_infos):
         futures = []
-        for p in range(num_partitions):
+        for process_info in process_infos:
             futures.append(
                 self._pool.submit(
-                    _do_func,
-                    _MapReduceProcess(
-                        partition_id=p,
-                        input_info=input_info,
-                        output_info=output_info,
-                        operator_info=_MapReduceFunctorInfo(mapper=mapper, reducer=reducer),
-                    ),
+                    do_func,
+                    process_info,
                 )
             )
         results = [r.result() for r in futures]
-        return results
-
-    def _submit_binary(self, func, do_func, partitions, name, namespace, other_name, other_namespace):
-        task_info = _TaskInfo(
-            self.session_id,
-            function_id=str(uuid.uuid1()),
-            function_bytes=f_pickle.dumps(func),
-        )
-        futures = []
-        for p in range(partitions):
-            left = _Operand(namespace, name, p, partitions)
-            right = _Operand(other_namespace, other_name, p, partitions)
-            futures.append(self._pool.submit(do_func, _BinaryProcess(task_info, left, right)))
-        results = []
-        for f in futures:
-            r = f.result()
-            results.append(r)
         return results
 
 
@@ -830,53 +833,6 @@ def _load_table(session, name: str, namespace: str, need_cleanup=False):
     )
 
 
-class _TaskInfo:
-    def __init__(self, task_id, function_id, function_bytes):
-        self.task_id = task_id
-        self.function_id = function_id
-        self.function_bytes = function_bytes
-        self._function_deserialized = None
-
-    def get_func(self):
-        if self._function_deserialized is None:
-            self._function_deserialized = f_pickle.loads(self.function_bytes)
-        return self._function_deserialized
-
-
-class _MapReduceTaskInfo:
-    def __init__(self, output_namespace, output_name, map_function_bytes, reduce_function_bytes):
-        self.output_namespace = output_namespace
-        self.output_name = output_name
-        self.map_function_bytes = map_function_bytes
-        self.reduce_function_bytes = reduce_function_bytes
-        self._reduce_function_deserialized = None
-        self._mapper_function_deserialized = None
-
-    def get_mapper(self):
-        if self._mapper_function_deserialized is None:
-            self._mapper_function_deserialized = f_pickle.loads(self.map_function_bytes)
-        return self._mapper_function_deserialized
-
-    def get_reducer(self):
-        if self._reduce_function_deserialized is None:
-            self._reduce_function_deserialized = f_pickle.loads(self.reduce_function_bytes)
-        return self._reduce_function_deserialized
-
-
-class _Operand:
-    def __init__(self, namespace, name, partition, num_partitions: int):
-        self.namespace = namespace
-        self.name = name
-        self.partition = partition
-        self.num_partitions = num_partitions
-
-    def as_env(self, write=False):
-        return _get_env(self.namespace, self.name, str(self.partition), write=write)
-
-    def as_partition_env(self, partition, write=False):
-        return _get_env(self.namespace, self.name, str(partition), write=write)
-
-
 class _TaskInputInfo:
     def __init__(self, namespace, name, num_partitions):
         self.namespace = namespace
@@ -919,6 +875,19 @@ class _MapReduceFunctorInfo:
         return f_pickle.loads(self.reducer_bytes)
 
 
+class _BinarySortedMapFunctorInfo:
+    def __init__(self, mapper):
+        if mapper is not None:
+            self.mapper_bytes = f_pickle.dumps(mapper)
+        else:
+            self.mapper_bytes = None
+
+    def get_mapper(self):
+        if self.mapper_bytes is None:
+            raise RuntimeError("mapper is None")
+        return f_pickle.loads(self.mapper_bytes)
+
+
 class _ReduceFunctorInfo:
     def __init__(self, reducer):
         if reducer is not None:
@@ -956,7 +925,7 @@ class _ReduceProcess:
 class _MapReduceProcess:
     def __init__(
         self,
-        partition_id,
+        partition_id: int,
         input_info: _TaskInputInfo,
         output_info: _TaskOutputInfo,
         operator_info: _MapReduceFunctorInfo,
@@ -981,9 +950,14 @@ class _MapReduceProcess:
     def get_input_cursor(self, stack: ExitStack, pid=None):
         if pid is None:
             pid = self.partition_id
+        if isinstance(pid, int) and pid >= self.input_info.num_partitions:
+            raise RuntimeError(f"pid {pid} >= input_info.num_partitions {self.input_info.num_partitions}")
         return stack.enter_context(
             stack.enter_context(stack.enter_context(self.get_input_env(pid, write=False)).begin(write=False)).cursor()
         )
+
+    def has_partition(self, pid):
+        return pid < self.input_info.num_partitions
 
     def get_output_transaction(self, pid, stack: ExitStack):
         return stack.enter_context(stack.enter_context(self.get_output_env(pid, write=True)).begin(write=True))
@@ -998,17 +972,62 @@ class _MapReduceProcess:
         return self.operator_info.get_reducer()
 
 
-class _BinaryProcess:
-    def __init__(self, task_info: _TaskInfo, left: _Operand, right: _Operand):
-        self.info = task_info
-        self.left = left
-        self.right = right
+class _BinarySortedMapProcess:
+    def __init__(
+        self,
+        partition_id,
+        first_input_info: _TaskInputInfo,
+        second_input_info: _TaskInputInfo,
+        output_info: _TaskOutputInfo,
+        operator_info: _BinarySortedMapFunctorInfo,
+    ):
+        self.partition_id = partition_id
+        self.first_input = first_input_info
+        self.second_input = second_input_info
+        self.output_info = output_info
+        self.operator_info = operator_info
 
-    def output_operand(self):
-        return _Operand(self.info.task_id, self.info.function_id, self.left.partition, self.left.num_partitions)
+    def get_input_partition_num(self):
+        return self.first_input.num_partitions
+
+    def get_output_partition_num(self):
+        return self.output_info.num_partitions
+
+    def get_first_input_env(self, pid, write=False):
+        return _get_env(self.first_input.namespace, self.first_input.name, str(pid), write=write)
+
+    def get_second_input_env(self, pid, write=False):
+        return _get_env(self.second_input.namespace, self.second_input.name, str(pid), write=write)
+
+    def get_output_env(self, pid, write=True):
+        return _get_env(self.output_info.namespace, self.output_info.name, str(pid), write=write)
+
+    def get_first_input_cursor(self, stack: ExitStack, pid=None):
+        if pid is None:
+            pid = self.partition_id
+        return stack.enter_context(
+            stack.enter_context(
+                stack.enter_context(self.get_first_input_env(pid, write=False)).begin(write=False)
+            ).cursor()
+        )
+
+    def get_second_input_cursor(self, stack: ExitStack, pid=None):
+        if pid is None:
+            pid = self.partition_id
+        return stack.enter_context(
+            stack.enter_context(
+                stack.enter_context(self.get_second_input_env(pid, write=False)).begin(write=False)
+            ).cursor()
+        )
+
+    def get_output_transaction(self, pid, stack: ExitStack):
+        return stack.enter_context(stack.enter_context(self.get_output_env(pid, write=True)).begin(write=True))
+
+    def get_output_partition_id(self, key: bytes):
+        return self.output_info.get_partition_id(key)
 
     def get_func(self):
-        return self.info.get_func()
+        return self.operator_info.get_mapper()
 
 
 def _get_env(*args, write=False):
@@ -1059,15 +1078,30 @@ def _do_mrwi_no_shuffle(p: _MapReduceProcess):
 
 def _do_mrwi_shuffle_no_reduce(p: _MapReduceProcess):
     rtn = p.output_info
+    if p.has_partition(p.partition_id):
+        with ExitStack() as s:
+            cursor = p.get_input_cursor(s)
+            txn_map = {}
+            for output_partition_id in range(p.get_output_partition_num()):
+                txn_map[output_partition_id] = p.get_output_transaction(output_partition_id, s)
+            output_kv_iter = p.get_mapper()(p.partition_id, _generator_from_cursor(cursor))
+            for k_bytes, v_bytes in output_kv_iter:
+                partition_id = p.get_output_partition_id(k_bytes)
+                txn_map[partition_id].put(k_bytes, v_bytes)
+    return rtn
+
+
+def _do_binary_sorted_map_with_index(p: _BinarySortedMapProcess):
+    rtn = p.output_info
     with ExitStack() as s:
-        cursor = p.get_input_cursor(s)
-        txn_map = {}
-        for output_partition_id in range(p.get_output_partition_num()):
-            txn_map[output_partition_id] = p.get_output_transaction(output_partition_id, s)
-        output_kv_iter = p.get_mapper()(p.partition_id, _generator_from_cursor(cursor))
+        first_cursor = p.get_first_input_cursor(s)
+        second_cursor = p.get_second_input_cursor(s)
+        dst_txn = p.get_output_transaction(p.partition_id, s)
+        output_kv_iter = p.get_func()(
+            p.partition_id, _generator_from_cursor(first_cursor), _generator_from_cursor(second_cursor)
+        )
         for k_bytes, v_bytes in output_kv_iter:
-            partition_id = p.get_output_partition_id(k_bytes)
-            txn_map[partition_id].put(k_bytes, v_bytes)
+            dst_txn.put(k_bytes, v_bytes)
         return rtn
 
 
@@ -1091,18 +1125,19 @@ def _get_shuffle_partition_id(shuffle_source_partition_id: int, shuffle_destinat
 
 def _do_mrwi_map_and_shuffle_write(p: _MapReduceProcess):
     rtn = p.output_info
-    with ExitStack() as s:
-        cursor = p.get_input_cursor(s)
-        shuffle_write_txn_map = {}
-        for output_partition_id in range(p.get_output_partition_num()):
-            shuffle_partition_id = _get_shuffle_partition_id(p.partition_id, output_partition_id)
-            shuffle_write_txn_map[output_partition_id] = p.get_output_transaction(shuffle_partition_id, s)
+    if p.has_partition(p.partition_id):
+        with ExitStack() as s:
+            cursor = p.get_input_cursor(s)
+            shuffle_write_txn_map = {}
+            for output_partition_id in range(p.get_output_partition_num()):
+                shuffle_partition_id = _get_shuffle_partition_id(p.partition_id, output_partition_id)
+                shuffle_write_txn_map[output_partition_id] = p.get_output_transaction(shuffle_partition_id, s)
 
-        output_kv_iter = p.get_mapper()(p.partition_id, _generator_from_cursor(cursor))
-        for index, (k_bytes, v_bytes) in enumerate(output_kv_iter):
-            shuffle_write_txn_map[p.get_output_partition_id(k_bytes)].put(
-                _serialize_shuffle_write_key(index, k_bytes), v_bytes, overwrite=False
-            )
+            output_kv_iter = p.get_mapper()(p.partition_id, _generator_from_cursor(cursor))
+            for index, (k_bytes, v_bytes) in enumerate(output_kv_iter):
+                shuffle_write_txn_map[p.get_output_partition_id(k_bytes)].put(
+                    _serialize_shuffle_write_key(index, k_bytes), v_bytes, overwrite=False
+                )
     return rtn
 
 
@@ -1133,83 +1168,6 @@ def _do_reduce(p: _ReduceProcess):
             else:
                 value = p.get_reducer()(value, v_bytes)
     return value
-
-
-def _do_subtract_by_key(p: _BinaryProcess):
-    rtn = p.output_operand()
-    with ExitStack() as s:
-        left_op = p.left
-        right_op = p.right
-        right_env = s.enter_context(right_op.as_env())
-        left_env = s.enter_context(left_op.as_env())
-        dst_env = s.enter_context(rtn.as_env(write=True))
-
-        left_txn = s.enter_context(left_env.begin())
-        right_txn = s.enter_context(right_env.begin())
-        dst_txn = s.enter_context(dst_env.begin(write=True))
-
-        cursor = s.enter_context(left_txn.cursor())
-        for k_bytes, left_v_bytes in cursor:
-            right_v_bytes = right_txn.get(k_bytes)
-            if right_v_bytes is None:
-                dst_txn.put(k_bytes, left_v_bytes)
-    return rtn
-
-
-def _do_join(p: _BinaryProcess):
-    rtn = p.output_operand()
-    with ExitStack() as s:
-        right_env = s.enter_context(p.right.as_env())
-        left_env = s.enter_context(p.left.as_env())
-        dst_env = s.enter_context(rtn.as_env(write=True))
-
-        left_txn = s.enter_context(left_env.begin())
-        right_txn = s.enter_context(right_env.begin())
-        dst_txn = s.enter_context(dst_env.begin(write=True))
-
-        cursor = s.enter_context(left_txn.cursor())
-        for k_bytes, v1_bytes in cursor:
-            v2_bytes = right_txn.get(k_bytes)
-            if v2_bytes is None:
-                continue
-            try:
-                v3 = p.get_func()(v1_bytes, v2_bytes)
-            except Exception as e:
-                raise RuntimeError(
-                    f"Error when joining:\n" f"left:\n" f"{v1_bytes}\n" f"right:\n" f"{v2_bytes}\n" f"error: {e}"
-                ) from e
-            dst_txn.put(k_bytes, v3)
-    return rtn
-
-
-def _do_union(p: _BinaryProcess):
-    rtn = p.output_operand()
-    with ExitStack() as s:
-        left_env = s.enter_context(p.left.as_env())
-        right_env = s.enter_context(p.right.as_env())
-        dst_env = s.enter_context(rtn.as_env(write=True))
-
-        left_txn = s.enter_context(left_env.begin())
-        right_txn = s.enter_context(right_env.begin())
-        dst_txn = s.enter_context(dst_env.begin(write=True))
-
-        # process left op
-        with left_txn.cursor() as left_cursor:
-            for k_bytes, left_v_bytes in left_cursor:
-                right_v_bytes = right_txn.get(k_bytes)
-                if right_v_bytes is None:
-                    dst_txn.put(k_bytes, left_v_bytes)
-                else:
-                    final_v = p.get_func()(left_v_bytes, right_v_bytes)
-                    dst_txn.put(k_bytes, final_v)
-
-        # process right op
-        with right_txn.cursor() as right_cursor:
-            for k_bytes, right_v_bytes in right_cursor:
-                final_v_bytes = dst_txn.get(k_bytes)
-                if final_v_bytes is None:
-                    dst_txn.put(k_bytes, right_v_bytes)
-    return rtn
 
 
 class _FederationMetaManager:

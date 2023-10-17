@@ -16,7 +16,7 @@
 
 import logging
 
-from fate.arch.abc import CSessionABC
+from fate.arch.computing.table import KVTableContext
 
 from ...unify import URI, uuid
 from .._profile import computing_profile
@@ -31,7 +31,7 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 
-class CSession(CSessionABC):
+class CSession(KVTableContext):
     def __init__(self, session_id, options: dict = None):
         if options is None:
             options = {}
@@ -82,13 +82,31 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-    @computing_profile
-    def parallelize(self, data, partition: int, include_key: bool, **kwargs) -> Table:
-        options = dict()
-        options["total_partitions"] = partition
-        options["include_key"] = include_key
-        rp = self._rpc.parallelize(data=data, options=options)
-        return Table(rp)
+    def _parallelize(
+        self,
+        data,
+        total_partitions,
+        key_serdes,
+        key_serdes_type,
+        value_serdes,
+        value_serdes_type,
+        partitioner,
+        partitioner_type,
+    ):
+        rp = self._rpc.parallelize(
+            data=data,
+            total_partitions=total_partitions,
+            partitioner=partitioner,
+            partitioner_type=partitioner_type,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+        )
+        return Table(
+            rp,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+        )
 
     def cleanup(self, name, namespace):
         self._rpc.cleanup(name=name, namespace=namespace)

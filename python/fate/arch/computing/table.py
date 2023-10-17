@@ -1,3 +1,4 @@
+import abc
 import random
 from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar
 
@@ -59,15 +60,71 @@ class KVTableContext:
 
 
 class KVTable(Generic[K, V]):
-    def __init__(self, key_serdes_type, value_serdes_type, partitioner_type):
+    def __init__(self, key_serdes_type, value_serdes_type, partitioner_type, num_partitions):
         self.key_serdes_type = key_serdes_type
         self.value_serdes_type = value_serdes_type
         self.partitioner_type = partitioner_type
+        self.num_partitions = num_partitions
 
         self._count_cache = None
         self._key_serdes = None
         self._value_serdes = None
         self._partitioner = None
+
+    @abc.abstractmethod
+    def _map_reduce_partitions_with_index(
+        self,
+        map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
+        reduce_partition_op: Callable[[Any, Any], Any],
+        shuffle: bool,
+        input_key_serdes,
+        input_key_serdes_type: int,
+        input_value_serdes,
+        input_value_serdes_type: int,
+        input_partitioner,
+        input_partitioner_type: int,
+        output_key_serdes,
+        output_key_serdes_type: int,
+        output_value_serdes,
+        output_value_serdes_type: int,
+        output_partitioner,
+        output_partitioner_type: int,
+        output_num_partitions: int,
+    ):
+        raise NotImplementedError(f"{self.__class__.__name__}._map_reduce_partitions_with_index")
+
+    @abc.abstractmethod
+    def _binary_sorted_map_partitions_with_index(
+        self,
+        other: "KVTable",
+        binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        key_serdes,
+        key_serdes_type,
+        partitioner,
+        partitioner_type,
+        first_input_value_serdes,
+        first_input_value_serdes_type,
+        second_input_value_serdes,
+        second_input_value_serdes_type,
+        output_value_serdes,
+        output_value_serdes_type,
+    ):
+        raise NotImplementedError(f"{self.__class__.__name__}._subtract_by_key")
+
+    def _reduce(self, func: Callable[[V, V], V]):
+        raise NotImplementedError(f"{self.__class__.__name__}._reduce")
+
+    @abc.abstractmethod
+    def _collect(self):
+        raise NotImplementedError(f"{self.__class__.__name__}._collect")
+
+    @abc.abstractmethod
+    def _take(self, n=1, **kwargs):
+        raise NotImplementedError(f"{self.__class__.__name__}._take")
+
+    @abc.abstractmethod
+    def _count(self):
+        raise NotImplementedError(f"{self.__class__.__name__}._count")
 
     @property
     def key_serdes(self):
@@ -90,71 +147,70 @@ class KVTable(Generic[K, V]):
     def __str__(self):
         return f"<{self.__class__.__name__} key_serdes={self.key_serdes}, value_serdes={self.value_serdes}, partitioner={self.partitioner}>"
 
-    def _map_reduce_partitions_with_index(
-        self,
-        map_partition_op: Callable[[int, Iterable], Iterable],
-        reduce_partition_op: Callable[[Any, Any], Any],
-        shuffle,
-        output_key_serdes,
-        output_key_serdes_type,
-        output_value_serdes,
-        output_value_serdes_type,
-        output_partitioner,
-        output_partitioner_type,
-    ):
-        raise NotImplementedError(f"{self.__class__.__name__}._map_reduce_partitions_with_index")
-
-    def _collect(self):
-        raise NotImplementedError(f"{self.__class__.__name__}._collect")
-
-    def _take(self, n=1, **kwargs):
-        raise NotImplementedError(f"{self.__class__.__name__}._take")
-
-    def _count(self):
-        raise NotImplementedError(f"{self.__class__.__name__}._count")
+    @abc.abstractmethod
+    def destroy(self):
+        raise NotImplementedError(f"{self.__class__.__name__}.destroy")
 
     def map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
         reduce_partition_op: Callable[[Any, Any], Any] = None,
         shuffle=True,
-        output_key_serdes=None,
-        output_value_serdes=None,
-        output_partitioner=None,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
+        output_num_partitions=None,
     ):
-        if output_key_serdes is None:
-            output_key_serdes = self.key_serdes
-        if output_value_serdes is None:
-            output_value_serdes = self.value_serdes
-        if output_partitioner is None:
-            output_partitioner = self.partitioner
+        if not shuffle and reduce_partition_op is not None:
+            raise ValueError("when shuffle is False, it is not allowed to specify reduce_partition_op")
+        if output_key_serdes_type is None:
+            output_key_serdes_type = self.key_serdes_type
+        if output_value_serdes_type is None:
+            output_value_serdes_type = self.value_serdes_type
+        if output_partitioner_type is None:
+            output_partitioner_type = self.partitioner_type
+        if output_num_partitions is None:
+            output_num_partitions = self.num_partitions
+        input_key_serdes = self.key_serdes
+        input_value_serdes = self.value_serdes
+        input_partitioner = self.partitioner
+        output_key_serdes = get_serdes_by_type(output_key_serdes_type)
+        output_value_serdes = get_serdes_by_type(output_value_serdes_type)
+        output_partitioner = get_partitioner_by_type(output_partitioner_type)
         return self._map_reduce_partitions_with_index(
             map_partition_op=_lifted_mpwi_map_to_serdes(
                 map_partition_op, self.key_serdes, self.value_serdes, output_key_serdes, output_value_serdes
             ),
             reduce_partition_op=_lifted_mpwi_reduce_to_serdes(reduce_partition_op, output_value_serdes),
             shuffle=shuffle,
+            input_key_serdes=input_key_serdes,
+            input_key_serdes_type=self.key_serdes_type,
+            input_value_serdes=input_value_serdes,
+            input_value_serdes_type=self.value_serdes_type,
+            input_partitioner=input_partitioner,
+            input_partitioner_type=self.partitioner_type,
             output_key_serdes=output_key_serdes,
-            output_key_serdes_type=0,
+            output_key_serdes_type=output_key_serdes_type,
             output_value_serdes=output_value_serdes,
-            output_value_serdes_type=0,
+            output_value_serdes_type=output_value_serdes_type,
             output_partitioner=output_partitioner,
-            output_partitioner_type=0,
+            output_partitioner_type=output_partitioner_type,
+            output_num_partitions=output_num_partitions,
         )
 
     def mapPartitionsWithIndex(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
-        output_key_serdes=None,
-        output_value_serdes=None,
-        output_partitioner=None,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         return self.map_reduce_partitions_with_index(
             map_partition_op=map_partition_op,
             shuffle=True,
-            output_key_serdes=output_key_serdes,
-            output_value_serdes=output_value_serdes,
-            output_partitioner=output_partitioner,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner_type=output_partitioner_type,
         )
 
     def mapReducePartitions(
@@ -162,89 +218,92 @@ class KVTable(Generic[K, V]):
         map_partition_op: Callable[[Iterable], Iterable],
         reduce_partition_op: Callable[[Any, Any], Any] = None,
         shuffle=True,
-        output_key_serdes=None,
-        output_value_serdes=None,
-        output_partitioner=None,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         return self.map_reduce_partitions_with_index(
             map_partition_op=_lifted_map_reduce_partitions_to_mpwi(map_partition_op),
             reduce_partition_op=reduce_partition_op,
             shuffle=shuffle,
-            output_key_serdes=output_key_serdes,
-            output_value_serdes=output_value_serdes,
-            output_partitioner=output_partitioner,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner_type=output_partitioner_type,
         )
 
-    def applyPartitions(self, func, output_value_serdes=None):
+    def applyPartitions(self, func, output_value_serdes_type=None):
         return self.map_reduce_partitions_with_index(
             map_partition_op=_lifted_apply_partitions_to_mpwi(func),
             shuffle=False,
-            output_key_serdes=self.key_serdes,
-            output_value_serdes=output_value_serdes,
+            output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
         )
 
-    def mapPartitions(self, func, use_previous_behavior=False, preserves_partitioning=False, output_value_serdes=None):
+    def mapPartitions(
+        self, func, use_previous_behavior=False, preserves_partitioning=False, output_value_serdes_type=None
+    ):
         if use_previous_behavior:
             raise NotImplementedError("use_previous_behavior is not supported")
         return self.map_reduce_partitions_with_index(
             map_partition_op=_lifted_map_partitions_to_mpwi(func),
             shuffle=not preserves_partitioning,
-            output_key_serdes=self.key_serdes,
-            output_value_serdes=output_value_serdes,
+            output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
         )
 
     def map(
         self,
         map_op: Callable[[Any, Any], Tuple[Any, Any]],
-        output_key_serdes=None,
-        output_value_serdes=None,
-        output_partitioner=None,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         return self.map_reduce_partitions_with_index(
             _lifted_map_to_mpwi(map_op),
             shuffle=True,
-            output_key_serdes=output_key_serdes,
-            output_value_serdes=output_value_serdes,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner_type=output_partitioner_type,
         )
 
-    def mapValues(self, map_value_op: Callable[[Any], Any], output_value_serdes=None):
+    def mapValues(self, map_value_op: Callable[[Any], Any], output_value_serdes_type=None):
         return self.map_reduce_partitions_with_index(
             _lifted_map_values_to_mpwi(map_value_op),
             shuffle=False,
-            output_key_serdes=self.key_serdes,
-            output_value_serdes=output_value_serdes,
+            output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
         )
 
     def copy(self):
-        return self.mapValues(lambda x: x, output_value_serdes=self.value_serdes)
+        return self.mapValues(lambda x: x, output_value_serdes_type=self.value_serdes_type)
 
     def flatMap(
         self,
         flat_map_op: Callable[[Any, Any], Iterable[Tuple[Any, Any]]],
-        output_key_serdes=None,
-        output_value_serdes=None,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
     ):
         return self.map_reduce_partitions_with_index(
             _lifted_flat_map_to_mpwi(flat_map_op),
             shuffle=True,
-            output_key_serdes=output_key_serdes,
-            output_value_serdes=output_value_serdes,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
         )
 
     def filter(self, filter_op: Callable[[Any], bool]):
         return self.map_reduce_partitions_with_index(
             lambda i, x: ((k, v) for k, v in x if filter_op(v)),
             shuffle=False,
-            output_key_serdes=self.key_serdes,
-            output_value_serdes=self.value_serdes,
+            output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes_type=self.value_serdes_type,
         )
 
     def _sample(self, fraction, seed=None):
         return self.map_reduce_partitions_with_index(
             _lifted_sample_to_mpwi(fraction, seed),
             shuffle=False,
-            output_key_serdes=self.key_serdes,
-            output_value_serdes=self.value_serdes,
+            output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes_type=self.value_serdes_type,
         )
 
     def collect(self):
@@ -260,9 +319,6 @@ class KVTable(Generic[K, V]):
             raise RuntimeError("table is empty")
         return resp[0]
 
-    def _reduce(self, func: Callable[[V, V], V]):
-        raise NotImplementedError(f"{self.__class__.__name__}._reduce")
-
     def reduce(self, func: Callable[[V, V], V]) -> V:
         return self.value_serdes.deserialize(self._reduce(_lifted_reduce_to_serdes(func, self.value_serdes)))
 
@@ -271,78 +327,89 @@ class KVTable(Generic[K, V]):
             self._count_cache = self._count()
         return self._count_cache
 
-    def _join(
-        self,
-        other: "KVTable",
-        merge_op: Callable[[V, V], V],
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        raise NotImplementedError(f"{self.__class__.__name__}._join")
-
-    def join(self, other: "KVTable", merge_op: Callable[[V, V], V] = None):
-        return self._join(
+    def join(self, other: "KVTable", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+        return self.binarySortedMapPartitionsWithIndex(
             other,
-            _lifted_join_merge_to_serdes(merge_op, self.value_serdes),
-            key_serdes=self.key_serdes,
-            key_serdes_type=self.key_serdes_type,
-            value_serdes=self.value_serdes,
-            value_serdes_type=self.value_serdes_type,
-            partitioner=self.partitioner,
-            partitioner_type=self.partitioner_type,
+            _lifted_join_merge_to_sbmpwi(merge_op),
+            output_value_serdes_type=output_value_serdes_type,
         )
 
-    def _union(
-        self,
-        other,
-        merge_op: Callable[[V, V], V],
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        raise NotImplementedError(f"{self.__class__.__name__}._union")
-
-    def union(self, other, merge_op: Callable[[V, V], V] = None):
-        return self._union(
+    def union(self, other, merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+        return self.binarySortedMapPartitionsWithIndex(
             other,
-            _lifted_join_merge_to_serdes(merge_op, self.value_serdes),
-            key_serdes=self.key_serdes,
-            key_serdes_type=self.key_serdes_type,
-            value_serdes=self.value_serdes,
-            value_serdes_type=self.value_serdes_type,
-            partitioner=self.partitioner,
-            partitioner_type=self.partitioner_type,
+            _lifted_union_merge_to_sbmpwi(merge_op),
+            output_value_serdes_type=output_value_serdes_type,
         )
-
-    def _subtract_by_key(
-        self,
-        other: "KVTable",
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        raise NotImplementedError(f"{self.__class__.__name__}._subtract_by_key")
 
     def subtractByKey(self, other: "KVTable"):
-        return self._subtract_by_key(
+        return self.binarySortedMapPartitionsWithIndex(
             other,
-            key_serdes=self.key_serdes,
-            key_serdes_type=self.key_serdes_type,
-            value_serdes=self.value_serdes,
-            value_serdes_type=self.value_serdes_type,
-            partitioner=self.partitioner,
-            partitioner_type=self.partitioner_type,
+            _lifted_subtract_by_key_to_sbmpwi(),
+            output_value_serdes_type=self.value_serdes_type,
         )
+
+    def binarySortedMapPartitionsWithIndex(
+        self,
+        other: "KVTable",
+        binary_sorted_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        output_value_serdes_type=None,
+    ):
+        if output_value_serdes_type is None:
+            output_value_serdes_type = self.value_serdes_type
+        assert self.key_serdes_type == other.key_serdes_type, "key_serdes_type must be the same"
+        assert self.partitioner_type == other.partitioner_type, "partitioner_type must be the same"
+        output_value_serdes = get_serdes_by_type(output_value_serdes_type)
+
+        # makes partition alignment:
+        #   self.num_partitions == other.num_partitions
+        #   self.partitioner_type == other.partitioner_type
+        first, second = self.repartition_with(other)
+
+        # apply binary_sorted_map_partitions_with_index_op
+        return first._binary_sorted_map_partitions_with_index(
+            other=second,
+            binary_map_partitions_with_index_op=_lifted_sorted_binary_map_partitions_with_index_to_serdes(
+                binary_sorted_map_partitions_with_index_op,
+                first.key_serdes,
+                first.value_serdes,
+                second.value_serdes,
+                output_value_serdes,
+            ),
+            key_serdes=first.key_serdes,
+            key_serdes_type=first.key_serdes_type,
+            partitioner=first.partitioner,
+            partitioner_type=first.partitioner_type,
+            first_input_value_serdes=first.value_serdes,
+            first_input_value_serdes_type=first.value_serdes_type,
+            second_input_value_serdes=second.value_serdes,
+            second_input_value_serdes_type=second.value_serdes_type,
+            output_value_serdes=output_value_serdes,
+            output_value_serdes_type=output_value_serdes_type,
+        )
+
+    def repartition(self, num_partitions, partitioner_type=None):
+        if partitioner_type is None:
+            partitioner_type = self.partitioner_type
+        if self.partitioner_type == partitioner_type and self.num_partitions == num_partitions:
+            return self
+
+        # TODO: serialize and deserialize is not necessary
+        return self.map_reduce_partitions_with_index(
+            map_partition_op=lambda i, x: x,
+            shuffle=True,
+            output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes_type=self.value_serdes_type,
+            output_num_partitions=num_partitions,
+            output_partitioner_type=partitioner_type,
+        )
+
+    def repartition_with(self, other: "KVTable") -> Tuple["KVTable", "KVTable"]:
+        if self.partitioner_type == other.partitioner_type and self.num_partitions == other.num_partitions:
+            return self, other
+        if self.num_partitions > other.num_partitions:
+            return self, other.repartition(self.num_partitions, self.partitioner_type)
+        else:
+            return self.repartition(other.num_partitions, other.partitioner_type), other
 
     # def save_as(self, name, namespace, partition=None, options=None):
     #     return self.rp.save_as(name=name, namespace=namespace, partition=partition, options=options)
@@ -460,13 +527,158 @@ def _lifted_reduce_to_serdes(reduce_op, value_serdes):
     return _lifted
 
 
-def _lifted_join_merge_to_serdes(join_merge_op, value_serdes):
-    def _lifted(x, y):
-        return value_serdes.serialize(
-            join_merge_op(
-                value_serdes.deserialize(x),
-                value_serdes.deserialize(y),
-            )
-        )
+def _lifted_sorted_binary_map_partitions_with_index_to_serdes(
+    _f, key_serdes, left_value_serdes, right_value_serdes, output_value_serdes
+):
+    def _lifted(_index, left_iter, right_iter):
+        for out_k, out_v in _f(
+            _index,
+            _serdes_wrapped_generator(left_iter, key_serdes, left_value_serdes),
+            _serdes_wrapped_generator(right_iter, key_serdes, right_value_serdes),
+        ):
+            yield key_serdes.serialize(out_k), output_value_serdes.serialize(out_v)
 
     return _lifted
+
+
+def _lifted_join_merge_to_sbmpwi(join_merge_op):
+    def _lifted(_index, _left_iter, _right_iter):
+        return _merge_intersecting_keys(_left_iter, _right_iter, join_merge_op)
+
+    return _lifted
+
+
+def _lifted_union_merge_to_sbmpwi(join_merge_op):
+    def _lifted(_index, _left_iter, _right_iter):
+        return _merge_union_keys(_left_iter, _right_iter, join_merge_op)
+
+    return _lifted
+
+
+def _lifted_subtract_by_key_to_sbmpwi():
+    def _lifted(_index, _left_iter, _right_iter):
+        return _subtract_by_key(_left_iter, _right_iter)
+
+    return _lifted
+
+
+def _merge_intersecting_keys(iter1, iter2, merge_op):
+    try:
+        item1 = next(iter1)
+        item2 = next(iter2)
+    except StopIteration:
+        return
+
+    while True:
+        key1, value1 = item1
+        key2, value2 = item2
+
+        if key1 == key2:
+            yield key1, merge_op(value1, value2)
+            try:
+                item1 = next(iter1)
+                item2 = next(iter2)
+            except StopIteration:
+                break
+        elif key1 < key2:
+            try:
+                item1 = next(iter1)
+            except StopIteration:
+                break
+        else:  # key1 > key2
+            try:
+                item2 = next(iter2)
+            except StopIteration:
+                break
+
+
+def _merge_union_keys(iter1, iter2, merge_op):
+    try:
+        item1 = next(iter1)
+    except StopIteration:
+        item1 = None
+
+    try:
+        item2 = next(iter2)
+    except StopIteration:
+        item2 = None
+
+    if item1 is None and item2 is None:
+        return
+
+    while item1 is not None and item2 is not None:
+        key1, value1 = item1
+        key2, value2 = item2
+
+        if key1 == key2:
+            yield key1, merge_op(value1, value2)
+            try:
+                item1 = next(iter1)
+            except StopIteration:
+                item1 = None
+            try:
+                item2 = next(iter2)
+            except StopIteration:
+                item2 = None
+        elif key1 < key2:
+            yield key1, value1
+            try:
+                item1 = next(iter1)
+            except StopIteration:
+                item1 = None
+        else:  # key1 > key2
+            yield key2, value2
+            try:
+                item2 = next(iter2)
+            except StopIteration:
+                item2 = None
+
+    if item1 is not None:
+        yield item1
+        yield from iter1
+    elif item2 is not None:
+        yield item2
+        yield from iter2
+
+
+def _subtract_by_key(iter1, iter2):
+    try:
+        item1 = next(iter1)
+    except StopIteration:
+        return
+
+    try:
+        item2 = next(iter2)
+    except StopIteration:
+        yield item1
+        yield from iter1
+        return
+
+    while item1 is not None and item2 is not None:
+        key1, value1 = item1
+        key2, value2 = item2
+
+        if key1 == key2:
+            try:
+                item1 = next(iter1)
+            except StopIteration:
+                item1 = None
+            try:
+                item2 = next(iter2)
+            except StopIteration:
+                item2 = None
+        elif key1 < key2:
+            yield item1
+            try:
+                item1 = next(iter1)
+            except StopIteration:
+                item1 = None
+        else:  # key1 > key2
+            try:
+                item2 = next(iter2)
+            except StopIteration:
+                item2 = None
+
+    if item1 is not None:
+        yield item1
+        yield from iter1

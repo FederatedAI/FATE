@@ -17,22 +17,123 @@
 
 import logging
 import typing
-
-from fate.arch.abc import CTableABC
+from typing import Callable, Iterable, Any
 
 from ...unify import URI
 from .._profile import computing_profile
 from .._type import ComputingEngine
+from ..table import KVTable
+from eggroll.roll_pair.roll_pair import RollPair
 
 LOGGER = logging.getLogger(__name__)
 
 
-class Table(CTableABC):
-    def __init__(self, rp):
+class Table(KVTable):
+    def destroy(self):
+        self._rp.destroy()
+
+    def _map_reduce_partitions_with_index(
+        self,
+        map_partition_op: Callable[[int, Iterable], Iterable],
+        reduce_partition_op: Callable[[Any, Any], Any],
+        shuffle: bool,
+        input_key_serdes,
+        input_key_serdes_type: int,
+        input_value_serdes,
+        input_value_serdes_type: int,
+        input_partitioner,
+        input_partitioner_type: int,
+        output_key_serdes,
+        output_key_serdes_type: int,
+        output_value_serdes,
+        output_value_serdes_type: int,
+        output_partitioner,
+        output_partitioner_type: int,
+        output_num_partitions: int,
+    ):
+        rp = self._rp.map_reduce_partitions_with_index(
+            map_partition_op=map_partition_op,
+            reduce_partition_op=reduce_partition_op,
+            shuffle=shuffle,
+            input_key_serdes=input_key_serdes,
+            input_key_serdes_type=input_key_serdes_type,
+            input_value_serdes=input_value_serdes,
+            input_value_serdes_type=input_value_serdes_type,
+            input_partitioner=input_partitioner,
+            input_partitioner_type=input_partitioner_type,
+            output_key_serdes=output_key_serdes,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes=output_value_serdes,
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner=output_partitioner,
+            output_partitioner_type=output_partitioner_type,
+            output_num_partitions=output_num_partitions,
+        )
+        return Table(
+            rp,
+            key_serdes_type=output_key_serdes_type,
+            value_serdes_type=output_value_serdes_type,
+            partitioner_type=output_partitioner_type,
+        )
+
+    def _binary_sorted_map_partitions_with_index(
+        self,
+        other: "Table",
+        binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        key_serdes,
+        key_serdes_type,
+        partitioner,
+        partitioner_type,
+        first_input_value_serdes,
+        first_input_value_serdes_type,
+        second_input_value_serdes,
+        second_input_value_serdes_type,
+        output_value_serdes,
+        output_value_serdes_type,
+    ):
+        rp = self._rp.binary_sorted_map_partitions_with_index(
+            other=other._rp,
+            binary_map_partitions_with_index_op=binary_map_partitions_with_index_op,
+            key_serdes=key_serdes,
+            key_serdes_type=key_serdes_type,
+            partitioner=partitioner,
+            partitioner_type=partitioner_type,
+            first_input_value_serdes=first_input_value_serdes,
+            first_input_value_serdes_type=first_input_value_serdes_type,
+            second_input_value_serdes=second_input_value_serdes,
+            second_input_value_serdes_type=second_input_value_serdes_type,
+            output_value_serdes=output_value_serdes,
+            output_value_serdes_type=output_value_serdes_type,
+        )
+        return Table(
+            rp,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=output_value_serdes_type,
+            partitioner_type=partitioner_type,
+        )
+
+    def _take(self, n=1, **kwargs):
+        return self._rp.take(n=n, **kwargs)
+
+    def _count(self, **kwargs):
+        return self._rp.count(**kwargs)
+
+    def _collect(self):
+        return self._rp.get_all()
+
+    def _reduce(self, func: Callable[[bytes, bytes], bytes]):
+        return self._rp.reduce(func=func)
+
+    def __init__(self, rp: RollPair, key_serdes_type, value_serdes_type, partitioner_type):
         self._rp = rp
         self._engine = ComputingEngine.EGGROLL
 
-        self._count = None
+        super().__init__(
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+            num_partitions=rp.get_partitions(),
+        )
 
     @property
     def engine(self):
@@ -41,9 +142,6 @@ class Table(CTableABC):
     @property
     def partitions(self):
         return self._rp.get_partitions()
-
-    def copy(self):
-        return Table(self._rp.map_values(lambda x: x))
 
     @computing_profile
     def save(self, uri: URI, schema: dict, options: dict = None):
@@ -71,70 +169,6 @@ class Table(CTableABC):
         )
         schema.update(self.schema)
         return
-
-    @computing_profile
-    def collect(self, **kwargs) -> list:
-        return self._rp.get_all()
-
-    @computing_profile
-    def count(self, **kwargs) -> int:
-        if self._count is None:
-            self._count = self._rp.count()
-        return self._count
-
-    @computing_profile
-    def take(self, n=1, **kwargs):
-        options = dict(keys_only=False)
-        return self._rp.take(n=n, options=options)
-
-    @computing_profile
-    def first(self):
-        options = dict(keys_only=False)
-        return self._rp.first(options=options)
-
-    @computing_profile
-    def map(self, func, **kwargs):
-        return Table(self._rp.map(func))
-
-    @computing_profile
-    def mapValues(self, func: typing.Callable[[typing.Any], typing.Any], **kwargs):
-        return Table(self._rp.map_values(func))
-
-    @computing_profile
-    def applyPartitions(self, func):
-        return Table(self._rp.collapse_partitions(func))
-
-    @computing_profile
-    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
-        if use_previous_behavior is True:
-            LOGGER.warning(
-                f"please use `applyPartitions` instead of `mapPartitions` "
-                f"if the previous behavior was expected. "
-                f"The previous behavior will not work in future"
-            )
-            return self.applyPartitions(func)
-
-        return Table(self._rp.map_partitions(func, options={"shuffle": not preserves_partitioning}))
-
-    @computing_profile
-    def mapReducePartitions(self, mapper, reducer, **kwargs):
-        return Table(self._rp.map_partitions(func=mapper, reduce_op=reducer))
-
-    @computing_profile
-    def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
-        return Table(self._rp.map_partitions_with_index(func, options={"shuffle": not preserves_partitioning}))
-
-    @computing_profile
-    def reduce(self, func, **kwargs):
-        return self._rp.reduce(func)
-
-    @computing_profile
-    def join(self, other: "Table", func, **kwargs):
-        return Table(self._rp.join(other._rp, func=func))
-
-    @computing_profile
-    def glom(self, **kwargs):
-        return Table(self._rp.glom())
 
     @computing_profile
     def sample(
@@ -169,21 +203,3 @@ class Table(CTableABC):
             return Table(sampled_table)
 
         raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
-
-    @computing_profile
-    def subtractByKey(self, other: "Table", **kwargs):
-        return Table(self._rp.subtract_by_key(other._rp))
-
-    @computing_profile
-    def filter(self, func, **kwargs):
-        return Table(self._rp.filter(func))
-
-    @computing_profile
-    def union(self, other: "Table", func=lambda v1, v2: v1, **kwargs):
-        return Table(self._rp.union(other._rp, func=func))
-
-    @computing_profile
-    def flatMap(self, func, **kwargs):
-        flat_map = self._rp.flat_map(func)
-        shuffled = flat_map.map(lambda k, v: (k, v))  # trigger shuffle
-        return Table(shuffled)
