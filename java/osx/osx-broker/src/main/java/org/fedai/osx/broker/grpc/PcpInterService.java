@@ -40,7 +40,7 @@ import java.util.Map;
 
 @Singleton
 @Slf4j
-public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferProtocolImplBase {
+public class PcpInterService extends PrivateTransferProtocolGrpc.PrivateTransferProtocolImplBase {
 
     @Inject
     TechProviderRegister techProviderRegister;
@@ -141,23 +141,7 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
         }
     }
 
-    public void peek(org.ppc.ptp.Osx.PeekInbound request,
-                     io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.TransportOutbound> responseObserver) {
-        OsxContext osxContext = new OsxContext();
-        osxContext.setUri(UriConstants.PEEK);
-        TechProvider techProvider= prepare(osxContext);
-        techProvider.processGrpcPeek(osxContext,request, responseObserver);
-    }
 
-    /**
-     */
-    public void pop(org.ppc.ptp.Osx.PopInbound request,
-                    io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.TransportOutbound> responseObserver) {
-        OsxContext osxContext = new OsxContext();
-        osxContext.setUri(UriConstants.POP);
-        TechProvider techProvider= prepare(osxContext);
-        techProvider.processGrpcPop(osxContext,request, responseObserver);
-    }
 
     private TechProvider prepare(OsxContext  osxContext){
         ContextUtil.assableContextFromInbound(osxContext);
@@ -166,23 +150,5 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
     }
 
 
-    /**
-     */
-    public void push(org.ppc.ptp.Osx.PushInbound request,
-                     io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.TransportOutbound> responseObserver) {
-        OsxContext osxContext = new OsxContext();
-
-        TechProvider techProvider= prepare(osxContext);
-        techProvider.processGrpcPush(osxContext,request, responseObserver);
-    }
-
-    /**
-     */
-    public void release(org.ppc.ptp.Osx.ReleaseInbound request,
-                        io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.TransportOutbound> responseObserver) {
-        OsxContext osxContext = new OsxContext();
-        TechProvider techProvider= prepare(osxContext);
-        techProvider.processGrpcRelease(osxContext,request, responseObserver);
-    }
 
 }

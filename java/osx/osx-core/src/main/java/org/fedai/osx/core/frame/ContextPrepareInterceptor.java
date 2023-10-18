@@ -2,9 +2,11 @@ package org.fedai.osx.core.frame;
 
 import io.grpc.*;
 import io.grpc.stub.MetadataUtils;
+import jdk.nashorn.internal.runtime.URIUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.utils.UrlUtil;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +54,7 @@ public class ContextPrepareInterceptor implements ServerInterceptor ,ClientInter
 
 
     private void setMetadata(Metadata metadata, Metadata.Key<String> key, String v) {
-        System.err.println("xxxxxxxxx"+v);
+
         if (StringUtils.isNotEmpty(v)) {
             logger.info("======meta data put {} {}",key,v);
             metadata.put(key, v);
@@ -145,11 +147,11 @@ public class ContextPrepareInterceptor implements ServerInterceptor ,ClientInter
         setMetadata(metadata, METAKEY_TARGET_INST_ID, Optional.ofNullable(osxContext.getDesInstId()).orElse(""));
         setMetadata(metadata, METAKEY_SESSION_ID, Optional.ofNullable(osxContext.getSessionId()).orElse(""));
         setMetadata(metadata, METAKEY_TOPIC_KEY, Optional.ofNullable(osxContext.getTopic()).orElse(""));
-        setMetadata(metadata,METAKEY_URI, Optional.ofNullable(osxContext.getUri()).orElse(""));
+        setMetadata(metadata,METAKEY_URI, Optional.ofNullable(UrlUtil.buildUrl("grpcs://","fedai.org",osxContext.getUri())).orElse(""));
         setMetadata(metadata,METAKEY_QUEUE_TYPE,Optional.ofNullable(osxContext.getQueueType()).orElse(""));
         setMetadata(metadata,METAKEY_MSG_FLAG,Optional.ofNullable(osxContext.getMessageFlag()).orElse(""));
 
-        logger.info("========client intercept======{}",metadata);
+      //  logger.info("========client intercept======{}",metadata);
         return MetadataUtils.newAttachHeadersInterceptor(metadata).interceptCall(descriptor, options, channel);
     }
 

@@ -45,7 +45,7 @@ public class Bootstrap {
     public static void main(String[] args) {
         try {
              injector = Guice.createInjector(new BrokerModule() );
-            System.err.println(injector.getAllBindings());
+//            System.err.println(injector.getAllBindings());
             Options options = ServerUtil.buildCommandlineOptions(new Options());
             commandLine = ServerUtil.parseCmdLine("osx", args, buildCommandlineOptions(options),
                     new PosixParser());

@@ -149,8 +149,8 @@ public class QueueTest {
         fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
         fateContext.setSessionId("test_session");
         fateContext.setTopic("test_topic");
-        fateContext.setDesInstId("webank");
-        fateContext.setDesNodeId("9999");
+        //fateContext.setDesInstId("webank");
+        fateContext.setDesNodeId("10000");
         fateContext.setUri(UriConstants.POP);
         fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         OsxContext.pushThreadLocalContext(fateContext);
@@ -160,7 +160,7 @@ public class QueueTest {
 
     @Test
     public void testHttpPush() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
 //            new Thread(new Runnable() {
 //                @Override
 //                public void run() {
@@ -174,13 +174,13 @@ public class QueueTest {
             fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
             fateContext.setSessionId("test_session");
             fateContext.setTopic("test_topic");
-            fateContext.setDesInstId("webank");
+            fateContext.setDesInstId("9999");
             fateContext.setDesNodeId("9999");
             fateContext.setUri(UriConstants.PUSH);
             fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             OsxContext.pushThreadLocalContext(fateContext);
             Osx.TransportOutbound outbound = TransferUtil.redirectHttpPush(fateContext, pushInbound.build(), routerInfo);
-            System.err.println("response " + outbound);
+            //System.err.println("response " + outbound);
 
 //                }
 //            }).start();
@@ -205,8 +205,8 @@ public class QueueTest {
             fateContext.setTraceId("fate-test-"+System.currentTimeMillis());
             fateContext.setSessionId("test_session");
             fateContext.setTopic("test_topic");
-            fateContext.setDesInstId("FATEINST9999");
-            fateContext.setDesNodeId("FATENODE9999");
+//            fateContext.setDesInstId("FATEINST9999");
+            fateContext.setDesNodeId("10000");
 //            fateContext.setUri(UriConstants.PUSH);
             fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             OsxContext.pushThreadLocalContext(fateContext);

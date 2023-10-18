@@ -28,6 +28,7 @@ import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.service.InboundPackage;
 import org.fedai.osx.core.service.OutboundPackage;
+import org.fedai.osx.core.utils.FlowLogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +60,9 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
 
     public void unaryCall(com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet request,
                           io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> responseObserver) {
+        OsxContext context = ContextUtil.buildFateContext(Protocol.grpc);
         try {
-            OsxContext context = ContextUtil.buildFateContext(Protocol.grpc);
+
             InboundPackage<Proxy.Packet> data = new InboundPackage<>();
             data.setBody(request);
             context.setDataSize(request.getSerializedSize());
@@ -69,6 +71,9 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             responseObserver.onCompleted();
         }catch (Exception e){
             responseObserver.onError(e);
+        }
+        finally {
+            FlowLogUtil.printFlowLog(context);
         }
     }
 

@@ -46,11 +46,16 @@ public class ServiceRegisterManager implements ApplicationStartedRunner {
     public   void  register(ServiceRegisterInfo  serviceRegisterInfo){
         String key = serviceRegisterInfo.buildRegisterKey();
         if(serviceRegisterMap.get(key)==null){
-            serviceRegisterMap.put(serviceRegisterInfo.buildRegisterKey(), Lists.newArrayList());
+            serviceRegisterMap.putIfAbsent(serviceRegisterInfo.buildRegisterKey(), Lists.newArrayList());
         }
         serviceRegisterMap.get(key).add(serviceRegisterInfo);
         log.info("register service {}",key);
     }
+
+//    public  void unRegister(ServiceRegisterInfo  serviceRegisterInfo ){
+//        serviceRegisterMap
+//    }
+
 
     public  ServiceRegisterInfo  getServiceWithLoadBalance(OsxContext  osxContext,String node, String uri,boolean  interInvoke){
         long now = System.currentTimeMillis();
@@ -92,5 +97,11 @@ public class ServiceRegisterManager implements ApplicationStartedRunner {
                 });
 
         });
+
     }
+
+
+
+
+
 }

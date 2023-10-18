@@ -68,6 +68,16 @@ public class TechProviderRegister implements Lifecycle , ApplicationStartedRunne
         }
     }
 
+    public TechProvider  getTechProvider(OsxContext  context){
+        TechProvider techProvider = this.select(context.getTechProviderCode());
+        if (techProvider == null) {
+            techProvider = this.select("default");
+        }
+        return  techProvider;
+    }
+
+
+
 
 
     public void init() {

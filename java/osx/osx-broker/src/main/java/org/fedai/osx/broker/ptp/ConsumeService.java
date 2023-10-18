@@ -35,6 +35,7 @@ import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.ppc.ptp.Osx;
 import org.ppc.ptp.PrivateTransferProtocolGrpc;
+import org.ppc.ptp.PrivateTransferTransportGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
  @Singleton
@@ -139,7 +140,7 @@ import org.slf4j.LoggerFactory;
      private Osx.TransportOutbound redirect(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
-        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+        PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);
     }
 

@@ -45,6 +45,7 @@ import org.fedai.osx.core.utils.AssertUtil;
 import org.fedai.osx.core.utils.JsonUtil;
 import org.ppc.ptp.Osx;
 import org.ppc.ptp.PrivateTransferProtocolGrpc;
+import org.ppc.ptp.PrivateTransferTransportGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -363,12 +364,12 @@ public class TransferUtil {
     static public Osx.TransportOutbound redirectPush(OsxContext context, Osx.PushInbound
             produceRequest, RouterInfo routerInfo, boolean usePooled) {
             Osx.TransportOutbound result = null;
-            PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
+            PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = null;
             if (context.getData(Dict.BLOCKING_STUB) == null) {
                 ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
-                stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+                stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
             } else {
-                stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
+                stub = (PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub) context.getData(Dict.BLOCKING_STUB);
             }
             try {
                 result = stub.push(produceRequest);
@@ -422,14 +423,14 @@ public class TransferUtil {
     static public Osx.TransportOutbound redirectPop(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
-        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+        PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);
     }
 
     static public Osx.TransportOutbound redirectPeek(OsxContext context, RouterInfo routerInfo, Osx.PeekInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
-        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+        PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.peek(inbound);
     }
 
@@ -614,19 +615,26 @@ public class TransferUtil {
     }
 
 
+
+
+
+
+
     public static void main(String[] args) {
 
-        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-
-        if (platformMBeanServer instanceof com.sun.management.OperatingSystemMXBean) {
-            com.sun.management.OperatingSystemMXBean osBean = (com.sun.management.OperatingSystemMXBean) platformMBeanServer;
-
-            // 获取连接数
-            int connectionCount = osBean.getAvailableProcessors();
-            System.out.println("HTTP 连接数: " + connectionCount);
-        } else {
-            System.out.println("当前平台不支持获取 HTTP 连接数");
-        }
+//       System.err.println( TransferUtil.parseUri("/testuri"));
+//       System.err.println(TransferUtil.buildUrl("grpcs://","yyyy.com","/uuuuu"));
+//        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
+//
+//        if (platformMBeanServer instanceof com.sun.management.OperatingSystemMXBean) {
+//            com.sun.management.OperatingSystemMXBean osBean = (com.sun.management.OperatingSystemMXBean) platformMBeanServer;
+//
+//            // 获取连接数
+//            int connectionCount = osBean.getAvailableProcessors();
+//            System.out.println("HTTP 连接数: " + connectionCount);
+//        } else {
+//            System.out.println("当前平台不支持获取 HTTP 连接数");
+//        }
 
 //        TransferUtil a = new TransferUtil();
 //        a.testHttps();

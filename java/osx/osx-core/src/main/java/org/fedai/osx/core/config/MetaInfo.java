@@ -223,7 +223,7 @@ public class MetaInfo {
     /**
      * 从连接池中申请连接的超时时间
      */
-    @Config(confKey = "http.client.method.config")
+   // @Config(confKey = "http.client.method.config")
     public static Map<String,Map<String,Integer>> PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP =new HashMap<>();
 
     @Config(confKey = "http.client.con.req.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
