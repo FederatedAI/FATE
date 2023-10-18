@@ -21,7 +21,7 @@ from typing import Dict, List, Any
 
 import grpc
 from fate.arch.federation.osx import osx_pb2
-from fate.arch.federation.osx.osx_pb2_grpc import PrivateTransferProtocolStub
+from fate.arch.federation.osx.osx_pb2_grpc import PrivateTransferTransportStub
 
 # from .._nretry import nretry
 
@@ -91,6 +91,7 @@ class MQChannel(object):
             Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
         Metadata.PTP_TECH_PROVIDER_CODE.append(metadata,"FATE")
+        LOGGER.debug(f"kaideng meta={metadata}")
         return metadata;
 
 
@@ -210,7 +211,7 @@ class MQChannel(object):
             ],
         )
 
-        self._stub = PrivateTransferProtocolStub(self._channel)
+        self._stub = PrivateTransferTransportStub(self._channel)
         LOGGER.debug(f"channel created, mq={self}")
 
     def _check_alive(self):
@@ -233,6 +234,9 @@ class MQChannel(object):
 
 if __name__ == "__main__":
 
-    channel = MQChannel(host="localhost",namespace="testSession",src_role="",dst_role="",port=9370,send_topic="test_send_topic",receive_topic="test_send_topic",src_party_id=9999,dst_party_id=10000)
-    # channel.produce(body="my name is test".encode('utf-8'),properties=None)
-    print(channel.consume())
+    channel = MQChannel(host="localhost",namespace="202310182129589924630_toy_example_0_0",src_role="",dst_role="",
+                        port=7304,send_topic="202310181952116553710_toy_example_0_0-guest-9999-host-10000-<dtype>-<dtype>",receive_topic="test_send_topic",src_party_id=9999,dst_party_id=10000)
+    print(channel.produce(body="my name is test".encode('utf-8'),properties=None))
+                          # properties="{'content_type': 'text/plain', 'app_id': '10000', "
+                          #            "'message_id': 'guest_index__table_persistent_0__', 'correlation_id': 'default^<dtype>'}"))
+    # print(channel.consume())

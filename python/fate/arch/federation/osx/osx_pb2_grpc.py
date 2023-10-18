@@ -28,36 +28,6 @@ class PrivateTransferProtocolStub(object):
                 request_serializer=osx__pb2.Inbound.SerializeToString,
                 response_deserializer=osx__pb2.Outbound.FromString,
                 )
-        self.clusterTokenApply = channel.stream_stream(
-                '/org.ppc.ptp.PrivateTransferProtocol/clusterTokenApply',
-                request_serializer=osx__pb2.Inbound.SerializeToString,
-                response_deserializer=osx__pb2.Outbound.FromString,
-                )
-        self.clusterTopicApply = channel.stream_stream(
-                '/org.ppc.ptp.PrivateTransferProtocol/clusterTopicApply',
-                request_serializer=osx__pb2.Inbound.SerializeToString,
-                response_deserializer=osx__pb2.Outbound.FromString,
-                )
-        self.peek = channel.unary_unary(
-                '/org.ppc.ptp.PrivateTransferProtocol/peek',
-                request_serializer=osx__pb2.PeekInbound.SerializeToString,
-                response_deserializer=osx__pb2.TransportOutbound.FromString,
-                )
-        self.pop = channel.unary_unary(
-                '/org.ppc.ptp.PrivateTransferProtocol/pop',
-                request_serializer=osx__pb2.PopInbound.SerializeToString,
-                response_deserializer=osx__pb2.TransportOutbound.FromString,
-                )
-        self.push = channel.unary_unary(
-                '/org.ppc.ptp.PrivateTransferProtocol/push',
-                request_serializer=osx__pb2.PushInbound.SerializeToString,
-                response_deserializer=osx__pb2.TransportOutbound.FromString,
-                )
-        self.release = channel.unary_unary(
-                '/org.ppc.ptp.PrivateTransferProtocol/release',
-                request_serializer=osx__pb2.ReleaseInbound.SerializeToString,
-                response_deserializer=osx__pb2.TransportOutbound.FromString,
-                )
 
 
 class PrivateTransferProtocolServicer(object):
@@ -74,43 +44,9 @@ class PrivateTransferProtocolServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def invoke(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def clusterTokenApply(self, request_iterator, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def clusterTopicApply(self, request_iterator, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def peek(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def pop(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def push(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def release(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """rpc clusterTokenApply(stream Inbound)  returns (stream Outbound);
+        rpc clusterTopicApply(stream Inbound)  returns (stream Outbound);
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -127,36 +63,6 @@ def add_PrivateTransferProtocolServicer_to_server(servicer, server):
                     servicer.invoke,
                     request_deserializer=osx__pb2.Inbound.FromString,
                     response_serializer=osx__pb2.Outbound.SerializeToString,
-            ),
-            'clusterTokenApply': grpc.stream_stream_rpc_method_handler(
-                    servicer.clusterTokenApply,
-                    request_deserializer=osx__pb2.Inbound.FromString,
-                    response_serializer=osx__pb2.Outbound.SerializeToString,
-            ),
-            'clusterTopicApply': grpc.stream_stream_rpc_method_handler(
-                    servicer.clusterTopicApply,
-                    request_deserializer=osx__pb2.Inbound.FromString,
-                    response_serializer=osx__pb2.Outbound.SerializeToString,
-            ),
-            'peek': grpc.unary_unary_rpc_method_handler(
-                    servicer.peek,
-                    request_deserializer=osx__pb2.PeekInbound.FromString,
-                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
-            ),
-            'pop': grpc.unary_unary_rpc_method_handler(
-                    servicer.pop,
-                    request_deserializer=osx__pb2.PopInbound.FromString,
-                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
-            ),
-            'push': grpc.unary_unary_rpc_method_handler(
-                    servicer.push,
-                    request_deserializer=osx__pb2.PushInbound.FromString,
-                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
-            ),
-            'release': grpc.unary_unary_rpc_method_handler(
-                    servicer.release,
-                    request_deserializer=osx__pb2.ReleaseInbound.FromString,
-                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -206,39 +112,97 @@ class PrivateTransferProtocol(object):
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
-    @staticmethod
-    def clusterTokenApply(request_iterator,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/org.ppc.ptp.PrivateTransferProtocol/clusterTokenApply',
-            osx__pb2.Inbound.SerializeToString,
-            osx__pb2.Outbound.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
-    @staticmethod
-    def clusterTopicApply(request_iterator,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/org.ppc.ptp.PrivateTransferProtocol/clusterTopicApply',
-            osx__pb2.Inbound.SerializeToString,
-            osx__pb2.Outbound.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+class PrivateTransferTransportStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.peek = channel.unary_unary(
+                '/org.ppc.ptp.PrivateTransferTransport/peek',
+                request_serializer=osx__pb2.PeekInbound.SerializeToString,
+                response_deserializer=osx__pb2.TransportOutbound.FromString,
+                )
+        self.pop = channel.unary_unary(
+                '/org.ppc.ptp.PrivateTransferTransport/pop',
+                request_serializer=osx__pb2.PopInbound.SerializeToString,
+                response_deserializer=osx__pb2.TransportOutbound.FromString,
+                )
+        self.push = channel.unary_unary(
+                '/org.ppc.ptp.PrivateTransferTransport/push',
+                request_serializer=osx__pb2.PushInbound.SerializeToString,
+                response_deserializer=osx__pb2.TransportOutbound.FromString,
+                )
+        self.release = channel.unary_unary(
+                '/org.ppc.ptp.PrivateTransferTransport/release',
+                request_serializer=osx__pb2.ReleaseInbound.SerializeToString,
+                response_deserializer=osx__pb2.TransportOutbound.FromString,
+                )
+
+
+class PrivateTransferTransportServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def peek(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def pop(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def push(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def release(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_PrivateTransferTransportServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'peek': grpc.unary_unary_rpc_method_handler(
+                    servicer.peek,
+                    request_deserializer=osx__pb2.PeekInbound.FromString,
+                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
+            ),
+            'pop': grpc.unary_unary_rpc_method_handler(
+                    servicer.pop,
+                    request_deserializer=osx__pb2.PopInbound.FromString,
+                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
+            ),
+            'push': grpc.unary_unary_rpc_method_handler(
+                    servicer.push,
+                    request_deserializer=osx__pb2.PushInbound.FromString,
+                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
+            ),
+            'release': grpc.unary_unary_rpc_method_handler(
+                    servicer.release,
+                    request_deserializer=osx__pb2.ReleaseInbound.FromString,
+                    response_serializer=osx__pb2.TransportOutbound.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'org.ppc.ptp.PrivateTransferTransport', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class PrivateTransferTransport(object):
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def peek(request,
@@ -251,7 +215,7 @@ class PrivateTransferProtocol(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferProtocol/peek',
+        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferTransport/peek',
             osx__pb2.PeekInbound.SerializeToString,
             osx__pb2.TransportOutbound.FromString,
             options, channel_credentials,
@@ -268,7 +232,7 @@ class PrivateTransferProtocol(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferProtocol/pop',
+        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferTransport/pop',
             osx__pb2.PopInbound.SerializeToString,
             osx__pb2.TransportOutbound.FromString,
             options, channel_credentials,
@@ -285,7 +249,7 @@ class PrivateTransferProtocol(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferProtocol/push',
+        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferTransport/push',
             osx__pb2.PushInbound.SerializeToString,
             osx__pb2.TransportOutbound.FromString,
             options, channel_credentials,
@@ -302,7 +266,7 @@ class PrivateTransferProtocol(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferProtocol/release',
+        return grpc.experimental.unary_unary(request, target, '/org.ppc.ptp.PrivateTransferTransport/release',
             osx__pb2.ReleaseInbound.SerializeToString,
             osx__pb2.TransportOutbound.FromString,
             options, channel_credentials,
