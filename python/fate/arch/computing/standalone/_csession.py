@@ -57,11 +57,9 @@ class CSession(KVTableContext):
             raise ValueError(f"uri `{uri}` not valid, demo format: standalone://database_path/namespace/name") from e
 
         raw_table = self._session.load(name=name, namespace=namespace)
-        partitions = raw_table.partitions
-        raw_table = raw_table.save_as(
+        raw_table = raw_table.copy_as(
             name=f"{name}_{uuid()}",
             namespace=namespace,
-            partitions=partitions,
             need_cleanup=True,
         )
         table = Table(raw_table)

@@ -13,51 +13,122 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import List, Tuple
+import typing
+from typing import List
 
+from fate.arch.abc import PartyMeta
+
+if typing.TYPE_CHECKING:
+    from fate.arch.computing.table import KVTable
 
 LOGGER = logging.getLogger(__name__)
 
 
 class Federation:
-    def _push(
-        self,
-        v,
-        name: str,
-        tag: str,
-        parties: List[Tuple[str, str]],
-    ):
-        ...
+    def __init__(self):
+        self._push_history = set()
+        self._pull_history = set()
 
-    def push(
+    def _pull_table(
         self,
-        v,
         name: str,
         tag: str,
-        parties: List[Tuple[str, str]],
+        parties: List[PartyMeta],
+    ) -> List["KVTable"]:
+        raise NotImplementedError(f"pull table is not supported in {self.__class__.__name__}")
+
+    def _pull_bytes(
+        self,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ) -> List[bytes]:
+        raise NotImplementedError(f"pull bytes is not supported in {self.__class__.__name__}")
+
+    def _push_table(
+        self,
+        table: "KVTable",
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
     ):
-        self._push(
+        raise NotImplementedError(f"push table is not supported in {self.__class__.__name__}")
+
+    def _push_bytes(
+        self,
+        v: bytes,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        raise NotImplementedError(f"push bytes is not supported in {self.__class__.__name__}")
+
+    def push_table(
+        self,
+        table: "KVTable",
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        for party in parties:
+            if (name, tag, party) in self._push_history:
+                raise ValueError(f"push table to {parties} with duplicate name and tag: name={name}, tag={tag}")
+            self._push_history.add((name, tag, party))
+
+        self._push_table(
+            table=table,
+            name=name,
+            tag=tag,
+            parties=parties,
+        )
+
+    def push_bytes(
+        self,
+        v: bytes,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        for party in parties:
+            if (name, tag, party) in self._push_history:
+                raise ValueError(f"push bytes to {parties} with duplicate name and tag: name={name}, tag={tag}")
+            self._push_history.add((name, tag, party))
+
+        self._push_bytes(
             v=v,
             name=name,
             tag=tag,
             parties=parties,
         )
 
-    def _pull(
+    def pull_table(
         self,
         name: str,
         tag: str,
-        parties: List[Tuple[str, str]],
-    ) -> List:
-        raise NotImplementedError("pull is not supported in standalone federation")
+        parties: List[PartyMeta],
+    ) -> List["KVTable"]:
+        for party in parties:
+            if (name, tag, party) in self._pull_history:
+                raise ValueError(f"pull table from {party} with duplicate name and tag: name={name}, tag={tag}")
+            self._pull_history.add((name, tag, party))
 
-    def pull(
+        return self._pull_table(
+            name=name,
+            tag=tag,
+            parties=parties,
+        )
+
+    def pull_bytes(
         self,
         name: str,
         tag: str,
-        parties: List[Tuple[str, str]],
-    ) -> List:
-        return self._pull(
+        parties: List[PartyMeta],
+    ) -> List[bytes]:
+        for party in parties:
+            if (name, tag, party) in self._pull_history:
+                raise ValueError(f"pull bytes from {party} with duplicate name and tag: name={name}, tag={tag}")
+            self._pull_history.add((name, tag, party))
+        return self._pull_bytes(
             name=name,
             tag=tag,
             parties=parties,

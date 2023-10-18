@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import List, Tuple
+from typing import List
 
 from fate.arch.abc import PartyMeta
 
@@ -33,6 +33,7 @@ class StandaloneFederation(Federation):
         party: PartyMeta,
         parties: List[PartyMeta],
     ):
+        super().__init__()
         LOGGER.debug(
             f"[federation.standalone]init federation: "
             f"standalone_session={standalone_session}, "
@@ -42,12 +43,7 @@ class StandaloneFederation(Federation):
         self._session_id = federation_session_id
         self._federation = RawFederation(standalone_session._session, federation_session_id, party)
         LOGGER.debug("[federation.standalone]init federation context done")
-        self._remote_history = set()
-        self._get_history = set()
 
-        # standalone has build in design of table clean
-        self.get_gc = None
-        self.remote_gc = None
         self.local_party = party
         self.parties = parties
 
@@ -55,34 +51,41 @@ class StandaloneFederation(Federation):
     def session_id(self) -> str:
         return self._session_id
 
-    def _push(
+    def _push_table(
         self,
-        v,
+        table: Table,
         name: str,
         tag: str,
-        parties: List[Tuple[str, str]],
+        parties: List[PartyMeta],
     ):
-        for party in parties:
-            if (name, tag, party) in self._remote_history:
-                raise ValueError(f"remote to {parties} with duplicate tag: {name}.{tag}")
-            self._remote_history.add((name, tag, party))
+        return self._federation.push_table(table=table.table, name=name, tag=tag, parties=parties)
 
-        if isinstance(v, Table):
-            # noinspection PyProtectedMember
-            v = v._table
-        return self._federation.remote(v=v, name=name, tag=tag, parties=parties)
+    def _push_bytes(
+        self,
+        v: bytes,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        return self._federation.push_bytes(v=v, name=name, tag=tag, parties=parties)
 
-    def _pull(
+    def _pull_table(
         self,
         name: str,
         tag: str,
-        parties: List[Tuple[str, str]],
-    ) -> List:
-        for party in parties:
-            if (name, tag, party) in self._get_history:
-                raise ValueError(f"get from {party} with duplicate tag: {name}.{tag}")
-            self._get_history.add((name, tag, party))
-        rtn = self._federation.get(name=name, tag=tag, parties=parties)
+        parties: List[PartyMeta],
+    ) -> List[Table]:
+        rtn = self._federation.pull_table(name=name, tag=tag, parties=parties)
+
+        return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
+
+    def _pull_bytes(
+        self,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ) -> List[bytes]:
+        rtn = self._federation.pull_bytes(name=name, tag=tag, parties=parties)
 
         return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
 

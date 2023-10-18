@@ -411,8 +411,14 @@ class KVTable(Generic[K, V]):
         else:
             return self.repartition(other.num_partitions, other.partitioner_type), other
 
-    # def save_as(self, name, namespace, partition=None, options=None):
-    #     return self.rp.save_as(name=name, namespace=namespace, partition=partition, options=options)
+    def save(self, uri: URI, schema, options: dict = None):
+        options = options or {}
+        if (partition := options.get("partition")) is not None and partition != self.num_partitions:
+            self.repartition(partition)._save(uri, schema, options)
+        return self._save(uri, schema, options)
+
+    def _save(self, uri: URI, schema, options: dict = None):
+        raise NotImplementedError(f"{self.__class__.__name__}._save")
 
 
 def _serdes_wrapped_generator(_iter, key_serdes, value_serdes):

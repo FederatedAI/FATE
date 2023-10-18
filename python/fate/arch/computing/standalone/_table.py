@@ -38,6 +38,14 @@ class Table(KVTable):
         )
 
     @property
+    def table(self):
+        return self._table
+
+    @property
+    def partitions(self):
+        return self._table.partitions
+
+    @property
     def engine(self):
         return self._engine
 
@@ -116,25 +124,17 @@ class Table(KVTable):
     def _reduce(self, func, **kwargs):
         return self._table.reduce(func)
 
-    @property
-    def partitions(self):
-        return self._table.partitions
-
     @computing_profile
-    def save(self, uri: URI, schema, options: dict = None):
-        if options is None:
-            options = {}
-
+    def _save(self, uri: URI, schema, options: dict = None):
         if uri.scheme != "standalone":
             raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
         try:
             *database, namespace, name = uri.path_splits()
         except Exception as e:
             raise ValueError(f"uri `{uri}` not supported with standalone backend") from e
-        self._table.save_as(
+        self._table.copy_as(
             name=name,
             namespace=namespace,
-            partitions=options.get("partitions", self.partitions),
             need_cleanup=False,
         )
         # TODO: self.schema is a bit confusing here, it set by property assignment directly, not by constructor
