@@ -143,14 +143,16 @@ public class QueueTest {
 
     @Test
     public void testPop(){
+        //202310191251296433960_toy_example_0_0.202310191251296433960_toy_example_0_0-host-10000-guest-9999-host_index
+        //202310191310469345390_toy_example_0_0.202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index
         Osx.PopInbound.Builder inboundBuilder = Osx.PopInbound.newBuilder();
-        inboundBuilder.setTopic("test_topic");
+        inboundBuilder.setTopic("202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index");
         OsxContext  fateContext= new OsxContext();
         fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
-        fateContext.setSessionId("test_session");
-        fateContext.setTopic("test_topic");
+        fateContext.setSessionId("202310191310469345390_toy_example_0_0");
+//        fateContext.setTopic("test_topic");
         //fateContext.setDesInstId("webank");
-        fateContext.setDesNodeId("10000");
+//        fateContext.setDesNodeId("10000");
         fateContext.setUri(UriConstants.POP);
         fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         OsxContext.pushThreadLocalContext(fateContext);
@@ -203,13 +205,19 @@ public class QueueTest {
 
             OsxContext  fateContext= new OsxContext();
             fateContext.setTraceId("fate-test-"+System.currentTimeMillis());
-            fateContext.setSessionId("test_session");
+            fateContext.setSessionId("test_session_yy");
             fateContext.setTopic("test_topic");
 //            fateContext.setDesInstId("FATEINST9999");
-            fateContext.setDesNodeId("10000");
+            fateContext.setDesNodeId("9999");
 //            fateContext.setUri(UriConstants.PUSH);
             fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             OsxContext.pushThreadLocalContext(fateContext);
+            RouterInfo  routerInfo = new RouterInfo();
+            routerInfo.setHost("localhost");
+            routerInfo.setPort(7304);
+            routerInfo.setProtocol(Protocol.grpc);
+
+
             Osx.TransportOutbound outbound =TransferUtil.redirectPush(fateContext,pushInbound.build(),routerInfo,true);
             System.err.println("response " + outbound);
 

@@ -80,6 +80,22 @@ class MQChannel(object):
     def __str__(self):
         return f"<MQChannel namespace={self._namespace}, host={self._host},port={self._port}, src=({self._src_role}, {self._src_party_id}), dst=({self._dst_role}, {self._dst_party_id}), send_topic={self._send_topic}, receive_topic={self._receive_topic}>"
 
+
+    def prepare_metadata_consume(self):
+        metadata = []
+        # Metadata.PTP_TRACE_ID.append(metadata, )
+        if not self._namespace is None:
+            Metadata.PTP_SESSION_ID.append(metadata, self._namespace)
+        # if not self._dst_party_id is None:
+        #     Metadata.PTP_TARGET_NODE_ID.append(metadata, str(self._dst_party_id))
+        if not self._src_party_id is None:
+            Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
+        # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
+        Metadata.PTP_TECH_PROVIDER_CODE.append(metadata, "FATE")
+        print(metadata)
+        LOGGER.debug(f"kaideng meta={metadata}")
+        return metadata;
+
     def prepare_metadata(self,):
         metadata = []
         # Metadata.PTP_TRACE_ID.append(metadata, )
@@ -91,6 +107,7 @@ class MQChannel(object):
             Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
         Metadata.PTP_TECH_PROVIDER_CODE.append(metadata,"FATE")
+        print(metadata)
         LOGGER.debug(f"kaideng meta={metadata}")
         return metadata;
 
@@ -114,7 +131,8 @@ class MQChannel(object):
         # LOGGER.debug(f"consume, inbound={inbound}, mq={self}")
         # result = self._stub.invoke(inbound)
         inbound = osx_pb2.PopInbound(topic=self._receive_topic,timeout=120000)
-        metadata = self.prepare_metadata();
+        print(inbound)
+        metadata = self.prepare_metadata_consume();
         result = self._stub.pop(request=inbound,metadata=metadata)
         # LOGGER.debug(f"consume, result={result.code}, mq={self}")
         return result
@@ -233,9 +251,11 @@ class MQChannel(object):
 
 
 if __name__ == "__main__":
+    #202310191251296433960_toy_example_0_0.202310191251296433960_toy_example_0_0-host-10000-guest-9999-host_index
+    #202310191310469345390_toy_example_0_0.202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index
 
-    channel = MQChannel(host="localhost",namespace="202310182129589924630_toy_example_0_0",src_role="",dst_role="",
-                        port=7304,send_topic="202310181952116553710_toy_example_0_0-guest-9999-host-10000-<dtype>-<dtype>",receive_topic="test_send_topic",src_party_id=9999,dst_party_id=10000)
-    print(channel.produce(body="my name is test".encode('utf-8'),properties = "{'content_type': 'text/plain', 'app_id': '10000', 'message_id': 'guest_index__table_persistent_0__', 'correlation_id': 'default^<dtype>'}"))
-    #
-    # print(channel.consume())
+    channel = MQChannel(host="localhost",namespace="202310191310469345390_toy_example_0_0",src_role="",dst_role="",
+                        port=7304,send_topic="xxxxx",receive_topic="202310191310469345390_toy_example_0_0-host-10000-guest-9999-<dtype>-<dtype>",src_party_id=9999,dst_party_id=10000)
+    # print(channel.produce(body="my name is test".encode('utf-8'),properties = "{'content_type': 'text/plain', 'app_id': '10000', 'message_id': 'guest_index__table_persistent_0__', 'correlation_id': 'default^<dtype>'}"))
+
+    print(channel.consume())
