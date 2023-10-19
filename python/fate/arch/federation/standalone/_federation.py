@@ -19,7 +19,7 @@ from fate.arch.abc import PartyMeta
 
 from ..._standalone import Federation as RawFederation
 from ..._standalone import Table as RawTable
-from ...computing.standalone import Table
+from ...computing.standalone import Table, CSession
 from ..federation import Federation
 
 LOGGER = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
 class StandaloneFederation(Federation):
     def __init__(
         self,
-        standalone_session,
+        standalone_session: CSession,
         federation_session_id: str,
         party: PartyMeta,
         parties: List[PartyMeta],
@@ -41,7 +41,9 @@ class StandaloneFederation(Federation):
             f"party={party}"
         )
         self._session_id = federation_session_id
-        self._federation = RawFederation(standalone_session._session, federation_session_id, party)
+        self._federation = RawFederation.create(
+            standalone_session.get_standalone_session(), session_id=federation_session_id, party=party
+        )
         LOGGER.debug("[federation.standalone]init federation context done")
 
         self.local_party = party

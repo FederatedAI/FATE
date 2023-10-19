@@ -36,31 +36,7 @@ from typing import List, Tuple, Literal
 import cloudpickle as f_pickle
 import lmdb
 
-LOGGER = logging.getLogger(__name__)
 PartyMeta = Tuple[Literal["guest", "host", "arbiter", "local"], str]
-
-
-class FederationDataType(object):
-    OBJECT = "obj"
-    TABLE = "Table"
-    SPLIT_OBJECT = "split_obj"
-
-
-# default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 1048576
-
-if (STANDALONE_DATA_PATH := os.getenv("STANDALONE_DATA_PATH")) is not None:
-    _data_dir = Path(STANDALONE_DATA_PATH)
-    LOGGER.debug(f"env STANDALONE_DATA_PATH is set to {STANDALONE_DATA_PATH}, using {_data_dir} as data dir")
-else:
-    _data_dir = Path(
-        os.path.abspath(
-            os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir, os.pardir, "__standalone_data__"
-            )
-        )
-    )
-    LOGGER.debug(f"env STANDALONE_DATA_PATH is not set, using {_data_dir} as data dir")
 
 
 def _watch_thread_react_to_parent_die(ppid, logger_config):
@@ -135,6 +111,7 @@ class Table(object):
     def __init__(
         self,
         session: "Session",
+        data_dir: str,
         namespace: str,
         name: str,
         partitions,
@@ -144,6 +121,7 @@ class Table(object):
         need_cleanup=True,
     ):
         self._need_cleanup = need_cleanup
+        self._data_dir = data_dir
         self._namespace = namespace
         self._name = name
         self._partitions = partitions
@@ -199,7 +177,7 @@ class Table(object):
                 db = env.open_db()
                 with env.begin(write=True) as txn:
                     txn.drop(db)
-        _TableMetaManager.destroy_table(self._namespace, self._name)
+        _TableMetaManager.destroy_table(data_dir=self._data_dir, namespace=self._namespace, name=self._name)
 
     def take(self, num, **kwargs):
         if num <= 0:
@@ -240,7 +218,11 @@ class Table(object):
 
     def reduce(self, func):
         return self._session.submit_reduce(
-            func, num_partitions=self.num_partitions, name=self._name, namespace=self._namespace
+            func,
+            data_dir=self._data_dir,
+            num_partitions=self.num_partitions,
+            name=self._name,
+            namespace=self._namespace,
         )
 
     def binary_sorted_map_partitions_with_index(
@@ -251,9 +233,12 @@ class Table(object):
         partitioner_type,
         output_value_serdes_type,
         need_cleanup=True,
-        output_namespace=None,
         output_name=None,
+        output_namespace=None,
+        output_data_dir=None,
     ):
+        if output_data_dir is None:
+            output_data_dir = self._data_dir
         if output_name is None:
             output_name = str(uuid.uuid1())
         if output_namespace is None:
@@ -263,15 +248,19 @@ class Table(object):
             func=binary_map_partitions_with_index_op,
             do_func=_do_binary_sorted_map_with_index,
             num_partitions=self.num_partitions,
+            first_input_data_dir=self._data_dir,
             first_input_name=self._name,
             first_input_namespace=self._namespace,
+            second_input_data_dir=other._data_dir,
             second_input_name=other._name,
             second_input_namespace=other._namespace,
+            output_data_dir=output_data_dir,
             output_name=output_name,
             output_namespace=output_namespace,
         )
         return _create_table(
             session=self._session,
+            data_dir=self._data_dir,
             name=output_name,
             namespace=output_namespace,
             partitions=self.num_partitions,
@@ -294,7 +283,10 @@ class Table(object):
         need_cleanup=True,
         output_name=None,
         output_namespace=None,
+        output_data_dir=None,
     ):
+        if output_data_dir is None:
+            output_data_dir = self._data_dir
         if output_name is None:
             output_name = str(uuid.uuid1())
         if output_namespace is None:
@@ -302,24 +294,25 @@ class Table(object):
         if not shuffle:
             assert output_num_partitions == self.num_partitions and output_partitioner_type == self.partitioner_type
             # noinspection PyProtectedMember
-            results = self._session._submit_map_reduce_partitions_with_index(
+            self._session._submit_map_reduce_partitions_with_index(
                 _do_mrwi_no_shuffle,
                 mapper=map_partition_op,
                 reducer=reduce_partition_op,
                 input_num_partitions=self.num_partitions,
+                input_data_dir=self._data_dir,
                 input_name=self._name,
                 input_namespace=self._namespace,
                 output_num_partitions=output_num_partitions,
+                output_data_dir=output_data_dir,
                 output_name=output_name,
                 output_namespace=output_namespace,
                 output_partitioner=output_partitioner,
             )
-            result = results[0]
-            # noinspection PyProtectedMember
             return _create_table(
                 session=self._session,
-                name=result.name,
-                namespace=result.namespace,
+                data_dir=output_data_dir,
+                name=output_name,
+                namespace=output_namespace,
                 partitions=output_num_partitions,
                 need_cleanup=need_cleanup,
                 key_serdes_type=output_key_serdes_type,
@@ -333,17 +326,19 @@ class Table(object):
                 _do_mrwi_shuffle_no_reduce,
                 map_partition_op,
                 reduce_partition_op,
+                input_data_dir=self._data_dir,
                 input_num_partitions=self.num_partitions,
                 input_name=self._name,
                 input_namespace=self._namespace,
+                output_data_dir=output_data_dir,
                 output_num_partitions=output_num_partitions,
                 output_name=output_name,
                 output_namespace=output_namespace,
                 output_partitioner=output_partitioner,
             )
-            # noinspection PyProtectedMember
             return _create_table(
                 session=self._session,
+                data_dir=output_data_dir,
                 name=output_name,
                 namespace=output_namespace,
                 partitions=output_num_partitions,
@@ -357,13 +352,16 @@ class Table(object):
         # noinspection PyProtectedMember
         intermediate_name = str(uuid.uuid1())
         intermediate_namespace = self._namespace
+        intermediate_data_dir = self._data_dir
         self._session._submit_map_reduce_partitions_with_index(
             _do_mrwi_map_and_shuffle_write,
             mapper=map_partition_op,
             reducer=None,
+            input_data_dir=self._data_dir,
             input_num_partitions=self.num_partitions,
             input_name=self._name,
             input_namespace=self._namespace,
+            output_data_dir=intermediate_data_dir,
             output_num_partitions=output_num_partitions,
             output_name=intermediate_name,
             output_namespace=intermediate_namespace,
@@ -375,15 +373,18 @@ class Table(object):
             _do_mrwi_shuffle_read_and_reduce,
             mapper=None,
             reducer=reduce_partition_op,
+            input_data_dir=intermediate_data_dir,
             input_num_partitions=self.num_partitions,
             input_name=intermediate_name,
             input_namespace=intermediate_namespace,
+            output_data_dir=output_data_dir,
             output_num_partitions=output_num_partitions,
             output_name=output_name,
             output_namespace=output_namespace,
         )
         output = _create_table(
             session=self._session,
+            data_dir=output_data_dir,
             name=output_name,
             namespace=output_namespace,
             partitions=output_num_partitions,
@@ -395,12 +396,14 @@ class Table(object):
 
         # drop cache table
         for p in range(self._partitions):
-            with _get_env(intermediate_namespace, intermediate_name, str(p), write=True) as env:
+            with _get_env_with_data_dir(
+                intermediate_data_dir, intermediate_namespace, intermediate_name, str(p), write=True
+            ) as env:
                 db = env.open_db()
                 with env.begin(write=True) as txn:
                     txn.drop(db)
 
-        path = _data_dir.joinpath(intermediate_namespace, intermediate_name)
+        path = Path(self._data_dir).joinpath(intermediate_namespace, intermediate_name)
         shutil.rmtree(path, ignore_errors=True)
         return output
 
@@ -420,7 +423,7 @@ class Table(object):
         )
 
     def _get_env_for_partition(self, p: int, write=False):
-        return _get_env(self._namespace, self._name, str(p), write=write)
+        return _get_env_with_data_dir(self._data_dir, self._namespace, self._name, str(p), write=write)
 
     def put(self, k_bytes: bytes, v_bytes: bytes, partitioner: Callable[[bytes, int], int] = None):
         p = partitioner(k_bytes, self._partitions)
@@ -440,7 +443,6 @@ class Table(object):
                     if not txn_map[p][1].put(k_bytes, v_bytes):
                         break
             except Exception as e:
-                LOGGER.exception(f"put_all fail. exception: {e}")
                 for p, (env, txn) in txn_map.items():
                     txn.abort()
                 raise e
@@ -466,8 +468,9 @@ class Table(object):
 
 # noinspection PyMethodMayBeStatic
 class Session(object):
-    def __init__(self, session_id, max_workers=None, logger_config=None):
+    def __init__(self, session_id, data_dir: str, max_workers=None, logger_config=None):
         self.session_id = session_id
+        self._data_dir = data_dir
         self._pool = Executor(
             max_workers=max_workers,
             initializer=_watch_thread_react_to_parent_die,
@@ -482,7 +485,7 @@ class Session(object):
         pass
 
     def load(self, name, namespace):
-        return _load_table(session=self, name=name, namespace=namespace)
+        return _load_table(session=self, data_dir=self._data_dir, name=name, namespace=namespace)
 
     def create_table(
         self,
@@ -497,6 +500,7 @@ class Session(object):
     ):
         return _create_table(
             session=self,
+            data_dir=self._data_dir,
             name=name,
             namespace=namespace,
             partitions=partitions,
@@ -519,6 +523,7 @@ class Session(object):
     ):
         table = _create_table(
             session=self,
+            data_dir=self._data_dir,
             name=str(uuid.uuid1()),
             namespace=self.session_id,
             partitions=partition,
@@ -531,19 +536,15 @@ class Session(object):
         return table
 
     def cleanup(self, name, namespace):
-        if not _data_dir.is_dir():
-            LOGGER.error(f"illegal data dir: {_data_dir}")
+        path = Path(self._data_dir)
+        if not path.is_dir():
             return
-
-        namespace_dir = _data_dir.joinpath(namespace)
-
+        namespace_dir = path.joinpath(namespace)
         if not namespace_dir.is_dir():
             return
-
         if name == "*":
             shutil.rmtree(namespace_dir, True)
             return
-
         for table in namespace_dir.glob(name):
             shutil.rmtree(table, True)
 
@@ -555,13 +556,15 @@ class Session(object):
         self.cleanup(name="*", namespace=self.session_id)
         self._pool.shutdown()
 
-    def submit_reduce(self, func, num_partitions, name, namespace):
+    def submit_reduce(self, func, data_dir: str, num_partitions: int, name: str, namespace: str):
         futures = []
         for p in range(num_partitions):
             futures.append(
                 self._pool.submit(
                     _do_reduce,
-                    _ReduceProcess(p, _TaskInputInfo(namespace, name, num_partitions), _ReduceFunctorInfo(func)),
+                    _ReduceProcess(
+                        p, _TaskInputInfo(data_dir, namespace, name, num_partitions), _ReduceFunctorInfo(func)
+                    ),
                 )
             )
         rs = [r.result() for r in futures]
@@ -578,20 +581,19 @@ class Session(object):
         _do_func,
         mapper,
         reducer,
+        input_data_dir: str,
         input_num_partitions,
         input_name,
         input_namespace,
+        output_data_dir: str,
         output_num_partitions,
         output_name,
         output_namespace,
         output_partitioner=None,
     ):
-        input_info = _TaskInputInfo(input_namespace, input_name, input_num_partitions)
+        input_info = _TaskInputInfo(input_data_dir, input_namespace, input_name, input_num_partitions)
         output_info = _TaskOutputInfo(
-            namespace=output_namespace,
-            name=output_name,
-            num_partitions=output_num_partitions,
-            partitioner=output_partitioner,
+            output_data_dir, output_namespace, output_name, output_num_partitions, partitioner=output_partitioner
         )
         return self._submit_process(
             _do_func,
@@ -610,19 +612,24 @@ class Session(object):
         self,
         func,
         do_func,
-        num_partitions,
-        first_input_name,
-        first_input_namespace,
-        second_input_name,
-        second_input_namespace,
-        output_name,
-        output_namespace,
+        num_partitions: int,
+        first_input_data_dir: str,
+        first_input_name: str,
+        first_input_namespace: str,
+        second_input_data_dir: str,
+        second_input_name: str,
+        second_input_namespace: str,
+        output_data_dir: str,
+        output_name: str,
+        output_namespace: str,
     ):
-        first_input_info = _TaskInputInfo(first_input_namespace, first_input_name, num_partitions)
-        second_input_info = _TaskInputInfo(second_input_namespace, second_input_name, num_partitions)
-        output_info = _TaskOutputInfo(
-            namespace=output_namespace, name=output_name, num_partitions=num_partitions, partitioner=None
+        first_input_info = _TaskInputInfo(
+            first_input_data_dir, first_input_namespace, first_input_name, num_partitions
         )
+        second_input_info = _TaskInputInfo(
+            second_input_data_dir, second_input_namespace, second_input_name, num_partitions
+        )
+        output_info = _TaskOutputInfo(output_data_dir, output_namespace, output_name, num_partitions, partitioner=None)
         return self._submit_process(
             do_func,
             (
@@ -654,17 +661,22 @@ class Federation(object):
     def _federation_object_key(self, name: str, tag: str, s_party: Tuple[str, str], d_party: Tuple[str, str]) -> bytes:
         return f"{self._session_id}-{name}-{tag}-{s_party[0]}-{s_party[1]}-{d_party[0]}-{d_party[1]}".encode("utf-8")
 
-    def __init__(self, session: Session, session_id: str, party: Tuple[str, str]):
+    def __init__(self, session: Session, data_dir: str, session_id: str, party: Tuple[str, str]):
+        self._session = session
+        self._data_dir = data_dir
         self._session_id = session_id
         self._party = party
-        self._session = session
-        self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         self._other_status_tables = {}
         self._other_object_tables = {}
         self._federation_status_table_cache = None
         self._federation_object_table_cache = None
 
-        self._meta = _FederationMetaManager(session_id, party)
+        self._meta = _FederationMetaManager(session_id, data_dir, party)
+
+    @classmethod
+    def create(cls, session: Session, session_id: str, party: Tuple[str, str]):
+        federation = cls(session, session._data_dir, session_id, party)
+        return federation
 
     def destroy(self):
         self._session.cleanup(namespace=self._session_id, name="*")
@@ -691,7 +703,9 @@ class Federation(object):
         rtn = []
         for r in results:
             name, namespace = _deserialize_tuple_of_str(self._meta.get_status(r))
-            table: Table = _load_table(session=self._session, name=name, namespace=namespace, need_cleanup=True)
+            table: Table = _load_table(
+                session=self._session, data_dir=self._data_dir, name=name, namespace=namespace, need_cleanup=True
+            )
             rtn.append(table)
             self._meta.ack_status(r)
         return rtn
@@ -715,6 +729,7 @@ class Federation(object):
 
 def _create_table(
     session: "Session",
+    data_dir: str,
     name: str,
     namespace: str,
     partitions: int,
@@ -727,9 +742,9 @@ def _create_table(
     assert isinstance(name, str)
     assert isinstance(namespace, str)
     assert isinstance(partitions, int)
-    if (exist_partitions := _TableMetaManager.get_table_meta(namespace, name)) is None:
+    if (exist_partitions := _TableMetaManager.get_table_meta(data_dir, namespace, name)) is None:
         _TableMetaManager.add_table_meta(
-            namespace, name, partitions, key_serdes_type, value_serdes_type, partitioner_type
+            data_dir, namespace, name, partitions, key_serdes_type, value_serdes_type, partitioner_type
         )
     else:
         if error_if_exist:
@@ -738,6 +753,7 @@ def _create_table(
 
     return Table(
         session=session,
+        data_dir=data_dir,
         namespace=namespace,
         name=name,
         partitions=partitions,
@@ -748,12 +764,13 @@ def _create_table(
     )
 
 
-def _load_table(session, name: str, namespace: str, need_cleanup=False):
-    table_meta = _TableMetaManager.get_table_meta(namespace, name)
+def _load_table(session, data_dir: str, name: str, namespace: str, need_cleanup=False):
+    table_meta = _TableMetaManager.get_table_meta(data_dir, namespace, name)
     if table_meta is None:
         raise RuntimeError(f"table not exist: name={name}, namespace={namespace}")
     return Table(
         session=session,
+        data_dir=data_dir,
         namespace=namespace,
         name=name,
         need_cleanup=need_cleanup,
@@ -765,18 +782,26 @@ def _load_table(session, name: str, namespace: str, need_cleanup=False):
 
 
 class _TaskInputInfo:
-    def __init__(self, namespace, name, num_partitions):
+    def __init__(self, data_dir: str, namespace: str, name: str, num_partitions: int):
+        self.data_dir = data_dir
         self.namespace = namespace
         self.name = name
         self.num_partitions = num_partitions
 
+    def get_env(self, pid, write=False):
+        return _get_env_with_data_dir(self.data_dir, self.namespace, self.name, str(pid), write=write)
+
 
 class _TaskOutputInfo:
-    def __init__(self, namespace, name, num_partitions, partitioner):
+    def __init__(self, data_dir: str, namespace: str, name: str, num_partitions: int, partitioner):
+        self.data_dir = data_dir
         self.namespace = namespace
         self.name = name
         self.num_partitions = num_partitions
         self.partitioner = partitioner
+
+    def get_env(self, pid, write=True):
+        return _get_env_with_data_dir(self.data_dir, self.namespace, self.name, str(pid), write=write)
 
     def get_partition_id(self, key):
         if self.partitioner is None:
@@ -844,7 +869,7 @@ class _ReduceProcess:
         self.operator_info = operator_info
 
     def as_input_env(self, pid, write=False):
-        return _get_env(self.input_info.namespace, self.input_info.name, str(pid), write=write)
+        return self.input_info.get_env(pid, write=write)
 
     def input_cursor(self, stack: ExitStack):
         return stack.enter_context(stack.enter_context(self.as_input_env(self.partition_id).begin()).cursor())
@@ -873,10 +898,10 @@ class _MapReduceProcess:
         return self.output_info.num_partitions
 
     def get_input_env(self, pid, write=False):
-        return _get_env(self.input_info.namespace, self.input_info.name, str(pid), write=write)
+        return self.input_info.get_env(pid, write=write)
 
     def get_output_env(self, pid, write=True):
-        return _get_env(self.output_info.namespace, self.output_info.name, str(pid), write=write)
+        return self.output_info.get_env(pid, write=write)
 
     def get_input_cursor(self, stack: ExitStack, pid=None):
         if pid is None:
@@ -925,13 +950,13 @@ class _BinarySortedMapProcess:
         return self.output_info.num_partitions
 
     def get_first_input_env(self, pid, write=False):
-        return _get_env(self.first_input.namespace, self.first_input.name, str(pid), write=write)
+        return self.first_input.get_env(pid, write=write)
 
     def get_second_input_env(self, pid, write=False):
-        return _get_env(self.second_input.namespace, self.second_input.name, str(pid), write=write)
+        return self.second_input.get_env(pid, write=write)
 
     def get_output_env(self, pid, write=True):
-        return _get_env(self.output_info.namespace, self.output_info.name, str(pid), write=write)
+        return self.output_info.get_env(pid, write=write)
 
     def get_first_input_cursor(self, stack: ExitStack, pid=None):
         if pid is None:
@@ -961,8 +986,8 @@ class _BinarySortedMapProcess:
         return self.operator_info.get_mapper()
 
 
-def _get_env(*args, write=False):
-    _path = _data_dir.joinpath(*args)
+def _get_env_with_data_dir(data_dir: str, *args, write=False):
+    _path = Path(data_dir).joinpath(*args)
     return _open_env(_path, write=write)
 
 
@@ -1105,9 +1130,10 @@ class _FederationMetaManager:
     STATUS_TABLE_NAME_PREFIX = "__federation_status__"
     OBJECT_TABLE_NAME_PREFIX = "__federation_object__"
 
-    def __init__(self, session_id, party: Tuple[str, str]) -> None:
+    def __init__(self, data_dir: str, session_id, party: Tuple[str, str]) -> None:
         self.session_id = session_id
         self.party = party
+        self._data_dir = data_dir
         self._env = {}
 
     def wait_status_set(self, key: bytes) -> bytes:
@@ -1143,7 +1169,7 @@ class _FederationMetaManager:
 
     def _get_env(self, name):
         if name not in self._env:
-            self._env[name] = _get_env(self.session_id, name, str(0), write=True)
+            self._env[name] = _get_env_with_data_dir(self._data_dir, self.session_id, name, str(0), write=True)
         return self._env[name]
 
     def _get(self, name: str, key: bytes) -> bytes:
@@ -1175,20 +1201,21 @@ class _TableMetaManager:
     _env = {}
 
     @classmethod
-    def _get_or_create_meta_env(cls, p):
+    def _get_or_create_meta_env(cls, data_dir: str, p):
         if p not in cls._env:
-            cls._env[p] = _get_env(cls.namespace, cls.name, str(p), write=True)
+            cls._env[p] = _get_env_with_data_dir(data_dir, cls.namespace, cls.name, str(p), write=True)
         return cls._env[p]
 
     @classmethod
-    def _get_meta_env(cls, namespace: str, name: str):
+    def _get_meta_env(cls, data_dir: str, namespace: str, name: str):
         k_bytes, p = _hash_namespace_name_to_partition(namespace, name, cls.num_partitions)
-        env = cls._get_or_create_meta_env(p)
+        env = cls._get_or_create_meta_env(data_dir, p)
         return k_bytes, env
 
     @classmethod
     def add_table_meta(
         cls,
+        data_dir: str,
         namespace: str,
         name: str,
         num_partitions: int,
@@ -1196,14 +1223,14 @@ class _TableMetaManager:
         value_serdes_type: int,
         partitioner_type: int,
     ):
-        k_bytes, env = cls._get_meta_env(namespace, name)
+        k_bytes, env = cls._get_meta_env(data_dir, namespace, name)
         meta = _TableMeta(num_partitions, key_serdes_type, value_serdes_type, partitioner_type)
         with env.begin(write=True) as txn:
             return txn.put(k_bytes, meta.serialize())
 
     @classmethod
-    def get_table_meta(cls, namespace: str, name: str) -> "_TableMeta":
-        k_bytes, env = cls._get_meta_env(namespace, name)
+    def get_table_meta(cls, data_dir: str, namespace: str, name: str) -> "_TableMeta":
+        k_bytes, env = cls._get_meta_env(data_dir, namespace, name)
         with env.begin(write=False) as txn:
             old_value_bytes = txn.get(k_bytes)
             if old_value_bytes is not None:
@@ -1211,11 +1238,11 @@ class _TableMetaManager:
             return old_value_bytes
 
     @classmethod
-    def destroy_table(cls, namespace: str, name: str):
-        k_bytes, env = cls._get_meta_env(namespace, name)
+    def destroy_table(cls, data_dir: str, namespace: str, name: str):
+        k_bytes, env = cls._get_meta_env(data_dir, namespace, name)
         with env.begin(write=True) as txn:
             txn.delete(k_bytes)
-        path = _data_dir.joinpath(namespace, name)
+        path = Path(data_dir).joinpath(namespace, name)
         shutil.rmtree(path, ignore_errors=True)
 
 

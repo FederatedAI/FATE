@@ -21,20 +21,41 @@ from ..table import KVTableContext
 from ..._standalone import Session
 from ...unify import URI, generate_computing_uuid, uuid
 from ._table import Table
+import os.path
 
 LOGGER = logging.getLogger(__name__)
 
 
 class CSession(KVTableContext):
     def __init__(
-        self, session_id: Optional[str] = None, logger_config: Optional[dict] = None, options: Optional[dict] = None
+        self,
+        session_id: Optional[str] = None,
+        data_dir=None,
+        logger_config: Optional[dict] = None,
+        options: Optional[dict] = None,
     ):
         if session_id is None:
             session_id = generate_computing_uuid()
+        if data_dir is None:
+            raise ValueError("data_dir is None")
+            # data_dir = os.environ.get(
+            #     "STANDALONE_DATA_PATH",
+            #     os.path.abspath(
+            #         os.path.join(
+            #             os.path.dirname(__file__),
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             "data",
+            #         )
+            #     ),
+            # )
         if options is None:
             options = {}
         max_workers = options.get("task_cores", None)
-        self._session = Session(session_id, max_workers=max_workers, logger_config=logger_config)
+        self._session = Session(session_id, data_dir=data_dir, max_workers=max_workers, logger_config=logger_config)
 
     def get_standalone_session(self):
         return self._session
