@@ -1,17 +1,16 @@
 import torch as t
 import os
 from fate.components.components.nn.nn_runner import NNRunner
-from fate.ml.nn.algo.homo.fedavg import FedAVG, FedAVGArguments, FedAVGCLient, FedAVGServer, TrainingArguments
-from typing import Optional, Dict, Union
+from fate.ml.nn.homo import FedAVG, FedAVGArguments, FedAVGCLient, FedAVGServer
+from typing import Dict
 from fate.components.components.nn.loader import Loader
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data_utils
 from torch.optim.lr_scheduler import _LRScheduler
-from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments, FedTrainerClient, FedTrainerServer
+from fate.ml.nn.trainer.homo_trainer import FedArguments, TrainingArguments, FedTrainerClient, FedTrainerServer
 from typing import Union, Type, Callable, Optional
 from transformers.trainer_utils import get_last_checkpoint
-from fate.ml.nn.dataset.table import TableDataset
 from typing import Literal
 import logging
 from fate.components.components.utils import consts

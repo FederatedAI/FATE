@@ -20,19 +20,15 @@ import torch
 import math
 import sys
 from torch import nn
-import numpy as np
-import logging
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from typing import Any, Dict, List, Tuple, Union, Callable
 from enum import Enum
-from transformers.training_args import TrainingArguments
 from fate.arch import Context
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
 from transformers import TrainingArguments as _hf_TrainingArguments, PreTrainedTokenizer
-from transformers import Trainer, TrainerState, TrainerControl, EvalPrediction
+from transformers import Trainer, EvalPrediction
 from transformers.trainer_utils import has_length
-from torch.optim.lr_scheduler import _LRScheduler, LambdaLR
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import _utils
 from fate.ml.aggregator.base import Aggregator
 import logging
@@ -120,7 +116,7 @@ class TrainingArguments(_hf_TrainingArguments):
     evaluation_strategy: str = field(default="no")
     logging_dir: str = field(default=None)
     checkpoint_idx: int = field(default=None)
-    # by default we use constant learning rate, the same as FATE-1.X
+    # by default, we use constant learning rate, the same as FATE-1.X
     lr_scheduler_type: str = field(default="constant")
 
     def __post_init__(self):
@@ -295,9 +291,7 @@ class FedCallbackInterface(object):
 # I dont like huggingface logging
 class LogSuppressFilter(logging.Filter):
     def filter(self, record):
-        suppress_list = set(
-            ["\n\nTraining completed. Do not forget to share your model on huggingface.co/models =)\n\n"]
-        )
+        suppress_list = {"\n\nTraining completed. Do not forget to share your model on huggingface.co/models =)\n\n"}
         if record.getMessage() in suppress_list:
             return False
         return True
@@ -761,11 +755,10 @@ class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
             return eval_result
 
     def _handle_callback(self, callback_handler, new_callbacks):
-        # remove default logger.infoer callback, need to use our logging
+        # remove default logger.info callback, need to use our logging
         # strategy
         new_callback_list = []
         for i in callback_handler.callbacks:
-            # if not isinstance(i, logger.infoerCallback):
             new_callback_list.append(i)
         new_callback_list += new_callbacks
         callback_handler.callbacks = new_callback_list

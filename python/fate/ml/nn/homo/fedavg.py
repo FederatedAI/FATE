@@ -1,5 +1,5 @@
-from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer
-from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
+from fate.ml.nn.trainer.homo_trainer import FedTrainerClient, FedTrainerServer
+from fate.ml.nn.trainer.homo_trainer import FedArguments, TrainingArguments
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Callable, Union
 from fate.arch import Context

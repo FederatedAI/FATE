@@ -1,6 +1,5 @@
-from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, FedArguments, TrainingArguments, FedAVGServer
+from fate.ml.nn.homo import FedAVGCLient, FedArguments, TrainingArguments, FedAVGServer
 import torch as t
-import pandas as pd
 from fate.ml.nn.dataset.table import TableDataset
 import sys
 
