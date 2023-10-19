@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 import logging
-import typing
 from typing import Callable, Iterable, Any, Tuple
 
 from ...unify import URI
@@ -42,18 +41,16 @@ class Table(KVTable):
         return self._table
 
     @property
-    def partitions(self):
-        return self._table.partitions
-
-    @property
     def engine(self):
         return self._engine
 
-    def __getstate__(self):
+    def _destroy(self):
         pass
 
-    def __reduce__(self):
-        raise NotImplementedError("Table is not picklable, please don't do this or it may cause unexpected error")
+    def _drop_num(self, num: int, partitioner):
+        for k, v in self._table.take(num=num):
+            self._table.delete(k, partitioner=partitioner)
+        return Table(table=self._table)
 
     def _map_reduce_partitions_with_index(
         self,
@@ -115,8 +112,8 @@ class Table(KVTable):
     def _collect(self, **kwargs):
         return self._table.collect(**kwargs)
 
-    def _take(self, n=1, **kwargs):
-        return self._table.take(n=n, **kwargs)
+    def _take(self, num=1, **kwargs):
+        return self._table.take(num=num, **kwargs)
 
     def _count(self):
         return self._table.count()
@@ -125,7 +122,7 @@ class Table(KVTable):
         return self._table.reduce(func)
 
     @computing_profile
-    def _save(self, uri: URI, schema, options: dict = None):
+    def _save(self, uri: URI, schema, options: dict):
         if uri.scheme != "standalone":
             raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
         try:
@@ -137,39 +134,3 @@ class Table(KVTable):
             namespace=namespace,
             need_cleanup=False,
         )
-        # TODO: self.schema is a bit confusing here, it set by property assignment directly, not by constructor
-        schema.update(self.schema)
-
-    @computing_profile
-    def sample(
-        self,
-        *,
-        fraction: typing.Optional[float] = None,
-        num: typing.Optional[int] = None,
-        seed=None,
-    ):
-        if fraction is not None:
-            return Table(self._sample(fraction=fraction, seed=seed))
-
-        if num is not None:
-            total = self._table.count()
-            if num > total:
-                raise ValueError(f"not enough data to sample, own {total} but required {num}")
-
-            frac = num / float(total)
-            while True:
-                sampled_table = self._sample(fraction=frac, seed=seed)
-                sampled_count = sampled_table.count()
-                if sampled_count < num:
-                    frac += 0.1
-                else:
-                    break
-
-            if sampled_count > num:
-                drops = sampled_table.take(sampled_count - num)
-                for k, v in drops:
-                    sampled_table.delete(k)
-
-            return Table(sampled_table)
-
-        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")

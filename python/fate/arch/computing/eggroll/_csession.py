@@ -101,12 +101,7 @@ class CSession(KVTableContext):
             key_serdes_type=key_serdes_type,
             value_serdes_type=value_serdes_type,
         )
-        return Table(
-            rp,
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=value_serdes_type,
-            partitioner_type=partitioner_type,
-        )
+        return Table(rp)
 
     def cleanup(self, name, namespace):
         self._rpc.cleanup(name=name, namespace=namespace)

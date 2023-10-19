@@ -23,15 +23,14 @@ from typing import List
 
 from eggroll.roll_pair.roll_pair import RollPair
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate.arch.abc import FederationEngine, PartyMeta
+from fate.arch.federation.federation import Federation, PartyMeta
 
 from ...computing.eggroll import Table
-from .._gc import GarbageCollector
 
 LOGGER = logging.getLogger(__name__)
 
 
-class EggrollFederation(FederationEngine):
+class EggrollFederation(Federation):
     def __init__(
         self,
         rp_ctx,
@@ -40,6 +39,7 @@ class EggrollFederation(FederationEngine):
         parties: List[PartyMeta],
         proxy_endpoint,
     ):
+        super().__init__()
         LOGGER.debug(
             f"[federation.eggroll]init federation: "
             f"rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id}, "
@@ -53,11 +53,7 @@ class EggrollFederation(FederationEngine):
         }
         self._session_id = rs_session_id
         self._rp_ctx = rp_ctx
-        self._get_history = set()
-        self._remote_history = set()
 
-        self.get_gc: GarbageCollector = GarbageCollector()
-        self.remote_gc: GarbageCollector = GarbageCollector()
         self.local_party = party
         self.parties = parties
         self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
@@ -67,7 +63,12 @@ class EggrollFederation(FederationEngine):
     def session_id(self) -> str:
         return self._session_id
 
-    def pull(self, name: str, tag: str, parties: List[PartyMeta]):
+    def _pull_table(
+        self,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ) -> List["Table"]:
         rs = self._rsc.load(name=name, tag=tag)
         future_map = dict(
             zip(
@@ -79,49 +80,31 @@ class EggrollFederation(FederationEngine):
         for future in concurrent.futures.as_completed(future_map):
             party = future_map[future]
             v = future.result()
-            log_str = f"federation.eggroll.get.{name}.{tag}"
-            if v is None:
-                raise ValueError(f"[{log_str}]get `None` from {party}")
-            if (name, tag, party) in self._get_history:
-                raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
-            self._get_history.add((name, tag, party))
-            # got a roll pair
-            if isinstance(v, RollPair):
-                LOGGER.debug(
-                    f"[{log_str}] got "
-                    f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})"
-                )
-                self.get_gc.register_clean_action(name, tag, v, "destroy", {})
-                rtn[party] = Table(v)
-            # others
-            else:
-                LOGGER.debug(f"[{log_str}] got object with type: {type(v)}")
-                rtn[party] = v
+            assert isinstance(v, RollPair), f"pull table got {type(v)}"
+            rtn[party] = Table(v)
+        return [rtn[party] for party in parties]
+
+    def pull_bytes(self, name: str, tag: str, parties: List[PartyMeta]):
+        rs = self._rsc.load(name=name, tag=tag)
+        future_map = dict(
+            zip(
+                rs.pull(parties=parties),
+                parties,
+            )
+        )
+        rtn = {}
+        for future in concurrent.futures.as_completed(future_map):
+            party = future_map[future]
+            v = future.result()
+            rtn[party] = v
 
         return [rtn[party] for party in parties]
 
-    def push(self, v, name: str, tag: str, parties: List[PartyMeta]):
-        if isinstance(v, Table):
-            # noinspection PyProtectedMember
-            v = v._rp
-        log_str = f"federation.eggroll.remote.{name}.{tag}{parties})"
-        if v is None:
-            raise ValueError(f"[{log_str}]remote `None` to {parties}")
-        for party in parties:
-            if (name, tag, party) in self._remote_history:
-                raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
-            self._remote_history.add((name, tag, party))
+    def _push_table(self, table: Table, name: str, tag: str, parties: List[PartyMeta]):
+        _push_with_exception_handle(self._rsc, table._rp, name, tag, parties)
 
-        if isinstance(v, RollPair):
-            LOGGER.debug(
-                f"[{log_str}]remote "
-                f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})"
-            )
-            self.remote_gc.register_clean_action(name, tag, v, "destroy", {})
-            _push_with_exception_handle(self._rsc, v, name, tag, parties)
-        else:
-            LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
-            _push_with_exception_handle(self._rsc, v, name, tag, parties)
+    def push_bytes(self, v: bytes, name: str, tag: str, parties: List[PartyMeta]):
+        _push_with_exception_handle(self._rsc, v, name, tag, parties)
 
     def destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)

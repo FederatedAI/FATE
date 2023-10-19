@@ -201,10 +201,10 @@ class Table(object):
                     txn.drop(db)
         _TableMetaManager.destroy_table(self._namespace, self._name)
 
-    def take(self, n, **kwargs):
-        if n <= 0:
-            raise ValueError(f"{n} <= 0")
-        return list(itertools.islice(self.collect(**kwargs), n))
+    def take(self, num, **kwargs):
+        if num <= 0:
+            raise ValueError(f"{num} <= 0")
+        return list(itertools.islice(self.collect(**kwargs), num))
 
     def count(self):
         cnt = 0
@@ -320,7 +320,7 @@ class Table(object):
                 session=self._session,
                 name=result.name,
                 namespace=result.namespace,
-                partitions=self.num_partitions,
+                partitions=output_num_partitions,
                 need_cleanup=need_cleanup,
                 key_serdes_type=output_key_serdes_type,
                 value_serdes_type=output_value_serdes_type,
@@ -329,7 +329,7 @@ class Table(object):
 
         if reduce_partition_op is None:
             # noinspection PyProtectedMember
-            results = self._session._submit_map_reduce_partitions_with_index(
+            self._session._submit_map_reduce_partitions_with_index(
                 _do_mrwi_shuffle_no_reduce,
                 map_partition_op,
                 reduce_partition_op,
@@ -341,13 +341,12 @@ class Table(object):
                 output_namespace=output_namespace,
                 output_partitioner=output_partitioner,
             )
-            result = results[0]
             # noinspection PyProtectedMember
             return _create_table(
                 session=self._session,
-                name=result.name,
-                namespace=result.namespace,
-                partitions=self.num_partitions,
+                name=output_name,
+                namespace=output_namespace,
+                partitions=output_num_partitions,
                 need_cleanup=need_cleanup,
                 key_serdes_type=output_key_serdes_type,
                 value_serdes_type=output_value_serdes_type,
@@ -365,7 +364,7 @@ class Table(object):
             input_num_partitions=self.num_partitions,
             input_name=self._name,
             input_namespace=self._namespace,
-            output_num_partitions=self.num_partitions,
+            output_num_partitions=output_num_partitions,
             output_name=intermediate_name,
             output_namespace=intermediate_namespace,
             output_partitioner=output_partitioner,
@@ -387,7 +386,7 @@ class Table(object):
             session=self._session,
             name=output_name,
             namespace=output_namespace,
-            partitions=self.num_partitions,
+            partitions=output_num_partitions,
             need_cleanup=need_cleanup,
             key_serdes_type=output_key_serdes_type,
             value_serdes_type=output_value_serdes_type,

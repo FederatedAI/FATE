@@ -67,11 +67,11 @@ class KFold(object):
 
             train_indexer = self._ctx.computing.parallelize(train_indexer,
                                                           include_key=True,
-                                                          partition=df.block_table.partitions)
+                                                          partition=df.block_table.num_partitions)
 
             test_indexer = self._ctx.computing.parallelize(test_indexer,
                                                            include_key=True,
-                                                           partition=df.block_table.partitions)
+                                                           partition=df.block_table.num_partitions)
 
             train_frame = df.loc(train_indexer)
             test_frame = df.loc(test_indexer)

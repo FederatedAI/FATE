@@ -29,8 +29,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Table(KVTable):
-    def destroy(self):
-        self._rp.destroy()
+    def __init__(self, rp: RollPair):
+        self._rp = rp
+        self._engine = ComputingEngine.EGGROLL
+
+        super().__init__(
+            key_serdes_type=self._rp.get_store().key_serdes_type,
+            value_serdes_type=self._rp.get_store().value_serdes_type,
+            partitioner_type=self._rp.get_store().partitioner_type,
+            num_partitions=rp.get_partitions(),
+        )
+
+    @property
+    def engine(self):
+        return self._engine
 
     def _map_reduce_partitions_with_index(
         self,
@@ -69,12 +81,7 @@ class Table(KVTable):
             output_partitioner_type=output_partitioner_type,
             output_num_partitions=output_num_partitions,
         )
-        return Table(
-            rp,
-            key_serdes_type=output_key_serdes_type,
-            value_serdes_type=output_value_serdes_type,
-            partitioner_type=output_partitioner_type,
-        )
+        return Table(rp)
 
     def _binary_sorted_map_partitions_with_index(
         self,
@@ -105,12 +112,7 @@ class Table(KVTable):
             output_value_serdes=output_value_serdes,
             output_value_serdes_type=output_value_serdes_type,
         )
-        return Table(
-            rp,
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=output_value_serdes_type,
-            partitioner_type=partitioner_type,
-        )
+        return Table(rp)
 
     def _take(self, n=1, **kwargs):
         return self._rp.take(n=n, **kwargs)
@@ -124,30 +126,7 @@ class Table(KVTable):
     def _reduce(self, func: Callable[[bytes, bytes], bytes]):
         return self._rp.reduce(func=func)
 
-    def __init__(self, rp: RollPair, key_serdes_type, value_serdes_type, partitioner_type):
-        self._rp = rp
-        self._engine = ComputingEngine.EGGROLL
-
-        super().__init__(
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=value_serdes_type,
-            partitioner_type=partitioner_type,
-            num_partitions=rp.get_partitions(),
-        )
-
-    @property
-    def engine(self):
-        return self._engine
-
-    @property
-    def partitions(self):
-        return self._rp.get_partitions()
-
-    @computing_profile
-    def save(self, uri: URI, schema: dict, options: dict = None):
-        if options is None:
-            options = {}
-
+    def _save(self, uri: URI, schema: dict, options: dict):
         from ._type import EggRollStoreType
 
         if uri.scheme != "eggroll":
@@ -159,47 +138,16 @@ class Table(KVTable):
 
         if "store_type" not in options:
             options["store_type"] = EggRollStoreType.ROLLPAIR_LMDB
-
-        partitions = options.get("partitions", self.partitions)
         self._rp.save_as(
             name=name,
             namespace=namespace,
-            partition=partitions,
             options=options,
         )
-        schema.update(self.schema)
-        return
 
-    @computing_profile
-    def sample(
-        self,
-        *,
-        fraction: typing.Optional[float] = None,
-        num: typing.Optional[int] = None,
-        seed=None,
-    ):
-        if fraction is not None:
-            return Table(self._rp.sample(fraction=fraction, seed=seed))
+    def _drop_num(self, num: int, partitioner):
+        for k, v in self._rp.take(num=num):
+            self._rp.delete(k, partitioner=partitioner)
+        return self
 
-        if num is not None:
-            total = self._rp.count()
-            if num > total:
-                raise ValueError(f"not enough data to sample, own {total} but required {num}")
-
-            frac = num / float(total)
-            while True:
-                sampled_table = self._rp.sample(fraction=frac, seed=seed)
-                sampled_count = sampled_table.count()
-                if sampled_count < num:
-                    frac *= 1.1
-                else:
-                    break
-
-            if sampled_count > num:
-                drops = sampled_table.take(sampled_count - num)
-                for k, v in drops:
-                    sampled_table.delete(k)
-
-            return Table(sampled_table)
-
-        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
+    def _destroy(self):
+        self._rp.destroy()

@@ -1,6 +1,6 @@
 import abc
 import random
-from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar
+from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar, Optional
 
 from fate.arch.unify.serdes import get_serdes_by_type
 from fate.arch.unify.partitioner import get_partitioner_by_type
@@ -71,11 +71,35 @@ class KVTable(Generic[K, V]):
         self._value_serdes = None
         self._partitioner = None
 
+        self._schema = {}
+
+    def __getstate__(self):
+        pass
+
+    def __reduce__(self):
+        raise NotImplementedError("Table is not picklable, please don't do this or it may cause unexpected error")
+
+    @property
+    def schema(self):
+        return self._schema
+
+    @schema.setter
+    def schema(self, schema):
+        self._schema = schema
+
+    @abc.abstractmethod
+    def _save(self, uri: URI, schema, options: dict):
+        raise NotImplementedError(f"{self.__class__.__name__}._save")
+
+    @abc.abstractmethod
+    def _drop_num(self, num: int, partitioner):
+        raise NotImplementedError(f"{self.__class__.__name__}._drop_num")
+
     @abc.abstractmethod
     def _map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
-        reduce_partition_op: Callable[[Any, Any], Any],
+        reduce_partition_op: Optional[Callable[[Any, Any], Any]],
         shuffle: bool,
         input_key_serdes,
         input_key_serdes_type: int,
@@ -111,6 +135,7 @@ class KVTable(Generic[K, V]):
     ):
         raise NotImplementedError(f"{self.__class__.__name__}._subtract_by_key")
 
+    @abc.abstractmethod
     def _reduce(self, func: Callable[[V, V], V]):
         raise NotImplementedError(f"{self.__class__.__name__}._reduce")
 
@@ -125,6 +150,10 @@ class KVTable(Generic[K, V]):
     @abc.abstractmethod
     def _count(self):
         raise NotImplementedError(f"{self.__class__.__name__}._count")
+
+    @abc.abstractmethod
+    def _destroy(self):
+        raise NotImplementedError(f"{self.__class__.__name__}.destroy")
 
     @property
     def key_serdes(self):
@@ -147,9 +176,8 @@ class KVTable(Generic[K, V]):
     def __str__(self):
         return f"<{self.__class__.__name__} key_serdes={self.key_serdes}, value_serdes={self.value_serdes}, partitioner={self.partitioner}>"
 
-    @abc.abstractmethod
     def destroy(self):
-        raise NotImplementedError(f"{self.__class__.__name__}.destroy")
+        self._destroy()
 
     def map_reduce_partitions_with_index(
         self,
@@ -298,7 +326,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=self.value_serdes_type,
         )
 
-    def _sample(self, fraction, seed=None):
+    def _sample(self, fraction, seed=None) -> "KVTable":
         return self.map_reduce_partitions_with_index(
             _lifted_sample_to_mpwi(fraction, seed),
             shuffle=False,
@@ -327,7 +355,12 @@ class KVTable(Generic[K, V]):
             self._count_cache = self._count()
         return self._count_cache
 
-    def join(self, other: "KVTable", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+    def join(
+        self,
+        other: "KVTable",
+        merge_op: Callable[[V, V], V] = lambda x, y: x,
+        output_value_serdes_type=None,
+    ):
         return self.binarySortedMapPartitionsWithIndex(
             other,
             _lifted_join_merge_to_sbmpwi(merge_op),
@@ -370,7 +403,6 @@ class KVTable(Generic[K, V]):
             other=second,
             binary_map_partitions_with_index_op=_lifted_sorted_binary_map_partitions_with_index_to_serdes(
                 binary_sorted_map_partitions_with_index_op,
-                first.key_serdes,
                 first.value_serdes,
                 second.value_serdes,
                 output_value_serdes,
@@ -392,15 +424,24 @@ class KVTable(Generic[K, V]):
             partitioner_type = self.partitioner_type
         if self.partitioner_type == partitioner_type and self.num_partitions == num_partitions:
             return self
-
-        # TODO: serialize and deserialize is not necessary
-        return self.map_reduce_partitions_with_index(
+        output_partitioner = get_partitioner_by_type(partitioner_type)
+        return self._map_reduce_partitions_with_index(
             map_partition_op=lambda i, x: x,
+            reduce_partition_op=None,
             shuffle=True,
+            input_key_serdes=self.key_serdes,
+            input_key_serdes_type=self.key_serdes_type,
+            input_value_serdes=self.value_serdes,
+            input_value_serdes_type=self.value_serdes_type,
+            input_partitioner=self.partitioner,
+            input_partitioner_type=self.partitioner_type,
+            output_key_serdes=self.key_serdes,
             output_key_serdes_type=self.key_serdes_type,
+            output_value_serdes=self.value_serdes,
             output_value_serdes_type=self.value_serdes_type,
-            output_num_partitions=num_partitions,
+            output_partitioner=output_partitioner,
             output_partitioner_type=partitioner_type,
+            output_num_partitions=num_partitions,
         )
 
     def repartition_with(self, other: "KVTable") -> Tuple["KVTable", "KVTable"]:
@@ -415,15 +456,50 @@ class KVTable(Generic[K, V]):
         options = options or {}
         if (partition := options.get("partition")) is not None and partition != self.num_partitions:
             self.repartition(partition)._save(uri, schema, options)
-        return self._save(uri, schema, options)
+        else:
+            self._save(uri, schema, options)
+        schema.update(self.schema)
 
-    def _save(self, uri: URI, schema, options: dict = None):
-        raise NotImplementedError(f"{self.__class__.__name__}._save")
+    def sample(
+        self,
+        *,
+        fraction: Optional[float] = None,
+        num: Optional[int] = None,
+        seed=None,
+    ):
+        if fraction is None and num is None:
+            raise ValueError("either fraction or num must be specified")
+
+        if fraction is not None:
+            return self._sample(fraction=fraction, seed=seed)
+
+        if num is not None:
+            total = self.count()
+            if num > total:
+                raise ValueError(f"not enough data to sample, own {total} but required {num}")
+
+            frac = num / float(total)
+            while True:
+                sampled_table = self._sample(fraction=frac, seed=seed)
+                sampled_count = sampled_table.count()
+                if sampled_count < num:
+                    frac *= 1.1
+                else:
+                    break
+            if sampled_count == num:
+                return sampled_table
+            else:
+                return sampled_table._drop_num(sampled_count - num, self.partitioner)
 
 
 def _serdes_wrapped_generator(_iter, key_serdes, value_serdes):
     for k, v in _iter:
         yield key_serdes.deserialize(k), value_serdes.deserialize(v)
+
+
+def _value_serdes_wrapped_generator(_iter, value_serdes):
+    for k, v in _iter:
+        yield k, value_serdes.deserialize(v)
 
 
 def _lifted_mpwi_map_to_serdes(_f, input_key_serdes, input_value_serdes, output_key_serdes, output_value_serdes):
@@ -534,15 +610,15 @@ def _lifted_reduce_to_serdes(reduce_op, value_serdes):
 
 
 def _lifted_sorted_binary_map_partitions_with_index_to_serdes(
-    _f, key_serdes, left_value_serdes, right_value_serdes, output_value_serdes
+    _f, left_value_serdes, right_value_serdes, output_value_serdes
 ):
     def _lifted(_index, left_iter, right_iter):
-        for out_k, out_v in _f(
+        for out_k_bytes, out_v in _f(
             _index,
-            _serdes_wrapped_generator(left_iter, key_serdes, left_value_serdes),
-            _serdes_wrapped_generator(right_iter, key_serdes, right_value_serdes),
+            _value_serdes_wrapped_generator(left_iter, left_value_serdes),
+            _value_serdes_wrapped_generator(right_iter, right_value_serdes),
         ):
-            yield key_serdes.serialize(out_k), output_value_serdes.serialize(out_v)
+            yield out_k_bytes, output_value_serdes.serialize(out_v)
 
     return _lifted
 

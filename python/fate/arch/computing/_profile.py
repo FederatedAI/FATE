@@ -319,7 +319,7 @@ def _pretty_table_str(v):
     from ..computing import is_table
 
     if is_table(v):
-        return f"Table(partition={v.partitions})"
+        return f"Table(partition={v.num_partitions})"
     else:
         return f"{type(v).__name__}"
 

@@ -230,7 +230,7 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
 
     sample_indexer = df._ctx.computing.parallelize(sample_indexer,
                                                    include_key=True,
-                                                   partition=df.block_table.partitions)
+                                                   partition=df.block_table.num_partitions)
 
     sample_frame = df.loc(sample_indexer)
 

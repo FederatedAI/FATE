@@ -12,11 +12,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import logging
 import typing
 from typing import List
 
 from fate.arch.abc import PartyMeta
+from ._gc import GarbageCollector
 
 if typing.TYPE_CHECKING:
     from fate.arch.computing.table import KVTable
@@ -28,6 +30,9 @@ class Federation:
     def __init__(self):
         self._push_history = set()
         self._pull_history = set()
+
+        self.get_gc: GarbageCollector = GarbageCollector()
+        self.remote_gc: GarbageCollector = GarbageCollector()
 
     def _pull_table(
         self,
@@ -75,6 +80,7 @@ class Federation:
                 raise ValueError(f"push table to {parties} with duplicate name and tag: name={name}, tag={tag}")
             self._push_history.add((name, tag, party))
 
+        self.remote_gc.register_clean_action(name, tag, table, "destroy", {})
         self._push_table(
             table=table,
             name=name,
@@ -112,11 +118,14 @@ class Federation:
                 raise ValueError(f"pull table from {party} with duplicate name and tag: name={name}, tag={tag}")
             self._pull_history.add((name, tag, party))
 
-        return self._pull_table(
+        tables = self._pull_table(
             name=name,
             tag=tag,
             parties=parties,
         )
+        for table in tables:
+            self.get_gc.register_clean_action(name, tag, table, "destroy", {})
+        return tables
 
     def pull_bytes(
         self,
