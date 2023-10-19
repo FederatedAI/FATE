@@ -82,41 +82,6 @@ if __name__ == "__main__":
     # # make random fake data
     sample_num = 569
 
-    if party == 'local':
-
-        ctx = create_ctx(guest, get_current_datetime_str())
-
-        df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_guest.csv')
-        X_g = t.Tensor(df.drop(columns=['id', 'y']).values).type(t.float64)[0: sample_num]
-        y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num]
-        df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_host.csv')
-        X_h = t.Tensor(df.drop(columns=['id']).values).type(t.float64)[0: sample_num]
-
-        interactive_layer = InteractiveLayerGuest(4, 4, 4)
-        local_model = HeteroNNLocalModel(guest_bottom, guest_top, host_bottom,
-                                         interactive_layer._guest_model.double(),
-                                         interactive_layer._host_model[0].double())
-        loss_fn = t.nn.BCELoss()
-        optimizer = t.optim.Adam(local_model.parameters(), lr=0.01)
-        dataset = TensorDataset(X_g, X_h, y)
-
-        for i in range(epoch):
-            loss_sum = 0
-            batch_idx = 0
-            for x_g, x_h, y_ in tqdm.tqdm(DataLoader(dataset, batch_size=batch_size)):
-                optimizer.zero_grad()
-                fw = local_model(x_g, x_h)
-                loss_ = loss_fn(fw.flatten(), y_)
-                loss_.backward()
-                loss_sum += loss_.item()
-                batch_idx += 1
-                optimizer.step()
-            print(loss_sum / batch_idx)
-
-        pred = local_model(X_g, X_h)
-        from sklearn.metrics import roc_auc_score
-        print(roc_auc_score(y, pred.detach().numpy()))
-
     if party == "guest":
 
         ctx = create_ctx(guest, get_current_datetime_str())
@@ -125,19 +90,14 @@ if __name__ == "__main__":
         y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num]
 
         dataset = TensorDataset(X_g, y)
-
-        interactive_layer = InteractiveLayerGuest(4,4,4)
+        interactive_layer = InteractiveLayerGuest(4,4,guest_in_features=4)
         interactive_layer._guest_model = interactive_layer._guest_model.double()
-        interactive_layer._host_model[0] = interactive_layer._host_model[0].double()
         loss_fn = t.nn.BCELoss()
-
         model = HeteroNNModelGuest(
             top_model=guest_top,
-            bottom_model=guest_bottom,
-            interactive_layer=interactive_layer
+            interactive_layer=interactive_layer,
+            bottom_model=guest_bottom
         )
-        model.set_context(ctx)
-
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
         for i in range(epoch):
@@ -153,29 +113,7 @@ if __name__ == "__main__":
                 batch_idx += 1
             print(loss_sum / batch_idx)
 
-        pred = model(X_g)
+        pred = model.predict(X_g)
+        # compute auc
         from sklearn.metrics import roc_auc_score
-        print(roc_auc_score(y, pred.detach()))
-
-    elif party == "host":
-
-        ctx = create_ctx(host, get_current_datetime_str())
-
-        df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_host.csv')
-        X_h = t.Tensor(df.drop(columns=['id']).values).type(t.float64)[0: sample_num]
-
-        dataset = TensorDataset(X_h)
-
-        layer = InteractiveLayerHost()
-        model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
-        optimizer = t.optim.Adam(model.parameters(), lr=0.01)
-        model.set_context(ctx)
-
-        for i in range(epoch):
-            for x_ in DataLoader(dataset, batch_size=batch_size):
-                optimizer.zero_grad()
-                model.forward(x_[0])
-                model.backward()
-                optimizer.step()
-
-        pred = model(X_h)
+        print(roc_auc_score(y, pred))

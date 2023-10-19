@@ -632,6 +632,7 @@ class Federation(object):
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, party, self._party)
+
             results.append(self._meta.wait_status_set(_tagged_key))
 
         rtn = []

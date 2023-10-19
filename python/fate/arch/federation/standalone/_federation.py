@@ -81,6 +81,7 @@ class StandaloneFederation(FederationEngine):
             if (name, tag, party) in self._get_history:
                 raise ValueError(f"get from {party} with duplicate tag: {name}.{tag}")
             self._get_history.add((name, tag, party))
+
         rtn = self._federation.get(name=name, tag=tag, parties=parties)
         return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
 

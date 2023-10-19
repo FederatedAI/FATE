@@ -1,4 +1,4 @@
-from fate.ml.nn.hetero.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
+from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
 import sys
 from datetime import datetime
 
