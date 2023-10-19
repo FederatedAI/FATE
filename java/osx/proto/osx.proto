@@ -87,8 +87,8 @@ message PopInbound {
 }
 
 message PushInbound{
-  bytes payload = 1;                  // 二进制报文
-  string topic = 2;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  string topic = 1;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  bytes payload = 2;                  // 二进制报文
   map<string, string> metadata = 3;   // optional 保留参数，用于扩展性
 }
 

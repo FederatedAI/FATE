@@ -236,7 +236,6 @@ if __name__ == "__main__":
 
     channel = MQChannel(host="localhost",namespace="202310182129589924630_toy_example_0_0",src_role="",dst_role="",
                         port=7304,send_topic="202310181952116553710_toy_example_0_0-guest-9999-host-10000-<dtype>-<dtype>",receive_topic="test_send_topic",src_party_id=9999,dst_party_id=10000)
-    print(channel.produce(body="my name is test".encode('utf-8'),properties=None))
-                          # properties="{'content_type': 'text/plain', 'app_id': '10000', "
-                          #            "'message_id': 'guest_index__table_persistent_0__', 'correlation_id': 'default^<dtype>'}"))
+    print(channel.produce(body="my name is test".encode('utf-8'),properties = "{'content_type': 'text/plain', 'app_id': '10000', 'message_id': 'guest_index__table_persistent_0__', 'correlation_id': 'default^<dtype>'}"))
+    #
     # print(channel.consume())
