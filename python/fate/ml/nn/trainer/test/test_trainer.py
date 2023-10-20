@@ -1,4 +1,4 @@
-from fate.ml.nn.homo import FedAVGCLient, FedArguments, TrainingArguments, FedAVGServer
+from fate.ml.nn.homo.fedavg import FedAVGClient, FedArguments, TrainingArguments, FedAVGServer
 import torch as t
 from fate.ml.nn.dataset.table import TableDataset
 import sys
@@ -43,9 +43,10 @@ if __name__ == "__main__":
         ctx = create_ctx(guest)
         fed_args = FedArguments(aggregate_strategy="epochs", aggregate_freq=1, aggregator="secure_aggregate")
         args = TrainingArguments(
-            num_train_epochs=5, per_device_train_batch_size=16, logging_strategy="steps", logging_steps=5
+            num_train_epochs=5, per_device_train_batch_size=16, logging_strategy="steps", logging_steps=5,
+            disable_tqdm=True
         )
-        trainer = FedAVGCLient(
+        trainer = FedAVGClient(
             ctx=ctx,
             model=model,
             fed_args=fed_args,
@@ -54,13 +55,14 @@ if __name__ == "__main__":
             optimizer=t.optim.SGD(model.parameters(), lr=0.01),
             train_set=ds,
         )
+        trainer.set_local_mode()
         trainer.train()
 
     elif sys.argv[1] == "host":
         ctx = create_ctx(host)
         fed_args = FedArguments(aggregate_strategy="epochs", aggregate_freq=1, aggregator="secure_aggregate")
         args = TrainingArguments(num_train_epochs=5, per_device_train_batch_size=16)
-        trainer = FedAVGCLient(
+        trainer = FedAVGClient(
             ctx=ctx,
             model=model,
             fed_args=fed_args,

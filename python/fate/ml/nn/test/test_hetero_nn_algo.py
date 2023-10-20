@@ -1,4 +1,5 @@
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
 from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost
 import sys
@@ -93,8 +94,6 @@ if __name__ == "__main__":
         dataset = TensorDataset(X_g, y)
 
         interactive_layer = InteractiveLayerGuest(4,4,4)
-        interactive_layer._guest_model = interactive_layer._guest_model.double()
-        interactive_layer._host_model[0] = interactive_layer._host_model[0].double()
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(
@@ -103,10 +102,26 @@ if __name__ == "__main__":
             interactive_layer=interactive_layer
         )
         model.set_context(ctx)
+        model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
-        trainer = HeteroNNTrainerGuest(ctx, model, optimizer, dataset, None, loss_fn, batch_size=batch_size,
-                                       epochs=epoch)
+        # trainer = HeteroNNTrainerGuest(ctx, model, optimizer, dataset, None, loss_fn, batch_size=batch_size,
+        #                                epochs=epoch)
+        # trainer.train()
+
+        args = TrainingArguments(
+            num_train_epochs=5,
+            per_device_train_batch_size=16,
+            disable_tqdm=False
+        )
+        trainer = HeteroNNTrainerGuest(
+            ctx=ctx,
+            model=model,
+            optimizer=optimizer,
+            train_set=dataset,
+            loss_fn=loss_fn,
+            training_args=args,
+        )
         trainer.train()
 
         pred = model.predict(X_g)
@@ -125,8 +140,23 @@ if __name__ == "__main__":
 
         layer = InteractiveLayerHost()
         model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
+        model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
-        trainer = HeteroNNTrainerHost(ctx, model, optimizer, dataset, None, batch_size=batch_size, epochs=epoch)
+
+        args = TrainingArguments(
+            num_train_epochs=5,
+            per_device_train_batch_size=16,
+            disable_tqdm=False
+        )
+        trainer = HeteroNNTrainerHost(
+            ctx=ctx,
+            model=model,
+            optimizer=optimizer,
+            train_set=dataset,
+            training_args=args
+        )
         trainer.train()
+        # trainer = HeteroNNTrainerHost(ctx, model, optimizer, dataset, None, batch_size=batch_size, epochs=epoch)
+        # trainer.train()
 
         pred = model.predict(X_h)

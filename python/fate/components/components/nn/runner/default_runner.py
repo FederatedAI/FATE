@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data_utils
 from torch.optim.lr_scheduler import _LRScheduler
-from fate.ml.nn.trainer.homo_trainer import FedArguments, TrainingArguments, FedTrainerClient, FedTrainerServer
+from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments, FedTrainerClient, HomoTrainerServer
 from typing import Union, Type, Callable, Optional
 from transformers.trainer_utils import get_last_checkpoint
 from typing import Literal
@@ -58,7 +58,7 @@ class SetupReturn:
 
     def __init__(self,
                  trainer: Union[Type[FedTrainerClient],
-                                Type[FedTrainerServer]] = None,
+                                Type[HomoTrainerServer]] = None,
                  model: Type[nn.Module] = None,
                  optimizer: Type[optim.Optimizer] = None,
                  loss: Callable = None,
@@ -72,7 +72,7 @@ class SetupReturn:
                 type(trainer),
                 FedTrainerClient) or issubclass(
                 type(trainer),
-                FedTrainerServer)):
+                HomoTrainerServer)):
             raise TypeError(
                 f"SetupReturn Error: trainer must be a subclass of either FedTrainerClient or FedTrainerServer but got {type(trainer)}")
 

@@ -38,6 +38,7 @@ from typing import Optional
 from dataclasses import dataclass, field, fields
 from transformers.trainer_callback import PrinterCallback
 from fate.ml.aggregator import AggregatorType
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 
 
 # Reset the logger to redirect logs output
@@ -84,7 +85,7 @@ class FedArguments(object):
     The argument for Fed algorithm
     """
 
-    aggregate_strategy: AggregateStrategy = field(default=AggregateStrategy.EPOCH.value)
+    aggregate_strategy: str = field(default=AggregateStrategy.EPOCH.value)
     aggregate_freq: int = field(default=1)
     aggregator: str = field(default=AggregatorType.SECURE_AGGREGATE.value)
 
@@ -268,6 +269,10 @@ class ShortcutCallBackInterFace(object):
 
 
 class FedCallbackInterface(object):
+
+    def __init__(self):
+        pass
+
     def on_federation(
         self,
         ctx: Context,
@@ -539,7 +544,7 @@ class FatePrinterCallback(TrainerCallback):
 
 
 class CallbackWrapper(TrainerCallback):
-    def __init__(self, ctx: Context, wrapped_trainer: "StdFedTrainerMixin"):
+    def __init__(self, ctx: Context, wrapped_trainer: "HomoTrainerMixin"):
         self.ctx = ctx
         self.wrapped_trainer = wrapped_trainer
         self.fed_arg = self.wrapped_trainer._fed_args
@@ -556,7 +561,7 @@ class CallbackWrapper(TrainerCallback):
 
 
 class WrappedFedCallback(CallbackWrapper):
-    def __init__(self, ctx: Context, wrapped_trainer: "StdFedTrainerMixin"):
+    def __init__(self, ctx: Context, wrapped_trainer: "HomoTrainerMixin"):
         super().__init__(ctx, wrapped_trainer)
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
@@ -613,7 +618,7 @@ class WrappedFedCallback(CallbackWrapper):
 
 
 class WrappedShortcutCallback(CallbackWrapper):
-    def __init__(self, ctx: Context, wrapped_trainer: "StdFedTrainerMixin"):
+    def __init__(self, ctx: Context, wrapped_trainer: "HomoTrainerMixin"):
         super().__init__(ctx, wrapped_trainer)
 
     def on_init_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
@@ -708,8 +713,45 @@ logger.addFilter(LogSuppressFilter())
 Mixin Class For Federation Trainer
 """
 
+class HeteroTrainerMixin(ShortcutCallBackInterFace):
 
-class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
+    def __init__(self,
+        ctx: Context,
+        model: nn.Module,
+        training_args: TrainingArguments,
+        train_set: Dataset,
+        val_set: Dataset = None,
+        loss_fn: nn.Module = None,
+        optimizer: torch.optim.Optimizer = None,
+        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
+        callbacks: Optional[List[TrainerCallback]] = [],
+        compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+        ):
+        super().__init__()
+
+        self.ctx: Context = ctx
+        self._callbacks = callbacks
+        self._args = training_args
+        self._user_compute_metric_func = compute_metrics
+        self.train_dataset = train_set
+        self.eval_dataset = val_set
+        self.loss_func = loss_fn
+        self._user_compute_metric_func = compute_metrics
+
+    def _compute_metrics_warp_func(self, *args, **kwargs):
+        if self._user_compute_metric_func is None:
+            return {}
+        else:
+            eval_result = self._user_compute_metric_func(*args, **kwargs)
+            # Do some FATEBoard Callback here
+            return eval_result
+
+    def _set_ctx_to_model(self, model: Union[HeteroNNModelGuest, HeteroNNModelHost]):
+        model.set_context(self.ctx)
+
+
+class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
     def __init__(
         self,
         ctx: Context,
@@ -727,6 +769,9 @@ class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
         local_mode: bool = False,
     ):
+
+        super().__init__()
+
         assert isinstance(callbacks, list), "callback must be a list containing Callback objects, but got {}".format(
             callbacks
         )
@@ -809,11 +854,67 @@ class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
 
 
 """
-Base Classes of Client/Sever Trainer
+Base Classes of NN Trainer
 """
 
+class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
 
-class FedTrainerClient(Trainer, StdFedTrainerMixin):
+    def __init__(self,
+        ctx: Context,
+        model: Union[HeteroNNModelGuest, HeteroNNModelHost],
+        training_args: TrainingArguments,
+        train_set: Dataset,
+        val_set: Dataset = None,
+        loss_fn: nn.Module = None,
+        optimizer: torch.optim.Optimizer = None,
+        data_collator: Callable = None,
+        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
+        callbacks: Optional[List[TrainerCallback]] = [],
+        compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+        ):
+
+        HeteroTrainerMixin.__init__(
+            self,
+            ctx=ctx,
+            model=model,
+            loss_fn=loss_fn,
+            optimizer=optimizer,
+            training_args=training_args,
+            train_set=train_set,
+            val_set=val_set,
+            scheduler=scheduler,
+            callbacks=callbacks,
+            compute_metrics=compute_metrics,
+            tokenizer=tokenizer
+        )
+
+        if data_collator is None:
+            data_collator = _utils.collate.default_collate
+
+        # concat checkpoint path if checkpoint idx is set
+        if self._args.checkpoint_idx is not None:
+            checkpoint_path = self._args.resume_from_checkpoint
+            if checkpoint_path is not None and os.path.exists(checkpoint_path):
+                checkpoint_folder = get_ith_checkpoint(checkpoint_path, self._args.checkpoint_idx)
+                self._args.resume_from_checkpoint = os.path.join(checkpoint_path, checkpoint_folder)
+
+        self._set_ctx_to_model(model)
+
+        Trainer.__init__(
+            self,
+            model=model,
+            args=self._args,
+            train_dataset=train_set,
+            eval_dataset=val_set,
+            data_collator=data_collator,
+            optimizers=(optimizer, scheduler),
+            tokenizer=tokenizer,
+            compute_metrics=self._compute_metrics_warp_func,
+        )
+
+
+class HomoTrainerClient(Trainer, HomoTrainerMixin):
 
     """
     FedTrainerClient is designed to handle diverse federated training tasks.
@@ -845,7 +946,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
         if val_set is not None and training_args.evaluation_strategy == "no":
             training_args.evaluation_strategy = "epoch"
 
-        StdFedTrainerMixin.__init__(
+        HomoTrainerMixin.__init__(
             self,
             ctx=ctx,
             model=model,
@@ -879,7 +980,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
             train_dataset=train_set,
             eval_dataset=val_set,
             data_collator=data_collator,
-            optimizers=[optimizer, scheduler],
+            optimizers=(optimizer, scheduler),
             tokenizer=tokenizer,
             compute_metrics=self._compute_metrics_warp_func,
         )
@@ -923,13 +1024,14 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                 return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys)
 
 
-class FedTrainerServer(object):
+class HomoTrainerServer(object):
     def __init__(self, ctx: Context, local_mode: bool = False) -> None:
         self.ctx = ctx
         self.local_mode = local_mode
         self._max_steps = None
         self._parameter_check_callback = FedParameterAlignCallback(self, self.ctx, None, None, is_server=True)
         self._max_aggregation = None
+        self.aggregator = None
 
     def set_fed_context(self, ctx: Context):
         assert isinstance(ctx, Context), "ctx must be a Context object, but got {}".format(ctx)
@@ -943,9 +1045,6 @@ class FedTrainerServer(object):
         self.local_mode = False
         logger.info("trainer set to federated mode")
 
-    def init_aggregator(self, ctx: Context):
-        return None
-
     def on_train_end(self, ctx: Context, aggregator: Aggregator):
         pass
 
@@ -956,6 +1055,9 @@ class FedTrainerServer(object):
         pass
 
     def on_federation(self, ctx: Context, aggregator: Aggregator):
+        pass
+
+    def init_aggregator(self, ctx: Context) -> Aggregator:
         pass
 
     def train(self):

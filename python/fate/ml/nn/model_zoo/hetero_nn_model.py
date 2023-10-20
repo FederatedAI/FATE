@@ -30,7 +30,9 @@ class HeteroNNModelGuest(t.nn.Module):
         self._ctx = None
 
     def __repr__(self):
-        return f"HeteroNNGuest(bottom_model={self._bottom_model}\ntop_model={self._top_model})"
+        return (f"HeteroNNGuest(top_model={self._top_model}\n"
+                f"interactive_layer={self._interactive_layer}\n"
+                f"bottom_model={self._bottom_model})")
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -98,6 +100,9 @@ class HeteroNNModelHost(t.nn.Module):
 
         # ctx
         self._ctx = None
+
+    def __repr__(self):
+        return f"HeteroNNHost(bottom_model={self._bottom_model})"
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
