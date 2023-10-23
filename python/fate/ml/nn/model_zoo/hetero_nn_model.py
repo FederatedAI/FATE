@@ -1,7 +1,7 @@
 import torch
 import torch as t
 from fate.arch import Context
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest
+from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayer
 from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerHost
 
 
@@ -29,6 +29,9 @@ class HeteroNNModelGuest(t.nn.Module):
         # ctx
         self._ctx = None
 
+        # internal mode
+        self._guest_direct_backward = True
+
     def __repr__(self):
         return (f"HeteroNNGuest(top_model={self._top_model}\n"
                 f"interactive_layer={self._interactive_layer}\n"
@@ -52,25 +55,36 @@ class HeteroNNModelGuest(t.nn.Module):
         else:
             b_out = self._bottom_model(x)
             # bottom layer
-            self._bottom_fw = b_out
+            if not self._guest_direct_backward:
+                self._bottom_fw = b_out
 
         # hetero layer
-        interactive_out = self._interactive_layer.forward(b_out)
-        self._interactive_fw_rg = interactive_out.requires_grad_(True)
-        # top layer
-        top_out = self._top_model(self._interactive_fw_rg)
+        if not self._guest_direct_backward:
+            interactive_out = self._interactive_layer.forward(b_out)
+            self._interactive_fw_rg = interactive_out.requires_grad_(True)
+            # top layer
+            top_out = self._top_model(self._interactive_fw_rg)
+        else:
+            top_out = self._top_model(self._interactive_layer(b_out))
 
         return top_out
 
     def backward(self, loss):
 
-        loss.backward()  # update top
-        interactive_error = self._interactive_fw_rg.grad
-        bottom_error = self._interactive_layer.backward(interactive_error)  # compute bottom error & update hetero
-        if bottom_error is not None:
-            bottom_loss = backward_loss(self._bottom_fw, bottom_error)
-            bottom_loss.backward()
-        self._clear_state()
+        if self._guest_direct_backward:
+            # guest side direct backward & send error to hosts
+            self._interactive_layer.backward(loss)
+            loss.backward()
+        else:
+            # backward are split into parts
+            loss.backward()  # update top
+            interactive_error = self._interactive_fw_rg.grad
+            self._interactive_fw_rg = None
+            bottom_error = self._interactive_layer.backward(interactive_error)  # compute bottom error & update hetero
+            if bottom_error is not None:
+                bottom_loss = backward_loss(self._bottom_fw, bottom_error)
+                bottom_loss.backward()
+            self._bottom_fw = False
 
     def predict(self, x = None):
 

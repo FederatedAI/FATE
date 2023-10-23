@@ -1,6 +1,9 @@
 import torch
 import torch as t
 from typing import Union, List
+
+from torch.nn.modules.module import T
+
 from fate.ml.nn.model_zoo.agg_layer._base import InteractiveLayer, backward_loss
 
 
@@ -46,6 +49,16 @@ class InteractiveLayerGuest(InteractiveLayer):
 
         self._lr = lr
 
+        self.training = True
+
+    def train(self: T, mode: bool = True) -> T:
+        self.training = mode
+        return self
+
+    def eval(self: T) -> T:
+        self.training = False
+        return self
+
     def _clear_state(self):
         self._guest_input_cache = None
         self._host_input_caches = None
@@ -71,46 +84,46 @@ class InteractiveLayerGuest(InteractiveLayer):
 
     def forward(self, x: t.Tensor = None) -> t.Tensor:
 
-        # save input for backwards
-        if self._has_ctx:
-            self._host_input_caches = []
-            host_x = self.ctx.hosts.get(self._fw_suffix.format(self._fw_count))
-            self._fw_count += 1
-            for h in range(self._host_num):
-                host_input_cache = t.Tensor(host_x[h].detach()).type(t.float64).requires_grad_(True)
-                self._host_input_caches.append(host_input_cache)
+        if self.training:
+
+            # save input for backwards
+            if self._has_ctx:
+                self._host_input_caches = []
+                host_x = self.ctx.hosts.get(self._fw_suffix.format(self._fw_count))
+                self._fw_count += 1
+                for h in range(self._host_num):
+                    host_input_cache = t.from_numpy(host_x[h]).requires_grad_(True)
+                    self._host_input_caches.append(host_input_cache)
+            else:
+                self._host_input_caches = None
+
+            # if self._guest_model is not None:
+            #     self._guest_input_cache = x.detach().requires_grad_(True)
+            # else:
+            #     self._guest_input_cache = None
+
+            out = self._forward(x, self._host_input_caches)
+            final_out = self._activation_layer(out)
+            # self._out_cache = final_out
+            return final_out
+
         else:
-            self._host_input_caches = None
+            return self.predict(x)
 
-        if self._guest_model is not None:
-            self._guest_input_cache = t.Tensor(x.detach()).type(t.float64).requires_grad_(True)
-        else:
-            self._guest_input_cache = None
-
-        out = self._forward(self._guest_input_cache, self._host_input_caches)
-        final_out = self._activation_layer(out)
-        self._out_cache = final_out
-        return final_out.detach()
-
-    def backward(self, error) -> t.Tensor:
+    def backward(self, error):
 
         # compute backward grads
-        has_guest_error = 0
         backward_list = []
-        if self._guest_input_cache is not None:
-            backward_list.append(self._guest_input_cache)
-            has_guest_error = 1
+        # if self._guest_input_cache is not None:
+        #     backward_list.append(self._guest_input_cache)
+        #     has_guest_error = 1
         if self._host_input_caches is not None:
             for h in self._host_input_caches:
                 backward_list.append(h)
-
-        loss = backward_loss(self._out_cache, error)
-        loss.backward()
-        ret_error = [i.grad for i in backward_list]
-
+        ret_error = t.autograd.grad(error, backward_list, retain_graph=True)
         # send error back to hosts
         if self._has_ctx:
-            host_errors = ret_error[has_guest_error: ]
+            host_errors = ret_error
             idx = 0
             for host in self.ctx.hosts:
                 host.put(self._bw_suffix.format(self._bw_count), host_errors[idx])
@@ -118,7 +131,6 @@ class InteractiveLayerGuest(InteractiveLayer):
             self._bw_count += 1
 
         self._clear_state()
-        return ret_error[0] if has_guest_error else None
 
     def predict(self, x):
 
@@ -138,9 +150,22 @@ class InteractiveLayerHost(InteractiveLayer):
     def __init__(self):
         super(InteractiveLayerHost, self).__init__()
 
-    def forward(self, x) -> None:
-        self.ctx.guest.put(self._fw_suffix.format(self._fw_count), x)
-        self._fw_count += 1
+    def train(self: T, mode: bool = True) -> T:
+        self.training = mode
+        return self
+
+    def eval(self: T) -> T:
+        self.training = False
+        return self
+
+    def forward(self, x: t.Tensor) -> None:
+        if self.training:
+            assert isinstance(x, t.Tensor), 'x should be a tensor'
+            x = x.detach().cpu().numpy()
+            self.ctx.guest.put(self._fw_suffix.format(self._fw_count), x)
+            self._fw_count += 1
+        else:
+            self.predict(x)
     def backward(self, error=None) -> t.Tensor:
         error = self.ctx.guest.get(self._bw_suffix.format(self._bw_count))
         self._bw_count += 1

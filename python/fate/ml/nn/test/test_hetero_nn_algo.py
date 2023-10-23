@@ -1,13 +1,10 @@
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
 from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
-from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost
 import sys
 from datetime import datetime
 import pandas as pd
-from torch.utils.data import TensorDataset, DataLoader
-import tqdm
-
+from torch.utils.data import TensorDataset
 
 def get_current_datetime_str():
     return datetime.now().strftime("%Y-%m-%d-%H-%M")
@@ -105,14 +102,11 @@ if __name__ == "__main__":
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
-        # trainer = HeteroNNTrainerGuest(ctx, model, optimizer, dataset, None, loss_fn, batch_size=batch_size,
-        #                                epochs=epoch)
-        # trainer.train()
-
         args = TrainingArguments(
             num_train_epochs=5,
             per_device_train_batch_size=16,
-            disable_tqdm=False
+            disable_tqdm=False,
+            no_cuda=True
         )
         trainer = HeteroNNTrainerGuest(
             ctx=ctx,
@@ -123,8 +117,8 @@ if __name__ == "__main__":
             training_args=args,
         )
         trainer.train()
-
-        pred = model.predict(X_g)
+        model.eval()
+        pred = model(X_g)
         # compute auc
         from sklearn.metrics import roc_auc_score
         print(roc_auc_score(y.detach().numpy(), pred.detach().numpy()))
@@ -146,7 +140,8 @@ if __name__ == "__main__":
         args = TrainingArguments(
             num_train_epochs=5,
             per_device_train_batch_size=16,
-            disable_tqdm=False
+            disable_tqdm=False,
+            no_cuda=True
         )
         trainer = HeteroNNTrainerHost(
             ctx=ctx,
@@ -156,7 +151,6 @@ if __name__ == "__main__":
             training_args=args
         )
         trainer.train()
-        # trainer = HeteroNNTrainerHost(ctx, model, optimizer, dataset, None, batch_size=batch_size, epochs=epoch)
-        # trainer.train()
 
-        pred = model.predict(X_h)
+        model.eval()
+        model(X_h)
