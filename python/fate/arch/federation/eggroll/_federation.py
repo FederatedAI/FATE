@@ -84,7 +84,7 @@ class EggrollFederation(Federation):
             rtn[party] = Table(v)
         return [rtn[party] for party in parties]
 
-    def pull_bytes(self, name: str, tag: str, parties: List[PartyMeta]):
+    def _pull_bytes(self, name: str, tag: str, parties: List[PartyMeta]):
         rs = self._rsc.load(name=name, tag=tag)
         future_map = dict(
             zip(
@@ -101,10 +101,14 @@ class EggrollFederation(Federation):
         return [rtn[party] for party in parties]
 
     def _push_table(self, table: Table, name: str, tag: str, parties: List[PartyMeta]):
-        _push_with_exception_handle(self._rsc, table._rp, name, tag, parties)
+        rs = self._rsc.load(name=name, tag=tag)
+        futures = rs.push_rp(table._rp, parties=parties)
+        # concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
 
-    def push_bytes(self, v: bytes, name: str, tag: str, parties: List[PartyMeta]):
-        _push_with_exception_handle(self._rsc, v, name, tag, parties)
+    def _push_bytes(self, v: bytes, name: str, tag: str, parties: List[PartyMeta]):
+        rs = self._rsc.load(name=name, tag=tag)
+        futures = rs.push_bytes(v, parties=parties)
+        # concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
 
     def destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)
@@ -160,4 +164,4 @@ def add_remote_futures(fs: typing.List[concurrent.futures.Future]):
 
 
 def wait_all_remote_done(timeout=None):
-    concurrent.futures.wait(_remote_futures, timeout=timeout, return_when=concurrent.futures.ALL_COMPLETED)
+    concurrent.futures.wait(_remote_futures, timeout=timeout, return_when=concurrent.futures.FIRST_EXCEPTION)

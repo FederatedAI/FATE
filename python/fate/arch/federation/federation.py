@@ -19,11 +19,25 @@ from typing import List
 
 from fate.arch.abc import PartyMeta
 from ._gc import GarbageCollector
+import traceback
 
 if typing.TYPE_CHECKING:
     from fate.arch.computing.table import KVTable
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
+
+def _federation_info(func):
+    def wrapper(*args, **kwargs):
+        logger.debug(f"federation enter {func.__name__}")
+        try:
+            stacks = "".join(traceback.format_stack(limit=7)[:-1])
+            logger.debug(f"stack:\n{stacks}")
+            return func(*args, **kwargs)
+        finally:
+            logger.debug(f"federation exit {func.__name__}")
+
+    return wrapper
 
 
 class Federation:
@@ -68,6 +82,7 @@ class Federation:
     ):
         raise NotImplementedError(f"push bytes is not supported in {self.__class__.__name__}")
 
+    @_federation_info
     def push_table(
         self,
         table: "KVTable",
@@ -88,6 +103,7 @@ class Federation:
             parties=parties,
         )
 
+    @_federation_info
     def push_bytes(
         self,
         v: bytes,
@@ -107,6 +123,7 @@ class Federation:
             parties=parties,
         )
 
+    @_federation_info
     def pull_table(
         self,
         name: str,
@@ -127,6 +144,7 @@ class Federation:
             self.get_gc.register_clean_action(name, tag, table, "destroy", {})
         return tables
 
+    @_federation_info
     def pull_bytes(
         self,
         name: str,

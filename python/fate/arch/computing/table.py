@@ -1,14 +1,43 @@
 import abc
+import logging
 import random
+import traceback
 from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar, Optional
 
-from fate.arch.unify.serdes import get_serdes_by_type
 from fate.arch.unify.partitioner import get_partitioner_by_type
+from fate.arch.unify.serdes import get_serdes_by_type
 from ..unify import URI
+
+logger = logging.getLogger(__name__)
 
 
 K = TypeVar("K")
 V = TypeVar("V")
+
+_level = 0
+
+
+def _add_padding(message, count):
+    padding = " " * count
+    lines = message.split("\n")
+    padded_lines = [padding + line for line in lines]
+    return "\n".join(padded_lines)
+
+
+def _compute_info(func):
+    def wrapper(*args, **kwargs):
+        global _level
+        logger.debug(_add_padding(f"computing enter {func.__name__}", _level * 2))
+        try:
+            _level += 1
+            stacks = _add_padding("".join(traceback.format_stack(limit=5)[:-1]), _level * 2)
+            logger.debug(f'{_add_padding("stack:", _level * 2)}\n{stacks}')
+            return func(*args, **kwargs)
+        finally:
+            _level -= 1
+            logger.debug(f"{' ' * _level}computing exit {func.__name__}")
+
+    return wrapper
 
 
 class KVTableContext:
@@ -179,6 +208,7 @@ class KVTable(Generic[K, V]):
     def destroy(self):
         self._destroy()
 
+    @_compute_info
     def map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
@@ -226,6 +256,7 @@ class KVTable(Generic[K, V]):
             output_num_partitions=output_num_partitions,
         )
 
+    @_compute_info
     def mapPartitionsWithIndex(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
@@ -241,6 +272,7 @@ class KVTable(Generic[K, V]):
             output_partitioner_type=output_partitioner_type,
         )
 
+    @_compute_info
     def mapReducePartitions(
         self,
         map_partition_op: Callable[[Iterable], Iterable],
@@ -259,6 +291,7 @@ class KVTable(Generic[K, V]):
             output_partitioner_type=output_partitioner_type,
         )
 
+    @_compute_info
     def applyPartitions(self, func, output_value_serdes_type=None):
         return self.map_reduce_partitions_with_index(
             map_partition_op=_lifted_apply_partitions_to_mpwi(func),
@@ -267,6 +300,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def mapPartitions(
         self, func, use_previous_behavior=False, preserves_partitioning=False, output_value_serdes_type=None
     ):
@@ -279,6 +313,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def map(
         self,
         map_op: Callable[[Any, Any], Tuple[Any, Any]],
@@ -294,6 +329,7 @@ class KVTable(Generic[K, V]):
             output_partitioner_type=output_partitioner_type,
         )
 
+    @_compute_info
     def mapValues(self, map_value_op: Callable[[Any], Any], output_value_serdes_type=None):
         return self.map_reduce_partitions_with_index(
             _lifted_map_values_to_mpwi(map_value_op),
@@ -302,9 +338,11 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def copy(self):
         return self.mapValues(lambda x: x, output_value_serdes_type=self.value_serdes_type)
 
+    @_compute_info
     def flatMap(
         self,
         flat_map_op: Callable[[Any, Any], Iterable[Tuple[Any, Any]]],
@@ -318,6 +356,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def filter(self, filter_op: Callable[[Any], bool]):
         return self.map_reduce_partitions_with_index(
             lambda i, x: ((k, v) for k, v in x if filter_op(v)),
@@ -334,27 +373,33 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=self.value_serdes_type,
         )
 
+    @_compute_info
     def collect(self):
         for k, v in self._collect():
             yield self.key_serdes.deserialize(k), self.value_serdes.deserialize(v)
 
+    @_compute_info
     def take(self, n):
         return [(self.key_serdes.deserialize(k), self.value_serdes.deserialize(v)) for k, v in self._take(n)]
 
+    @_compute_info
     def first(self):
         resp = self.take(n=1)
         if len(resp) < 1:
             raise RuntimeError("table is empty")
         return resp[0]
 
+    @_compute_info
     def reduce(self, func: Callable[[V, V], V]) -> V:
         return self.value_serdes.deserialize(self._reduce(_lifted_reduce_to_serdes(func, self.value_serdes)))
 
+    @_compute_info
     def count(self) -> int:
         if self._count_cache is None:
             self._count_cache = self._count()
         return self._count_cache
 
+    @_compute_info
     def join(
         self,
         other: "KVTable",
@@ -367,6 +412,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def union(self, other, merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
         return self.binarySortedMapPartitionsWithIndex(
             other,
@@ -374,6 +420,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def subtractByKey(self, other: "KVTable"):
         return self.binarySortedMapPartitionsWithIndex(
             other,
@@ -419,6 +466,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @_compute_info
     def repartition(self, num_partitions, partitioner_type=None):
         if partitioner_type is None:
             partitioner_type = self.partitioner_type
@@ -444,6 +492,7 @@ class KVTable(Generic[K, V]):
             output_num_partitions=num_partitions,
         )
 
+    @_compute_info
     def repartition_with(self, other: "KVTable") -> Tuple["KVTable", "KVTable"]:
         if self.partitioner_type == other.partitioner_type and self.num_partitions == other.num_partitions:
             return self, other
@@ -452,6 +501,7 @@ class KVTable(Generic[K, V]):
         else:
             return self.repartition(other.num_partitions, other.partitioner_type), other
 
+    @_compute_info
     def save(self, uri: URI, schema, options: dict = None):
         options = options or {}
         if (partition := options.get("partition")) is not None and partition != self.num_partitions:
@@ -460,6 +510,7 @@ class KVTable(Generic[K, V]):
             self._save(uri, schema, options)
         schema.update(self.schema)
 
+    @_compute_info
     def sample(
         self,
         *,

@@ -51,7 +51,7 @@ class CSession(KVTableContext):
         return self._session_id
 
     @computing_profile
-    def load(self, uri: URI, schema: dict, options: dict = None) -> Table:
+    def _load(self, uri: URI, schema: dict, options: dict) -> Table:
         from ._type import EggRollStoreType
 
         if uri.scheme != "eggroll":
@@ -63,19 +63,16 @@ class CSession(KVTableContext):
 
         if options is None:
             options = {}
-        if "store_type" not in options:
-            options["store_type"] = EggRollStoreType.ROLLPAIR_LMDB
-        options["create_if_missing"] = False
-        rp = self._rpc.load(namespace=namespace, name=name, options=options)
+        store_type = options.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
+        rp = self._rpc.load_rp(namespace=namespace, name=name, store_type=store_type)
         if rp is None or rp.get_partitions() == 0:
             raise RuntimeError(f"no exists: {name}, {namespace}")
 
-        if options["store_type"] != EggRollStoreType.ROLLPAIR_IN_MEMORY:
-            rp = rp.save_as(
+        if store_type != EggRollStoreType.ROLLPAIR_IN_MEMORY:
+            rp = rp.copy_as(
                 name=f"{name}_{uuid()}",
                 namespace=self.session_id,
-                partition=rp.get_partitions(),
-                options={"store_type": EggRollStoreType.ROLLPAIR_IN_MEMORY},
+                store_type=EggRollStoreType.ROLLPAIR_IN_MEMORY,
             )
 
             table = Table(rp=rp)

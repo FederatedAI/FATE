@@ -16,11 +16,9 @@
 
 
 import logging
-import typing
 from typing import Callable, Iterable, Any
 
 from ...unify import URI
-from .._profile import computing_profile
 from .._type import ComputingEngine
 from ..table import KVTable
 from eggroll.roll_pair.roll_pair import RollPair
@@ -115,7 +113,7 @@ class Table(KVTable):
         return Table(rp)
 
     def _take(self, n=1, **kwargs):
-        return self._rp.take(n=n, **kwargs)
+        return self._rp.take(num=n, **kwargs)
 
     def _count(self, **kwargs):
         return self._rp.count(**kwargs)
@@ -136,12 +134,11 @@ class Table(KVTable):
         except Exception as e:
             raise ValueError(f"uri {uri} not supported with eggroll backend") from e
 
-        if "store_type" not in options:
-            options["store_type"] = EggRollStoreType.ROLLPAIR_LMDB
-        self._rp.save_as(
+        store_type = options.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
+        self._rp.copy_as(
             name=name,
             namespace=namespace,
-            options=options,
+            store_type=store_type,
         )
 
     def _drop_num(self, num: int, partitioner):
