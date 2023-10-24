@@ -7,7 +7,7 @@ from transformers import PreTrainedTokenizer
 from transformers import EvalPrediction
 from transformers.trainer_callback import TrainerCallback
 from typing import Optional
-from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.trainer.trainer_base import HeteroTrainerBase, TrainingArguments
 
 

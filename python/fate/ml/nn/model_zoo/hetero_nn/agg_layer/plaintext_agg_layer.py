@@ -4,10 +4,10 @@ from typing import Union, List
 
 from torch.nn.modules.module import T
 
-from fate.ml.nn.model_zoo.agg_layer._base import InteractiveLayer, backward_loss
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer._base import AggLayer
 
 
-class InteractiveLayerGuest(InteractiveLayer):
+class AggLayerGuest(AggLayer):
 
     def __init__(self,
                  out_features: int,
@@ -16,7 +16,7 @@ class InteractiveLayerGuest(InteractiveLayer):
                  activation: str = "relu",
                  lr=0.01
                  ):
-        super(InteractiveLayerGuest, self).__init__()
+        super(AggLayerGuest, self).__init__()
         self._out_features = out_features
         self._guest_in_features = guest_in_features
 
@@ -145,10 +145,10 @@ class InteractiveLayerGuest(InteractiveLayer):
             return final_out.detach()
 
 
-class InteractiveLayerHost(InteractiveLayer):
+class AggLayerHost(AggLayer):
 
     def __init__(self):
-        super(InteractiveLayerHost, self).__init__()
+        super(AggLayerHost, self).__init__()
 
     def train(self: T, mode: bool = True) -> T:
         self.training = mode

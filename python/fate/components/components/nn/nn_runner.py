@@ -1,17 +1,22 @@
-import numpy as np
+import os
 import torch
+import torch as t
+import logging
+import numpy as np
+from torch import optim, nn
 import pandas as pd
-from typing import Union, Optional, Literal
+from typing import Literal, Type, Callable
+from fate.ml.nn.trainer.trainer_base import TrainingArguments
 from fate.components.core import Role
 from fate.arch import Context
 from typing import Optional, Union
 from transformers.trainer_utils import PredictionOutput
-import numpy as np
 from fate.arch.dataframe._dataframe import DataFrame
 from fate.components.components.utils import consts
-import logging
+from torch.optim.lr_scheduler import _LRScheduler
 from fate.ml.utils.predict_tools import to_dist_df, array_to_predict_df
 from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION, OTHER, LABEL, PREDICT_SCORE
+from fate.components.components.nn.loader import Loader
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +53,42 @@ def task_type_infer(predict_result, true_label):
     return None
 
 
+def load_model_dict_from_path(path):
+    # Ensure that the path is a string
+    assert isinstance(
+        path, str), "Path must be a string, but got {}".format(
+        type(path))
+
+    # Append the filename to the path
+    model_path = os.path.join(path, 'pytorch_model.bin')
+
+    # Check if the file exists
+    if not os.path.isfile(model_path):
+        raise FileNotFoundError(
+            f"No 'pytorch_model.bin' file found at {model_path}, no saved model found")
+
+    # Load the state dict from the specified path
+    model_dict = t.load(model_path)
+
+    return model_dict
+
+
+def dir_warning(train_args):
+    if 'output_dir' in train_args or 'logging_dir' in train_args or 'resume_from_checkpoint' in train_args:
+        logger.warning(
+            "The output_dir, logging_dir, and resume_from_checkpoint arguments are not supported in the "
+            "DefaultRunner when running the Pipeline. These arguments will be replaced by FATE provided paths.")
+
+
+def loader_load_from_conf(conf, return_class=False):
+    if conf is None:
+        return None
+    if return_class:
+        return Loader.from_dict(conf).load_item()
+    return Loader.from_dict(conf).call_item()
+
+
+
 class NNRunner(object):
 
     def __init__(self) -> None:
@@ -73,6 +114,11 @@ class NNRunner(object):
     def is_server(self) -> bool:
         return self._role.is_arbiter
 
+    def is_guest(self) -> bool:
+        return self._role.is_guest
+
+    def is_host(self) -> bool:
+        return self._role.is_host
     def set_party_id(self, party_id: int):
         assert isinstance(self._party_id, int)
         self._party_id = party_id

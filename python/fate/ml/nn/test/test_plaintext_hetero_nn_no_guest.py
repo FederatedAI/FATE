@@ -1,5 +1,5 @@
-from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
+from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num]
 
         dataset = TensorDataset(y)
-        interactive_layer = InteractiveLayerGuest(4,4,guest_in_features=None)
+        interactive_layer = AggLayerGuest(4, 4, guest_in_features=None)
         interactive_layer._host_model[0] = interactive_layer._host_model[0].double()
         loss_fn = t.nn.BCELoss()
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_h)
 
-        layer = InteractiveLayerHost()
+        layer = AggLayerHost()
         model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
         model.set_context(ctx)

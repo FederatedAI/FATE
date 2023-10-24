@@ -1,6 +1,6 @@
-from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -90,14 +90,13 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_g, y)
 
-        interactive_layer = InteractiveLayerGuest(4,4,4)
+        agglayer = AggLayerGuest(4, 4, 4)
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(
             top_model=guest_top,
-            bottom_model=guest_bottom,
-            interactive_layer=interactive_layer
-        )
+            agg_layer=agglayer,
+            bottom_model=guest_bottom)
         model.set_context(ctx)
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
@@ -126,14 +125,16 @@ if __name__ == "__main__":
     elif party == "host":
 
         ctx = create_ctx(host, get_current_datetime_str())
-
         df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_host.csv')
         X_h = t.Tensor(df.drop(columns=['id']).values).type(t.float64)[0: sample_num]
 
         dataset = TensorDataset(X_h)
 
-        layer = InteractiveLayerHost()
-        model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
+        layer = AggLayerHost()
+        model = HeteroNNModelHost(
+            bottom_model=host_bottom,
+            agg_layer=layer
+        )
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
@@ -143,6 +144,7 @@ if __name__ == "__main__":
             disable_tqdm=False,
             no_cuda=True
         )
+
         trainer = HeteroNNTrainerHost(
             ctx=ctx,
             model=model,

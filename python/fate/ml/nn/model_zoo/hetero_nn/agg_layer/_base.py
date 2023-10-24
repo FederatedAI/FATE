@@ -4,7 +4,7 @@ from fate.arch import Context
 def backward_loss(z, backward_error):
     return t.sum(z * backward_error)
 
-class InteractiveLayer(t.nn.Module):
+class AggLayer(t.nn.Module):
     def __init__(self):
         super().__init__()
         self._ctx = None

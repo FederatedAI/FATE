@@ -1,4 +1,4 @@
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     if party == "guest":
 
         ctx = create_ctx(guest, get_current_datetime_str())
-        layer = InteractiveLayerGuest(ctx, 8, 10, 10)
+        layer = AggLayerGuest(ctx, 8, 10, 10)
         fake_features = t.randn(2, 10)
         out = layer.forward(fake_features)
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     elif party == "host":
 
         ctx = create_ctx(host, get_current_datetime_str())
-        layer = InteractiveLayerHost(ctx)
+        layer = AggLayerHost(ctx)
         fake_features = t.randn(2, 10)
         layer.forward(fake_features)
         error = layer.backward()

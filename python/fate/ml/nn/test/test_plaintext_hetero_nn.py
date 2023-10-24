@@ -1,5 +1,5 @@
-from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayerHost
+from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_host.csv')
         X_h = t.Tensor(df.drop(columns=['id']).values).type(t.float64)[0: sample_num]
 
-        interactive_layer = InteractiveLayerGuest(4, 4, 4)
+        interactive_layer = AggLayerGuest(4, 4, 4)
         local_model = HeteroNNLocalModel(guest_bottom, guest_top, host_bottom,
                                          interactive_layer._guest_model.double(),
                                          interactive_layer._host_model[0].double())
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_g, y)
 
-        interactive_layer = InteractiveLayerGuest(4,4,4)
+        interactive_layer = AggLayerGuest(4, 4, 4)
         interactive_layer._guest_model = interactive_layer._guest_model.double()
         interactive_layer._host_model[0] = interactive_layer._host_model[0].double()
         loss_fn = t.nn.BCELoss()
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_h)
 
-        layer = InteractiveLayerHost()
+        layer = AggLayerHost()
         model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
         model.set_context(ctx)

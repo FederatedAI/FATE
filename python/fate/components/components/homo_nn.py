@@ -17,7 +17,7 @@ import os
 from fate.arch import Context
 from fate.components.components.nn.loader import Loader
 from fate.components.components.nn.nn_runner import NNRunner
-from fate.components.components.nn.runner.default_runner import DefaultRunner
+from fate.components.components.nn.runner.homo_default_runner import DefaultRunner
 from fate.components.components.utils import consts
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 from fate.arch.dataframe import DataFrame
@@ -144,7 +144,7 @@ def train(
     role: Role,
     train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
     validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-    runner_module: cpn.parameter(type=str, default="default_runner", desc="name of your runner script"),
+    runner_module: cpn.parameter(type=str, default="homo_default_runner", desc="name of your runner script"),
     runner_class: cpn.parameter(type=str, default="DefaultRunner", desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),

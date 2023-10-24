@@ -1,30 +1,50 @@
 import torch
 import torch as t
 from fate.arch import Context
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerGuest, InteractiveLayer
-from fate.ml.nn.model_zoo.agg_layer.plaintext_agg_layer import InteractiveLayerHost
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer._base import AggLayer
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest
+from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerHost
 
 
 def backward_loss(z, backward_error):
     return t.sum(z * backward_error)
 
 
-class HeteroNNModelGuest(t.nn.Module):
+class HeteroNNModelBase(t.nn.Module):
+    
+    def __init__(self):
+        super().__init__()
+        self._bottom_model = None
+        self._top_model = None
+        self._agg_layer = None
+        self._ctx = None
+        
+    def set_context(self, ctx: Context):
+        self._ctx = ctx
+        self._agg_layer.set_context(ctx)
+
+
+
+class HeteroNNModelGuest(HeteroNNModelBase):
 
     def __init__(self,
                  top_model: t.nn.Module,
-                 interactive_layer: InteractiveLayerGuest,
-                 bottom_model: t.nn.Module = None,
+                 agg_layer: AggLayerGuest,
+                 bottom_model: t.nn.Module = None
                  ):
 
         super(HeteroNNModelGuest, self).__init__()
-        self._bottom_model = bottom_model
-        self._top_model = top_model
-        self._interactive_layer = interactive_layer
-
         # cached variables
+        assert isinstance(top_model, t.nn.Module), "top model should be a torch nn.Module"
+        self._top_model = top_model
+        assert isinstance(agg_layer, AggLayerGuest), "aggregate layer should be a AggLayerGuest"
+        self._agg_layer = agg_layer
+        if bottom_model is not None:
+            assert isinstance(bottom_model, t.nn.Module), "bottom model should be a torch nn.Module"
+            self._bottom_model = bottom_model
+
         self._bottom_fw = None  # for backward usage
-        self._interactive_fw_rg = None # for backward usage
+        self._agg_fw_rg = None # for backward usage
 
         # ctx
         self._ctx = None
@@ -34,7 +54,7 @@ class HeteroNNModelGuest(t.nn.Module):
 
     def __repr__(self):
         return (f"HeteroNNGuest(top_model={self._top_model}\n"
-                f"interactive_layer={self._interactive_layer}\n"
+                f"agg_layer={self._agg_layer}\n"
                 f"bottom_model={self._bottom_model})")
 
     def __call__(self, *args, **kwargs):
@@ -42,11 +62,7 @@ class HeteroNNModelGuest(t.nn.Module):
 
     def _clear_state(self):
         self._bottom_fw = None
-        self._interactive_fw_rg = None
-
-    def set_context(self, ctx: Context):
-        self._ctx = ctx
-        self._interactive_layer.set_context(ctx)
+        self._agg_fw_rg = None
 
     def forward(self, x = None):
 
@@ -60,12 +76,12 @@ class HeteroNNModelGuest(t.nn.Module):
 
         # hetero layer
         if not self._guest_direct_backward:
-            interactive_out = self._interactive_layer.forward(b_out)
-            self._interactive_fw_rg = interactive_out.requires_grad_(True)
+            agg_out = self._agg_layer.forward(b_out)
+            self._agg_fw_rg = agg_out.requires_grad_(True)
             # top layer
-            top_out = self._top_model(self._interactive_fw_rg)
+            top_out = self._top_model(self._agg_fw_rg)
         else:
-            top_out = self._top_model(self._interactive_layer(b_out))
+            top_out = self._top_model(self._agg_layer(b_out))
 
         return top_out
 
@@ -73,14 +89,14 @@ class HeteroNNModelGuest(t.nn.Module):
 
         if self._guest_direct_backward:
             # guest side direct backward & send error to hosts
-            self._interactive_layer.backward(loss)
+            self._agg_layer.backward(loss)
             loss.backward()
         else:
             # backward are split into parts
             loss.backward()  # update top
-            interactive_error = self._interactive_fw_rg.grad
-            self._interactive_fw_rg = None
-            bottom_error = self._interactive_layer.backward(interactive_error)  # compute bottom error & update hetero
+            agg_error = self._agg_fw_rg.grad
+            self._agg_fw_rg = None
+            bottom_error = self._agg_layer.backward(agg_error)  # compute bottom error & update hetero
             if bottom_error is not None:
                 bottom_loss = backward_loss(self._bottom_fw, bottom_error)
                 bottom_loss.backward()
@@ -93,25 +109,27 @@ class HeteroNNModelGuest(t.nn.Module):
                 b_out = None
             else:
                 b_out = self._bottom_model(x)
-            interactive_out = self._interactive_layer.predict(b_out)
-            top_out = self._top_model(interactive_out)
+            agg_out = self._agg_layer.predict(b_out)
+            top_out = self._top_model(agg_out)
 
         return top_out
 
 
-class HeteroNNModelHost(t.nn.Module):
+class HeteroNNModelHost(HeteroNNModelBase):
 
-    def __init__(self, bottom_model: t.nn.Module,
-                 interactive_layer: InteractiveLayerHost
+    def __init__(self,
+                 agg_layer: AggLayer,
+                 bottom_model: t.nn.Module
                  ):
 
         super().__init__()
-        self._bottom_model = bottom_model
-        self._interactive_layer = interactive_layer
 
+        assert isinstance(bottom_model, t.nn.Module), "bottom model should be a torch nn.Module"
+        self._bottom_model = bottom_model
+        assert isinstance(agg_layer, AggLayerHost), "aggregate layer should be a AggLayerHost"
+        self._agg_layer = agg_layer
         # cached variables
         self._bottom_fw = None  # for backward usage
-
         # ctx
         self._ctx = None
 
@@ -126,7 +144,7 @@ class HeteroNNModelHost(t.nn.Module):
 
     def set_context(self, ctx: Context):
         self._ctx = ctx
-        self._interactive_layer.set_context(ctx)
+        self._agg_layer.set_context(ctx)
 
     def forward(self, x):
 
@@ -134,11 +152,11 @@ class HeteroNNModelHost(t.nn.Module):
         # bottom layer
         self._bottom_fw = b_out
         # hetero layer
-        self._interactive_layer.forward(b_out)
+        self._agg_layer.forward(b_out)
 
     def backward(self):
 
-        error = self._interactive_layer.backward()
+        error = self._agg_layer.backward()
         loss = backward_loss(self._bottom_fw, error)
         loss.backward()
         self._clear_state()
@@ -147,4 +165,4 @@ class HeteroNNModelHost(t.nn.Module):
 
         with torch.no_grad():
             b_out = self._bottom_model(x)
-            self._interactive_layer.predict(b_out)
+            self._agg_layer.predict(b_out)
