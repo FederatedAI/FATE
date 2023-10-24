@@ -28,22 +28,22 @@ def main(config="../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
     psi_1 = PSI("psi_1")
-    psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    psi_1.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
-    psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_1.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
     feature_scale_0 = FeatureScale("feature_scale_0",
@@ -80,9 +80,9 @@ def main(config="../config.yaml", namespace=""):
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    deployed_pipeline.psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                                     namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    deployed_pipeline.psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                                        namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
