@@ -49,24 +49,6 @@ if __name__ == "__main__":
             t.backends.cudnn.deterministic = True
             t.backends.cudnn.benchmark = False
 
-
-    class HeteroNNLocalModel(t.nn.Module):
-
-        def __init__(self, guest_b, guest_t, host_b, guest_i, host_i):
-            super(HeteroNNLocalModel, self).__init__()
-            self._guest_b = guest_b
-            self._guest_t = guest_t
-            self._host_b = host_b
-            self._guest_i = guest_i
-            self._host_i = host_i
-        def forward(self, x_g, x_h):
-            fw_g = self._guest_i(self._guest_b(x_g))
-            fw_h = self._host_i(self._host_b(x_h))
-            fw_ = fw_g + fw_h
-            fw_ = t.nn.ReLU()(fw_)
-            fw_ = self._guest_t(fw_)
-            return fw_
-
     set_seed(42)
 
     batch_size = 64
@@ -116,11 +98,10 @@ if __name__ == "__main__":
             training_args=args,
         )
         trainer.train()
-        model.eval()
-        pred = model(X_g)
+        pred = trainer.predict(dataset)
         # compute auc
         from sklearn.metrics import roc_auc_score
-        print(roc_auc_score(y.detach().numpy(), pred.detach().numpy()))
+        print(roc_auc_score(pred.label_ids, pred.predictions))
 
     elif party == "host":
 
@@ -153,6 +134,4 @@ if __name__ == "__main__":
             training_args=args
         )
         trainer.train()
-
-        model.eval()
-        model(X_h)
+        trainer.predict(dataset)

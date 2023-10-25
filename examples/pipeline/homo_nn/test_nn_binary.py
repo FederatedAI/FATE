@@ -57,7 +57,7 @@ def main(config="../../config.yaml", namespace=""):
         ), 
         loss=nn.BCELoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514, logging_strategy='steps'),
         fed_args=FedAVGArguments(),
         task_type='binary'
         )

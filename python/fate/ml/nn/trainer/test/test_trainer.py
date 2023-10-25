@@ -43,8 +43,8 @@ if __name__ == "__main__":
         ctx = create_ctx(guest)
         fed_args = FedArguments(aggregate_strategy="epochs", aggregate_freq=1, aggregator="secure_aggregate")
         args = TrainingArguments(
-            num_train_epochs=5, per_device_train_batch_size=16, logging_strategy="steps", logging_steps=5,
-            disable_tqdm=True
+            num_train_epochs=5, per_device_train_batch_size=16, logging_strategy="steps",
+            log_level='info'
         )
         trainer = FedAVGClient(
             ctx=ctx,

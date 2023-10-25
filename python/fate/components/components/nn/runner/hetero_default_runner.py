@@ -3,10 +3,12 @@ from fate.components.components.nn.loader import Loader
 from typing import Optional, Union, Dict, Literal
 from fate.arch.dataframe import DataFrame
 from fate.components.components.nn.nn_runner import (NNRunner, loader_load_from_conf, load_model_dict_from_path,
-                                                     dir_warning)
+                                                     dir_warning, run_dataset_func)
 from transformers.trainer_utils import get_last_checkpoint
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
 from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.components.components.utils import consts
+from fate.ml.nn.dataset.table import TableDataset, Dataset
 
 
 logger = logging.getLogger(__file__)
@@ -48,29 +50,43 @@ class DefaultRunner(NNRunner):
         self.trainer = None
         self.model = None
 
-    def guest_setup(self,
-                    train_set=None,
-                    validate_set=None,
-                    output_dir=None,
-                    saved_model=None
-                    ):
+    def _prepare_data(self, data, data_name):
 
+        if data is None:
+            return data
 
-        # load bottom model
-        b_model = loader_load_from_conf(self.bottom_model_conf)
-        # load agg layer
-        agg_layer = loader_load_from_conf(self.interactive_layer_conf)
-        # load top model
-        t_model = loader_load_from_conf(self.top_model_conf)
+        if isinstance(data, DataFrame) and self.dataset_conf is None:
+            logger.info(
+                'Input data {} is FATE DataFrame and dataset conf is None, will automatically handle the input data'.format(data_name))
+            if self.task_type == consts.MULTI:
+                dataset = TableDataset(
+                    flatten_label=True,
+                    label_dtype='long',
+                    to_tensor=True)
+            else:
+                dataset = TableDataset(to_tensor=True)
+            dataset.load(data)
+        else:
+            dataset = loader_load_from_conf(self.dataset_conf)
+            if hasattr(dataset, 'load'):
+                dataset.load(data)
+            else:
+                raise ValueError(
+                    f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner. \
+                                Please implement this method in your dataset class. You can refer to the base class 'Dataset' in 'fate.ml.nn.dataset.base' \
+                                for the necessary interfaces to implement.")
+        if dataset is not None and not issubclass(
+                type(dataset), Dataset):
+            raise TypeError(
+                f"SetupReturn Error: {data_name}_set must be a subclass of fate built-in Dataset but got {type(dataset)}, \n"
+                f"You can get the class via: from fate.ml.nn.dataset.table import Dataset")
 
-        if b_model is None:
-            logger.info('guest side bottom model is None')
+        return dataset
 
-        model = HeteroNNModelGuest(
-            top_model=t_model,
-            agg_layer=agg_layer,
-            bottom_model=b_model
-        )
+    def _setup(self,
+               model,
+               output_dir=None,
+               saved_model=None):
 
         output_dir = './' if output_dir is None else output_dir
         resume_path = None
@@ -100,6 +116,31 @@ class DefaultRunner(NNRunner):
         training_args.output_dir = output_dir
         training_args.resume_from_checkpoint = resume_path  # resume path
 
+        return optimizer, loss, data_collator, tokenizer, training_args
+
+    def guest_setup(self,
+                    train_set=None,
+                    validate_set=None,
+                    output_dir=None,
+                    saved_model=None
+                    ):
+
+
+        # load bottom model
+        b_model = loader_load_from_conf(self.bottom_model_conf)
+        # load agg layer
+        agg_layer = loader_load_from_conf(self.interactive_layer_conf)
+        # load top model
+        t_model = loader_load_from_conf(self.top_model_conf)
+
+        if b_model is None:
+            logger.info('guest side bottom model is None')
+        model = HeteroNNModelGuest(
+            top_model=t_model,
+            agg_layer=agg_layer,
+            bottom_model=b_model
+        )
+        optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         model.set_context(self.get_context())
         trainer = HeteroNNTrainerGuest(
             ctx=self.get_context(),
@@ -113,9 +154,46 @@ class DefaultRunner(NNRunner):
             loss_fn=loss
         )
 
-    def host_setup(self):
-        pass
+        return trainer, model
 
+    def host_setup(self,
+                   train_set=None,
+                   validate_set=None,
+                   output_dir=None,
+                   saved_model=None
+                   ):
+        # load agg layer
+        agg_layer = loader_load_from_conf(self.interactive_layer_conf)
+        # load bottom model
+        b_model = loader_load_from_conf(self.bottom_model_conf)
+
+        model = HeteroNNModelHost(agg_layer=agg_layer, bottom_model=b_model)
+        optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
+        model.set_context(self.get_context())
+        trainer = HeteroNNTrainerHost(
+            ctx=self.get_context(),
+            model=model,
+            optimizer=optimizer,
+            train_set=train_set,
+            val_set=validate_set,
+            training_args=training_args,
+            tokenizer=tokenizer,
+            data_collator=data_collator
+        )
+
+        return trainer, model
+
+    def _check_label(self, dataset):
+
+        if not hasattr(dataset, 'has_label'):
+            raise ValueError('dataset has no has_label func, please make sure that your'
+                             ' class subclasses fate built-in Dataset class')
+
+        has_label = dataset.has_label()
+        if has_label is None or has_label == False:
+            raise ValueError('label is required on the guest side for hetero training, has label return False or None\n'
+                             '- Please check your input data.\n'
+                             '- Please make sure the has_label func is implemented correctly in your dataset class.')
 
     def train(self,
               train_data: Optional[Union[str,
@@ -125,16 +203,64 @@ class DefaultRunner(NNRunner):
               output_dir: str = None,
               saved_model_path: str = None) -> None:
 
-        if self.is_guest():
-            pass
+        train_set = self._prepare_data(train_data, 'train_data')
+        validate_set = self._prepare_data(validate_data, 'val_data')
 
+        if self.is_guest():
+            self._check_label(train_set)
+            if validate_set is not None:
+                self._check_label(validate_set)
+            trainer, model = self.guest_setup(train_set, validate_set, output_dir, saved_model_path)
         elif self.is_host():
-            pass
+            trainer, model = self.host_setup(train_set, validate_set, output_dir, saved_model_path)
+        else:
+            raise RuntimeError('invalid role in hetero nn')
+
+        self.trainer, self.model = trainer, model
+        self.trainer.train()
+        if output_dir is not None:
+            self.trainer.save_model(output_dir)
 
     def predict(self,
                 test_data: Optional[Union[str,
                                           DataFrame]] = None,
                 output_dir: str = None,
                 saved_model_path: str = None) -> DataFrame:
-        pass
 
+        test_set = self._prepare_data(test_data, 'test_data')
+        if self.trainer is not None:
+            trainer = self.trainer
+            logger.info('trainer found, skip setting up')
+        else:
+            if self.is_guest():
+                trainer = self.guest_setup(output_dir=output_dir, saved_model=saved_model_path)[0]
+            else:
+                trainer = self.host_setup(output_dir=output_dir, saved_model=saved_model_path)[0]
+
+        if self.is_guest():
+            classes = run_dataset_func(test_set, 'get_classes')
+            match_ids = run_dataset_func(test_set, 'get_match_ids')
+            sample_ids = run_dataset_func(test_set, 'get_sample_ids')
+            match_id_name = run_dataset_func(
+                test_set, 'get_match_id_name')
+            sample_id_name = run_dataset_func(
+                test_set, 'get_sample_id_name')
+
+            pred_rs = trainer.predict(test_set)
+
+            rs_df = self.get_nn_output_dataframe(
+                self.get_context(),
+                pred_rs.predictions,
+                pred_rs.label_ids if hasattr(pred_rs, 'label_ids') else None,
+                match_ids,
+                sample_ids,
+                match_id_name=match_id_name,
+                sample_id_name=sample_id_name,
+                dataframe_format='fate_std',
+                task_type=self.task_type,
+                classes=classes)
+
+            return rs_df
+
+        elif self.is_host():
+            trainer.predict(test_set)

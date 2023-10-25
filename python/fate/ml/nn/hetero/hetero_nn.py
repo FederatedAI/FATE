@@ -80,6 +80,27 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
 
         return loss.detach() / self.args.gradient_accumulation_steps
 
+    def prediction_step(
+        self,
+        model: nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        prediction_loss_only: bool,
+        ignore_keys: Optional[List[str]] = None,
+    ):
+        # (features, labels), this format is used in FATE-1.x
+        # now the model is in eval status
+        if isinstance(inputs, tuple) or isinstance(inputs, list):
+            with torch.no_grad():
+                if len(inputs) == 2:  # data & label
+                    feats, labels = inputs
+                    output = model(feats)
+                if len(inputs) == 1:  # label only
+                    labels = inputs[0]
+                    output = model()
+            return None, output, labels
+        else:
+            return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys)
+
 
 class HeteroNNTrainerHost(HeteroTrainerBase):
 
@@ -116,12 +137,14 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
         )
     def compute_loss(self, model, inputs, **kwargs):
         # host side not computing loss
-        if isinstance(inputs, tuple) or isinstance(inputs, list):
+        if isinstance(inputs, torch.Tensor):
+            feats = inputs
+        elif isinstance(inputs, tuple) or isinstance(inputs, list):
             feats = inputs[0]
-            model(feats)
-            return 0
         else:
             return super().compute_loss(model, inputs, **kwargs)
+        model(feats)
+        return 0
 
     def training_step(self, model: Union[HeteroNNModelGuest, HeteroNNModelHost],
                       inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
@@ -133,3 +156,23 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
         model.backward()
         # host has no label, will never have loss
         return torch.tensor(0)
+
+    def prediction_step(
+        self,
+        model: nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        prediction_loss_only: bool,
+        ignore_keys: Optional[List[str]] = None,
+    ):
+        # (features, labels), this format is used in FATE-1.x
+        # now the model is in eval status
+        if isinstance(inputs, torch.Tensor):
+            feats = inputs
+        elif isinstance(inputs, tuple) or isinstance(inputs, list):
+            feats = inputs[0]
+        else:
+            return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys)
+
+        with torch.no_grad():
+            model(feats)
+        return None, None, None

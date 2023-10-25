@@ -22,7 +22,7 @@ from fate.components.components.nn.loader import Loader
 logger = logging.getLogger(__name__)
 
 
-def _convert_to_numpy_array(
+def convert_to_numpy_array(
         data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
     if isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
         return data.to_numpy()
@@ -74,7 +74,7 @@ def load_model_dict_from_path(path):
 
 
 def dir_warning(train_args):
-    if 'output_dir' in train_args or 'logging_dir' in train_args or 'resume_from_checkpoint' in train_args:
+    if 'output_dir' in train_args or 'resume_from_checkpoint' in train_args:
         logger.warning(
             "The output_dir, logging_dir, and resume_from_checkpoint arguments are not supported in the "
             "DefaultRunner when running the Pipeline. These arguments will be replaced by FATE provided paths.")
@@ -87,6 +87,19 @@ def loader_load_from_conf(conf, return_class=False):
         return Loader.from_dict(conf).load_item()
     return Loader.from_dict(conf).call_item()
 
+
+def run_dataset_func(dataset, func_name):
+
+    if hasattr(dataset, func_name):
+        output = getattr(dataset, func_name)()
+        if output is None:
+            logger.info(
+                f'dataset {type(dataset)}: {func_name} returns None, this will influence the output of predict')
+        return output
+    else:
+        logger.info(
+            f'dataset {type(dataset)} not implemented {func_name}, classes set to None, this will influence the output of predict')
+        return None
 
 
 class NNRunner(object):
@@ -176,14 +189,14 @@ class NNRunner(object):
         if labels is not None:
             if isinstance(labels, PredictionOutput):
                 labels = labels.label_ids
-            predictions = _convert_to_numpy_array(predictions)
-            labels = _convert_to_numpy_array(labels)
+            predictions = convert_to_numpy_array(predictions)
+            labels = convert_to_numpy_array(labels)
             assert len(predictions) == len(
                 labels), f"predictions length {len(predictions)} != labels length {len(labels)}"
 
         # check match ids
         if match_ids is not None:
-            match_ids = _convert_to_numpy_array(match_ids).flatten()
+            match_ids = convert_to_numpy_array(match_ids).flatten()
         else:
             logger.info(
                 "match_ids is not provided, will auto generate match_ids")
@@ -192,7 +205,7 @@ class NNRunner(object):
 
         # check sample ids
         if sample_ids is not None:
-            sample_ids = _convert_to_numpy_array(sample_ids).flatten()
+            sample_ids = convert_to_numpy_array(sample_ids).flatten()
         else:
             logger.info(
                 "sample_ids is not provided, will auto generate sample_ids")

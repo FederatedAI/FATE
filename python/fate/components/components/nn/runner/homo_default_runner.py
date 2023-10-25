@@ -1,13 +1,12 @@
 import torch as t
 import os
 from fate.components.components.nn.nn_runner import (NNRunner, load_model_dict_from_path, dir_warning,
-                                                     loader_load_from_conf)
+                                                     loader_load_from_conf, run_dataset_func)
 from fate.ml.nn.homo.fedavg import FedAVG, FedAVGArguments, FedAVGClient, FedAVGServer
 from typing import Dict
 from fate.components.components.nn.loader import Loader
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data as data_utils
 from torch.optim.lr_scheduler import _LRScheduler
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments, HomoTrainerClient, HomoTrainerServer
 from typing import Union, Type, Callable, Optional
@@ -15,7 +14,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from typing import Literal
 import logging
 from fate.components.components.utils import consts
-from fate.ml.nn.dataset.table import TableDataset
+from fate.ml.nn.dataset.table import TableDataset, Dataset
 from fate.arch.dataframe import DataFrame
 
 
@@ -145,9 +144,10 @@ class DefaultRunner(NNRunner):
                                 Please implement this method in your dataset class. You can refer to the base class 'Dataset' in 'fate.ml.nn.dataset.base' \
                                 for the necessary interfaces to implement.")
         if dataset is not None and not issubclass(
-                type(dataset), data_utils.Dataset):
+                type(dataset), Dataset):
             raise TypeError(
-                f"SetupReturn Error: {data_name}_set must be a subclass of torch.utils.data.Dataset but got {type(dataset)}")
+                f"SetupReturn Error: {data_name}_set must be a subclass of fate built-in Dataset but got {type(dataset)}, \n"
+                f"You can get the class via: from fate.ml.nn.dataset.table import Dataset")
 
         return dataset
 
@@ -267,19 +267,6 @@ class DefaultRunner(NNRunner):
             trainer = self.server_setup()
             trainer.train()
 
-    def _run_dataset_func(self, dataset, func_name):
-
-        if hasattr(dataset, func_name):
-            output = getattr(dataset, func_name)()
-            if output is None:
-                logger.info(
-                    f'dataset {type(dataset)}: {func_name} returns None, this will influence the output of predict')
-            return output
-        else:
-            logger.info(
-                f'dataset {type(dataset)} not implemented {func_name}, classes set to None, this will influence the output of predict')
-            return None
-
     def predict(self,
                 test_data: Union[str,
                                  DataFrame],
@@ -295,12 +282,12 @@ class DefaultRunner(NNRunner):
                 trainer = self.client_setup(
                     saved_model=saved_model_path, stage='predict')
 
-            classes = self._run_dataset_func(test_set, 'get_classes')
-            match_ids = self._run_dataset_func(test_set, 'get_match_ids')
-            sample_ids = self._run_dataset_func(test_set, 'get_sample_ids')
-            match_id_name = self._run_dataset_func(
+            classes = run_dataset_func(test_set, 'get_classes')
+            match_ids = run_dataset_func(test_set, 'get_match_ids')
+            sample_ids = run_dataset_func(test_set, 'get_sample_ids')
+            match_id_name = run_dataset_func(
                 test_set, 'get_match_id_name')
-            sample_id_name = self._run_dataset_func(
+            sample_id_name = run_dataset_func(
                 test_set, 'get_sample_id_name')
             pred_rs = trainer.predict(test_set)
             rs_df = self.get_nn_output_dataframe(

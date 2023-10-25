@@ -1,9 +1,7 @@
 import torch
 import torch as t
 from typing import Union, List
-
 from torch.nn.modules.module import T
-
 from fate.ml.nn.model_zoo.hetero_nn.agg_layer._base import AggLayer
 
 
@@ -14,7 +12,6 @@ class AggLayerGuest(AggLayer):
                  host_in_features: Union[int, List[int], None],
                  guest_in_features: Union[int, None],
                  activation: str = "relu",
-                 lr=0.01
                  ):
         super(AggLayerGuest, self).__init__()
         self._out_features = out_features
@@ -46,8 +43,6 @@ class AggLayerGuest(AggLayer):
         self._guest_input_cache = None
         self._host_input_caches = None
         self._out_cache = None
-
-        self._lr = lr
 
         self.training = True
 

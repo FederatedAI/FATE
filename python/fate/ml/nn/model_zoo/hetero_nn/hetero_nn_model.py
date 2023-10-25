@@ -35,6 +35,8 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
         super(HeteroNNModelGuest, self).__init__()
         # cached variables
+        if top_model is None:
+            raise RuntimeError('guest needs a top model to compute loss, but no top model provided')
         assert isinstance(top_model, t.nn.Module), "top model should be a torch nn.Module"
         self._top_model = top_model
         assert isinstance(agg_layer, AggLayerGuest), "aggregate layer should be a AggLayerGuest"

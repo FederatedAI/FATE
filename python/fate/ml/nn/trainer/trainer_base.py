@@ -39,6 +39,7 @@ from dataclasses import dataclass, field, fields
 from transformers.trainer_callback import PrinterCallback
 from fate.ml.aggregator import AggregatorType
 from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from transformers.trainer import logger as logger_
 
 
 # Reset the logger to redirect logs output
@@ -106,9 +107,8 @@ class FedArguments(object):
                 d[k] = f"<{k.upper()}>"
         return d
 
-
 @dataclass
-class TrainingArguments(_hf_TrainingArguments):
+class _TrainingArguments(_hf_TrainingArguments):
     # in fate-2.0, we will control the output dir when using pipeline
     output_dir: str = field(default="./")
     disable_tqdm: bool = field(default=True)
@@ -119,9 +119,9 @@ class TrainingArguments(_hf_TrainingArguments):
     checkpoint_idx: int = field(default=None)
     # by default, we use constant learning rate, the same as FATE-1.X
     lr_scheduler_type: str = field(default="constant")
+    log_level: str = field(default="info")
 
     def __post_init__(self):
-        # Always use default values for hub-related attributes
         self.push_to_hub = False
         self.hub_model_id = None
         self.hub_strategy = "every_save"
@@ -133,18 +133,20 @@ class TrainingArguments(_hf_TrainingArguments):
 
         super().__post_init__()
 
+
+@dataclass
+class TrainingArguments(_TrainingArguments):
+
+    # To simplify the to dict result(to_dict only return non-default args)
+
     def to_dict(self):
         # Call the superclass's to_dict method
         all_args = super().to_dict()
-
         # Get a dict with default values for all fields
-        default_args = _hf_TrainingArguments(output_dir="./").to_dict()
-
+        default_args = _TrainingArguments().to_dict()
         # Filter out args that are equal to their default values
         set_args = {name: value for name, value in all_args.items() if value != default_args.get(name)}
-
         return set_args
-
 
 """
 Fed Callback Related Classes
@@ -301,6 +303,7 @@ class LogSuppressFilter(logging.Filter):
             return False
         return True
 
+logger_.addFilter(LogSuppressFilter())
 
 def compute_max_aggregation(
     fed_args: FedArguments, max_epoch: int, max_steps: int, epochs_trained: int, steps_trained: int
@@ -706,8 +709,6 @@ class WrappedShortcutCallback(CallbackWrapper):
         )
 
 
-logger.addFilter(LogSuppressFilter())
-
 
 """
 Mixin Class For Federation Trainer
@@ -913,6 +914,16 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
             compute_metrics=self._compute_metrics_warp_func,
         )
 
+        # update callbacks
+        new_callback_list = []
+        for i in self.callback_handler.callbacks:
+            if isinstance(i, PrinterCallback):
+                continue
+            else:
+                new_callback_list.append(i)
+        new_callback_list.append(FatePrinterCallback())
+        self.callback_handler.callbacks = new_callback_list
+
 
 class HomoTrainerClient(Trainer, HomoTrainerMixin):
 
@@ -1019,7 +1030,7 @@ class HomoTrainerClient(Trainer, HomoTrainerMixin):
                 with torch.no_grad():
                     feats, labels = inputs
                     logits = model(feats)
-                    return (None, logits, labels)
+                    return None, logits, labels
             else:
                 return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys)
 
