@@ -89,8 +89,8 @@ def main(config="../config.yaml", namespace=""):
     with torch.no_grad():
         pytorch_model.linear.weight.copy_(coef)
         pytorch_model.linear.bias.copy_(intercept)
-        predictions = pytorch_model(input_data)
-    print(f"predictions shape: {predictions.shape}")
+        predict_result = pytorch_model(input_data)
+    print(f"predictions shape: {predict_result.shape}")
 
 
 if __name__ == "__main__":
