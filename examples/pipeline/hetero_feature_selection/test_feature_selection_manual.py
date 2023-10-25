@@ -27,23 +27,23 @@ def main(config=".../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"experiment{namespace}"))
 
     selection_0 = HeteroFeatureSelection("selection_0",
                                          method=["manual"],
                                          train_data=psi_0.outputs["output_data"])
-    selection_0.guest.component_setting(manual_param={"keep_col": ["x0", "x1"]})
-    selection_0.hosts[0].component_setting(manual_param={"filter_out_col": ["x0", "x1"]})
+    selection_0.guest.task_setting(manual_param={"keep_col": ["x0", "x1"]})
+    selection_0.hosts[0].task_setting(manual_param={"filter_out_col": ["x0", "x1"]})
 
     pipeline.add_task(psi_0)
     pipeline.add_task(selection_0)
@@ -60,9 +60,9 @@ def main(config=".../config.yaml", namespace=""):
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    deployed_pipeline.psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                                     namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    deployed_pipeline.psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                                        namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)

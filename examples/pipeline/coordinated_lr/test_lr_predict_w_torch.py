@@ -15,11 +15,22 @@
 
 import argparse
 
+import torch
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
+
+
+class LogisticRegression(torch.nn.Module):
+    def __init__(self, coefficients):
+        super(LogisticRegression, self).__init__()
+        self.linear = torch.nn.Linear(coefficients.shape[1], 1)
+
+    def forward(self, x):
+        y_pred = torch.sigmoid(self.linear(x))
+        return y_pred
 
 
 def main(config="../config.yaml", namespace=""):
@@ -37,24 +48,22 @@ def main(config="../config.yaml", namespace=""):
         pipeline.conf.set("timeout", config.timeout)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="vehicle_scale_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                             namespace=f"experiment{namespace}"))
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                namespace=f"experiment{namespace}"))
     lr_0 = CoordinatedLR("lr_0",
                          epochs=10,
-                         batch_size=None,
-                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.21}, "penalty": "L1",
-                                    "alpha": 0.001},
-                         init_param={"fit_intercept": True, "method": "random_uniform"},
+                         batch_size=300,
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}, "penalty": "l2", "alpha": 0.001},
+                         init_param={"fit_intercept": True, "method": "zeros"},
                          train_data=psi_0.outputs["output_data"],
                          learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
                                                                                            "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_roles=["guest"],
-                              default_eval_setting="multi",
-                              predict_column_name='predict_result',
+                              default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
@@ -62,27 +71,26 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(evaluation_0)
 
     pipeline.compile()
-    # print(pipeline.get_dag())
     pipeline.fit()
 
-    pipeline.deploy([psi_0, lr_0])
+    lr_model = pipeline.get_task_info('lr_0').get_output_model()
+    param = lr_model['output_model']['data']['estimator']['param']
+    dtype = getattr(torch, param['dtype'])
+    coef = torch.transpose(torch.tensor(param['coef_'], dtype=dtype), 0, 1)
+    intercept = torch.tensor(param["intercept_"], dtype=dtype)
 
-    predict_pipeline = FateFlowPipeline()
+    import pandas as pd
 
-    deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.task_setting(
-        input_data=DataWarehouseChannel(name="vehicle_scale_hetero_guest",
-                                        namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].task_setting(
-        input_data=DataWarehouseChannel(name="vehicle_scale_hetero_host",
-                                        namespace=f"experiment{namespace}"))
+    input_data = pd.read_csv("../../data/breast_hetero_guest.csv", index_col="id")
+    input_data.drop(['y'], axis=1, inplace=True)
+    input_data = torch.tensor(input_data.values, dtype=dtype)
 
-    predict_pipeline.add_task(deployed_pipeline)
-    predict_pipeline.compile()
-    # print("\n\n\n")
-    # print(predict_pipeline.compile().get_dag())
-    predict_pipeline.predict()
-    # print(f"predict lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")
+    pytorch_model = LogisticRegression(coef)
+    with torch.no_grad():
+        pytorch_model.linear.weight.copy_(coef)
+        pytorch_model.linear.bias.copy_(intercept)
+        predictions = pytorch_model(input_data)
+    print(f"predictions shape: {predictions.shape}")
 
 
 if __name__ == "__main__":

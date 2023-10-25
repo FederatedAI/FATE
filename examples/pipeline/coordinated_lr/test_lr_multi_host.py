@@ -30,14 +30,14 @@ def main(config="../config.yaml", namespace=""):
     host = parties.host
     arbiter = parties.arbiter[0]
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                   namespace=f"{namespace}experiment"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"{namespace}experiment"))
-    psi_0.hosts[1].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.hosts[1].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                      namespace=f"{namespace}experiment"))
     lr_0 = CoordinatedLR("lr_0",
                          epochs=5,
@@ -68,10 +68,10 @@ def main(config="../config.yaml", namespace=""):
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(
+    deployed_pipeline.psi_0.guest.task_setting(
         input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                         namespace=f"{namespace}experiment"))
-    deployed_pipeline.psi_0.hosts[[0, 1]].component_setting(
+    deployed_pipeline.psi_0.hosts[[0, 1]].task_setting(
         input_data=DataWarehouseChannel(name="breast_hetero_host",
                                         namespace=f"{namespace}experiment"))
 

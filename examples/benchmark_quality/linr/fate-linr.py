@@ -41,12 +41,12 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "motor_hetero_host", "namespace": f"experiment{namespace}"}
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
                                                                   namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
                                                                      namespace=host_train_data["namespace"]))
 
     linr_param = {

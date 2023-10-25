@@ -28,7 +28,7 @@ def union(
     data_list = []
     data_len_dict = {}
     for data in input_data_list:
-        data_name = f"{data.artifact.metadata.source.task_name}_{data.artifact.metadata.source.output_artifact_key}"
+        data_name = f"{data.artifact.metadata.source.task_name}.{data.artifact.metadata.source.output_artifact_key}"
         data = data.read()
         data_list.append(data)
         data_len_dict[data_name] = data.shape[0]

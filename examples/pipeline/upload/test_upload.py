@@ -14,7 +14,7 @@
 #  limitations under the License.
 from fate_client.pipeline import FateFlowPipeline
 
-pipeline = FateFlowPipeline().set_roles(
+pipeline = FateFlowPipeline().set_parties(
     local="0")
 pipeline.set_site_role("local")
 pipeline.set_site_party_id("0")
@@ -44,7 +44,7 @@ meta = {'delimiter': ',',
         'tag_with_value': False,
         'weight_type': 'float32'}
 
-pipeline = FateFlowPipeline().set_roles(
+pipeline = FateFlowPipeline().set_parties(
     local="0")
 pipeline.set_site_role("local")
 pipeline.set_site_party_id("0")
