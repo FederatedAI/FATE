@@ -40,6 +40,7 @@ from transformers.trainer_callback import PrinterCallback
 from fate.ml.aggregator import AggregatorType
 from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from transformers.trainer import logger as logger_
+from fate.ml.evaluation.metric_base import MetricEnsemble
 
 
 # Reset the logger to redirect logs output
@@ -714,6 +715,20 @@ class WrappedShortcutCallback(CallbackWrapper):
 Mixin Class For Federation Trainer
 """
 
+def _parse_metrics_ensemble_result(metrics_ensemble_result):
+
+    rs_dict ={}
+    for i in metrics_ensemble_result:
+        if isinstance(i, dict):
+            rs_dict[i['metric']] = i['val']
+        elif isinstance(i, list):
+            for k in i:
+                if isinstance(k, dict):
+                    rs_dict[k['metric']] = k['val']
+
+    return rs_dict
+
+
 class HeteroTrainerMixin(ShortcutCallBackInterFace):
 
     def __init__(self,
@@ -744,6 +759,8 @@ class HeteroTrainerMixin(ShortcutCallBackInterFace):
             return {}
         else:
             eval_result = self._user_compute_metric_func(*args, **kwargs)
+            if isinstance(self._user_compute_metric_func, MetricEnsemble):
+                return _parse_metrics_ensemble_result(eval_result)
             return eval_result
 
     def _set_ctx_to_model(self, model: Union[HeteroNNModelGuest, HeteroNNModelHost]):
@@ -795,6 +812,8 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
             return {}
         else:
             eval_result = self._user_compute_metric_func(*args, **kwargs)
+            if isinstance(self._user_compute_metric_func, MetricEnsemble):
+                return _parse_metrics_ensemble_result(eval_result)
             return eval_result
 
     def _handle_callback(self, callback_handler, new_callbacks):

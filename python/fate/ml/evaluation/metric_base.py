@@ -37,7 +37,9 @@ class EvalResult(object):
 
     def to_dict(self):
         return {
-            self.metric_name: self.result.to_dict(orient='list') if self.result_type == TABLE_VALUE else self.result
+            "metric": self.metric_name,
+            # "result_type": self.result_type,
+            "val": self.result.to_dict(orient='list') if self.result_type == TABLE_VALUE else self.result
         }
 
     def to_json(self):
@@ -45,7 +47,7 @@ class EvalResult(object):
             return self.result.to_json(orient='split')
         else:
             return json.dumps(self.to_dict())
-        
+
     def get_raw_data(self):
         return self.result
 
@@ -113,26 +115,26 @@ class MetricEnsemble(object):
 
         return predict, label, input_
 
-    def __call__(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
+    def __call__(self, eval_rs=None, predict=None, label=None, **kwargs):
 
-        metric_result = {}
-        
+        metric_result = []
+
         if eval_rs is not None:
             predict, label, input_ = self._parse_input(eval_rs)
 
         for metric in self._metrics:
             rs = metric(predict, label)
             if isinstance(rs, tuple):
-                for r in rs:
-                    metric_result.update(r.to_dict())
+                new_rs = [r.to_dict() for r in rs]
+                rs = new_rs
             elif isinstance(rs, EvalResult):
-                metric_result.update(rs.to_dict())
+                rs = rs.to_dict()
             else:
                 raise ValueError('cannot parse metric result: {}'.format(rs))
-
+            metric_result.append(rs)
         return metric_result
 
-    def fit(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
+    def fit(self, eval_rs=None, predict=None, label=None, **kwargs):
         return self.__call__(eval_rs, predict, label, **kwargs)
 
 
