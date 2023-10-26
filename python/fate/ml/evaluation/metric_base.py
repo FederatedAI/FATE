@@ -1,5 +1,6 @@
 from typing import Dict
 from transformers import EvalPrediction
+from transformers.trainer_utils import PredictionOutput
 import pandas as pd
 import torch
 import numpy as np
@@ -36,9 +37,7 @@ class EvalResult(object):
 
     def to_dict(self):
         return {
-            "metric": self.metric_name,
-            # "result_type": self.result_type,
-            "val": self.result.to_dict(orient='list') if self.result_type == TABLE_VALUE else self.result
+            self.metric_name: self.result.to_dict(orient='list') if self.result_type == TABLE_VALUE else self.result
         }
 
     def to_json(self):
@@ -99,6 +98,11 @@ class MetricEnsemble(object):
             label = eval_rs.label_ids
             input_ = eval_rs.inputs
 
+        elif isinstance(eval_rs, PredictionOutput):
+            predict = eval_rs.predictions
+            label = eval_rs.label_ids
+            input_ = None
+
         elif isinstance(eval_rs, tuple) and len(eval_rs) == 2:
             # conventional format
             predict, label = eval_rs
@@ -111,7 +115,7 @@ class MetricEnsemble(object):
 
     def __call__(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
 
-        metric_result = []
+        metric_result = {}
         
         if eval_rs is not None:
             predict, label, input_ = self._parse_input(eval_rs)
@@ -119,13 +123,13 @@ class MetricEnsemble(object):
         for metric in self._metrics:
             rs = metric(predict, label)
             if isinstance(rs, tuple):
-                new_rs = [r.to_dict() for r in rs]
-                rs = new_rs
+                for r in rs:
+                    metric_result.update(r.to_dict())
             elif isinstance(rs, EvalResult):
-                rs = rs.to_dict()
+                metric_result.update(rs.to_dict())
             else:
                 raise ValueError('cannot parse metric result: {}'.format(rs))
-            metric_result.append(rs)
+
         return metric_result
 
     def fit(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:

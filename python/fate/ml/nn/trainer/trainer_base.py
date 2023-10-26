@@ -738,14 +738,12 @@ class HeteroTrainerMixin(ShortcutCallBackInterFace):
         self.train_dataset = train_set
         self.eval_dataset = val_set
         self.loss_func = loss_fn
-        self._user_compute_metric_func = compute_metrics
 
     def _compute_metrics_warp_func(self, *args, **kwargs):
         if self._user_compute_metric_func is None:
             return {}
         else:
             eval_result = self._user_compute_metric_func(*args, **kwargs)
-            # Do some FATEBoard Callback here
             return eval_result
 
     def _set_ctx_to_model(self, model: Union[HeteroNNModelGuest, HeteroNNModelHost]):
@@ -797,7 +795,6 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
             return {}
         else:
             eval_result = self._user_compute_metric_func(*args, **kwargs)
-            # Do some FATEBoard Callback here
             return eval_result
 
     def _handle_callback(self, callback_handler, new_callbacks):
