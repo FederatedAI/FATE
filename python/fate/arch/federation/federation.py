@@ -14,12 +14,12 @@
 #  limitations under the License.
 
 import logging
+import traceback
 import typing
 from typing import List
 
 from fate.arch.abc import PartyMeta
 from ._gc import GarbageCollector
-import traceback
 
 if typing.TYPE_CHECKING:
     from fate.arch.computing.table import KVTable
@@ -29,24 +29,45 @@ logger = logging.getLogger(__name__)
 
 def _federation_info(func):
     def wrapper(*args, **kwargs):
-        logger.debug(f"federation enter {func.__name__}")
+        name = kwargs.get("name")
+        tag = kwargs.get("tag")
+        logger.debug(f"federation enter {func.__name__}: name={name}, tag={tag}")
         try:
             stacks = "".join(traceback.format_stack(limit=7)[:-1])
             logger.debug(f"stack:\n{stacks}")
             return func(*args, **kwargs)
         finally:
-            logger.debug(f"federation exit {func.__name__}")
+            logger.debug(f"federation exit {func.__name__}: name={name}, tag={tag}")
 
     return wrapper
 
 
 class Federation:
-    def __init__(self):
+    def __init__(self, session_id: str, party: PartyMeta, parties: List[PartyMeta]):
+        logger.debug(f"[federation]initializing({self.__class__.__name__}): {session_id=}, {party=}, {parties=}")
+        self._session_id = session_id
+        self._local_party = party
+        self._parties = parties
         self._push_history = set()
         self._pull_history = set()
+        self._get_gc: GarbageCollector = GarbageCollector()
+        self._remote_gc: GarbageCollector = GarbageCollector()
 
-        self.get_gc: GarbageCollector = GarbageCollector()
-        self.remote_gc: GarbageCollector = GarbageCollector()
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
+    @property
+    def local_party(self) -> PartyMeta:
+        return self._local_party
+
+    @property
+    def parties(self) -> List[PartyMeta]:
+        return self._parties
+
+    @property
+    def world_size(self) -> int:
+        return len(self._parties)
 
     def _pull_table(
         self,
@@ -95,7 +116,7 @@ class Federation:
                 raise ValueError(f"push table to {parties} with duplicate name and tag: name={name}, tag={tag}")
             self._push_history.add((name, tag, party))
 
-        self.remote_gc.register_clean_action(name, tag, table, "destroy", {})
+        self._remote_gc.register_clean_action(name, tag, table, "destroy", {})
         self._push_table(
             table=table,
             name=name,
@@ -141,7 +162,7 @@ class Federation:
             parties=parties,
         )
         for table in tables:
-            self.get_gc.register_clean_action(name, tag, table, "destroy", {})
+            self._get_gc.register_clean_action(name, tag, table, "destroy", {})
         return tables
 
     @_federation_info

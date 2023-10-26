@@ -18,12 +18,11 @@ import logging
 import typing
 from collections import deque
 
-from fate.arch.abc import GarbageCollector as GarbageCollectorInterface
 
 LOGGER = logging.getLogger(__name__)
 
 
-class GarbageCollector(GarbageCollectorInterface):
+class GarbageCollector:
     def __init__(self) -> None:
         self._register = {}
 

@@ -17,8 +17,7 @@ from typing import List
 
 from fate.arch.abc import PartyMeta
 
-from ..._standalone import Federation as RawFederation
-from ..._standalone import Table as RawTable
+from ... import _standalone as standalone
 from ...computing.standalone import Table, CSession
 from ..federation import Federation
 
@@ -33,25 +32,10 @@ class StandaloneFederation(Federation):
         party: PartyMeta,
         parties: List[PartyMeta],
     ):
-        super().__init__()
-        LOGGER.debug(
-            f"[federation.standalone]init federation: "
-            f"standalone_session={standalone_session}, "
-            f"federation_session_id={federation_session_id}, "
-            f"party={party}"
-        )
-        self._session_id = federation_session_id
-        self._federation = RawFederation.create(
+        super().__init__(federation_session_id, party, parties)
+        self._federation = standalone.Federation.create(
             standalone_session.get_standalone_session(), session_id=federation_session_id, party=party
         )
-        LOGGER.debug("[federation.standalone]init federation context done")
-
-        self.local_party = party
-        self.parties = parties
-
-    @property
-    def session_id(self) -> str:
-        return self._session_id
 
     def _push_table(
         self,
@@ -79,7 +63,7 @@ class StandaloneFederation(Federation):
     ) -> List[Table]:
         rtn = self._federation.pull_table(name=name, tag=tag, parties=parties)
 
-        return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
+        return [Table(r) if isinstance(r, standalone.Table) else r for r in rtn]
 
     def _pull_bytes(
         self,
@@ -89,7 +73,7 @@ class StandaloneFederation(Federation):
     ) -> List[bytes]:
         rtn = self._federation.pull_bytes(name=name, tag=tag, parties=parties)
 
-        return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
+        return [Table(r) if isinstance(r, standalone.Table) else r for r in rtn]
 
     def destroy(self):
         self._federation.destroy()

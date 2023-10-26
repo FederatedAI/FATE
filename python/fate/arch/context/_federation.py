@@ -18,11 +18,10 @@ import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
 
-from fate.arch.abc import FederationEngine, PartyMeta
-
+from fate.arch.abc import PartyMeta
+from ._namespace import NS
 from ..computing import is_table
 from ..federation._gc import IterationGC
-from ._namespace import NS
 
 T = TypeVar("T")
 
@@ -70,6 +69,9 @@ class Party:
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(party={self.party}, rank={self.rank}, namespace={self.namespace})"
+
     @property
     def party(self) -> PartyMeta:
         return self._party
@@ -116,6 +118,9 @@ class Parties:
         self.federation = federation
         self.parties = parties
         self.namespace = namespace
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(parties={self.parties}, namespace={self.namespace})"
 
     @property
     def ranks(self):
@@ -196,7 +201,7 @@ class Serde:
         return struct.unpack("!d", value)[0]
 
 
-def _push_int(federation: FederationEngine, name: str, namespace: NS, parties: List[PartyMeta], value: int):
+def _push_int(federation: "Federation", name: str, namespace: NS, parties: List[PartyMeta], value: int):
     tag = namespace.federation_tag
     federation.push(v=Serde.encode_int(value), name=name, tag=tag, parties=parties)
 

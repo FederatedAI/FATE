@@ -27,7 +27,7 @@ from fate.arch.federation.federation import Federation, PartyMeta
 
 from ...computing.eggroll import Table
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class EggrollFederation(Federation):
@@ -39,29 +39,17 @@ class EggrollFederation(Federation):
         parties: List[PartyMeta],
         proxy_endpoint,
     ):
-        super().__init__()
-        LOGGER.debug(
-            f"[federation.eggroll]init federation: "
-            f"rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id}, "
-            f"party={party}, proxy_endpoint={proxy_endpoint}"
-        )
-
-        options = {
-            "self_role": party[0],
-            "self_party_id": party[1],
-            "proxy_endpoint": proxy_endpoint,
-        }
-        self._session_id = rs_session_id
+        super().__init__(rs_session_id, party, parties)
         self._rp_ctx = rp_ctx
-
-        self.local_party = party
-        self.parties = parties
-        self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
-        LOGGER.debug(f"[federation.eggroll]init federation context done")
-
-    @property
-    def session_id(self) -> str:
-        return self._session_id
+        self._rsc = RollSiteContext(
+            rs_session_id,
+            rp_ctx=rp_ctx,
+            options={
+                "self_role": party[0],
+                "self_party_id": party[1],
+                "proxy_endpoint": proxy_endpoint,
+            },
+        )
 
     def _pull_table(
         self,
@@ -118,10 +106,10 @@ def _push_with_exception_handle(rsc, v, name: str, tag: str, parties: List[Party
     def _remote_exception_re_raise(f, p: PartyMeta):
         try:
             f.result()
-            LOGGER.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
+            logger.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
         except Exception as e:
             pid = os.getpid()
-            LOGGER.exception(
+            logger.exception(
                 f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} fail,"
                 f" terminating process(pid={pid})"
             )
@@ -153,7 +141,7 @@ _remote_futures = set()
 
 
 def _clear_callback(future):
-    LOGGER.debug("future `{future}` done, remove")
+    logger.debug("future `{future}` done, remove")
     _remote_futures.remove(future)
 
 
