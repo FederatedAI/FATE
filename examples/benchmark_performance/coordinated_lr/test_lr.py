@@ -50,9 +50,9 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                                  namespace=guest_train_data["namespace"]))
+                                                             namespace=guest_train_data["namespace"]))
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                     namespace=host_train_data["namespace"]))
+                                                                namespace=host_train_data["namespace"]))
 
     lr_param = {
     }

@@ -34,11 +34,11 @@ def main(config="../config.yaml", namespace=""):
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="motor_hetero_guest",
-                                                                  namespace=f"{namespace}experiment"))
+                                                             namespace=f"{namespace}experiment"))
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="motor_hetero_host",
-                                                                     namespace=f"{namespace}experiment"))
+                                                                namespace=f"{namespace}experiment"))
     psi_0.hosts[1].task_setting(input_data=DataWarehouseChannel(name="motor_hetero_host",
-                                                                     namespace=f"{namespace}experiment"))
+                                                                namespace=f"{namespace}experiment"))
     linr_0 = CoordinatedLinR("linr_0",
                              epochs=5,
                              batch_size=None,

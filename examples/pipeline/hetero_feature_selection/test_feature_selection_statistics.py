@@ -35,9 +35,9 @@ def main(config=".../config.yaml", namespace=""):
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
+                                                             namespace=f"experiment{namespace}"))
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+                                                                namespace=f"experiment{namespace}"))
 
     statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"],
                               metrics=["min", "max", "25%", "mean", "median"])
@@ -65,9 +65,9 @@ def main(config=".../config.yaml", namespace=""):
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
     deployed_pipeline.psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                    namespace=f"experiment{namespace}"))
+                                                                               namespace=f"experiment{namespace}"))
     deployed_pipeline.psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                                       namespace=f"experiment{namespace}"))
+                                                                                  namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
     predict_pipeline.compile()

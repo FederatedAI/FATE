@@ -35,15 +35,15 @@ def main(config="../config.yaml", namespace=""):
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
+                                                             namespace=f"experiment{namespace}"))
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+                                                                namespace=f"experiment{namespace}"))
 
     psi_1 = PSI("psi_1")
     psi_1.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
+                                                             namespace=f"experiment{namespace}"))
     psi_1.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+                                                                namespace=f"experiment{namespace}"))
 
     feature_scale_0 = FeatureScale("feature_scale_0",
                                    method="min_max",
@@ -78,9 +78,9 @@ def main(config="../config.yaml", namespace=""):
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
     deployed_pipeline.psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                    namespace=f"experiment{namespace}"))
+                                                                               namespace=f"experiment{namespace}"))
     deployed_pipeline.psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                                       namespace=f"experiment{namespace}"))
+                                                                                  namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
     predict_pipeline.compile()

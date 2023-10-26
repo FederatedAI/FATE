@@ -35,9 +35,9 @@ def main(config=".../config.yaml", namespace=""):
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
+                                                             namespace=f"experiment{namespace}"))
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+                                                                namespace=f"experiment{namespace}"))
 
     statistics_0 = Statistics("statistics_0", input_data=psi_0.outputs["output_data"],
                               metrics=["mean", "std", "0%", "25%", "median", "75%", "100%",
