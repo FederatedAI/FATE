@@ -101,7 +101,7 @@ def get_model_output_conf(runner_module,
     }
 
 
-def train_guest_and_host(
+def train_procedure(
         ctx: Context,
         role: Role,
         train_data: DataframeReader,
@@ -112,7 +112,8 @@ def train_guest_and_host(
         source: str,
         train_data_output: DataframeWriter,
         train_model_output: ModelDirectoryWriter,
-        train_model_input: ModelDirectoryReader
+        train_model_input: ModelDirectoryReader,
+        is_hetero=False
 ):
 
     if train_model_input is not None:
@@ -151,8 +152,11 @@ def train_guest_and_host(
         logger.info('write result dataframe')
         train_data_output.write(output_df)
     else:
-        logger.warning(
-            "train_pred is None, It seems that the runner is not able to predict. Failed to output data")
+        if is_hetero and role.is_host:
+            pass
+        else:
+            logger.warning(
+                "train_pred is None, It seems that the runner is not able to predict. Failed to output data")
 
     output_conf = get_model_output_conf(runner_module,
                                         runner_class,
@@ -160,3 +164,37 @@ def train_guest_and_host(
                                         source
                                         )
     train_model_output.write_metadata(output_conf)
+
+
+def predict_procedure(
+    ctx: Context,
+    role: Role,
+    test_data: DataframeReader,
+    predict_model_input: ModelDirectoryReader,
+    predict_data_output: DataframeWriter,
+    is_hetero=False
+):
+
+    model_conf = predict_model_input.get_metadata()
+    runner_module = model_conf['runner_module']
+    runner_class = model_conf['runner_class']
+    runner_conf = model_conf['runner_conf']
+    source = model_conf['source']
+    saved_model_path = str(predict_model_input.get_directory())
+    test_data_ = get_input_data(consts.PREDICT, test_data)
+    runner: NNRunner = prepare_runner_class(
+        runner_module, runner_class, runner_conf, source)
+    prepare_context_and_role(runner, ctx, role, consts.PREDICT)
+    test_pred = runner.predict(
+        test_data_, saved_model_path=saved_model_path)
+    if test_pred is not None:
+        assert isinstance(
+            test_pred, DataFrame), "test predict result should be a DataFrame"
+        add_dataset_type(test_pred, consts.TEST_SET)
+        predict_data_output.write(test_pred)
+    else:
+        if is_hetero and role.is_host:
+            pass
+        else:
+            logger.warning(
+                "test_pred is None, It seems that the runner is not able to predict. Failed to output data")

@@ -16,16 +16,16 @@
 
 import argparse
 from fate_test.utils import parse_summary_result
-from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
-from fate_client.pipeline.components.fate.evaluation import Evaluation
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.hetero_nn import HeteroNN, get_config_of_default_runner
+from fate_client.pipeline.components.fate.psi import PSI
 from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments
+from fate_client.pipeline.components.fate.nn.loader import ModelLoader
+from fate_client.pipeline.components.fate import Evaluation
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -37,40 +37,68 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    epochs = 10
-    batch_size = 64
-    in_feat = 30
-    out_feat = 16
-    lr = 0.01
-
-    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
 
-    conf = get_config_of_default_runner(
-        model=Sequential(
-            nn.Linear(in_feat, out_feat),
-            nn.ReLU(),
-            nn.Linear(out_feat ,1),
-            nn.Sigmoid()
-        ), 
-        loss=nn.BCELoss(),
-        optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514, logging_strategy='steps'),
-        task_type='binary'
+    psi_0 = PSI("psi_0")
+    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                    namespace="experiment"))
+    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                        namespace="experiment"))
+
+    training_args = TrainingArguments(
+            num_train_epochs=20,
+            per_device_train_batch_size=16,
+            logging_strategy='steps',
+            logging_steps=10,
+            no_cuda=True,
+            log_level='debug',
+            disable_tqdm=False
         )
 
-
-    hetero_nn_0 = HeteroNN(
-        'hetero_nn_0'
+    guest_conf = get_config_of_default_runner(
+        bottom_model=nn.Linear(10, 10),
+        agg_layer=ModelLoader('hetero_nn.agg_layer.plaintext_agg_layer', 'AggLayerGuest',
+                               out_features=10, host_in_features=10, guest_in_features=10
+                               ),
+        top_model=Sequential(
+            nn.Linear(10, 1),
+            nn.Sigmoid()
+        ),
+        training_args=training_args,
+        optimizer=optim.Adam(lr=0.01),
+        loss=nn.BCELoss()
     )
 
-    hetero_nn_0.guest.component_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    hetero_nn_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
+    host_conf = get_config_of_default_runner(
+        agg_layer=ModelLoader('hetero_nn.agg_layer.plaintext_agg_layer', 'AggLayerHost'),
+        bottom_model=nn.Linear(20, 10),
+        optimizer=optim.Adam(lr=0.01),
+        training_args=training_args
+    )
 
+    hetero_nn_0 = HeteroNN(
+        'hetero_nn_0',
+        train_data=psi_0.outputs['output_data']
+    )
+
+    hetero_nn_0.guest.component_setting(runner_conf=guest_conf)
+    hetero_nn_0.hosts[0].component_setting(runner_conf=host_conf)
+
+    evaluation_0 = Evaluation(
+        'eval_0',
+        runtime_roles=['guest'],
+        metrics=['auc'],
+        input_data=[hetero_nn_0.outputs['train_data_output']]
+    )
+
+    pipeline.add_task(psi_0)
     pipeline.add_task(hetero_nn_0)
+    pipeline.add_task(evaluation_0)
     pipeline.compile()
     pipeline.fit()
+
+    result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
+    print(f"result_summary: {result_summary}")
 
 
 if __name__ == "__main__":

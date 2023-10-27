@@ -89,6 +89,7 @@ class DefaultRunner(NNRunner):
                saved_model=None):
 
         output_dir = './' if output_dir is None else output_dir
+        logger.info('output dir is {}'.format(output_dir))
         resume_path = None
         if saved_model is not None:
             model_dict = load_model_dict_from_path(saved_model)

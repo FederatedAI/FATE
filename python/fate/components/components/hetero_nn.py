@@ -13,14 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-import os
 from fate.arch import Context
-from fate.components.components.nn.nn_runner import NNRunner
-from fate.components.components.utils import consts
 from fate.components.core import GUEST, HOST, Role, cpn
-from fate.arch.dataframe import DataFrame
-from fate.components.components.utils.tools import add_dataset_type
-from fate.components.components.nn.component_utils import train_guest_and_host
+from fate.components.components.nn.component_utils import train_procedure, predict_procedure
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +41,7 @@ def train(
     train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True)
 ):
 
-    train_guest_and_host(
+    train_procedure(
         ctx,
         role,
         train_data,
@@ -64,9 +59,11 @@ def train(
 @hetero_nn.predict()
 def predict(
         ctx: Context,
-        role: Role, test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+        role: Role,
+        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
         predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
         predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True)
 ):
-    pass
+
+    predict_procedure(ctx, role, test_data, predict_model_input, predict_data_output)
 
