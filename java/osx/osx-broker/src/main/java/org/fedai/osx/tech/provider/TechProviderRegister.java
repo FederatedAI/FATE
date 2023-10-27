@@ -46,10 +46,14 @@ public class TechProviderRegister implements Lifecycle {
         return this.registerMap.get(techProviderCode);
     }
     public void init() {
-        Properties properties = PropertiesUtil.getProperties(MetaInfo.PROPERTY_CONFIG_DIR+Dict.SLASH+Dict.SLASH+configFileName);
+        String path = MetaInfo.PROPERTY_CONFIG_DIR+Dict.SLASH+configFileName;
+        logger.info("init path" + path);
+        Properties properties = PropertiesUtil.getProperties(path);
         properties.forEach((k,v)->{
             try {
+                logger.info("key = {} , value  = {}",k.toString(),v.toString());
                 this.registerMap.put(k.toString(), (TechProvider) ClassUtils.newInstance(v.toString()));
+                logger.info("mapsize = {},",this.registerMap.size());
             }catch(Exception e){
                 logger.error("provider {} class {} init error",k,v);
             }
