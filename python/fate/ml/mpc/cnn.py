@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import os.path
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
@@ -22,6 +22,7 @@ class MPCCNN(MPCModule):
     def __init__(
         self,
         context_manager=None,
+        data_dir: str = "/tmp/mnist",
         num_epochs=3,
         learning_rate=0.001,
         batch_size=5,
@@ -34,6 +35,7 @@ class MPCCNN(MPCModule):
         self.batch_size = batch_size
         self.print_freq = print_freq
         self.num_samples = num_samples
+        self.data_dir = data_dir
 
     def fit(
         self,
@@ -43,8 +45,7 @@ class MPCCNN(MPCModule):
         Args:
             context_manager: used for setting proxy settings during download.
         """
-
-        data_alice, data_bob, train_labels = preprocess_mnist(self.context_manager)
+        data_alice, data_bob, train_labels = preprocess_mnist(ctx, self.context_manager, data_dir=self.data_dir)
         rank = ctx.local.rank
 
         # assumes at least two parties exist
@@ -140,15 +141,14 @@ def train_encrypted(
         print(f"Epoch {epoch} completed: " f"Loss {loss_plaintext:.4f} Accuracy {accuracy.item():.2f}")
 
 
-def preprocess_mnist(context_manager):
+def preprocess_mnist(ctx: Context, context_manager, data_dir):
     if context_manager is None:
         context_manager = NoopContextManager()
 
     with context_manager:
         # each party gets a unique temp directory
-        with tempfile.TemporaryDirectory() as data_dir:
-            mnist_train = datasets.MNIST(data_dir, download=True, train=True)
-            mnist_test = datasets.MNIST(data_dir, download=True, train=False)
+        mnist_train = datasets.MNIST(os.path.join(data_dir, str(ctx.rank)), download=True, train=True)
+        mnist_test = datasets.MNIST(os.path.join(data_dir, str(ctx.rank)), download=True, train=False)
 
     # modify labels so all non-zero digits have class label 1
     mnist_train.targets[mnist_train.targets != 0] = 1

@@ -13,6 +13,7 @@ import torch
 from .common.tensor_types import is_float_tensor, is_int_tensor
 from .config import cfg
 from .cryptensor import CrypTensor
+from fate.arch.tensor import DTensor
 
 
 def nearest_integer_division(tensor, integer):
@@ -60,6 +61,8 @@ class FixedPointEncoder:
             return self._scale * x.long()
         elif isinstance(x, np.ndarray):
             return self._scale * torch.from_numpy(x).long().to(device)
+        elif isinstance(x, DTensor):
+            raise ValueError("Cannot encode DTensor")
         elif torch.is_tensor(x):
             raise TypeError("Cannot encode input with dtype %s" % x.dtype)
         else:

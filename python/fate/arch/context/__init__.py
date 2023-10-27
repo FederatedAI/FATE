@@ -14,5 +14,7 @@
 #  limitations under the License.
 from ._cipher import CipherKit
 from ._context import Context
+from ._namespace import NS
+from ._federation import Parties
 
-__all__ = ["Context", "CipherKit"]
+__all__ = ["Context", "CipherKit", "NS", "Parties"]

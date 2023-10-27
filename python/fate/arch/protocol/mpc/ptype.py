@@ -22,4 +22,4 @@ class ptype(Enum):
         elif self.value == 1:
             return BinarySharedTensor
         else:
-            raise ValueError("Cannot convert %s to encrypted tensor" % (self.name))
+            raise ValueError("Cannot convert %s to encrypted tensor" % self.name)
