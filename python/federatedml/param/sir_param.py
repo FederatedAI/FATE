@@ -20,6 +20,7 @@
 from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.base_param import BaseParam
 from federatedml.param.intersect_param import DHParam
+from federatedml.secureprotol.conf import DH_KEY_BIT_LENGTH
 from federatedml.util import consts, LOGGER
 
 
@@ -56,7 +57,7 @@ class SecureInformationRetrievalParam(BaseParam):
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
                  non_committing_encryption=consts.AES,
-                 key_size=consts.DEFAULT_KEY_LENGTH,
+                 key_size=DH_KEY_BIT_LENGTH,
                  dh_params=DHParam(),
                  raw_retrieval=False,
                  target_cols=None):

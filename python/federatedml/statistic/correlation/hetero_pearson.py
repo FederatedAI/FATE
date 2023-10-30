@@ -122,6 +122,7 @@ class HeteroPearson(ModelBase):
                 local_party=local_party,
                 all_parties=parties,
                 use_mix_rand=self.model_param.use_mix_rand,
+                n_length=self.model_param.fixpoint_bit_length
             ) as spdz:
                 LOGGER.info("secret share: prepare data")
                 if self.is_guest:

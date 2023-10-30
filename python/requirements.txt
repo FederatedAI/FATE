@@ -9,6 +9,7 @@ casbin==1.16.6
 casbin-sqlalchemy-adapter==0.4.2
 cloudpickle==2.1.0
 cos-python-sdk-v5==1.9.10
+Werkzeug<3.0.0
 Flask==2.0.3
 gmpy2==2.0.8
 joblib==1.2.0

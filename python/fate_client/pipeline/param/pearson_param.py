@@ -29,6 +29,7 @@ class PearsonParam(BaseParam):
         need_run=True,
         use_mix_rand=False,
         calc_local_vif=True,
+        fixpoint_bit_length=1024
     ):
         super().__init__()
         self.column_names = column_names
@@ -41,6 +42,7 @@ class PearsonParam(BaseParam):
         if column_indexes is None:
             self.column_indexes = []
         self.calc_local_vif = calc_local_vif
+        self.fixpoint_bit_length = fixpoint_bit_length
 
     def check(self):
         if not isinstance(self.use_mix_rand, bool):

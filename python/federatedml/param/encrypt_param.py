@@ -18,6 +18,7 @@
 #
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts, LOGGER
+from federatedml.secureprotol.conf import PAILLIER_KEYPAIR_N_LENGTH
 
 
 class EncryptParam(BaseParam):
@@ -30,12 +31,12 @@ class EncryptParam(BaseParam):
         If method is 'Paillier', Paillier encryption will be used for federated ml.
         To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
-    key_length : int, default: 1024
+    key_length : int, default: 2048
         Used to specify the length of key in this encryption method.
 
     """
 
-    def __init__(self, method=consts.PAILLIER, key_length=1024):
+    def __init__(self, method=consts.PAILLIER, key_length=PAILLIER_KEYPAIR_N_LENGTH):
         super(EncryptParam, self).__init__()
         self.method = method
         self.key_length = key_length
