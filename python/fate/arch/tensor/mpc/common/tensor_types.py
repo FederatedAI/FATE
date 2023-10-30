@@ -20,7 +20,9 @@ def _is_type_tensor(tensor, types):
 
 def is_tensor(tensor):
     """Checks if the input tensor is a Torch tensor or a CUDALongTensor"""
-    return torch.is_tensor(tensor) or isinstance(tensor, CUDALongTensor)
+    from fate.arch.tensor import DTensor
+
+    return torch.is_tensor(tensor) or isinstance(tensor, CUDALongTensor) or isinstance(tensor, DTensor)
 
 
 def is_float_tensor(tensor):
@@ -30,6 +32,4 @@ def is_float_tensor(tensor):
 
 def is_int_tensor(tensor):
     """Checks if the input tensor is a Torch tensor of an int type."""
-    return _is_type_tensor(
-        tensor, [torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64]
-    )
+    return _is_type_tensor(tensor, [torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64])

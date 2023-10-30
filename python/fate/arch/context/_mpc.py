@@ -54,9 +54,8 @@ class MPC:
     def communicator(self):
         return Communicator.get()
 
-    @classmethod
-    def cryptensor(cls, *args, cryptensor_type=None, **kwargs):
-        return mpc.cryptensor(*args, cryptensor_type=cryptensor_type, **kwargs)
+    def cryptensor(self, *args, cryptensor_type=None, **kwargs):
+        return mpc.cryptensor(self._ctx, *args, cryptensor_type=cryptensor_type, **kwargs)
 
     @classmethod
     def is_encrypted_tensor(cls, obj):

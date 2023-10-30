@@ -111,12 +111,20 @@ class Communicator:
             return results
         else:
             ag = self.all_gather(input)
-            if op == ReduceOp.SUM:
-                return torch.sum(torch.stack(ag), dim=0)
+            if op == torch.distributed.ReduceOp.SUM:
+                return self._sum(ag)
             elif op == torch.distributed.ReduceOp.BXOR:
                 return functools.reduce(torch.bitwise_xor, ag)
             else:
                 raise NotImplementedError(f"op {op} is not implemented")
+
+    @staticmethod
+    def _sum(tensor_list):
+        # return torch.sum(torch.stack(ag), dim=0)
+        result = tensor_list[0]
+        for t in tensor_list[1:]:
+            result += t
+        return result
 
     def gather(self, tensor, dst, async_op=False):
         raise NotImplementedError

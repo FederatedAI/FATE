@@ -17,11 +17,12 @@ from . import communicator as comm
 from .primitives.binary import BinarySharedTensor
 from .primitives.converters import convert
 from .ptype import ptype as Ptype
+from fate.arch.tensor.distributed import DTensor
 
 
 @CrypTensor.register_cryptensor("mpc")
 class MPCTensor(CrypTensor):
-    def __init__(self, tensor, ptype=Ptype.arithmetic, device=None, *args, **kwargs):
+    def __init__(self, ctx, tensor, ptype=Ptype.arithmetic, device=None, *args, **kwargs):
         """
         Creates the shared tensor from the input `tensor` provided by party `src`.
         The `ptype` defines the type of sharing used (default: arithmetic).
@@ -53,12 +54,16 @@ class MPCTensor(CrypTensor):
             device = tensor.device
 
         # create the MPCTensor:
-        tensor_type = ptype.to_tensor()
         if tensor is []:
             self._tensor = torch.tensor([], device=device)
+        elif isinstance(tensor, DTensor):
+            tensor_type = ptype.to_tensor(distributed=True)
+            self._tensor = tensor_type(ctx=ctx, tensor=tensor, device=device, *args, **kwargs)
         else:
+            tensor_type = ptype.to_tensor()
             self._tensor = tensor_type(tensor=tensor, device=device, *args, **kwargs)
         self.ptype = ptype
+        self.ctx = ctx
 
     @staticmethod
     def new(*args, **kwargs):
@@ -86,7 +91,7 @@ class MPCTensor(CrypTensor):
     def shallow_copy(self):
         """Create a shallow copy of the input tensor."""
         # TODO: Rename this to __copy__()?
-        result = MPCTensor([])
+        result = MPCTensor(self.ctx, [])
         result._tensor = self._tensor
         result.ptype = self.ptype
         return result

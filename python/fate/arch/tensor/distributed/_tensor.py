@@ -44,6 +44,15 @@ class DTensor:
             return NotImplemented
         return _HANDLED_FUNCTIONS[func](*args, **kwargs)
 
+    def to(self, device):
+        if self.shardings.device == device:
+            return self
+        else:
+            raise NotImplementedError(f"device {device} not supported")
+
+    def size(self):
+        return self.shape
+
     @property
     def T(self):
         return torch.transpose(self, 0, 1)
@@ -135,6 +144,9 @@ class DTensor:
     def __str__(self) -> str:
         return f"<DTensor(shardings={self.shardings})>"
 
+    def __repr__(self):
+        return self.__str__()
+
     @classmethod
     def from_sharding_table(
         cls,
@@ -165,6 +177,22 @@ class DTensor:
         return cls.from_sharding_table(
             ctx.computing.parallelize(data, partition=num_partitions, include_key=False), shapes, axis, dtype, device
         )
+
+    def clone(self):
+        return DTensor(self.shardings)
+
+    def add(self, other):
+        return torch.add(self, other)
+
+    def nelement(self):
+        return self.shardings.shape.numel()
+
+    def copy_(self, other):
+        self.shardings = other.shardings
+
+    def long(self):
+        shardings = self.shardings.map_shard(lambda t: t.long(), dtype=torch.long)
+        return DTensor(shardings)
 
 
 T1 = TypeVar("T1")

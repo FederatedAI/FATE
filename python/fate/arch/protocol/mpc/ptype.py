@@ -7,7 +7,7 @@
 
 from enum import Enum
 
-from .primitives import ArithmeticSharedTensor, BinarySharedTensor
+from .primitives import ArithmeticSharedTensor, BinarySharedTensor, DistributedArithmeticSharedTensor
 
 
 class ptype(Enum):
@@ -16,9 +16,12 @@ class ptype(Enum):
     arithmetic = 0
     binary = 1
 
-    def to_tensor(self):
+    def to_tensor(self, distributed=False):
         if self.value == 0:
-            return ArithmeticSharedTensor
+            if distributed:
+                return DistributedArithmeticSharedTensor
+            else:
+                return ArithmeticSharedTensor
         elif self.value == 1:
             return BinarySharedTensor
         else:

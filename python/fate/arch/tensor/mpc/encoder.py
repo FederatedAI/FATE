@@ -45,15 +45,9 @@ class FixedPointEncoder:
             return x
         elif isinstance(x, int) or isinstance(x, float):
             # Squeeze in order to get a 0-dim tensor with value `x`
-            return torch.tensor(
-                [self._scale * x], dtype=torch.long, device=device
-            ).squeeze()
+            return torch.tensor([self._scale * x], dtype=torch.long, device=device).squeeze()
         elif isinstance(x, list):
-            return (
-                torch.tensor(x, dtype=torch.float, device=device)
-                .mul_(self._scale)
-                .long()
-            )
+            return torch.tensor(x, dtype=torch.float, device=device).mul_(self._scale).long()
         elif is_float_tensor(x):
             return (self._scale * x).long()
         # For integer types cast to long prior to scaling to avoid overflow.
@@ -62,7 +56,7 @@ class FixedPointEncoder:
         elif isinstance(x, np.ndarray):
             return self._scale * torch.from_numpy(x).long().to(device)
         elif isinstance(x, DTensor):
-            raise ValueError("Cannot encode DTensor")
+            return DTensor(x.shardings.map_shard(lambda v: self.encode(v, device=device), dtype=torch.long))
         elif torch.is_tensor(x):
             raise TypeError("Cannot encode input with dtype %s" % x.dtype)
         else:
@@ -73,6 +67,8 @@ class FixedPointEncoder:
         if tensor is None:
             return None
         assert is_int_tensor(tensor), "input must be a LongTensor"
+        if isinstance(tensor, DTensor):
+            return DTensor(tensor.shardings.map_shard(lambda x: self.decode(x), dtype=torch.float))
         if self._scale > 1:
             correction = (tensor < 0).long()
             dividend = tensor.div(self._scale - correction, rounding_mode="floor")

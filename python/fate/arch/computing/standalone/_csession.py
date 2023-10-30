@@ -23,7 +23,7 @@ from ...unify import URI, generate_computing_uuid, uuid
 from ._table import Table
 import os.path
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class CSession(KVTableContext):
@@ -119,13 +119,13 @@ class CSession(KVTableContext):
 
     def destroy(self):
         try:
-            LOGGER.info(f"clean table namespace {self.session_id}")
+            logger.debug(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")
-        except Exception:
-            LOGGER.warning(f"no found table namespace {self.session_id}")
+        except:
+            logger.warning(f"no found table namespace {self.session_id}")
 
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
+            logger.warning(f"stop storage session {self.session_id} failed, try to kill", e)
             self.kill()

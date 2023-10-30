@@ -8,7 +8,6 @@
 
 import torch
 
-from fate.arch.tensor import mpc
 from . import MPCModule
 from ...arch import Context
 from ...arch.tensor import DTensor
@@ -31,7 +30,10 @@ class Toy(MPCModule):
         else:
             x_bob = DTensor.from_sharding_list(ctx, [torch.zeros(5, 11), torch.zeros(4, 11), torch.zeros(3, 11)])
 
-        x_alice_enc = mpc.cryptensor(x_alice, src=0)
-        x_bob_enc = mpc.cryptensor(x_bob, src=1)
+        x_alice_enc = ctx.mpc.cryptensor(x_alice, src=0)
+        x_bob_enc = ctx.mpc.cryptensor(x_bob, src=1)
 
-        mpc.print((x_alice_enc + x_bob_enc).get_plain_text())
+        out = x_bob_enc.add(x_alice_enc).get_plain_text()
+        print(torch.to_local_f(out))
+
+        # mpc.print((x_alice_enc + x_bob_enc).get_plain_text())

@@ -1,27 +1,53 @@
 #!/usr/bin/env python3
+import time
 
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import List
+import signal
+import rich
+import rich.console
+import rich.panel
+import rich.traceback
+import logging
 import importlib
 import datetime
 import uuid
 import multiprocessing
+from multiprocessing import Queue
 import click
+
+logger = logging.getLogger()
 
 
 class MultiProcessLauncher:
-    def __init__(self, world_size, parties, federation_session_id, proc, data_dir, log_level, parameters):
+    def __init__(
+        self,
+        console: rich.console.Console,
+        world_size,
+        parties,
+        federation_session_id,
+        proc,
+        data_dir,
+        log_level,
+        parameters,
+    ):
         multiprocessing.set_start_method("spawn")
-        self.processes = []
+        self.processes: List[multiprocessing.Process] = []
+        self.q = Queue()
+        self._console = console
+        self._exception_tb = {}
         for rank in range(world_size):
             process_name = "process " + str(rank)
+            q = self.q
+            width = console.width
             process = multiprocessing.Process(
                 target=self.__class__._run_process,
                 name=process_name,
-                args=(rank, parties, federation_session_id, proc, data_dir, log_level, parameters),
+                args=(q, width, rank, parties, federation_session_id, proc, data_dir, log_level, parameters),
             )
             self.processes.append(process)
 
@@ -40,12 +66,15 @@ class MultiProcessLauncher:
         #     self.processes.append(ttp_process)
 
     @classmethod
-    def _run_process(cls, rank, parties, federation_session_id, proc, data_dir, log_level, parameters):
+    def _run_process(
+        cls, q: Queue, width, rank, parties, federation_session_id, proc, data_dir, log_level, parameters
+    ):
         from fate.arch.utils.logger import set_up_logging
         from fate.arch.utils.context_helper import init_standalone_context
 
         # set up logging
         set_up_logging(rank, log_level)
+        logger = logging.getLogger()
 
         # init context
         parties = [tuple(p.split(":")) for p in parties]
@@ -55,32 +84,64 @@ class MultiProcessLauncher:
         csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
         ctx = init_standalone_context(csession_id, federation_session_id, party, parties, data_dir)
 
-        # init crypten
-        from fate.ml.mpc import MPCModule
+        try:
+            # init crypten
+            from fate.ml.mpc import MPCModule
 
-        ctx.mpc.init()
+            ctx.mpc.init()
 
-        # get proc cls
-        module_name, cls_name = proc.split(":")
-        module = importlib.import_module(module_name)
-        cls = getattr(module, cls_name)
-        assert issubclass(cls, MPCModule), f"{cls} is not a subclass of MPCModule"
-        parameters = cls.parse_parameters(parameters)
-        inst = cls(**parameters)
-        inst.fit(ctx)
+            # get proc cls
+            module_name, cls_name = proc.split(":")
+            module = importlib.import_module(module_name)
+            mpc_module = getattr(module, cls_name)
+            assert issubclass(mpc_module, MPCModule), f"{mpc_module} is not a subclass of MPCModule"
+            parameters = mpc_module.parse_parameters(parameters)
+            inst = mpc_module(**parameters)
+            inst.fit(ctx)
+
+        except Exception as e:
+            logger.error(f"exception in rank {rank}: {e}", stack_info=False)
+            # logger.exception(e)
+            exc_traceback = rich.traceback.Traceback.from_exception(
+                type(e), e, traceback=e.__traceback__, width=width, show_locals=True
+            )
+            q.put((rank, e, exc_traceback))
+        else:
+            q.put((rank, None, None))
+        finally:
+            try:
+                ctx.destroy()
+            except Exception:
+                pass
 
     def start(self):
         for process in self.processes:
             process.start()
 
-    def join(self):
-        for process in self.processes:
-            process.join()
-            assert process.exitcode == 0, f"{process.name} has non-zero exit code {process.exitcode}"
+    def wait(self) -> int:
+        uncompleted_ranks = set(range(len(self.processes)))
+        for i in range(len(self.processes)):
+            rank, e, exc_traceback = self.q.get()
+            uncompleted_ranks.remove(rank)
+            if e is not None:
+                self._exception_tb[rank] = exc_traceback
+                return 1
+            else:
+                logger.info(f"rank {rank} exited successfully, waiting for other ranks({uncompleted_ranks}) to exit")
+        else:
+            return 0
 
     def terminate(self):
         for process in self.processes:
-            process.terminate()
+            if process.is_alive():
+                process.terminate()
+        for process in self.processes:
+            process.join()
+        self.q.close()
+
+    def show_exceptions(self):
+        for rank, tb in self._exception_tb.items():
+            self._console.print(rich.panel.Panel(tb, title=f"rank {rank} exception", expand=False, border_style="red"))
 
 
 @click.command()
@@ -91,22 +152,41 @@ class MultiProcessLauncher:
 @click.option("--log_level", type=str, help="log level", default="INFO")
 @click.option("-p", "--parameter", multiple=True, type=str, help="parameters")
 def cli(federation_session_id, parties, data_dir, proc, log_level, parameter):
+    from fate.arch.utils.logger import set_up_logging
+
+    set_up_logging(-1, log_level)
     if not federation_session_id:
         federation_session_id = f"{datetime.datetime.now().strftime('YYMMDD-hh:mm-ss')}-{uuid.uuid1()}"
     parameters = {}
     for p in parameter:
         k, v = p.split("=")
         parameters[k] = v
-    print("========================================================")
-    print(f"federation id: {federation_session_id}")
-    print(f"parties: {parties}")
-    print(f"data dir: {data_dir}")
-    print(f"proc: {proc}")
-    print("========================================================")
-    launcher = MultiProcessLauncher(len(parties), parties, federation_session_id, proc, data_dir, log_level, parameters)
+    logger.info("========================================================")
+    logger.info(f"federation id: {federation_session_id}")
+    logger.info(f"parties: {parties}")
+    logger.info(f"data dir: {data_dir}")
+    logger.info(f"proc: {proc}")
+    logger.info("========================================================")
+    console = rich.console.Console()
+    launcher = MultiProcessLauncher(
+        console, len(parties), parties, federation_session_id, proc, data_dir, log_level, parameters
+    )
     launcher.start()
-    launcher.join()
+
+    def sigterm_handler(signum, frame):
+        launcher.terminate()
+        exit(1)
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
+    logger.info("waiting for all processes to exit")
+    exit_code = launcher.wait()
+    logger.info("all processes exited")
+    logger.info("cleaning up")
     launcher.terminate()
+    logger.info("done")
+    if exit_code != 0:
+        launcher.show_exceptions()
+    exit(exit_code)
 
 
 if __name__ == "__main__":

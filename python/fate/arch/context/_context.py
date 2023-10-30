@@ -274,6 +274,6 @@ class Context:
             try:
                 self.computing.destroy()
                 logger.debug("computing engine destroy done")
-            except:
-                logger.exception("computing engine destroy failed", stack_info=True)
+            except Exception as e:
+                logger.exception(f"computing engine destroy failed: {e}", stack_info=True)
             self._is_destroyed = True

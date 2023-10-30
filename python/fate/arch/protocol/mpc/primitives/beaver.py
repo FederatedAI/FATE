@@ -84,6 +84,7 @@ def __beaver_protocol(op, x, y, *args, **kwargs):
 
 
 def mul(x, y):
+    raise NotImplementedError("mul not implemented.")
     return __beaver_protocol("mul", x, y)
 
 

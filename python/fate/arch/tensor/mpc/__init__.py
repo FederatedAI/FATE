@@ -8,7 +8,8 @@ from fate.arch.protocol import mpc
 
 from . import nn
 
-def cryptensor(*args, cryptensor_type=None, **kwargs):
+
+def cryptensor(ctx, *args, cryptensor_type=None, **kwargs):
     """
     Factory function to return encrypted tensor of given `cryptensor_type`. If no
     `cryptensor_type` is specified, the default type is used.
@@ -21,7 +22,7 @@ def cryptensor(*args, cryptensor_type=None, **kwargs):
         raise ValueError("CrypTensor type %s does not exist." % cryptensor_type)
 
     # create CrypTensor:
-    return CrypTensor.__CRYPTENSOR_TYPES__[cryptensor_type](*args, **kwargs)
+    return CrypTensor.__CRYPTENSOR_TYPES__[cryptensor_type](ctx, *args, **kwargs)
 
 
 def is_encrypted_tensor(obj):

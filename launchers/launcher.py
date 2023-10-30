@@ -41,12 +41,4 @@ def cli(csession_id, federation_session_id, rank, parties, data_dir, proc):
 
 
 if __name__ == "__main__":
-    import sys
-    import os
-
-    python_path = os.path.join(_get_base_dir(), "python")
-    if not os.path.exists(python_path):
-        raise RuntimeError("Cannot find python path: {}".format(python_path))
-    if python_path not in sys.path:
-        sys.path.append(python_path)
     cli()
