@@ -81,29 +81,32 @@ class Union(ModelBase):
             raise ValueError("Label names do not match. "
                              "Please check label column names.")
 
-    def check_header(self, local_table, combined_table):
+    @staticmethod
+    def check_header(local_table, combined_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_header = local_schema.get("header")
         combined_header = combined_schema.get("header")
         if local_header != combined_header:
             raise ValueError("Table headers do not match! Please check header.")
 
-    def check_header_overlap(self, local_table, combined_table):
+    @staticmethod
+    def check_header_overlap(local_table, combined_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_header = local_schema.get("header")
         combined_header = combined_schema.get("header")
         if local_header is None or combined_header is None:
             return False
-        if len(set(local_header).intersection(set(combined_header))) > 0:
-            raise ValueError("Table headers overlap! Please check input data.")
+        header_overlap = set(local_header).intersection(set(combined_header))
+        if len(header_overlap) > 0:
+            raise ValueError(f"Table headers overlap: {header_overlap}! Please check input data.")
         return False
 
     def get_combined_schema(self, combined_table, local_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_header = local_schema.get("header")
         combined_header = combined_schema.get("header")
-        combined_header.extend(local_header)
-        # combined_schema["header"] = combined_header
+        new_header = combined_header + local_header
+        combined_schema["header"] = new_header
         return combined_schema
 
     def check_feature_length(self, data_instance):
@@ -222,9 +225,9 @@ class Union(ModelBase):
                     # first non-empty table to combine
                     combined_table = local_table
                 else:
-                    self.check_header_overlap(local_table, combined_table)
                     combined_schema = self.get_combined_schema(combined_table, local_table)
                     if self.is_data_instance:
+                        self.check_header_overlap(local_table, combined_table)
                         combined_table = combined_table.join(local_table, lambda x, y: self.join_instances(x, y))
                     else:
                         combined_table = combined_table.join(local_table, lambda x, y: x + y)
