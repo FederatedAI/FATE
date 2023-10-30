@@ -34,13 +34,20 @@ class UnionParam(BaseParam):
 
     keep_duplicate: bool, default False
         Whether to keep entries with duplicated keys. If set to True, a new id will be generated for duplicated entry in the format {id}_{table_name}.
+    axis: int, default 0
+        The axis to union tables. 0 for row-wise union and 1 for column-wise union.
+    unmatched_id: str, choose from {'raise', 'ignore'}, default 'raise'
+        Whether to ignore unmatched id in the union process for axis=1. If set to 'ignore', the result will only contain entries with id that exists in all tables.
+        Otherwise, if unmatched id exists, an error will be raised.
     """
 
-    def __init__(self, need_run=True, allow_missing=False, keep_duplicate=False):
+    def __init__(self, need_run=True, allow_missing=False, keep_duplicate=False, axis=0, unmatched_id='raise'):
         super().__init__()
         self.need_run = need_run
         self.allow_missing = allow_missing
         self.keep_duplicate = keep_duplicate
+        self.axis = axis
+        self.unmatched_id = unmatched_id
 
     def check(self):
         descr = "union param's "
