@@ -75,10 +75,10 @@ class Table(KVTable):
             table=self._table.map_reduce_partitions_with_index(
                 map_partition_op=map_partition_op,
                 reduce_partition_op=reduce_partition_op,
-                output_partitioner=output_partitioner,
                 shuffle=shuffle,
                 output_key_serdes_type=output_key_serdes_type,
                 output_value_serdes_type=output_value_serdes_type,
+                output_partitioner=output_partitioner,
                 output_partitioner_type=output_partitioner_type,
                 output_num_partitions=output_num_partitions,
             ),

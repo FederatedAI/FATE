@@ -143,7 +143,7 @@ class KVTable(Generic[K, V]):
         output_partitioner,
         output_partitioner_type: int,
         output_num_partitions: int,
-    ):
+    ) -> "KVTable":
         raise NotImplementedError(f"{self.__class__.__name__}._map_reduce_partitions_with_index")
 
     @abc.abstractmethod
@@ -467,14 +467,39 @@ class KVTable(Generic[K, V]):
         )
 
     @_compute_info
-    def repartition(self, num_partitions, partitioner_type=None):
+    def repartition(self, num_partitions, partitioner_type=None, key_serdes_type=None) -> "KVTable":
+        if (
+            self.num_partitions == num_partitions
+            and ((partitioner_type is None) or self.partitioner_type == partitioner_type)
+            and ((key_serdes_type is None) or key_serdes_type == self.key_serdes_type)
+        ):
+            return self
         if partitioner_type is None:
             partitioner_type = self.partitioner_type
-        if self.partitioner_type == partitioner_type and self.num_partitions == num_partitions:
-            return self
-        output_partitioner = get_partitioner_by_type(partitioner_type)
+        if self.partitioner_type != partitioner_type:
+            output_partitioner = get_partitioner_by_type(partitioner_type)
+        else:
+            output_partitioner = self.partitioner
+
+        if key_serdes_type is None:
+            key_serdes_type = self.key_serdes_type
+        if key_serdes_type != self.key_serdes_type:
+            output_key_serdes = get_serdes_by_type(key_serdes_type)
+        else:
+            output_key_serdes = self.key_serdes
+
+        if self.key_serdes_type == key_serdes_type and self.partitioner_type == partitioner_type:
+            mapper = lambda i, x: x
+        else:
+            mapper = _lifted_map_to_io_serdes(
+                lambda i, x: x,
+                self.key_serdes,
+                self.value_serdes,
+                output_key_serdes,
+                self.value_serdes,
+            )
         return self._map_reduce_partitions_with_index(
-            map_partition_op=lambda i, x: x,
+            map_partition_op=mapper,
             reduce_partition_op=None,
             shuffle=True,
             input_key_serdes=self.key_serdes,
@@ -483,8 +508,8 @@ class KVTable(Generic[K, V]):
             input_value_serdes_type=self.value_serdes_type,
             input_partitioner=self.partitioner,
             input_partitioner_type=self.partitioner_type,
-            output_key_serdes=self.key_serdes,
-            output_key_serdes_type=self.key_serdes_type,
+            output_key_serdes=output_key_serdes,
+            output_key_serdes_type=key_serdes_type,
             output_value_serdes=self.value_serdes,
             output_value_serdes_type=self.value_serdes_type,
             output_partitioner=output_partitioner,
@@ -541,6 +566,14 @@ class KVTable(Generic[K, V]):
                 return sampled_table
             else:
                 return sampled_table._drop_num(sampled_count - num, self.partitioner)
+
+
+def _lifted_map_to_io_serdes(_f, input_key_serdes, input_value_serdes, output_key_serdes, output_value_serdes):
+    def _lifted(_index, _iter):
+        for out_k, out_v in _f(_index, _serdes_wrapped_generator(_iter, input_key_serdes, input_value_serdes)):
+            yield output_key_serdes.serialize(out_k), output_value_serdes.serialize(out_v)
+
+    return _lifted
 
 
 def _serdes_wrapped_generator(_iter, key_serdes, value_serdes):
