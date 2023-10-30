@@ -151,7 +151,7 @@ public class ContextPrepareInterceptor implements ServerInterceptor ,ClientInter
         setMetadata(metadata,METAKEY_QUEUE_TYPE,Optional.ofNullable(osxContext.getQueueType()).orElse(""));
         setMetadata(metadata,METAKEY_MSG_FLAG,Optional.ofNullable(osxContext.getMessageFlag()).orElse(""));
 
-      //  logger.info("========client intercept======{}",metadata);
+       logger.info("========client intercept======{}",metadata);
         return MetadataUtils.newAttachHeadersInterceptor(metadata).interceptCall(descriptor, options, channel);
     }
 

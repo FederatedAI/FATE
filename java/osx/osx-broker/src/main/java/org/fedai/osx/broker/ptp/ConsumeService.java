@@ -123,7 +123,8 @@ import org.slf4j.LoggerFactory;
             }
             ConsumerResponse consumeResponse  = new ConsumerResponse();
             consumeResponse.setCode(StatusCode.PTP_SUCCESS);
-            consumeResponse.setPayload(transferQueueConsumeResult.getMessage().getBody());
+            if(transferQueueConsumeResult.getMessage()!=null)
+                consumeResponse.setPayload(transferQueueConsumeResult.getMessage().getBody());
             return   consumeResponse;
 
 

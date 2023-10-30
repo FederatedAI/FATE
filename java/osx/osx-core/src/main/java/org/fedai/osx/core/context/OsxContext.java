@@ -384,9 +384,9 @@ public class OsxContext {
         if(this.getUri()!=null){
             stringBuffer.append(this.getUri()).append(SPLIT);
         }
-//        if(context.getSessionId()!=null){
-//            stringBuffer.append("session:").append(context.getSessionId()).append(SPLIT);
-//        }
+        if(this.getSessionId()!=null){
+            stringBuffer.append("session:").append(this.getSessionId()).append(SPLIT);
+        }
         if (this.getTopic() != null) {
             stringBuffer.append("topic:").append(this.getTopic()).append(SPLIT);
         }
@@ -440,10 +440,5 @@ public class OsxContext {
         return  stringBuffer.toString();
     }
     static final String SPLIT= "|";
-
-    public  static  void  main(String[] args){
-           System.err.println( Optional.ofNullable("ggj").orElseGet(()->{return  "my name is new";}));
-    }
-
 
 }

@@ -416,10 +416,6 @@ public class TransferUtil {
         return  result;
     }
 
-
-
-
-
     static public Osx.TransportOutbound redirectPop(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
         ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
@@ -434,8 +430,12 @@ public class TransferUtil {
         return stub.peek(inbound);
     }
 
-
-
+    static public Osx.TransportOutbound  redirectRelease(OsxContext  context,RouterInfo routerInfo,Osx.ReleaseInbound  inbound){
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+        context.setActionType(ActionType.CANCEL_TOPIC.name());
+        PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
+        return stub.release(inbound);
+    }
 
     static public Osx.Outbound redirect(OsxContext context, Osx.Inbound
             produceRequest, RouterInfo routerInfo, boolean usePooled) {

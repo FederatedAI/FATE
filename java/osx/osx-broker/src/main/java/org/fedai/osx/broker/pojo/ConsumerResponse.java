@@ -16,7 +16,9 @@ public class ConsumerResponse {
 
     public Osx.TransportOutbound toTransportOutbound() {
             Osx.TransportOutbound.Builder builder = Osx.TransportOutbound.newBuilder();
-            return builder.setCode(code).setMessage(msg).setPayload(ByteString.copyFrom(payload)).build();
-
+            builder.setCode(code).setMessage(msg);
+            if(payload!=null)
+                builder.setPayload(ByteString.copyFrom(payload)).build();
+            return  builder.build();
     }
 }

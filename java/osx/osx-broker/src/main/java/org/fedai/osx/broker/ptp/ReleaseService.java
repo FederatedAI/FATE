@@ -19,8 +19,13 @@ package org.fedai.osx.broker.ptp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.fedai.osx.broker.consumer.ConsumerManager;
+import org.fedai.osx.broker.pojo.ConsumeRequest;
+import org.fedai.osx.broker.pojo.ConsumerResponse;
+import org.fedai.osx.broker.pojo.ReleaseRequest;
+import org.fedai.osx.broker.pojo.ReleaseResponse;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.service.Register;
+import org.fedai.osx.core.constant.ActionType;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.constant.UriConstants;
@@ -32,47 +37,48 @@ import org.ppc.ptp.Osx;
 
 import java.util.List;
 @Singleton
-//@Register(uri= UriConstants.RELEASE,allowInterUse = false)
-public class ReleaseService extends AbstractServiceAdaptorNew< Osx.ReleaseInbound, Osx.TransportOutbound> {
-
+@Register(uris= {UriConstants.RELEASE},allowInterUse = false)
+public class ReleaseService extends AbstractServiceAdaptorNew<ReleaseRequest, ReleaseResponse> {
     public ReleaseService() {
-        this.setServiceName("cancel-unary");
     }
     @Inject
     TransferQueueManager   transferQueueManager;
-
     @Inject
     ConsumerManager  consumerManager;
 
     @Override
-    protected Osx.TransportOutbound doService(OsxContext context, Osx.ReleaseInbound data) {
+    protected ReleaseResponse doService(OsxContext context, ReleaseRequest data) {
 
+        ReleaseResponse  releaseResponse = new  ReleaseResponse();
+        context.setActionType(ActionType.CANCEL_TOPIC.name());
         String sessionId = context.getSessionId();
         String topic = data.getTopic();
+        context.setTopic(topic);
         List<String> cleanedTransferId = transferQueueManager.cleanByParam(sessionId, topic);
         if (cleanedTransferId != null) {
             for (String transferIdClean : cleanedTransferId) {
                     consumerManager.onComplete(transferIdClean);
             }
         }
-        Osx.TransportOutbound.Builder outBoundBuilder = Osx.TransportOutbound.newBuilder();
-        outBoundBuilder.setCode(StatusCode.SUCCESS).setMessage(Dict.SUCCESS);
-        return outBoundBuilder.build();
+        releaseResponse.setCode(StatusCode.PTP_SUCCESS);
+        releaseResponse.setMessage(Dict.SUCCESS);
+        return releaseResponse;
+    }
+    @Override
+    protected ReleaseResponse transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
+        ReleaseResponse  releaseResponse =  new  ReleaseResponse();
+        releaseResponse.setCode(exceptionInfo.getCode());
+        releaseResponse.setMessage(exceptionInfo.getMessage());
+        return releaseResponse;
     }
 
     @Override
-    protected Osx.TransportOutbound transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
+    public ReleaseRequest decode(Object object) {
         return null;
     }
 
-
     @Override
-    public Osx.ReleaseInbound decode(Object object) {
-        return null;
-    }
-
-    @Override
-    public Osx.Outbound toOutbound(Osx.TransportOutbound response) {
+    public Osx.Outbound toOutbound(ReleaseResponse response) {
         return null;
     }
 }

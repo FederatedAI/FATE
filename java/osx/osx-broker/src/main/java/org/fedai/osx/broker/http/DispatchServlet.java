@@ -50,6 +50,9 @@ public class DispatchServlet extends HttpServlet {
     }
 
 
+
+
+
     private   void  handleInner(HttpServletRequest req, HttpServletResponse  resp) throws IOException {
         //处理get请求
         DebugUtil.printHttpParams(req);
@@ -64,8 +67,27 @@ public class DispatchServlet extends HttpServlet {
             } else {
                 resp.sendError(404, "tech-provider-code invalid");
             }
+        String requestUri = req.getRequestURI();
 
+        switch (requestUri){
+            case "/v1/interconn/chan/pop":
+                techProvider.processHttpPop(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/push":
+                techProvider.processHttpPop(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/peek":
+                techProvider.processHttpPeek(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/release":
+                techProvider.processHttpRelease(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/invoke":
+                techProvider.processHttpInvoke(osxContext,req, resp);
+                break;
+            default:
+                resp.sendError(502, "invalid request "+requestUri);
+        }
 
-        //logger.info("receive request uri  {}", requestUri);
     }
 }

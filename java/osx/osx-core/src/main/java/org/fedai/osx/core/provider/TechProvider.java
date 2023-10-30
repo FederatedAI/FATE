@@ -29,16 +29,14 @@ public interface TechProvider {
     void processGrpcInvoke(OsxContext context,Osx.Inbound request,
                            io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver);
 
-//    rpc peek (PeekInbound) returns (TransportOutbound);
-//    rpc pop (PopInbound) returns (TransportOutbound);
-//    rpc push (PushInbound) returns (TransportOutbound);
-//    rpc release (ReleaseInbound) returns (TransportOutbound);
-
+    default void processHttpPeek(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
+    default void processHttpPush(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
+    default void processHttpPop(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
+    default void processHttpRelease(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
     //用于处理grpc流式请求
    default public StreamObserver<Osx.Inbound> processGrpcTransport(OsxContext context,Osx.Inbound inbound, StreamObserver<Osx.Outbound> responseObserver){return null;};
 
-//
-    void processGrpcPeek(OsxContext context,Osx.PeekInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
+   void processGrpcPeek(OsxContext context,Osx.PeekInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
 
     void processGrpcPush(OsxContext context,Osx.PushInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
 

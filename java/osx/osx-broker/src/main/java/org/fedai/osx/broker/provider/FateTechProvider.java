@@ -23,10 +23,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 
 import org.fedai.osx.broker.constants.ServiceType;
-import org.fedai.osx.broker.pojo.ConsumeRequest;
-import org.fedai.osx.broker.pojo.ConsumerResponse;
-import org.fedai.osx.broker.pojo.ProduceRequest;
-import org.fedai.osx.broker.pojo.ProduceResponse;
+import org.fedai.osx.broker.pojo.*;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.service.ServiceRegisterInfo;
 import org.fedai.osx.broker.service.ServiceRegisterManager;
@@ -34,6 +31,7 @@ import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.PtpHttpHeader;
+import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
@@ -42,6 +40,7 @@ import org.fedai.osx.core.provider.TechProvider;
 import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.service.*;
 import org.fedai.osx.core.utils.FlowLogUtil;
+import org.fedai.osx.core.utils.JsonUtil;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static org.fedai.osx.core.constant.ActionType.MSG_REDIRECT;
 
@@ -68,14 +70,12 @@ public class FateTechProvider implements TechProvider {
     DefaultFateRouterServiceImpl routerService;
 
     List<String> selfPartyIds;
+    Base64.Encoder  base64Encoder = Base64.getEncoder();
+    Base64.Decoder  base64Deonder = Base64.getDecoder();
 
     public FateTechProvider() {
         selfPartyIds = Lists.newArrayList(MetaInfo.PROPERTY_SELF_PARTY);
-
     }
-
-
-
     @Override
     public void processHttpInvoke(OsxContext  osxContext , HttpServletRequest request, HttpServletResponse response) {
 
@@ -113,27 +113,91 @@ public class FateTechProvider implements TechProvider {
 
     }
 
+    @Override
+    public void processHttpPeek(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        context.setProtocol(Protocol.http);
+        try {
+            context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
+            OsxContext.pushThreadLocalContext(context);
+            byte[] payload = this.read(httpServletRequest.getInputStream());
+            ConsumeRequest  consumeRequest = JsonUtil.json2Object(new String(payload),ConsumeRequest.class);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context,selfPartyIds.get(0),UriConstants.PEEK,false);
+            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+            ServiceAdaptorNew   serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+            ConsumerResponse consumerResponse = (ConsumerResponse)serviceAdaptor.service(context,consumeRequest );
+            httpServletResponse.setContentType(Dict.CONTENT_TYPE_JSON_UTF8);
+            byte[]   respContent = consumerResponse.getPayload();
+            TransferUtil.writeHttpRespose(httpServletResponse, consumerResponse.getCode(), consumerResponse.getMsg(),  base64Encoder.encode(respContent));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-//    @Override
-//    public StreamObserver<Osx.Inbound> processGrpcTransport(OsxContext context,Osx.Inbound fristPackage, StreamObserver<Osx.Outbound> responseObserver) {
-//        Map<String, String> metaDataMap = fristPackage.getMetadataMap();
-//        String targetMethod = metaDataMap.get(Osx.Metadata.TargetMethod.name());
-//        String uri = context.getUri();
-//        ServiceAdaptor serviceAdaptor = this.serviceRegister
-//        if (serviceAdaptor == null) {
-//            throw new ParameterException("invalid target method " + targetMethod);
-//        }
-////        Context context = ContextUtil.buildFateContext(Protocol.grpc);
-//        context.setProtocol(Protocol.grpc);
-//        InboundPackage inboundPackage = new InboundPackage();
-//        inboundPackage.setBody(responseObserver);
-//        OutboundPackage<StreamObserver<Osx.Inbound>> outboundPackage = serviceAdaptor.service(context, inboundPackage);
-//        if (outboundPackage != null && outboundPackage.getData() != null) {
-//            return (StreamObserver<Osx.Inbound>) outboundPackage.getData();
-//        } else {
-//            return null;
-//        }
-//    }
+    @Override
+    public void processHttpPush(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        context.setProtocol(Protocol.http);
+        try {
+            context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
+            OsxContext.pushThreadLocalContext(context);
+            byte[] payload = this.read(httpServletRequest.getInputStream());
+            Map  produceData  = JsonUtil.json2Object(new String(payload), Map.class);
+            ProduceRequest  produceRequest = new ProduceRequest();
+            produceRequest.setTopic(produceData.get(Dict.TOPIC)!=null?produceData.get(Dict.TOPIC).toString():"");
+            produceRequest.setPayload(base64Deonder.decode(produceData.get(Dict.PAYLOAD)!=null?(byte[])produceData.get(Dict.PAYLOAD):null));
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context,selfPartyIds.get(0),UriConstants.PEEK,false);
+            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+            ServiceAdaptorNew   serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+            ProduceResponse produceResponse = (ProduceResponse)serviceAdaptor.service(context,produceRequest );
+            httpServletResponse.setContentType(Dict.CONTENT_TYPE_JSON_UTF8);
+            TransferUtil.writeHttpRespose(httpServletResponse, produceResponse.getCode(), produceResponse.getMsg(),JsonUtil.object2Json(produceResponse).getBytes(StandardCharsets.UTF_8) );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void processHttpPop(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        context.setProtocol(Protocol.http);
+        try {
+            context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
+            OsxContext.pushThreadLocalContext(context);
+            byte[] payload = this.read(httpServletRequest.getInputStream());
+            ConsumeRequest  consumeRequest = JsonUtil.json2Object(new String(payload),ConsumeRequest.class);
+            consumeRequest.setNeedBlock(true);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context,selfPartyIds.get(0),UriConstants.PEEK,false);
+            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+            ServiceAdaptorNew   serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+            ConsumerResponse consumerResponse = (ConsumerResponse)serviceAdaptor.service(context,consumeRequest );
+            if(!StatusCode.CONSUME_NO_MESSAGE.equals(consumerResponse.getCode())){
+                httpServletResponse.setContentType(Dict.CONTENT_TYPE_JSON_UTF8);
+                byte[]   respContent = consumerResponse.getPayload();
+                TransferUtil.writeHttpRespose(httpServletResponse, consumerResponse.getCode(), consumerResponse.getMsg(),  base64Encoder.encode(respContent));
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void processHttpRelease(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        context.setProtocol(Protocol.http);
+        try {
+            context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
+            OsxContext.pushThreadLocalContext(context);
+            byte[] payload = this.read(httpServletRequest.getInputStream());
+            ReleaseRequest  releaseRequest = JsonUtil.json2Object(new String(payload), ReleaseRequest.class);
+
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context,selfPartyIds.get(0),UriConstants.PEEK,false);
+            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+            ServiceAdaptorNew   serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+            ReleaseResponse response = (ReleaseResponse)serviceAdaptor.service(context,releaseRequest );
+            TransferUtil.writeHttpRespose(httpServletResponse, response.getCode(), response.getMessage(),  JsonUtil.object2Json(response).getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private  Osx.Outbound  handleInner(OsxContext  context, Osx.Inbound  request){
         Osx.Outbound  result = null;
@@ -212,12 +276,11 @@ public class FateTechProvider implements TechProvider {
             ServiceAdaptorNew   serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
             ConsumeRequest  consumeRequest =  new ConsumeRequest();
             consumeRequest.setTopic(inbound.getTopic());
-            ConsumerResponse consumerResponse = (ConsumerResponse)serviceAdaptor.service(context,inbound );
+            ConsumerResponse consumerResponse = (ConsumerResponse)serviceAdaptor.service(context,consumeRequest );
             if(consumerResponse !=null){
                 if(consumerResponse.isNeedRedirect()){
                     result = TransferUtil.redirectPeek(context,consumerResponse.getRedirectRouterInfo(),inbound);
                 }else {
-                    System.err.println("==========="+consumerResponse);
                     result = consumerResponse.toTransportOutbound();
                 }
             }
@@ -332,7 +395,45 @@ public class FateTechProvider implements TechProvider {
     //只有集群内部访问
     @Override
     public void processGrpcRelease(OsxContext  context , Osx.ReleaseInbound inbound, StreamObserver<Osx.TransportOutbound> responseObserver) {
+        context.setProtocol(Protocol.grpc);
+        context.putData(Dict.RESPONSE_STREAM_OBSERVER, responseObserver);
+        context.putData(Dict.INPUT_DATA,inbound);
+        OsxContext.pushThreadLocalContext(context);
+        Osx.TransportOutbound result = null;
+        try {
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context,selfPartyIds.get(0),UriConstants.RELEASE,false);
+            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+            ServiceAdaptorNew   serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+            ReleaseRequest  releaseRequest = new ReleaseRequest();
+            releaseRequest.setTopic(inbound.getTopic());
 
+
+            ReleaseResponse consumerResponse = (ReleaseResponse)serviceAdaptor.service(context,releaseRequest );
+//            if(consumerResponse !=null){
+//                if(consumerResponse.isNeedRedirect()){
+//                    result = TransferUtil.redirectPop(context,consumerResponse.getRedirectRouterInfo(),inbound);
+//                }else {
+//                    result = consumerResponse.toTransportOutbound();
+//                }
+//            }
+            result =Osx.TransportOutbound.newBuilder().setCode(consumerResponse.getCode()).setMessage(consumerResponse.getMessage()).build();
+
+
+        } catch (Exception e) {
+            ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
+            context.setReturnCode(exceptionInfo.getCode());
+            context.setReturnMsg(exceptionInfo.getMessage());
+            result = Osx.TransportOutbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
+        }
+        finally {
+            FlowLogUtil.printFlowLog(context);
+            OsxContext.popThreadLocalContext();
+            OsxContext.release();
+        }
+        if (result != null) {
+            responseObserver.onNext(result);
+            responseObserver.onCompleted();
+        }
     }
 
 
