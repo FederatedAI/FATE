@@ -105,7 +105,10 @@ class Union(ModelBase):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_header = local_schema.get("header")
         combined_header = combined_schema.get("header")
-        new_header = combined_header + local_header
+        if self.is_data_instance:
+            new_header = combined_header + local_header
+        else:
+            new_header = ",".join([combined_header, local_header])
         combined_schema["header"] = new_header
         return combined_schema
 
@@ -225,12 +228,13 @@ class Union(ModelBase):
                     # first non-empty table to combine
                     combined_table = local_table
                 else:
-                    combined_schema = self.get_combined_schema(combined_table, local_table)
                     if self.is_data_instance:
                         self.check_header_overlap(local_table, combined_table)
+                        combined_schema = self.get_combined_schema(combined_table, local_table)
                         combined_table = combined_table.join(local_table, lambda x, y: self.join_instances(x, y))
                     else:
-                        combined_table = combined_table.join(local_table, lambda x, y: x + y)
+                        combined_schema = self.get_combined_schema(combined_table, local_table)
+                        combined_table = combined_table.join(local_table, lambda x, y: f"{x},{y}")
                     combined_table.schema = combined_schema
 
         else:
