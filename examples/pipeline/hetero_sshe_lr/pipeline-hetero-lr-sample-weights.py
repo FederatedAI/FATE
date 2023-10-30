@@ -61,7 +61,10 @@ def main(config="../../config.yaml", namespace=""):
         with_label=True,
         output_format="dense")  # start component numbering at 0
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
-    intersect_0 = Intersection(name='intersect_0')
+    intersect_0 = Intersection(
+        name='intersect_0',
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     scale_0 = FeatureScale(name='scale_0', need_run=False)
     sample_weight_0 = SampleWeight(name="sample_weight_0", class_weight={"0": 1, "1": 2})
@@ -80,6 +83,9 @@ def main(config="../../config.yaml", namespace=""):
         "decay_sqrt": True,
         "init_param": {
             "init_method": "ones"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "reveal_every_iter": False,
         "reveal_strategy": "respectively"

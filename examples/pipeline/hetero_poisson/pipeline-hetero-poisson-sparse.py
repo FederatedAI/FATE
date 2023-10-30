@@ -52,11 +52,15 @@ def main(config="../../config.yaml", namespace=""):
                                                                                       label_type="float")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=2,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01,
                                      exposure_colname="exposure", optimizer="rmsprop",
                                      penalty="L2", decay_sqrt=False, tol=0.001,
+                                     encrypt_param={"key_length": 1024},
                                      init_param={"init_method": "zeros"},
                                      )
 

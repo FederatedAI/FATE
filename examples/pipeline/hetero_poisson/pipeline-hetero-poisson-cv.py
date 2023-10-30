@@ -60,12 +60,16 @@ def main(config="../../config.yaml", namespace=""):
         output_format="dense",
         outlier_replace=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=10,
                                      optimizer="rmsprop", tol=0.001, penalty="L2",
                                      alpha=100.0, batch_size=-1, learning_rate=0.01,
                                      exposure_colname="exposure", decay_sqrt=False,
                                      init_param={"init_method": "zeros"},
+                                     encrypt_param={"key_length": 1024},
                                      cv_param={
                                          "n_splits": 5,
                                          "shuffle": False,

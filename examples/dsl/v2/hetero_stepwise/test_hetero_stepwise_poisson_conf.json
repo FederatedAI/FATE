@@ -27,6 +27,9 @@
                 "init_param": {
                     "init_method": "zeros"
                 },
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "max_iter": 5,
                 "early_stop": "diff",
                 "decay": 0.0,
@@ -37,6 +40,14 @@
                     "need_stepwise": true,
                     "max_step": 1,
                     "nvmin": 2
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         },

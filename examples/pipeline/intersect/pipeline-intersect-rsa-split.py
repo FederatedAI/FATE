@@ -58,7 +58,8 @@ def main(config="../../config.yaml", namespace=""):
             "hash_method": "sha256",
             "final_hash_method": "sha256",
             "split_calculation": True,
-            "random_base_fraction": 0.5
+            "random_base_fraction": 0.5,
+            "key_length": 1024
         }
     }
     intersect_0 = Intersection(name="intersect_0", **param)

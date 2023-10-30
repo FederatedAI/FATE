@@ -63,6 +63,14 @@
                     "filter_out_indexes": null,
                     "filter_out_names": null
                 }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         }
     }

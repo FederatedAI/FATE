@@ -22,13 +22,22 @@
                 "num_trees": 5,
                 "validation_freqs": 1,
                 "encrypt_param": {
-                    "method": "Paillier"
+                    "method": "Paillier",
+                    "key_length": 1024
                 },
                 "tree_param": {
                     "max_depth": 3,
                     "criterion_params": [0.5, 0]
                 },
                 "multi_mode": "multi_output"
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "evaluation_0": {
                 "eval_type": "multi"

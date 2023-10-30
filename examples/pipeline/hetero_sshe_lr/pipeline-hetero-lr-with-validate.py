@@ -76,8 +76,14 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
-    intersection_1 = Intersection(name="intersection_1")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
@@ -108,6 +114,9 @@ def main(config="../../config.yaml", namespace=""):
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "reveal_strategy": "respectively",
         "reveal_every_iter": True

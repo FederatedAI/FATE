@@ -66,7 +66,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     # define SecureBoost and PositiveUnlabeled components
     sbt_0_param = {
@@ -78,6 +81,9 @@ def main(config="../../config.yaml", namespace=""):
         "num_trees": 2,
         "tree_param": {
             "max_depth": 3
+        },
+        "encrypt_param": {
+            "key_length": 1024
         }
     }
     pu_0_param = {
@@ -94,6 +100,9 @@ def main(config="../../config.yaml", namespace=""):
         "num_trees": 1,
         "tree_param": {
             "max_depth": 2
+        },
+        "encrypt_param": {
+            "key_length": 1024
         }
     }
     hetero_sbt_0 = HeteroSecureBoost(**sbt_0_param)

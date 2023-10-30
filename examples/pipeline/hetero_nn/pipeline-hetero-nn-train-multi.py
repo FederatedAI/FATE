@@ -54,11 +54,14 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=15,
                            interactive_layer_lr=0.05, batch_size=256, validation_freqs=1, task_type='classification',
-                           selector_param={"method": "relative"})
+                           selector_param={"method": "relative"}, encrypt_param={"key_length": 1024})
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
 

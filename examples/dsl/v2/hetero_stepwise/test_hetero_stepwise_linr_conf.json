@@ -31,12 +31,23 @@
                 },
                 "max_iter": 3,
                 "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "stepwise_param": {
                     "score_name": "AIC",
                     "direction": "backward",
                     "need_stepwise": true,
                     "max_step": 3,
                     "nvmin": 2
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         },

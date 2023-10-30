@@ -65,8 +65,14 @@ def main(config="../../config.yaml", namespace=""):
         role='host', party_id=host).component_param(
         with_label=True, output_format="dense")
 
-    intersection_0 = Intersection(name="intersection_0")
-    intersection_1 = Intersection(name="intersection_1")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     param = {
         "method": "quantile",
@@ -88,6 +94,9 @@ def main(config="../../config.yaml", namespace=""):
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
+        "encrypt_param": {
+            "key_length": 1024
+        },
         "transform_param": {
             "transform_cols": -1,
             "transform_names": None,

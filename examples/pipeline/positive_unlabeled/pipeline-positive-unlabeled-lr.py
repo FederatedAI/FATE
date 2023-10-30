@@ -67,12 +67,18 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     # define LR and PositiveUnlabeled components
     lr_0_param = {
         "name": "hetero_lr_0",
-        "max_iter": 2
+        "max_iter": 2,
+        "encrypt_param": {
+            "key_length": 1024
+        }
     }
     pu_0_param = {
         "name": "positive_unlabeled_0",
@@ -81,7 +87,10 @@ def main(config="../../config.yaml", namespace=""):
     }
     lr_1_param = {
         "name": "hetero_lr_1",
-        "max_iter": 1
+        "max_iter": 1,
+        "encrypt_param": {
+            "key_length": 1024
+        }
     }
     hetero_lr_0 = HeteroLR(**lr_0_param)
     positive_unlabeled_0 = PositiveUnlabeled(**pu_0_param)
