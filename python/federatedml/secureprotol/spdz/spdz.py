@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+from federatedml.secureprotol.conf import PAILLIER_KEYPAIR_N_LENGTH
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.spdz.communicator import Communicator
 from federatedml.secureprotol.spdz.utils import NamingService
@@ -37,7 +38,15 @@ class SPDZ(object):
     def has_instance(cls):
         return cls.__instance is not None
 
-    def __init__(self, name="ss", q_field=None, local_party=None, all_parties=None, use_mix_rand=False, n_length=1024):
+    def __init__(
+            self,
+            name="ss",
+            q_field=None,
+            local_party=None,
+            all_parties=None,
+            use_mix_rand=False,
+            n_length=PAILLIER_KEYPAIR_N_LENGTH
+    ):
         self.name_service = naming.NamingService(name)
         self._prev_name_service = None
         self._pre_instance = None

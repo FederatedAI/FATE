@@ -24,6 +24,7 @@ from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol import gmpy_math
+from federatedml.secureprotol.conf import PAILLIER_KEYPAIR_N_LENGTH, RSA_BIT_LENGTH
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol.random import RandomPads
@@ -134,7 +135,7 @@ class RsaEncrypt(Encrypt):
         self.p = None
         self.q = None
 
-    def generate_key(self, rsa_bit=1024):
+    def generate_key(self, rsa_bit=RSA_BIT_LENGTH):
         random_generator = Random.new().read
         rsa = RSA.generate(rsa_bit, random_generator)
         self.e = rsa.e
@@ -180,7 +181,7 @@ class PaillierEncrypt(Encrypt):
     def __init__(self):
         super(PaillierEncrypt, self).__init__()
 
-    def generate_key(self, n_length=1024):
+    def generate_key(self, n_length=PAILLIER_KEYPAIR_N_LENGTH):
         self.public_key, self.privacy_key = PaillierKeypair.generate_keypair(
             n_length=n_length
         )
@@ -233,7 +234,7 @@ class IpclPaillierEncrypt(Encrypt):
     def __init__(self):
         super(IpclPaillierEncrypt, self).__init__()
 
-    def generate_key(self, n_length=1024):
+    def generate_key(self, n_length=PAILLIER_KEYPAIR_N_LENGTH):
         self.public_key, self.privacy_key = IpclPaillierKeypair.generate_keypair(
             n_length=n_length
         )

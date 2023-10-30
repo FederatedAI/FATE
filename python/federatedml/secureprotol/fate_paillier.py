@@ -19,6 +19,7 @@
 import random
 
 from federatedml.secureprotol import gmpy_math
+from federatedml.secureprotol.conf import PAILLIER_KEYPAIR_N_LENGTH
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
 
 
@@ -27,7 +28,7 @@ class PaillierKeypair(object):
         pass
 
     @staticmethod
-    def generate_keypair(n_length=1024):
+    def generate_keypair(n_length=PAILLIER_KEYPAIR_N_LENGTH):
         """return a new :class:`PaillierPublicKey` and :class:`PaillierPrivateKey`.
         """
         p = q = n = None

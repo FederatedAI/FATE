@@ -18,6 +18,7 @@
 #
 import random
 
+from federatedml.secureprotol.conf import DH_KEY_BIT_LENGTH
 from federatedml.secureprotol.gmpy_math import is_prime, invert, gcd, powmod
 from federatedml.secureprotol.symmetric_encryption.symmetric_encryption import SymmetricKey, SymmetricCiphertext
 from federatedml.secureprotol.diffie_hellman import DiffieHellman
@@ -46,7 +47,7 @@ class PohligHellmanCipherKey(SymmetricKey):
         self.exponent_inverse = None if exponent is None else invert(exponent, mod_base - 1)
 
     @staticmethod
-    def generate_key(key_size=1024):
+    def generate_key(key_size=DH_KEY_BIT_LENGTH):
         """
         Generate a self-typed object with public mod_base and vacant exponent
         :param key_size: int
