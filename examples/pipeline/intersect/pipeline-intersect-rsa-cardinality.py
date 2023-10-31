@@ -62,8 +62,7 @@ def main(config="../../config.yaml", namespace=""):
         "intersect_preprocess_params": {
             "false_positive_rate": 1e-4,
             "encrypt_method": "rsa",
-            "hash_method": "sha256",
-            "key_length": 1024
+            "hash_method": "sha256"
         }
     }
     intersect_0 = Intersection(name="intersect_0", **param)
