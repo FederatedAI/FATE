@@ -1,0 +1,67 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "provider": "fate_flow"
+        },
+        "data_transform_0": {
+            "module": "DataTransform",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "provider": "fate"
+        },
+        "hetero_ftl_0": {
+            "module": "FTL",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "data_transform_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "provider": "fate"
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_ftl_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "provider": "fate"
+        }
+    }
+}
