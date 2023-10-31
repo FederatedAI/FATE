@@ -93,8 +93,14 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_1.get_party_instance(role='host', party_id=host).component_param(**param)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0", intersect_method="raw")
-    intersection_1 = Intersection(name="intersection_1", intersect_method="raw")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     param = {
         "name": 'hetero_feature_binning_0',
@@ -102,6 +108,9 @@ def main(config="../../config.yaml", namespace=""):
         "optimal_binning_param": {
             "metric_method": "iv",
             "init_bucket_method": "quantile"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "bin_indexes": -1
     }
@@ -146,6 +155,9 @@ def main(config="../../config.yaml", namespace=""):
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "zeros"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "validation_freqs": None,
         "early_stopping_rounds": None

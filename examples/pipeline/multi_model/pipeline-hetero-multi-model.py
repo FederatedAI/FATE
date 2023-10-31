@@ -124,11 +124,11 @@ def main(config="../../config.yaml", namespace=""):
     one_hot_1 = OneHotEncoder(name="one_hot_1")
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="rmsprop", tol=1e-5,
-                           init_param={"init_method": "random_uniform"}, encrpyt_param={"key_length": 1024},
+                           init_param={"init_method": "random_uniform"}, encrypt_param={"key_length": 1024},
                            alpha=0.01, max_iter=3, early_stop="diff", batch_size=320, learning_rate=0.15)
     hetero_lr_1 = HeteroLR(name="hetero_lr_1")
     hetero_lr_2 = HeteroLR(name="hetero_lr_2", penalty="L2", optimizer="rmsprop", tol=1e-5,
-                           init_param={"init_method": "random_uniform"}, encrpyt_param={"key_length": 1024},
+                           init_param={"init_method": "random_uniform"}, encrypt_param={"key_length": 1024},
                            alpha=0.01, max_iter=3, early_stop="diff", batch_size=320, learning_rate=0.15,
                            cv_param={"n_splits": 5,
                                      "shuffle": True,
@@ -152,7 +152,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_secureboost_1 = HeteroSecureBoost(name="hetero_secureboost_1")
     hetero_secureboost_2 = HeteroSecureBoost(name="hetero_secureboost_2", num_trees=3,
                                              cv_param={"shuffle": False, "need_cv": True},
-                                             encrpyt_param={"method": "Paillier", "key_length": 1024})
+                                             encrypt_param={"method": "Paillier", "key_length": 1024})
 
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, max_iter=3, early_stop="weight_diff", batch_size=-1,
