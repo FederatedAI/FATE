@@ -79,7 +79,6 @@ if __name__ == "__main__":
             top_model=guest_top,
             agg_layer=agglayer,
             bottom_model=guest_bottom)
-        model.set_context(ctx)
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 

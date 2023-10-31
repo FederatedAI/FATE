@@ -142,7 +142,6 @@ class DefaultRunner(NNRunner):
             bottom_model=b_model
         )
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
-        model.set_context(self.get_context())
         trainer = HeteroNNTrainerGuest(
             ctx=self.get_context(),
             model=model,
@@ -170,7 +169,6 @@ class DefaultRunner(NNRunner):
 
         model = HeteroNNModelHost(agg_layer=agg_layer, bottom_model=b_model)
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
-        model.set_context(self.get_context())
         trainer = HeteroNNTrainerHost(
             ctx=self.get_context(),
             model=model,

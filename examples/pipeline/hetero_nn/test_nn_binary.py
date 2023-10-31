@@ -46,12 +46,10 @@ def main(config="../../config.yaml", namespace=""):
                                                                         namespace="experiment"))
 
     training_args = TrainingArguments(
-            num_train_epochs=20,
+            num_train_epochs=5,
             per_device_train_batch_size=16,
-            logging_strategy='steps',
-            logging_steps=10,
+            logging_strategy='epoch',
             no_cuda=True,
-            log_level='debug',
             disable_tqdm=False
         )
 
@@ -84,20 +82,27 @@ def main(config="../../config.yaml", namespace=""):
     hetero_nn_0.guest.component_setting(runner_conf=guest_conf)
     hetero_nn_0.hosts[0].component_setting(runner_conf=host_conf)
 
+    hetero_nn_1 = HeteroNN(
+        'hetero_nn_1',
+        test_data=psi_0.outputs['output_data'],
+        predict_model_input=hetero_nn_0.outputs['train_model_output']
+    )
+
     evaluation_0 = Evaluation(
         'eval_0',
         runtime_roles=['guest'],
         metrics=['auc'],
-        input_data=[hetero_nn_0.outputs['train_data_output']]
+        input_data=[hetero_nn_1.outputs['predict_data_output'], hetero_nn_0.outputs['train_data_output']]
     )
 
     pipeline.add_task(psi_0)
     pipeline.add_task(hetero_nn_0)
+    pipeline.add_task(hetero_nn_1)
     pipeline.add_task(evaluation_0)
     pipeline.compile()
     pipeline.fit()
 
-    result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
+    result_summary = pipeline.get_task_info("eval_0").get_output_metric()[0]["data"]
     print(f"result_summary: {result_summary}")
 
 
