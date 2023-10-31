@@ -79,6 +79,7 @@ def main(config="../../config.yaml", param="./sshe_linr_config.yaml", namespace=
         "optimizer": param["optimizer"],
         "learning_rate": param["learning_rate"],
         "init_param": param["init_param"],
+        "encrypt_param": param["encrypt_param"],
         "batch_size": param["batch_size"],
         "alpha": param["alpha"],
         "early_stop": param["early_stop"],

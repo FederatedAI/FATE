@@ -12,3 +12,5 @@ early_stop: "diff"
 reveal_strategy: "respectively"
 init_param:
   init_method: "zeros"
+encrypt_param:
+  key_length: 1024

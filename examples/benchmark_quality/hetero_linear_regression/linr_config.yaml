@@ -11,3 +11,5 @@ alpha: 0.01
 tol: 1e-4
 init_param:
   init_method: "zeros"
+encrypt_param:
+  key_length: 1024
