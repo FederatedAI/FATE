@@ -17,7 +17,7 @@ import importlib
 import datetime
 import uuid
 import multiprocessing
-from multiprocessing import Queue
+from multiprocessing import Queue, Event
 import click
 
 logger = logging.getLogger()
@@ -37,17 +37,30 @@ class MultiProcessLauncher:
     ):
         multiprocessing.set_start_method("spawn")
         self.processes: List[multiprocessing.Process] = []
-        self.q = Queue()
+        self.output_or_exception_q = Queue()
+        self.safe_to_exit = Event()  # barrier
         self._console = console
         self._exception_tb = {}
         for rank in range(world_size):
             process_name = "process " + str(rank)
-            q = self.q
+            output_or_exception_q = self.output_or_exception_q
+            safe_to_exit = self.safe_to_exit
             width = console.width
             process = multiprocessing.Process(
                 target=self.__class__._run_process,
                 name=process_name,
-                args=(q, width, rank, parties, federation_session_id, proc, data_dir, log_level, parameters),
+                args=(
+                    output_or_exception_q,
+                    safe_to_exit,
+                    width,
+                    rank,
+                    parties,
+                    federation_session_id,
+                    proc,
+                    data_dir,
+                    log_level,
+                    parameters,
+                ),
             )
             self.processes.append(process)
 
@@ -67,7 +80,17 @@ class MultiProcessLauncher:
 
     @classmethod
     def _run_process(
-        cls, q: Queue, width, rank, parties, federation_session_id, proc, data_dir, log_level, parameters
+        cls,
+        output_or_exception_q: Queue,
+        safe_to_exit: Event,
+        width,
+        rank,
+        parties,
+        federation_session_id,
+        proc,
+        data_dir,
+        log_level,
+        parameters,
     ):
         from fate.arch.utils.logger import set_up_logging
         from fate.arch.utils.context_helper import init_standalone_context
@@ -98,16 +121,15 @@ class MultiProcessLauncher:
             parameters = mpc_module.parse_parameters(parameters)
             inst = mpc_module(**parameters)
             inst.fit(ctx)
+            output_or_exception_q.put((rank, None, None))
+            safe_to_exit.wait()
 
         except Exception as e:
             logger.error(f"exception in rank {rank}: {e}", stack_info=False)
-            # logger.exception(e)
             exc_traceback = rich.traceback.Traceback.from_exception(
                 type(e), e, traceback=e.__traceback__, width=width, show_locals=True
             )
-            q.put((rank, e, exc_traceback))
-        else:
-            q.put((rank, None, None))
+            output_or_exception_q.put((rank, e, exc_traceback))
         finally:
             try:
                 ctx.destroy()
@@ -121,7 +143,7 @@ class MultiProcessLauncher:
     def wait(self) -> int:
         uncompleted_ranks = set(range(len(self.processes)))
         for i in range(len(self.processes)):
-            rank, e, exc_traceback = self.q.get()
+            rank, e, exc_traceback = self.output_or_exception_q.get()
             uncompleted_ranks.remove(rank)
             if e is not None:
                 self._exception_tb[rank] = exc_traceback
@@ -132,12 +154,14 @@ class MultiProcessLauncher:
             return 0
 
     def terminate(self):
+        self.safe_to_exit.set()
+        time.sleep(1)  # wait for 1 second to let all processes has a chance to exit
         for process in self.processes:
             if process.is_alive():
                 process.terminate()
         for process in self.processes:
             process.join()
-        self.q.close()
+        self.output_or_exception_q.close()
 
     def show_exceptions(self):
         for rank, tb in self._exception_tb.items():
