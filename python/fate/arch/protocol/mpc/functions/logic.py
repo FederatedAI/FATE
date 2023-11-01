@@ -5,9 +5,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from fate.arch.protocol import mpc
 from ..common.tensor_types import is_tensor
-from fate.arch.tensor import mpc
-
 
 __all__ = [
     "__eq__",

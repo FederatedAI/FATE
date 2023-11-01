@@ -6,7 +6,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from fate.arch.tensor.mpc.cuda import CUDALongTensor
+
+from fate.arch.protocol.mpc.cuda import CUDALongTensor
 
 
 # helper functions that determine if input is float, int, or base tensor:

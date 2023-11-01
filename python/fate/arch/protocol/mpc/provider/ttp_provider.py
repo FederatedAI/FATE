@@ -7,15 +7,14 @@
 
 import logging
 
-import fate.arch.protocol.mpc.communicator as comm
 import torch
 import torch.distributed as dist
-from fate.arch.tensor.mpc.common.rng import generate_kbit_random_tensor, generate_random_ring_element
-from fate.arch.tensor.mpc.common.util import count_wraps
+
+import fate.arch.protocol.mpc.communicator as comm
+from fate.arch.protocol.mpc.common.rng import generate_kbit_random_tensor, generate_random_ring_element
+from fate.arch.protocol.mpc.common.util import count_wraps
 from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor, BinarySharedTensor
-
 from .provider import TupleProvider
-
 
 TTP_FUNCTIONS = ["additive", "square", "binary", "wraps", "B2A"]
 

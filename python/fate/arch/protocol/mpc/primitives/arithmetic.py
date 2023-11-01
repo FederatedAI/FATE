@@ -9,16 +9,16 @@
 import torch
 
 import fate.arch.protocol.mpc.communicator as comm
-from fate.arch.tensor.mpc.common.rng import generate_random_ring_element
-from fate.arch.tensor.mpc.common.tensor_types import is_float_tensor, is_int_tensor, is_tensor
-from fate.arch.tensor.mpc.common.util import torch_stack
-from fate.arch.tensor.mpc.config import cfg
-from fate.arch.tensor.mpc.cryptensor import CrypTensor
-from fate.arch.tensor.mpc.cuda import CUDALongTensor
-from fate.arch.tensor.mpc.encoder import FixedPointEncoder
-from fate.arch.tensor.mpc.functions import regular
-from . import beaver, replicated  # noqa: F401
 from fate.arch.context import Context
+from fate.arch.protocol.mpc.common.rng import generate_random_ring_element
+from fate.arch.protocol.mpc.common.tensor_types import is_float_tensor, is_int_tensor, is_tensor
+from fate.arch.protocol.mpc.common.util import torch_stack
+from fate.arch.protocol.mpc.config import cfg
+from fate.arch.protocol.mpc.cryptensor import CrypTensor
+from fate.arch.protocol.mpc.cuda import CUDALongTensor
+from fate.arch.protocol.mpc.encoder import FixedPointEncoder
+from fate.arch.protocol.mpc.functions import regular
+from . import beaver, replicated  # noqa: F401
 
 SENTINEL = -1
 

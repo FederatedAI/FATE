@@ -8,14 +8,12 @@
 
 from functools import wraps
 
-from fate.arch.tensor.mpc.config import cfg
-
+from fate.arch.protocol.mpc.config import cfg
 from .debug import configure_logging, MultiprocessingPdb, validate_correctness
-
 
 pdb = MultiprocessingPdb()
 
-__all__ = ["pdb", "configure_logging", "validate_correctness", "validate_decorator"]
+__all__ = ["pdb", "configure_logging", "validate_correctness"]
 
 
 def register_validation(getattr_function):

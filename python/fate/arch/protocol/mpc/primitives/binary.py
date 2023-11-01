@@ -9,12 +9,12 @@
 import torch
 
 import fate.arch.protocol.mpc.communicator as comm
-from fate.arch.tensor.mpc.common.rng import generate_kbit_random_tensor
-from fate.arch.tensor.mpc.common.tensor_types import is_tensor
-from fate.arch.tensor.mpc.common.util import torch_cat, torch_stack
-from fate.arch.tensor.mpc.cuda import CUDALongTensor
-from fate.arch.tensor.mpc.encoder import FixedPointEncoder
-from fate.arch.tensor.mpc.functions import regular
+from fate.arch.protocol.mpc.common.rng import generate_kbit_random_tensor
+from fate.arch.protocol.mpc.common.tensor_types import is_tensor
+from fate.arch.protocol.mpc.common.util import torch_cat, torch_stack
+from fate.arch.protocol.mpc.cuda import CUDALongTensor
+from fate.arch.protocol.mpc.encoder import FixedPointEncoder
+from fate.arch.protocol.mpc.functions import regular
 from . import beaver, circuit
 
 SENTINEL = -1

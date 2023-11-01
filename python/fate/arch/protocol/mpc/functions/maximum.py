@@ -8,9 +8,9 @@
 import math
 
 import torch
-from fate.arch.tensor.mpc.config import cfg
-from fate.arch.tensor import mpc
 
+from fate.arch.protocol import mpc
+from fate.arch.protocol.mpc.config import cfg
 
 __all__ = [
     "argmax",

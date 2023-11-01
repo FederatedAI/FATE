@@ -11,8 +11,9 @@ from collections import OrderedDict
 
 import torch
 import torch.onnx.symbolic_helper as sym_help
-from ..functions.pooling import _adaptive_pool2d_helper
+
 from ..cryptensor import CrypTensor
+from ..functions.pooling import _adaptive_pool2d_helper
 from ... import mpc
 
 

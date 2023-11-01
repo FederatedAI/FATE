@@ -9,7 +9,7 @@ import logging
 import pdb as pythondebugger
 import sys
 
-from fate.arch.tensor.mpc.config import cfg
+from fate.arch.protocol.mpc.config import cfg
 
 
 class MultiprocessingPdb(pythondebugger.Pdb):

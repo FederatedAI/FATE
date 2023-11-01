@@ -9,8 +9,8 @@ import torch
 
 import fate.arch.protocol.mpc.communicator as comm
 from fate.arch.protocol import mpc
-from fate.arch.tensor.mpc.common.util import count_wraps
-from fate.arch.tensor.mpc.config import cfg
+from fate.arch.protocol.mpc.common.util import count_wraps
+from fate.arch.protocol.mpc.config import cfg
 
 
 class IgnoreEncodings:

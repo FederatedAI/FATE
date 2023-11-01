@@ -7,7 +7,7 @@
 
 import torch
 
-from fate.arch.tensor.mpc.encoder import FixedPointEncoder
+from fate.arch.protocol.mpc.encoder import FixedPointEncoder
 from . import beaver
 from .arithmetic import ArithmeticSharedTensor
 from .binary import BinarySharedTensor

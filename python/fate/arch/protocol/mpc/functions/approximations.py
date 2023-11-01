@@ -8,10 +8,10 @@
 import math
 
 import torch
-from ..config import cfg
-from fate.arch.tensor import mpc
-from ..common.util import chebyshev_series
 
+from fate.arch.protocol import mpc
+from ..common.util import chebyshev_series
+from ..config import cfg
 
 __all__ = [
     "exp",

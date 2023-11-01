@@ -4,10 +4,10 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from fate.arch.tensor import mpc
 import torch
-from fate.arch.tensor.mpc.cuda import CUDALongTensor
+
 from fate.arch.protocol import mpc
+from fate.arch.protocol.mpc.cuda import CUDALongTensor
 from fate.arch.tensor.distributed._tensor import _ShardingShapes, DTensor
 
 

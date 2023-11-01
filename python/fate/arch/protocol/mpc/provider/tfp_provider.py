@@ -5,12 +5,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import fate.arch.protocol.mpc.communicator as comm
 import torch
-from fate.arch.tensor.mpc.common.rng import generate_kbit_random_tensor, generate_random_ring_element
-from fate.arch.tensor.mpc.common.util import count_wraps, torch_stack
-from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor, BinarySharedTensor
 
+import fate.arch.protocol.mpc.communicator as comm
+from fate.arch.protocol.mpc.common.rng import generate_kbit_random_tensor, generate_random_ring_element
+from fate.arch.protocol.mpc.common.util import count_wraps, torch_stack
+from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor, BinarySharedTensor
 from .provider import TupleProvider
 
 

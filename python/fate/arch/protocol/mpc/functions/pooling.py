@@ -8,7 +8,8 @@
 import math
 
 import torch
-from fate.arch.tensor import mpc
+
+from fate.arch.protocol import mpc
 
 __all__ = [
     "_max_pool2d_backward",

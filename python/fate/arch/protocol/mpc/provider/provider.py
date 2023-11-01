@@ -7,8 +7,9 @@
 
 import os
 
-import fate.arch.protocol.mpc.communicator as comm
 import torch
+
+import fate.arch.protocol.mpc.communicator as comm
 
 
 class TupleProvider:

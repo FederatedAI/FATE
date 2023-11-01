@@ -5,12 +5,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import abc
 import functools
 
 import numpy as np
 import torch
-from fate.arch.tensor.mpc.cuda import CUDALongTensor
+
+from fate.arch.protocol.mpc.cuda import CUDALongTensor
 
 
 def count_wraps(share_list):
@@ -75,9 +75,7 @@ def torch_stack(tensors, dim=0, out=None):
 
 # TODO: Remove this function and change the calling locations accordingly.
 # See https://github.com/pytorch/pytorch/commit/445ee5620ec203cfccefd6f3dca4f0962a83b03e
-def _grad_input_padding(
-    grad_output, input_size, stride, padding, kernel_size, dilation=None
-):
+def _grad_input_padding(grad_output, input_size, stride, padding, kernel_size, dilation=None):
     if dilation is None:
         # For backward compatibility
         dilation = [1] * len(stride)
@@ -88,17 +86,10 @@ def _grad_input_padding(
     if len(input_size) == k + 2:
         input_size = input_size[-k:]
     if len(input_size) != k:
-        raise ValueError(
-            "input_size must have {} elements (got {})".format(k + 2, len(input_size))
-        )
+        raise ValueError("input_size must have {} elements (got {})".format(k + 2, len(input_size)))
 
     def dim_size(d):
-        return (
-            (grad_output.size(d + 2) - 1) * stride[d]
-            - 2 * padding[d]
-            + 1
-            + dilation[d] * (kernel_size[d] - 1)
-        )
+        return (grad_output.size(d + 2) - 1) * stride[d] - 2 * padding[d] + 1 + dilation[d] * (kernel_size[d] - 1)
 
     min_sizes = [dim_size(d) for d in range(k)]
     max_sizes = [min_sizes[d] + stride[d] - 1 for d in range(k)]

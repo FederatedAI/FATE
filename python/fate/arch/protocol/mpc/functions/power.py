@@ -7,9 +7,8 @@
 
 import torch
 
+from fate.arch.protocol import mpc
 from ..common.tensor_types import is_tensor
-from fate.arch.tensor import mpc
-
 
 __all__ = ["norm", "polynomial", "pos_pow", "pow"]
 

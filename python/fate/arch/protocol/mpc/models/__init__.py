@@ -12,7 +12,6 @@ import sys
 import fate.arch.tensor.mpc.nn as cnn
 import torch
 
-
 # List of modules to import and additional classes to update from them
 __import_list = {
     "alexnet": [],

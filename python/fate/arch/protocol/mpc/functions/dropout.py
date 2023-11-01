@@ -6,8 +6,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import logging
-from fate.arch.tensor import mpc
 
+from fate.arch.protocol import mpc
 
 __all__ = ["dropout"]
 

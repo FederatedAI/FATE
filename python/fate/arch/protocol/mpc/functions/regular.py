@@ -10,7 +10,6 @@ import torch
 from ..common.tensor_types import is_tensor
 from ..common.util import torch_cat, torch_stack
 
-
 __all__ = [  # noqa: F822
     "__getitem__",
     "__len__",

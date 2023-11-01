@@ -10,10 +10,10 @@ import math
 import numpy as np
 import torch
 
+from fate.arch.tensor import DTensor
 from .common.tensor_types import is_float_tensor, is_int_tensor
 from .config import cfg
 from .cryptensor import CrypTensor
-from fate.arch.tensor import DTensor
 
 
 def nearest_integer_division(tensor, integer):

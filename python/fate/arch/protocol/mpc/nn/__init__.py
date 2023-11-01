@@ -6,8 +6,8 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from .init import *  # noqa: F403
 from .distances import CosineSimilarity
+from .init import *  # noqa: F403
 from .loss import _Loss, BCELoss, BCEWithLogitsLoss, CrossEntropyLoss, L1Loss, MSELoss
 from .module import (
     AdaptiveAvgPool2d,
@@ -72,7 +72,6 @@ from .module import (
     Where,
 )
 from .onnx_converter import from_onnx, from_pytorch, from_tensorflow, TF_AND_TF2ONNX
-
 
 # expose contents of package
 __all__ = [  # noqa: F405

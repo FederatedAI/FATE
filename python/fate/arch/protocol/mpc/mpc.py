@@ -7,17 +7,16 @@
 
 import torch
 
-from fate.arch.tensor.mpc.common.tensor_types import is_tensor
-from fate.arch.tensor.mpc.common.util import torch_stack
-from fate.arch.tensor.mpc.config import cfg
-from fate.arch.tensor.mpc.cryptensor import CrypTensor
-from fate.arch.tensor.mpc.cuda import CUDALongTensor
-from fate.arch.tensor.mpc.encoder import FixedPointEncoder
 from . import communicator as comm
+from .common.tensor_types import is_tensor
+from .common.util import torch_stack
+from .config import cfg
+from .cryptensor import CrypTensor
+from .cuda import CUDALongTensor
+from .encoder import FixedPointEncoder
 from .primitives.binary import BinarySharedTensor
 from .primitives.converters import convert
 from .ptype import ptype as Ptype
-from fate.arch.tensor.distributed import DTensor
 
 
 @CrypTensor.register_cryptensor("mpc")

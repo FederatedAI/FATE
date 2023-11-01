@@ -5,8 +5,8 @@ import warnings
 import torch
 
 from fate.arch.protocol.mpc.communicator import Communicator
-from fate.arch.tensor import mpc
-from fate.arch.tensor.mpc.cryptensor import CrypTensor
+from fate.arch.protocol import mpc
+from fate.arch.protocol.mpc.cryptensor import CrypTensor
 import logging
 
 if typing.TYPE_CHECKING:
@@ -107,7 +107,7 @@ class MPC:
 
 
 def ttp_required():
-    from fate.arch.tensor.mpc.config import cfg
+    from fate.arch.protocol.mpc.config import cfg
 
     return cfg.mpc.provider == "TTP"
 

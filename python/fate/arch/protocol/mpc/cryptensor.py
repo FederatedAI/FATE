@@ -12,7 +12,6 @@ import torch
 from .debug import register_validation
 from .gradients import AutogradContext, BaseAutogradContext, get_grad_fn
 
-
 # list of all static functions that CrypTensors support:
 STATIC_FUNCTIONS = ["cat", "stack"]
 STATIC_FUNCTION_MAPPING = {getattr(torch, name): name for name in STATIC_FUNCTIONS}
