@@ -26,6 +26,7 @@ __all__ = [
     "primitives",
     "provider",
     "ptype",
+    "generators"
 ]
 
 # the different private type attributes of an mpc encrypted tensor

@@ -17,16 +17,16 @@ from .provider import TupleProvider
 class TrustedFirstParty(TupleProvider):
     NAME = "TFP"
 
-    def generate_additive_triple(self, size0, size1, op, device=None, *args, **kwargs):
+    def generate_additive_triple(self, ctx, size0, size1, op, device=None, *args, **kwargs):
         """Generate multiplicative triples of given sizes"""
-        a = generate_random_ring_element(size0, device=device)
-        b = generate_random_ring_element(size1, device=device)
+        a = generate_random_ring_element(ctx, size0, device=device)
+        b = generate_random_ring_element(ctx, size1, device=device)
 
         c = getattr(torch, op)(a, b, *args, **kwargs)
 
-        a = ArithmeticSharedTensor(a, precision=0, src=0)
-        b = ArithmeticSharedTensor(b, precision=0, src=0)
-        c = ArithmeticSharedTensor(c, precision=0, src=0)
+        a = ArithmeticSharedTensor(ctx, a, precision=0, src=0)
+        b = ArithmeticSharedTensor(ctx, b, precision=0, src=0)
+        c = ArithmeticSharedTensor(ctx, c, precision=0, src=0)
 
         return a, b, c
 
@@ -55,10 +55,7 @@ class TrustedFirstParty(TupleProvider):
     def wrap_rng(self, size, device=None):
         """Generate random shared tensor of given size and sharing of its wraps"""
         num_parties = comm.get().get_world_size()
-        r = [
-            generate_random_ring_element(size, device=device)
-            for _ in range(num_parties)
-        ]
+        r = [generate_random_ring_element(size, device=device) for _ in range(num_parties)]
         theta_r = count_wraps(r)
 
         shares = comm.get().scatter(r, 0)

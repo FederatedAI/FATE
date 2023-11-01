@@ -56,12 +56,9 @@ class MPCTensor(CrypTensor):
         # create the MPCTensor:
         if tensor is []:
             self._tensor = torch.tensor([], device=device)
-        elif isinstance(tensor, DTensor):
-            tensor_type = ptype.to_tensor(distributed=True)
-            self._tensor = tensor_type(ctx=ctx, tensor=tensor, device=device, *args, **kwargs)
         else:
             tensor_type = ptype.to_tensor()
-            self._tensor = tensor_type(tensor=tensor, device=device, *args, **kwargs)
+            self._tensor = tensor_type(ctx=ctx, tensor=tensor, device=device, *args, **kwargs)
         self.ptype = ptype
         self.ctx = ctx
 
@@ -83,7 +80,7 @@ class MPCTensor(CrypTensor):
     def clone(self):
         """Create a deep copy of the input tensor."""
         # TODO: Rename this to __deepcopy__()?
-        result = MPCTensor([])
+        result = MPCTensor(self.ctx, [])
         result._tensor = self._tensor.clone()
         result.ptype = self.ptype
         return result

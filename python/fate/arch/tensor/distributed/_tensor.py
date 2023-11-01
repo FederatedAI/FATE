@@ -51,7 +51,7 @@ class DTensor:
             raise NotImplementedError(f"device {device} not supported")
 
     def size(self):
-        return self.shape
+        return self.shardings.shapes
 
     @property
     def T(self):
@@ -181,18 +181,45 @@ class DTensor:
     def clone(self):
         return DTensor(self.shardings)
 
-    def add(self, other):
+    def add(self, other) -> "DTensor":
         return torch.add(self, other)
+
+    def div(self, other, *, rounding_mode=None) -> "DTensor":
+        return torch.div(self, other, rounding_mode=rounding_mode)
+
+    def sub(self, other):
+        return torch.sub(self, other)
 
     def nelement(self):
         return self.shardings.shape.numel()
 
+    def long(self):
+        return DTensor(self.shardings.map_shard(lambda t: t.long(), dtype=torch.long))
+
+    def set_(self, other):
+        if isinstance(other, DTensor):
+            self.shardings = other.shardings
+        elif isinstance(other, Shardings):
+            self.shardings = other
+        else:
+            raise NotImplementedError(f"type `{other}`")
+        return self
+
     def copy_(self, other):
         self.shardings = other.shardings
+        return self
 
-    def long(self):
-        shardings = self.shardings.map_shard(lambda t: t.long(), dtype=torch.long)
-        return DTensor(shardings)
+    def add_(self, other):
+        self.shardings = self.add(other).shardings
+        return self
+
+    def div_(self, other, *, rounding_mode=None):
+        self.shardings = self.div(other, rounding_mode=rounding_mode).shardings
+        return self
+
+    @property
+    def data(self):
+        return self.shardings
 
 
 T1 = TypeVar("T1")

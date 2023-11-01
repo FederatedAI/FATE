@@ -29,7 +29,7 @@ class IgnoreEncodings:
             tensor.encoder._scale = self.encodings_cache[i]
 
 
-def __beaver_protocol(op, x, y, *args, **kwargs):
+def __beaver_protocol(ctx, op, x, y, *args, **kwargs):
     """Performs Beaver protocol for additively secret-shared tensors x and y
 
     1. Obtain uniformly random sharings [a],[b] and [c] = [a * b]
@@ -49,7 +49,7 @@ def __beaver_protocol(op, x, y, *args, **kwargs):
         raise ValueError(f"x lives on device {x.device} but y on device {y.device}")
 
     provider = mpc.get_default_provider()
-    a, b, c = provider.generate_additive_triple(x.size(), y.size(), op, device=x.device, *args, **kwargs)
+    a, b, c = provider.generate_additive_triple(ctx, x.size(), y.size(), op, device=x.device, *args, **kwargs)
 
     from .arithmetic import ArithmeticSharedTensor
 
@@ -58,9 +58,9 @@ def __beaver_protocol(op, x, y, *args, **kwargs):
         Reference: "Multiparty Computation from Somewhat Homomorphic Encryption"
         Link: https://eprint.iacr.org/2011/535.pdf
         """
-        f, g, h = provider.generate_additive_triple(x.size(), y.size(), op, device=x.device, *args, **kwargs)
+        f, g, h = provider.generate_additive_triple(ctx, x.size(), y.size(), op, device=x.device, *args, **kwargs)
 
-        t = ArithmeticSharedTensor.PRSS(a.size(), device=x.device)
+        t = ArithmeticSharedTensor.PRSS(ctx, a.size(), device=x.device)
         t_plain_text = t.get_plain_text()
 
         rho = (t_plain_text * a - f).get_plain_text()
@@ -83,29 +83,28 @@ def __beaver_protocol(op, x, y, *args, **kwargs):
     return c
 
 
-def mul(x, y):
-    raise NotImplementedError("mul not implemented.")
-    return __beaver_protocol("mul", x, y)
+def mul(ctx, x, y):
+    return __beaver_protocol(ctx, "mul", x, y)
 
 
-def matmul(x, y):
-    return __beaver_protocol("matmul", x, y)
+def matmul(ctx, x, y):
+    return __beaver_protocol(ctx, "matmul", x, y)
 
 
-def conv1d(x, y, **kwargs):
-    return __beaver_protocol("conv1d", x, y, **kwargs)
+def conv1d(ctx, x, y, **kwargs):
+    return __beaver_protocol(ctx, "conv1d", x, y, **kwargs)
 
 
-def conv2d(x, y, **kwargs):
-    return __beaver_protocol("conv2d", x, y, **kwargs)
+def conv2d(ctx, x, y, **kwargs):
+    return __beaver_protocol(ctx, "conv2d", x, y, **kwargs)
 
 
-def conv_transpose1d(x, y, **kwargs):
-    return __beaver_protocol("conv_transpose1d", x, y, **kwargs)
+def conv_transpose1d(ctx, x, y, **kwargs):
+    return __beaver_protocol(ctx, "conv_transpose1d", x, y, **kwargs)
 
 
-def conv_transpose2d(x, y, **kwargs):
-    return __beaver_protocol("conv_transpose2d", x, y, **kwargs)
+def conv_transpose2d(ctx, x, y, **kwargs):
+    return __beaver_protocol(ctx, "conv_transpose2d", x, y, **kwargs)
 
 
 def square(x):

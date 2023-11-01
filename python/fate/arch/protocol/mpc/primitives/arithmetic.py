@@ -18,6 +18,7 @@ from fate.arch.tensor.mpc.cuda import CUDALongTensor
 from fate.arch.tensor.mpc.encoder import FixedPointEncoder
 from fate.arch.tensor.mpc.functions import regular
 from . import beaver, replicated  # noqa: F401
+from fate.arch.context import Context
 
 SENTINEL = -1
 
@@ -35,6 +36,7 @@ class ArithmeticSharedTensor(object):
     # constructors:
     def __init__(
         self,
+        ctx,
         tensor=None,
         size=None,
         broadcast_size=False,
@@ -60,6 +62,8 @@ class ArithmeticSharedTensor(object):
         the tensor. If `device` is unspecified, it is set to `tensor.device`.
         """
 
+        assert isinstance(ctx, Context), "ctx must be a Context object"
+        self._ctx = ctx
         # do nothing if source is sentinel:
         if src == SENTINEL:
             return
@@ -93,9 +97,10 @@ class ArithmeticSharedTensor(object):
             size = comm.get().broadcast_obj(size, src)
 
         # generate pseudo-random zero sharing (PRZS) and add source's tensor:
-        self.share = ArithmeticSharedTensor.PRZS(size, device=device).share
+        self.share = ArithmeticSharedTensor.PRZS(ctx, size, device=device).share
         if self.rank == src:
             self.share += tensor
+
 
     @staticmethod
     def new(*args, **kwargs):
@@ -149,7 +154,7 @@ class ArithmeticSharedTensor(object):
         return result
 
     @staticmethod
-    def PRZS(*size, device=None):
+    def PRZS(ctx, *size, device=None):
         """
         Generate a Pseudo-random Sharing of Zero (using arithmetic shares)
 
@@ -159,24 +164,24 @@ class ArithmeticSharedTensor(object):
         """
         from fate.arch.protocol.mpc import generators
 
-        tensor = ArithmeticSharedTensor(src=SENTINEL)
+        tensor = ArithmeticSharedTensor(ctx, src=SENTINEL)
         if device is None:
             device = torch.device("cpu")
         elif isinstance(device, str):
             device = torch.device(device)
         g0 = generators["prev"][device]
         g1 = generators["next"][device]
-        current_share = generate_random_ring_element(*size, generator=g0, device=device)
-        next_share = generate_random_ring_element(*size, generator=g1, device=device)
+        current_share = generate_random_ring_element(ctx, *size, generator=g0, device=device)
+        next_share = generate_random_ring_element(ctx, *size, generator=g1, device=device)
         tensor.share = current_share - next_share
         return tensor
 
     @staticmethod
-    def PRSS(*size, device=None):
+    def PRSS(ctx, *size, device=None):
         """
         Generates a Pseudo-random Secret Share from a set of random arithmetic shares
         """
-        share = generate_random_ring_element(*size, device=device)
+        share = generate_random_ring_element(ctx, *size, device=device)
         tensor = ArithmeticSharedTensor.from_shares(share=share)
         return tensor
 
@@ -186,13 +191,13 @@ class ArithmeticSharedTensor(object):
 
     def shallow_copy(self):
         """Create a shallow copy"""
-        result = ArithmeticSharedTensor(src=SENTINEL)
+        result = ArithmeticSharedTensor(ctx=self._ctx, src=SENTINEL)
         result.encoder = self.encoder
         result._tensor = self._tensor
         return result
 
     def clone(self):
-        result = ArithmeticSharedTensor(src=SENTINEL)
+        result = ArithmeticSharedTensor(ctx=self._ctx, src=SENTINEL)
         result.encoder = self.encoder
         result._tensor = self._tensor.clone()
         return result
@@ -356,7 +361,8 @@ class ArithmeticSharedTensor(object):
                 result.share = getattr(result.share, op)(y.share)
             else:  # ['mul', 'matmul', 'convNd', 'conv_transposeNd']
                 protocol = globals()[cfg.mpc.protocol]
-                result.share.set_(getattr(protocol, op)(result, y, *args, **kwargs).share.data)
+                tmp = getattr(protocol, op)(self._ctx, result, y, *args, **kwargs)
+                result.share = tmp.share
         else:
             raise TypeError("Cannot %s %s with %s" % (op, type(y), type(self)))
 

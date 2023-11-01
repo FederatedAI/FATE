@@ -23,9 +23,20 @@ def mul(input, other):
     return _binary(input, other, torch.mul)
 
 
+def _create_meta_tensor(x):
+    if isinstance(x, (torch.Tensor, DTensor)):
+        return torch.rand(*x.shape, device=torch.device("meta"), dtype=x.dtype)
+    else:
+        return torch.tensor(x, device=torch.device("meta"))
+
+
 @implements(torch.div)
-def div(input, other):
-    return _binary(input, other, torch.div, dtype_promote_to=torch.float32)
+def div(input, other, *, rounding_mode=None):
+    _x = _create_meta_tensor(input)
+    _y = _create_meta_tensor(other)
+    _z = torch.div(_x, _y, rounding_mode=rounding_mode)
+
+    return _binary(input, other, lambda x, y: torch.div(x, y, rounding_mode=rounding_mode), dtype_promote_to=_z.dtype)
 
 
 def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
@@ -50,13 +61,19 @@ def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
         if swap_operad:
             return DTensor(
                 input.shardings.map_shard(
-                    lambda x: op(other, x), dtype_promote_to=dtype_promote_to, shapes=shapes.shapes, axis=shapes.axis
+                    lambda x: op(other, x),
+                    dtype_promote_to=dtype_promote_to,
+                    shapes=shapes.shapes,
+                    axis=shapes.axis,
                 )
             )
 
         else:
             return DTensor(
                 input.shardings.map_shard(
-                    lambda x: op(x, other), dtype_promote_to=dtype_promote_to, shapes=shapes.shapes, axis=shapes.axis
+                    lambda x: op(x, other),
+                    dtype_promote_to=dtype_promote_to,
+                    shapes=shapes.shapes,
+                    axis=shapes.axis,
                 )
             )

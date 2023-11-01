@@ -7,9 +7,11 @@ import torch
 from fate.arch.protocol.mpc.communicator import Communicator
 from fate.arch.tensor import mpc
 from fate.arch.tensor.mpc.cryptensor import CrypTensor
+import logging
 
 if typing.TYPE_CHECKING:
     from fate.arch.context import Context
+logger = logging.getLogger(__name__)
 
 
 class MPC:
@@ -63,6 +65,45 @@ class MPC:
         Returns True if obj is an encrypted tensor.
         """
         return isinstance(obj, CrypTensor)
+
+    def print(self, message, dst=[0], print_func=None):
+        if print_func is None:
+            print_func = print
+        if self.rank in dst:
+            print_func(message)
+
+    def info(self, message, dst=[0]):
+        if isinstance(dst, int):
+            dst = [dst]
+        if self.rank in dst:
+            logger.info(msg=message, stacklevel=2)
+
+    def debug(self, message, dst=[0]):
+        if isinstance(dst, int):
+            dst = [dst]
+        if self.rank in dst:
+            logger.debug(msg=message, stacklevel=2)
+
+    def warning(self, message, dst=[0]):
+        if isinstance(dst, int):
+            dst = [dst]
+        if self.rank in dst:
+            logger.warning(msg=message, stacklevel=2)
+
+    def error(self, message, dst=[0]):
+        if isinstance(dst, int):
+            dst = [dst]
+        if self.rank in dst:
+            logger.error(msg=message, stacklevel=2)
+
+    def cond_call(self, func1, func2=None, dst=0):
+        """
+        Calls func1 if rank == dst, otherwise calls func2.
+        """
+        if self.rank == dst:
+            return func1()
+        else:
+            return func2() if func2 is not None else None
 
 
 def ttp_required():

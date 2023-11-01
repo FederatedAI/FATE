@@ -11,4 +11,4 @@ def to_local_f(input: DTensor):
 
 @implements(_custom_ops.encode_as_int_f)
 def encode_as_int_f(input: DTensor, precision):
-    return DTensor(input.shardings.map_shard(lambda x: (x * 2 ** precision).type(torch.int64), dtype=torch.int64))
+    return DTensor(input.shardings.map_shard(lambda x: (x * 2**precision).type(torch.int64), dtype=torch.int64))

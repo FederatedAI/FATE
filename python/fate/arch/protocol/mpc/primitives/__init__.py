@@ -7,7 +7,6 @@
 
 from .arithmetic import ArithmeticSharedTensor
 from .binary import BinarySharedTensor
-from .distributed_arithmetic import DistributedArithmeticSharedTensor
 
 
-__all__ = ["ArithmeticSharedTensor", "BinarySharedTensor", "DistributedArithmeticSharedTensor"]
+__all__ = ["ArithmeticSharedTensor", "BinarySharedTensor"]
