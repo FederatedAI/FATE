@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 
+from pipeline.param import consts
 from pipeline.param.base_param import BaseParam
 
 
@@ -27,38 +28,41 @@ class FeatureImputationParam(BaseParam):
     Parameters
     ----------
 
-    default_value : None or single object type or list
+    default_value : None or single object type
         the value to replace missing value.
         if None, it will use default value defined in federatedml/feature/imputer.py,
-        if single object, will fill missing value with this object,
-        if list, it's length should be the same as input data' feature dimension,
-            means that if some column happens to have missing values, it will replace it
-            the value by element in the identical position of this list.
-
-    missing_fill_method : [None, 'min', 'max', 'mean', 'designated']
+        if single object, will fill missing value with this object
+    col_default_value: None or dict of (column name, default_value) pairs
+        specifies default value for each column;
+        any column to be filled with 'designated' but not specified in col_default_value will take default_value
+    missing_fill_method : [None, 'min', 'max', 'mean', 'designated', 'median', 'mode']
         the method to replace missing value
-
     col_missing_fill_method: None or dict of (column name, missing_fill_method) pairs
         specifies method to replace missing value for each column;
         any column not specified will take missing_fill_method,
         if missing_fill_method is None, unspecified column will not be imputed;
-
     missing_impute : None or list
-        element of list can be any type, or auto generated if value is None, define which values to be consider as missing, default: None
-
+        element of list can be any type, or auto generated if value is None, define which values to be considered as missing, default: None
+    error: float, 0 <= error < 1 default: 0.0001
+        The error of tolerance for quantile calculation when computing median
+    multi_mode: string, choose between 'random' and 'raise', default 'random'
+        if 'random', randomly choose one of the modes as fill value, if 'raise', raise error when there are multiple modes
     need_run: bool, default True
         need run or not
 
     """
 
-    def __init__(self, default_value=0, missing_fill_method=None, col_missing_fill_method=None,
-                 missing_impute=None, need_run=True):
+    def __init__(self, default_value=0, col_default_value=None, missing_fill_method=None, col_missing_fill_method=None,
+                 missing_impute=None, need_run=True, error=consts.DEFAULT_RELATIVE_ERROR, multi_mode='random'):
         super(FeatureImputationParam, self).__init__()
         self.default_value = default_value
+        self.col_default_value = col_default_value
         self.missing_fill_method = missing_fill_method
         self.col_missing_fill_method = col_missing_fill_method
         self.missing_impute = missing_impute
         self.need_run = need_run
+        self.error = error
+        self.multi_mode = multi_mode
 
     def check(self):
 
@@ -68,8 +72,15 @@ class FeatureImputationParam(BaseParam):
 
         if self.missing_fill_method is not None:
             self.missing_fill_method = self.check_and_change_lower(self.missing_fill_method,
-                                                                   ['min', 'max', 'mean', 'designated'],
+                                                                   ['min', 'max', 'mean',
+                                                                    'designated', 'median', 'mode'],
                                                                    f"{descr}missing_fill_method ")
+        if self.col_default_value:
+            if not isinstance(self.col_default_value, dict):
+                raise ValueError(f"{descr}col_default_value should be a dict")
+            for k, v in self.col_default_value.items():
+                if not isinstance(k, str):
+                    raise ValueError(f"{descr}col_default_value should contain str key(s) only")
         if self.col_missing_fill_method:
             if not isinstance(self.col_missing_fill_method, dict):
                 raise ValueError(f"{descr}col_missing_fill_method should be a dict")
@@ -77,7 +88,7 @@ class FeatureImputationParam(BaseParam):
                 if not isinstance(k, str):
                     raise ValueError(f"{descr}col_missing_fill_method should contain str key(s) only")
                 v = self.check_and_change_lower(v,
-                                                ['min', 'max', 'mean', 'designated'],
+                                                ['min', 'max', 'mean', 'designated', 'median', 'mode'],
                                                 f"per column method specified in {descr} col_missing_fill_method dict")
                 self.col_missing_fill_method[k] = v
         if self.missing_impute:

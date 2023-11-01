@@ -100,7 +100,7 @@ class SummaryStatistics(object):
                 exp_sum_m = getattr(self, f"exp_sum_{m}")
                 # exp_sum_m[filter_idx] += filter_rows ** m
                 exp_sum_m[filter_idx] = (self.count[filter_idx] - 1) / self.count[filter_idx] * \
-                    exp_sum_m[filter_idx] + filter_rows ** m / self.count[filter_idx]
+                                        exp_sum_m[filter_idx] + filter_rows ** m / self.count[filter_idx]
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
 
             """
@@ -395,6 +395,7 @@ class MultivariateStatisticalSummary(object):
         self.label_summary = None
         self.error = error
         self.missing_static_obj: MissingStatistic = None
+        self.mode_ = None
 
     def __init_cols(self, data_instances, cols_index, stat_order, bias):
         header = data_overview.get_header(data_instances)
@@ -540,6 +541,73 @@ class MultivariateStatisticalSummary(object):
             new_dict[col_name] = static_1
         return new_dict
 
+    def compute_mode(self, data):
+
+        def __mapper(kv_iterator):
+            for _, v in kv_iterator:
+                for i, val in enumerate(v):
+                    yield (i, val), 1
+
+        def __reducer(x, y):
+            return x + y
+
+        data_reduce_by_col_val = data.mapReducePartitions(__mapper, __reducer)
+
+        def __aggregate_count_per_val_in_col(kv_iterator, header):
+            col_dict = {}
+            for k, v in kv_iterator:
+                if k[1] in self.abnormal_list or (isinstance(k[1], float) and np.isnan(k[1])):
+                    continue
+                col_name = header[k[0]]
+                if col_name not in col_dict:
+                    col_dict[col_name] = {'max_count': v, 'max_val': [k[1]]}
+                else:
+                    if col_dict[col_name]['max_count'] < v:
+                        col_dict[col_name] = {'max_count': v, 'max_val': [k[1]]}
+                    elif col_dict[col_name]['max_count'] == v:
+                        col_dict[col_name]['max_val'].append(k[1])
+            return col_dict
+
+        func = functools.partial(__aggregate_count_per_val_in_col, header=data.schema.get('header'))
+
+        def merge_count_dict(x, y):
+            for k, v in y.items():
+                if k not in x:
+                    x[k] = v
+                else:
+                    if v['max_count'] > x[k]['max_count']:
+                        x[k] = v
+                    elif v['max_count'] == x[k]['max_count']:
+                        x[k]['max_val'].extend(v['max_val'])
+
+            return x
+
+        data_mode_summary = data_reduce_by_col_val.mapPartitions(func).reduce(merge_count_dict)
+        return data_mode_summary
+
+    def get_mode(self, col=None):
+        """
+        Return the mode value(s) of the given column
+
+        Returns
+        -------
+        return a dict of result mode.
+
+        """
+        if col:
+            new_header = col
+            select_idx = [self.header.index(c) for c in col]
+            data = self.data_instances.mapValues(lambda v: v.features[select_idx])
+        else:
+            new_header = [self.header[i] for i in self.cols_index]
+            data = self.data_instances.mapValues(lambda v: v.features[self.cols_index])
+        new_schema = copy.deepcopy(self.data_instances.schema)
+        new_schema['header'] = new_header
+        data.schema = new_schema
+        if not self.mode_:
+            self.mode_ = self.compute_mode(data)
+        return self.mode_
+
     def get_median(self):
         if self.binning_obj is None:
             self._static_quantile_summaries()
@@ -607,7 +675,7 @@ class MultivariateStatisticalSummary(object):
 
         Returns
         -------
-        return a list of result result. The order is the same as cols.
+        return a list of result. The order is the same as cols.
         """
         if not self.finish_fit_statics:
             self._static_sums()

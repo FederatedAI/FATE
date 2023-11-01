@@ -36,7 +36,7 @@ class Imputer(object):
                 self.missing_value_list[i] = np.nan
                 self.abnormal_value_list[i] = NoneType()
         self.abnormal_value_set = set(self.abnormal_value_list)
-        self.support_replace_method = ['min', 'max', 'mean', 'median', 'designated']
+        self.support_replace_method = ['min', 'max', 'mean', 'median', 'designated', 'mode']
         self.support_output_format = {
             'str': str,
             'float': float,
@@ -49,7 +49,8 @@ class Imputer(object):
             'max': 'col',
             'mean': 'col',
             'median': 'col',
-            'designated': 'col'
+            'designated': 'col',
+            'mode': 'col'
         }
 
         self.cols_fit_impute_rate = []
@@ -81,6 +82,7 @@ class Imputer(object):
         replace_cols_index_list = []
         if isinstance(_data, Instance):
             for i, v in enumerate(_data.features):
+                # raise ValueError(f"v: {v}, type: {type(v)}, v in missing_value_list: {v in missing_value_list}")
                 if v in missing_value_list and i not in skip_cols:
                     _data.features[i] = output_format(transform_list[i])
                     replace_cols_index_list.append(i)
@@ -103,6 +105,7 @@ class Imputer(object):
         if isinstance(_data, Instance):
             new_features = []
             for i, v in enumerate(_data.features):
+                # raise ValueError(f"v: {v}, type: {type(v)}, v in missing_value_list: {v in missing_value_list}")
                 if v in missing_value_list and i not in skip_cols:
                     # _data.features[i] = transform_list[i]
                     new_features.append(transform_list[i])
@@ -176,7 +179,8 @@ class Imputer(object):
 
         return replace_method_per_col, skip_cols
 
-    def __get_cols_transform_value(self, data, replace_method, replace_value=None):
+    def __get_cols_transform_value(self, data, replace_method, replace_value=None, col_replace_value=None,
+                                   error=consts.DEFAULT_RELATIVE_ERROR, multi_mode='random'):
         """
 
         Parameters
@@ -189,8 +193,12 @@ class Imputer(object):
         list of transform value for each column, length equal to feature count of input data
 
         """
-        summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.abnormal_value_list)
         header = get_header(data)
+        to_compute_col_idx = [header.index(k) for k, v in
+                              replace_method.items() if v is not None and v not in (consts.DESIGNATED, consts.MODE)]
+        summary_obj = MultivariateStatisticalSummary(data, to_compute_col_idx, abnormal_list=self.abnormal_value_list,
+                                                     error=error)
+        to_compute_mode_col = [k for k, v in replace_method.items() if v == consts.MODE]
         cols_transform_value = {}
         if isinstance(replace_value, list):
             if len(replace_value) != len(header):
@@ -207,9 +215,18 @@ class Imputer(object):
                 transform_value = summary_obj.get_mean()[feature]
             elif replace_method[feature] == consts.MEDIAN:
                 transform_value = summary_obj.get_median()[feature]
+            elif replace_method[feature] == consts.MODE:
+                mode = summary_obj.get_mode(to_compute_mode_col)[feature]
+                if len(mode['max_val']) > 1:
+                    if multi_mode == 'random':
+                        transform_value = np.random.choice(mode['max_val'])
+                    else:
+                        raise ValueError("There are multiple modes in column {}, please check.".format(feature))
+                else:
+                    transform_value = mode['max_val'][0]
             elif replace_method[feature] == consts.DESIGNATED:
-                if isinstance(replace_value, list):
-                    transform_value = replace_value[i]
+                if isinstance(col_replace_value, dict):
+                    transform_value = col_replace_value.get(feature, replace_value)
                 else:
                     transform_value = replace_value
                 LOGGER.debug(f"replace value for feature {feature} is: {transform_value}")
@@ -217,28 +234,33 @@ class Imputer(object):
                 raise ValueError("Unknown replace method:{}".format(replace_method))
             cols_transform_value[feature] = transform_value
 
-        LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
+        # LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         cols_transform_value = [cols_transform_value[key] for key in header]
         # cols_transform_value = {i: round(cols_transform_value[key], 6) for i, key in enumerate(header)}
-        LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
+        # LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         return cols_transform_value
 
     @staticmethod
     def _transform_nan(instance):
         feature_shape = instance.features.shape[0]
         new_features = []
-
+        contains_na = False
         for i in range(feature_shape):
             if instance.features[i] != instance.features[i]:
                 new_features.append(NoneType())
+                contains_na = True
             else:
                 new_features.append(instance.features[i])
         new_instance = copy.deepcopy(instance)
-        new_instance.features = np.array(new_features)
+        if contains_na:
+            new_instance.features = np.array(new_features)
+        else:
+            new_instance.features = np.array(new_features, dtype=instance.features.dtype)
         return new_instance
 
     def __fit_replace(self, data, replace_method, replace_value=None, output_format=None,
-                      col_replace_method=None):
+                      col_replace_method=None, col_replace_value=None, error=consts.DEFAULT_RELATIVE_ERROR,
+                      multi_mode='random'):
         replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
 
         schema = data.schema
@@ -246,7 +268,9 @@ class Imputer(object):
             data = data.mapValues(lambda v: Imputer._transform_nan(v))
             data.schema = schema
         cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
-                                                               replace_value=replace_value)
+                                                               replace_value=replace_value,
+                                                               col_replace_value=col_replace_value,
+                                                               error=error, multi_mode=multi_mode)
         self.skip_cols = skip_cols
         skip_cols = [get_header(data).index(v) for v in skip_cols]
         if output_format is not None:
@@ -324,7 +348,7 @@ class Imputer(object):
         return cols_impute_rate
 
     def fit(self, data, replace_method=None, replace_value=None, output_format=consts.ORIGIN,
-            col_replace_method=None):
+            col_replace_method=None, error=consts.DEFAULT_RELATIVE_ERROR, multi_mode='random', col_replace_value=None):
         """
         Apply imputer for input data
         Parameters
@@ -366,7 +390,9 @@ class Imputer(object):
                 col_replace_method[col_name] = method
 
         process_data, cols_transform_value = self.__fit_replace(data, replace_method, replace_value, output_format,
-                                                                col_replace_method=col_replace_method)
+                                                                col_replace_method=col_replace_method,
+                                                                col_replace_value=col_replace_value,
+                                                                error=error, multi_mode=multi_mode)
 
         self.cols_fit_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
         process_data = process_data.mapValues(lambda v: v[0])

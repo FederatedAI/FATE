@@ -31,6 +31,14 @@
             "table_name": "dvisits_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
+        },
+      {
+        "file": "examples/data/mocked_string_data.csv",
+        "head": 1,
+        "partition": 4,
+        "table_name": "mocked_string_data",
+        "namespace": "experiment",
+        "role": "guest_0"
         }
     ],
     "pipeline_tasks": {
@@ -42,6 +50,9 @@
         },
         "diff-method-per-column": {
             "script": "pipeline-feature-imputation-column-method.py"
+        },
+      "pipeline-feature-imputation-designated-column": {
+        "script": "pipeline-feature-imputation-designated-column.py"
         }
     }
 }

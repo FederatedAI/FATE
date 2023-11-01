@@ -258,6 +258,7 @@ FLOAT = 'float'
 INT = 'int'
 ORIGIN = 'origin'
 MEDIAN = 'median'
+MODE = 'mode'
 
 # min_max_scaler
 NORMAL = 'normal'

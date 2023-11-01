@@ -13,6 +13,8 @@ This section introduces the pipeline scripts of feature imputation tasks.
 3. Feature Imputation using Different Methods for Different Columns:
     script: pipeline-feature-imputation-column-method.py
 
+4. Feature Imputation using Different Methods and Different Filling Values for Different Columns:
+   script: pipeline-feature-imputation-designated-column.py
 Users can use following commands to running the task.
 
     python ${pipeline_script}
