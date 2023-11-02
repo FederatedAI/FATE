@@ -57,6 +57,10 @@ class DTensor:
     def T(self):
         return torch.transpose(self, 0, 1)
 
+    @property
+    def is_cuda(self):
+        return self.shardings.device.type == "cuda"
+
     def elem_type(self) -> Optional[str]:
         return self.shardings._type
 
@@ -179,16 +183,22 @@ class DTensor:
         )
 
     def clone(self):
-        return DTensor(self.shardings)
+        return DTensor(self.shardings.map_shard(lambda t: t))
 
     def add(self, other) -> "DTensor":
         return torch.add(self, other)
+
+    def mul(self, other) -> "DTensor":
+        return torch.mul(self, other)
 
     def div(self, other, *, rounding_mode=None) -> "DTensor":
         return torch.div(self, other, rounding_mode=rounding_mode)
 
     def sub(self, other):
         return torch.sub(self, other)
+
+    def neg(self):
+        return torch.neg(self)
 
     def nelement(self):
         return self.shardings.shape.numel()
@@ -217,9 +227,16 @@ class DTensor:
         self.shardings = self.div(other, rounding_mode=rounding_mode).shardings
         return self
 
+    def neg_(self):
+        self.shardings = self.neg().shardings
+        return self
+
     @property
     def data(self):
         return self.shardings
+
+    def __getitem__(self, item):
+        return DTensor(self.shardings.map_shard(lambda t: t[item]))
 
 
 T1 = TypeVar("T1")

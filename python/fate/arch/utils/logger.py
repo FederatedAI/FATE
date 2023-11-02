@@ -1,5 +1,4 @@
 import logging.config
-import rich.logging
 
 
 def set_up_logging(rank, log_level="DEBUG"):

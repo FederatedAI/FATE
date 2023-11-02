@@ -20,8 +20,6 @@ import multiprocessing
 from multiprocessing import Queue, Event
 import click
 
-logger = logging.getLogger()
-
 
 class MultiProcessLauncher:
     def __init__(
@@ -64,19 +62,22 @@ class MultiProcessLauncher:
             )
             self.processes.append(process)
 
-        # if crypten.mpc.ttp_required():
-        #     ttp_process = multiprocessing.Process(
-        #         target=self.__class__._run_process,
-        #         name="TTP",
-        #         args=(
-        #             world_size,
-        #             world_size,
-        #             env,
-        #             crypten.mpc.provider.TTPServer,
-        #             None,
-        #         ),
-        #     )
-        #     self.processes.append(ttp_process)
+        from fate.arch.protocol import mpc
+
+        # TODO: not work for now, need to fix
+        if mpc.ttp_required():
+            ttp_process = multiprocessing.Process(
+                target=self.__class__._run_ttp_server,
+                name="TTP",
+                args=(world_size,),
+            )
+            self.processes.append(ttp_process)
+
+    @classmethod
+    def _run_ttp_server(cls, world_size):
+        from fate.arch.protocol import mpc
+
+        mpc.provider.TTPServer()
 
     @classmethod
     def _run_process(
@@ -97,7 +98,7 @@ class MultiProcessLauncher:
 
         # set up logging
         set_up_logging(rank, log_level)
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
         # init context
         parties = [tuple(p.split(":")) for p in parties]
@@ -141,6 +142,8 @@ class MultiProcessLauncher:
             process.start()
 
     def wait(self) -> int:
+        logger = logging.getLogger(__name__)
+
         uncompleted_ranks = set(range(len(self.processes)))
         for i in range(len(self.processes)):
             rank, e, exc_traceback = self.output_or_exception_q.get()
@@ -178,9 +181,12 @@ class MultiProcessLauncher:
 def cli(federation_session_id, parties, data_dir, proc, log_level, parameter):
     from fate.arch.utils.logger import set_up_logging
 
+    logger = logging.getLogger(__name__)
+
     set_up_logging(-1, log_level)
     if not federation_session_id:
-        federation_session_id = f"{datetime.datetime.now().strftime('YYMMDD-hh:mm-ss')}-{uuid.uuid1()}"
+        federation_session_id = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid1().hex[:6]}"
+
     parameters = {}
     for p in parameter:
         k, v = p.split("=")

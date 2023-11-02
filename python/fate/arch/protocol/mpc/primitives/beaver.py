@@ -107,7 +107,7 @@ def conv_transpose2d(ctx, x, y, **kwargs):
     return __beaver_protocol(ctx, "conv_transpose2d", x, y, **kwargs)
 
 
-def square(x):
+def square(ctx, x):
     """Computes the square of `x` for additively secret-shared tensor `x`
 
     1. Obtain uniformly random sharings [r] and [r2] = [r * r]
@@ -116,7 +116,7 @@ def square(x):
     4. Return z = [r2] + 2 * epsilon * [r] + epsilon ** 2
     """
     provider = mpc.get_default_provider()
-    r, r2 = provider.square(x.size(), device=x.device)
+    r, r2 = provider.square(ctx, x.size(), device=x.device)
 
     with IgnoreEncodings([x, r]):
         epsilon = (x - r).reveal()

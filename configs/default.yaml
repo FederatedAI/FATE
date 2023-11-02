@@ -1,0 +1,47 @@
+communicator:
+  verbose: False
+debug:
+  debug_mode: False
+  validation_mode: False
+encoder:
+  precision_bits: 16
+functions:
+  max_method: "log_reduction"
+
+  # exponential function
+  exp_iterations: 8
+
+  # reciprocal configuration
+  reciprocal_method: "NR"
+  reciprocal_nr_iters: 10
+  reciprocal_log_iters: 1
+  reciprocal_all_pos: False
+  reciprocal_initial: null
+
+  # sqrt configuration
+  sqrt_nr_iters: 3
+  sqrt_nr_initial: null
+
+  # sigmoid / tanh configuration
+  sigmoid_tanh_method: "reciprocal"
+  sigmoid_tanh_terms: 32
+
+  # log configuration
+  log_iterations: 2
+  log_exp_iterations: 8
+  log_order: 8
+
+  # trigonometry configuration
+  trig_iterations: 10
+
+  # error function configuration:
+  erf_iterations: 8
+mpc:
+  active_security: False
+  provider: "TFP"
+  protocol: "beaver"
+nn:
+  dpsmpc:
+    protocol: "layer_estimation"
+    skip_loss_forward: True
+    cache_pred_size: True

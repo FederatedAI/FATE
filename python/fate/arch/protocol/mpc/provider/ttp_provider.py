@@ -212,9 +212,8 @@ class TTPServer:
     def __init__(self):
         """Initializes a Trusted Third Party server that receives requests"""
         # Initialize connection
-        crypten.init()
-        self.ttp_group = comm.get().ttp_group
-        self.comm_group = comm.get().ttp_comm_group
+        # self.ttp_group = comm.get().ttp_group
+        # self.comm_group = comm.get().ttp_comm_group
         self.device = "cpu"
         self._setup_generators()
         ttp_rank = comm.get().get_ttp_rank()

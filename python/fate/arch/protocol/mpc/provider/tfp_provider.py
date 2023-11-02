@@ -30,15 +30,19 @@ class TrustedFirstParty(TupleProvider):
 
         return a, b, c
 
-    def square(self, size, device=None):
+    def square(self, ctx, size, device=None):
         """Generate square double of given size"""
-        r = generate_random_ring_element(size, device=device)
+        r = generate_random_ring_element(ctx, size, device=device)
         r2 = r.mul(r)
 
         # Stack to vectorize scatter function
-        stacked = torch_stack([r, r2])
-        stacked = ArithmeticSharedTensor(stacked, precision=0, src=0)
-        return stacked[0], stacked[1]
+        # stacked = torch_stack([r, r2])
+        # stacked = ArithmeticSharedTensor(ctx, stacked, precision=0, src=0)
+        # return stacked[0], stacked[1]
+        # TODO: use stacked tensor to avoid additional communication
+        r = ArithmeticSharedTensor(ctx, r, precision=0, src=0)
+        r2 = ArithmeticSharedTensor(ctx, r2, precision=0, src=0)
+        return r, r2
 
     def generate_binary_triple(self, size0, size1, device=None):
         """Generate xor triples of given size"""

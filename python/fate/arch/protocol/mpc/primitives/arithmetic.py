@@ -19,6 +19,9 @@ from fate.arch.protocol.mpc.cuda import CUDALongTensor
 from fate.arch.protocol.mpc.encoder import FixedPointEncoder
 from fate.arch.protocol.mpc.functions import regular
 from . import beaver, replicated  # noqa: F401
+import logging
+
+logger = logging.getLogger(__name__)
 
 SENTINEL = -1
 
@@ -62,7 +65,8 @@ class ArithmeticSharedTensor(object):
         the tensor. If `device` is unspecified, it is set to `tensor.device`.
         """
 
-        assert isinstance(ctx, Context), "ctx must be a Context object"
+        if not isinstance(ctx, Context):
+            logger.warning("ctx must be a Context object")
         self._ctx = ctx
         # do nothing if source is sentinel:
         if src == SENTINEL:
@@ -100,7 +104,6 @@ class ArithmeticSharedTensor(object):
         self.share = ArithmeticSharedTensor.PRZS(ctx, size, device=device).share
         if self.rank == src:
             self.share += tensor
-
 
     @staticmethod
     def new(*args, **kwargs):
@@ -570,7 +573,7 @@ class ArithmeticSharedTensor(object):
 
     def square_(self):
         protocol = globals()[cfg.mpc.protocol]
-        self.share = protocol.square(self).div_(self.encoder.scale).share
+        self.share = protocol.square(self._ctx, self).div_(self.encoder.scale).share
         return self
 
     def square(self):

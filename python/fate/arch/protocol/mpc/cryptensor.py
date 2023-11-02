@@ -41,7 +41,7 @@ class CrypTensorMetaclass(type):
 
     def __getattribute__(cls, name):
         if name in STATIC_FUNCTIONS:
-            dummy = cls([])  # this creates an empty CrypTensor
+            dummy = cls(None, [])  # this creates an empty CrypTensor
             dummy.__IS_DUMMY__ = True
             return cls.__getattribute__(dummy, name)
         return type.__getattribute__(cls, name)
@@ -221,7 +221,6 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
         """
         if self.requires_grad:
             with CrypTensor.no_grad():  # disable autograd for backward pass
-
                 # in initial backward call, identify all required nodes:
                 if top_node:
                     self._identify_required_grads()
@@ -231,9 +230,7 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
                     if self.nelement() == 1:
                         grad_input = self.new(torch.ones_like(self.data))
                     else:
-                        raise RuntimeError(
-                            "grad can be implicitly created only for scalar outputs"
-                        )
+                        raise RuntimeError("grad can be implicitly created only for scalar outputs")
 
                 # process gradient input:
                 self.grad_received += 1
@@ -252,9 +249,7 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
 
                 # perform backpropagation:
                 grad = self.grad_fn.backward(self.ctx, self.grad)
-                differentiable_children = [
-                    x for x in self.children if self.ctx.is_differentiable(x)
-                ]
+                differentiable_children = [x for x in self.children if self.ctx.is_differentiable(x)]
                 self.ctx.reset()  # free up memory used for context
 
                 # call backward function on children:
@@ -296,12 +291,9 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
             # dispatch torch.{cat,stack} call on CrypTensor to CrypTen:
             return getattr(crypten, STATIC_FUNCTION_MAPPING[func])(*args, **kwargs)
         else:
-            raise NotImplementedError(
-                f"CrypTen does not support torch function {func}."
-            )
+            raise NotImplementedError(f"CrypTen does not support torch function {func}.")
 
     def _get_forward_function_no_ctx(self, grad_fn):
-
         # determine if self is a dummy object (the case for staticmethods):
         is_dummy = getattr(self, "__IS_DUMMY__", False)
 
@@ -319,7 +311,6 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
         return autograd_forward_no_ctx
 
     def _get_autograd_forward_function(self, name, grad_fn, in_place):
-
         # determine if self is a dummy object (the case for staticmethods):
         is_dummy = getattr(self, "__IS_DUMMY__", False)
 
@@ -431,9 +422,7 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
         #     b. raise NotImplementedError telling user to use `detach()`
         if CrypTensor.AUTOGRAD_ENABLED:
             if not hasattr(grad_fn, "forward"):
-                raise NotImplementedError(
-                    f"Autograd forward not implemented for {name}. Please use detach()."
-                )
+                raise NotImplementedError(f"Autograd forward not implemented for {name}. Please use detach().")
             return self._get_autograd_forward_function(name, grad_fn, inplace)
 
         # TODO: Add validation_mode / validate_correctness
