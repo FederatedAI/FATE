@@ -96,7 +96,7 @@ class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
             pred = np.asarray([random.random() for j in range(5)], dtype='float64')
             label = random.randint(0, 4)
             softmaxloss_hess = self.softmax_loss.compute_hess(label, pred)
-            hess = 2 * pred * (1 - pred)
+            hess = pred * (1 - pred)
             self.assertTrue(np.fabs(hess - softmaxloss_hess).all() < consts.FLOAT_ZERO)
 
     def test_compute_loss(self):
