@@ -5,6 +5,18 @@ import numpy as np
 from typing import Literal
 
 
+def _get_activation(activation):
+    if activation == "relu":
+        return t.nn.ReLU()
+    elif activation == "sigmoid":
+        return t.nn.Sigmoid()
+    elif activation == "tanh":
+        return t.nn.Tanh()
+    else:
+        raise ValueError(f"Unsupported activation: {activation}")
+
+
+
 class PassportBlock(nn.Module):
 
     def __init__(self, passport_distribute: Literal['gaussian', 'uniform'], passport_mode: Literal['single', 'multi']):
@@ -24,21 +36,99 @@ class PassportBlock(nn.Module):
         self._leaky_relu = nn.LeakyReLU(inplace=True)
         self._decode = nn.Linear(out_feat, in_feat, bias=False)
 
-    def _get_scale(self):
+    def _generate_key(self):
+        pass
+
+    def set_key(self, skey, bkey):
+        self.register_buffer('skey', skey)
+        self.register_buffer('bkey', bkey)
+
+    def _compute_para(self, key) -> float:
         pass
 
     def _get_bias(self):
-        pass
+        return self._compute_para(self.bkey)
 
-    def _generate_key(self):
-        pass
+    def _get_scale(self):
+        return self._compute_para(self.skey)
+
+
+
+class LinearPassportBlock(PassportBlock):
+
+    def __init__(self, in_features, out_features, bias=True,
+                 passport_distribute: Literal['gaussian', 'uniform'] = 'gaussian',
+                 passport_mode: Literal['single', 'multi'] = 'single',
+                 loc=-1.0, scale=1.0, low=-1.0, high=1.0, num_passport=1, ae_in=None, ae_out=None):
+        super().__init__(
+            passport_distribute=passport_distribute,
+            passport_mode=passport_mode
+        )
+
+        self._num_passport = num_passport
+        self._linear = nn.Linear(in_features, out_features, bias=bias)
+        if ae_in is None:
+            ae_in = out_features
+        if ae_out is None:
+            ae_out = out_features // 4
+        self._init_autoencoder(ae_in, ae_out)
+        self.set_key(None, None)
+        self._loc = loc
+        self._scale = scale
+        self._low = low
+        self._high = high
+
+        # running var
+        self.scale, self.bias = None, None
+
+    def generate_key(self, *shape):
+
+        newshape = list(shape)
+        newshape[0] = self.num_passport
+        if self.passport_mode == 'single':
+            if self.passport_type == 'uniform':
+                key = np.random.uniform(self.a, self.b, newshape)
+            elif self.passport_type == 'gaussian':
+                key = np.random.normal(self.a, self.b, newshape)
+            else:
+                raise ValueError("Wrong passport type (uniform or gaussian)")
+
+        elif self.passport_mode == 'multi':
+            assert self.a != 0
+            element_num = newshape[1]  # for every element
+            keys = []
+            for c in range(element_num):
+                if self.a < 0:
+                    candidates = range(int(self.a), -1, 1)
+                else:
+                    candidates = range(1, int(self.a) + 1, 1)
+                a = random.sample(candidates, 1)[0]
+                while a == 0:
+                    a = random.sample(candidates, 1)[0]
+                b = self.b
+                newshape[1] = 1
+                if self.passport_type == 'uniform':
+                    key = np.random.uniform(self.a, self.b, newshape)
+                elif self.passport_type == 'gaussian':
+                    key = np.random.normal(a, b, newshape)
+                else:
+                    raise ValueError("Wrong passport type (uniform or gaussian)")
+                keys.append(key)
+            key = np.concatenate(keys, axis=1)
+        else:
+            raise ValueError("Wrong passport mode, in ['single', 'multi']")
+        return key
+
+
+
 
 
 class ConvPassportBlock(PassportBlock):
 
-    def __init__(self,  in_channels, out_channels, kernel_size, stride=1, padding=0, bias=True,
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, bias=True,
                  passport_distribute: Literal['gaussian', 'uniform'] = 'gaussian',
                  passport_mode: Literal['single', 'multi'] = 'single',
+                 activation: Literal['relu', 'tanh', 'sigmoid'] = "relu",
                  loc=-1.0, scale=1.0, low=-1.0, high=1.0, num_passport=1, ae_in=None, ae_out=None):
 
         super().__init__(
@@ -67,7 +157,10 @@ class ConvPassportBlock(PassportBlock):
         self._scale = scale
         self._low = low
         self._high = high
-
+        if activation is not None:
+            self._activation = _get_activation(activation)
+        else:
+            self._activation = None
         # running var
         self.scale, self.bias = None, None
 
@@ -106,10 +199,6 @@ class ConvPassportBlock(PassportBlock):
             raise ValueError("Wrong passport mode, in ['single', 'multi']")
         return key
 
-    def set_key(self, skey, bkey):
-        self.register_buffer('skey', skey)
-        self.register_buffer('bkey', bkey)
-
     def _compute_para(self, key):
 
         b, c, h, w = key.size()
@@ -128,12 +217,6 @@ class ConvPassportBlock(PassportBlock):
         scale = self._decode(self._leaky_relu(self._encode(scale))).view(1, c, 1, 1)
         return scale
 
-    def _get_bias(self):
-        return self._compute_para(self.bkey)
-
-    def _get_scale(self):
-        return self._compute_para(self.skey)
-
     def forward(self, x: t.Tensor):
 
         if self.skey is None and self.bkey is None:
@@ -148,7 +231,7 @@ class ConvPassportBlock(PassportBlock):
         bias = self._get_bias()
         x = scale * x + bias
         self.scale, self.bias = scale, bias
-        return x
+        return self._activation(x) if self._activation is not None else x
 
 
 

@@ -1,6 +1,6 @@
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
+from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     epoch = 10
     guest_bottom = t.nn.Linear(10, 4).double()
     guest_top = t.nn.Sequential(
-                                 t.nn.Linear(4, 1),
+                                 t.nn.Linear(8, 1),
                                  t.nn.Sigmoid()
                                ).double()
     host_bottom = t.nn.Linear(20, 4).double()
@@ -71,13 +71,11 @@ if __name__ == "__main__":
         y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num].reshape((-1, 1))
 
         dataset = TensorDataset(X_g, y)
-
-        agglayer = AggLayerGuest(4, 4, 4)
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(
             top_model=guest_top,
-            agg_layer=agglayer,
+            agg_layer=AggLayerGuest(merge_type='concat'),
             bottom_model=guest_bottom)
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
@@ -110,12 +108,10 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_h)
 
-        layer = AggLayerHost()
         model = HeteroNNModelHost(
             bottom_model=host_bottom,
-            agg_layer=layer
+            agg_layer=AggLayerHost()
         )
-        model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
         args = TrainingArguments(

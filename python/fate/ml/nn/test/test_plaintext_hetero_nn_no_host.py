@@ -1,5 +1,5 @@
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest
+from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest
 import sys
 from datetime import datetime
 import pandas as pd

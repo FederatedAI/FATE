@@ -1,6 +1,6 @@
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
+from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -65,7 +65,6 @@ if __name__ == "__main__":
 
     if party == "guest":
 
-        from sklearn.metrics import roc_auc_score
         from fate.ml.evaluation.classification import AUC, BinaryAccuracy
         from fate.ml.evaluation.metric_base import MetricEnsemble
         ctx = create_ctx(guest, get_current_datetime_str())
@@ -75,7 +74,7 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_g, y)
 
-        agglayer = AggLayerGuest(4, 4, 4)
+        agglayer = AggLayerGuest()
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(

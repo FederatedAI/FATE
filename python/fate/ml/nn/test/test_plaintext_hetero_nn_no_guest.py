@@ -1,5 +1,5 @@
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -74,10 +74,10 @@ if __name__ == "__main__":
     epoch = 10
     guest_bottom = t.nn.Linear(10, 4).double()
     guest_top = t.nn.Sequential(
-                                 t.nn.Linear(4, 1),
+                                 t.nn.Linear(8, 1),
                                  t.nn.Sigmoid()
                                ).double()
-    host_bottom = t.nn.Linear(20, 4).double()
+    host_bottom = t.nn.Linear(20, 8).double()
 
     # # make random fake data
     sample_num = 569
@@ -89,14 +89,11 @@ if __name__ == "__main__":
         y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num]
 
         dataset = TensorDataset(y)
-        interactive_layer = AggLayerGuest(4, 4, guest_in_features=None)
-        interactive_layer._host_model[0] = interactive_layer._host_model[0].double()
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(
             top_model=guest_top,
-            interactive_layer=interactive_layer,
-            bottom_model=None
+            agg_layer=AggLayerGuest()
         )
         model.set_context(ctx)
 
@@ -131,7 +128,7 @@ if __name__ == "__main__":
         dataset = TensorDataset(X_h)
 
         layer = AggLayerHost()
-        model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
+        model = HeteroNNModelHost(agg_layer=AggLayerHost(), bottom_model=host_bottom)
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
         model.set_context(ctx)
 

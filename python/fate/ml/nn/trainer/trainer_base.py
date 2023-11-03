@@ -38,7 +38,7 @@ from typing import Optional
 from dataclasses import dataclass, field, fields
 from transformers.trainer_callback import PrinterCallback
 from fate.ml.aggregator import AggregatorType
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from transformers.trainer import logger as logger_
 from fate.ml.evaluation.metric_base import MetricEnsemble
 

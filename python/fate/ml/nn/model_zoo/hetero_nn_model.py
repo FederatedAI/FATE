@@ -1,9 +1,7 @@
 import torch
 import torch as t
 from fate.arch import Context
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer._base import AggLayer
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerHost
+from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
 
 
 def backward_loss(z, backward_error):
@@ -90,7 +88,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
     def backward(self, loss):
 
         if self._guest_direct_backward:
-            # guest side direct backward & send error to hosts
+            # send error to hosts & guest side direct backward
             self._agg_layer.backward(loss)
             loss.backward()
         else:
@@ -120,7 +118,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 class HeteroNNModelHost(HeteroNNModelBase):
 
     def __init__(self,
-                 agg_layer: AggLayer,
+                 agg_layer: AggLayerHost,
                  bottom_model: t.nn.Module
                  ):
 

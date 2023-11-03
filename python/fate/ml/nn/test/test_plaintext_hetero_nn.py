@@ -1,5 +1,5 @@
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
-from fate.ml.nn.model_zoo.hetero_nn.agg_layer.plaintext_agg_layer import AggLayerGuest, AggLayerHost
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
 import sys
 from datetime import datetime
 import pandas as pd
@@ -53,31 +53,33 @@ if __name__ == "__main__":
 
     class HeteroNNLocalModel(t.nn.Module):
 
-        def __init__(self, guest_b, guest_t, host_b, guest_i, host_i):
+        def __init__(self, guest_b, guest_t, host_b, merge_type='concat'):
             super(HeteroNNLocalModel, self).__init__()
             self._guest_b = guest_b
             self._guest_t = guest_t
             self._host_b = host_b
-            self._guest_i = guest_i
-            self._host_i = host_i
+            self._merge_type = merge_type
+
         def forward(self, x_g, x_h):
-            fw_g = self._guest_i(self._guest_b(x_g))
-            fw_h = self._host_i(self._host_b(x_h))
-            fw_ = fw_g + fw_h
-            fw_ = t.nn.ReLU()(fw_)
+            fw_g = self._guest_b(x_g)
+            fw_h = self._host_b(x_h)
+            if self._merge_type == 'concat':
+                fw_ = t.cat([fw_g, fw_h], dim=1)
+            else:
+                fw_ = fw_g + fw_h
             fw_ = self._guest_t(fw_)
             return fw_
 
     set_seed(42)
 
     batch_size = 64
-    epoch = 10
-    guest_bottom = t.nn.Linear(10, 4).double()
+    epoch = 5
+    guest_bottom = t.nn.Linear(10, 10).double()
     guest_top = t.nn.Sequential(
-                                 t.nn.Linear(4, 1),
+                                 t.nn.Linear(18, 1),
                                  t.nn.Sigmoid()
                                ).double()
-    host_bottom = t.nn.Linear(20, 4).double()
+    host_bottom = t.nn.Linear(20, 8).double()
 
     # # make random fake data
     sample_num = 569
@@ -92,10 +94,7 @@ if __name__ == "__main__":
         df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_host.csv')
         X_h = t.Tensor(df.drop(columns=['id']).values).type(t.float64)[0: sample_num]
 
-        interactive_layer = AggLayerGuest(4, 4, 4)
-        local_model = HeteroNNLocalModel(guest_bottom, guest_top, host_bottom,
-                                         interactive_layer._guest_model.double(),
-                                         interactive_layer._host_model[0].double())
+        local_model = HeteroNNLocalModel(guest_bottom, guest_top, host_bottom)
         loss_fn = t.nn.BCELoss()
         optimizer = t.optim.Adam(local_model.parameters(), lr=0.01)
         dataset = TensorDataset(X_g, X_h, y)
@@ -126,15 +125,13 @@ if __name__ == "__main__":
 
         dataset = TensorDataset(X_g, y)
 
-        interactive_layer = AggLayerGuest(4, 4, 4)
-        interactive_layer._guest_model = interactive_layer._guest_model.double()
-        interactive_layer._host_model[0] = interactive_layer._host_model[0].double()
+        agg_layer = AggLayerGuest(merge_type='concat')
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(
             top_model=guest_top,
             bottom_model=guest_bottom,
-            interactive_layer=interactive_layer
+            agg_layer=agg_layer
         )
         model.set_context(ctx)
 
@@ -167,12 +164,12 @@ if __name__ == "__main__":
         dataset = TensorDataset(X_h)
 
         layer = AggLayerHost()
-        model = HeteroNNModelHost(host_bottom, interactive_layer=layer)
+        model = HeteroNNModelHost(agg_layer=layer, bottom_model=host_bottom)
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
         model.set_context(ctx)
 
         for i in range(epoch):
-            for x_ in DataLoader(dataset, batch_size=batch_size):
+            for x_ in tqdm.tqdm(DataLoader(dataset, batch_size=batch_size)):
                 optimizer.zero_grad()
                 model.forward(x_[0])
                 model.backward()

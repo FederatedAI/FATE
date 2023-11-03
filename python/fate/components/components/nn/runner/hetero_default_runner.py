@@ -6,7 +6,7 @@ from fate.components.components.nn.nn_runner import (NNRunner, loader_load_from_
                                                      dir_warning, run_dataset_func)
 from transformers.trainer_utils import get_last_checkpoint
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments
-from fate.ml.nn.model_zoo.hetero_nn.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
+from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.components.components.utils import consts
 from fate.ml.nn.dataset.table import TableDataset, Dataset
 
