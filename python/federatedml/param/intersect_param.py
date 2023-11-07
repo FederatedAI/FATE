@@ -19,6 +19,7 @@
 
 import copy
 
+from federatedml.secureprotol.conf import RSA_BIT_LENGTH, DH_KEY_BIT_LENGTH
 from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts, LOGGER
@@ -120,14 +121,14 @@ class RSAParam(BaseParam):
         if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
         note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
     key_length: int
-        value >= 1024, bit count of rsa key, default 1024
+        value >= 1024, bit count of rsa key, default 2048
     random_bit: positive int
         it will define the size of blinding factor in rsa algorithm, default 128
 
     """
 
     def __init__(self, salt='', hash_method='sha256', final_hash_method='sha256',
-                 split_calculation=False, random_base_fraction=None, key_length=consts.DEFAULT_KEY_LENGTH,
+                 split_calculation=False, random_base_fraction=None, key_length=RSA_BIT_LENGTH,
                  random_bit=DEFAULT_RANDOM_BIT):
         super().__init__()
         self.salt = salt
@@ -177,11 +178,11 @@ class DHParam(BaseParam):
         the src id will be str = str + salt, default ''
     hash_method: str
         the hash method of src id, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
-    key_length: int, value >= 1024
-        the key length of the commutative cipher p, default 1024
+    key_length: int, value >= 2048
+        the key length of the commutative cipher p, default 2048
     """
 
-    def __init__(self, salt='', hash_method='sha256', key_length=consts.DEFAULT_KEY_LENGTH):
+    def __init__(self, salt='', hash_method='sha256', key_length=DH_KEY_BIT_LENGTH):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method

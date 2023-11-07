@@ -201,6 +201,7 @@ def sbt_train_pipeline(guest, host, guest_train_data, host_train_data):
         "validation_freqs": 1,
         "encrypt_param": {
             "method": "paillier",
+            "key_length": 1024
         },
         "tree_param": {
             "max_depth": 3,

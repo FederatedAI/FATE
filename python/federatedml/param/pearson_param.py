@@ -16,8 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.encrypt_param import EncryptParam
 
 
 class PearsonParam(BaseParam):
@@ -36,8 +38,10 @@ class PearsonParam(BaseParam):
         set False to skip this party
     use_mix_rand : bool, defalut: False
         mix system random and pseudo random for quicker calculation
-    calc_loca_vif : bool, default True
+    calc_local_vif : bool, default True
         calculate VIF for columns in local
+    fixpoint_bit_length: integer, default 2048
+        bit length to convert floating point number to a fixpoint-integer
     """
 
     def __init__(
@@ -48,6 +52,7 @@ class PearsonParam(BaseParam):
         need_run=True,
         use_mix_rand=False,
         calc_local_vif=True,
+        fixpoint_bit_length=2048
     ):
         super().__init__()
         self.column_names = column_names
@@ -56,6 +61,7 @@ class PearsonParam(BaseParam):
         self.need_run = need_run
         self.use_mix_rand = use_mix_rand
         self.calc_local_vif = calc_local_vif
+        self.fixpoint_bit_length = fixpoint_bit_length
 
     def check(self):
         if not isinstance(self.use_mix_rand, bool):
@@ -97,3 +103,8 @@ class PearsonParam(BaseParam):
             ):
                 if len(self.column_indexes) == 0 and len(self.column_names) == 0:
                     raise ValueError(f"provide at least one column")
+
+        if not isinstance(self.fixpoint_bit_length, int) or self.fixpoint_bit_length < 1024:
+            raise ValueError(
+                "fixpoint bit length should be integer >= 1024"
+            )

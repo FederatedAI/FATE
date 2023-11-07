@@ -19,6 +19,8 @@ import random
 import gmpy2
 from gmpy2 import mpz
 
+from federatedml.secureprotol.conf import DH_KEY_BIT_LENGTH
+
 
 class DiffieHellman(object):
 
@@ -159,7 +161,7 @@ class DiffieHellman(object):
         return p, g
 
     @staticmethod
-    def _oakley_group_key_pair(num_bits=1024):
+    def _oakley_group_key_pair(num_bits=DH_KEY_BIT_LENGTH):
         available = {
             1024: DiffieHellman._oakley_group_1024_1024,
             2048: DiffieHellman._oakley_group_2048_2048
@@ -172,7 +174,7 @@ class DiffieHellman(object):
         return available[num_bits].__call__()
 
     @staticmethod
-    def generate_oakley_group_key_pair(num_bits=1024, pair_name=None):
+    def generate_oakley_group_key_pair(num_bits=DH_KEY_BIT_LENGTH, pair_name=None):
         if pair_name is None:
             return DiffieHellman._oakley_group_key_pair(num_bits)
 
@@ -186,7 +188,7 @@ class DiffieHellman(object):
             return DiffieHellman._oakley_group_2048_2048()
 
     @staticmethod
-    def _key_pair(num_bits=1024):
+    def _key_pair(num_bits=DH_KEY_BIT_LENGTH):
         available = {
             1024: [
                 DiffieHellman._oakley_group_1024_1024,
@@ -205,7 +207,7 @@ class DiffieHellman(object):
         return random.choice(available[num_bits]).__call__()
 
     @staticmethod
-    def key_pair(num_bits=1024, pair_name=None):
+    def key_pair(num_bits=DH_KEY_BIT_LENGTH, pair_name=None):
         """
         Generate a primitive root for a big prime number is really slow!
         Notice the fact that:
@@ -244,7 +246,7 @@ class DiffieHellman(object):
 
     # noinspection PyArgumentList
     @staticmethod
-    def generate_secret(p, num_bits=1024):
+    def generate_secret(p, num_bits=DH_KEY_BIT_LENGTH):
         return mpz(random.SystemRandom().getrandbits(num_bits)) % p
 
     @staticmethod
