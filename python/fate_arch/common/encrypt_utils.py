@@ -2,7 +2,8 @@ import base64
 
 from Crypto import Random
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5 as PKCS1_cipher
+from Crypto.Cipher import PKCS1_OAEP as OAEP_cipher
+# update RSA OAEP for encryption.It is described in RFC8017 where it is called RSAES-OAEP.
 
 
 def rsa_key_generate():
@@ -18,14 +19,14 @@ def rsa_key_generate():
 
 
 def encrypt_data(public_key, msg):
-    cipher = PKCS1_cipher.new(RSA.importKey(public_key))
+    cipher = OAEP_cipher.new(RSA.importKey(public_key))
     encrypt_text = base64.b64encode(cipher.encrypt(bytes(msg.encode("utf8"))))
     return encrypt_text.decode('utf-8')
 
 
 def pwdecrypt(private_key, encrypt_msg):
-    cipher = PKCS1_cipher.new(RSA.importKey(private_key))
-    back_text = cipher.decrypt(base64.b64decode(encrypt_msg), 0)
+    cipher = OAEP_cipher.new(RSA.importKey(private_key))
+    back_text = cipher.decrypt(base64.b64decode(encrypt_msg))
     return back_text.decode('utf-8')
 
 
