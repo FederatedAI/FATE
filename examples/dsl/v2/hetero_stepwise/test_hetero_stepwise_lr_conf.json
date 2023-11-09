@@ -28,6 +28,9 @@
                 },
                 "max_iter": 5,
                 "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "decay": 0.0,
                 "decay_sqrt": false,
                 "stepwise_param": {
@@ -36,6 +39,14 @@
                     "need_stepwise": true,
                     "max_step": 2,
                     "nvmin": 2
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         },

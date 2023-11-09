@@ -116,6 +116,9 @@
                 "batch_size": -1,
                 "validation_freqs": 1,
                 "task_type": "classification",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "optimizer": {
                     "lr": 0.01,
                     "betas": [
@@ -151,6 +154,14 @@
                     "reduce": null,
                     "reduction": "mean",
                     "loss_fn": "BCELoss"
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             },
             "eval_0": {

@@ -79,9 +79,18 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_1 = DataTransform(name="data_transform_1")
     data_transform_2 = DataTransform(name="data_transform_2")
 
-    intersection_0 = Intersection(name="intersection_0")
-    intersection_1 = Intersection(name="intersection_1")
-    intersection_2 = Intersection(name="intersection_2")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_2 = Intersection(
+        name="intersection_2",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     union_0 = Union(name="union_0")
 
@@ -91,8 +100,22 @@ def main(config="../../config.yaml", namespace=""):
     feature_scale_0 = FeatureScale(name="feature_scale_0")
     feature_scale_1 = FeatureScale(name="feature_scale_1")
 
-    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0")
-    hetero_feature_binning_1 = HeteroFeatureBinning(name="hetero_feature_binning_1")
+    hetero_feature_binning_0 = HeteroFeatureBinning(
+        name="hetero_feature_binning_0",
+        bin_num=10,
+        bin_indexes=-1,
+        error=0.001,
+        encrypt_param={"key_length": 1024},
+        transform_param={"transform_cols": -1, "transform_type": "bin_num"}
+    )
+    hetero_feature_binning_1 = HeteroFeatureBinning(
+        name="hetero_feature_binning_1",
+        bin_num=10,
+        bin_indexes=-1,
+        error=0.001,
+        encrypt_param={"key_length": 1024},
+        transform_param={"transform_cols": -1, "transform_type": "bin_num"}
+    )
 
     hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0")
     hetero_feature_selection_1 = HeteroFeatureSelection(name="hetero_feature_selection_1")
@@ -101,11 +124,11 @@ def main(config="../../config.yaml", namespace=""):
     one_hot_1 = OneHotEncoder(name="one_hot_1")
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="rmsprop", tol=1e-5,
-                           init_param={"init_method": "random_uniform"},
+                           init_param={"init_method": "random_uniform"}, encrypt_param={"key_length": 1024},
                            alpha=0.01, max_iter=3, early_stop="diff", batch_size=320, learning_rate=0.15)
     hetero_lr_1 = HeteroLR(name="hetero_lr_1")
     hetero_lr_2 = HeteroLR(name="hetero_lr_2", penalty="L2", optimizer="rmsprop", tol=1e-5,
-                           init_param={"init_method": "random_uniform"},
+                           init_param={"init_method": "random_uniform"}, encrypt_param={"key_length": 1024},
                            alpha=0.01, max_iter=3, early_stop="diff", batch_size=320, learning_rate=0.15,
                            cv_param={"n_splits": 5,
                                      "shuffle": True,
@@ -124,10 +147,12 @@ def main(config="../../config.yaml", namespace=""):
     local_baseline_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
     local_baseline_1 = LocalBaseline(name="local_baseline_1")
 
-    hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0", num_trees=3)
+    hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0", num_trees=3,
+                                             encrypt_param={"method": "Paillier", "key_length": 1024})
     hetero_secureboost_1 = HeteroSecureBoost(name="hetero_secureboost_1")
     hetero_secureboost_2 = HeteroSecureBoost(name="hetero_secureboost_2", num_trees=3,
-                                             cv_param={"shuffle": False, "need_cv": True})
+                                             cv_param={"shuffle": False, "need_cv": True},
+                                             encrypt_param={"method": "Paillier", "key_length": 1024})
 
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, max_iter=3, early_stop="weight_diff", batch_size=-1,

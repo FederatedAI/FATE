@@ -69,7 +69,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
@@ -86,6 +89,9 @@ def main(config="../../config.yaml", namespace=""):
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
+        "encrypt_param": {
+            "key_length": 1024
+        },
         "transform_param": {
             "transform_cols": -1,
             "transform_names": None,
@@ -107,7 +113,10 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
     data_transform_1 = DataTransform(name="data_transform_1")
-    intersection_1 = Intersection(name="intersection_1")
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     pipeline.add_component(reader_1)
     pipeline.add_component(
         data_transform_1, data=Data(

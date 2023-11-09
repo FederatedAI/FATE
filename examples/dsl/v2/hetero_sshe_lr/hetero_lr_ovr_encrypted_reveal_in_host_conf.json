@@ -85,8 +85,19 @@
                 },
                 "max_iter": 1,
                 "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "reveal_strategy": "encrypted_reveal_in_host",
                 "reveal_every_iter": false
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "evaluation_0": {
                 "eval_type": "multi"

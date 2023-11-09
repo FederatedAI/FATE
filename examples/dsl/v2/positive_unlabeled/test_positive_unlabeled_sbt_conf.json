@@ -25,6 +25,9 @@
                 "num_trees": 2,
                 "tree_param": {
                     "max_depth": 3
+                },
+                "encrypt_param": {
+                    "key_length": 1024
                 }
             },
             "positive_unlabeled_0": {
@@ -39,6 +42,17 @@
                 "num_trees": 1,
                 "tree_param": {
                     "max_depth": 2
+                },
+                "encrypt_param": {
+                    "key_length": 1024
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         },

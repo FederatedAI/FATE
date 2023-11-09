@@ -42,7 +42,10 @@
                     "init_method": "random_uniform"
                 },
                 "max_iter": 10,
-                "early_stop": "diff"
+                "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                }
             },
             "hetero_lr_1": {
                 "penalty": "L2",
@@ -56,6 +59,9 @@
                 },
                 "max_iter": 10,
                 "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "cv_param": {
                     "n_splits": 5,
                     "shuffle": true,
@@ -68,10 +74,24 @@
                 "cv_param": {
                     "shuffle": false,
                     "need_cv": true
+                },
+                "encrypt_param": {
+                    "key_length": 1024
                 }
             },
             "hetero_secureboost_1": {
-                "num_trees": 5
+                "num_trees": 5,
+                "encrypt_param": {
+                    "key_length": 1024
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         },
         "role": {

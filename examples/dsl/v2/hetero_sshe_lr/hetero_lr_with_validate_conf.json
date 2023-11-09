@@ -72,6 +72,9 @@
                 },
                 "max_iter": 30,
                 "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "callback_param": {
                     "callbacks": [
                         "EarlyStopping",
@@ -82,6 +85,22 @@
                 },
                 "reveal_strategy": "respectively",
                 "reveal_every_iter": true
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
+            },
+            "intersection_1": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "evaluation_0": {
                 "eval_type": "binary"

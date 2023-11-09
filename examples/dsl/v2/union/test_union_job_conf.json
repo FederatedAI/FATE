@@ -26,7 +26,20 @@
                     "init_method": "random_uniform"
                 },
                 "max_iter": 30,
-                "early_stop": "weight_diff"
+                "early_stop": "weight_diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "sync_intersect_ids": true,
+                "only_output_key": false,
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "evaluation_0": {
                 "eval_type": "binary",

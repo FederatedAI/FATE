@@ -99,9 +99,18 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_2.get_party_instance(role='host', party_id=host).component_param(**param)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0", intersect_method="raw")
-    intersection_1 = Intersection(name="intersection_1", intersect_method="raw")
-    intersection_2 = Intersection(name="intersection_2", intersect_method="raw")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_2 = Intersection(
+        name="intersection_2",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     param = {
         "name": 'hetero_feature_binning_0',
@@ -109,6 +118,9 @@ def main(config="../../config.yaml", namespace=""):
         "optimal_binning_param": {
             "metric_method": "iv",
             "init_bucket_method": "quantile"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "bin_indexes": -1
     }
@@ -150,7 +162,8 @@ def main(config="../../config.yaml", namespace=""):
             "objective": "cross_entropy"
         },
         "encrypt_param": {
-            "method": "paillier"
+            "method": "paillier",
+            "key_length": 1024
         },
         "predict_param": {
             "threshold": 0.5

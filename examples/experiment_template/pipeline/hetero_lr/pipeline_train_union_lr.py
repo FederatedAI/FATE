@@ -103,14 +103,23 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_1.get_party_instance(role='host', party_id=host).component_param(**param)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
-    intersection_1 = Intersection(name="intersection_1")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersection_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     param = {
         "name": 'hetero_feature_binning_0',
         "method": 'optimal',
         "optimal_binning_param": {
             "metric_method": "iv"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "bin_indexes": -1
     }
@@ -149,7 +158,10 @@ def main(config="../../config.yaml", namespace=""):
         "penalty": "L2",
         "validation_freqs": None,
         "early_stopping_rounds": None,
-        "max_iter": 5
+        "max_iter": 5,
+        "encrypt_param": {
+            "key_length": 1024
+        },
     }
 
     hetero_lr_0 = HeteroLR(name='hetero_lr_0', **param)

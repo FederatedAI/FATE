@@ -21,7 +21,7 @@ from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
-    common_param = dict(column_indexes=-1, use_mix_rand=True)
+    common_param = dict(column_indexes=-1, use_mix_rand=True, fixpoint_bit_length=1024)
     pipeline = run_pearson_pipeline(
         config=config,
         namespace=namespace,
@@ -70,7 +70,10 @@ def run_pearson_pipeline(
         role="host", party_id=config.parties.host[0]
     ).component_param(with_label=False)
 
-    intersect_0 = Intersection(name="intersection_0")
+    intersect_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     if common_param is None:
         common_param = {}

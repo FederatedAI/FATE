@@ -61,6 +61,9 @@
                 "optimizer": "sgd",
                 "batch_size": 100,
                 "learning_rate": 0.2,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "init_param": {
                     "init_method": "const",
                     "init_const": 100
@@ -69,6 +72,14 @@
                 "early_stop": "weight_diff",
                 "decay": 0.0,
                 "decay_sqrt": false
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "evaluation_0": {
                 "eval_type": "regression",

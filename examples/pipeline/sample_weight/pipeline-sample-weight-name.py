@@ -57,7 +57,10 @@ def main(config="../../config.yaml", namespace=""):
         output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     scale_0 = FeatureScale(name="scale_0", method="min_max_scale", mode="normal", scale_names=["x0"])
 
     sample_weight_0 = SampleWeight(name="sample_weight_0")
@@ -70,7 +73,8 @@ def main(config="../../config.yaml", namespace=""):
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="sgd", tol=0.001,
                            alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                            learning_rate=0.1,
-                           init_param={"init_method": "random_uniform"})
+                           init_param={"init_method": "random_uniform"},
+                           encrypt_param={"key_length": 1024})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)

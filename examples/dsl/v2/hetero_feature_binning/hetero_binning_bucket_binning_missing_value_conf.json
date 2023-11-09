@@ -93,6 +93,9 @@
                 "category_names": null,
                 "adjustment_factor": 0.5,
                 "local_only": false,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "transform_param": {
                     "transform_type": null
                 }
@@ -109,8 +112,19 @@
                 "category_names": null,
                 "adjustment_factor": 0.5,
                 "local_only": false,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "transform_param": {
                     "transform_type": null
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         }

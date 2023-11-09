@@ -64,8 +64,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0", intersect_method="rsa",
-                                  sync_intersect_ids=True, only_output_key=False)
+    intersection_0 = Intersection(
+        name="intersection_0", intersect_method="rsa",
+        sync_intersect_ids=True, only_output_key=False,
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     param = {
         "penalty": "L2",
@@ -78,6 +80,9 @@ def main(config="../../config.yaml", namespace=""):
         "learning_rate": 0.15,
         "init_param": {
             "init_method": "random_uniform"
+        },
+        "encrypt_param": {
+            "key_length": 1024
         },
         "sqn_param": {
             "update_interval_L": 3,

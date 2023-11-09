@@ -65,7 +65,8 @@
                     "roc"
                 ],
                 "encrypt_param": {
-                    "method": "paillier"
+                    "method": "paillier",
+                    "key_length": 1204
                 },
                 "guest_depth": 2,
                 "host_depth": 3,
@@ -82,6 +83,14 @@
                     "filter_type": "threshold",
                     "take_high": true,
                     "threshold": 0.03
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         }

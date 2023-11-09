@@ -35,6 +35,9 @@
                 "init_param": {
                     "init_method": "zeros"
                 },
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "max_iter": 30,
                 "early_stop": "diff",
                 "cv_param": {

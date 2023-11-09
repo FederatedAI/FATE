@@ -63,8 +63,14 @@ def main(config="../../config.yaml", namespace=""):
         output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
-    intersect_1 = Intersection(name="intersection_1")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersect_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
                                      exposure_colname="exposure", optimizer="rmsprop", tol=0.001,
@@ -79,6 +85,7 @@ def main(config="../../config.yaml", namespace=""):
                                          "use_first_metric_only": False,
                                          "save_freq": 1
                                      },
+                                     encrypt_param={"key_length": 1024},
                                      init_param={"init_method": "zeros"})
 
     pipeline.add_component(reader_0)

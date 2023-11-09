@@ -66,15 +66,21 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_1.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
-    intersect_0 = Intersection(name="intersection_0")
-    intersect_1 = Intersection(name="intersection_1")
+    intersect_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersect_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
                                               num_trees=3,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "Paillier"},
+                                              encrypt_param={"method": "Paillier", "key_length": 1024},
                                               tree_param={"max_depth": 3},
                                               validation_freqs=1,
                                               multi_mode='multi_output'

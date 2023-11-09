@@ -64,13 +64,20 @@ def main(config="../../config.yaml", namespace=""):
                                                                                       output_format="dense")
     data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
-    intersect_1 = Intersection(name="intersection_1")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersect_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                    alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                    learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                    init_param={"init_method": "zeros"},
+                                   encrypt_param={"key_length": 1024},
                                    callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
                                                    "validation_freqs": 1,
                                                    "early_stopping_rounds": 5,

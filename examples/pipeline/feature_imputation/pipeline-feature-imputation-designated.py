@@ -43,7 +43,11 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0", with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
+
     feature_imputation_0 = FeatureImputation(name="feature_imputation_0",
                                              missing_fill_method="designated",
                                              default_value=42, missing_impute=[0])

@@ -89,7 +89,10 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     # define Intersection component
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
     lr_param = {
     }
@@ -109,6 +112,9 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "init_param": {
             "init_method": param.get("init_method", 'random_uniform'),
             "random_seed": param.get("random_seed", 103)
+        },
+        "encrypt_param": {
+            "key_length": 1024
         }
     }
     lr_param.update(config_param)

@@ -72,15 +72,21 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
         with_label=False)
 
     # data intersect component
-    intersect_0 = Intersection(name="intersection_0")
-    intersect_1 = Intersection(name="intersection_1")
+    intersect_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
+    intersect_1 = Intersection(
+        name="intersection_1",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
     # secure boost component
     hetero_fast_sbt_0 = HeteroFastSecureBoost(name="hetero_fast_sbt_0",
                                               num_trees=param['tree_num'],
                                               task_type=param['task_type'],
                                               objective_param={"objective": param['loss_func']},
-                                              encrypt_param={"method": "Paillier"},
+                                              encrypt_param={"method": "Paillier", "key_length": 1024},
                                               tree_param={"max_depth": param['tree_depth']},
                                               validation_freqs=1,
                                               subsample_feature_rate=1,

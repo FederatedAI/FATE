@@ -31,6 +31,9 @@
                 "optimal_binning_param": {
                     "metric_method": "iv",
                     "init_bucket_method": "quantile"
+                },
+                "encrypt_param": {
+                    "key_length": 1024
                 }
             },
             "hetero_feature_selection_0": {
@@ -106,7 +109,8 @@
                     "ks"
                 ],
                 "encrypt_param": {
-                    "method": "paillier"
+                    "method": "paillier",
+                    "key_length": 1024
                 },
                 "early_stopping_rounds": 5,
                 "tree_param": {

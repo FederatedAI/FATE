@@ -71,7 +71,10 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     # define Intersection component
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
     param = {
         "penalty": param["penalty"],
@@ -79,6 +82,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
         "optimizer": param["optimizer"],
         "learning_rate": param["learning_rate"],
         "init_param": param["init_param"],
+        "encrypt_param": param["encrypt_param"],
         "batch_size": param["batch_size"],
         "alpha": param["alpha"]
     }
