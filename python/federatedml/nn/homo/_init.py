@@ -5,7 +5,7 @@ from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerB
 from federatedml.util import LOGGER
 from federatedml.nn.backend.torch import serialization as s
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
-from federatedml.nn.backend.utils.common import recover_model_bytes
+from federatedml.nn.backend.utils.common import recover_model_bytes, get_homo_param_meta
 from federatedml.nn.backend.utils import deepspeed_util
 
 
