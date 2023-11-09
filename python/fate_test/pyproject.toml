@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fate_test"
-version = "1.11.3"
+version = "1.11.4"
 description = "test tools for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
