@@ -53,7 +53,10 @@ def generate_random_ring_element(ctx, size, ring_size=(2**64), generator=None, *
 def generate_random_ring_element_by_seed(size, seed, ring_size=(2**64), **kwargs):
     """Helper function to generate a random number from a signed ring"""
     generator = torch.Generator()
-    generator.manual_seed(seed)
+    if seed is None:
+        generator.seed()
+    else:
+        generator.manual_seed(seed)
     rand_element = torch.randint(
         -(ring_size // 2),
         (ring_size - 1) // 2,

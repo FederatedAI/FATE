@@ -8,7 +8,12 @@ import logging
 
 if typing.TYPE_CHECKING:
     from fate.arch.context import Context
+    from fate.arch.tensor.phe import PHETensor, PHETensorDecryptor
+    from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor
 logger = logging.getLogger(__name__)
+
+TO1 = typing.TypeVar("TO1")
+TO2 = typing.TypeVar("TO2")
 
 
 class MPC:
@@ -64,6 +69,11 @@ class MPC:
 
     def encrypt(self, *args, cryptensor_type=None, **kwargs):
         return mpc.cryptensor(self._ctx, *args, cryptensor_type=cryptensor_type, **kwargs)
+
+    def encode(self, x, precision_bits=None):
+        from fate.arch.protocol.mpc.mpc import FixedPointEncoder
+
+        return FixedPointEncoder(precision_bits=precision_bits).encode(x)
 
     @classmethod
     def is_encrypted_tensor(cls, obj):
@@ -138,7 +148,9 @@ class MPC:
         if self.rank in dst:
             logger.log(msg=message, stacklevel=3, level=level)
 
-    def cond_call(self, func1, func2=None, dst=0):
+    def cond_call(
+        self, func1: typing.Callable[[], TO1], func2: typing.Callable[[], TO2] = None, dst=0
+    ) -> typing.Union[TO1, TO2]:
         """
         Calls func1 if rank == dst, otherwise calls func2.
         """
@@ -146,3 +158,19 @@ class MPC:
             return func1()
         else:
             return func2() if func2 is not None else None
+
+    @property
+    def sshe(self):
+        from fate.arch.protocol.mpc.sshe import SSHE
+
+        return SSHE
+
+    def random_tensor(self, shape, src=0, generator=None):
+        import torch
+        from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor
+
+        if self.rank == src:
+            return ArithmeticSharedTensor(self._ctx, torch.rand(shape, generator=generator), src=src)
+
+        else:
+            return ArithmeticSharedTensor(self._ctx, None, size=shape, src=src)

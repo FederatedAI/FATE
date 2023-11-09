@@ -9,6 +9,7 @@ from torch.distributed import ReduceOp
 from torch.distributed import ReduceOp
 
 from fate.arch.context import Context, NS, Parties
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -23,19 +24,23 @@ class Communicator:
     def __init__(
         self,
         ctx: Context,
-        namespace: NS,
+        namespace_tensor: NS,
+        namespace_obj: NS,
         rank_to_party,
         rank,
         world_size,
     ):
         self.ctx = ctx
-        self.namespace = namespace
+        self.namespace_tensor = namespace_tensor
+        self.namespace_obj = namespace_obj
         self.rank_to_party = rank_to_party
         self.rank = rank
         self.world_size = world_size
         self.main_group = None
         self._tensor_send_index = -1
         self._tensor_recv_index = -1
+        self._object_send_index = -1
+        self._object_recv_index = -1
 
         self._pool = ThreadPoolExecutor(max_workers=2)
 
@@ -62,11 +67,13 @@ class Communicator:
     def initialize(cls, ctx: Context, init_ttp):
         world_size = ctx.world_size
         rank = ctx.local.rank
-        namespace = NS(ctx.namespace.sub_ns("mpc"), 0)
+        namespace_tensor = NS(ctx.namespace.sub_ns("mpc_tensor"), 0)
+        namespace_obj = NS(ctx.namespace.sub_ns("mpc_obj"), 0)
         rank_to_party = {p.rank: p.party for p in ctx.parties}
         cls.instance = Communicator(
             ctx,
-            namespace,
+            namespace_tensor,
+            namespace_obj,
             rank_to_party,
             rank,
             world_size,
@@ -78,11 +85,19 @@ class Communicator:
 
     def send(self, tensor, dst):
         self._tensor_send_index += 1
-        self._send(self._tensor_send_index, tensor, dst)
+        return self._send(self._tensor_send_index, tensor, dst)
 
-    def recv(self, tensor, src=None):
+    def send_obj(self, obj, dst):
+        self._object_send_index += 1
+        return self._send_obj(self._object_send_index, obj, dst)
+
+    def recv(self, tensor, src):
         self._tensor_recv_index += 1
-        self._recv(self._tensor_recv_index, tensor, src)
+        return self._recv(self._tensor_recv_index, tensor, src)
+
+    def recv_obj(self, src):
+        self._object_recv_index += 1
+        return self._recv_obj(self._object_recv_index, src)
 
     def isend(self, tensor, dst):
         self._tensor_send_index += 1
@@ -99,8 +114,27 @@ class Communicator:
     def scatter(self, scatter_list, src, size=None, async_op=False):
         raise NotImplementedError
 
-    def reduce(self, tensor, op=None, async_op=False):
-        raise NotImplementedError
+    def reduce(self, tensor, dst, op=None, async_op=False):
+        if self.rank == dst:
+            self._tensor_recv_index += 1
+            for i in range(self.world_size):
+                if i != dst:
+                    tensor.add_(
+                        self._recv(
+                            index=self._tensor_recv_index,
+                            tensor=tensor,
+                            src=i,
+                        )
+                    )
+            return tensor
+        else:
+            self._tensor_send_index += 1
+            self._send(
+                index=self._tensor_send_index,
+                tensor=tensor,
+                dst=dst,
+            )
+            return None
 
     def all_reduce(self, input, op=ReduceOp.SUM, batched=False):
         if batched:
@@ -225,36 +259,50 @@ class Communicator:
     def _log_communication_time(self, comm_time):
         self.comm_time += comm_time
 
-    def _get_parties(self, parties):
+    def _get_parties(self, parties, namespace: NS):
         return Parties(
             self.ctx,
             self.ctx.federation,
             [(i, p) for i, p in enumerate(parties)],
-            self.namespace,
+            namespace,
         )
 
-    def _get_parties_by_rank(self, rank):
-        return self._get_parties([self.rank_to_party[rank]])
+    def _get_parties_by_rank(self, rank: int, namespace: NS):
+        return self._get_parties([self.rank_to_party[rank]], namespace)
 
-    def _get_parties_by_ranks(self, ranks):
-        return self._get_parties([self.rank_to_party[rank] for rank in ranks])
+    def _get_parties_by_ranks(self, ranks: List[int], namespace: NS):
+        return self._get_parties([self.rank_to_party[rank] for rank in ranks], namespace)
 
     def _send(self, index, tensor, dst):
-        parties = self._get_parties_by_rank(dst)
+        parties = self._get_parties_by_rank(dst, self.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst}, parties={parties}")
-        parties.put(self.namespace.indexed_ns(index).federation_tag, tensor)
+        parties.put(self.namespace_tensor.indexed_ns(index).federation_tag, tensor)
+
+    def _send_obj(self, index, obj, dst):
+        parties = self._get_parties_by_rank(dst, self.namespace_obj)
+        logger.debug(f"[{self.ctx.local}]sending obj, index={index}, dst={dst}, parties={parties}")
+        parties.put(self.namespace_obj.indexed_ns(index).federation_tag, obj)
 
     def _recv(self, index, tensor, src):
-        parties = self._get_parties_by_rank(src)
+        parties = self._get_parties_by_rank(src, self.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]receiving, index={index}, src={src}, parties={parties}")
-        got_tensor = parties.get(self.namespace.indexed_ns(index).federation_tag)[0]
-        tensor.copy_(got_tensor)
+        got_tensor = parties.get(self.namespace_tensor.indexed_ns(index).federation_tag)[0]
+        if tensor is None:
+            return got_tensor
+        else:
+            tensor.copy_(got_tensor)
         return tensor
 
+    def _recv_obj(self, index, src):
+        parties = self._get_parties_by_rank(src, self.namespace_obj)
+        logger.debug(f"[{self.ctx.local}]receiving, index={index}, src={src}, parties={parties}")
+        got_obj = parties.get(self.namespace_obj.indexed_ns(index).federation_tag)[0]
+        return got_obj
+
     def _send_many(self, index, tensor, dst_list):
-        parties = self._get_parties_by_ranks(dst_list)
+        parties = self._get_parties_by_ranks(dst_list, self.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst_list}, parties={parties}")
-        parties.put(self.namespace.indexed_ns(index).federation_tag, tensor)
+        parties.put(self.namespace_tensor.indexed_ns(index).federation_tag, tensor)
 
 
 class WaitableFuture:

@@ -148,9 +148,9 @@ class ArithmeticSharedTensor(object):
         self._tensor = value
 
     @staticmethod
-    def from_shares(share, precision=None, device=None):
+    def from_shares(ctx, share, precision=None, device=None):
         """Generate an ArithmeticSharedTensor from a share from each party"""
-        result = ArithmeticSharedTensor(src=SENTINEL)
+        result = ArithmeticSharedTensor(ctx, src=SENTINEL)
         share = share.to(device) if device is not None else share
         result.share = CUDALongTensor(share) if share.is_cuda else share
         result.encoder = FixedPointEncoder(precision_bits=precision)
@@ -325,6 +325,7 @@ class ArithmeticSharedTensor(object):
             "sub",
             "mul",
             "matmul",
+            "rmatmul",
             "conv1d",
             "conv2d",
             "conv_transpose1d",
@@ -353,7 +354,10 @@ class ArithmeticSharedTensor(object):
             elif op == "mul_":  # ['mul_']
                 result.share = result.share.mul_(y)
             else:  # ['mul', 'matmul', 'convNd', 'conv_transposeNd']
-                result.share = getattr(torch, op)(result.share, y, *args, **kwargs)
+                if op == "rmatmul":
+                    result.share = torch.matmul(y, result.share, *args, **kwargs)
+                else:
+                    result.share = getattr(torch, op)(result.share, y, *args, **kwargs)
         elif private:
             if additive_func:  # ['add', 'sub', 'add_', 'sub_']
                 # Re-encode if necessary:
@@ -465,6 +469,10 @@ class ArithmeticSharedTensor(object):
     def matmul(self, y):
         """Perform matrix multiplication using some tensor"""
         return self._arithmetic_function(y, "matmul")
+
+    def rmatmul(self, y):
+        """Perform right matrix multiplication using some tensor"""
+        return self._arithmetic_function(y, "rmatmul")
 
     def conv1d(self, kernel, **kwargs):
         """Perform a 1D convolution using the given kernel"""

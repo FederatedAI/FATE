@@ -216,7 +216,7 @@ class CrypTensor(object, metaclass=CrypTensorMetaclass):
 
     def backward(self, grad_input=None, top_node=True):
         """
-        Backpropagates gradient through the computation graph. The function
+        Back propagates gradient through the computation graph. The function
         only maintains the gradients in leaf nodes of the graph.
         """
         if self.requires_grad:

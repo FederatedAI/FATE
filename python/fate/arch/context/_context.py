@@ -59,7 +59,7 @@ class Context:
         if self._namespace is None:
             self._namespace = default_ns
         if self._cipher is None:
-            self._cipher: CipherKit = CipherKit(device)
+            self._cipher: CipherKit = CipherKit(self, device)
 
         self._role_to_parties = None
         self._is_destroyed = False
@@ -88,7 +88,7 @@ class Context:
         return self._cipher
 
     def set_cipher(self, cipher_mapping):
-        self._cipher = CipherKit(self._device, {"phe": {self._device: cipher_mapping["phe"]}})
+        self._cipher = CipherKit(self, self._device, {"phe": {self._device: cipher_mapping["phe"]}})
 
     def set_metric_handler(self, metrics_handler):
         self._metrics_handler = metrics_handler
