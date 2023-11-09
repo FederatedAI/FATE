@@ -1,6 +1,8 @@
 import torch
+from dataclasses import dataclass, fields
+from enum import Enum
 from torch import nn
-from typing import Any, Dict, List, Union, Callable
+from typing import Any, Dict, List, Union, Callable, Literal
 from fate.arch import Context
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
@@ -9,6 +11,9 @@ from transformers.trainer_callback import TrainerCallback
 from typing import Optional
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.trainer.trainer_base import HeteroTrainerBase, TrainingArguments
+from fate.ml.nn.model_zoo.hetero_nn_model import StdAggLayerArgument, FedPassArgument, HESSArgument
+from fate.ml.nn.model_zoo.hetero_nn_model import TopModelArguments
+
 
 
 class HeteroNNTrainerGuest(HeteroTrainerBase):
@@ -20,6 +25,8 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             training_args: TrainingArguments,
             train_set: Dataset,
             val_set: Dataset = None,
+            agg_layer_arguments: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+            top_model_arguments: TopModelArguments = None,
             loss_fn: nn.Module = None,
             optimizer = None,
             data_collator: Callable = None,
@@ -46,6 +53,8 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             callbacks=callbacks,
             compute_metrics=compute_metrics
         )
+
+        model.setup(ctx, agglayer_arg=agg_layer_arguments, top_arg=top_model_arguments)
 
     def compute_loss(self, model, inputs, **kwargs):
         # (features, labels), this format is used in FATE-1.x
@@ -111,6 +120,7 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
             training_args: TrainingArguments,
             train_set: Dataset,
             val_set: Dataset = None,
+            agg_layer_arguments: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
             optimizer=None,
             data_collator: Callable = None,
             scheduler=None,
@@ -135,6 +145,8 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
             callbacks=callbacks,
             compute_metrics=compute_metrics
         )
+        model.setup(ctx, agglayer_arg=agg_layer_arguments)
+
     def compute_loss(self, model, inputs, **kwargs):
         # host side not computing loss
         if isinstance(inputs, torch.Tensor):

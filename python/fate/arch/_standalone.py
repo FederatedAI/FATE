@@ -1152,6 +1152,7 @@ class _FederationMetaManager:
     def wait_status_set(self, key):
         value = self.get_status(key)
         while value is None:
+
             time.sleep(0.1)
             value = self.get_status(key)
         LOGGER.debug("[GET] Got {} type {}".format(key, "Table" if isinstance(value, tuple) else "Object"))

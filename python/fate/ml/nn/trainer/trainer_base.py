@@ -916,8 +916,6 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
                 checkpoint_folder = get_ith_checkpoint(checkpoint_path, self._args.checkpoint_idx)
                 self._args.resume_from_checkpoint = os.path.join(checkpoint_path, checkpoint_folder)
 
-        self._set_ctx_to_model(model)
-
         Trainer.__init__(
             self,
             model=model,

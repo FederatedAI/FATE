@@ -78,8 +78,10 @@ class AggLayerGuest(_AggLayerBase):
         if x_g is None and x_h is None:
             raise ValueError("guest input and host inputs cannot be both None")
 
+        can_cat = True
         if x_g is None:
             x_g = 0
+            can_cat = False
         else:
             if self._model is not None:
                 x_g = self._model(x_g)
@@ -93,7 +95,7 @@ class AggLayerGuest(_AggLayerBase):
                 ret = x_g
             elif self._merge_type == 'concat':
                 # xg + x_h
-                feat = [x_g] if x_g is not None else []
+                feat = [x_g] if can_cat else []
                 feat.extend(x_h)
                 ret = torch.cat(feat, dim=1)
             else:
@@ -151,8 +153,9 @@ class AggLayerGuest(_AggLayerBase):
         if self._has_ctx:
             host_x = self.ctx.hosts.get(self._pred_suffix.format(self._pred_count))
             self._pred_count += 1
+            host_x = [t.from_numpy(h) for h in host_x]
         with torch.no_grad():
-            out = self._forward(x, [t.from_numpy(h) for h in host_x])
+            out = self._forward(x, host_x)
             return out
 
 
@@ -182,7 +185,7 @@ class AggLayerHost(_AggLayerBase):
             assert isinstance(x, t.Tensor), 'x should be a tensor'
             if self._model is not None:
                 self._input_cache = t.from_numpy(x.detach().numpy()).requires_grad_(True)
-                out_ = self._model(self._input_caches)
+                out_ = self._model(self._input_cache)
                 self._out_cache = out_
             else:
                 out_ = x
@@ -196,7 +199,7 @@ class AggLayerHost(_AggLayerBase):
         if self._input_cache is not None and self._model is not None:
             loss = backward_loss(self._out_cache, error)
             loss.backward()
-            error = self._host_input_caches.grad
+            error = self._input_cache.grad
             self._clear_state()
             return error
         else:

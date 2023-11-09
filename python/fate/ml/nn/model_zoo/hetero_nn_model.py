@@ -2,6 +2,80 @@ import torch
 import torch as t
 from fate.arch import Context
 from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
+from fate.ml.nn.model_zoo.agg_layer.fedpass.agg_layer import FedPassAggLayerGuest, FedPassAggLayerHost, get_model
+from typing import Any, Dict, List, Union, Callable, Literal
+from dataclasses import dataclass, fields
+from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+"""
+Agg Layer Arguments
+"""
+
+@dataclass
+class Args(object):
+    def to_dict(self):
+        d = dict((field.name, getattr(self, field.name)) for field in fields(self) if field.init)
+        for k, v in d.items():
+            if isinstance(v, Enum):
+                d[k] = v.value
+            if isinstance(v, list) and len(v) > 0 and isinstance(v[0], Enum):
+                d[k] = [x.value for x in v]
+            if k.endswith("_token"):
+                d[k] = f"<{k.upper()}>"
+        return d
+
+
+@dataclass
+class StdAggLayerArgument(Args):
+    merge_type: Literal['sum', 'concat'] = 'sum'
+    concat_dim = 1
+
+
+@dataclass
+class FedPassArgument(StdAggLayerArgument):
+
+    layer_type: Literal['conv', 'linear'] = 'conv'
+    in_channels_or_features: int = 8
+    out_channels_or_features: int = 8
+    kernel_size: Union[int, tuple] = 3
+    stride: Union[int, tuple] = 1
+    padding: int = 0
+    bias: bool = True
+    hidden_features: int = 128
+    activation: Literal['relu', 'tanh', 'sigmoid'] = "relu"
+    passport_distribute: Literal['gaussian', 'uniform'] = 'gaussian'
+    passport_mode: Literal['single', 'multi'] = 'single'
+    loc: int = -1.0
+    scale: int = 1.0
+    low: int = -1.0
+    high: int = 1.0
+    num_passport: int = 1
+    ae_in: int = None
+    ae_out: int = None
+
+
+@dataclass
+class HESSArgument(object):
+    pass
+
+
+"""
+Top & Bottom Model Strategy
+"""
+
+@dataclass
+class TopModelArguments(Args):
+
+    protect_strategy: Literal['fedpass'] = None
+    fed_pass_arg: FedPassArgument = None
+
+    def __post_init__(self):
+        if self.protect_strategy == 'fedpass' and not isinstance(self.fed_pass_arg, FedPassArgument):
+            raise TypeError("fed_pass_arg must be an instance of FedPassArgument for protect_strategy 'fedpass'")
 
 
 def backward_loss(z, backward_error):
@@ -16,18 +90,16 @@ class HeteroNNModelBase(t.nn.Module):
         self._top_model = None
         self._agg_layer = None
         self._ctx = None
-        
-    def set_context(self, ctx: Context):
-        self._ctx = ctx
-        self._agg_layer.set_context(ctx)
 
+    def _auto_setup(self):
+        self._agg_layer = AggLayerGuest()
+        self._agg_layer.set_context(self._ctx)
 
 
 class HeteroNNModelGuest(HeteroNNModelBase):
 
     def __init__(self,
                  top_model: t.nn.Module,
-                 agg_layer: AggLayerGuest,
                  bottom_model: t.nn.Module = None
                  ):
 
@@ -37,20 +109,21 @@ class HeteroNNModelGuest(HeteroNNModelBase):
             raise RuntimeError('guest needs a top model to compute loss, but no top model provided')
         assert isinstance(top_model, t.nn.Module), "top model should be a torch nn.Module"
         self._top_model = top_model
-        assert isinstance(agg_layer, AggLayerGuest), "aggregate layer should be a AggLayerGuest"
-        self._agg_layer = agg_layer
+        self._agg_layer = None
         if bottom_model is not None:
             assert isinstance(bottom_model, t.nn.Module), "bottom model should be a torch nn.Module"
             self._bottom_model = bottom_model
 
         self._bottom_fw = None  # for backward usage
         self._agg_fw_rg = None # for backward usage
-
         # ctx
         self._ctx = None
-
         # internal mode
         self._guest_direct_backward = True
+        # set top strategy
+        self._top_strategy = None
+        # top additional model
+        self._top_add_model = None
 
     def __repr__(self):
         return (f"HeteroNNGuest(top_model={self._top_model}\n"
@@ -64,7 +137,34 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         self._bottom_fw = None
         self._agg_fw_rg = None
 
+    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+              top_arg: TopModelArguments = None, bottom_arg=None):
+
+        self._ctx = ctx
+        if agglayer_arg is None:
+            self._agg_layer = AggLayerGuest()
+        elif isinstance(agglayer_arg, StdAggLayerArgument):
+            self._agg_layer = AggLayerGuest(**agglayer_arg.to_dict())
+        elif isinstance(agglayer_arg, FedPassArgument):
+            self._agg_layer = FedPassAggLayerGuest(**agglayer_arg.to_dict())
+
+        if top_arg:
+            logger.info('detect top model strategy')
+            if top_arg.protect_strategy == 'fedpass':
+                fedpass_arg = top_arg.fed_pass_arg
+                top_fedpass_model = get_model(**fedpass_arg.to_dict())
+                self._top_add_model = top_fedpass_model
+                self._top_model = t.nn.Sequential(
+                    self._top_model,
+                    top_fedpass_model
+                )
+
+        self._agg_layer.set_context(ctx)
+
     def forward(self, x = None):
+
+        if self._agg_layer is None:
+            self._auto_setup()
 
         if self._bottom_model is None:
             b_out = None
@@ -118,7 +218,6 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 class HeteroNNModelHost(HeteroNNModelBase):
 
     def __init__(self,
-                 agg_layer: AggLayerHost,
                  bottom_model: t.nn.Module
                  ):
 
@@ -126,15 +225,15 @@ class HeteroNNModelHost(HeteroNNModelBase):
 
         assert isinstance(bottom_model, t.nn.Module), "bottom model should be a torch nn.Module"
         self._bottom_model = bottom_model
-        assert isinstance(agg_layer, AggLayerHost), "aggregate layer should be a AggLayerHost"
-        self._agg_layer = agg_layer
         # cached variables
         self._bottom_fw = None  # for backward usage
         # ctx
         self._ctx = None
 
+        self._agg_layer = None
+
     def __repr__(self):
-        return f"HeteroNNHost(bottom_model={self._bottom_model})"
+        return f"HeteroNNHost(bottom_model={self._bottom_model}, agg_layer={self._agg_layer})"
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -142,11 +241,23 @@ class HeteroNNModelHost(HeteroNNModelBase):
     def _clear_state(self):
         self._bottom_fw = None
 
-    def set_context(self, ctx: Context):
+    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+                bottom_arg=None):
+
         self._ctx = ctx
+        if agglayer_arg is None:
+            self._agg_layer = AggLayerHost()
+        elif type(agglayer_arg) == StdAggLayerArgument:
+            self._agg_layer = AggLayerHost()  # no parameters are needed
+        elif type(agglayer_arg) == FedPassArgument:
+            self._agg_layer = FedPassAggLayerHost(**agglayer_arg.to_dict())
+
         self._agg_layer.set_context(ctx)
 
     def forward(self, x):
+
+        if self._agg_layer is None:
+            self._auto_setup()
 
         b_out = self._bottom_model(x)
         # bottom layer

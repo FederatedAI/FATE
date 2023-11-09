@@ -90,12 +90,10 @@ if __name__ == "__main__":
         y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num]
 
         dataset = TensorDataset(X_g, y)
-        interactive_layer = AggLayerGuest(4, 4, guest_in_features=4)
-        interactive_layer._guest_model = interactive_layer._guest_model.double()
         loss_fn = t.nn.BCELoss()
         model = HeteroNNModelGuest(
             top_model=guest_top,
-            interactive_layer=interactive_layer,
+            agg_layer=AggLayerGuest(),
             bottom_model=guest_bottom
         )
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)

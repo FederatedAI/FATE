@@ -55,7 +55,7 @@ if __name__ == "__main__":
     epoch = 10
     guest_bottom = t.nn.Linear(10, 4).double()
     guest_top = t.nn.Sequential(
-                                 t.nn.Linear(8, 1),
+                                 t.nn.Linear(4, 1),
                                  t.nn.Sigmoid()
                                ).double()
     host_bottom = t.nn.Linear(20, 4).double()
@@ -70,12 +70,12 @@ if __name__ == "__main__":
         X_g = t.Tensor(df.drop(columns=['id', 'y']).values).type(t.float64)[0: sample_num]
         y = t.Tensor(df['y'].values).type(t.float64)[0: sample_num].reshape((-1, 1))
 
-        dataset = TensorDataset(X_g, y)
+        dataset = TensorDataset(y)
         loss_fn = t.nn.BCELoss()
 
         model = HeteroNNModelGuest(
             top_model=guest_top,
-            bottom_model=guest_bottom)
+            agg_layer=AggLayerGuest(merge_type='concat'))
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
@@ -108,7 +108,8 @@ if __name__ == "__main__":
         dataset = TensorDataset(X_h)
 
         model = HeteroNNModelHost(
-            bottom_model=host_bottom
+            bottom_model=host_bottom,
+            agg_layer=AggLayerHost()
         )
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
