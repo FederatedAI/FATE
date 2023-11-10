@@ -39,6 +39,7 @@ class SSHEAggregatorFunction(torch.autograd.Function):
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         aggregator: "SSHEAggregator" = ctx.aggregator
+        aggregator.ctx.mpc.info(f"grad_outputs={grad_outputs}", dst=[0, 1])
         ha = ctx.saved_tensors[0] if aggregator.ctx.rank == aggregator.rank_a else None
         hb = ctx.saved_tensors[0] if aggregator.ctx.rank == aggregator.rank_b else None
         dz = grad_outputs[0] if aggregator.ctx.rank == aggregator.rank_b else None
@@ -90,7 +91,6 @@ class SSHEAggregator:
             return torch.zeros(1)
 
     def backward(self, dz, ha, hb):
-        self.ctx.mpc.info(f"dz={dz}", dst=[self.rank_b])
         from fate.arch.protocol.mpc.mpc import FixedPointEncoder
 
         encoder = FixedPointEncoder(self.precision_bits)
@@ -118,7 +118,6 @@ class SSHEAggregator:
             gb = hb.T @ dz
             self.wb.share = self.wb.share - self.wb.encoder.encode(self.lr * gb)
 
-        self.ctx.mpc.info(f"h={ha}, dh={dh}", dst=[self.rank_a, self.rank_b])
         return dh
 
 

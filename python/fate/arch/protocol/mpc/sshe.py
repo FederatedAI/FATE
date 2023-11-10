@@ -59,7 +59,7 @@ class SSHE:
             z += cls.smm_lc(ctx, tensor_a=xa, rank_a=rank_a, rank_b=rank_b)
             z += cls.smm_lc(ctx, tensor_b=wb.share, rank_a=rank_b, rank_b=rank_a, cipher=phe_cipher)
 
-        if ctx.rank == rank_b:
+        elif ctx.rank == rank_b:
             assert xb is not None, "xb should not be None on rank_b"
             xb = encoder.encode(xb)
 
@@ -67,6 +67,9 @@ class SSHE:
                 z = wb.rmatmul(xb)
             z += cls.smm_lc(ctx, tensor_b=wa.share, rank_a=rank_a, rank_b=rank_b, cipher=phe_cipher)
             z += cls.smm_lc(ctx, tensor_a=xb, rank_a=rank_b, rank_b=rank_a)
+
+        else:
+            raise ValueError(f"invalid rank: {ctx.rank}")
 
         z.encoder = FixedPointEncoder(z.encoder._precision_bits + encoder._precision_bits)
         return z
@@ -185,12 +188,12 @@ class SSHE:
 
     @classmethod
     @typing.overload
-    def smm_mpc_with_rv(cls, ctx: Context, sa: ArithmeticSharedTensor, rank_a, rank_b, *, tensor_b):
+    def smm_sa_rb_lc(cls, ctx: Context, sa: ArithmeticSharedTensor, rank_a, rank_b, *, tensor_b):
         ...
 
     @classmethod
     @typing.overload
-    def smm_mpc_with_rv(cls, ctx: Context, sa: ArithmeticSharedTensor, rank_a, rank_b, *, phe_cipher):
+    def smm_sa_rb_lc(cls, ctx: Context, sa: ArithmeticSharedTensor, rank_a, rank_b, *, phe_cipher):
         ...
 
     @classmethod

@@ -122,7 +122,7 @@ class Communicator:
                     tensor.add_(
                         self._recv(
                             index=self._tensor_recv_index,
-                            tensor=tensor,
+                            tensor=None,
                             src=i,
                         )
                     )
