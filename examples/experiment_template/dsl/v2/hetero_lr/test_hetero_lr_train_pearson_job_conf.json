@@ -18,10 +18,20 @@
     "component_parameters": {
         "common": {
             "intersection_0": {
-                "intersect_method": "raw"
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "intersection_1": {
-                "intersect_method": "raw"
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "hetero_feature_binning_0": {
                 "method": "optimal",
@@ -29,6 +39,9 @@
                 "optimal_binning_param": {
                     "metric_method": "iv",
                     "init_bucket_method": "quantile"
+                },
+                "encrypt_param": {
+                    "key_length": 1024
                 }
             },
             "hetero_feature_selection_0": {

@@ -34,22 +34,21 @@
         }
     ],
     "tasks": {
-        "ftl": {
-            "conf": "./test_ftl_conf.json",
-            "dsl": "./test_ftl_dsl.json"
+        "hetero_ftl_plain": {
+            "conf": "hetero_ftl_plain_conf.json",
+            "dsl": "hetero_ftl_plain_dsl.json"
         },
-        "ftl_predict": {
-            "conf": "./test_ftl_predict.json",
-            "dsl": "./test_ftl_predict_dsl.json",
-            "deps": "ftl"
+        "hetero_ftl_communication_efficient": {
+            "conf": "hetero_ftl_communication_efficient_conf.json",
+            "dsl": "hetero_ftl_communication_efficient_dsl.json"
         },
-        "encrypted_ftl": {
-            "conf": "./test_ftl_encrypted_conf.json",
-            "dsl": "./test_ftl_dsl.json"
+        "hetero_ftl_with_predict": {
+            "conf": "hetero_ftl_with_predict_conf.json",
+            "dsl": "hetero_ftl_with_predict_dsl.json"
         },
-        "comm_eff_ftl": {
-            "conf": "./test_ftl_comm_eff_conf.json",
-            "dsl": "./test_ftl_dsl.json"
+        "hetero_ftl_encrypted": {
+            "conf": "hetero_ftl_encrypted_conf.json",
+            "dsl": "hetero_ftl_encrypted_dsl.json"
         }
     }
 }

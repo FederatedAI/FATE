@@ -55,16 +55,21 @@ def main(config="../../config.yaml", namespace=""):
         output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=3,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01, optimizer="rmsprop",
                                      exposure_colname="exposure", decay_sqrt=False, tol=0.001,
                                      callback_param={"callbacks": ["ModelCheckpoint"]},
+                                     encrypt_param={"key_length": 1024},
                                      init_param={"init_method": "zeros"}, penalty="L2")
 
     hetero_poisson_1 = HeteroPoisson(name="hetero_poisson_1", early_stop="weight_diff", max_iter=10,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01, optimizer="rmsprop",
-                                     exposure_colname="exposure", decay_sqrt=False, tol=0.001, penalty="L2")
+                                     exposure_colname="exposure", decay_sqrt=False, tol=0.001, penalty="L2",
+                                     encrypt_param={"key_length": 1024})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
     evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)

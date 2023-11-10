@@ -51,10 +51,14 @@ def main(config="../../config.yaml", namespace=""):
                                                                                       label_type="float")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
     hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                    alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=100,
                                    learning_rate=0.2, decay=0.0, decay_sqrt=False,
+                                   encrypt_param={"key_length": 1024},
                                    init_param={"init_method": "const", "init_const": 100})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)

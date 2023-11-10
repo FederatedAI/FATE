@@ -62,6 +62,9 @@
                 "optimizer": "rmsprop",
                 "batch_size": 320,
                 "learning_rate": 0.15,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "init_param": {
                     "init_method": "zeros"
                 },
@@ -75,6 +78,14 @@
                 },
                 "decay": 1.0,
                 "decay_sqrt": true
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         }
     }

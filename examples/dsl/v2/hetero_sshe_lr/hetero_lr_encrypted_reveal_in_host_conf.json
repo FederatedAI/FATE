@@ -70,6 +70,9 @@
                 },
                 "max_iter": 30,
                 "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "reveal_strategy": "encrypted_reveal_in_host",
                 "reveal_every_iter": false
             },

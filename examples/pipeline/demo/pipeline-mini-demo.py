@@ -61,14 +61,18 @@ def main():
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
     # define HeteroLR component
     hetero_lr_0 = HeteroLR(name="hetero_lr_0",
                            early_stop="diff",
                            learning_rate=0.15,
                            optimizer="rmsprop",
-                           max_iter=10)
+                           max_iter=10,
+                           encrypt_param={"key_length": 1024})
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)

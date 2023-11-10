@@ -51,7 +51,8 @@
         },
         "common": {
             "hetero_pearson_0": {
-                "column_indexes": -1
+                "column_indexes": -1,
+                "fixpoint_bit_length": 1024
             },
             "hetero_feature_selection_0": {
                 "vif_param": {
@@ -62,6 +63,14 @@
                 "filter_methods": [
                     "vif_filter"
                 ]
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         }
     }

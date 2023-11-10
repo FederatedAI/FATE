@@ -84,6 +84,9 @@
                     2
                 ],
                 "category_names": null,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_names": null,
@@ -109,6 +112,22 @@
                     "filter_type": "threshold",
                     "threshold": 2,
                     "mul_class_merge_type": "max"
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
+            },
+            "intersection_1": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             }
         }

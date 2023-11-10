@@ -46,7 +46,10 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml", namespa
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
     guest_input_shape = param['guest_input_shape']
     host_input_shape = param['host_input_shape']
@@ -78,7 +81,7 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml", namespa
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=param["epochs"],
                            interactive_layer_lr=param["learning_rate"], batch_size=param["batch_size"],
-                           early_stop="diff")
+                           early_stop="diff", encrypt_param={"key_length": 1024})
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
     guest_nn_0.add_bottom_model(bottom_model_guest)
     guest_nn_0.add_top_model(top_model_guest)

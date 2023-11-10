@@ -5,23 +5,67 @@
         "party_id": 9999
     },
     "role": {
-        "host": [
-            9998
-        ],
         "guest": [
             9999
+        ],
+        "host": [
+            10000
         ]
     },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
     "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "nus_wide_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "nus_wide_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            }
+        },
         "common": {
             "hetero_ftl_0": {
                 "epochs": 10,
                 "alpha": 1,
                 "batch_size": -1,
                 "mode": "plain",
+                "communication_efficient": true,
+                "local_round": 5,
                 "optimizer": {
-                    "learning_rate": 0.01,
-                    "decay": 0.0,
+                    "weight_decay": null,
+                    "clipnorm": null,
+                    "global_clipnorm": null,
+                    "clipvalue": null,
+                    "use_ema": false,
+                    "ema_momentum": 0.99,
+                    "ema_overwrite_frequency": null,
+                    "jit_compile": false,
+                    "is_legacy_optimizer": false,
+                    "learning_rate": 0.0010000000474974513,
                     "beta_1": 0.9,
                     "beta_2": 0.999,
                     "epsilon": 1e-07,
@@ -38,7 +82,7 @@
                                 "config": {
                                     "name": "dense",
                                     "trainable": true,
-                                    "dtype": null,
+                                    "dtype": "float32",
                                     "units": 32,
                                     "activation": "sigmoid",
                                     "use_bias": true,
@@ -47,15 +91,12 @@
                                         "config": {
                                             "mean": 0.0,
                                             "stddev": 1.0,
-                                            "seed": null,
-                                            "dtype": "float32"
+                                            "seed": null
                                         }
                                     },
                                     "bias_initializer": {
                                         "class_name": "Zeros",
-                                        "config": {
-                                            "dtype": "float32"
-                                        }
+                                        "config": {}
                                     },
                                     "kernel_regularizer": null,
                                     "bias_regularizer": null,
@@ -66,42 +107,13 @@
                             }
                         ]
                     },
-                    "keras_version": "2.2.4-tf",
+                    "keras_version": "2.11.0",
                     "backend": "tensorflow"
                 },
                 "config_type": "keras"
             },
             "evaluation_0": {
                 "eval_type": "binary"
-            }
-        },
-        "role": {
-            "guest": {
-                "0": {
-                    "data_transform_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "nus_wide_guest",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
-            "host": {
-                "0": {
-                    "data_transform_0": {
-                        "with_label": false
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "nus_wide_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
             }
         }
     }

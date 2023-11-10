@@ -28,6 +28,9 @@
                 "bin_indexes": -1,
                 "optimal_binning_param": {
                     "metric_method": "iv"
+                },
+                "encrypt_param": {
+                    "key_length": 1024
                 }
             },
             "hetero_feature_selection_0": {
@@ -91,7 +94,10 @@
                 "penalty": "L2",
                 "max_iter": 5,
                 "validation_freqs": null,
-                "early_stopping_rounds": null
+                "early_stopping_rounds": null,
+                "encrypt_param": {
+                    "key_length": 1024
+                }
             }
         },
         "role": {

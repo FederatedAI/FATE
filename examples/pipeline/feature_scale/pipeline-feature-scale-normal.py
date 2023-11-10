@@ -58,7 +58,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, missing_fill=True,
                                                                                     outlier_replace=True)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
     federated_sample_0 = FederatedSample(name="federated_sample_0", mode="stratified", method="upsample",
                                          fractions=[[0, 1.5], [1, 2.0]])
     feature_scale_0 = FeatureScale(name="feature_scale_0", method="min_max_scale", mode="normal")
@@ -66,11 +69,11 @@ def main(config="../../config.yaml", namespace=""):
         role='guest', party_id=guest).component_param(
         feat_upper=[
             1, 2, 1, 1, 0.5, 1, 2, 2, 1, 1])
-    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0")
+    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", encrypt_param={"key_length": 1024})
     hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0")
     one_hot_0 = OneHotEncoder(name="one_hot_0")
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="rmsprop", tol=1e-5,
-                           init_param={"init_method": "random_uniform"},
+                           init_param={"init_method": "random_uniform"}, encrypt_param={"key_length": 1024},
                            alpha=0.01, max_iter=10, early_stop="diff", batch_size=320, learning_rate=0.15)
     evaluation_0 = Evaluation(name="evaluation_0")
 

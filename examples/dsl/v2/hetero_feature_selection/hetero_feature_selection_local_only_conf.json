@@ -78,6 +78,14 @@
                     "select_federated": false,
                     "threshold": 1
                 }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         }
     }

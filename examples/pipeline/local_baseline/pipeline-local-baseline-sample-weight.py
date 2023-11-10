@@ -58,8 +58,10 @@ def main(config="../../config.yaml", namespace=""):
         label_name="y")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0", intersect_method="rsa", sync_intersect_ids=True,
-                                  only_output_key=False)
+    intersection_0 = Intersection(
+        name="intersection_0", intersect_method="rsa",
+        sync_intersect_ids=True, only_output_key=False,
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     sample_weight_0 = SampleWeight(name="sample_weight_0")
     sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
@@ -68,7 +70,8 @@ def main(config="../../config.yaml", namespace=""):
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="nesterov_momentum_sgd",
                            tol=0.0001, alpha=0.0001, max_iter=30, batch_size=-1,
-                           early_stop="diff", learning_rate=0.15, init_param={"init_method": "zeros"})
+                           early_stop="diff", learning_rate=0.15,
+                           init_param={"init_method": "zeros"}, encrypt_param={"key_length": 1024})
 
     local_baseline_0 = LocalBaseline(name="local_baseline_0", model_name="LogisticRegression",
                                      model_opts={"penalty": "l2", "tol": 0.0001, "C": 1.0, "fit_intercept": True,

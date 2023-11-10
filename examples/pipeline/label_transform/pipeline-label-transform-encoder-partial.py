@@ -54,7 +54,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False,
                                                                                     output_format="dense")
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     label_transform_0 = LabelTransform(name="label_transform_0", label_encoder={"0": 1, "1": 0})
     label_transform_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
@@ -63,6 +66,7 @@ def main(config="../../config.yaml", namespace=""):
                            alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                            learning_rate=0.15, decay=0.0, decay_sqrt=False,
                            init_param={"init_method": "zeros"},
+                           encrypt_param={"key_length": 1024},
                            floating_point_precision=23)
 
     label_transform_1 = LabelTransform(name="label_transform_1")

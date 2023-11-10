@@ -108,6 +108,9 @@
                 "selector_param": {
                     "method": "relative"
                 },
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "optimizer": {
                     "lr": 0.05,
                     "betas": [
@@ -152,6 +155,14 @@
                         "flatten_label": true,
                         "label_dtype": "long"
                     }
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             },
             "eval_0": {

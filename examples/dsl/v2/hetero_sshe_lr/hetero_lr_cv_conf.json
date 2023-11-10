@@ -69,6 +69,14 @@
                     "random_seed": 103,
                     "need_cv": true
                 }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         }
     }

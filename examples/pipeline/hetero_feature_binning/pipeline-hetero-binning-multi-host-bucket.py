@@ -46,7 +46,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     param = {
         "method": "bucket",
@@ -59,7 +62,10 @@ def main(config="../../config.yaml", namespace=""):
         "category_indexes": None,
         "category_names": None,
         "adjustment_factor": 0.5,
-        "local_only": False
+        "local_only": False,
+        "encrypt_param": {
+            "key_length": 1024
+        },
     }
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
     hetero_feature_binning_0.get_party_instance(role="guest",
