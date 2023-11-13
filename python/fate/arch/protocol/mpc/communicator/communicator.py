@@ -20,7 +20,28 @@ class CommunicateGroup:
         self.namespace_tensor = namespace_tensor
         self.namespace_obj = namespace_obj
 
+        self._tensor_send_index = -1
+        self._tensor_recv_index = -1
+        self._object_send_index = -1
+        self._object_recv_index = -1
+
         self._prev_group = None
+
+    def tensor_send_index_inc(self):
+        self._tensor_send_index += 1
+        return self._tensor_send_index
+
+    def tensor_recv_index_inc(self):
+        self._tensor_recv_index += 1
+        return self._tensor_recv_index
+
+    def object_send_index_inc(self):
+        self._object_send_index += 1
+        return self._object_send_index
+
+    def object_recv_index_inc(self):
+        self._object_recv_index += 1
+        return self._object_recv_index
 
     def __str__(self):
         return f"CommunicateGroup(ranks={self.ranks})"
@@ -58,10 +79,6 @@ class Communicator:
         self.rank = rank
         self.rank_to_party = rank_to_party
         self.world_size = world_size
-        self._tensor_send_index = -1
-        self._tensor_recv_index = -1
-        self._object_send_index = -1
-        self._object_recv_index = -1
         self._pool = ThreadPoolExecutor(max_workers=world_size)
         self.main_group = main_group
 
@@ -115,53 +132,52 @@ class Communicator:
         pass
 
     def send(self, tensor, dst):
-        self._tensor_send_index += 1
-        return self._send(self._tensor_send_index, tensor, dst)
+        send_index = self.main_group.tensor_send_index_inc()
+        return self._send(send_index, tensor, dst)
 
     def send_obj(self, obj, dst):
-        self._object_send_index += 1
-        return self._send_obj(self._object_send_index, obj, dst)
+        send_index = self.main_group.object_send_index_inc()
+        return self._send_obj(send_index, obj, dst)
 
     def recv(self, tensor, src):
-        self._tensor_recv_index += 1
-        return self._recv(self._tensor_recv_index, tensor, src)
+        recv_index = self.main_group.tensor_recv_index_inc()
+        return self._recv(recv_index, tensor, src)
 
     def recv_obj(self, src):
-        self._object_recv_index += 1
-        return self._recv_obj(self._object_recv_index, src)
+        recv_index = self.main_group.object_recv_index_inc()
+        return self._recv_obj(recv_index, src)
 
     def isend(self, tensor, dst):
-        self._tensor_send_index += 1
-
-        feature = self._pool.submit(self._send, self._tensor_send_index, tensor, dst)
-        return WaitableFuture(feature, f"send_{self._tensor_send_index}_{dst}")
+        send_index = self.main_group.tensor_send_index_inc()
+        feature = self._pool.submit(self._send, send_index, tensor, dst)
+        return WaitableFuture(feature, f"send_{send_index}_{dst}")
 
     def irecv(self, tensor: torch.Tensor, src=None):
-        self._tensor_recv_index += 1
+        recv_index = self.main_group.tensor_recv_index_inc()
 
-        future = self._pool.submit(self._recv, self._tensor_recv_index, tensor, src)
-        return WaitableFuture(future, f"recv_{self._tensor_recv_index}_{src}")
+        future = self._pool.submit(self._recv, recv_index, tensor, src)
+        return WaitableFuture(future, f"recv_{recv_index}_{src}")
 
     def scatter(self, scatter_list, src, size=None, async_op=False):
         raise NotImplementedError
 
     def reduce(self, tensor, dst, op=None, async_op=False):
         if self.rank == dst:
-            self._tensor_recv_index += 1
+            recv_index = self.main_group.tensor_recv_index_inc()
             for i in range(self.world_size):
                 if i != dst:
                     tensor.add_(
                         self._recv(
-                            index=self._tensor_recv_index,
+                            index=recv_index,
                             tensor=None,
                             src=i,
                         )
                     )
             return tensor
         else:
-            self._tensor_send_index += 1
+            send_index = self.main_group.tensor_recv_index_inc()
             self._send(
-                index=self._tensor_send_index,
+                index=send_index,
                 tensor=tensor,
                 dst=dst,
             )
@@ -198,14 +214,14 @@ class Communicator:
         if async_op:
             raise NotImplementedError()
 
-        self._tensor_send_index += 1
+        send_index = self.main_group.tensor_send_index_inc()
         self._send_many(
-            index=self._tensor_send_index,
+            index=send_index,
             tensor=tensor,
             dst_list=[rank for rank in range(self.world_size) if rank != self.rank],
         )
         # self.barrier.wait()
-        self._tensor_recv_index += 1
+        recv_index = self.main_group.tensor_recv_index_inc()
         result = []
         for i in range(self.world_size):
             if i == self.rank:
@@ -213,7 +229,7 @@ class Communicator:
             else:
                 result.append(
                     self._recv(
-                        index=self._tensor_recv_index,
+                        index=recv_index,
                         tensor=tensor.clone(),
                         src=i,
                     )
@@ -231,16 +247,16 @@ class Communicator:
         else:
             assert torch.is_tensor(input.data), "unbatched input for reduce must be a torch tensor"
             if src == self.rank:
-                self._tensor_send_index += 1
+                send_index = self.main_group.tensor_send_index_inc()
                 self._send_many(
-                    index=self._tensor_send_index,
+                    index=send_index,
                     tensor=input.data,
                     dst_list=[rank for rank in range(self.world_size) if rank != self.rank],
                 )
             else:
-                self._tensor_recv_index += 1
+                recv_index = self.main_group.tensor_recv_index_inc()
                 self._recv(
-                    index=self._tensor_recv_index,
+                    index=recv_index,
                     tensor=input.data,
                     src=src,
                 )
