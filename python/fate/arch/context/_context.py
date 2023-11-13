@@ -17,7 +17,6 @@ import logging
 import typing
 from typing import Iterable, Literal, Optional, Tuple, TypeVar, overload
 
-from fate.arch.abc import CSessionABC
 from ._cipher import CipherKit
 from ._federation import Parties, Party
 from ._metrics import InMemoryMetricsHandler, MetricsWrap

@@ -14,6 +14,27 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 
+class CommunicateGroup:
+    def __init__(self, ranks: List[int], namespace_tensor: NS, namespace_obj: NS):
+        self.ranks = ranks
+        self.namespace_tensor = namespace_tensor
+        self.namespace_obj = namespace_obj
+
+        self._prev_group = None
+
+    def __str__(self):
+        return f"CommunicateGroup(ranks={self.ranks})"
+
+    def __enter__(self):
+        # replace the communicator's main group with this group
+        self._prev_group = Communicator.get().main_group
+        Communicator.get().main_group = self
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        Communicator.get().main_group = self._prev_group
+
+
 class Communicator:
     """
     FATECommunicator is a wrapper around the FATE communicator.
@@ -24,25 +45,25 @@ class Communicator:
     def __init__(
         self,
         ctx: Context,
-        namespace_tensor: NS,
-        namespace_obj: NS,
+        main_group: CommunicateGroup,
         rank_to_party,
         rank,
         world_size,
     ):
+        assert rank in rank_to_party, f"rank {rank} not in rank_to_party: {rank_to_party}"
+        assert len(rank_to_party) == world_size, f"rank_to_party size {len(rank_to_party)} != world_size {world_size}"
+        for i in range(world_size):
+            assert i in rank_to_party, f"rank {i} not in rank_to_party: {rank_to_party}"
         self.ctx = ctx
-        self.namespace_tensor = namespace_tensor
-        self.namespace_obj = namespace_obj
-        self.rank_to_party = rank_to_party
         self.rank = rank
+        self.rank_to_party = rank_to_party
         self.world_size = world_size
-        self.main_group = None
         self._tensor_send_index = -1
         self._tensor_recv_index = -1
         self._object_send_index = -1
         self._object_recv_index = -1
-
-        self._pool = ThreadPoolExecutor(max_workers=2)
+        self._pool = ThreadPoolExecutor(max_workers=world_size)
+        self.main_group = main_group
 
     @classmethod
     def is_initialized(cls):
@@ -51,6 +72,14 @@ class Communicator:
     @classmethod
     def get(cls) -> "Communicator":
         return cls.instance
+
+    def new_group(self, ranks: List[int], name: str):
+        assert len(ranks) > 1, f"new group must have more than 1 rank: {ranks}"
+        assert all([0 <= rank < self.world_size for rank in ranks]), f"invalid ranks: {ranks}"
+        assert len(set(ranks)) == len(ranks), f"duplicate ranks: {ranks}"
+        namespace_tensor = self.ctx.namespace.sub_ns(f"mpc_tensor_{name}")
+        namespace_obj = self.ctx.namespace.sub_ns(f"mpc_obj_{name}")
+        return CommunicateGroup(ranks, namespace_tensor, namespace_obj)
 
     def _assert_initialized(self):
         assert self.is_initialized(), "initialize the communicator first"
@@ -65,15 +94,17 @@ class Communicator:
 
     @classmethod
     def initialize(cls, ctx: Context, init_ttp):
-        world_size = ctx.world_size
         rank = ctx.local.rank
-        namespace_tensor = NS(ctx.namespace.sub_ns("mpc_tensor"), 0)
-        namespace_obj = NS(ctx.namespace.sub_ns("mpc_obj"), 0)
         rank_to_party = {p.rank: p.party for p in ctx.parties}
+        world_size = len(rank_to_party)
+        namespace_tensor = ctx.namespace.sub_ns("mpc_tensor")
+        namespace_obj = ctx.namespace.sub_ns("mpc_obj")
+        main_group = CommunicateGroup(
+            ranks=list(range(world_size)), namespace_tensor=namespace_tensor, namespace_obj=namespace_obj
+        )
         cls.instance = Communicator(
             ctx,
-            namespace_tensor,
-            namespace_obj,
+            main_group,
             rank_to_party,
             rank,
             world_size,
@@ -251,11 +282,6 @@ class Communicator:
             "time": self.comm_time,
         }
 
-    def _log_communication(self, nelement):
-        """Updates log of communication statistics."""
-        self.comm_rounds += 1
-        self.comm_bytes += nelement * self.BYTES_PER_ELEMENT
-
     def _log_communication_time(self, comm_time):
         self.comm_time += comm_time
 
@@ -274,19 +300,19 @@ class Communicator:
         return self._get_parties([self.rank_to_party[rank] for rank in ranks], namespace)
 
     def _send(self, index, tensor, dst):
-        parties = self._get_parties_by_rank(dst, self.namespace_tensor)
+        parties = self._get_parties_by_rank(dst, self.main_group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst}, parties={parties}")
-        parties.put(self.namespace_tensor.indexed_ns(index).federation_tag, tensor)
+        parties.put(self.main_group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
 
     def _send_obj(self, index, obj, dst):
-        parties = self._get_parties_by_rank(dst, self.namespace_obj)
+        parties = self._get_parties_by_rank(dst, self.main_group.namespace_obj)
         logger.debug(f"[{self.ctx.local}]sending obj, index={index}, dst={dst}, parties={parties}")
-        parties.put(self.namespace_obj.indexed_ns(index).federation_tag, obj)
+        parties.put(self.main_group.namespace_obj.indexed_ns(index).federation_tag, obj)
 
     def _recv(self, index, tensor, src):
-        parties = self._get_parties_by_rank(src, self.namespace_tensor)
+        parties = self._get_parties_by_rank(src, self.main_group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]receiving, index={index}, src={src}, parties={parties}")
-        got_tensor = parties.get(self.namespace_tensor.indexed_ns(index).federation_tag)[0]
+        got_tensor = parties.get(self.main_group.namespace_tensor.indexed_ns(index).federation_tag)[0]
         if tensor is None:
             return got_tensor
         else:
@@ -294,15 +320,15 @@ class Communicator:
         return tensor
 
     def _recv_obj(self, index, src):
-        parties = self._get_parties_by_rank(src, self.namespace_obj)
+        parties = self._get_parties_by_rank(src, self.main_group.namespace_obj)
         logger.debug(f"[{self.ctx.local}]receiving, index={index}, src={src}, parties={parties}")
-        got_obj = parties.get(self.namespace_obj.indexed_ns(index).federation_tag)[0]
+        got_obj = parties.get(self.main_group.namespace_obj.indexed_ns(index).federation_tag)[0]
         return got_obj
 
     def _send_many(self, index, tensor, dst_list):
-        parties = self._get_parties_by_ranks(dst_list, self.namespace_tensor)
+        parties = self._get_parties_by_ranks(dst_list, self.main_group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst_list}, parties={parties}")
-        parties.put(self.namespace_tensor.indexed_ns(index).federation_tag, tensor)
+        parties.put(self.main_group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
 
 
 class WaitableFuture:

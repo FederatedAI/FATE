@@ -18,37 +18,7 @@ class Toy(MPCModule):
         ...
 
     def fit(self, ctx: Context) -> None:
-        h = ctx.mpc.cond_call(
-            lambda: torch.rand(10, 4, requires_grad=True, generator=torch.Generator().manual_seed(0)),
-            lambda: torch.rand(10, 5, requires_grad=True, generator=torch.Generator().manual_seed(1)),
-            dst=0,
-        )
-        ctx.mpc.info(h, dst=[0, 1])
-        generator = torch.Generator().manual_seed(0)
-        lr = 0.05
-        layer = SSHEAggregatorLayer(
-            ctx, in_features_a=4, in_features_b=5, out_features=2, rank_a=0, rank_b=1, lr=lr, generator=generator
-        )
-        ctx.mpc.info(f"wa={layer.get_wa()}")
-        ctx.mpc.info(f"wb={layer.get_wb()}")
-        z = layer(h)
-        ctx.mpc.info(z)
-        z.sum().backward()
-        ctx.mpc.info(f"wa={layer.get_wa()}")
-        ctx.mpc.info(f"wb={layer.get_wb()}")
-
-        # validate
-        h1 = torch.rand(10, 4, requires_grad=True, generator=torch.Generator().manual_seed(0))
-        h2 = torch.rand(10, 5, requires_grad=True, generator=torch.Generator().manual_seed(1))
-        w1 = torch.rand(4, 2, requires_grad=True, generator=torch.Generator().manual_seed(0))
-        w2 = torch.rand(5, 2, requires_grad=True, generator=torch.Generator().manual_seed(0))
-        z = torch.matmul(h1, w1) + torch.matmul(h2, w2)
-        z.sum().backward()
-        w1 = w1 - lr * w1.grad
-        w2 = w2 - lr * w2.grad
-        ctx.mpc.info((h1, h2, w1, w2), dst=0)
-
-        # self.fit_mul(ctx)
+        self.fit_matmul(ctx)
         # x = _get_left_tensor(ctx, 0)
         # alice = ctx.mpc.cond_call(lambda: x, lambda: _get_left_tensor(ctx, is_zero=True), dst=0)
         # logger.info(torch.to_local_f(x))
@@ -84,25 +54,27 @@ class Toy(MPCModule):
         ctx.mpc.info(f"mul={torch.to_local_f(out)}")
 
     def fit_matmul(self, ctx: Context):
-        x = _get_left_tensor(ctx, 0)
-        y = _get_right_tensor(ctx, 1)
-        expect = torch.matmul(x, y)
-        logger.info(f"expect={torch.to_local_f(expect)}")
 
-        x_alice = ctx.mpc.cond_call(
-            lambda: _get_left_tensor(ctx, 0), lambda: _get_left_tensor(ctx, is_zero=True), dst=0
-        )
-        ctx.mpc.info(torch.to_local_f(x_alice), dst=0)
-        x_alice_enc = ctx.mpc.cryptensor(x_alice, src=0)
+        with ctx.mpc.communicator.new_group(ranks=[0,1], name="matmul"):
+            x = _get_left_tensor(ctx, 0)
+            y = _get_right_tensor(ctx, 1)
+            expect = torch.matmul(x, y)
+            logger.info(f"expect={torch.to_local_f(expect)}")
 
-        x_bob = ctx.mpc.cond_call(
-            lambda: _get_right_tensor(ctx, 1), lambda: _get_right_tensor(ctx, is_zero=True), dst=1
-        )
-        ctx.mpc.info(torch.to_local_f(x_bob), dst=1)
-        x_bob_enc = ctx.mpc.cryptensor(x_bob, src=1)
+            x_alice = ctx.mpc.cond_call(
+                lambda: _get_left_tensor(ctx, 0), lambda: _get_left_tensor(ctx, is_zero=True), dst=0
+            )
+            ctx.mpc.info(torch.to_local_f(x_alice), dst=0)
+            x_alice_enc = ctx.mpc.encrypt(x_alice, src=0)
 
-        out = x_alice_enc.matmul(x_bob_enc).get_plain_text()
-        ctx.mpc.info(f"matmul={torch.to_local_f(out)}")
+            x_bob = ctx.mpc.cond_call(
+                lambda: _get_right_tensor(ctx, 1), lambda: _get_right_tensor(ctx, is_zero=True), dst=1
+            )
+            ctx.mpc.info(torch.to_local_f(x_bob), dst=1)
+            x_bob_enc = ctx.mpc.encrypt(x_bob, src=1)
+
+            out = x_alice_enc.matmul(x_bob_enc).get_plain_text()
+            ctx.mpc.info(f"matmul={torch.to_local_f(out)}")
 
 
 def _get_left_tensor(ctx, seed=None, is_zero=False):

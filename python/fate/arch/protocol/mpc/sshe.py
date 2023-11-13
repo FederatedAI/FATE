@@ -71,7 +71,8 @@ class SSHE:
         else:
             raise ValueError(f"invalid rank: {ctx.rank}")
 
-        z.encoder = FixedPointEncoder(z.encoder._precision_bits + encoder._precision_bits)
+        with IgnoreEncodings([z]):
+            z.div_(encoder.scale)
         return z
 
     @classmethod

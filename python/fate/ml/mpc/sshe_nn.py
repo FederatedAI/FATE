@@ -51,6 +51,8 @@ class SSHENN(MPCModule):
         ctx.mpc.info(f"ha.grad={h.grad}", dst=[0])
         ctx.mpc.info(f"hb.grad={h.grad}", dst=[1])
 
+        import time
+        time.sleep(3)
         ctx.mpc.info(f"==================ground truth==================")
         ha = torch.rand(num_samples, in_features_a, requires_grad=True, generator=torch.Generator().manual_seed(0))
         hb = torch.rand(num_samples, in_features_b, requires_grad=True, generator=torch.Generator().manual_seed(1))
