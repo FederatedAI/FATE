@@ -55,7 +55,7 @@ class Toy(MPCModule):
 
     def fit_matmul(self, ctx: Context):
 
-        with ctx.mpc.communicator.new_group(ranks=[0,1], name="matmul"):
+        with ctx.mpc.communicator.new_group(ranks=[0, 1], name="matmul"):
             x = _get_left_tensor(ctx, 0)
             y = _get_right_tensor(ctx, 1)
             expect = torch.matmul(x, y)

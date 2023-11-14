@@ -2,6 +2,7 @@ import typing
 import warnings
 from typing import overload
 
+import torch
 
 from fate.arch.protocol import mpc
 import logging
@@ -69,6 +70,13 @@ class MPC:
 
     def encrypt(self, *args, cryptensor_type=None, **kwargs):
         return mpc.cryptensor(self._ctx, *args, cryptensor_type=cryptensor_type, **kwargs)
+
+    def lazy_encrypt(self, f: typing.Callable[[], torch.Tensor], *args, cryptensor_type=None, **kwargs):
+        src = kwargs.get("src")
+        assert src is not None, "src should not be None"
+        tensor = f() if self.rank == src else None
+        x = self.encrypt(tensor, *args, cryptensor_type=cryptensor_type, broadcast_size=True, **kwargs)
+        return x
 
     def encode(self, x, precision_bits=None):
         from fate.arch.protocol.mpc.mpc import FixedPointEncoder

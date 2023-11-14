@@ -40,8 +40,8 @@ class MPCTensor(CrypTensor):
         The parties can also set the `precision` and `device` for their share of
         the tensor. If `device` is unspecified, it is set to `tensor.device`.
         """
-        if tensor is None:
-            raise ValueError("Cannot initialize tensor with None.")
+        # if tensor is None:
+        #     raise ValueError("Cannot initialize tensor with None.")
 
         # take required_grad from kwargs, input tensor, or set to False:
         default = tensor.requires_grad if torch.is_tensor(tensor) else False

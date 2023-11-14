@@ -246,21 +246,39 @@ class Communicator:
                 reqs.append(self.broadcast(tensor.data, src, group=group, batched=False))
         else:
             assert torch.is_tensor(input.data), "unbatched input for reduce must be a torch tensor"
+            send_index = group.tensor_send_index_inc()
+            recv_index = group.tensor_recv_index_inc()
             if src == self.rank:
-                send_index = self.main_group.tensor_send_index_inc()
                 self._send_many(
                     index=send_index,
                     tensor=input.data,
-                    dst_list=[rank for rank in range(self.world_size) if rank != self.rank],
+                    dst_list=[rank for rank in group.ranks if rank != self.rank],
                 )
             else:
-                recv_index = self.main_group.tensor_recv_index_inc()
                 self._recv(
                     index=recv_index,
                     tensor=input.data,
                     src=src,
                 )
         return input
+
+    def broadcast_obj(self, src, obj=None, group=None):
+        self._assert_initialized()
+        group = self.main_group if group is None else group
+        send_index = group.object_send_index_inc()
+        recv_index = group.object_recv_index_inc()
+        if src == self.rank:
+            self._send_obj_many(
+                index=send_index,
+                obj=obj,
+                dst_list=[rank for rank in group.ranks if rank != self.rank],
+            )
+        else:
+            obj = self._recv_obj(
+                index=recv_index,
+                src=src,
+            )
+        return obj
 
     def reset_communication_stats(self):
         """Resets communication statistics."""
@@ -345,6 +363,11 @@ class Communicator:
         parties = self._get_parties_by_ranks(dst_list, self.main_group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst_list}, parties={parties}")
         parties.put(self.main_group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
+
+    def _send_obj_many(self, index, obj, dst_list):
+        parties = self._get_parties_by_ranks(dst_list, self.main_group.namespace_obj)
+        logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst_list}, parties={parties}")
+        parties.put(self.main_group.namespace_obj.indexed_ns(index).federation_tag, obj)
 
 
 class WaitableFuture:
