@@ -18,11 +18,11 @@ import json
 from logging import getLogger
 from enum import Enum
 from typing import Dict, List, Any
-
+import time
 import grpc
 from fate.arch.federation.osx import osx_pb2
 from fate.arch.federation.osx.osx_pb2_grpc import PrivateTransferTransportStub
-
+import numpy as np
 # from .._nretry import nretry
 
 LOGGER = getLogger(__name__)
@@ -57,7 +57,10 @@ class Metadata(Enum):
         if attachments is not None and '' != v:
             attachments.append((self.key(), v))
 
-
+def  build_trace_id():
+    timestamp = int(time.time())
+    timestamp_str = str(timestamp)
+    return timestamp_str+"_"+str(np.random.randint(10000))
 
 class MQChannel(object):
     def __init__(
@@ -81,6 +84,10 @@ class MQChannel(object):
         return f"<MQChannel namespace={self._namespace}, host={self._host},port={self._port}, src=({self._src_role}, {self._src_party_id}), dst=({self._dst_role}, {self._dst_party_id}), send_topic={self._send_topic}, receive_topic={self._receive_topic}>"
 
 
+
+
+
+
     def prepare_metadata_consume(self):
         metadata = []
         # Metadata.PTP_TRACE_ID.append(metadata, )
@@ -92,11 +99,12 @@ class MQChannel(object):
             Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
         Metadata.PTP_TECH_PROVIDER_CODE.append(metadata, "FATE")
+        Metadata.PTP_TRACE_ID.append(metadata,build_trace_id())
         return metadata;
 
     def prepare_metadata(self,):
         metadata = []
-        # Metadata.PTP_TRACE_ID.append(metadata, )
+        Metadata.PTP_TRACE_ID.append(metadata,build_trace_id() )
         if not self._namespace is None:
             Metadata.PTP_SESSION_ID.append(metadata,self._namespace)
         if not self._dst_party_id is None:
@@ -188,6 +196,12 @@ class MQChannel(object):
 
     def cleanup(self):
         LOGGER.debug(f"cancel channel")
+        self._get_or_create_channel()
+        inbound = osx_pb2.ReleaseInbound()
+        metadata = self.prepare_metadata()
+        # result = self._stub.push(inbound)
+        result = self._stub.release(inbound,metadata=metadata)
+
 
     def cancel(self):
         LOGGER.debug(f"cancel channel")
@@ -246,11 +260,9 @@ class MQChannel(object):
 
 
 if __name__ == "__main__":
-    #202310191251296433960_toy_example_0_0.202310191251296433960_toy_example_0_0-host-10000-guest-9999-host_index
-    #202310191310469345390_toy_example_0_0.202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index
+    timestamp = int(time.time())
+    timestamp_str = str(timestamp)
 
-    channel = MQChannel(host="localhost",namespace="202310191310469345390_toy_example_0_0",src_role="",dst_role="",
-                        port=7304,send_topic="xxxxx",receive_topic="202310191310469345390_toy_example_0_0-host-10000-guest-9999-<dtype>-<dtype>",src_party_id=9999,dst_party_id=10000)
-    # print(channel.produce(body="my name is test".encode('utf-8'),properties = "{'content_type': 'text/plain', 'app_id': '10000', 'message_id': 'guest_index__table_persistent_0__', 'correlation_id': 'default^<dtype>'}"))
 
-    print(channel.consume())
+    print(build_trace_id())
+

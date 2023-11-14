@@ -180,16 +180,16 @@ class OSXFederation(FederationBase):
         LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}")
         while True:
             response = channel_info.consume()
-            LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}, response={response}")
-            # if response.code == "138":
-            #     continue
+            # LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}, response={response}")
+            if response.code == "E0000000601":
+                 raise LookupError(f"{response}")
             message = osx_pb2.Message()
             message.ParseFromString(response.payload)
             # offset = response.metadata["MessageOffSet"]
             head_str = str(message.head, encoding="utf-8")
-            LOGGER.debug(f"head str {head_str}")
+            # LOGGER.debug(f"head str {head_str}")
             properties = json.loads(head_str)
-            LOGGER.debug(f"osx response properties {properties}")
+            # LOGGER.debug(f"osx response properties {properties}")
             body = message.body
             yield 0, properties, body
 
