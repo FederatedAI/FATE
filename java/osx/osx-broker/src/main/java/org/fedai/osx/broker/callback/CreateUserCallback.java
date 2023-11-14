@@ -1,6 +1,7 @@
 package org.fedai.osx.broker.callback;
 
-import org.fedai.osx.broker.ServiceContainer;
+
+import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.consumer.GrpcEventHandler;
 import org.fedai.osx.broker.message.MessageExt;
 import org.fedai.osx.broker.queue.TransferQueue;
@@ -17,9 +18,9 @@ public class CreateUserCallback  implements MsgEventCallback{
     Class  grpcEventHandlerClass ;
 
     @Override
-    public  void callback(TransferQueue queue , MessageExt message) {
+    public  void callback(ConsumerManager  consumerManager ,TransferQueue queue , MessageExt message) {
             String topic = queue.getTransferId();
-            if(ServiceContainer.consumerManager.getEventDrivenConsumer(topic)==null){
+            if(consumerManager.getEventDrivenConsumer(topic)==null){
                 GrpcEventHandler grpcEventHandler = null;
                 try {
                     grpcEventHandler = (GrpcEventHandler)grpcEventHandlerClass.newInstance();
@@ -28,7 +29,7 @@ public class CreateUserCallback  implements MsgEventCallback{
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
-                ServiceContainer.consumerManager.createEventDrivenConsumer(topic,grpcEventHandler);
+                consumerManager.createEventDrivenConsumer(topic,grpcEventHandler);
             };
     }
 

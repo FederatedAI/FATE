@@ -192,6 +192,8 @@ public class Dict {
     public static final String TRANSFER_ID = "transferId";
     public static final String TOPIC = "topic";
 
+    public static final String PAYLOAD = "payload";
+
 
     public static final String PROPERTY_DEPLOY_MODE_KEY = "deploy.model";
 //    public static final String PROPERTY_CLUSTER_MANAGER_ADDRESS = "cluster.manager.address";

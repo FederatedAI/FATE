@@ -1,6 +1,7 @@
 package org.fedai.osx.broker.consumer;
 
 import org.fedai.osx.broker.message.MessageExt;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +12,9 @@ public  class EventDrivenConsumer extends LocalQueueConsumer  {
     GrpcEventHandler  eventHandler;
   //  Disruptor  disruptor;
 
-    public EventDrivenConsumer(long consumerId, String topic,GrpcEventHandler eventHandler){
+    public EventDrivenConsumer(TransferQueueManager transferQueueManager, long consumerId, String topic, GrpcEventHandler eventHandler){
 
-        super(consumerId,topic);
+        super(transferQueueManager,consumerId,topic);
         this.eventHandler = eventHandler;
 //        disruptor = new Disruptor(() -> new MessageEvent(),
 //                16, DaemonThreadFactory.INSTANCE,

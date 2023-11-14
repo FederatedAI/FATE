@@ -1,7 +1,7 @@
 package org.fedai.osx.broker.eggroll;
 
 import com.google.common.collect.Lists;
-import org.fedai.osx.broker.ServiceContainer;
+
 import org.fedai.osx.broker.callback.CreateUserCallback;
 import org.fedai.osx.broker.callback.MsgEventDispatchCallback;
 import org.fedai.osx.broker.consumer.ConsumerManager;
@@ -27,13 +27,13 @@ public class EventDriverMsgManager implements Lifecycle {
     @Override
     public void init() {
         MsgEventDispatchCallback dispatchCallback = new MsgEventDispatchCallback();
-        ServiceContainer.transferQueueManager.addMsgCallBackRule((queue -> {
+        transferQueueManager.addMsgCallBackRule((queue -> {
             if(queue.getTransferId().startsWith(Dict.STREAM_SEND_TOPIC_PREFIX)){
                 return true;
             }
             return false;
         }), Lists.newArrayList(new CreateUserCallback(PushEventHandler.class),dispatchCallback));
-        ServiceContainer.transferQueueManager.addMsgCallBackRule((queue -> {
+        transferQueueManager.addMsgCallBackRule((queue -> {
             if(queue.getTransferId().startsWith(Dict.STREAM_BACK_TOPIC_PREFIX)){
                 return true;
             }

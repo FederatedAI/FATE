@@ -66,7 +66,6 @@ public class CommandClient {
                         map((element) -> ((AbstractMessageLite) element.toProto()).toByteString()).collect(Collectors.toList()))
                 .build();
 
-
         ManagedChannel managedChannel = buildManagedChannel(erEndpoint.host, erEndpoint.port);
         CommandServiceGrpc.CommandServiceBlockingStub stub = CommandServiceGrpc.newBlockingStub(managedChannel);
         Command.CommandResponse commandResponse = stub.call(commandRequest);

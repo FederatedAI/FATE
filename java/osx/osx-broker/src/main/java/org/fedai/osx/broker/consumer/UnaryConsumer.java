@@ -17,12 +17,14 @@ package org.fedai.osx.broker.consumer;
 
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
-import org.fedai.osx.broker.ServiceContainer;
+
 import org.fedai.osx.broker.queue.TransferQueue;
+import org.fedai.osx.broker.queue.TransferQueueConsumeResult;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.constant.ActionType;
 import org.fedai.osx.core.constant.StatusCode;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ErrorMessageUtil;
 import org.fedai.osx.core.exceptions.TransferQueueNotExistException;
 import org.fedai.osx.core.utils.FlowLogUtil;
@@ -40,12 +42,19 @@ public class UnaryConsumer extends LocalQueueConsumer {
     Logger logger = LoggerFactory.getLogger(UnaryConsumer.class);
     ConcurrentLinkedQueue<LongPullingHold> longPullingQueue;
 
-    public UnaryConsumer(long consumerId, String transferId) {
-        super(consumerId, transferId);
-        TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
+    TransferQueueManager  transferQueueManager;
+    ConsumerManager consumerManager;
+
+
+    public UnaryConsumer(TransferQueueManager  transferQueueManager,ConsumerManager consumerManager,long consumerId, String transferId) {
+        super(transferQueueManager,consumerId, transferId);
+        this.transferQueueManager = transferQueueManager;
+        this.consumerManager = consumerManager;
+
+        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(transferId);
         if (transferQueue != null) {
             transferQueue.registerDestoryCallback(() -> {
-                ServiceContainer.consumerManager.onComplete(transferId);
+               consumerManager.onComplete(transferId);
             });
         }
         longPullingQueue = new ConcurrentLinkedQueue<>();
@@ -69,7 +78,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
          * 这里需要改为ack  后才加1  ，要不然这里会丢消息
          */
         int answerCount = 0;
-        TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
+        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(transferId);
         List<LongPullingHold> reputList = null;
         while (this.longPullingQueue.size() > 0) {
             LongPullingHold longPullingHold = this.longPullingQueue.poll();
@@ -94,9 +103,9 @@ public class UnaryConsumer extends LocalQueueConsumer {
                     continue;
                 }
 
-                FateContext context = longPullingHold.getContext();
-                context.setActionType(ActionType.LONG_PULLING_ANSWER.getAlias());
-                TransferQueue.TransferQueueConsumeResult consumeResult = null;
+                OsxContext context = longPullingHold.getContext();
+                context.setActionType(ActionType.LONG_PULLING_ANSWER.name());
+                TransferQueueConsumeResult consumeResult = null;
                 if (needOffset <= 0) {
                     long consumeOffset = this.consumeOffset.get();
                     if (this.checkMsgIsArrive(consumeOffset)) {
@@ -117,7 +126,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 if (consumeResult != null) {
                     if (consumeResult.getMessage() != null && consumeResult.getMessage().getBody() != null)
                         context.setDataSize(consumeResult.getMessage().getBody().length);
-                    Osx.Outbound consumeResponse = TransferUtil.buildResponse(StatusCode.SUCCESS, "success", consumeResult);
+                    Osx.TransportOutbound consumeResponse = TransferUtil.buildTransportOutbound(StatusCode.PTP_SUCCESS, "success", consumeResult);
                     answerCount++;
                     longPullingHold.answer(consumeResponse);
                     context.setTopic(transferQueue.getTransferId());
@@ -145,25 +154,23 @@ public class UnaryConsumer extends LocalQueueConsumer {
     }
 
     private  void handleExpire(LongPullingHold longPullingHold){
-        Osx.Outbound consumeResponse = TransferUtil.buildResponse(StatusCode.CONSUME_MSG_TIMEOUT, "CONSUME_MSG_TIMEOUT", null);
+        Osx.TransportOutbound consumeResponse = TransferUtil.buildTransportOutbound(StatusCode.PTP_TIME_OUT, "CONSUME_MSG_TIMEOUT", null);
         longPullingHold.answer(consumeResponse);
     }
 
     @Data
     public static class LongPullingHold {
         Logger logger = LoggerFactory.getLogger(LongPullingHold.class);
-        FateContext context;
+        OsxContext context;
         io.grpc.Context   grpcContext;
         StreamObserver streamObserver;
         HttpServletResponse httpServletResponse;
         long expireTimestamp;
         long needOffset;
 
-        public  void  answer(Osx.Outbound  consumeResponse){
-
+        public  void  answer(Osx.TransportOutbound consumeResponse){
 
             if(streamObserver!=null) {
-
                 streamObserver.onNext(consumeResponse);
                 streamObserver.onCompleted();
             }else if(httpServletResponse!=null){

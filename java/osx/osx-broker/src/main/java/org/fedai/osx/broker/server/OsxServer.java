@@ -15,25 +15,32 @@
  */
 package org.fedai.osx.broker.server;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.grpc.ServerInterceptors;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.fedai.osx.broker.grpc.ContextPrepareInterceptor;
-import org.fedai.osx.broker.grpc.PcpGrpcService;
+
+import org.fedai.osx.broker.grpc.PcpInnerService;
+import org.fedai.osx.broker.grpc.PcpInterService;
 import org.fedai.osx.broker.grpc.ProxyGrpcService;
 import org.fedai.osx.broker.grpc.ServiceExceptionHandler;
 import org.fedai.osx.broker.http.DispatchServlet;
 import org.fedai.osx.core.config.MetaInfo;
+import org.fedai.osx.core.frame.ContextPrepareInterceptor;
+import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.utils.OSXCertUtils;
 import org.fedai.osx.core.utils.OsxX509TrustManager;
 import org.slf4j.Logger;
@@ -57,29 +64,35 @@ import static org.fedai.osx.core.config.MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER;
 /**
  * http1.X  + grpc
  */
-public class OsxServer {
-
-    Logger logger = LoggerFactory.getLogger(OsxServer.class);
+@Singleton
+@Slf4j
+public class OsxServer  {
     io.grpc.Server server;
     io.grpc.Server tlsServer;
     org.eclipse.jetty.server.Server httpServer;
     org.eclipse.jetty.server.Server httpsServer;
+    @Inject
     ProxyGrpcService proxyGrpcService;
-    PcpGrpcService pcpGrpcService;
+    @Inject
+    PcpInterService pcpInterService;
+    @Inject
+    PcpInnerService pcpInnerService;
+    @Inject
+    DispatchServlet  dispatchServlet;
 
     private synchronized void init() {
         try {
-            proxyGrpcService = new ProxyGrpcService();
-            pcpGrpcService = new PcpGrpcService();
+//            proxyGrpcService = new ProxyGrpcService();
+//            pcpGrpcService = new PcpGrpcService();
             server = buildServer();
             if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
-                logger.info("prepare to create http server");
+                log.info("prepare to create http server");
                 httpServer = buildHttpServer();
                 if (httpServer == null) {
                     System.exit(0);
                 }
                 if (MetaInfo.PROPERTY_HTTP_USE_TLS) {
-                    logger.info("prepare to create http server with TLS");
+                    log.info("prepare to create http server with TLS");
                     httpsServer = buildHttpsServer();
                     if (httpsServer == null) {
                         System.exit(0);
@@ -88,7 +101,7 @@ public class OsxServer {
             }
             tlsServer = buildTlsServer();
         }catch(Exception e){
-            logger.error("server init error ",e);
+            log.error("server init error ",e);
             e.printStackTrace();
         }
     }
@@ -108,7 +121,7 @@ public class OsxServer {
             server.setHandler(buildServlet());
             return server;
         } catch (Exception e) {
-            logger.error("build http server error", e);
+            log.error("build http server error", e);
         }
         return null;
     }
@@ -163,7 +176,7 @@ public class OsxServer {
 //            }).start();
             return server;
         } catch (Exception e) {
-            logger.error("build https server error = {}", e.getMessage());
+            log.error("build https server error = {}", e.getMessage());
             e.printStackTrace();
         }
         return null;
@@ -172,7 +185,8 @@ public class OsxServer {
     ServletContextHandler buildServlet() {
         ServletContextHandler context = new ServletContextHandler();
         context.setContextPath(MetaInfo.PROPERTY_HTTP_CONTEXT_PATH);
-        context.addServlet(DispatchServlet.class, MetaInfo.PROPERTY_HTTP_SERVLET_PATH);
+        ServletHolder  servletHolder= new ServletHolder(dispatchServlet);
+        context.addServlet(servletHolder, MetaInfo.PROPERTY_HTTP_SERVLET_PATH);
         context.setMaxFormContentSize(Integer.MAX_VALUE);
         return context;
     }
@@ -182,10 +196,10 @@ public class OsxServer {
         //grpc
         try {
             server.start();
-            logger.info("listen grpc port {} success", MetaInfo.PROPERTY_GRPC_PORT);
+            log.info("listen grpc port {} success", MetaInfo.PROPERTY_GRPC_PORT);
         } catch (Exception e) {
             if (e instanceof IOException || e.getCause() instanceof java.net.BindException) {
-                logger.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_GRPC_PORT);
+                log.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_GRPC_PORT);
             }
             e.printStackTrace();
             return false;
@@ -195,11 +209,11 @@ public class OsxServer {
         try {
             if (httpServer != null) {
                 httpServer.start();
-                logger.info("listen http port {} success", MetaInfo.PROPERTY_HTTP_PORT);
+                log.info("listen http port {} success", MetaInfo.PROPERTY_HTTP_PORT);
             }
         } catch (Exception e) {
             if (e instanceof java.net.BindException || e.getCause() instanceof java.net.BindException) {
-                logger.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_HTTP_PORT);
+                log.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_HTTP_PORT);
             }
             e.printStackTrace();
             return false;
@@ -208,15 +222,15 @@ public class OsxServer {
         //tls
         try {
             if (tlsServer != null) {
-                logger.info("grpc tls server try to start, listen port {}", MetaInfo.PROPERTY_GRPC_TLS_PORT);
+                log.info("grpc tls server try to start, listen port {}", MetaInfo.PROPERTY_GRPC_TLS_PORT);
                 tlsServer.start();
-                logger.info("listen grpc tls port {} success", MetaInfo.PROPERTY_GRPC_TLS_PORT);
+                log.info("listen grpc tls port {} success", MetaInfo.PROPERTY_GRPC_TLS_PORT);
             }
         } catch (Exception e) {
             if (e instanceof java.net.BindException || e.getCause() instanceof java.net.BindException) {
-                logger.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_GRPC_TLS_PORT);
+                log.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_GRPC_TLS_PORT);
             }
-            e.printStackTrace();
+
             return false;
         }
 
@@ -224,11 +238,11 @@ public class OsxServer {
         try {
             if (httpsServer != null) {
                 httpsServer.start();
-                logger.info("listen https port {} success", MetaInfo.PROPERTY_HTTPS_PORT);
+                log.info("listen https port {} success", MetaInfo.PROPERTY_HTTPS_PORT);
             }
         } catch (Exception e) {
             if (e instanceof java.net.BindException || e.getCause() instanceof java.net.BindException) {
-                logger.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_HTTPS_PORT);
+                log.error("port {}  already in use, please try to choose another one  !!!!", MetaInfo.PROPERTY_HTTPS_PORT);
             }
             e.printStackTrace();
             return false;
@@ -250,14 +264,12 @@ public class OsxServer {
                         .clientAuth(ClientAuth.REQUIRE)
                         .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                         .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
-                logger.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
+                log.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
                         certChainFilePath, privateKeyFilePath, trustCertCollectionFilePath);
                 //serverBuilder.executor(executor);
                 nettyServerBuilder.sslContext(GrpcSslContexts.configure(sslContextBuilder, SslProvider.OPENSSL).build());
                 nettyServerBuilder.addService(ServerInterceptors.intercept(proxyGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
-                nettyServerBuilder.addService(ServerInterceptors.intercept(pcpGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
-
-
+                nettyServerBuilder.addService(ServerInterceptors.intercept(pcpInterService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
                 nettyServerBuilder
                         .executor(Executors.newCachedThreadPool())
                         .maxConcurrentCallsPerConnection(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION)
@@ -288,12 +300,12 @@ public class OsxServer {
         return null;
     }
 
-
     private io.grpc.Server buildServer() {
         SocketAddress address = new InetSocketAddress(MetaInfo.PROPERTY_BIND_HOST, MetaInfo.PROPERTY_GRPC_PORT);
         NettyServerBuilder nettyServerBuilder = NettyServerBuilder.forAddress(address);
         nettyServerBuilder.addService(ServerInterceptors.intercept(proxyGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
-        nettyServerBuilder.addService(ServerInterceptors.intercept(pcpGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
+        nettyServerBuilder.addService(ServerInterceptors.intercept(pcpInterService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
+        nettyServerBuilder.addService(ServerInterceptors.intercept(pcpInnerService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
         nettyServerBuilder
                 .executor(Executors.newCachedThreadPool())
                 .maxConcurrentCallsPerConnection(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION)
@@ -317,4 +329,6 @@ public class OsxServer {
             nettyServerBuilder.maxConnectionAgeGrace(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC, TimeUnit.SECONDS);
         return nettyServerBuilder.build();
     }
+
+
 }

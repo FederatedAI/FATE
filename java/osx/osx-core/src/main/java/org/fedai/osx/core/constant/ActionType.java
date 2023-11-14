@@ -17,31 +17,31 @@ package org.fedai.osx.core.constant;
 
 public enum ActionType {
 
-    QUERY_TOPIC("query-topic"),
-    CANCEL_TOPIC("cancel-topic"),
-    PUSH_REMOTE("push-to-remote"),
-    PUSH_EGGROLL("push-to-eggroll"),
-    LOCAL_ACK("local-ack"),
-    CUSTOMER_CONSUME("customer-consume"),
-    DEFUALT_CONSUME("default-consume"),
-    REDIRECT_CONSUME("redirect-consume"),
-    INNER_REDIRECT("inner-redirect"),
-    LONG_PULLING_ANSWER("long-pulling-answer"),
-    MSG_DOWNLOAD("msg-download"),
-    MSG_REDIRECT("msg-redirect"),
-    REDIRECT_ACK("redirect-ack"),
-    UNARY_CALL("unary-call"),
-    UNARY_CALL_NEW("unary-call-new"),
-    CLUSTER_TOKEN_APPLY("cluster-token-apply"),
-    TOPIC_APPLY("topic_apply");
+//    QUERY_TOPIC("query-topic"),
+    CANCEL_TOPIC,
+    PUSH_REMOTE,
+    PUSH_EGGROLL,
+//    LOCAL_ACK("local-ack"),
+    CUSTOMER_CONSUME,
+    DEFUALT_CONSUME,
+    REDIRECT_CONSUME,
+    INNER_REDIRECT,
+    LONG_PULLING_ANSWER,
+    MSG_DOWNLOAD,
+    MSG_REDIRECT,
+    REDIRECT_ACK,
+    UNARY_CALL,
+    UNARY_CALL_NEW,
+    CLUSTER_TOKEN_APPLY,
+    TOPIC_APPLY;
 
-    private   String alias;
-    private  ActionType(String alias){
-        this.alias = alias;
-    }
-    public  String getAlias(){
-        return  alias;
-    }
+//    private   String alias;
+//    private  ActionType(String alias){
+//        this.alias = alias;
+//    }
+//    public  String getAlias(){
+//        return  alias;
+//    }
 
 
 }

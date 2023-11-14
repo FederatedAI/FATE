@@ -8,16 +8,30 @@
           "port": 9360,
           "ip": "127.0.0.1"
         }
+      ],
+      "default": [
+        {
+        "port": 9370,
+          "ip": "localhost"
+      }
       ]
     },
     "10000":{
       "default":[{
-        "protocol":"http",
+        "ip": "10.42.0.1",
+        "port": 9371
+      }]
+    },
+    "10001":{
+      "default":[{
+        "protocol":"grpc",
         "url": "http://127.0.0.1:8087/osx/inbound",
         "ip": "127.0.0.1",
-        "port": 9370
+        "port": 9375
       }]
     }
+
+
   },
   "permission":
   {

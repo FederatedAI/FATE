@@ -15,11 +15,16 @@
  */
 package org.fedai.osx.broker.http;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.ServiceContainer;
+
+import org.fedai.osx.broker.util.ContextUtil;
 import org.fedai.osx.broker.util.DebugUtil;
 import org.fedai.osx.core.constant.PtpHttpHeader;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.provider.TechProvider;
+import org.fedai.osx.broker.provider.TechProviderRegister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,55 +33,61 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-
+@Singleton
 public class DispatchServlet extends HttpServlet {
 
     Logger logger = LoggerFactory.getLogger(DispatchServlet.class);
+    @Inject
+    TechProviderRegister  providerRegistry ;
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        handleInner(req,resp);
+    }
+
+
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        handleInner(req,resp);
+    }
+
+
+
+
+
+    private   void  handleInner(HttpServletRequest req, HttpServletResponse  resp) throws IOException {
         //处理get请求
         DebugUtil.printHttpParams(req);
         String protocol = req.getProtocol();
         if (!protocol.endsWith("1.1")) {
             resp.sendError(405, "http.method_get_not_supported");
         }
-        String techProviderCode = req.getHeader(PtpHttpHeader.TechProviderCode);
-        if (StringUtils.isNotEmpty(techProviderCode)) {
-            TechProvider techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
+        OsxContext  osxContext = ContextUtil.buildContextFromHttpRequest(req);
+        TechProvider techProvider = providerRegistry.select(osxContext);
             if (techProvider != null) {
-                techProvider.processHttpInvoke(req, resp);
+                techProvider.processHttpInvoke(osxContext,req, resp);
             } else {
                 resp.sendError(404, "tech-provider-code invalid");
             }
-        } else {
-            resp.sendError(404, "tech-provider-code invalid");
-        }
         String requestUri = req.getRequestURI();
-        logger.info("receive request uri  {}", requestUri);
-    }
 
-
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        //处理post请求
-        DebugUtil.printHttpParams(req);
-        String requestUri = req.getRequestURI();
-        //logger.info("receive request uri  {}",requestUri);
-        String protocol = req.getProtocol();
-        if (!protocol.endsWith("1.1")) {
-            resp.sendError(405, "http.method_get_not_supported");
+        switch (requestUri){
+            case "/v1/interconn/chan/pop":
+                techProvider.processHttpPop(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/push":
+                techProvider.processHttpPop(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/peek":
+                techProvider.processHttpPeek(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/release":
+                techProvider.processHttpRelease(osxContext,req, resp);
+                break;
+            case "/v1/interconn/chan/invoke":
+                techProvider.processHttpInvoke(osxContext,req, resp);
+                break;
+            default:
+                resp.sendError(502, "invalid request "+requestUri);
         }
-        String techProviderCode = req.getHeader(PtpHttpHeader.TechProviderCode);
-        if (StringUtils.isNotEmpty(techProviderCode)) {
-            TechProvider techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
-            if (techProvider != null) {
-                techProvider.processHttpInvoke(req, resp);
-            } else {
-                resp.sendError(404, "tech-provider-code invalid");
-            }
-        } else {
-            resp.sendError(404, "tech-provider-code invalid");
-        }
+
     }
-
-
 }

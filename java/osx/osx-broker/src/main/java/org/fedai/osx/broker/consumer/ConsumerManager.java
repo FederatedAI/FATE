@@ -16,6 +16,9 @@
 package org.fedai.osx.broker.consumer;
 
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.frame.ServiceThread;
 import org.slf4j.Logger;
@@ -25,9 +28,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
+@Singleton
 public class ConsumerManager   implements Lifecycle {
     Logger logger = LoggerFactory.getLogger(ConsumerManager.class);
+
+    @Inject
+    TransferQueueManager transferQueueManager;
+    @Inject
+    ConsumerManager consumerManager;
+
+
     ConcurrentHashMap<String, UnaryConsumer> unaryConsumerMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, EventDrivenConsumer> eventDrivenConsumerMap = new ConcurrentHashMap<>();
     AtomicLong consumerIdIndex = new AtomicLong(0);
@@ -128,7 +138,7 @@ public class ConsumerManager   implements Lifecycle {
         logger.info("create event driven consumer , {}",topic);
         if (eventDrivenConsumerMap.get(topic) == null) {
             EventDrivenConsumer  eventDrivenConsumer =
-                    new EventDrivenConsumer(consumerIdIndex.get(), topic,eventHandler);
+                    new EventDrivenConsumer(transferQueueManager,consumerIdIndex.get(), topic,eventHandler);
             eventDrivenConsumerMap.putIfAbsent(topic, eventDrivenConsumer);
             return eventDrivenConsumerMap.get(topic);
         } else {
@@ -139,7 +149,7 @@ public class ConsumerManager   implements Lifecycle {
     public UnaryConsumer getOrCreateUnaryConsumer(String transferId) {
         if (unaryConsumerMap.get(transferId) == null) {
             UnaryConsumer unaryConsumer =
-                    new UnaryConsumer(consumerIdIndex.get(), transferId);
+                    new UnaryConsumer(transferQueueManager,consumerManager,consumerIdIndex.get(), transferId);
             unaryConsumerMap.putIfAbsent(transferId, unaryConsumer);
             return unaryConsumerMap.get(transferId);
         } else {
