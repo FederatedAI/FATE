@@ -68,7 +68,6 @@ class MultiProcessLauncher:
         self.safe_to_exit = Event()  # barrier
         self._console = console
         self._exception_tb = {}
-        parties = [tuple(p.split(":")) for p in parties]
         for rank in range(world_size):
             process_name = "process " + str(rank)
             output_or_exception_q = self.output_or_exception_q
@@ -188,7 +187,7 @@ class MultiProcessLauncher:
 
 @dataclass
 class LauncherArguments:
-    parties: List[str] = field()
+    parties: List[str] = field(metadata={"required": True})
     federation_session_id: str = field(
         default_factory=lambda: f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid1().hex[:6]}"
     )
@@ -206,7 +205,10 @@ def launch(f, **kwargs):
         namespace.data_dir = kwargs["data_dir"]
     if "log_level" in kwargs:
         namespace.log_level = kwargs["log_level"]
-    args = HfArgumentParser(LauncherArguments).parse_known_args(namespace=namespace)[0]
+
+    args_desc = [LauncherArguments]
+    args_desc.extend(kwargs.get("extra_args_desc", []))
+    args, _ = HfArgumentParser(args_desc).parse_known_args(namespace=namespace)
 
     from fate.arch.utils.logger import set_up_logging
 

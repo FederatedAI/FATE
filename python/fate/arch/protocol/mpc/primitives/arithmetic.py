@@ -98,7 +98,6 @@ class ArithmeticSharedTensor(object):
 
         # if other parties do not know tensor's size, broadcast the size:
         if broadcast_size:
-            logger.error("broadcast_size is not supported")
             size = comm.get().broadcast_obj(src, size)
 
         # generate pseudo-random zero sharing (PRZS) and add source's tensor:
