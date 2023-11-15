@@ -72,10 +72,13 @@ class TopModelArguments(Args):
 
     protect_strategy: Literal['fedpass'] = None
     fed_pass_arg: FedPassArgument = None
+    add_output_layer: Literal[None, 'sigmoid', 'softmax'] = None
 
     def __post_init__(self):
         if self.protect_strategy == 'fedpass' and not isinstance(self.fed_pass_arg, FedPassArgument):
             raise TypeError("fed_pass_arg must be an instance of FedPassArgument for protect_strategy 'fedpass'")
+        assert self.add_output_layer in [None, 'sigmoid', 'softmax'], \
+            "add_output_layer must be None, 'sigmoid' or 'softmax'"
 
 
 def backward_loss(z, backward_error):
@@ -100,7 +103,10 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
     def __init__(self,
                  top_model: t.nn.Module,
-                 bottom_model: t.nn.Module = None
+                 bottom_model: t.nn.Module = None,
+                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+                 top_arg: TopModelArguments = None,
+                 ctx: Context = None
                  ):
 
         super(HeteroNNModelGuest, self).__init__()
@@ -124,6 +130,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         self._top_strategy = None
         # top additional model
         self._top_add_model = None
+        self.setup(ctx=ctx, agglayer_arg=agglayer_arg, top_arg=top_arg, bottom_arg=None)
 
     def __repr__(self):
         return (f"HeteroNNGuest(top_model={self._top_model}\n"
@@ -141,23 +148,30 @@ class HeteroNNModelGuest(HeteroNNModelBase):
               top_arg: TopModelArguments = None, bottom_arg=None):
 
         self._ctx = ctx
-        if agglayer_arg is None:
-            self._agg_layer = AggLayerGuest()
-        elif isinstance(agglayer_arg, StdAggLayerArgument):
-            self._agg_layer = AggLayerGuest(**agglayer_arg.to_dict())
-        elif isinstance(agglayer_arg, FedPassArgument):
-            self._agg_layer = FedPassAggLayerGuest(**agglayer_arg.to_dict())
 
-        if top_arg:
-            logger.info('detect top model strategy')
-            if top_arg.protect_strategy == 'fedpass':
-                fedpass_arg = top_arg.fed_pass_arg
-                top_fedpass_model = get_model(**fedpass_arg.to_dict())
-                self._top_add_model = top_fedpass_model
-                self._top_model = t.nn.Sequential(
-                    self._top_model,
-                    top_fedpass_model
-                )
+        if self._agg_layer is None:
+            if agglayer_arg is None:
+                self._agg_layer = AggLayerGuest()
+            elif isinstance(agglayer_arg, StdAggLayerArgument):
+                self._agg_layer = AggLayerGuest(**agglayer_arg.to_dict())
+            elif isinstance(agglayer_arg, FedPassArgument):
+                self._agg_layer = FedPassAggLayerGuest(**agglayer_arg.to_dict())
+
+        if self._top_add_model is None:
+            if top_arg:
+                logger.info('detect top model strategy')
+                if top_arg.protect_strategy == 'fedpass':
+                    fedpass_arg = top_arg.fed_pass_arg
+                    top_fedpass_model = get_model(**fedpass_arg.to_dict())
+                    self._top_add_model = top_fedpass_model
+                    self._top_model = t.nn.Sequential(
+                        self._top_model,
+                        top_fedpass_model
+                    )
+                    if top_arg.add_output_layer == 'sigmoid':
+                        self._top_model.add_module('sigmoid', t.nn.Sigmoid())
+                    elif top_arg.add_output_layer == 'softmax':
+                        self._top_model.add_module('softmax', t.nn.Softmax(dim=1))
 
         self._agg_layer.set_context(ctx)
 
@@ -218,7 +232,9 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 class HeteroNNModelHost(HeteroNNModelBase):
 
     def __init__(self,
-                 bottom_model: t.nn.Module
+                 bottom_model: t.nn.Module,
+                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+                 ctx: Context = None
                  ):
 
         super().__init__()
@@ -229,8 +245,8 @@ class HeteroNNModelHost(HeteroNNModelBase):
         self._bottom_fw = None  # for backward usage
         # ctx
         self._ctx = None
-
         self._agg_layer = None
+        self.setup(ctx=ctx, agglayer_arg=agglayer_arg)
 
     def __repr__(self):
         return f"HeteroNNHost(bottom_model={self._bottom_model}, agg_layer={self._agg_layer})"
@@ -245,12 +261,14 @@ class HeteroNNModelHost(HeteroNNModelBase):
                 bottom_arg=None):
 
         self._ctx = ctx
-        if agglayer_arg is None:
-            self._agg_layer = AggLayerHost()
-        elif type(agglayer_arg) == StdAggLayerArgument:
-            self._agg_layer = AggLayerHost()  # no parameters are needed
-        elif type(agglayer_arg) == FedPassArgument:
-            self._agg_layer = FedPassAggLayerHost(**agglayer_arg.to_dict())
+
+        if self._agg_layer is None:
+            if agglayer_arg is None:
+                self._agg_layer = AggLayerHost()
+            elif type(agglayer_arg) == StdAggLayerArgument:
+                self._agg_layer = AggLayerHost()  # no parameters are needed
+            elif type(agglayer_arg) == FedPassArgument:
+                self._agg_layer = FedPassAggLayerHost(**agglayer_arg.to_dict())
 
         self._agg_layer.set_context(ctx)
 

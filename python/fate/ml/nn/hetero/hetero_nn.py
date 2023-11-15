@@ -25,8 +25,6 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             training_args: TrainingArguments,
             train_set: Dataset,
             val_set: Dataset = None,
-            agg_layer_arguments: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
-            top_model_arguments: TopModelArguments = None,
             loss_fn: nn.Module = None,
             optimizer = None,
             data_collator: Callable = None,
@@ -38,6 +36,7 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
 
         assert isinstance(model, HeteroNNModelGuest), ('Model should be a HeteroNNModelGuest instance, '
                                                        'but got {}.').format(type(model))
+        model.setup(ctx=ctx)
 
         super().__init__(
             ctx=ctx,
@@ -54,7 +53,6 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             compute_metrics=compute_metrics
         )
 
-        model.setup(ctx, agglayer_arg=agg_layer_arguments, top_arg=top_model_arguments)
 
     def compute_loss(self, model, inputs, **kwargs):
         # (features, labels), this format is used in FATE-1.x
@@ -120,7 +118,6 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
             training_args: TrainingArguments,
             train_set: Dataset,
             val_set: Dataset = None,
-            agg_layer_arguments: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
             optimizer=None,
             data_collator: Callable = None,
             scheduler=None,
@@ -130,7 +127,7 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
     ):
         assert isinstance(model, HeteroNNModelHost), ('Model should be a HeteroNNModelHost instance, '
                                                        'but got {}.').format(type(model))
-
+        model.setup(ctx=ctx)
         super().__init__(
             ctx=ctx,
             model=model,
@@ -145,7 +142,6 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
             callbacks=callbacks,
             compute_metrics=compute_metrics
         )
-        model.setup(ctx, agglayer_arg=agg_layer_arguments)
 
     def compute_loss(self, model, inputs, **kwargs):
         # host side not computing loss

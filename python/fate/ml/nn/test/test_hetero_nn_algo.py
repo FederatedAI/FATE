@@ -93,11 +93,11 @@ if __name__ == "__main__":
             loss_fn=loss_fn,
             training_args=args,
         )
-        trainer.train()
-        pred = trainer.predict(dataset)
-        # compute auc
-        from sklearn.metrics import roc_auc_score
-        print(roc_auc_score(pred.label_ids, pred.predictions))
+        # trainer.train()
+        # pred = trainer.predict(dataset)
+        # # compute auc
+        # from sklearn.metrics import roc_auc_score
+        # print(roc_auc_score(pred.label_ids, pred.predictions))
 
     elif party == "host":
 
@@ -128,3 +128,4 @@ if __name__ == "__main__":
         )
         trainer.train()
         trainer.predict(dataset)
+

@@ -540,13 +540,6 @@ class FedParameterAlignCallback(TrainerCallback):
                 self._client_send_parameters(state, args, train_dataloader)
 
 
-class FatePrinterCallback(TrainerCallback):
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if state.is_local_process_zero:
-            _ = logs.pop("total_flos", None)
-            logger.info(str(logs))
-
-
 class CallbackWrapper(TrainerCallback):
     def __init__(self, ctx: Context, wrapped_trainer: "HomoTrainerMixin"):
         self.ctx = ctx
@@ -837,7 +830,6 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
                 continue
             else:
                 new_callback_list.append(i)
-        new_callback_list.append(FatePrinterCallback())
         callback_handler.callbacks = new_callback_list
         callback_handler.callbacks.append(WrappedFedCallback(self.ctx, self))
         callback_handler.callbacks.append(
@@ -935,7 +927,6 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
                 continue
             else:
                 new_callback_list.append(i)
-        new_callback_list.append(FatePrinterCallback())
         self.callback_handler.callbacks = new_callback_list
 
 

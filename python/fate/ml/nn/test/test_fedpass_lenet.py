@@ -146,14 +146,14 @@ class LeNetBottomRaw(nn.Module):
 
 class LeNet_Top(nn.Module):
 
-    def __init__(self):
+    def __init__(self, out_feat=10):
         super(LeNet_Top, self).__init__()
         self.pool = nn.MaxPool2d(2, 2)
         self.fc1 = nn.Linear(16 * 4 * 4, 120)
         self.fc1act = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(120, 84)
         self.fc2act = nn.ReLU(inplace=True)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, out_feat)
 
     def forward(self, x_a):
         x = x_a
@@ -277,7 +277,7 @@ if __name__ == '__main__':
     #             optimizer.step()
     #         print(loss_sum / len(train_loader))
 
-    arg = TrainingArguments(num_train_epochs=1, per_device_train_batch_size=16, disable_tqdm=False,
+    arg = TrainingArguments(num_train_epochs=20, per_device_train_batch_size=16, disable_tqdm=False,
                             eval_steps=1,
                             evaluation_strategy='epoch'
                             )
@@ -286,11 +286,24 @@ if __name__ == '__main__':
 
         from fate.ml.evaluation.metric_base import MetricEnsemble
         from fate.ml.evaluation.classification import MultiAccuracy
-        ctx = create_ctx(guest, get_current_datetime_str())
+        from fate.ml.nn.model_zoo.hetero_nn_model import TopModelArguments, FedPassArgument
 
-        top_model = LeNet_Top()
+        ctx = create_ctx(guest, get_current_datetime_str())
+        top_model = LeNet_Top(out_feat=10)
         model = HeteroNNModelGuest(
-            top_model=top_model
+            top_model=top_model,
+            # top_arg=TopModelArguments(
+            #    protect_strategy='fedpass',
+               # fed_pass_arg=FedPassArgument(
+               #      layer_type='linear',
+               #      num_passport=64,
+               #      in_channels_or_features=84,
+               #      hidden_features=64,
+               #      out_channels_or_features=10,
+               #      passport_mode='single'
+               # )
+           # ),
+            ctx=ctx
         )
         loss = nn.CrossEntropyLoss()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
@@ -299,11 +312,9 @@ if __name__ == '__main__':
                                        train_set=NoFeatureDataset(subset_train_data),
                                        val_set=NoFeatureDataset(subset_val_data),
                                        loss_fn=loss, optimizer=optimizer,
-                                       compute_metrics=MetricEnsemble().add_metric(MultiAccuracy())
+                                       compute_metrics=MetricEnsemble().add_metric(MultiAccuracy()),
                                        )
         trainer.train()
-
-
 
     if party == 'host':
 
@@ -311,22 +322,45 @@ if __name__ == '__main__':
 
         bottom_model = LeNetBottom()
         model = HeteroNNModelHost(
-            bottom_model=bottom_model
+            bottom_model=bottom_model,
+            agglayer_arg=FedPassArgument(
+                layer_type='conv',
+                in_channels_or_features=8,
+                out_channels_or_features=16,
+                kernel_size=(5, 5),
+                stride=(1, 1),
+                passport_mode='multi',
+                activation='relu',
+                num_passport=64
+            )
         )
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
         trainer = HeteroNNTrainerHost(ctx, model, training_args=arg,
                                       train_set=subset_train_data,
                                       val_set=subset_val_data,
-                                      agg_layer_arguments=FedPassArgument(
-                                          layer_type='conv',
-                                          in_channels_or_features=8,
-                                          out_channels_or_features=16,
-                                          kernel_size=(5, 5),
-                                          stride=(1, 1),
-                                          passport_mode='multi',
-                                          activation='relu',
-                                          num_passport=64
-                                      ),
                                       optimizer=optimizer)
         trainer.train()
+
+    elif party == 'test':
+        from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, TopModelArguments, FedPassArgument
+
+        top_model = LeNet_Top(out_feat=84)
+        model = HeteroNNModelGuest(
+            top_model=top_model
+        )
+        model.setup(
+            top_arg=TopModelArguments(
+                protect_strategy='fedpass',
+                fed_pass_arg=FedPassArgument(
+                    num_passport=64,
+                    in_channels_or_features=84,
+                    hidden_features=64,
+                    out_channels_or_features=10,
+                    passport_mode='single'
+                )
+            )
+        )
+
+
+
