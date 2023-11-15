@@ -31,8 +31,14 @@ class Args(object):
 
 @dataclass
 class StdAggLayerArgument(Args):
+
     merge_type: Literal['sum', 'concat'] = 'sum'
     concat_dim = 1
+
+    def to_dict(self):
+        d = super().to_dict()
+        d['agg_type'] = 'std'
+        return d
 
 
 @dataclass
@@ -57,28 +63,60 @@ class FedPassArgument(StdAggLayerArgument):
     ae_in: int = None
     ae_out: int = None
 
+    def to_dict(self):
+        d = super().to_dict()
+        d['agg_type'] = 'fedpass'
+        return d
+
 
 @dataclass
 class HESSArgument(object):
     pass
 
 
+def parse_agglayer_conf(agglayer_arg_conf):
+
+    if 'agg_type' not in agglayer_arg_conf:
+        raise ValueError('can not load agg layer conf, keyword agg_type not found')
+    agg_type = agglayer_arg_conf['agg_type']
+    agglayer_arg_conf.pop('agg_type')
+    if agg_type == 'fed_pass':
+        agglayer_arg = FedPassArgument(**agglayer_arg_conf['fed_pass_arg'])
+    elif agg_type == 'std':
+        agglayer_arg = StdAggLayerArgument(**agglayer_arg_conf['std_arg'])
+    else:
+        raise ValueError(f'agg type {agg_type} not supported')
+
+    return agglayer_arg
+
 """
 Top & Bottom Model Strategy
 """
 
 @dataclass
-class TopModelArguments(Args):
+class TopModelStrategyArguments(Args):
 
     protect_strategy: Literal['fedpass'] = None
-    fed_pass_arg: FedPassArgument = None
+    fed_pass_arg: Union[FedPassArgument, dict] = None
     add_output_layer: Literal[None, 'sigmoid', 'softmax'] = None
 
     def __post_init__(self):
-        if self.protect_strategy == 'fedpass' and not isinstance(self.fed_pass_arg, FedPassArgument):
-            raise TypeError("fed_pass_arg must be an instance of FedPassArgument for protect_strategy 'fedpass'")
+
+        if self.protect_strategy == 'fedpass':
+            if isinstance(self.fed_pass_arg, dict):
+                self.fed_pass_arg = FedPassArgument(**self.fed_pass_arg)
+            if not isinstance(self.fed_pass_arg, FedPassArgument):
+                raise TypeError("fed_pass_arg must be an instance of FedPassArgument for protect_strategy 'fedpass'")
+
         assert self.add_output_layer in [None, 'sigmoid', 'softmax'], \
             "add_output_layer must be None, 'sigmoid' or 'softmax'"
+
+    def to_dict(self):
+        d = super().to_dict()
+        if 'fed_pass_arg' in d:
+            d['fed_pass_arg'] = d['fed_pass_arg'].to_dict()
+            d['fed_pass_arg'].pop('agg_type')
+        return d
 
 
 def backward_loss(z, backward_error):
@@ -105,7 +143,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
                  top_model: t.nn.Module,
                  bottom_model: t.nn.Module = None,
                  agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
-                 top_arg: TopModelArguments = None,
+                 top_arg: TopModelStrategyArguments = None,
                  ctx: Context = None
                  ):
 
@@ -145,7 +183,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         self._agg_fw_rg = None
 
     def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
-              top_arg: TopModelArguments = None, bottom_arg=None):
+              top_arg: TopModelStrategyArguments = None, bottom_arg=None):
 
         self._ctx = ctx
 

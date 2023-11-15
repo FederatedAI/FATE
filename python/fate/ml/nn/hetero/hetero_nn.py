@@ -12,7 +12,7 @@ from typing import Optional
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.trainer.trainer_base import HeteroTrainerBase, TrainingArguments
 from fate.ml.nn.model_zoo.hetero_nn_model import StdAggLayerArgument, FedPassArgument, HESSArgument
-from fate.ml.nn.model_zoo.hetero_nn_model import TopModelArguments
+from fate.ml.nn.model_zoo.hetero_nn_model import TopModelStrategyArguments
 
 
 

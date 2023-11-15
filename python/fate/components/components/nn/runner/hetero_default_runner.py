@@ -9,6 +9,8 @@ from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHos
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.components.components.utils import consts
 from fate.ml.nn.dataset.table import TableDataset, Dataset
+from fate.ml.nn.model_zoo.hetero_nn_model import (FedPassArgument, StdAggLayerArgument, parse_agglayer_conf,
+                                                  TopModelStrategyArguments)
 
 
 logger = logging.getLogger(__file__)
@@ -17,8 +19,9 @@ class DefaultRunner(NNRunner):
 
     def __init__(self,
                  bottom_model_conf: Optional[Dict] = None,
-                 agg_layer_conf: Optional[Dict] = None,
                  top_model_conf: Optional[Dict] = None,
+                 agglayer_arg_conf: Optional[Dict] = None,
+                 top_model_strategy_arg_conf: Optional[Dict] = None,
                  dataset_conf: Optional[Dict] = None,
                  optimizer_conf: Optional[Dict] = None,
                  training_args_conf: Optional[Dict] = None,
@@ -33,10 +36,10 @@ class DefaultRunner(NNRunner):
                  ):
 
         super().__init__()
-
         self.bottom_model_conf = bottom_model_conf
-        self.interactive_layer_conf = agg_layer_conf
         self.top_model_conf = top_model_conf
+        self.agglayer_arg_conf = agg_layer_conf
+        self.top_model_strategy_arg_conf = top_model_strategy_arg_conf
         self.dataset_conf = dataset_conf
         self.optimizer_conf = optimizer_conf
         self.training_args_conf = training_args_conf
@@ -126,20 +129,24 @@ class DefaultRunner(NNRunner):
                     saved_model=None
                     ):
 
-
         # load bottom model
         b_model = loader_load_from_conf(self.bottom_model_conf)
-        # load agg layer
-        agg_layer = loader_load_from_conf(self.interactive_layer_conf)
         # load top model
         t_model = loader_load_from_conf(self.top_model_conf)
 
+        if self.agglayer_arg_conf is not None:
+            agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
+        if self.top_model_strategy_arg_conf is not None:
+            top_model_strategy = TopModelStrategyArguments(**self.top_model_strategy_arg_conf)
+
         if b_model is None:
             logger.info('guest side bottom model is None')
+
         model = HeteroNNModelGuest(
             top_model=t_model,
-            agg_layer=agg_layer,
-            bottom_model=b_model
+            bottom_model=b_model,
+            agglayer_arg=agglayer_arg,
+            top_arg=None
         )
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerGuest(
@@ -162,12 +169,11 @@ class DefaultRunner(NNRunner):
                    output_dir=None,
                    saved_model=None
                    ):
-        # load agg layer
-        agg_layer = loader_load_from_conf(self.interactive_layer_conf)
         # load bottom model
         b_model = loader_load_from_conf(self.bottom_model_conf)
+        agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
 
-        model = HeteroNNModelHost(agg_layer=agg_layer, bottom_model=b_model)
+        model = HeteroNNModelHost(bottom_model=b_model, agglayer_arg=agglayer_arg)
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerHost(
             ctx=self.get_context(),

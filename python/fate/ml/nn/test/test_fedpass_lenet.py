@@ -178,7 +178,6 @@ def hash_model_parameters(model):
 if __name__ == '__main__':
 
     party = sys.argv[1]
-
     def set_seed(seed):
         t.manual_seed(seed)
         if t.cuda.is_available():
@@ -188,30 +187,24 @@ if __name__ == '__main__':
 
     set_seed(42)
 
-
-    # 1. 加载数据
     train_data = torchvision.datasets.MNIST(root='/home/cwj/mnist',
                                             train=True,
                                             download=True,
                                             transform=torchvision.transforms.ToTensor())
 
-    # 2. 为每个数字保存其索引
     digit_indices = [[] for _ in range(10)]
     for idx, (_, label) in enumerate(train_data):
         digit_indices[label].append(idx)
 
-    # 3. 从每个数字的索引中随机选择300个样本作为训练集
     selected_train_indices = []
     for indices in digit_indices:
         selected_train_indices.extend(torch.randperm(len(indices))[:300].tolist())
 
-    # 4. 从剩下的索引中随机选择100个样本作为验证集
     selected_val_indices = []
     for indices in digit_indices:
         remaining_indices = [idx for idx in indices if idx not in selected_train_indices]
         selected_val_indices.extend(torch.randperm(len(remaining_indices))[:100].tolist())
 
-    # 5. 使用Subset获取训练集和验证集
     subset_train_data = torch.utils.data.Subset(train_data, selected_train_indices)
     subset_val_data = torch.utils.data.Subset(train_data, selected_val_indices)
 
@@ -229,54 +222,6 @@ if __name__ == '__main__':
         def __getitem__(self, item):
             return [self.ds[item][1]]
 
-
-    # if party == 'local':
-    #     b_model = LeNetBottom_()
-    #     t_model = LeNet_Top()
-    #     p = list(t_model.parameters())
-    #     p.extend(list(b_model.parameters()))
-    #     optimizer = t.optim.Adam(p, lr=0.001)
-    #     train_loader = t.utils.data.DataLoader(dataset=subset_data, batch_size=16, shuffle=False)
-    #     loss = nn.CrossEntropyLoss()
-    #
-    #     for i in range(epochs):
-    #         loss_sum = 0
-    #         for x, y in tqdm(train_loader):
-    #             optimizer.zero_grad()
-    #             pred = t_model(b_model(x))
-    #             loss_val = loss(pred, y)
-    #             loss_sum += loss_val.item()
-    #             loss_val.backward()
-    #             optimizer.step()
-    #         print(loss_sum / len(train_loader))
-
-    # if party == 'local_simulate':
-    #
-    #     bottom_model = LeNetBottom()
-    #     fedpass_layer = FedPassAggLayerHost(
-    #         config_or_dict=ConvConfig(8, 16, kernel_size=(5, 5), stride=(1, 1)),
-    #         num_passport=64
-    #     )._host_model
-    #     top_model = LeNet_Top()
-    #
-    #     p = list(bottom_model.parameters())
-    #     p.extend(list(fedpass_layer.parameters()))
-    #     p.extend(list(top_model.parameters()))
-    #     optimizer = t.optim.Adam(p, lr=0.001)
-    #     train_loader = t.utils.data.DataLoader(dataset=subset_data, batch_size=16, shuffle=False)
-    #     loss = nn.CrossEntropyLoss()
-    #
-    #     for i in range(epochs):
-    #         loss_sum = 0
-    #         for x, y in tqdm(train_loader):
-    #             optimizer.zero_grad()
-    #             pred = top_model(fedpass_layer(bottom_model(x)))
-    #             loss_val = loss(pred, y)
-    #             loss_sum += loss_val.item()
-    #             loss_val.backward()
-    #             optimizer.step()
-    #         print(loss_sum / len(train_loader))
-
     arg = TrainingArguments(num_train_epochs=20, per_device_train_batch_size=16, disable_tqdm=False,
                             eval_steps=1,
                             evaluation_strategy='epoch'
@@ -286,23 +231,23 @@ if __name__ == '__main__':
 
         from fate.ml.evaluation.metric_base import MetricEnsemble
         from fate.ml.evaluation.classification import MultiAccuracy
-        from fate.ml.nn.model_zoo.hetero_nn_model import TopModelArguments, FedPassArgument
+        from fate.ml.nn.model_zoo.hetero_nn_model import TopModelStrategyArguments, FedPassArgument
 
         ctx = create_ctx(guest, get_current_datetime_str())
-        top_model = LeNet_Top(out_feat=10)
+        top_model = LeNet_Top(out_feat=84)
         model = HeteroNNModelGuest(
             top_model=top_model,
-            # top_arg=TopModelArguments(
-            #    protect_strategy='fedpass',
-               # fed_pass_arg=FedPassArgument(
-               #      layer_type='linear',
-               #      num_passport=64,
-               #      in_channels_or_features=84,
-               #      hidden_features=64,
-               #      out_channels_or_features=10,
-               #      passport_mode='single'
-               # )
-           # ),
+            top_arg=TopModelStrategyArguments(
+               protect_strategy='fedpass',
+               fed_pass_arg=FedPassArgument(
+                    layer_type='linear',
+                    num_passport=64,
+                    in_channels_or_features=84,
+                    hidden_features=64,
+                    out_channels_or_features=10,
+                    passport_mode='single'
+               )
+           ),
             ctx=ctx
         )
         loss = nn.CrossEntropyLoss()
@@ -343,14 +288,14 @@ if __name__ == '__main__':
         trainer.train()
 
     elif party == 'test':
-        from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, TopModelArguments, FedPassArgument
+        from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, TopModelStrategyArguments, FedPassArgument
 
         top_model = LeNet_Top(out_feat=84)
         model = HeteroNNModelGuest(
             top_model=top_model
         )
         model.setup(
-            top_arg=TopModelArguments(
+            top_arg=TopModelStrategyArguments(
                 protect_strategy='fedpass',
                 fed_pass_arg=FedPassArgument(
                     num_passport=64,
