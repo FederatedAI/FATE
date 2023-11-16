@@ -252,6 +252,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         self.start_epoch = 0
         self.end_epoch = -1
         self.is_converged = False
+        self.header = None
 
     def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X, Y, weight):
         h = X.shape[0]
@@ -325,6 +326,8 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
         """
         coef_count = train_data.shape[1]
+        self.header = train_data.schema.columns.to_list()
+
         if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1.0
 
@@ -401,6 +404,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
             "fit_intercept": self.init_param.get("fit_intercept"),
+            "header": self.header
         }
 
     def restore(self, model):

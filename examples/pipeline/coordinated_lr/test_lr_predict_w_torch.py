@@ -15,10 +15,22 @@
 
 import argparse
 
+import torch
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import CoordinatedLR, PSI
+from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
+
+
+class LogisticRegression(torch.nn.Module):
+    def __init__(self, coefficients):
+        super(LogisticRegression, self).__init__()
+        self.linear = torch.nn.Linear(coefficients.shape[1], 1)
+
+    def forward(self, x):
+        y_pred = torch.sigmoid(self.linear(x))
+        return y_pred
 
 
 def main(config="../config.yaml", namespace=""):
@@ -28,6 +40,7 @@ def main(config="../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
+
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
@@ -40,19 +53,44 @@ def main(config="../config.yaml", namespace=""):
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                 namespace=f"experiment{namespace}"))
     lr_0 = CoordinatedLR("lr_0",
-                         epochs=2,
-                         batch_size=None,
-                         optimizer={"method": "sgd", "optimizer_params": {"lr": 0.01},
-                                    "alpha": 0.001},
-                         init_param={"fit_intercept": True},
-                         cv_data=psi_0.outputs["output_data"],
-                         cv_param={"n_splits": 3})
+                         epochs=10,
+                         batch_size=300,
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}, "penalty": "l2", "alpha": 0.001},
+                         init_param={"fit_intercept": True, "method": "zeros"},
+                         train_data=psi_0.outputs["output_data"],
+                         learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
+                                                                                           "total_iters": 100}})
+
+    evaluation_0 = Evaluation("evaluation_0",
+                              runtime_roles=["guest"],
+                              default_eval_setting="binary",
+                              input_data=lr_0.outputs["train_output_data"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
+    pipeline.add_task(evaluation_0)
+
     pipeline.compile()
-    # print(pipeline.get_dag())
     pipeline.fit()
+
+    lr_model = pipeline.get_task_info('lr_0').get_output_model()
+    param = lr_model['output_model']['data']['estimator']['param']
+    dtype = getattr(torch, param['dtype'])
+    coef = torch.transpose(torch.tensor(param['coef_'], dtype=dtype), 0, 1)
+    intercept = torch.tensor(param["intercept_"], dtype=dtype)
+
+    import pandas as pd
+
+    input_data = pd.read_csv("../../data/breast_hetero_guest.csv", index_col="id")
+    input_data.drop(['y'], axis=1, inplace=True)
+    input_data = torch.tensor(input_data.values, dtype=dtype)
+
+    pytorch_model = LogisticRegression(coef)
+    with torch.no_grad():
+        pytorch_model.linear.weight.copy_(coef)
+        pytorch_model.linear.bias.copy_(intercept)
+        predict_result = pytorch_model(input_data)
+    print(f"predictions shape: {predict_result.shape}")
 
 
 if __name__ == "__main__":
