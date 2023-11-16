@@ -4,6 +4,7 @@ import torch
 
 from fate.arch.context import Context
 from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor
+from fate.arch.utils.trace import auto_trace
 
 
 class SSHEAggregatorLayer(torch.nn.Module):
@@ -68,6 +69,7 @@ class SSHEAggregator:
         self.lr = lr
         self.precision_bits = precision_bits
 
+    @auto_trace(annotation="[z|rank_b] = [xa|rank_a] * <wa> + [xb|rank_b] * <wb>")
     def forward(self, input):
         xa = input if self.ctx.rank == self.rank_a else None
         xb = input if self.ctx.rank == self.rank_b else None
@@ -90,6 +92,7 @@ class SSHEAggregator:
             # because backward() has nothing to do with forward output in rank_a
             return torch.zeros(1)
 
+    @auto_trace
     def backward(self, dz, ha, hb):
         from fate.arch.protocol.mpc.mpc import FixedPointEncoder
 

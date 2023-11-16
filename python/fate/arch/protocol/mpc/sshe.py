@@ -3,9 +3,11 @@ import typing
 import torch
 
 from fate.arch.context import Context
-from fate.arch.protocol.mpc.common.rng import generate_random_ring_element_by_seed
+from fate.arch.tensor import DTensor
+from fate.arch.protocol.mpc.common.rng import generate_random_ring_element
 from fate.arch.protocol.mpc.primitives.arithmetic import ArithmeticSharedTensor
 from fate.arch.protocol.mpc.primitives.beaver import IgnoreEncodings
+from fate.arch.utils.trace import auto_trace
 
 
 if typing.TYPE_CHECKING:
@@ -14,6 +16,7 @@ if typing.TYPE_CHECKING:
 
 class SSHE:
     @classmethod
+    @auto_trace(annotation="<z> = [xa|rank_a] * <wa> + [xb|rank_b] * <wb>")
     def cross_smm(
         cls,
         ctx: Context,
@@ -86,6 +89,7 @@ class SSHE:
         ...
 
     @classmethod
+    @auto_trace
     def smm_lc(cls, ctx: Context, **kwargs):
         from fate.arch.context import PHECipher
 
@@ -124,6 +128,7 @@ class SSHE:
         ...
 
     @classmethod
+    @auto_trace
     def smm_rc(cls, ctx: Context, **kwargs):
         from fate.arch.context import PHECipher
 
@@ -161,6 +166,7 @@ class SSHE:
         ...
 
     @classmethod
+    @auto_trace
     def phe_to_mpc(cls, ctx: Context, **kwargs):
         """
         Convert a phe-tensor to MPC encrypted tensor.
@@ -175,7 +181,9 @@ class SSHE:
             assert phe_tensor is not None, "he_tensor should not be None on src_rank"
             assert phe_cipher is None, "phe_cipher should be None on src_rank"
 
-            src_share = generate_random_ring_element_by_seed(phe_tensor.shape, None)
+            src_share = generate_random_ring_element(
+                ctx, phe_tensor.shardings.shapes if isinstance(phe_tensor, DTensor) else phe_tensor.shape
+            )
             dst_share = phe_tensor - src_share
             ctx.mpc.communicator.send(dst_share, dst=dst_rank)
             return ArithmeticSharedTensor.from_shares(ctx, src_share)
@@ -198,6 +206,7 @@ class SSHE:
         ...
 
     @classmethod
+    @auto_trace
     def smm_sa_rb_lc(cls, ctx: Context, sa: ArithmeticSharedTensor, rank_a, rank_b, **kwargs):
         """
         Securely computes c = sa.T @ b, where:

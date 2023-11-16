@@ -23,6 +23,7 @@ import pandas as pd
 
 from fate.arch.tensor import DTensor
 from .manager import DataManager, Schema
+from fate.arch.utils.trace import auto_trace
 
 if typing.TYPE_CHECKING:
     from fate.arch.histogram import DistributedHistogram, HistogramBuilder
@@ -75,6 +76,7 @@ class DataFrame(object):
         )
 
     @property
+    @auto_trace
     def label(self):
         if not self.schema.label_name:
             return None
@@ -140,6 +142,7 @@ class DataFrame(object):
     def dtypes(self):
         return self._data_manager.dtypes
 
+    @auto_trace
     def as_tensor(self, dtype=None):
         """
         df.weight.as_tensor()
@@ -157,6 +160,7 @@ class DataFrame(object):
 
         return transform_to_pandas_dataframe(self._block_table, self._data_manager)
 
+    @auto_trace
     def apply_row(self, func, columns=None, with_label=False, with_weight=False, enable_type_align_checking=False):
         from .ops._apply_row import apply_row
 
@@ -169,6 +173,7 @@ class DataFrame(object):
             enable_type_align_checking=enable_type_align_checking,
         )
 
+    @auto_trace
     def create_frame(self, with_label=False, with_weight=False, columns: Union[list, pd.Index] = None) -> "DataFrame":
         if columns is not None and isinstance(columns, pd.Index):
             columns = columns.tolist()
@@ -177,6 +182,7 @@ class DataFrame(object):
             with_sample_id=True, with_match_id=True, with_label=with_label, with_weight=with_weight, columns=columns
         )
 
+    @auto_trace
     def empty_frame(self) -> "DataFrame":
         return DataFrame(
             self._ctx,
@@ -185,84 +191,101 @@ class DataFrame(object):
             data_manager=self._data_manager.duplicate(),
         )
 
+    @auto_trace
     def drop(self, index) -> "DataFrame":
         from .ops._dimension_scaling import drop
 
         return drop(self, index)
 
+    @auto_trace
     def fillna(self, value):
         from .ops._fillna import fillna
 
         return fillna(self, value)
 
+    @auto_trace
     def get_dummies(self, dtype="int32"):
         from .ops._encoder import get_dummies
 
         return get_dummies(self, dtype=dtype)
 
+    @auto_trace
     def isna(self):
         from .ops._missing import isna
 
         return isna(self)
 
+    @auto_trace
     def isin(self, values):
         from .ops._isin import isin
 
         return isin(self, values)
 
+    @auto_trace
     def na_count(self):
         return self.isna().sum()
 
+    @auto_trace
     def max(self) -> "pd.Series":
         from .ops._stat import max
 
         return max(self)
 
+    @auto_trace
     def min(self, *args, **kwargs) -> "pd.Series":
         from .ops._stat import min
 
         return min(self)
 
+    @auto_trace
     def mean(self, *args, **kwargs) -> "pd.Series":
         from .ops._stat import mean
 
         return mean(self)
 
+    @auto_trace
     def sum(self, *args, **kwargs) -> "pd.Series":
         from .ops._stat import sum
 
         return sum(self)
 
+    @auto_trace
     def std(self, ddof=1, **kwargs) -> "pd.Series":
         from .ops._stat import std
 
         return std(self, ddof=ddof)
 
+    @auto_trace
     def var(self, ddof=1, **kwargs):
         from .ops._stat import var
 
         return var(self, ddof=ddof)
 
+    @auto_trace
     def variation(self, ddof=1):
         from .ops._stat import variation
 
         return variation(self, ddof=ddof)
 
+    @auto_trace
     def skew(self, unbiased=False):
         from .ops._stat import skew
 
         return skew(self, unbiased=unbiased)
 
+    @auto_trace
     def kurt(self, unbiased=False):
         from .ops._stat import kurt
 
         return kurt(self, unbiased=unbiased)
 
+    @auto_trace
     def sigmoid(self) -> "DataFrame":
         from .ops._activation import sigmoid
 
         return sigmoid(self)
 
+    @auto_trace
     def rename(
         self,
         sample_id_name: str = None,
@@ -279,29 +302,35 @@ class DataFrame(object):
             columns=columns,
         )
 
+    @auto_trace
     def count(self) -> "int":
         return self.shape[0]
 
+    @auto_trace
     def describe(self, ddof=1, unbiased=False):
         from .ops._stat import describe
 
         return describe(self, ddof=ddof, unbiased=unbiased)
 
+    @auto_trace
     def quantile(self, q, relative_error: float = 1e-4):
         from .ops._quantile import quantile
 
         return quantile(self, q, relative_error)
 
+    @auto_trace
     def qcut(self, q: int):
         from .ops._quantile import qcut
 
         return qcut(self, q)
 
+    @auto_trace
     def bucketize(self, boundaries: Union[dict, pd.DataFrame]) -> "DataFrame":
         from .ops._encoder import bucketize
 
         return bucketize(self, boundaries)
 
+    @auto_trace
     def distributed_hist_stat(self,
                               histogram_builder: "HistogramBuilder",
                               position: "DataFrame" = None,
@@ -317,53 +346,69 @@ class DataFrame(object):
 
         return distributed_hist_stat(self, histogram_builder, position, targets)
 
+    @auto_trace
     def replace(self, to_replace=None) -> "DataFrame":
         from .ops._replace import replace
 
         return replace(self, to_replace)
 
+    @auto_trace
     def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
+    @auto_trace
     def __radd__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self + other
 
+    @auto_trace
     def __sub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.sub, other)
 
+    @auto_trace
     def __rsub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self * (-1) + other
 
+    @auto_trace
     def __mul__(self, other) -> "DataFrame":
         return self.__arithmetic_operate(operator.mul, other)
 
+    @auto_trace
     def __rmul__(self, other) -> "DataFrame":
         return self * other
 
+    @auto_trace
     def __truediv__(self, other) -> "DataFrame":
         return self.__arithmetic_operate(operator.truediv, other)
 
+    @auto_trace
     def __pow__(self, power) -> "DataFrame":
         return self.__arithmetic_operate(operator.pow, power)
 
+    @auto_trace
     def __lt__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.lt, other)
 
+    @auto_trace
     def __le__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.le, other)
 
+    @auto_trace
     def __gt__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.gt, other)
 
+    @auto_trace
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
 
+    @auto_trace
     def __eq__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.eq, other)
 
+    @auto_trace
     def __ne__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ne, other)
 
+    @auto_trace
     def __invert__(self):
         from .ops._unary_operator import invert
 
@@ -478,6 +523,7 @@ class DataFrame(object):
 
         return indexes
 
+    @auto_trace
     def get_indexer(self, target):
         if target not in ["sample_id", "match_id"]:
             raise ValueError(f"Target should be sample_id or match_id, but {target} found")
@@ -494,15 +540,18 @@ class DataFrame(object):
 
         return indexer
 
+    @auto_trace
     def loc(self, indexer, target="sample_id", preserve_order=False):
         from .ops._indexer import loc
 
         return loc(self, indexer, target=target, preserve_order=preserve_order)
 
+    @auto_trace
     def iloc(self, indexer: "DataFrame") -> "DataFrame":
         from .ops._dimension_scaling import retrieval_row
         return retrieval_row(self, indexer)
 
+    @auto_trace
     def loc_with_sample_id_replacement(self, indexer):
         """
         indexer: table,
@@ -513,6 +562,7 @@ class DataFrame(object):
 
         return loc_with_sample_id_replacement(self, indexer)
 
+    @auto_trace
     def flatten(self, key_type="block_id", with_sample_id=True):
         """
         flatten data_frame
@@ -520,6 +570,7 @@ class DataFrame(object):
         from .ops._indexer import flatten_data
         return flatten_data(self, key_type=key_type, with_sample_id=with_sample_id)
 
+    @auto_trace
     def copy(self) -> "DataFrame":
         return DataFrame(
             self._ctx,
@@ -534,17 +585,20 @@ class DataFrame(object):
         return transform_flatten_data_to_df(ctx, flatten_table, data_manager, key_type)
 
     @classmethod
+    @auto_trace
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
         from .ops._dimension_scaling import hstack
 
         return hstack(stacks)
 
     @classmethod
+    @auto_trace
     def vstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
         from .ops._dimension_scaling import vstack
 
         return vstack(stacks)
 
+    @auto_trace
     def sample(self, n: int = None, frac: float = None, random_state=None) -> "DataFrame":
         from .ops._dimension_scaling import sample
 

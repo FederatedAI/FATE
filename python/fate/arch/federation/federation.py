@@ -14,32 +14,17 @@
 #  limitations under the License.
 
 import logging
-import traceback
 import typing
 from typing import List
 
 from fate.arch.abc import PartyMeta
+from fate.arch.utils.trace import federation_auto_trace
 from ._gc import GarbageCollector
 
 if typing.TYPE_CHECKING:
     from fate.arch.computing.table import KVTable
 
 logger = logging.getLogger(__name__)
-
-
-def _federation_info(func):
-    def wrapper(*args, **kwargs):
-        name = kwargs.get("name")
-        tag = kwargs.get("tag")
-        logger.debug(f"federation enter {func.__name__}: name={name}, tag={tag}")
-        try:
-            stacks = "".join(traceback.format_stack(limit=7)[:-1])
-            logger.debug(f"stack:\n{stacks}")
-            return func(*args, **kwargs)
-        finally:
-            logger.debug(f"federation exit {func.__name__}: name={name}, tag={tag}")
-
-    return wrapper
 
 
 class Federation:
@@ -103,7 +88,7 @@ class Federation:
     ):
         raise NotImplementedError(f"push bytes is not supported in {self.__class__.__name__}")
 
-    @_federation_info
+    @federation_auto_trace
     def push_table(
         self,
         table: "KVTable",
@@ -124,7 +109,7 @@ class Federation:
             parties=parties,
         )
 
-    @_federation_info
+    @federation_auto_trace
     def push_bytes(
         self,
         v: bytes,
@@ -144,7 +129,7 @@ class Federation:
             parties=parties,
         )
 
-    @_federation_info
+    @federation_auto_trace
     def pull_table(
         self,
         name: str,
@@ -165,7 +150,7 @@ class Federation:
             self._get_gc.register_clean_action(name, tag, table, "destroy", {})
         return tables
 
-    @_federation_info
+    @federation_auto_trace
     def pull_bytes(
         self,
         name: str,

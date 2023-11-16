@@ -133,37 +133,47 @@ class Communicator:
 
     def send(self, tensor, dst):
         send_index = self.main_group.tensor_send_index_inc()
-        return self._send(send_index, tensor, dst)
+        recv_index = self.main_group.tensor_recv_index_inc()
+        out = self._send(send_index, tensor, dst)
+        return out
 
     def send_obj(self, obj, dst):
         send_index = self.main_group.object_send_index_inc()
-        return self._send_obj(send_index, obj, dst)
+        recv_index = self.main_group.object_recv_index_inc()
+        out = self._send_obj(send_index, obj, dst)
+        return out
 
     def recv(self, tensor, src):
         recv_index = self.main_group.tensor_recv_index_inc()
-        return self._recv(recv_index, tensor, src)
+        send_index = self.main_group.tensor_send_index_inc()
+        out = self._recv(recv_index, tensor, src)
+        return out
 
     def recv_obj(self, src):
+        send_index = self.main_group.object_send_index_inc()
         recv_index = self.main_group.object_recv_index_inc()
-        return self._recv_obj(recv_index, src)
+        out = self._recv_obj(recv_index, src)
+        return out
 
     def isend(self, tensor, dst):
         send_index = self.main_group.tensor_send_index_inc()
         feature = self._pool.submit(self._send, send_index, tensor, dst)
-        return WaitableFuture(feature, f"send_{send_index}_{dst}")
+        out = WaitableFuture(feature, f"isend: index={send_index} dst={dst}")
+        return out
 
     def irecv(self, tensor: torch.Tensor, src=None):
         recv_index = self.main_group.tensor_recv_index_inc()
-
         future = self._pool.submit(self._recv, recv_index, tensor, src)
-        return WaitableFuture(future, f"recv_{recv_index}_{src}")
+        out = WaitableFuture(future, f"irecv: index={recv_index} src={src}")
+        return out
 
     def scatter(self, scatter_list, src, size=None, async_op=False):
         raise NotImplementedError
 
     def reduce(self, tensor, dst, op=None, async_op=False):
+        recv_index = self.main_group.tensor_recv_index_inc()
+        send_index = self.main_group.tensor_send_index_inc()
         if self.rank == dst:
-            recv_index = self.main_group.tensor_recv_index_inc()
             for i in range(self.world_size):
                 if i != dst:
                     tensor.add_(
@@ -175,7 +185,6 @@ class Communicator:
                     )
             return tensor
         else:
-            send_index = self.main_group.tensor_recv_index_inc()
             self._send(
                 index=send_index,
                 tensor=tensor,
@@ -376,8 +385,9 @@ class WaitableFuture:
         self.tag = tag
 
     def wait(self):
+        logger.debug(f"waiting {self.tag}")
         self.future.result()
-        logger.info(f"wait {self.tag} done")
+        logger.debug(f"wait {self.tag} done")
 
 
 def _logging(func):

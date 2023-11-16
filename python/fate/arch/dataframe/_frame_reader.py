@@ -21,12 +21,13 @@ from .conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
 from .entity import types
 from ._dataframe import DataFrame
 from .manager import DataManager
+from fate.arch.utils.trace import auto_trace
 
 
 class TableReader(object):
     def __init__(
         self,
-        sample_id_name: str =None,
+        sample_id_name: str = None,
         match_id_name: str = None,
         match_id_list: list = None,
         match_id_range: int = 0,
@@ -42,7 +43,7 @@ class TableReader(object):
         input_format: str = "dense",
         tag_with_value: bool = False,
         tag_value_delimiter: str = ":",
-        block_row_size: int = None
+        block_row_size: int = None,
     ):
         self._sample_id_name = sample_id_name
         self._match_id_name = match_id_name
@@ -71,6 +72,7 @@ class TableReader(object):
         if not isinstance(self._block_row_size, int) or self._block_row_size < 0:
             raise ValueError("block_row_size should be positive integer")
 
+    @auto_trace
     def to_frame(self, ctx, table):
         if self._input_format != "dense":
             raise ValueError("Only support dense input format in this version.")
@@ -82,28 +84,37 @@ class TableReader(object):
         columns = self._header.split(self._delimiter, -1)
         columns.remove(self._sample_id_name)
         retrieval_index_dict = data_manager.init_from_local_file(
-            sample_id_name=self._sample_id_name, columns=columns, match_id_list=self._match_id_list,
-            match_id_name=self._match_id_name, label_name=self._label_name, weight_name=self._weight_name,
-            label_type=self._label_type, weight_type=self._weight_type,
-            dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
+            sample_id_name=self._sample_id_name,
+            columns=columns,
+            match_id_list=self._match_id_list,
+            match_id_name=self._match_id_name,
+            label_name=self._label_name,
+            weight_name=self._weight_name,
+            label_type=self._label_type,
+            weight_type=self._weight_type,
+            dtype=self._dtype,
+            default_type=types.DEFAULT_DATA_TYPE,
+        )
 
         from .ops._indexer import get_partition_order_by_raw_table
+
         partition_order_mappings = get_partition_order_by_raw_table(table, data_manager.block_row_size)
         # partition_order_mappings = _get_partition_order(table)
         table = table.mapValues(lambda value: value.split(self._delimiter, -1))
-        to_block_func = functools.partial(_to_blocks,
-                                          data_manager=data_manager,
-                                          retrieval_index_dict=retrieval_index_dict,
-                                          partition_order_mappings=partition_order_mappings)
-        block_table = table.mapPartitions(
-            to_block_func,
-            use_previous_behavior=False
+        to_block_func = functools.partial(
+            _to_blocks,
+            data_manager=data_manager,
+            retrieval_index_dict=retrieval_index_dict,
+            partition_order_mappings=partition_order_mappings,
         )
+        block_table = table.mapPartitions(to_block_func, use_previous_behavior=False)
 
-        return DataFrame(ctx=ctx,
-                         block_table=block_table,
-                         partition_order_mappings=partition_order_mappings,
-                         data_manager=data_manager)
+        return DataFrame(
+            ctx=ctx,
+            block_table=block_table,
+            partition_order_mappings=partition_order_mappings,
+            data_manager=data_manager,
+        )
 
 
 class ImageReader(object):
@@ -133,7 +144,7 @@ class CSVReader(object):
         dtype: str = "float32",
         na_values: Union[None, str, list, dict] = None,
         partition: int = 4,
-        block_row_size: int = None
+        block_row_size: int = None,
     ):
         self._sample_id_name = sample_id_name
         self._match_id_list = match_id_list
@@ -148,6 +159,7 @@ class CSVReader(object):
         self._partition = partition
         self._block_row_size = block_row_size if block_row_size is not None else DATAFRAME_BLOCK_ROW_SIZE
 
+    @auto_trace
     def to_frame(self, ctx, path):
         # TODO: use table put data instead of read all data
         df = pd.read_csv(path, delimiter=self._delimiter, na_values=self._na_values)
@@ -161,7 +173,7 @@ class CSVReader(object):
             weight_name=self._weight_name,
             dtype=self._dtype,
             partition=self._partition,
-            block_row_size=self._block_row_size
+            block_row_size=self._block_row_size,
         ).to_frame(ctx, df)
 
 
@@ -216,6 +228,7 @@ class PandasReader(object):
         if self._sample_id_name and not self._match_id_name:
             raise ValueError(f"As sample_id {self._sample_id_name} is given, match_id should be given too")
 
+    @auto_trace
     def to_frame(self, ctx, df: "pd.DataFrame"):
         if not self._sample_id_name:
             self._sample_id_name = types.DEFAULT_SID_NAME
@@ -225,10 +238,17 @@ class PandasReader(object):
 
         data_manager = DataManager(block_row_size=self._block_row_size)
         retrieval_index_dict = data_manager.init_from_local_file(
-            sample_id_name=self._sample_id_name, columns=df.columns.tolist(), match_id_list=self._match_id_list,
-            match_id_name=self._match_id_name, label_name=self._label_name, weight_name=self._weight_name,
-            label_type=self._label_type, weight_type=self._weight_type,
-            dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
+            sample_id_name=self._sample_id_name,
+            columns=df.columns.tolist(),
+            match_id_list=self._match_id_list,
+            match_id_name=self._match_id_name,
+            label_name=self._label_name,
+            weight_name=self._weight_name,
+            label_type=self._label_type,
+            weight_type=self._weight_type,
+            dtype=self._dtype,
+            default_type=types.DEFAULT_DATA_TYPE,
+        )
 
         site_name = ctx.local.name
         local_role = ctx.local.party[0]
@@ -237,34 +257,30 @@ class PandasReader(object):
             data_manager.fill_anonymous_site_name(site_name=site_name)
 
         buf = zip(df.index.tolist(), df.values.tolist())
-        table = ctx.computing.parallelize(
-            buf, include_key=True, partition=self._partition
-        )
+        table = ctx.computing.parallelize(buf, include_key=True, partition=self._partition)
 
         from .ops._indexer import get_partition_order_by_raw_table
+
         partition_order_mappings = get_partition_order_by_raw_table(table, data_manager.block_row_size)
         # partition_order_mappings = _get_partition_order(table)
-        to_block_func = functools.partial(_to_blocks,
-                                          data_manager=data_manager,
-                                          retrieval_index_dict=retrieval_index_dict,
-                                          partition_order_mappings=partition_order_mappings)
-
-        block_table = table.mapPartitions(
-            to_block_func,
-            use_previous_behavior=False
+        to_block_func = functools.partial(
+            _to_blocks,
+            data_manager=data_manager,
+            retrieval_index_dict=retrieval_index_dict,
+            partition_order_mappings=partition_order_mappings,
         )
 
-        return DataFrame(ctx=ctx,
-                         block_table=block_table,
-                         partition_order_mappings=partition_order_mappings,
-                         data_manager=data_manager)
+        block_table = table.mapPartitions(to_block_func, use_previous_behavior=False)
+
+        return DataFrame(
+            ctx=ctx,
+            block_table=block_table,
+            partition_order_mappings=partition_order_mappings,
+            data_manager=data_manager,
+        )
 
 
-def _to_blocks(kvs,
-               data_manager=None,
-               retrieval_index_dict=None,
-               partition_order_mappings=None,
-               na_values=None):
+def _to_blocks(kvs, data_manager=None, retrieval_index_dict=None, partition_order_mappings=None, na_values=None):
     """
     sample_id/match_id,label(maybe missing),weight(maybe missing),X
     """
@@ -273,9 +289,11 @@ def _to_blocks(kvs,
     schema = data_manager.schema
 
     splits = [[] for _ in range(data_manager.block_num)]
-    sample_id_block = data_manager.loc_block(schema.sample_id_name, with_offset=False) if schema.sample_id_name else None
+    sample_id_block = (
+        data_manager.loc_block(schema.sample_id_name, with_offset=False) if schema.sample_id_name else None
+    )
 
-    match_id_block = data_manager.loc_block(schema.match_id_name, with_offset=False)if schema.match_id_name else None
+    match_id_block = data_manager.loc_block(schema.match_id_name, with_offset=False) if schema.match_id_name else None
     match_id_column_index = retrieval_index_dict["match_id_index"]
 
     label_block = data_manager.loc_block(schema.label_name, with_offset=False) if schema.label_name else None
@@ -317,7 +335,7 @@ def _to_blocks(kvs,
 
         if lid % block_row_size == 0:
             converted_blocks = data_manager.convert_to_blocks(splits)
-            yield  block_id, converted_blocks
+            yield block_id, converted_blocks
             block_id += 1
             splits = [[] for _ in range(data_manager.block_num)]
 
