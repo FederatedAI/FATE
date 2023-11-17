@@ -118,7 +118,7 @@ class PearsonCorrelation(Module):
     def get_model(self):
         output_model = {"data": {"local_corr": self.local_corr.to_dict(),
                                  "remote_corr": self.remote_corr.to_dict(),
-                                 "vif": self.vif.to_dict() if self.vif is not None else None,
-                                 "column_anonymous_map": dict(zip(self.select_cols, self.select_anonymous_cols))},
-                        "meta": {"model_type": "feature_correlation"}}
+                                 "vif": self.vif.to_dict() if self.vif is not None else None},
+                        "meta": {"model_type": "feature_correlation",
+                                 "column_anonymous_map": dict(zip(self.select_cols, self.select_anonymous_cols))}}
         return output_model
