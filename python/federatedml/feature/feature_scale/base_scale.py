@@ -123,13 +123,13 @@ class BaseScale(object):
 
         if self.feat_upper is not None:
             if isinstance(self.feat_upper, list):
-                self.__check_equal(data_shape, len(self.feat_upper))
-                for i in range(data_shape):
-                    if i in scale_column_idx_set:
-                        if column_max_value[i] > self.feat_upper[i]:
-                            column_max_value[i] = self.feat_upper[i]
-                        if column_min_value[i] > self.feat_upper[i]:
-                            column_min_value[i] = self.feat_upper[i]
+                self.__check_equal(len(scale_column_idx_set), len(self.feat_upper))
+                for upper_index, col_index in enumerate(scale_column_idx_set):
+                    if col_index < data_shape:
+                        if column_max_value[col_index] > self.feat_upper[upper_index]:
+                            column_max_value[col_index] = self.feat_upper[upper_index]
+                        if column_min_value[col_index] > self.feat_upper[upper_index]:
+                            column_min_value[col_index] = self.feat_upper[upper_index]
             else:
                 for i in range(data_shape):
                     if i in scale_column_idx_set:
@@ -140,13 +140,13 @@ class BaseScale(object):
 
         if self.feat_lower is not None:
             if isinstance(self.feat_lower, list):
-                self.__check_equal(data_shape, len(self.feat_lower))
-                for i in range(data_shape):
-                    if i in scale_column_idx_set:
-                        if column_min_value[i] < self.feat_lower[i]:
-                            column_min_value[i] = self.feat_lower[i]
-                        if column_max_value[i] < self.feat_lower[i]:
-                            column_max_value[i] = self.feat_lower[i]
+                self.__check_equal(len(scale_column_idx_set), len(self.feat_lower))
+                for lower_index, col_index in enumerate(scale_column_idx_set):
+                    if col_index < data_shape:
+                        if column_min_value[col_index] < self.feat_lower[lower_index]:
+                            column_min_value[col_index] = self.feat_lower[lower_index]
+                        if column_max_value[col_index] < self.feat_lower[lower_index]:
+                            column_max_value[col_index] = self.feat_lower[lower_index]
             else:
                 for i in range(data_shape):
                     if i in scale_column_idx_set:
