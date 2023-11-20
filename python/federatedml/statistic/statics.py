@@ -17,6 +17,7 @@
 import copy
 import functools
 import math
+import random
 
 import numpy as np
 
@@ -99,8 +100,8 @@ class SummaryStatistics(object):
             for m in range(3, self.stat_order + 1):
                 exp_sum_m = getattr(self, f"exp_sum_{m}")
                 # exp_sum_m[filter_idx] += filter_rows ** m
-                exp_sum_m[filter_idx] = (self.count[filter_idx] - 1) / self.count[filter_idx] * \
-                                        exp_sum_m[filter_idx] + filter_rows ** m / self.count[filter_idx]
+                exp_sum_m[filter_idx] = ((self.count[filter_idx] - 1) / self.count[filter_idx] *
+                                         exp_sum_m[filter_idx] + filter_rows ** m / self.count[filter_idx])
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
 
             """
@@ -578,7 +579,8 @@ class MultivariateStatisticalSummary(object):
                     if v['max_count'] > x[k]['max_count']:
                         x[k] = v
                     elif v['max_count'] == x[k]['max_count']:
-                        x[k]['max_val'].extend(v['max_val'])
+                        # x[k]['max_val'].extend(v['max_val'])
+                        x[k]['max_val'] = random.choice([x[k]['max_val'], v['max_val']])
 
             return x
 

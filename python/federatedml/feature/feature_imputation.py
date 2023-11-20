@@ -63,9 +63,9 @@ class FeatureImputation(ModelBase):
         self.header = param_obj.header
         self.missing_fill, self.missing_fill_method, \
             self.missing_impute, self.fill_value, self.skip_cols = load_feature_imputer_model(self.header,
-                                                                                                 "Imputer",
-                                                                                                 meta_obj.imputer_meta,
-                                                                                                 param_obj.imputer_param)
+                                                                                              "Imputer",
+                                                                                              meta_obj.imputer_meta,
+                                                                                              param_obj.imputer_param)
 
     def save_model(self):
         meta_obj, param_obj = save_feature_imputer_model(missing_fill=True,
