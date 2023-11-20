@@ -9,6 +9,7 @@ from torch.distributed import ReduceOp
 from torch.distributed import ReduceOp
 
 from fate.arch.context import Context, NS, Parties
+from fate.arch.utils import trace
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ class Communicator:
         self.rank = rank
         self.rank_to_party = rank_to_party
         self.world_size = world_size
-        self._pool = ThreadPoolExecutor(max_workers=world_size)
+        self._pool = trace.instrument_thread_pool_executor(ThreadPoolExecutor(max_workers=world_size))
         self.main_group = main_group
 
     @classmethod

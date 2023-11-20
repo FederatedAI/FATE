@@ -4,9 +4,8 @@ import logging
 import torch
 
 from . import MPCModule
-from ...arch import Context
-from ...arch.tensor import DTensor
-from .mpc_sa_layer import SSHEAggregatorLayer
+from fate.arch import Context
+from fate.arch.protocol.mpc.nn.sshe.sa_layer import SSHEAggregatorLayer
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +51,7 @@ class SSHENN(MPCModule):
         ctx.mpc.info(f"hb.grad={h.grad}", dst=[1])
 
         import time
+
         time.sleep(3)
         ctx.mpc.info(f"==================ground truth==================")
         ha = torch.rand(num_samples, in_features_a, requires_grad=True, generator=torch.Generator().manual_seed(0))

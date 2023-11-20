@@ -113,6 +113,9 @@ class DTensor:
     def __rmatmul__(self, other):
         return torch.matmul(other, self)
 
+    def matmul(self, other):
+        return torch.matmul(self, other)
+
     @auto_trace
     def encrypt(self, encryptor):
         return torch.encrypt_f(self, encryptor)

@@ -36,12 +36,12 @@ from typing import List, Tuple, Literal
 import cloudpickle as f_pickle
 import lmdb
 
-from fate.arch.utils.trace import setup_tracing, inject_carrier, auto_trace, extract_carrier, get_tracer
+from fate.arch.utils import trace
 
 PartyMeta = Tuple[Literal["guest", "host", "arbiter", "local"], str]
 
 logger = logging.getLogger(__name__)
-tracer = get_tracer(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 def _watch_thread_react_to_parent_die(ppid, logger_config):
@@ -70,7 +70,7 @@ def _watch_thread_react_to_parent_die(ppid, logger_config):
     thread.start()
 
     # initialize tracer
-    setup_tracing("standalone_computing")
+    trace.setup_tracing("standalone_computing")
 
     # initialize loggers
     if logger_config is not None:
@@ -187,7 +187,7 @@ class Table(object):
                 else:
                     _, _, _, it = heappop(entries)
 
-    @auto_trace
+    @trace.auto_trace
     def reduce(self, func):
         return self._session.submit_reduce(
             func,
@@ -197,7 +197,7 @@ class Table(object):
             namespace=self._namespace,
         )
 
-    @auto_trace
+    @trace.auto_trace
     def binary_sorted_map_partitions_with_index(
         self,
         other: "Table",
@@ -243,7 +243,7 @@ class Table(object):
             partitioner_type=partitioner_type,
         )
 
-    @auto_trace
+    @trace.auto_trace
     def map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
@@ -648,7 +648,7 @@ class RichProcessPool:
         outputs = {}
 
         with tracer.start_as_current_span("submit_process"):
-            carrier = inject_carrier()
+            carrier = trace.inject_carrier()
             for p in range(len(self.process_infos)):
                 features.append(
                     self._pool.submit(
@@ -689,7 +689,7 @@ class RichProcessPool:
 
     @classmethod
     def _process_wrapper(cls, carrier, do_func, process_info, log_level, width):
-        trace_context = extract_carrier(carrier)
+        trace_context = trace.extract_carrier(carrier)
         with tracer.start_as_current_span(f"partition:{process_info.partition_id}", context=trace_context):
             if log_level is not None:
                 RichProcessPool._set_up_process_logger(process_info.partition_id, log_level)

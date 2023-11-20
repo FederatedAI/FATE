@@ -34,8 +34,9 @@ class SSHEAggregatorFunction(torch.autograd.Function):
     def forward(ctx, input, aggregator: "SSHEAggregator"):
         ctx.save_for_backward(input)
         output = aggregator.forward(input)
+        output = output.get_plain_text(dst=aggregator.rank_b)
         ctx.aggregator = aggregator
-        return output
+        return aggregator.ctx.mpc.cond_call(lambda: output, lambda: torch.empty(1), dst=aggregator.rank_b)
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
@@ -57,6 +58,7 @@ class SSHEAggregator:
         rank_a,
         rank_b,
         lr,
+        input_has_grad=True,
         precision_bits=None,
         generator=None,
     ):
@@ -84,13 +86,7 @@ class SSHEAggregator:
             phe_cipher=self.phe_cipher,
             precision_bits=self.precision_bits,
         )
-        output = out.get_plain_text(dst=self.rank_b)
-        if self.ctx.rank == self.rank_b:
-            return output
-        else:
-            # return a fake tensor to avoid error
-            # because backward() has nothing to do with forward output in rank_a
-            return torch.zeros(1)
+        return out
 
     @auto_trace
     def backward(self, dz, ha, hb):

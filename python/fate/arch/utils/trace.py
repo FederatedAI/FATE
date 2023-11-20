@@ -1,6 +1,6 @@
 import os
 import functools
-from opentelemetry import trace
+from opentelemetry import trace, context
 
 _ENABLE_TRACING = None
 _ENABLE_TRACING_DEFAULT = True
@@ -14,13 +14,13 @@ def _is_tracing_enabled():
 
 
 def setup_tracing(service_name, endpoint: str = None):
+    if not _is_tracing_enabled():
+        return
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.trace import TracerProvider
 
     from opentelemetry.sdk.trace.export import BatchSpanProcessor as SpanProcessor
-
-    # from opentelemetry.sdk.trace.export import SimpleSpanProcessor as SpanProcessor
 
     provider = TracerProvider(resource=Resource(attributes={SERVICE_NAME: service_name}))
     provider.add_span_processor(SpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
@@ -32,10 +32,10 @@ def auto_trace(func=None, *, annotation=None):
 
         def _auto_trace(func):
             @functools.wraps(func)
-            def wrapper(*args, **kwargs):
+            def _wrapper(*args, **kwargs):
                 return _trace_func(func, args, kwargs, span_name=annotation)
 
-            return wrapper
+            return _wrapper
 
         return _auto_trace
 
@@ -87,8 +87,11 @@ def federation_auto_trace(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        name = kwargs.get("name")
-        tag = kwargs.get("tag")
+        import inspect
+
+        bounded = inspect.signature(func).bind(*args, **kwargs)
+        name = bounded.arguments.get("name")
+        tag = bounded.arguments.get("tag")
 
         module_name = func.__module__
         qualname = func.__qualname__
@@ -119,6 +122,9 @@ class WrappedTracer(trace.Tracer):
     def start_span(self, *args, **kwargs):
         return self._tracer.start_span(*args, **kwargs)
 
+    def set_status(self, *args, **kwargs):
+        return self._tracer.set_status(*args, **kwargs)
+
 
 def get_tracer(module_name):
     if not _is_tracing_enabled():
@@ -126,4 +132,37 @@ def get_tracer(module_name):
     return WrappedTracer(trace.get_tracer(module_name))
 
 
-__all__ = ["setup_tracing", "auto_trace", "inject_carrier", "extract_carrier", "get_tracer", "federation_auto_trace"]
+class WrappedThreadPoolExecutor:
+    def __init__(self, executor):
+        self._executor = executor
+
+    def submit(self, *args, **kwargs):
+        carrier = inject_carrier()
+        return self._executor.submit(WrappedThreadPoolExecutor._wrapped_func, carrier, *args, **kwargs)
+
+    @staticmethod
+    def _wrapped_func(carrier, func, *args, **kwargs):
+        ctx = extract_carrier(carrier)
+        token = context.attach(ctx)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            context.detach(token)
+
+
+def instrument_thread_pool_executor(executor):
+    if not _is_tracing_enabled():
+        return executor
+    return WrappedThreadPoolExecutor(executor)
+
+
+StatusCode = trace.StatusCode
+__all__ = [
+    "setup_tracing",
+    "auto_trace",
+    "inject_carrier",
+    "extract_carrier",
+    "get_tracer",
+    "federation_auto_trace",
+    "StatusCode",
+]
