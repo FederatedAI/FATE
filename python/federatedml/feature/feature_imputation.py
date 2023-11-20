@@ -16,8 +16,8 @@
 
 import numpy as np
 
-from federatedml.model_base import ModelBase
 from federatedml.feature.imputer import Imputer
+from federatedml.model_base import ModelBase
 from federatedml.protobuf.generated.feature_imputation_meta_pb2 import FeatureImputationMeta, FeatureImputerMeta
 from federatedml.protobuf.generated.feature_imputation_param_pb2 import FeatureImputationParam, FeatureImputerParam
 from federatedml.statistic.data_overview import get_header
@@ -42,13 +42,17 @@ class FeatureImputation(ModelBase):
     def _init_model(self, model_param):
         self.missing_fill_method = model_param.missing_fill_method
         self.col_missing_fill_method = model_param.col_missing_fill_method
+        self.col_default_value = model_param.col_default_value
         self.default_value = model_param.default_value
         self.missing_impute = model_param.missing_impute
+        self.error = model_param.error
+        self.multi_mode = model_param.multi_mode
+        self.fill_value = None
 
     def get_summary(self):
         missing_summary = dict()
         missing_summary["missing_value"] = list(self.missing_impute)
-        missing_summary["missing_impute_value"] = dict(zip(self.header, self.default_value))
+        missing_summary["missing_impute_value"] = dict(zip(self.header, self.fill_value))
         missing_summary["missing_impute_rate"] = dict(zip(self.header, self.missing_impute_rate))
         missing_summary["skip_cols"] = self.skip_cols
         return missing_summary
@@ -58,17 +62,17 @@ class FeatureImputation(ModelBase):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.header = param_obj.header
         self.missing_fill, self.missing_fill_method, \
-            self.missing_impute, self.default_value, self.skip_cols = load_feature_imputer_model(self.header,
-                                                                                                 "Imputer",
-                                                                                                 meta_obj.imputer_meta,
-                                                                                                 param_obj.imputer_param)
+            self.missing_impute, self.fill_value, self.skip_cols = load_feature_imputer_model(self.header,
+                                                                                              "Imputer",
+                                                                                              meta_obj.imputer_meta,
+                                                                                              param_obj.imputer_param)
 
     def save_model(self):
         meta_obj, param_obj = save_feature_imputer_model(missing_fill=True,
                                                          missing_replace_method=self.missing_fill_method,
                                                          cols_replace_method=self.cols_replace_method,
                                                          missing_impute=self.missing_impute,
-                                                         missing_fill_value=self.default_value,
+                                                         missing_fill_value=self.fill_value,
                                                          missing_replace_rate=self.missing_impute_rate,
                                                          header=self.header,
                                                          skip_cols=self.skip_cols)
@@ -97,10 +101,18 @@ class FeatureImputation(ModelBase):
             for k in self.col_missing_fill_method.keys():
                 if k not in self.header:
                     raise ValueError(f"{k} not found in data header. Please check col_missing_fill_method keys.")
-        imputed_data, self.default_value = imputer_processor.fit(data,
-                                                                 replace_method=self.missing_fill_method,
-                                                                 replace_value=self.default_value,
-                                                                 col_replace_method=self.col_missing_fill_method)
+        if self.col_default_value:
+            for k in self.col_default_value.keys():
+                if k not in self.header:
+                    raise ValueError(f"{k} not found in data header. Please check col_default_value keys.")
+        # LOGGER.info(f"data first: {data.first()[1].features}, type: {type(data.first()[1].features[0])}")
+        imputed_data, self.fill_value = imputer_processor.fit(data,
+                                                              replace_method=self.missing_fill_method,
+                                                              replace_value=self.default_value,
+                                                              col_replace_method=self.col_missing_fill_method,
+                                                              error=self.error,
+                                                              multi_mode=self.multi_mode,
+                                                              col_replace_value=self.col_default_value)
         if self.missing_impute is None:
             self.missing_impute = imputer_processor.get_missing_value_list()
         self.missing_impute_rate = imputer_processor.get_impute_rate("fit")
@@ -116,7 +128,7 @@ class FeatureImputation(ModelBase):
         LOGGER.info(f"Enter Feature Imputation transform")
         imputer_processor = Imputer(self.missing_impute)
         imputed_data = imputer_processor.transform(data,
-                                                   transform_value=self.default_value,
+                                                   transform_value=self.fill_value,
                                                    skip_cols=self.skip_cols)
         if self.missing_impute is None:
             self.missing_impute = imputer_processor.get_missing_value_list()
@@ -176,7 +188,7 @@ def load_value_to_type(value, value_type):
         loaded_value = None
     elif value_type in ["int", "int64", "long", "float", "float64", "double"]:
         loaded_value = getattr(np, value_type)(value)
-    elif value_type in ["str", "_str"]:
+    elif value_type in ["str", "_str", "str_"]:
         loaded_value = str(value)
     elif value_type.lower() in ["none", "nonetype"]:
         loaded_value = None

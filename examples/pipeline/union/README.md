@@ -20,6 +20,9 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-union-tag-value.py
 
+5. Union Task Joining Tables Along axis-1:
+
+   script: pipeline-union-axis-1.py
 
 Users can run a pipeline job directly:
 

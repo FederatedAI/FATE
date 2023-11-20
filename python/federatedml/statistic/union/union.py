@@ -14,8 +14,10 @@
 #  limitations under the License.
 #
 
-from federatedml.model_base import Metric, MetricMeta
+import numpy as np
+
 from federatedml.feature.instance import Instance
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.union_param import UnionParam
 from federatedml.statistic import data_overview
@@ -37,6 +39,8 @@ class Union(ModelBase):
         self.model_param = params
         self.allow_missing = params.allow_missing
         self.keep_duplicate = params.keep_duplicate
+        self.axis = params.axis
+        self.raise_error = True if params.unmatched_id == 'raise' else False
         self.feature_count = 0
         self.is_data_instance = None
         self.is_empty_feature = False
@@ -77,12 +81,36 @@ class Union(ModelBase):
             raise ValueError("Label names do not match. "
                              "Please check label column names.")
 
-    def check_header(self, local_table, combined_table):
+    @staticmethod
+    def check_header(local_table, combined_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_header = local_schema.get("header")
         combined_header = combined_schema.get("header")
         if local_header != combined_header:
             raise ValueError("Table headers do not match! Please check header.")
+
+    @staticmethod
+    def check_header_overlap(local_table, combined_table):
+        local_schema, combined_schema = local_table.schema, combined_table.schema
+        local_header = local_schema.get("header")
+        combined_header = combined_schema.get("header")
+        if local_header is None or combined_header is None:
+            return False
+        header_overlap = set(local_header).intersection(set(combined_header))
+        if len(header_overlap) > 0:
+            raise ValueError(f"Table headers overlap: {header_overlap}! Please check input data.")
+        return False
+
+    def get_combined_schema(self, combined_table, local_table):
+        local_schema, combined_schema = local_table.schema, combined_table.schema
+        local_header = local_schema.get("header")
+        combined_header = combined_schema.get("header")
+        if self.is_data_instance:
+            new_header = combined_header + local_header
+        else:
+            new_header = ",".join([combined_header, local_header])
+        combined_schema["header"] = new_header
+        return combined_schema
 
     def check_feature_length(self, data_instance):
         if not self.is_data_instance or self.allow_missing:
@@ -97,6 +125,12 @@ class Union(ModelBase):
         is_data_instance = isinstance(entry[1], Instance)
         return is_data_instance
 
+    @staticmethod
+    def join_instances(x, y):
+        joined_features = np.concatenate((x.features, y.features), axis=0)
+        new_instance = Instance(inst_id=x.inst_id, features=joined_features, label=x.label, weight=x.weight)
+        return new_instance
+
     @assert_schema_consistent
     def fit(self, data):
         # LOGGER.debug(f"fit receives data is {data}")
@@ -106,61 +140,105 @@ class Union(ModelBase):
         combined_table = None
         combined_schema = None
         metrics = []
+        if self.axis == 0:
+            for (key, local_table) in data.items():
+                LOGGER.debug("table to combine name: {}".format(key))
+                num_data = local_table.count()
+                LOGGER.debug("table count: {}".format(num_data))
+                metrics.append(Metric(key, num_data))
+                self.add_summary(key, num_data)
 
-        for (key, local_table) in data.items():
-            LOGGER.debug("table to combine name: {}".format(key))
-            num_data = local_table.count()
-            LOGGER.debug("table count: {}".format(num_data))
-            metrics.append(Metric(key, num_data))
-            self.add_summary(key, num_data)
+                if num_data == 0:
+                    LOGGER.warning("Table {} is empty.".format(key))
+                    if combined_table is None:
+                        combined_table = local_table
+                        combined_schema = local_table.schema
+                    empty_count += 1
+                    continue
 
-            if num_data == 0:
-                LOGGER.warning("Table {} is empty.".format(key))
-                if combined_table is None:
+                local_is_data_instance = self.check_is_data_instance(local_table)
+                if self.is_data_instance is None or combined_table is None:
+                    self.is_data_instance = local_is_data_instance
+                LOGGER.debug(f"self.is_data_instance is {self.is_data_instance}, "
+                             f"local_is_data_instance is {local_is_data_instance}")
+                if self.is_data_instance != local_is_data_instance:
+                    raise ValueError(f"Cannot combine DataInstance and non-DataInstance object. Union aborted.")
+
+                if self.is_data_instance:
+                    self.is_empty_feature = data_overview.is_empty_feature(local_table)
+                    if self.is_empty_feature:
+                        LOGGER.warning("Table {} has empty feature.".format(key))
+                    else:
+                        self.check_schema_content(local_table.schema)
+
+                if combined_table is None or combined_table.count() == 0:
+                    # first non-empty table to combine
                     combined_table = local_table
                     combined_schema = local_table.schema
-                empty_count += 1
-                continue
-
-            local_is_data_instance = self.check_is_data_instance(local_table)
-            if self.is_data_instance is None or combined_table is None:
-                self.is_data_instance = local_is_data_instance
-            LOGGER.debug(f"self.is_data_instance is {self.is_data_instance}, "
-                         f"local_is_data_instance is {local_is_data_instance}")
-            if self.is_data_instance != local_is_data_instance:
-                raise ValueError(f"Cannot combine DataInstance and non-DataInstance object. Union aborted.")
-
-            if self.is_data_instance:
-                self.is_empty_feature = data_overview.is_empty_feature(local_table)
-                if self.is_empty_feature:
-                    LOGGER.warning("Table {} has empty feature.".format(key))
+                    if self.keep_duplicate:
+                        combined_table = combined_table.map(lambda k, v: (f"{k}_{key}", v))
+                        combined_table.schema = combined_schema
                 else:
-                    self.check_schema_content(local_table.schema)
+                    self.check_id(local_table, combined_table)
+                    self.check_label_name(local_table, combined_table)
+                    self.check_header(local_table, combined_table)
+                    if self.keep_duplicate:
+                        local_table = local_table.map(lambda k, v: (f"{k}_{key}", v))
 
-            if combined_table is None or combined_table.count() == 0:
-                # first non-empty table to combine
-                combined_table = local_table
-                combined_schema = local_table.schema
-                if self.keep_duplicate:
-                    combined_table = combined_table.map(lambda k, v: (f"{k}_{key}", v))
+                    combined_table = combined_table.union(local_table, self._keep_first)
+
                     combined_table.schema = combined_schema
-            else:
-                self.check_id(local_table, combined_table)
-                self.check_label_name(local_table, combined_table)
-                self.check_header(local_table, combined_table)
-                if self.keep_duplicate:
-                    local_table = local_table.map(lambda k, v: (f"{k}_{key}", v))
 
-                combined_table = combined_table.union(local_table, self._keep_first)
+                # only check feature length if not empty
+                if self.is_data_instance and not self.is_empty_feature:
+                    self.feature_count = len(combined_schema.get("header"))
+                    # LOGGER.debug(f"feature count: {self.feature_count}")
+                    combined_table.mapValues(self.check_feature_length)
+        elif self.axis == 1:
+            for (key, local_table) in data.items():
+                LOGGER.debug("table to combine name: {}".format(key))
+                num_data = local_table.count()
+                LOGGER.debug("table count: {}".format(num_data))
+                metrics.append(Metric(key, num_data))
+                self.add_summary(key, num_data)
 
-                combined_table.schema = combined_schema
+                if num_data == 0:
+                    LOGGER.warning("Table {} is empty.".format(key))
+                    if combined_table is None:
+                        combined_table = local_table
+                    empty_count += 1
+                    continue
 
-            # only check feature length if not empty
-            if self.is_data_instance and not self.is_empty_feature:
-                self.feature_count = len(combined_schema.get("header"))
-                # LOGGER.debug(f"feature count: {self.feature_count}")
-                combined_table.mapValues(self.check_feature_length)
+                local_is_data_instance = self.check_is_data_instance(local_table)
+                if self.is_data_instance is None or combined_table is None:
+                    self.is_data_instance = local_is_data_instance
+                LOGGER.debug(f"self.is_data_instance is {self.is_data_instance}, "
+                             f"local_is_data_instance is {local_is_data_instance}")
+                if self.is_data_instance != local_is_data_instance:
+                    raise ValueError(f"Cannot combine DataInstance and non-DataInstance object. Union aborted.")
 
+                if self.is_data_instance:
+                    self.is_empty_feature = data_overview.is_empty_feature(local_table)
+                    if self.is_empty_feature:
+                        LOGGER.warning("Table {} has empty feature.".format(key))
+                    else:
+                        self.check_schema_content(local_table.schema)
+
+                if combined_table is None or combined_table.count() == 0:
+                    # first non-empty table to combine
+                    combined_table = local_table
+                else:
+                    if self.is_data_instance:
+                        self.check_header_overlap(local_table, combined_table)
+                        combined_schema = self.get_combined_schema(combined_table, local_table)
+                        combined_table = combined_table.join(local_table, lambda x, y: self.join_instances(x, y))
+                    else:
+                        combined_schema = self.get_combined_schema(combined_table, local_table)
+                        combined_table = combined_table.join(local_table, lambda x, y: f"{x},{y}")
+                    combined_table.schema = combined_schema
+
+        else:
+            raise ValueError(f"Axis {self.axis} is not supported. Please check axis value.")
         if combined_table is None:
             LOGGER.warning("All tables provided are empty or have empty features.")
             first_table = list(data.values())[0]
