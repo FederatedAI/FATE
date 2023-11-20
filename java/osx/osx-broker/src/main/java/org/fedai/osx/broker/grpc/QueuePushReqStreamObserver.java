@@ -69,21 +69,15 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     private boolean needPrintFlow = true;
     private StreamObserver<Proxy.Packet> forwardPushReqSO;
     private StreamObserver<Proxy.Metadata> backRespSO;
-
     private String transferId;
     private Integer queueId;
     private RouterService  routerService;
     private  TransferQueueManager  transferQueueManager;
-
-
+    private ManagedChannel channel;
 
     public QueuePushReqStreamObserver(OsxContext context,RouterService routerService,TransferQueueManager transferQueueManager,
                                       StreamObserver backRespSO
-
     ) {
-
-        logger.info("=====test ======context=={}",context);
-
         this.context = context;
         this.routerService = routerService;
         this.backRespSO = backRespSO;
@@ -104,7 +98,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     }
 
     public void init(Proxy.Packet packet) throws Exception {
-        logger.info("xxxxxxxxxxxxxxx testUUUUUU {}",packet);
         TransferUtil.assableContextFromProxyPacket(context,packet);
         Proxy.Metadata metadata = packet.getHeader();
         String desPartyId = context.getDesNodeId();
@@ -296,7 +289,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         routerInfo.setPort(egg.getTransferEndpoint().getPort());
         context.setSrcNodeId(routerInfo.getSourcePartyId());
         context.setDesNodeId(routerInfo.getDesPartyId());
-        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo,false);
+        this.channel = GrpcConnectionFactory.createManagedChannel(routerInfo, false);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch));
 
@@ -381,6 +374,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                         if (!finishLatch.await(MetaInfo.PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT, TimeUnit.SECONDS)) {
                             onError(new TimeoutException());
                             needPrintFlow = false;
+                            if (this.channel != null) {
+                                this.channel.shutdown();
+                            }
                         }
                     } catch (InterruptedException e) {
                         onError(e);

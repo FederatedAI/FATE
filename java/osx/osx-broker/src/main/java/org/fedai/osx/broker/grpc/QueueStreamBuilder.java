@@ -8,7 +8,7 @@ import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.consumer.ConsumerManager;
-import org.fedai.osx.broker.consumer.SourceGrpcEventHandler;
+//import org.fedai.osx.broker.consumer.SourceGrpcEventHandler;
 import org.fedai.osx.broker.queue.*;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
@@ -33,10 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class QueueStreamBuilder {
-
-
-
-
     /**
      *  在流的开端调用
      * @param respStreamObserver
@@ -46,7 +42,6 @@ public class QueueStreamBuilder {
      * @param sessionId
      * @return
      */
-
     private  static AtomicInteger  count= new AtomicInteger(0);
 
     private  static Logger logger = LoggerFactory.getLogger(QueueStreamBuilder.class);
@@ -60,17 +55,14 @@ public class QueueStreamBuilder {
                                                          String sessionId,
                                                          CountDownLatch countDownLatch
                                ){
-
-        //String uuid = UUID.randomUUID().toString();
         int  temp = count.addAndGet(1);
         long  now = System.currentTimeMillis();
-        //srcPartyId+"_"+desPartyId
         String backTopic = Dict.STREAM_BACK_TOPIC_PREFIX +now+ "_"+sessionId+"_"+temp;
         String sendTopic = Dict.STREAM_SEND_TOPIC_PREFIX +now+"_"+sessionId+"_"+temp;
         context.setTopic(sendTopic);
         context.setActionType(ActionType.MSG_REDIRECT.name());
         context.setQueueType(QueueType.DIRECT.name());
-        CreateQueueResult createQueueResult = transferQueueManager.createNewQueue(backTopic, sessionId, true, QueueType.DIRECT);
+        CreateQueueResult createQueueResult = transferQueueManager.createNewQueue(sessionId,backTopic , true, QueueType.DIRECT);
         if (createQueueResult.getQueue() == null) {
             throw new RemoteRpcException("create queue error");
         }
@@ -99,12 +91,11 @@ public class QueueStreamBuilder {
                     context.setMessageFlag(MessageFlag.SENDMSG.name());
                     context.setQueueType(QueueType.DIRECT.name());
                     Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-                    logger.info("test================{}",message);
                     Osx.PushInbound.Builder  pushInboundBuilder = Osx.PushInbound.newBuilder();
                     pushInboundBuilder.setPayload(message.toByteString());
                     pushInboundBuilder.setTopic(sendTopic);
                     inboundBuilder.setPayload(pushInboundBuilder.build().toByteString());
-                    Osx.Outbound outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
+                    Osx.Outbound outbound = (Osx.Outbound)TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
                     TransferUtil.checkResponse(outbound);
                 }catch(Exception e){
                     throw ErrorMessageUtil.toGrpcRuntimeException(e);
@@ -125,7 +116,7 @@ public class QueueStreamBuilder {
                     Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER, srcPartyId, desPartyId, TargetMethod.PRODUCE_MSG.name(),
                                     sendTopic, MessageFlag.ERROR, sessionId, errorData.getBytes(StandardCharsets.UTF_8))
                             .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
-                    Osx.Outbound outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
+                    Osx.Outbound outbound = (Osx.Outbound)TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
                     TransferUtil.checkResponse(outbound);
                     countDownLatch.countDown();
                 }catch (Exception e){
@@ -147,7 +138,7 @@ public class QueueStreamBuilder {
                     pushInboundBuilder.setPayload(ByteString.copyFrom("completed".getBytes(StandardCharsets.UTF_8)));
                     pushInboundBuilder.setTopic(sendTopic);
                     inboundBuilder.setPayload(pushInboundBuilder.build().toByteString());
-                    Osx.Outbound outbound = TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
+                    Osx.Outbound outbound =(Osx.Outbound) TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
 
 //                    Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(MetaInfo.PROPERTY_FATE_TECH_PROVIDER, srcPartyId, desPartyId, TargetMethod.PRODUCE_MSG.name(),
 //                                    sendTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8))

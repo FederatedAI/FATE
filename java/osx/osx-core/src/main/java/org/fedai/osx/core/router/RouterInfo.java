@@ -33,8 +33,15 @@ public class RouterInfo {
     private String negotiationType;
     private String certChainFile;
     private String privateKeyFile;
-    private String trustCertCollectionFile;
+ //   private String trustCertCollectionFile;
     private String caFile;
+
+    private boolean useKeyStore = true;
+    private String keyStoreFilePath;
+    private String keyStorePassword;
+    private String trustStoreFilePath;
+    private String trustStorePassword;
+
     private String version;
     private String instId;
     private boolean isCycle;

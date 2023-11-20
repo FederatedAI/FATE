@@ -56,14 +56,13 @@ public class ContextPrepareInterceptor implements ServerInterceptor ,ClientInter
     private void setMetadata(Metadata metadata, Metadata.Key<String> key, String v) {
 
         if (StringUtils.isNotEmpty(v)) {
-            logger.info("======meta data put {} {}",key,v);
+//            logger.info("======meta data put {} {}",key,v);
             metadata.put(key, v);
         }
     }
 
 
     public static <T> boolean required(T... inputs) {
-        System.err.println("ooooooooo"+inputs);
         if (null == inputs || inputs.length < 1) {
             return false;
         }
@@ -106,7 +105,7 @@ public class ContextPrepareInterceptor implements ServerInterceptor ,ClientInter
         String remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR).toString();
         String[] remoteAddrSplited = remoteAddr.split(":");
         String remoteIp = remoteAddrSplited[0].replaceAll("\\/", "");
-        logger.info("receive metadata {} {} {}",metadata,Optional.ofNullable(metadata.get(METAKEY_TRACE_ID)).orElse(""),remoteIp);
+        //logger.info("receive metadata {} {} {}",metadata,Optional.ofNullable(metadata.get(METAKEY_TRACE_ID)).orElse(""),remoteIp);
         Context context = Context.current()
                 .withValue(CONTEXTKEY_TRACE_ID, Optional.ofNullable(metadata.get(METAKEY_TRACE_ID)).orElse(""))
                 .withValue(CONTEXTKEY_FROM_INST_ID, metadata.get(METAKEY_FROM_INST_ID))
@@ -151,7 +150,7 @@ public class ContextPrepareInterceptor implements ServerInterceptor ,ClientInter
         setMetadata(metadata,METAKEY_QUEUE_TYPE,Optional.ofNullable(osxContext.getQueueType()).orElse(""));
         setMetadata(metadata,METAKEY_MSG_FLAG,Optional.ofNullable(osxContext.getMessageFlag()).orElse(""));
 
-       logger.info("========client intercept======{}",metadata);
+       //logger.info("========client intercept======{}",metadata);
         return MetadataUtils.newAttachHeadersInterceptor(metadata).interceptCall(descriptor, options, channel);
     }
 

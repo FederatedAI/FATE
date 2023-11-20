@@ -21,6 +21,21 @@ public class UriConstants {
     public static  final String  UNARYCALL = "/org.fedai.osx.proxy/unary";
 
     public static  final String  EGGROLL_PUSH = "/org.fedai.osx.proxy/push";
+
+    public static  final String  HTTP_PUSH= "/v1/interconn/chan/push";
+    public static  final String  HTTP_POP= "/v1/interconn/chan/pop";
+    public static  final String  HTTP_PEEK= "/v1/interconn/chan/peek";
+
+    public static  final String  HTTP_RELEASE= "/v1/interconn/chan/release";
+
+    public static  final String  HTTP_INVOKE =  "/v1/interconn/chan/invoke";
+
+
+    public static  final String  HTTP_CHANGE_ROUTER =  "/v1/inner/router/set";
+
+
+
+
     public static  final String  CLUSTER_TOKEN_APPLY = "/org.fedai.osx.proxy/tokenApply";
     public static  final String  CLUSTER_TOPIC_APPLY = "/org.fedai.osx.proxy/topicApply";
 

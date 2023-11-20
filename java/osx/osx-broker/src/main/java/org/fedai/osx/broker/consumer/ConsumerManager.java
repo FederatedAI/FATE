@@ -31,15 +31,13 @@ import java.util.concurrent.atomic.AtomicLong;
 @Singleton
 public class ConsumerManager   implements Lifecycle {
     Logger logger = LoggerFactory.getLogger(ConsumerManager.class);
-
     @Inject
     TransferQueueManager transferQueueManager;
     @Inject
     ConsumerManager consumerManager;
 
-
     ConcurrentHashMap<String, UnaryConsumer> unaryConsumerMap = new ConcurrentHashMap<>();
-    ConcurrentHashMap<String, EventDrivenConsumer> eventDrivenConsumerMap = new ConcurrentHashMap<>();
+    //ConcurrentHashMap<String, EventDrivenConsumer> eventDrivenConsumerMap = new ConcurrentHashMap<>();
     AtomicLong consumerIdIndex = new AtomicLong(0);
 
     ServiceThread monitorThread = new ServiceThread() {
@@ -128,51 +126,51 @@ public class ConsumerManager   implements Lifecycle {
         return unaryConsumerMap.get(transferId);
     }
 
-    public EventDrivenConsumer  getEventDrivenConsumer(String topic){
+//    public EventDrivenConsumer  getEventDrivenConsumer(String topic){
+//
+//        return this.eventDrivenConsumerMap.get(topic);
+//
+//    }
 
-        return this.eventDrivenConsumerMap.get(topic);
+//    public EventDrivenConsumer  createEventDrivenConsumer(String topic, GrpcEventHandler  eventHandler){
+//        logger.info("create event driven consumer , {}",topic);
+//        if (eventDrivenConsumerMap.get(topic) == null) {
+//            EventDrivenConsumer  eventDrivenConsumer =
+//                    new EventDrivenConsumer(transferQueueManager,consumerIdIndex.get(), topic,eventHandler);
+//            eventDrivenConsumerMap.putIfAbsent(topic, eventDrivenConsumer);
+//            return eventDrivenConsumerMap.get(topic);
+//        } else {
+//            return eventDrivenConsumerMap.get(topic);
+//        }
+//    }
 
-    }
-
-    public EventDrivenConsumer  createEventDrivenConsumer(String topic, GrpcEventHandler  eventHandler){
-        logger.info("create event driven consumer , {}",topic);
-        if (eventDrivenConsumerMap.get(topic) == null) {
-            EventDrivenConsumer  eventDrivenConsumer =
-                    new EventDrivenConsumer(transferQueueManager,consumerIdIndex.get(), topic,eventHandler);
-            eventDrivenConsumerMap.putIfAbsent(topic, eventDrivenConsumer);
-            return eventDrivenConsumerMap.get(topic);
-        } else {
-            return eventDrivenConsumerMap.get(topic);
-        }
-    }
-
-    public UnaryConsumer getOrCreateUnaryConsumer(String transferId) {
-        if (unaryConsumerMap.get(transferId) == null) {
+    public UnaryConsumer getOrCreateUnaryConsumer(String sessionId,String topic) {
+        String indexKey = TransferQueueManager.assembleTopic(sessionId,topic);
+        if (unaryConsumerMap.get(indexKey) == null) {
             UnaryConsumer unaryConsumer =
-                    new UnaryConsumer(transferQueueManager,consumerManager,consumerIdIndex.get(), transferId);
-            unaryConsumerMap.putIfAbsent(transferId, unaryConsumer);
-            return unaryConsumerMap.get(transferId);
+                    new UnaryConsumer(transferQueueManager,consumerManager,consumerIdIndex.get(),sessionId, topic);
+            unaryConsumerMap.putIfAbsent(indexKey, unaryConsumer);
+            return unaryConsumerMap.get(indexKey);
         } else {
-            return unaryConsumerMap.get(transferId);
+            return unaryConsumerMap.get(indexKey);
         }
     }
 
-    public void onComplete(String transferId) {
-        if(this.unaryConsumerMap.contains(transferId)) {
-            this.unaryConsumerMap.get(transferId).destroy();
-            this.unaryConsumerMap.remove(transferId);
-        }
-        if(this.eventDrivenConsumerMap.contains(transferId)){
-            this.eventDrivenConsumerMap.get(transferId).destroy();
-           // this.eventDrivenConsumerMap.remove(transferId);
-        }
+    public void onComplete(String indexKey) {
 
-        logger.info("remove consumer {}", transferId);
+        if(this.unaryConsumerMap.containsKey(indexKey)) {
+            this.unaryConsumerMap.get(indexKey).destroy();
+            this.unaryConsumerMap.remove(indexKey);
+        }else{
+           // logger.error("cannot found {} in consumer map ",indexKey);
+        }
+//        if(this.eventDrivenConsumerMap.contains(indexKey)){
+//            this.eventDrivenConsumerMap.get(indexKey).destroy();
+//           // this.eventDrivenConsumerMap.remove(transferId);
+//        }
+        logger.info("remove consumer index key {}", indexKey);
     }
 
-    private void checkAndClean() {
-
-    }
 
     @Override
     public void init() {

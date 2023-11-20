@@ -53,11 +53,13 @@ public class ReleaseService extends AbstractServiceAdaptorNew<ReleaseRequest, Re
         context.setActionType(ActionType.CANCEL_TOPIC.name());
         String sessionId = context.getSessionId();
         String topic = data.getTopic();
+        
         context.setTopic(topic);
-        List<String> cleanedTransferId = transferQueueManager.cleanByParam(sessionId, topic);
-        if (cleanedTransferId != null) {
-            for (String transferIdClean : cleanedTransferId) {
-                    consumerManager.onComplete(transferIdClean);
+
+        List<String> indexKeys = transferQueueManager.cleanByParam(sessionId, topic);
+        if (indexKeys != null) {
+            for (String indexKey : indexKeys) {
+                    consumerManager.onComplete(indexKey);
             }
         }
         releaseResponse.setCode(StatusCode.PTP_SUCCESS);

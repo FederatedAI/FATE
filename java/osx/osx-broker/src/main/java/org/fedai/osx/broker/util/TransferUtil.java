@@ -31,6 +31,8 @@ import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.http.HttpClientPool;
 import org.fedai.osx.broker.http.HttpDataWrapper;
 import org.fedai.osx.broker.http.HttpsClientPool;
+import org.fedai.osx.broker.pojo.HttpInvoke;
+import org.fedai.osx.broker.pojo.HttpInvokeResult;
 import org.fedai.osx.broker.queue.TransferQueueConsumeResult;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.config.TransferMeta;
@@ -50,11 +52,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class TransferUtil {
@@ -202,7 +207,7 @@ public class TransferUtil {
 
     public static void assableContextFromProxyPacket(OsxContext context, Proxy.Packet packet) {
         TransferMeta transferMeta = parseTransferMetaFromProxyPacket(packet);
-        logger.info("========  assableContextFromProxyPacket {}",transferMeta);
+       // logger.info("========  assableContextFromProxyPacket {}",transferMeta);
         context.setSrcNodeId(transferMeta.getSrcPartyId());
         context.setDesNodeId(transferMeta.getDesPartyId());
         context.setSrcComponent(transferMeta.getSrcRole());
@@ -437,29 +442,33 @@ public class TransferUtil {
         return stub.release(inbound);
     }
 
-    static public Osx.Outbound redirect(OsxContext context, Osx.Inbound
-            produceRequest, RouterInfo routerInfo, boolean usePooled) {
+    static public Object redirect(OsxContext context, Object
+            data, RouterInfo routerInfo, boolean usePooled) {
         AssertUtil.notNull(routerInfo, context.getDesNodeId() != null ? "des partyId " + context.getDesNodeId() + " router info is null" : " error router info");
         Osx.Outbound result = null;
-        context.setDataSize(produceRequest.getSerializedSize());
+
         if (routerInfo.isCycle()) {
             throw new CycleRouteInfoException("cycle router info");
         }
-        if (routerInfo.getProtocol() == null || routerInfo.getProtocol().equals(Protocol.grpc)) {
+        if (routerInfo.getProtocol() == null ||context.getProtocol().equals(Protocol.grpc)&& routerInfo.getProtocol().equals(Protocol.grpc)) {
             //来自旧版fateflow的请求，需要用旧版的stub
-            if (context.isDestination() && Role.fateflow.name().equals(routerInfo.getDesRole())
-                    && SourceMethod.OLDUNARY_CALL.name().equals(produceRequest.getMetadataMap().get(Osx.Metadata.SourceMethod.name()))) {
-                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
-                DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
-                Proxy.Packet request;
-                try {
-                    request = Proxy.Packet.parseFrom(produceRequest.getPayload().toByteArray());
-                } catch (InvalidProtocolBufferException e) {
-                    throw new RuntimeException(e);
-                }
-                Proxy.Packet response = stub.unaryCall(request);
-                result = Osx.Outbound.newBuilder().setPayload(response.toByteString()).setCode(StatusCode.SUCCESS).build();
-            } else {
+            Osx.Inbound inbound = (Osx.Inbound)data;
+            context.setDataSize(inbound.getSerializedSize());
+
+//            if (context.isDestination() && Role.fateflow.name().equals(routerInfo.getDesRole())
+//                    && SourceMethod.OLDUNARY_CALL.name().equals(produceRequest.getMetadataMap().get(Osx.Metadata.SourceMethod.name()))) {
+//                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
+//                DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
+//                Proxy.Packet request;
+//                try {
+//                    request = Proxy.Packet.parseFrom(produceRequest.getPayload().toByteArray());
+//                } catch (InvalidProtocolBufferException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                Proxy.Packet response = stub.unaryCall(request);
+//                result = Osx.Outbound.newBuilder().setPayload(response.toByteString()).setCode(StatusCode.SUCCESS).build();
+//            } else
+            {
 
                 PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
                 if (context.getData(Dict.BLOCKING_STUB) == null) {
@@ -469,7 +478,7 @@ public class TransferUtil {
                     stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
                 }
                 try {
-                    result = stub.invoke(produceRequest);
+                    result = stub.invoke(inbound);
                 } catch (StatusRuntimeException e) {
                     logger.error("redirect error", e);
                     throw new RemoteRpcException(StatusCode.NET_ERROR, "send to " + routerInfo.toKey() + " error : " + e.getMessage());
@@ -477,29 +486,32 @@ public class TransferUtil {
             }
             // ServiceContainer.tokenApplyService.applyToken(context,routerInfo.getResource(),produceRequest.getSerializedSize());
         } else {
+
+            HttpInvoke  httpInvoke = (HttpInvoke)data;
             String url = routerInfo.getUrl();
             Map header = parseHttpHeader(context);
-            System.err.println("send http header "+header);
+
             long startTime = System.currentTimeMillis();
             try {
                 if (routerInfo.getProtocol().equals(Protocol.http)) {
                     HttpDataWrapper httpDataWrapper =null;
                     if (routerInfo.isUseSSL()) {
-                        httpDataWrapper= HttpsClientPool.sendPostWithCert(url, produceRequest.getPayload().toByteArray(), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
+                        httpDataWrapper= HttpsClientPool.sendPostWithCert(url, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
                     } else {
-                         httpDataWrapper = HttpClientPool.sendPost(url, produceRequest.getPayload().toByteArray(), header);
+                         httpDataWrapper = HttpClientPool.sendPost(url,  JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header);
                     }
                     if(httpDataWrapper!=null) {
-
-                        result = Osx.Outbound.parseFrom(httpDataWrapper.getPayload());
+                        HttpInvokeResult  httpInvokeResult   = JsonUtil.json2Object(httpDataWrapper.getPayload(), HttpInvokeResult.class );
+                        return  httpInvokeResult;
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n"
-                        , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), JsonUtil.object2Json(produceRequest.getPayload()), e);
-                ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
-                result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
+//                logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n"
+//                        , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), , e);
+//                ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
+//                result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
+                throw  new RemoteRpcException(e);
             }
         }
         return result;
@@ -518,16 +530,9 @@ public class TransferUtil {
     }
 
     public static Osx.TransportOutbound buildTransportOutbound(String code, String msgReturn, TransferQueueConsumeResult messageWraper) {
-
         byte[] content = null;
-        if (messageWraper != null) {
-            Osx.Message message = null;
-            try {
-                message = Osx.Message.parseFrom(messageWraper.getMessage().getBody());
-            } catch (InvalidProtocolBufferException e) {
-                logger.error("parse message error", e);
-            }
-            content = message.toByteArray();
+        if(messageWraper!=null&&messageWraper.getMessage()!=null){
+            content =messageWraper.getMessage().getBody();
         }
         Osx.TransportOutbound.Builder builder = Osx.TransportOutbound.newBuilder();
         builder.setCode(code);
@@ -536,12 +541,6 @@ public class TransferUtil {
             builder.setPayload(ByteString.copyFrom(content));
         }
         return builder.build();
-
-//        Osx.Outbound.Builder builder = buildResponseInner(code, msgReturn, content);
-//        if (messageWraper != null) {
-//            builder.putMetadata(Osx.Metadata.MessageOffSet.name(), Long.toString(messageWraper.getRequestIndex()));
-//        }
-//        return builder.build();
     }
 
 
@@ -598,14 +597,15 @@ public class TransferUtil {
         }
     }
 
-    public static void writeHttpRespose(HttpServletResponse response, String code,
+    public static void writeHttpRespose(ServletResponse response, String code,
                                         String msg,
                                         byte[] content) {
         try {
-            response.setHeader(PtpHttpHeader.ReturnCode, code);
-            response.setHeader(PtpHttpHeader.MessageCode, msg);
+//            response.setHeader(PtpHttpHeader.ReturnCode, code);
+//            response.setHeader(PtpHttpHeader.MessageCode, msg);
             OutputStream outputStream = response.getOutputStream();
             if (content != null) {
+                System.err.println("return data :"+new String(content));
                 outputStream.write(content);
             }
             outputStream.flush();
@@ -657,4 +657,22 @@ public class TransferUtil {
 //            e.printStackTrace();
 //        }
 //    }
+
+    public  static  byte[] read(InputStream input) throws IOException {
+
+        byte[] result = null;
+        byte[] split = new byte[1024];
+        int length=0;
+        int count;
+        while( (count = input.read(split))!=-1){
+            byte[] temp =new  byte[length+count];
+            System.arraycopy(split, 0, temp, length, count);
+            if(result!=null) {
+                System.arraycopy(result, 0,temp,0,length );
+            }
+            result =  temp;
+            length =  result.length;
+        }
+        return result;
+    }
 }

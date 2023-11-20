@@ -22,6 +22,7 @@ import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
+import org.fedai.osx.core.utils.UrlUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
@@ -33,68 +34,37 @@ public class ContextUtil {
 
 
     public static void assableContextFromInbound(OsxContext context) {
-
         io.grpc.Context  grpcContext  = io.grpc.Context.current();
-
-
-
-//            .withValue(CONTEXTKEY_TRACE_ID, Optional.ofNullable(metadata.get(METAKEY_TRACE_ID)).orElse(""))
-//                .withValue(CONTEXTKEY_FROM_INST_ID, metadata.get(METAKEY_FROM_INST_ID))
-//                .withValue(CONTEXTKEY_FROM_NODE_ID, metadata.get(METAKEY_FROM_NODE_ID))
-//                .withValue(CONTEXTKEY_VERSION, metadata.get(METAKEY_VERSION))
-////                .withValue(tim metadata.get(GrpcContextKey.TIMESTAMP))
-//                .withValue(CONTEXTKEY_SOURCEIP, remoteIp)
-//                .withValue(CONTEXTKEY_TECH_PROVIDER, metadata.get(METAKEY_TECH_PROVIDER_CODE))
-//                .withValue(CONTEXTKEY_TOKEN, metadata.get(METAKEY_TOKEN))
-//                .withValue(CONTEXTKEY_TARGET_NODE_ID, metadata.get(METAKEY_TARGET_NODE_ID))
-//                .withValue(CONTEXTKEY_TARGET_INST_ID, metadata.get(METAKEY_TARGET_INST_ID))
-//                .withValue(CONTEXTKEY_SESSION_ID, metadata.get(METAKEY_SESSION_ID));
-//        context.setTraceId(CONTEXTKEY_TRACE_ID.get(grpcContext));
-//        context.setSourceInstId(CONTEXTKEY_FROM_INST_ID.get(grpcContext));
-//        context.setSourceNodeId(CONTEXTKEY_FROM_NODE_ID.get(grpcContext));
-//        context.setDesInstId(CONTEXTKEY_TARGET_INST_ID.get(grpcContext));
-//        context.setDesNodeId(CONTEXTKEY_SESSION_ID.get(grpcContext));
-//        context.setVersion(CONTEXTKEY_VERSION.get(grpcContext));
-//        context.setTechProviderCode(CONTEXTKEY_TECH_PROVIDER.get(grpcContext));
-//        context.setToken(CONTEXTKEY_TOKEN.get(grpcContext));
-//        context.setSessionId(CONTEXTKEY_SESSION_ID.get(grpcContext));
-
-
-//        String version = metaDataMap.get(Osx.Header.Version.name());
-//        String jobId = metaDataMap.get(Osx.Metadata.JobId.name());
         String techProviderCode = CONTEXTKEY_TECH_PROVIDER.get(grpcContext);
         String traceId = CONTEXTKEY_TRACE_ID.get(grpcContext);
         String token = CONTEXTKEY_TOKEN.get(grpcContext);
         String sourceNodeId = CONTEXTKEY_FROM_NODE_ID.get(grpcContext);
         String targetNodeId = CONTEXTKEY_TARGET_NODE_ID.get(grpcContext);
         String sourceInstId = CONTEXTKEY_FROM_INST_ID.get(grpcContext);
+        if(StringUtils.isEmpty(sourceNodeId)){
+            sourceNodeId = sourceInstId;
+        }
         String targetInstId = CONTEXTKEY_TARGET_INST_ID.get(grpcContext);
+        if(StringUtils.isEmpty(targetNodeId)){
+            targetNodeId = targetInstId;
+        }
         String sessionId = CONTEXTKEY_SESSION_ID.get(grpcContext);
         String queueType = CONTEXTKEY_QUEUE_TYPE.get(grpcContext);
         String msgFlag = CONTEXTKEY_MSG_FLAG.get(grpcContext);
-//        String targetMethod = metaDataMap.get(Osx.Metadata.TargetMethod.name());
-//        String targetComponentName = metaDataMap.get(Osx.Metadata.TargetComponentName.name());
-//        String sourceComponentName = metaDataMap.get(Osx.Metadata.SourceComponentName.name());
         String uri = CONTEXTKEY_URI.get(grpcContext);
-        String sourcePartyId = StringUtils.isEmpty(sourceInstId) ? sourceNodeId : sourceInstId + "." + sourceNodeId;
-        String targetPartyId = StringUtils.isEmpty(targetInstId) ? targetNodeId : targetInstId + "." + targetNodeId;
+        String sourcePartyId = sourceNodeId;
+        String targetPartyId = targetNodeId;
         String topic = CONTEXTKEY_TOPIC_KEY.get(grpcContext);
-//        String offsetString = metaDataMap.get(Osx.Metadata.MessageOffSet.name());
-//        String messageCode = metaDataMap.get(Osx.Metadata.MessageCode.name());
-//        Long offset = StringUtils.isNotEmpty(offsetString) ? Long.parseLong(offsetString) : null;
         context.setTraceId(traceId);
         context.setToken(token);
         context.setDesNodeId(targetNodeId);
         context.setDesInstId(targetInstId);
         context.setSrcInstId(sourceInstId);
-
         context.setSrcNodeId(sourceNodeId);
         context.setDesNodeId(targetPartyId);
-
         context.setTopic(topic);
         context.setQueueType(queueType);
         context.setMessageFlag(msgFlag);
-//        context.setJobId(jobId);
         context.setTopic(topic);
         context.setUri(uri);
         context.setSessionId(sessionId);
@@ -119,27 +89,31 @@ public class ContextUtil {
     public static  OsxContext  buildContextFromHttpRequest(HttpServletRequest  request){
         OsxContext  osxContext = new OsxContext();
         String version = request.getHeader(PtpHttpHeader.Version);
+//        System.err.println("version :" +version);
         String techProviderCode = request.getHeader(PtpHttpHeader.TechProviderCode);
+//        System.err.println("techProviderCode :" +techProviderCode);
         String traceID = request.getHeader(PtpHttpHeader.TraceID);
+//        System.err.println("TraceID :" +traceID);
         String token = request.getHeader(PtpHttpHeader.Token);
+//        System.err.println("Token :" +token);
         String sourceNodeID = request.getHeader(PtpHttpHeader.FromNodeID);
+//        System.err.println("FromNodeID :" +sourceNodeID);
         String targetNodeID = request.getHeader(PtpHttpHeader.TargetNodeID);
+//        System.err.println("TargetNodeID :" +targetNodeID);
         String sourceInstID = request.getHeader(PtpHttpHeader.FromInstID);
         String targetInstID = request.getHeader(PtpHttpHeader.TargetInstID);
         String sessionID = request.getHeader(PtpHttpHeader.SessionID);
+        System.err.println("sessionId :" +sessionID);
         String uri =   request.getHeader(PtpHttpHeader.Uri);
         String topic = request.getHeader(PtpHttpHeader.MessageTopic);
         String msgFlag = request.getHeader(PtpHttpHeader.MessageFlag);
         String queueType = request.getHeader(PtpHttpHeader.QueueType);
-
         Enumeration<String>   headers =  request.getHeaderNames();
-        while(headers.hasMoreElements()){
-            String name = headers.nextElement();
-            log.info("==http head======"+name+"======="+request.getHeader(name));
-        }
-
-
-        osxContext.setUri(uri);
+//        while(headers.hasMoreElements()){
+//            String name = headers.nextElement();
+//            log.info("==http head======"+name+"======="+request.getHeader(name));
+//        }
+        osxContext.setUri(UrlUtil.parseUri(uri));
         osxContext.setVersion(version);
         osxContext.setTraceId(traceID);
         osxContext.setTopic(topic);
@@ -153,6 +127,7 @@ public class ContextUtil {
         osxContext.setDesInstId(targetInstID);
         osxContext.setQueueType(queueType);
         osxContext.setMessageFlag(msgFlag);
+        System.err.println("xxxxxxxxxxx+"+osxContext.toString());
         return  osxContext;
     }
 

@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,12 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         routerInfo.setCaFile(endpoint.get(Dict.CA_FILE) != null ? endpoint.get(Dict.CA_FILE).toString() : "");
         routerInfo.setCertChainFile(endpoint.get(Dict.CERT_CHAIN_FILE) != null ? endpoint.get(Dict.CERT_CHAIN_FILE).toString() : "");
         routerInfo.setPrivateKeyFile(endpoint.get(Dict.PRIVATE_KEY_FILE) != null ? endpoint.get(Dict.PRIVATE_KEY_FILE).toString() : "");
+
+        routerInfo.setKeyStoreFilePath(endpoint.get(Dict.KEYSTORE_FILE) != null ? endpoint.get(Dict.KEYSTORE_FILE).toString() : "");
+        routerInfo.setKeyStorePassword(endpoint.get(Dict.KEYSTORE_PASSWORD) != null ? endpoint.get(Dict.KEYSTORE_PASSWORD).toString() : "");
+        routerInfo.setTrustStoreFilePath(endpoint.get(Dict.TRUSTSTORE_FILE) != null ? endpoint.get(Dict.TRUSTSTORE_FILE).toString() : "");
+        routerInfo.setTrustStorePassword(endpoint.get(Dict.TRUSTSTORE_PASSWORD) != null ? endpoint.get(Dict.TRUSTSTORE_PASSWORD).toString() : "");
+
         if (routerInfo.getProtocol().equals(Protocol.http)) {
             if (StringUtils.isEmpty(routerInfo.getUrl())) {
                 throw new InvalidRouteInfoException();
@@ -144,7 +151,7 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     }
 
     public RouterInfo route(String srcPartyId, String srcRole, String dstPartyId, String desRole) {
-        logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
+//        logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
         RouterInfo routerInfo = null;
         Map<String, List<Map>> partyIdMap = this.endPointMap.containsKey(dstPartyId)?this.endPointMap.get(dstPartyId):this.endPointMap.get(DEFAULT);
 
@@ -408,6 +415,33 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         }
         return result;
     }
+
+    public void saveRouterTable(OsxContext context, String  content){
+        String routerTablePath = getRouterTablePath();
+        File routerTableFile = new File(routerTablePath);
+        if (!routerTableFile.exists()) {
+            if (!routerTableFile.getParentFile().exists()) {
+                if (!routerTableFile.getParentFile().mkdirs()) {
+                    logger.warn("mkdir failed : {}", routerTableFile.getParent());
+                   // return false;
+                }
+            }
+            try {
+                if (!routerTableFile.createNewFile()) {
+                    logger.warn("create router_table.json failed  : {}", routerTableFile.getAbsoluteFile());
+                   // return false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+             FileUtils.writeStr2ReplaceFileSync(JsonUtil.formatJson(content), routerTablePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public boolean saveRouterTable(OsxContext context, InboundPackage<Proxy.Packet> data) {
         try {

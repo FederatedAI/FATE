@@ -32,17 +32,20 @@ public class CommandClient {
     Logger logger = LoggerFactory.getLogger(CommandClient.class);
     ErEndpoint erEndpoint;
 
+    ManagedChannel managedChannel;
+
     public CommandClient(ErEndpoint erEndpoint) {
         this.erEndpoint = erEndpoint;
     }
 
-    private ManagedChannel buildManagedChannel(String ip, int port) {
+    private synchronized ManagedChannel buildManagedChannel(String ip, int port) {
+        if (managedChannel == null) {
         NettyChannelBuilder channelBuilder = NettyChannelBuilder
                 .forAddress(ip, port)
-                .keepAliveTime(60, TimeUnit.MINUTES)
-                .keepAliveTimeout(60, TimeUnit.MINUTES)
-                .keepAliveWithoutCalls(true)
-                .idleTimeout(60, TimeUnit.MINUTES)
+//                .keepAliveTime(60, TimeUnit.MINUTES)
+//                .keepAliveTimeout(60, TimeUnit.MINUTES)
+//                .keepAliveWithoutCalls(true)
+                .idleTimeout(120, TimeUnit.SECONDS)
                 .perRpcBufferLimit(128 << 20)
                 .flowControlWindow(32 << 20)
                 .maxInboundMessageSize(32 << 20)
@@ -50,9 +53,9 @@ public class CommandClient {
                 .retryBufferSize(16 << 20)
                 .maxRetryAttempts(20);
         channelBuilder.usePlaintext();
-
-        return channelBuilder.build();
-
+            managedChannel = channelBuilder.build();
+        }
+        return managedChannel;
     }
 
 

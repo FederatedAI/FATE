@@ -78,7 +78,7 @@ choose_gc_options()
 
 choose_gc_log_directory
 
-JAVA_OPT="${JAVA_OPT} -server -Xms2g -Xmx2g"
+JAVA_OPT="${JAVA_OPT} -server -Xms4g -Xmx4g"
 choose_gc_options
 JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
 JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
@@ -121,6 +121,7 @@ start() {
     JAVA_OPT="${JAVA_OPT} -c ${configpath} "
     echo $JAVA ${JAVA_OPT}
     nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
+#    $JAVA ${JAVA_OPT} >/dev/null 2>&1
     inspect_pid 5 $!
     if [[ "$exist" = 1 ]]; then
        echo $! >./bin/${module}.pid

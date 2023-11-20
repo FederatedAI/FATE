@@ -46,6 +46,7 @@ public class Dict {
     public static final String SOURCE_IP = "sourceIp";
     //HttpServletResponse
     public static final String HTTP_SERVLET_RESPONSE = "httpServletResponse";
+    public static final String HTTP_ASYNC_CONTEXT = "AsyncContext";
 
 
 
@@ -283,6 +284,11 @@ public class Dict {
     public final static String CA_FILE="caFile";
     public final static String CERT_CHAIN_FILE="certChainFile";
     public final static String PRIVATE_KEY_FILE="privateKeyFile";
+
+    public final static String KEYSTORE_FILE="keyStoreFile";
+    public final static String TRUSTSTORE_FILE="trustStoreFile";
+    public final static String KEYSTORE_PASSWORD="keyStorePassword";
+    public final static String TRUSTSTORE_PASSWORD="trustStorePassword";
 
 
 

@@ -378,10 +378,13 @@ public class OsxContext {
         if (this.getProtocol() != null) {
             stringBuffer.append(this.getProtocol()).append(SPLIT);
         }
+        if(this.getTraceId()!=null){
+            stringBuffer.append(this.traceId).append(SPLIT);
+        }
         if (this.getActionType() != null) {
             stringBuffer.append(this.getActionType()).append(SPLIT);
         }
-        if(this.getUri()!=null){
+        if(MetaInfo.PROPERTY_PRINT_URI&&this.getUri()!=null){
             stringBuffer.append(this.getUri()).append(SPLIT);
         }
         if(this.getSessionId()!=null){

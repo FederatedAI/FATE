@@ -20,6 +20,7 @@ import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
+import io.netty.handler.codec.base64.Base64Decoder;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
@@ -28,10 +29,7 @@ import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
 import org.fedai.osx.broker.interceptor.RouterInterceptor;
 import org.fedai.osx.broker.message.MessageDecoder;
 import org.fedai.osx.broker.message.MessageExtBrokerInner;
-import org.fedai.osx.broker.pojo.ProduceRequest;
-import org.fedai.osx.broker.pojo.ProduceResponse;
-import org.fedai.osx.broker.pojo.PushRequest;
-import org.fedai.osx.broker.pojo.PushResponse;
+import org.fedai.osx.broker.pojo.*;
 import org.fedai.osx.broker.queue.*;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.service.Register;
@@ -48,16 +46,19 @@ import org.fedai.osx.core.service.InboundPackage;
 import org.fedai.osx.core.service.Interceptor;
 import org.fedai.osx.core.service.OutboundPackage;
 import org.fedai.osx.core.utils.FlowLogUtil;
+import org.fedai.osx.core.utils.JsonUtil;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
+import static org.fedai.osx.core.constant.UriConstants.HTTP_PUSH;
 import static org.fedai.osx.core.constant.UriConstants.PUSH;
 
 @Singleton
-@Register(uris={PUSH})
+@Register(uris={PUSH,HTTP_PUSH})
 @Data
 public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, ProduceResponse> {
 
@@ -71,6 +72,8 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
     FlowCounterManager flowCounterManager;
     @Inject
     DefaultFateRouterServiceImpl  defaultFateRouterService;
+
+    Base64.Decoder base64Decoder = Base64.getDecoder();
 
 //    @Inject
 //    public PushService(RouterInterceptor routerInterceptor) {
@@ -104,7 +107,7 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
 
     @Override
     protected ProduceResponse doService(OsxContext context, ProduceRequest produceRequest) {
-        logger.info("push service begin");
+
         AbstractQueue   queue ;
         String topic = produceRequest.getTopic();
         context.setTopic(topic);
@@ -129,10 +132,10 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
             if(StringUtils.isNotEmpty(context.getQueueType())){
                 queueType=  QueueType.valueOf(context.getQueueType());
             }
-            queue = transferQueueManager.getQueue(topic);
+            queue = transferQueueManager.getQueue(sessionId,topic);
             CreateQueueResult createQueueResult = null;
             if (queue == null) {
-                createQueueResult = transferQueueManager.createNewQueue(topic, sessionId, false,queueType);
+                createQueueResult = transferQueueManager.createNewQueue(sessionId,topic,  false,queueType);
                 if (createQueueResult == null) {
                     throw new CreateTopicErrorException("create topic " + topic + " error");
                 }
@@ -255,12 +258,14 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
 
     @Override
     public ProduceRequest decode(Object object) {
-        logger.info("decode {}",object.getClass());
-
         ProduceRequest  produceRequest = null;
         if(object instanceof Osx.PushInbound){
             Osx.PushInbound inbound =  (Osx.PushInbound)object;
             produceRequest = buildProduceRequest(inbound);
+        }
+        if(object instanceof HttpInvoke){
+            HttpInvoke inbound =  (HttpInvoke)object;
+            produceRequest= JsonUtil.json2Object(inbound.getPayload(),ProduceRequest.class);
         }
         if(object  instanceof  Osx.Inbound){
             Osx.Inbound  inbound = (Osx.Inbound)object;
