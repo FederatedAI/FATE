@@ -19,14 +19,11 @@ package org.fedai.osx.broker.util;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
-
-
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.http.HttpClientPool;
 import org.fedai.osx.broker.http.HttpDataWrapper;
@@ -36,12 +33,14 @@ import org.fedai.osx.broker.pojo.HttpInvokeResult;
 import org.fedai.osx.broker.queue.TransferQueueConsumeResult;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.config.TransferMeta;
-import org.fedai.osx.core.constant.*;
+import org.fedai.osx.core.constant.ActionType;
+import org.fedai.osx.core.constant.Dict;
+import org.fedai.osx.core.constant.PtpHttpHeader;
+import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.exceptions.*;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
-import org.fedai.osx.core.ptp.SourceMethod;
 import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.utils.AssertUtil;
 import org.fedai.osx.core.utils.JsonUtil;
@@ -51,14 +50,11 @@ import org.ppc.ptp.PrivateTransferTransportGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.MBeanServer;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -204,10 +200,9 @@ public class TransferUtil {
     }
 
 
-
     public static void assableContextFromProxyPacket(OsxContext context, Proxy.Packet packet) {
         TransferMeta transferMeta = parseTransferMetaFromProxyPacket(packet);
-       // logger.info("========  assableContextFromProxyPacket {}",transferMeta);
+        // logger.info("========  assableContextFromProxyPacket {}",transferMeta);
         context.setSrcNodeId(transferMeta.getSrcPartyId());
         context.setDesNodeId(transferMeta.getDesPartyId());
         context.setSrcComponent(transferMeta.getSrcRole());
@@ -224,7 +219,7 @@ public class TransferUtil {
     }
 
 
-    public static Osx.Inbound.Builder buildInboundFromPushingPacket(OsxContext  context ,Proxy.Packet packet, String provider) {
+    public static Osx.Inbound.Builder buildInboundFromPushingPacket(OsxContext context, Proxy.Packet packet, String provider) {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         TransferMeta transferMeta = parseTransferMetaFromProxyPacket(packet);
         inboundBuilder.setPayload(packet.toByteString());
@@ -259,7 +254,7 @@ public class TransferUtil {
         String sourceInstID = request.getHeader(PtpHttpHeader.FromInstID);
         String targetInstID = request.getHeader(PtpHttpHeader.TargetInstID);
         String sessionID = request.getHeader(PtpHttpHeader.SessionID);
-        String uri =   request.getHeader(PtpHttpHeader.Uri);
+        String uri = request.getHeader(PtpHttpHeader.Uri);
 
         String messageTopic = request.getHeader(PtpHttpHeader.MessageTopic);
         String messageCode = request.getHeader(Osx.Metadata.MessageCode.name());
@@ -304,7 +299,7 @@ public class TransferUtil {
     }
 
 
-    static public Map parseHttpHeader(OsxContext  context ) {
+    static public Map parseHttpHeader(OsxContext context) {
 
 //        static public  final String   Version="x-ptp-version";
 //        static public  final String   TechProviderCode  = "x-ptp-tech-provider-code";
@@ -320,19 +315,19 @@ public class TransferUtil {
 
 
         Map header = Maps.newHashMap();
-        header.put(PtpHttpHeader.Version,context.getVersion());
-        header.put(PtpHttpHeader.TechProviderCode,context.getTechProviderCode());
-        header.put(PtpHttpHeader.TraceID,context.getTraceId());
-        header.put(PtpHttpHeader.Token,context.getToken());
-        header.put(PtpHttpHeader.Uri,context.getUri());
-        header.put(PtpHttpHeader.FromNodeID,context.getSrcNodeId());
-        header.put(PtpHttpHeader.FromInstID,context.getSrcInstId());
-        header.put(PtpHttpHeader.TargetNodeID,context.getDesNodeId());
-        header.put(PtpHttpHeader.TargetInstID,context.getDesInstId());
-        header.put(PtpHttpHeader.SessionID,context.getSessionId());
-        header.put(PtpHttpHeader.MessageTopic,context.getTopic());
-        header.put(PtpHttpHeader.QueueType,context.getQueueType());
-        header.put(PtpHttpHeader.MessageFlag,context.getMessageFlag());
+        header.put(PtpHttpHeader.Version, context.getVersion());
+        header.put(PtpHttpHeader.TechProviderCode, context.getTechProviderCode());
+        header.put(PtpHttpHeader.TraceID, context.getTraceId());
+        header.put(PtpHttpHeader.Token, context.getToken());
+        header.put(PtpHttpHeader.Uri, context.getUri());
+        header.put(PtpHttpHeader.FromNodeID, context.getSrcNodeId());
+        header.put(PtpHttpHeader.FromInstID, context.getSrcInstId());
+        header.put(PtpHttpHeader.TargetNodeID, context.getDesNodeId());
+        header.put(PtpHttpHeader.TargetInstID, context.getDesInstId());
+        header.put(PtpHttpHeader.SessionID, context.getSessionId());
+        header.put(PtpHttpHeader.MessageTopic, context.getTopic());
+        header.put(PtpHttpHeader.QueueType, context.getQueueType());
+        header.put(PtpHttpHeader.MessageFlag, context.getMessageFlag());
 
 //        header.put(PtpHttpHeader.Version, version != null ? version : "");
 //        header.put(PtpHttpHeader.TechProviderCode, techProviderCode != null ? techProviderCode : "");
@@ -360,6 +355,7 @@ public class TransferUtil {
 
     /**
      * z
+     *
      * @param context
      * @param produceRequest
      * @param routerInfo
@@ -368,33 +364,31 @@ public class TransferUtil {
      */
     static public Osx.TransportOutbound redirectPush(OsxContext context, Osx.PushInbound
             produceRequest, RouterInfo routerInfo, boolean usePooled) {
-            Osx.TransportOutbound result = null;
-            PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = null;
-            if (context.getData(Dict.BLOCKING_STUB) == null) {
-                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
-                stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
-            } else {
-                stub = (PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub) context.getData(Dict.BLOCKING_STUB);
-            }
-            try {
-                result = stub.push(produceRequest);
-            } catch (StatusRuntimeException e) {
-                logger.error("redirect error", e);
-                throw new RemoteRpcException(StatusCode.NET_ERROR, "send to " + routerInfo.toKey() + " error : " + e.getMessage());
-            }
-            return result;
+        Osx.TransportOutbound result = null;
+        PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = null;
+        if (context.getData(Dict.BLOCKING_STUB) == null) {
+            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
+            stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
+        } else {
+            stub = (PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub) context.getData(Dict.BLOCKING_STUB);
+        }
+        try {
+            result = stub.push(produceRequest);
+        } catch (StatusRuntimeException e) {
+            logger.error("redirect error", e);
+            throw new RemoteRpcException(StatusCode.NET_ERROR, "send to " + routerInfo.toKey() + " error : " + e.getMessage());
+        }
+        return result;
     }
-
-
 
 
     static public Osx.TransportOutbound redirectHttpPush(OsxContext context, Osx.PushInbound
             produceRequest, RouterInfo routerInfo) {
-        Osx.TransportOutbound  result =null;
+        Osx.TransportOutbound result = null;
         String url = routerInfo.getUrl();
         Map header = parseHttpHeader(context);
         long startTime = System.currentTimeMillis();
-        HttpDataWrapper  httpDataWrapper=null;
+        HttpDataWrapper httpDataWrapper = null;
         try {
             if (routerInfo.getProtocol().equals(Protocol.http)) {
 
@@ -411,32 +405,32 @@ public class TransferUtil {
             ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
             result = Osx.TransportOutbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
         }
-        if(httpDataWrapper!=null) {
+        if (httpDataWrapper != null) {
             try {
                 result = Osx.TransportOutbound.parseFrom(ByteString.copyFrom(httpDataWrapper.getPayload()));
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
             }
         }
-        return  result;
+        return result;
     }
 
     static public Osx.TransportOutbound redirectPop(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);
     }
 
     static public Osx.TransportOutbound redirectPeek(OsxContext context, RouterInfo routerInfo, Osx.PeekInbound inbound) {
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.peek(inbound);
     }
 
-    static public Osx.TransportOutbound  redirectRelease(OsxContext  context,RouterInfo routerInfo,Osx.ReleaseInbound  inbound){
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+    static public Osx.TransportOutbound redirectRelease(OsxContext context, RouterInfo routerInfo, Osx.ReleaseInbound inbound) {
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
         context.setActionType(ActionType.CANCEL_TOPIC.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.release(inbound);
@@ -450,9 +444,9 @@ public class TransferUtil {
         if (routerInfo.isCycle()) {
             throw new CycleRouteInfoException("cycle router info");
         }
-        if (routerInfo.getProtocol() == null ||context.getProtocol().equals(Protocol.grpc)&& routerInfo.getProtocol().equals(Protocol.grpc)) {
+        if (routerInfo.getProtocol() == null || Protocol.grpc.equals(context.getProtocol()) && Protocol.grpc.equals(routerInfo.getProtocol())) {
             //来自旧版fateflow的请求，需要用旧版的stub
-            Osx.Inbound inbound = (Osx.Inbound)data;
+            Osx.Inbound inbound = (Osx.Inbound) data;
             context.setDataSize(inbound.getSerializedSize());
 
 //            if (context.isDestination() && Role.fateflow.name().equals(routerInfo.getDesRole())
@@ -487,22 +481,22 @@ public class TransferUtil {
             // ServiceContainer.tokenApplyService.applyToken(context,routerInfo.getResource(),produceRequest.getSerializedSize());
         } else {
 
-            HttpInvoke  httpInvoke = (HttpInvoke)data;
+            HttpInvoke httpInvoke = (HttpInvoke) data;
             String url = routerInfo.getUrl();
             Map header = parseHttpHeader(context);
 
             long startTime = System.currentTimeMillis();
             try {
                 if (routerInfo.getProtocol().equals(Protocol.http)) {
-                    HttpDataWrapper httpDataWrapper =null;
+                    HttpDataWrapper httpDataWrapper = null;
                     if (routerInfo.isUseSSL()) {
-                        httpDataWrapper= HttpsClientPool.sendPostWithCert(url, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
+                        httpDataWrapper = HttpsClientPool.sendPostWithCert(url, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
                     } else {
-                         httpDataWrapper = HttpClientPool.sendPost(url,  JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header);
+                        httpDataWrapper = HttpClientPool.sendPost(url, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header);
                     }
-                    if(httpDataWrapper!=null) {
-                        HttpInvokeResult  httpInvokeResult   = JsonUtil.json2Object(httpDataWrapper.getPayload(), HttpInvokeResult.class );
-                        return  httpInvokeResult;
+                    if (httpDataWrapper != null) {
+                        HttpInvokeResult httpInvokeResult = JsonUtil.json2Object(httpDataWrapper.getPayload(), HttpInvokeResult.class);
+                        return httpInvokeResult;
                     }
                 }
             } catch (Exception e) {
@@ -511,7 +505,7 @@ public class TransferUtil {
 //                        , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), , e);
 //                ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
 //                result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
-                throw  new RemoteRpcException(e);
+                throw new RemoteRpcException(e);
             }
         }
         return result;
@@ -531,8 +525,8 @@ public class TransferUtil {
 
     public static Osx.TransportOutbound buildTransportOutbound(String code, String msgReturn, TransferQueueConsumeResult messageWraper) {
         byte[] content = null;
-        if(messageWraper!=null&&messageWraper.getMessage()!=null){
-            content =messageWraper.getMessage().getBody();
+        if (messageWraper != null && messageWraper.getMessage() != null) {
+            content = messageWraper.getMessage().getBody();
         }
         Osx.TransportOutbound.Builder builder = Osx.TransportOutbound.newBuilder();
         builder.setCode(code);
@@ -562,7 +556,6 @@ public class TransferUtil {
 //        }
 //        return builder.build();
 //    }
-
 
 
     public static Osx.Outbound buildResponse(String code, String msgReturn, TransferQueueConsumeResult messageWraper) {
@@ -605,7 +598,7 @@ public class TransferUtil {
 //            response.setHeader(PtpHttpHeader.MessageCode, msg);
             OutputStream outputStream = response.getOutputStream();
             if (content != null) {
-                System.err.println("return data :"+new String(content));
+                System.err.println("return data :" + new String(content));
                 outputStream.write(content);
             }
             outputStream.flush();
@@ -613,11 +606,6 @@ public class TransferUtil {
             logger.error("write http response error", e);
         }
     }
-
-
-
-
-
 
 
     public static void main(String[] args) {
@@ -658,20 +646,20 @@ public class TransferUtil {
 //        }
 //    }
 
-    public  static  byte[] read(InputStream input) throws IOException {
+    public static byte[] read(InputStream input) throws IOException {
 
         byte[] result = null;
         byte[] split = new byte[1024];
-        int length=0;
+        int length = 0;
         int count;
-        while( (count = input.read(split))!=-1){
-            byte[] temp =new  byte[length+count];
+        while ((count = input.read(split)) != -1) {
+            byte[] temp = new byte[length + count];
             System.arraycopy(split, 0, temp, length, count);
-            if(result!=null) {
-                System.arraycopy(result, 0,temp,0,length );
+            if (result != null) {
+                System.arraycopy(result, 0, temp, 0, length);
             }
-            result =  temp;
-            length =  result.length;
+            result = temp;
+            length = result.length;
         }
         return result;
     }

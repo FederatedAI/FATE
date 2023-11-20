@@ -8,7 +8,7 @@ import org.fedai.osx.core.service.InboundPackage;
 import org.fedai.osx.core.service.Interceptor;
 import org.fedai.osx.core.service.OutboundPackage;
 
-public class UnaryCallHandleInterceptor implements Interceptor< Proxy.Packet, Proxy.Packet> {
+public class UnaryCallHandleInterceptor implements Interceptor<Proxy.Packet, Proxy.Packet> {
 
     @Override
     public void doProcess(OsxContext context, InboundPackage<Proxy.Packet> inboundPackage, OutboundPackage<Proxy.Packet> outboundPackage) throws Exception {

@@ -58,8 +58,8 @@ public class ExceptionInfo {
 
     public String toString() {
         Map data = Maps.newHashMap();
-        data.put(Dict.CODE,code);
-        data.put(Dict.MESSAGE,message);
+        data.put(Dict.CODE, code);
+        data.put(Dict.MESSAGE, message);
         return JsonUtil.object2Json(data);
     }
 }

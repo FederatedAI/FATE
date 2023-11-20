@@ -1,18 +1,13 @@
 package org.fedai.osx.broker.test.grpc;
-//import com.firework.cluster.rpc.FireworkQueueServiceGrpc;
-//import com.firework.cluster.rpc.FireworkTransfer;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
-import org.fedai.osx.core.ptp.TargetMethod;
 import org.fedai.osx.core.router.RouterInfo;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -28,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QueueTest {
-    Logger logger = LoggerFactory.getLogger(QueueTest.class);
     static String ip = "localhost";
     //int port = 8250;//nginx
     static int port = 9377;//nginx
@@ -40,6 +34,32 @@ public class QueueTest {
     static String topic = "testTopic";
     static OsxContext fateContext = new OsxContext();
     static RouterInfo routerInfo = new RouterInfo();
+
+    static {
+        routerInfo.setHost("localhost");
+        routerInfo.setPort(9371);
+        routerInfo.setProtocol(Protocol.grpc);
+        routerInfo.setUseSSL(true);
+        routerInfo.setUseKeyStore(false);
+//        routerInfo.setTrustStorePassword("123456");
+//        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client_truststore.jks");
+//        routerInfo.setKeyStorePassword("123456");
+//        routerInfo.setKeyStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client.jks");
+
+        routerInfo.setCertChainFile("/Users/kaideng/work/cert/test/client.crt");
+        routerInfo.setCaFile("/Users/kaideng/work/cert/test/ca.crt");
+        routerInfo.setPrivateKeyFile("/Users/kaideng/work/cert/test/client.pem");
+
+
+        routerInfo.setTrustStorePassword("123456");
+        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test3\\\\client\\\\truststore.jks");
+        routerInfo.setKeyStorePassword("123456");
+        routerInfo.setKeyStoreFilePath("D:\\\\webank\\\\osx\\\\test3\\\\client\\\\identity.jks");
+//        routerInfo.setNegotiationType("TLS");
+
+        //  routerInfo.setUrl("http://localhost:8087/osx/inbound");
+        //HttpClientPool.initPool();
+    }
 //    static {
 //        routerInfo.setHost(ip);
 //        routerInfo.setPort(9884);
@@ -62,27 +82,7 @@ public class QueueTest {
 //        //HttpClientPool.initPool();
 //    }
 
-    static {
-        routerInfo.setHost("127.0.0.1");
-        routerInfo.setPort(9884);
-        routerInfo.setProtocol(Protocol.grpc);
-        routerInfo.setUseSSL(true);
-        routerInfo.setUseKeyStore(true);
-//        routerInfo.setTrustStorePassword("123456");
-//        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client_truststore.jks");
-//        routerInfo.setKeyStorePassword("123456");
-//        routerInfo.setKeyStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client.jks");
-
-        routerInfo.setTrustStorePassword("123456");
-        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test3\\\\client\\\\truststore.jks");
-        routerInfo.setKeyStorePassword("123456");
-        routerInfo.setKeyStoreFilePath("D:\\\\webank\\\\osx\\\\test3\\\\client\\\\identity.jks");
-        routerInfo.setNegotiationType("TLS");
-
-        //  routerInfo.setUrl("http://localhost:8087/osx/inbound");
-        //HttpClientPool.initPool();
-    }
-
+    Logger logger = LoggerFactory.getLogger(QueueTest.class);
     PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub;
 //    FireworkQueueServiceGrpc.FireworkQueueServiceBlockingStub  blockingStub;
 
@@ -109,6 +109,11 @@ public class QueueTest {
         return null;
     }
 
+    public static void main(String[] args) {
+
+
+    }
+
     @Before
     public void init() {
     }
@@ -120,7 +125,6 @@ public class QueueTest {
         }
         return result;
     }
-
 
     @Test
     public void testPeek() {
@@ -141,7 +145,6 @@ public class QueueTest {
         System.err.println("result " + outbound);
     }
 
-
     @Test
     public void testPop() {
 
@@ -156,6 +159,20 @@ public class QueueTest {
         Osx.TransportOutbound outbound = TransferUtil.redirectPop(fateContext, routerInfo, inboundBuilder.build());
         System.err.println("result : " + new String(outbound.getPayload().toByteArray()));
     }
+
+
+//    @Test
+//    public void  testTopicApply(){
+//        Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
+//        //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
+//        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER );
+//        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.APPLY_TOPIC.name());
+//        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic0001");
+//        inboundBuilder.putMetadata(Osx.Metadata.InstanceId.name(),"localhost:9999" );
+//        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionId");
+//        Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
+//        System.err.println(outbound);
+//    }
 
     @Test
     public void testPush() {
@@ -176,20 +193,6 @@ public class QueueTest {
         }
     }
 
-
-//    @Test
-//    public void  testTopicApply(){
-//        Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
-//        //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-//        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER );
-//        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.APPLY_TOPIC.name());
-//        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic0001");
-//        inboundBuilder.putMetadata(Osx.Metadata.InstanceId.name(),"localhost:9999" );
-//        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionId");
-//        Osx.Outbound outbound =TransferUtil.redirect(fateContext,inboundBuilder.build(),routerInfo,false);
-//        System.err.println(outbound);
-//    }
-
     @Test
     public void testRelease() {
         Osx.ReleaseInbound.Builder releaseInboundBuilder = Osx.ReleaseInbound.newBuilder();
@@ -203,9 +206,17 @@ public class QueueTest {
         System.err.println(outbound);
     }
 
-
-    public static void main(String[] args) {
-
+    @Test
+    public void testInvoke() {
+        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+        inboundBuilder.setPayload(ByteString.copyFrom("hello world".getBytes(StandardCharsets.UTF_8)));
+        OsxContext fateContext = new OsxContext();
+        fateContext.setProtocol(Protocol.grpc);
+        fateContext.setSessionId(sessionId);
+        fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+        OsxContext.pushThreadLocalContext(fateContext);
+        Object result = TransferUtil.redirect(fateContext, inboundBuilder.build(), routerInfo, true);
+        System.err.println("result:" + result);
 
     }
 

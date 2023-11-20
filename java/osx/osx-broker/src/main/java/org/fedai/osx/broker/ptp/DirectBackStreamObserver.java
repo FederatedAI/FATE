@@ -12,69 +12,67 @@ import org.fedai.osx.core.constant.TransferStatus;
 import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
-import org.fedai.osx.core.ptp.TargetMethod;
 import org.fedai.osx.core.router.RouterInfo;
 import org.ppc.ptp.Osx;
 
 import java.nio.charset.StandardCharsets;
+
 @Slf4j
 public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> {
 
-    DirectBackStreamObserver(DefaultFateRouterServiceImpl  defaultFateRouterService,
-                             String oriTopic,String sessionId,String srcNodeId,String desNodeId){
+    TransferStatus transferStatus = TransferStatus.INIT;
+    DefaultFateRouterServiceImpl defaultFateRouterService;
+    OsxContext context;
+    String oriTopic;
+    String backTopic;
+    String sessionId;
+    String srcNodeId;
+    String desNodeId;
+    RouterInfo revertRouterInfo;
+    DirectBackStreamObserver(DefaultFateRouterServiceImpl defaultFateRouterService,
+                             String oriTopic, String sessionId, String srcNodeId, String desNodeId) {
         this.defaultFateRouterService = defaultFateRouterService;
-        this.oriTopic  = oriTopic;
+        this.oriTopic = oriTopic;
         this.sessionId = sessionId;
         this.srcNodeId = srcNodeId;
         this.desNodeId = desNodeId;
     }
 
-    TransferStatus transferStatus = TransferStatus.INIT;
-
-    private void init(){
-        context =  new OsxContext();
+    private void init() {
+        context = new OsxContext();
         context.setSessionId(sessionId);
         context.setUri(UriConstants.PUSH);
         context.setSrcNodeId(srcNodeId);
         context.setDesNodeId(desNodeId);
-        revertRouterInfo =defaultFateRouterService.routePtp("",srcNodeId,"",desNodeId);
-        transferStatus= TransferStatus.TRANSFERING;
-        backTopic =buildBackTopic(oriTopic);
+        revertRouterInfo = defaultFateRouterService.routePtp("", srcNodeId, "", desNodeId);
+        transferStatus = TransferStatus.TRANSFERING;
+        backTopic = buildBackTopic(oriTopic);
     }
 
-    private  String  buildBackTopic(String  oriTopic){
+    private String buildBackTopic(String oriTopic) {
         backTopic = oriTopic.replaceAll(Dict.STREAM_SEND_TOPIC_PREFIX, Dict.STREAM_BACK_TOPIC_PREFIX);
         return backTopic;
     }
-    DefaultFateRouterServiceImpl  defaultFateRouterService;
-    OsxContext context;
-    String oriTopic;
-    String  backTopic;
-    String  sessionId;
-    String  srcNodeId;
-    String  desNodeId;
-    RouterInfo revertRouterInfo;
-
 
     @Override
     public void onNext(Proxy.Metadata metadata) {
         //将其对调后再查路由
 
         try {
-            if(transferStatus.equals(TransferStatus.INIT)){
+            if (transferStatus.equals(TransferStatus.INIT)) {
                 init();
             }
             OsxContext.pushThreadLocalContext(context);
             context.setMessageFlag(MessageFlag.SENDMSG.name());
 //        Osx.Inbound.Builder  inboundBuilder = TransferUtil.buildInbound(provider,desPartyId,srcPartyId, TargetMethod.PRODUCE_MSG.name(),
 //                backTopic, MessageFlag.SENDMSG,sessionId, metadata.toByteString().toByteArray());
-            Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
-            Osx.PushInbound.Builder  pushBuilder = Osx.PushInbound.newBuilder();
+            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+            Osx.PushInbound.Builder pushBuilder = Osx.PushInbound.newBuilder();
             pushBuilder.setPayload(metadata.toByteString());
             pushBuilder.setTopic(backTopic);
             inboundBuilder.setPayload(pushBuilder.build().toByteString());
             TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo, true);
-        }finally {
+        } finally {
             OsxContext.popThreadLocalContext();
         }
     }
@@ -88,13 +86,13 @@ public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> 
             exceptionInfo.setMessage(throwable.getMessage());
             String message = throwable.getMessage();
             context.setMessageFlag(MessageFlag.ERROR.name());
-            Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
-            Osx.PushInbound.Builder  pushBuilder = Osx.PushInbound.newBuilder();
+            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+            Osx.PushInbound.Builder pushBuilder = Osx.PushInbound.newBuilder();
             pushBuilder.setPayload(ByteString.copyFrom(exceptionInfo.toString().getBytes(StandardCharsets.UTF_8)));
             pushBuilder.setTopic(backTopic);
             inboundBuilder.setPayload(pushBuilder.build().toByteString());
             TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo, true);
-        }finally {
+        } finally {
             OsxContext.popThreadLocalContext();
         }
 
@@ -108,15 +106,15 @@ public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> 
         try {
             OsxContext.pushThreadLocalContext(context);
             context.setMessageFlag(MessageFlag.COMPELETED.name());
-            Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
-            Osx.PushInbound.Builder  pushBuilder = Osx.PushInbound.newBuilder();
+            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+            Osx.PushInbound.Builder pushBuilder = Osx.PushInbound.newBuilder();
             pushBuilder.setPayload(ByteString.copyFrom("onCompleted".getBytes(StandardCharsets.UTF_8)));
             pushBuilder.setTopic(backTopic);
             inboundBuilder.setPayload(pushBuilder.build().toByteString());
-            Osx.Outbound result =(Osx.Outbound)TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
-        }catch (Exception e){
-            log.error("receive completed error",e);
-        }finally {
+            Osx.Outbound result = (Osx.Outbound) TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo, true);
+        } catch (Exception e) {
+            log.error("receive completed error", e);
+        } finally {
             OsxContext.popThreadLocalContext();
         }
     }

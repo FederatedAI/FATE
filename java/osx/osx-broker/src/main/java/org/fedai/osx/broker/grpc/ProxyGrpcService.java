@@ -27,7 +27,6 @@ import org.fedai.osx.broker.util.ContextUtil;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.service.InboundPackage;
-import org.fedai.osx.core.service.OutboundPackage;
 import org.fedai.osx.core.utils.FlowLogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             StreamObserver result = pushService.service(context, data);
             return result;
         } catch (Exception e) {
-            logger.error("push error",e);
+            logger.error("push error", e);
         }
         return null;
     }
@@ -69,10 +68,9 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             Proxy.Packet result = unaryCallService.service(context, request);
             responseObserver.onNext(result);
             responseObserver.onCompleted();
-        }catch (Exception e){
+        } catch (Exception e) {
             responseObserver.onError(e);
-        }
-        finally {
+        } finally {
             FlowLogUtil.printFlowLog(context);
         }
     }

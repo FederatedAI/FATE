@@ -78,6 +78,14 @@ public class OsxServer {
     @Inject
     DispatchServlet dispatchServlet;
 
+    private static KeyStore loadKeyStore(String keyStorePath, String keyStorePassword) throws Exception {
+        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(fis, keyStorePassword.toCharArray());
+            return keyStore;
+        }
+    }
+
     private synchronized void init() {
         try {
 
@@ -350,14 +358,6 @@ public class OsxServer {
         if (MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC > 0)
             nettyServerBuilder.maxConnectionAgeGrace(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC, TimeUnit.SECONDS);
         return nettyServerBuilder.build();
-    }
-
-    private static KeyStore loadKeyStore(String keyStorePath, String keyStorePassword) throws Exception {
-        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
-            KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(fis, keyStorePassword.toCharArray());
-            return keyStore;
-        }
     }
 
 }

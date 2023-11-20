@@ -6,14 +6,14 @@ import org.ppc.ptp.Osx;
 
 import java.util.List;
 
-public interface ServiceAdaptorNew <req, rsp>{
+public interface ServiceAdaptorNew<req, rsp> {
 
     public rsp service(OsxContext context, req inboundPackage);
 
     public rsp serviceFail(OsxContext context, req data, List<Throwable> e);
 
-    public req decode(Object  object);
+    public req decode(Object object);
 
-    public Osx.Outbound  toOutbound(rsp  response);
+    public Osx.Outbound toOutbound(rsp response);
 
 }

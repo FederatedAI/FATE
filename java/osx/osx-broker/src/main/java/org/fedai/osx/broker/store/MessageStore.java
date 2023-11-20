@@ -83,7 +83,7 @@ public class MessageStore {
                     mappedFile = this.mappedFileQueue.getLastMappedFile(0); // Mark: NewFile may be cause noise
                 }
                 if (null == mappedFile) {
-                    logger.error("create mapped file1 error, topic: " + msg.getTopic() );
+                    logger.error("create mapped file1 error, topic: " + msg.getTopic());
                     beginTimeInLock = 0;
                     return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, null);
                 }
@@ -93,7 +93,7 @@ public class MessageStore {
                     case PUT_OK:
                         break;
                     case END_OF_FILE:
-                        if(logger.isTraceEnabled()){
+                        if (logger.isTraceEnabled()) {
                             logger.trace("");
                         }
 
@@ -101,7 +101,7 @@ public class MessageStore {
                         // Create a new file, re-write the message
                         mappedFile = this.mappedFileQueue.getLastMappedFile(0);
                         if (null == mappedFile) {
-                            logger.error("create mapped file error, topic: " + msg.getTopic() );
+                            logger.error("create mapped file error, topic: " + msg.getTopic());
                             beginTimeInLock = 0;
                             return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, result);
                         }

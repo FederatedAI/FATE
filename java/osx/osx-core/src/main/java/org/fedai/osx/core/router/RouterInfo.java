@@ -15,6 +15,7 @@
  */
 
 package org.fedai.osx.core.router;
+
 import lombok.Data;
 import org.fedai.osx.core.context.Protocol;
 
@@ -30,10 +31,10 @@ public class RouterInfo {
     private String host;
     private Integer port;
     private boolean useSSL = false;
-    private String negotiationType;
+    //    private String negotiationType;
     private String certChainFile;
     private String privateKeyFile;
- //   private String trustCertCollectionFile;
+    //   private String trustCertCollectionFile;
     private String caFile;
 
     private boolean useKeyStore = true;
@@ -48,11 +49,11 @@ public class RouterInfo {
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();
-        if(Protocol.grpc.equals(protocol)) {
+        if (Protocol.grpc.equals(protocol)) {
             sb.append(host).append("_").append(port);
-            if (negotiationType != null)
-                sb.append("_").append(negotiationType);
-        }else {
+            if (useSSL)
+                sb.append("_").append("tls");
+        } else {
             sb.append(url);
         }
         return sb.toString();
@@ -60,7 +61,7 @@ public class RouterInfo {
 
     @Override
     public String toString() {
-        return  toKey();
+        return toKey();
     }
 
     public String getResource() {

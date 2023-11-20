@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 package org.fedai.osx.core.exceptions;
+
 import org.fedai.osx.core.constant.StatusCode;
+
 public class ParameterException extends BaseException {
 
     public ParameterException(String retCode, String message) {

@@ -2,7 +2,6 @@ package org.fedai.osx.broker.test.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
-
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.context.OsxContext;
@@ -35,8 +34,8 @@ public class Grpc_UC {
             "}";
 
     @Test
-    public void run(){
-        OsxContext context = JsonUtil.json2Object(contextStr,OsxContext.class);
+    public void run() {
+        OsxContext context = JsonUtil.json2Object(contextStr, OsxContext.class);
         RouterInfo routerInfo = JsonUtil.json2Object(routerJson, RouterInfo.class);
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
         if (context.getData(Dict.BLOCKING_STUB) == null) {

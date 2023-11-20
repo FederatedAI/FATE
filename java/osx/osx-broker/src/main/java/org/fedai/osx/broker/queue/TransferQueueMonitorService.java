@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 package org.fedai.osx.broker.queue;
+
 import org.fedai.osx.core.frame.ServiceThread;
 
 public class TransferQueueMonitorService extends ServiceThread {
     TransferQueueManager transferQueueManager;
+
     public TransferQueueMonitorService(TransferQueueManager transferQueueManager) {
         this.transferQueueManager = transferQueueManager;
     }

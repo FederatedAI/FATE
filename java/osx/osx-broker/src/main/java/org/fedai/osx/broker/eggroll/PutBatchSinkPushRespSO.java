@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fedai.osx.broker.eggroll;
+
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.stub.StreamObserver;
@@ -49,7 +50,7 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
             eggSiteServicerPushRespSO.onNext(reqHeader.toBuilder().setAck(resp.getHeader().getId()).build());
             eggSiteServicerPushRespSO.onCompleted();
         } catch (Exception e) {
-          logger.error("send to eggroll error",e);
+            logger.error("send to eggroll error", e);
         }
     }
 

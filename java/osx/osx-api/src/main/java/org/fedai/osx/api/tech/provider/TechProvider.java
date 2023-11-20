@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 package org.fedai.osx.api.tech.provider;
+
 import io.grpc.stub.StreamObserver;
 import org.ppc.ptp.Osx;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public interface TechProvider {
     //用于处理http1.X请求
-    void processHttpInvoke(HttpServletRequest  httpServletRequest,HttpServletResponse httpServletResponse);
+    void processHttpInvoke(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse);
+
     //用于处理grpc非流式请求
     void processGrpcInvoke(Osx.Inbound request,
                            io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver);
+
     //用于处理grpc流式请求
     public StreamObserver<Osx.Inbound> processGrpcTransport(Osx.Inbound inbound, StreamObserver<Osx.Outbound> responseObserver);
 

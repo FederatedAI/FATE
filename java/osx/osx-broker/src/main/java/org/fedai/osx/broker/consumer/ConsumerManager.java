@@ -28,8 +28,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
 @Singleton
-public class ConsumerManager   implements Lifecycle {
+public class ConsumerManager implements Lifecycle {
     Logger logger = LoggerFactory.getLogger(ConsumerManager.class);
     @Inject
     TransferQueueManager transferQueueManager;
@@ -63,6 +64,7 @@ public class ConsumerManager   implements Lifecycle {
         public String getServiceName() {
             return "longPullingThread";
         }
+
         @Override
         public void run() {
             int interval = 200;
@@ -144,11 +146,11 @@ public class ConsumerManager   implements Lifecycle {
 //        }
 //    }
 
-    public UnaryConsumer getOrCreateUnaryConsumer(String sessionId,String topic) {
-        String indexKey = TransferQueueManager.assembleTopic(sessionId,topic);
+    public UnaryConsumer getOrCreateUnaryConsumer(String sessionId, String topic) {
+        String indexKey = TransferQueueManager.assembleTopic(sessionId, topic);
         if (unaryConsumerMap.get(indexKey) == null) {
             UnaryConsumer unaryConsumer =
-                    new UnaryConsumer(transferQueueManager,consumerManager,consumerIdIndex.get(),sessionId, topic);
+                    new UnaryConsumer(transferQueueManager, consumerManager, consumerIdIndex.get(), sessionId, topic);
             unaryConsumerMap.putIfAbsent(indexKey, unaryConsumer);
             return unaryConsumerMap.get(indexKey);
         } else {
@@ -158,11 +160,11 @@ public class ConsumerManager   implements Lifecycle {
 
     public void onComplete(String indexKey) {
 
-        if(this.unaryConsumerMap.containsKey(indexKey)) {
+        if (this.unaryConsumerMap.containsKey(indexKey)) {
             this.unaryConsumerMap.get(indexKey).destroy();
             this.unaryConsumerMap.remove(indexKey);
-        }else{
-           // logger.error("cannot found {} in consumer map ",indexKey);
+        } else {
+            // logger.error("cannot found {} in consumer map ",indexKey);
         }
 //        if(this.eventDrivenConsumerMap.contains(indexKey)){
 //            this.eventDrivenConsumerMap.get(indexKey).destroy();
@@ -174,8 +176,6 @@ public class ConsumerManager   implements Lifecycle {
 
     @Override
     public void init() {
-
-
 
 
     }

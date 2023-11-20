@@ -17,8 +17,8 @@ package org.fedai.osx.core.exceptions;
 
 import org.fedai.osx.core.constant.StatusCode;
 
-public class CreateTopicErrorException extends BaseException{
-    public CreateTopicErrorException(String msg){
-        super(StatusCode.CREATE_TOPIC_ERROR,msg);
+public class CreateTopicErrorException extends BaseException {
+    public CreateTopicErrorException(String msg) {
+        super(StatusCode.CREATE_TOPIC_ERROR, msg);
     }
 }

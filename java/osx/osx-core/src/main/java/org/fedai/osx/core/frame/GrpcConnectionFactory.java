@@ -39,12 +39,13 @@ import java.security.KeyStore;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import static org.fedai.osx.core.config.MetaInfo.PROPERTY_GRPC_TLS_SESSION_SIZE;
+import static org.fedai.osx.core.config.MetaInfo.PROPERTY_GRPC_TLS_SESSION_TIMEOUT;
+
 public class GrpcConnectionFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcConnectionFactory.class);
     static ConcurrentHashMap<String, ManagedChannel> managedChannelPool = new ConcurrentHashMap<>();
-
-    static GrpcChannelInfo defaultfGrpcChannelInfo;
 
     private GrpcConnectionFactory() {
     }
@@ -56,7 +57,6 @@ public class GrpcConnectionFactory {
         if (usePooled) {
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
                 ManagedChannel targetChannel = managedChannelPool.get(routerInfo.toKey());
-                // logger.info("channel  is shutdown : {} isTerminated {}",targetChannel.isShutdown() ,targetChannel.isTerminated() ,targetChannel.getState(true));
                 return managedChannelPool.get(routerInfo.toKey());
             } else {
                 ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
@@ -107,15 +107,13 @@ public class GrpcConnectionFactory {
                     .maxRetryAttempts(channelInfo.getMaxRetryAttemps());
 
             if (routerInfo.isUseSSL()) {
-                if (routerInfo.isUseKeyStore() && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType())) {
+                if (routerInfo.isUseKeyStore()) {
 
                     // Load the truststore file
                     KeyStore trustStore = loadKeyStore(routerInfo.getTrustStoreFilePath(), routerInfo.getTrustStorePassword());
                     // Create a TrustManagerFactory and initialize it with the truststore
                     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                     trustManagerFactory.init(trustStore);
-
-
                     // Load the keystore file
                     KeyStore keyStore = loadKeyStore(routerInfo.getKeyStoreFilePath(), routerInfo.getKeyStorePassword());
                     // Create a keyManagerFactory and initialize it with the keystore
@@ -125,35 +123,22 @@ public class GrpcConnectionFactory {
                     SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
                             .keyManager(keyManagerFactory)
                             .trustManager(trustManagerFactory)
-                            .sessionTimeout(3600 << 4)
-                            .sessionCacheSize(65536)
+                            .sessionTimeout(PROPERTY_GRPC_TLS_SESSION_TIMEOUT)
+                            .sessionCacheSize(PROPERTY_GRPC_TLS_SESSION_SIZE)
                             .sslProvider(SslProvider.OPENSSL);
-
                     channelBuilder.negotiationType(NegotiationType.TLS).sslContext(sslContextBuilder.build()).useTransportSecurity();
 
-                } else if (NegotiationType.TLS.name().equals(routerInfo.getNegotiationType()) && StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
+                } else if (StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
                     SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
                             .keyManager(new File(routerInfo.getCertChainFile()), new File(routerInfo.getPrivateKeyFile()))
                             .trustManager(new File(routerInfo.getCaFile()))
-                            .sessionTimeout(3600 << 4)
-                            .sessionCacheSize(65536);
+                            .sessionTimeout(PROPERTY_GRPC_TLS_SESSION_TIMEOUT)
+                            .sessionCacheSize(PROPERTY_GRPC_TLS_SESSION_SIZE);
                     channelBuilder.negotiationType(NegotiationType.TLS).sslContext(sslContextBuilder.build()).useTransportSecurity().overrideAuthority(routerInfo.getHost());
                 }
             } else {
                 channelBuilder.usePlaintext();
             }
-
-//            if (routerInfo.isUseSSL() && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType()) && StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
-//                SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
-//                        .keyManager(new File(routerInfo.getCertChainFile()), new File(routerInfo.getPrivateKeyFile()))
-//                        .trustManager(new File(routerInfo.getCaFile()))
-//                        .sessionTimeout(3600 << 4)
-//                        .sessionCacheSize(65536);
-//
-//                channelBuilder.sslContext(sslContextBuilder.build()).useTransportSecurity().overrideAuthority(routerInfo.getHost());
-//            } else {
-//                channelBuilder.usePlaintext();
-//            }
             return channelBuilder.build();
         } catch (Exception e) {
             logger.error("create channel to {} error : ", routerInfo, e);

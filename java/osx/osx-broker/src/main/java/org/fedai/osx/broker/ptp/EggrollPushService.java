@@ -22,55 +22,52 @@ import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
-import org.fedai.osx.broker.service.Register;
 import org.fedai.osx.broker.service.TokenApplyService;
 import org.fedai.osx.broker.util.TransferUtil;
-
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
-
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
-import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.fedai.osx.core.constant.UriConstants.EGGROLL_PUSH;
-
 @Singleton
 //@Register(uri=EGGROLL_PUSH)
 public class EggrollPushService extends AbstractServiceAdaptorNew<StreamObserver, StreamObserver> {
-    Logger  logger = LoggerFactory.getLogger(EggrollPushService.class);
+    Logger logger = LoggerFactory.getLogger(EggrollPushService.class);
     @Inject
     DefaultFateRouterServiceImpl routerService;
     @Inject
-    TokenApplyService  tokenApplyService;
+    TokenApplyService tokenApplyService;
     @Inject
-    TransferQueueManager  transferQueueManager;
+    TransferQueueManager transferQueueManager;
 
     @Override
     protected StreamObserver doService(OsxContext context, StreamObserver data) {
         context.setNeedPrintFlowLog(false);
-        return  new StreamObserver<Osx.Inbound>() {
+        return new StreamObserver<Osx.Inbound>() {
             Logger logger = LoggerFactory.getLogger(EggrollPushService.class);
-            QueuePushReqStreamObserver queuePushReqStreamObserver = new  QueuePushReqStreamObserver(context, routerService,
+            QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context, routerService,
                     transferQueueManager,
                     data);
+
             @Override
             public void onNext(Osx.Inbound inbound) {
                 int dataSize = inbound.getSerializedSize();
                 tokenApplyService.applyToken(context, TransferUtil.buildResource(inbound), dataSize);
-                Proxy.Packet  packet =   TransferUtil.parsePacketFromInbound(inbound);
-                if(packet!=null) {
+                Proxy.Packet packet = TransferUtil.parsePacketFromInbound(inbound);
+                if (packet != null) {
                     queuePushReqStreamObserver.onNext(packet);
-                }else{
+                } else {
                     logger.error("parse inbound error");
                 }
             }
+
             @Override
             public void onError(Throwable throwable) {
                 queuePushReqStreamObserver.onError(throwable);
             }
+
             @Override
             public void onCompleted() {
                 queuePushReqStreamObserver.onCompleted();

@@ -71,11 +71,11 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     private StreamObserver<Proxy.Metadata> backRespSO;
     private String transferId;
     private Integer queueId;
-    private RouterService  routerService;
-    private  TransferQueueManager  transferQueueManager;
+    private RouterService routerService;
+    private TransferQueueManager transferQueueManager;
     private ManagedChannel channel;
 
-    public QueuePushReqStreamObserver(OsxContext context,RouterService routerService,TransferQueueManager transferQueueManager,
+    public QueuePushReqStreamObserver(OsxContext context, RouterService routerService, TransferQueueManager transferQueueManager,
                                       StreamObserver backRespSO
     ) {
         this.context = context;
@@ -84,7 +84,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         //this.context = context.subContext();
         //this.context.setNeedPrintFlowLog(true);
         this.context.setServiceName("pushTransfer");
-        this.transferQueueManager =  transferQueueManager;
+        this.transferQueueManager = transferQueueManager;
 
 
     }
@@ -98,7 +98,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     }
 
     public void init(Proxy.Packet packet) throws Exception {
-        TransferUtil.assableContextFromProxyPacket(context,packet);
+        TransferUtil.assableContextFromProxyPacket(context, packet);
         Proxy.Metadata metadata = packet.getHeader();
         String desPartyId = context.getDesNodeId();
         String srcPartyId = context.getSrcNodeId();
@@ -111,14 +111,14 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         if (MetaInfo.PROPERTY_SELF_PARTY.contains(desPartyId)) {
             isDst = true;
-        }else{
-            logger.info("des party id {} is not in {}",desPartyId,MetaInfo.PROPERTY_SELF_PARTY);
+        } else {
+            logger.info("des party id {} is not in {}", desPartyId, MetaInfo.PROPERTY_SELF_PARTY);
         }
         /**
          * 检查目的地是否为自己
          */
         if (!isDst) {
-            routerInfo =routerService.route(context.getSrcNodeId(),context.getSrcComponent(),context.getDesNodeId(),context.getDesComponent());
+            routerInfo = routerService.route(context.getSrcNodeId(), context.getSrcComponent(), context.getDesNodeId(), context.getDesComponent());
             if (routerInfo != null) {
                 this.transferId = routerInfo.getResource();
             } else {
@@ -126,10 +126,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             }
         }
         if (isDst) {
-            if(MetaInfo.PROPERTY_OPEN_MOCK_EGGPAIR)
-            {
+            if (MetaInfo.PROPERTY_OPEN_MOCK_EGGPAIR) {
                 mockEggroll(context, packet);
-            }else {
+            } else {
                 initEggroll(context, packet);
             }
         } else {
@@ -139,24 +138,24 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             context.setSrcNodeId(routerInfo.getSourcePartyId());
             context.setDesNodeId(routerInfo.getDesPartyId());
 
-            logger.info("router info {}",routerInfo);
-            if (routerInfo.getProtocol().equals(Protocol.http))  {
+            logger.info("router info {}", routerInfo);
+            if (routerInfo.getProtocol().equals(Protocol.http)) {
                 //由本方发起的传输且使用队列替代流式传输，需要在本地建立接受应答的队列,
-                    context.setUri(UriConstants.PUSH);
+                context.setUri(UriConstants.PUSH);
 
-                    forwardPushReqSO = QueueStreamBuilder.createStreamFromOrigin(context,transferQueueManager, backRespSO, Proxy.Packet.parser(),
-                            routerInfo, srcPartyId, desPartyId, rsHeader.getRollSiteSessionId(),finishLatch);
+                forwardPushReqSO = QueueStreamBuilder.createStreamFromOrigin(context, transferQueueManager, backRespSO, Proxy.Packet.parser(),
+                        routerInfo, srcPartyId, desPartyId, rsHeader.getRollSiteSessionId(), finishLatch);
 
             } else {
                 ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), true);
 //                if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
-                    DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
-                    ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, () -> {
-                        finishLatch.countDown();
-                    }, (t) -> {
-                        finishLatch.countDown();
-                    });
-                    forwardPushReqSO = stub.push(forwardPushRespSO);
+                DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
+                ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, () -> {
+                    finishLatch.countDown();
+                }, (t) -> {
+                    finishLatch.countDown();
+                });
+                forwardPushReqSO = stub.push(forwardPushRespSO);
 //                }
 //                else {
 //                    // TODO: 2023/9/25   互联互通并没有使用这个流式 ，所以屏蔽，流式直接使用旧FATE接口
@@ -190,7 +189,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         transferStatus = TransferStatus.TRANSFERING;
     }
 
-    private void mockEggroll(OsxContext  context,Proxy.Packet firstRequest){
+    private void mockEggroll(OsxContext context, Proxy.Packet firstRequest) {
         metadata = firstRequest.getHeader();
         routerInfo = new RouterInfo();
         context.setRouterInfo(routerInfo);
@@ -199,15 +198,15 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         context.setSrcNodeId(routerInfo.getSourcePartyId());
         context.setDesNodeId(MetaInfo.PROPERTY_MOCK_EGGPAIR_PARTYID);
-        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo,false);
+        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo, false);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
 
-        CompletableFuture<ErTask>  commandFuture = new CompletableFuture<>();
+        CompletableFuture<ErTask> commandFuture = new CompletableFuture<>();
         commandFuture.complete(new ErTask());
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch));
     }
 
-    private void initEggroll(OsxContext context,Proxy.Packet firstRequest) {
+    private void initEggroll(OsxContext context, Proxy.Packet firstRequest) {
 
 
         if (StringUtils.isEmpty(MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP)) {
@@ -227,7 +226,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             logger.error("get session error ", e);
         }
         if (!SessionStatus.ACTIVE.name().equals(session.getErSessionMeta().getStatus())) {
-            SessionInitException error = new SessionInitException("eggroll session "+sessionId+" invalid status : "+session.getErSessionMeta().getStatus());
+            SessionInitException error = new SessionInitException("eggroll session " + sessionId + " invalid status : " + session.getErSessionMeta().getStatus());
             onError(error);
             throw error;
         }
@@ -294,8 +293,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch));
 
 
-
-
     }
 
 
@@ -351,9 +348,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         if (isDst) {
             putBatchSinkPushReqSO.onError(t);
         } else {
-                if (forwardPushReqSO != null) {
-                    forwardPushReqSO.onError(t);
-                }
+            if (forwardPushReqSO != null) {
+                forwardPushReqSO.onError(t);
+            }
         }
 
 
@@ -369,20 +366,20 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             }
         } else {
             if (forwardPushReqSO != null) {
-                    forwardPushReqSO.onCompleted();
-                    try {
-                        if (!finishLatch.await(MetaInfo.PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT, TimeUnit.SECONDS)) {
-                            onError(new TimeoutException());
-                            needPrintFlow = false;
-                            if (this.channel != null) {
-                                this.channel.shutdown();
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        onError(e);
+                forwardPushReqSO.onCompleted();
+                try {
+                    if (!finishLatch.await(MetaInfo.PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT, TimeUnit.SECONDS)) {
+                        onError(new TimeoutException());
                         needPrintFlow = false;
+                        if (this.channel != null) {
+                            this.channel.shutdown();
+                        }
                     }
+                } catch (InterruptedException e) {
+                    onError(e);
+                    needPrintFlow = false;
                 }
+            }
 
         }
     }

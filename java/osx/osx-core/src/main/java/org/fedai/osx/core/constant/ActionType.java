@@ -17,11 +17,11 @@ package org.fedai.osx.core.constant;
 
 public enum ActionType {
 
-//    QUERY_TOPIC("query-topic"),
+    //    QUERY_TOPIC("query-topic"),
     CANCEL_TOPIC,
     PUSH_REMOTE,
     PUSH_EGGROLL,
-//    LOCAL_ACK("local-ack"),
+    //    LOCAL_ACK("local-ack"),
     CUSTOMER_CONSUME,
     DEFUALT_CONSUME,
     REDIRECT_CONSUME,

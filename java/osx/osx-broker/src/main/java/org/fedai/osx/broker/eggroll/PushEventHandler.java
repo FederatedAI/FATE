@@ -12,8 +12,6 @@ import com.webank.eggroll.core.transfer.TransferServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
-
-
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.consumer.GrpcEventHandler;
 import org.fedai.osx.broker.message.MessageExt;
@@ -44,29 +42,27 @@ import java.util.concurrent.Future;
 
 public class PushEventHandler extends GrpcEventHandler {
     Logger logger = LoggerFactory.getLogger(PushEventHandler.class);
-    public PushEventHandler(){
-        super(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-    }
-    TransferStatus transferStatus= TransferStatus.INIT;
+    TransferStatus transferStatus = TransferStatus.INIT;
     OsxContext context = new OsxContext();
-    RouterInfo routerInfo ;
+    RouterInfo routerInfo;
     Proxy.Metadata metadata;
     String brokerTag;
     ErRollSiteHeader rsHeader = null;
     CountDownLatch finishLatch;
     StreamObserver<Transfer.TransferBatch> putBatchSinkPushReqSO;
-    String  topic = null;
+    String topic = null;
     String backTopic = null;
     PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub backBlockingStub;
     String desRole = null;
     String srcRole = null;
     String sessionId = null;
     RouterInfo revertRouterInfo;
-    TransferQueueManager  transferQueueManager;
+    TransferQueueManager transferQueueManager;
+    public PushEventHandler() {
+        super(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+    }
 
-
-
-    protected   void handleError(MessageExt messageExt){
+    protected void handleError(MessageExt messageExt) {
         //todo
         // 需要构建新异常
         try {
@@ -74,20 +70,20 @@ public class PushEventHandler extends GrpcEventHandler {
             if (putBatchSinkPushReqSO != null) {
                 putBatchSinkPushReqSO.onError(new Exception());
             }
-        }finally {
-            String topic =  messageExt.getTopic();
-            transferQueueManager.onCompleted(sessionId,topic);
+        } finally {
+            String topic = messageExt.getTopic();
+            transferQueueManager.onCompleted(sessionId, topic);
         }
     }
 
-    protected  void handleComplete(MessageExt messageExt){
+    protected void handleComplete(MessageExt messageExt) {
         try {
             if (putBatchSinkPushReqSO != null) {
                 putBatchSinkPushReqSO.onCompleted();
             }
-        }finally {
-           String topic =  messageExt.getTopic();
-           transferQueueManager.onCompleted(sessionId,topic);
+        } finally {
+            String topic = messageExt.getTopic();
+            transferQueueManager.onCompleted(sessionId, topic);
         }
 
 
@@ -98,21 +94,21 @@ public class PushEventHandler extends GrpcEventHandler {
 
     }
 
-    protected  void  handleMessage(MessageExt messageExt){
+    protected void handleMessage(MessageExt messageExt) {
         try {
-            Proxy.Packet packet=null;
+            Proxy.Packet packet = null;
             try {
                 packet = Proxy.Packet.parseFrom(messageExt.getBody());
-            }catch (Exception  e){
-                logger.error("parse packet error {}",new String(messageExt.getBody()));
+            } catch (Exception e) {
+                logger.error("parse packet error {}", new String(messageExt.getBody()));
             }
             if (transferStatus.equals(TransferStatus.INIT)) {
                 //初始化
                 try {
-                    initEggroll(packet,messageExt);
-                }catch(Exception e){
-                    logger.error("init eggroll error",e);
-                    transferStatus=TransferStatus.ERROR;
+                    initEggroll(packet, messageExt);
+                } catch (Exception e) {
+                    logger.error("init eggroll error", e);
+                    transferStatus = TransferStatus.ERROR;
                 }
             }
             if (!transferStatus.equals(TransferStatus.TRANSFERING)) {
@@ -129,25 +125,25 @@ public class PushEventHandler extends GrpcEventHandler {
                     .build();
             putBatchSinkPushReqSO.onNext(tbBatch);
 
-        }catch(Exception e){
-            logger.error("handle msg error : "+ messageExt.getTopic(),e);
-            if(backBlockingStub!=null) {
-                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
-                        backTopic, MessageFlag.ERROR, sessionId, ErrorMessageUtil.buildRemoteRpcErrorMsg(1343,"kkkkk").getBytes());
+        } catch (Exception e) {
+            logger.error("handle msg error : " + messageExt.getTopic(), e);
+            if (backBlockingStub != null) {
+                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider, desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
+                        backTopic, MessageFlag.ERROR, sessionId, ErrorMessageUtil.buildRemoteRpcErrorMsg(1343, "kkkkk").getBytes());
                 Osx.Outbound outbound = backBlockingStub.invoke(inboundBuilder.build());
-            }else{
+            } else {
                 logger.error("back stub is null");
             }
         }
     }
 
-    private void initEggroll(Proxy.Packet firstRequest,MessageExt messageExt) throws Exception {
+    private void initEggroll(Proxy.Packet firstRequest, MessageExt messageExt) throws Exception {
         if (StringUtils.isEmpty(MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP)) {
             throw new SysException("eggroll cluter manager ip is not found");
         }
 
         topic = messageExt.getTopic();
-        backTopic= buildBackTopic(topic);
+        backTopic = buildBackTopic(topic);
         metadata = firstRequest.getHeader();
         ByteString encodedRollSiteHeader = metadata.getExt();
         rsHeader = ErRollSiteHeader.parseFromPb(Transfer.RollSiteHeader.parseFrom(encodedRollSiteHeader));
@@ -164,14 +160,14 @@ public class PushEventHandler extends GrpcEventHandler {
         srcPartyId = metadata.getSrc().getPartyId();
         //String srcPartyId, String srcRole, String dstPartyId, String desRole
         // TODO: 2023/9/20   临时屏蔽
-       // revertRouterInfo = routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,desRole,srcPartyId,srcRole);
-        if(revertRouterInfo==null){
-            throw new NoRouterInfoException(srcPartyId+" can not found route info");
+        // revertRouterInfo = routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,desRole,srcPartyId,srcRole);
+        if (revertRouterInfo == null) {
+            throw new NoRouterInfoException(srcPartyId + " can not found route info");
         }
-        if(Protocol.grpc.equals(revertRouterInfo.getProtocol())) {
+        if (Protocol.grpc.equals(revertRouterInfo.getProtocol())) {
             ManagedChannel backChannel = GrpcConnectionFactory.createManagedChannel(revertRouterInfo, true);
             backBlockingStub = PrivateTransferProtocolGrpc.newBlockingStub(backChannel);
-            context.putData(Dict.BLOCKING_STUB,backBlockingStub);
+            context.putData(Dict.BLOCKING_STUB, backBlockingStub);
         }
 
 
@@ -183,8 +179,8 @@ public class PushEventHandler extends GrpcEventHandler {
         }
         if (!SessionStatus.ACTIVE.name().equals(session.getErSessionMeta().getStatus())) {
             logger.error("");
-            IllegalStateException error = new IllegalStateException("eggroll  session "+sessionId+" status is "+session.getErSessionMeta().getStatus());
-        //    onError(error);
+            IllegalStateException error = new IllegalStateException("eggroll  session " + sessionId + " status is " + session.getErSessionMeta().getStatus());
+            //    onError(error);
             throw error;
         }
 
@@ -244,33 +240,33 @@ public class PushEventHandler extends GrpcEventHandler {
         routerInfo.setPort(egg.getTransferEndpoint().getPort());
         context.setSrcNodeId(routerInfo.getSourcePartyId());
         context.setDesNodeId(routerInfo.getDesPartyId());
-        ManagedChannel eggChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,false);
+        ManagedChannel eggChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, false);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(eggChannel);
         StreamObserver<Proxy.Metadata> eggSiteServicerPushRespSO;
-        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, new  StreamObserver<Proxy.Metadata>(){
+        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, new StreamObserver<Proxy.Metadata>() {
 
             TransferStatus transferStatus = TransferStatus.INIT;
 
-            private void init(){
-                transferStatus= TransferStatus.TRANSFERING;
+            private void init() {
+                transferStatus = TransferStatus.TRANSFERING;
             }
 
             @Override
             public void onNext(Proxy.Metadata metadata) {
-                    //将其对调后再查路由
-                    Osx.Inbound.Builder  inboundBuilder = TransferUtil.buildInbound(provider,desPartyId,srcPartyId,TargetMethod.PRODUCE_MSG.name(),
-                            backTopic,MessageFlag.SENDMSG,sessionId, metadata.toByteString().toByteArray());
-                    TransferUtil.redirect(context,inboundBuilder.build(),revertRouterInfo,true);
+                //将其对调后再查路由
+                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider, desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
+                        backTopic, MessageFlag.SENDMSG, sessionId, metadata.toByteString().toByteArray());
+                TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo, true);
             }
 
             @Override
             public void onError(Throwable throwable) {
-                    ExceptionInfo exceptionInfo = new ExceptionInfo();
-                    exceptionInfo.setMessage(throwable.getMessage());
-                    String message = throwable.getMessage();
-                    Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
-                            backTopic, MessageFlag.SENDMSG, sessionId, exceptionInfo.toString().getBytes(StandardCharsets.UTF_8));
-                    TransferUtil.redirect(context,inboundBuilder.build(),revertRouterInfo,true);
+                ExceptionInfo exceptionInfo = new ExceptionInfo();
+                exceptionInfo.setMessage(throwable.getMessage());
+                String message = throwable.getMessage();
+                Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider, desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
+                        backTopic, MessageFlag.SENDMSG, sessionId, exceptionInfo.toString().getBytes(StandardCharsets.UTF_8));
+                TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo, true);
 
             }
 
@@ -280,19 +276,19 @@ public class PushEventHandler extends GrpcEventHandler {
                  * 完成回调
                  */
                 try {
-                        Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
-                                backTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8));
-                        Osx.Outbound result =(Osx.Outbound)TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
-                }catch (Exception e){
-                    logger.error("receive completed error",e);
+                    Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider, desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
+                            backTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8));
+                    Osx.Outbound result = (Osx.Outbound) TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo, true);
+                } catch (Exception e) {
+                    logger.error("receive completed error", e);
                 }
             }
         }, finishLatch));
-        transferStatus= TransferStatus.TRANSFERING;
+        transferStatus = TransferStatus.TRANSFERING;
     }
 
-    private  String  buildBackTopic(String oriTopic){
+    private String buildBackTopic(String oriTopic) {
         int length = Dict.STREAM_SEND_TOPIC_PREFIX.length();
-        return Dict.STREAM_BACK_TOPIC_PREFIX+oriTopic.substring(length);
+        return Dict.STREAM_BACK_TOPIC_PREFIX + oriTopic.substring(length);
     }
 }

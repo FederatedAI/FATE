@@ -17,14 +17,10 @@ package org.fedai.osx.broker.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-
-import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
-import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.exceptions.SysException;
@@ -33,23 +29,24 @@ import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 @Singleton
 public class PushService extends AbstractServiceAdaptorNew<InboundPackage<StreamObserver>, StreamObserver> {
 
     Logger logger = LoggerFactory.getLogger(PushService.class);
     @Inject
-    DefaultFateRouterServiceImpl   defaultFateRouterService;
+    DefaultFateRouterServiceImpl defaultFateRouterService;
     @Inject
-    TransferQueueManager  transferQueueManager;
+    TransferQueueManager transferQueueManager;
 
     @Override
     protected StreamObserver doService(OsxContext context, InboundPackage<StreamObserver> data
     ) {
 
         StreamObserver backRespSO = data.getBody();
-       // context.setNeedPrintFlowLog(false);
+        // context.setNeedPrintFlowLog(false);
         QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context,
-                defaultFateRouterService,  transferQueueManager,
+                defaultFateRouterService, transferQueueManager,
                 backRespSO);
         return queuePushReqStreamObserver;
     }

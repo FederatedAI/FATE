@@ -21,7 +21,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.ManagedChannel;
-import org.fedai.osx.broker.interceptor.UnaryCallHandleInterceptor;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
@@ -36,7 +35,6 @@ import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
-import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +76,7 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
 
     protected Proxy.Packet transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
 
-        throw new RemoteRpcException(exceptionInfo.toString()) ;
+        throw new RemoteRpcException(exceptionInfo.toString());
 
 
     }
@@ -93,17 +91,17 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
         Proxy.Packet result = null;
         context.setUri(UriConstants.UNARYCALL);
         context.setActionType(ActionType.UNARY_CALL.name());
-        RouterInfo routerInfo=context.getRouterInfo();
-        if(routerInfo==null){
+        RouterInfo routerInfo = context.getRouterInfo();
+        if (routerInfo == null) {
             String sourcePartyId = context.getSrcNodeId();
             String desPartyId = context.getDesNodeId();
-            throw  new NoRouterInfoException(sourcePartyId+" to "+desPartyId +" found no router info");
+            throw new NoRouterInfoException(sourcePartyId + " to " + desPartyId + " found no router info");
         }
-        if(routerInfo.getProtocol().equals(Protocol.http)){
-            Osx.Inbound  inbound = TransferUtil.
-                    buildInboundFromPushingPacket(context,req, MetaInfo.PROPERTY_FATE_TECH_PROVIDER).build();
-            Osx.Outbound outbound = (Osx.Outbound)TransferUtil.redirect(context,inbound,routerInfo,true);
-            if(outbound!=null) {
+        if (routerInfo.getProtocol().equals(Protocol.http)) {
+            Osx.Inbound inbound = TransferUtil.
+                    buildInboundFromPushingPacket(context, req, MetaInfo.PROPERTY_FATE_TECH_PROVIDER).build();
+            Osx.Outbound outbound = (Osx.Outbound) TransferUtil.redirect(context, inbound, routerInfo, true);
+            if (outbound != null) {
                 if (outbound.getCode().equals(StatusCode.SUCCESS)) {
                     try {
                         result = Proxy.Packet.parseFrom(outbound.getPayload().toByteArray());
@@ -114,7 +112,7 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
                     throw new RemoteRpcException(outbound.getMessage());
                 }
             }
-        }else {
+        } else {
             ManagedChannel managedChannel = null;
             try {
                 managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), false);

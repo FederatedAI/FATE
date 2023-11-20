@@ -24,28 +24,49 @@ import javax.servlet.http.HttpServletResponse;
 
 public interface TechProvider {
     //用于处理http1.X请求
-    default  void processHttpInvoke(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
+    default void processHttpInvoke(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    }
+
+    ;
+
     //用于处理grpc非流式请求
-    void processGrpcInvoke(OsxContext context,Osx.Inbound request,
+    void processGrpcInvoke(OsxContext context, Osx.Inbound request,
                            io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver);
 
-    default void processHttpPeek(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
-    default void processHttpPush(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
-    default void processHttpPop(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
-    default void processHttpRelease(OsxContext context, HttpServletRequest  httpServletRequest, HttpServletResponse httpServletResponse){ };
+    default void processHttpPeek(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    }
+
+    ;
+
+    default void processHttpPush(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    }
+
+    ;
+
+    default void processHttpPop(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    }
+
+    ;
+
+    default void processHttpRelease(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    }
+
+    ;
+
     //用于处理grpc流式请求
-   default public StreamObserver<Osx.Inbound> processGrpcTransport(OsxContext context,Osx.Inbound inbound, StreamObserver<Osx.Outbound> responseObserver){return null;};
+    default public StreamObserver<Osx.Inbound> processGrpcTransport(OsxContext context, Osx.Inbound inbound, StreamObserver<Osx.Outbound> responseObserver) {
+        return null;
+    }
 
-   void processGrpcPeek(OsxContext context,Osx.PeekInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
+    ;
 
-    void processGrpcPush(OsxContext context,Osx.PushInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
+    void processGrpcPeek(OsxContext context, Osx.PeekInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
 
-    void processGrpcPop(OsxContext context,Osx.PopInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
+    void processGrpcPush(OsxContext context, Osx.PushInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
 
-    void processGrpcRelease(OsxContext  context ,Osx.ReleaseInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
+    void processGrpcPop(OsxContext context, Osx.PopInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
 
-
-
+    void processGrpcRelease(OsxContext context, Osx.ReleaseInbound inbound, io.grpc.stub.StreamObserver<Osx.TransportOutbound> responseObserver);
 
 
 }

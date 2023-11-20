@@ -17,7 +17,6 @@ package org.fedai.osx.broker.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.context.OsxContext;
@@ -28,24 +27,24 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 
 import static org.fedai.osx.core.frame.ContextPrepareInterceptor.*;
-import static org.fedai.osx.core.frame.ContextPrepareInterceptor.CONTEXTKEY_TOPIC_KEY;
+
 @Slf4j
 public class ContextUtil {
 
 
     public static void assableContextFromInbound(OsxContext context) {
-        io.grpc.Context  grpcContext  = io.grpc.Context.current();
+        io.grpc.Context grpcContext = io.grpc.Context.current();
         String techProviderCode = CONTEXTKEY_TECH_PROVIDER.get(grpcContext);
         String traceId = CONTEXTKEY_TRACE_ID.get(grpcContext);
         String token = CONTEXTKEY_TOKEN.get(grpcContext);
         String sourceNodeId = CONTEXTKEY_FROM_NODE_ID.get(grpcContext);
         String targetNodeId = CONTEXTKEY_TARGET_NODE_ID.get(grpcContext);
         String sourceInstId = CONTEXTKEY_FROM_INST_ID.get(grpcContext);
-        if(StringUtils.isEmpty(sourceNodeId)){
+        if (StringUtils.isEmpty(sourceNodeId)) {
             sourceNodeId = sourceInstId;
         }
         String targetInstId = CONTEXTKEY_TARGET_INST_ID.get(grpcContext);
-        if(StringUtils.isEmpty(targetNodeId)){
+        if (StringUtils.isEmpty(targetNodeId)) {
             targetNodeId = targetInstId;
         }
         String sessionId = CONTEXTKEY_SESSION_ID.get(grpcContext);
@@ -81,13 +80,13 @@ public class ContextUtil {
     public static OsxContext buildFateContext(Protocol protocol) {
         OsxContext context = new OsxContext();
         context.setProtocol(protocol);
-      //  context.setSourceIp(ContextPrepareInterceptor.sourceIp.get() != null ? ContextPrepareInterceptor.sourceIp.get().toString() : "");
+        //  context.setSourceIp(ContextPrepareInterceptor.sourceIp.get() != null ? ContextPrepareInterceptor.sourceIp.get().toString() : "");
 
         return context;
     }
 
-    public static  OsxContext  buildContextFromHttpRequest(HttpServletRequest  request){
-        OsxContext  osxContext = new OsxContext();
+    public static OsxContext buildContextFromHttpRequest(HttpServletRequest request) {
+        OsxContext osxContext = new OsxContext();
         String version = request.getHeader(PtpHttpHeader.Version);
 //        System.err.println("version :" +version);
         String techProviderCode = request.getHeader(PtpHttpHeader.TechProviderCode);
@@ -103,12 +102,12 @@ public class ContextUtil {
         String sourceInstID = request.getHeader(PtpHttpHeader.FromInstID);
         String targetInstID = request.getHeader(PtpHttpHeader.TargetInstID);
         String sessionID = request.getHeader(PtpHttpHeader.SessionID);
-        System.err.println("sessionId :" +sessionID);
-        String uri =   request.getHeader(PtpHttpHeader.Uri);
+        System.err.println("sessionId :" + sessionID);
+        String uri = request.getHeader(PtpHttpHeader.Uri);
         String topic = request.getHeader(PtpHttpHeader.MessageTopic);
         String msgFlag = request.getHeader(PtpHttpHeader.MessageFlag);
         String queueType = request.getHeader(PtpHttpHeader.QueueType);
-        Enumeration<String>   headers =  request.getHeaderNames();
+        Enumeration<String> headers = request.getHeaderNames();
 //        while(headers.hasMoreElements()){
 //            String name = headers.nextElement();
 //            log.info("==http head======"+name+"======="+request.getHeader(name));
@@ -127,8 +126,8 @@ public class ContextUtil {
         osxContext.setDesInstId(targetInstID);
         osxContext.setQueueType(queueType);
         osxContext.setMessageFlag(msgFlag);
-        System.err.println("xxxxxxxxxxx+"+osxContext.toString());
-        return  osxContext;
+        System.err.println("xxxxxxxxxxx+" + osxContext.toString());
+        return osxContext;
     }
 
 

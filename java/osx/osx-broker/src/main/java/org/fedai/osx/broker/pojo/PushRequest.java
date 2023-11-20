@@ -4,9 +4,9 @@ import lombok.Data;
 
 @Data
 public class PushRequest {
-    String  topic;
-    byte[]  payload;
-    String  msgCode="";
-    String  msgFlag="";
+    String topic;
+    byte[] payload;
+    String msgCode = "";
+    String msgFlag = "";
 
 }

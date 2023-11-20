@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class ReleaseRequest {
-    String  topic;
+    String topic;
 }

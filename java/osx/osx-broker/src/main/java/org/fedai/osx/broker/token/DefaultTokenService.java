@@ -32,9 +32,11 @@ public class DefaultTokenService implements TokenService {
     Logger logger = LoggerFactory.getLogger(DefaultTokenService.class);
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     MetricReport metricReport = new FileMetricReport(Dict.SERVICE_OSX_CLUSTERMANAGER);
+
     public DefaultTokenService() {
 
     }
+
     @Override
     public TokenResult requestToken(String resource, int acquireCount, boolean prioritized) {
 
@@ -58,12 +60,14 @@ public class DefaultTokenService implements TokenService {
         }
         return ClusterFlowChecker.acquireClusterToken(rule, acquireCount, prioritized);
     }
+
     @Override
     public void releaseConcurrentToken(Long tokenId) {
         if (tokenId == null) {
             return;
         }
     }
+
     private boolean notValidRequest(Long id, int count) {
         return id == null || id <= 0 || count <= 0;
     }
@@ -71,6 +75,7 @@ public class DefaultTokenService implements TokenService {
     private boolean notValidRequest(String address, Long id, int count) {
         return address == null || "".equals(address) || id == null || id <= 0 || count <= 0;
     }
+
     private TokenResult badRequest() {
         return new TokenResult(TokenResultStatus.BAD_REQUEST);
     }

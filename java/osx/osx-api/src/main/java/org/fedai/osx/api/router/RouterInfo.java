@@ -15,6 +15,7 @@
  */
 
 package org.fedai.osx.api.router;
+
 import lombok.Data;
 
 
@@ -40,11 +41,11 @@ public class RouterInfo {
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();
-        if(Protocol.grpc.equals(protocol)) {
+        if (Protocol.grpc.equals(protocol)) {
             sb.append(host).append("_").append(port);
             if (negotiationType != null)
                 sb.append("_").append(negotiationType);
-        }else {
+        } else {
             sb.append(url);
         }
         return sb.toString();
@@ -52,7 +53,7 @@ public class RouterInfo {
 
     @Override
     public String toString() {
-        return  toKey();
+        return toKey();
     }
 
     public String getResource() {

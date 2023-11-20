@@ -14,5 +14,6 @@
  * limitations under the License.
  */
 package org.fedai.osx.core.exceptions;
+
 public class ProduceMsgExcption extends BaseException {
 }

@@ -10,10 +10,12 @@ import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.service.InboundPackage;
 import org.fedai.osx.core.service.Interceptor;
 import org.fedai.osx.core.service.OutboundPackage;
+
 @Singleton
-public class TokenValidatorInterceptor implements Interceptor< InboundPackage, OutboundPackage> {
+public class TokenValidatorInterceptor implements Interceptor<InboundPackage, OutboundPackage> {
     @Inject
-    TokenValidatorRegister  tokenValidatorRegister;
+    TokenValidatorRegister tokenValidatorRegister;
+
     @Override
     public void doProcess(OsxContext context, InboundPackage inboundPackage, OutboundPackage outboundPackage) throws Exception {
         if (MetaInfo.PROPERTY_OPEN_TOKEN_VALIDATOR) {

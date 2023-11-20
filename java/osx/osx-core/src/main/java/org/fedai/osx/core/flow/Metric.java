@@ -16,7 +16,6 @@
 package org.fedai.osx.core.flow;
 
 
-
 public interface Metric extends DebugSupport {
 
     /**

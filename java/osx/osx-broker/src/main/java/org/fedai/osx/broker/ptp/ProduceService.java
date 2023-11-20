@@ -19,48 +19,41 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
-import io.grpc.stub.StreamObserver;
-import io.netty.handler.codec.base64.Base64Decoder;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
-import org.fedai.osx.broker.interceptor.RouterInterceptor;
-import org.fedai.osx.broker.message.MessageDecoder;
-import org.fedai.osx.broker.message.MessageExtBrokerInner;
-import org.fedai.osx.broker.pojo.*;
+import org.fedai.osx.broker.pojo.HttpInvoke;
+import org.fedai.osx.broker.pojo.ProduceRequest;
+import org.fedai.osx.broker.pojo.ProduceResponse;
 import org.fedai.osx.broker.queue.*;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.service.Register;
 import org.fedai.osx.broker.service.TokenApplyService;
-import org.fedai.osx.broker.util.TransferUtil;
-import org.fedai.osx.core.config.MetaInfo;
-import org.fedai.osx.core.constant.*;
+import org.fedai.osx.core.constant.ActionType;
+import org.fedai.osx.core.constant.Dict;
+import org.fedai.osx.core.constant.QueueType;
+import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.context.OsxContext;
-import org.fedai.osx.core.exceptions.*;
+import org.fedai.osx.core.exceptions.CreateTopicErrorException;
+import org.fedai.osx.core.exceptions.ExceptionInfo;
+import org.fedai.osx.core.exceptions.ParameterException;
 import org.fedai.osx.core.flow.FlowCounterManager;
-import org.fedai.osx.core.ptp.TargetMethod;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
-import org.fedai.osx.core.service.InboundPackage;
-import org.fedai.osx.core.service.Interceptor;
-import org.fedai.osx.core.service.OutboundPackage;
-import org.fedai.osx.core.utils.FlowLogUtil;
 import org.fedai.osx.core.utils.JsonUtil;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import static org.fedai.osx.core.constant.UriConstants.HTTP_PUSH;
 import static org.fedai.osx.core.constant.UriConstants.PUSH;
 
 @Singleton
-@Register(uris={PUSH,HTTP_PUSH})
+@Register(uris = {PUSH, HTTP_PUSH})
 @Data
-public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, ProduceResponse> {
+public class ProduceService extends AbstractServiceAdaptorNew<ProduceRequest, ProduceResponse> {
 
 
     Logger logger = LoggerFactory.getLogger(ProduceService.class);
@@ -71,7 +64,7 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
     @Inject
     FlowCounterManager flowCounterManager;
     @Inject
-    DefaultFateRouterServiceImpl  defaultFateRouterService;
+    DefaultFateRouterServiceImpl defaultFateRouterService;
 
     Base64.Decoder base64Decoder = Base64.getDecoder();
 
@@ -108,73 +101,73 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
     @Override
     protected ProduceResponse doService(OsxContext context, ProduceRequest produceRequest) {
 
-        AbstractQueue   queue ;
+        AbstractQueue queue;
         String topic = produceRequest.getTopic();
         context.setTopic(topic);
 //        RouterInfo routerInfo = context.getRouterInfo();
 //        String srcPartyId = context.getSrcPartyId();
         String sessionId = context.getSessionId();
-            /*
-             * 本地处理
-             */
-            if (StringUtils.isEmpty(topic)) {
-                throw new ParameterException(StatusCode.PARAM_ERROR, "topic is null");
-            }
-            if (StringUtils.isEmpty(sessionId)) {
-                throw new ParameterException(StatusCode.PARAM_ERROR, "sessionId is null");
-            }
-            int dataSize = produceRequest.getPayload().length;
-            context.setActionType(ActionType.MSG_DOWNLOAD.name());
-            context.setRouterInfo(null);
-            context.setDataSize(dataSize);
+        /*
+         * 本地处理
+         */
+        if (StringUtils.isEmpty(topic)) {
+            throw new ParameterException(StatusCode.PARAM_ERROR, "topic is null");
+        }
+        if (StringUtils.isEmpty(sessionId)) {
+            throw new ParameterException(StatusCode.PARAM_ERROR, "sessionId is null");
+        }
+        int dataSize = produceRequest.getPayload().length;
+        context.setActionType(ActionType.MSG_DOWNLOAD.name());
+        context.setRouterInfo(null);
+        context.setDataSize(dataSize);
 
-            QueueType  queueType = QueueType.NORMAL;
-            if(StringUtils.isNotEmpty(context.getQueueType())){
-                queueType=  QueueType.valueOf(context.getQueueType());
+        QueueType queueType = QueueType.NORMAL;
+        if (StringUtils.isNotEmpty(context.getQueueType())) {
+            queueType = QueueType.valueOf(context.getQueueType());
+        }
+        queue = transferQueueManager.getQueue(sessionId, topic);
+        CreateQueueResult createQueueResult = null;
+        if (queue == null) {
+            createQueueResult = transferQueueManager.createNewQueue(sessionId, topic, false, queueType);
+            if (createQueueResult == null) {
+                throw new CreateTopicErrorException("create topic " + topic + " error");
             }
-            queue = transferQueueManager.getQueue(sessionId,topic);
-            CreateQueueResult createQueueResult = null;
-            if (queue == null) {
-                createQueueResult = transferQueueManager.createNewQueue(sessionId,topic,  false,queueType);
-                if (createQueueResult == null) {
-                    throw new CreateTopicErrorException("create topic " + topic + " error");
-                }
-                queue = createQueueResult.getQueue();
-                if(QueueType.DIRECT.equals(queueType)){
-                    DirectBackStreamObserver  directBackStreamObserver = new  DirectBackStreamObserver(defaultFateRouterService,context.getTopic(),
-                            context.getSessionId(),context.getDesNodeId(),context.getSrcNodeId());
-                    QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context,
-                            defaultFateRouterService,  transferQueueManager,directBackStreamObserver);
-                    ((DirectQueue )queue).setStreamObserver(queuePushReqStreamObserver);
-                    ((DirectQueue )queue).setInputParser(new DataParser() {
-                        @Override
-                        public Object parse(Object src) {
-                            try {
-                                Osx.PushInbound  inbound =   Osx.PushInbound.parseFrom((byte[]) src);
-                                logger.info("receive push inbound ======= {}",inbound);
+            queue = createQueueResult.getQueue();
+            if (QueueType.DIRECT.equals(queueType)) {
+                DirectBackStreamObserver directBackStreamObserver = new DirectBackStreamObserver(defaultFateRouterService, context.getTopic(),
+                        context.getSessionId(), context.getDesNodeId(), context.getSrcNodeId());
+                QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context,
+                        defaultFateRouterService, transferQueueManager, directBackStreamObserver);
+                ((DirectQueue) queue).setStreamObserver(queuePushReqStreamObserver);
+                ((DirectQueue) queue).setInputParser(new DataParser() {
+                    @Override
+                    public Object parse(Object src) {
+                        try {
+                            Osx.PushInbound inbound = Osx.PushInbound.parseFrom((byte[]) src);
+                            logger.info("receive push inbound ======= {}", inbound);
 
-                                Proxy.Packet result =  Proxy.Packet.parseFrom((byte[])src);
-                                logger.info("receive package ======= {}",result);
+                            Proxy.Packet result = Proxy.Packet.parseFrom((byte[]) src);
+                            logger.info("receive package ======= {}", result);
 
-                                return  result;
-                            } catch (Exception e) {
-                                logger.error("parse Proxy.Packet error ",e);
-                            }
-                            return null;
+                            return result;
+                        } catch (Exception e) {
+                            logger.error("parse Proxy.Packet error ", e);
                         }
-                    });
-                }
+                        return null;
+                    }
+                });
             }
-            if (queue != null) {
-                //限流
-                // String resource = TransferUtil.buildResource(produceRequest);
-             //  tokenApplyService.applyToken(context, resource, dataSize);
-             //  flowCounterManager.pass(resource, dataSize);
-                context.putData(Dict.TRANSFER_QUEUE, queue);
+        }
+        if (queue != null) {
+            //限流
+            // String resource = TransferUtil.buildResource(produceRequest);
+            //  tokenApplyService.applyToken(context, resource, dataSize);
+            //  flowCounterManager.pass(resource, dataSize);
+            context.putData(Dict.TRANSFER_QUEUE, queue);
 //                String msgCode = produceRequest.getMetadataMap().get(Osx.Metadata.MessageCode.name());
 //                String retryCountString = produceRequest.getMetadataMap().get(Osx.Metadata.RetryCount.name());
-                // TODO: 2023/9/19   重试逻辑需要再修改
-                //此处为处理重复请求  
+            // TODO: 2023/9/19   重试逻辑需要再修改
+            //此处为处理重复请求
 //                if (StringUtils.isNotEmpty(msgCode)) {
 //                    if (transferQueue.checkMsgIdDuplicate(msgCode)) {//检查消息是不是已经存在于队列里面
 //                        if (StringUtils.isBlank(retryCountString)) {//重复请求，非重试请求
@@ -198,12 +191,11 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
 //                    }
 //                }
 
-                byte[] msgBytes = produceRequest.getPayload();
-                MessageFlag messageFlag = MessageFlag.SENDMSG;
-                if (StringUtils.isNotEmpty(context.getMessageFlag())) {
-                    messageFlag = MessageFlag.valueOf(context.getMessageFlag());
-                }
-
+            byte[] msgBytes = produceRequest.getPayload();
+            MessageFlag messageFlag = MessageFlag.SENDMSG;
+            if (StringUtils.isNotEmpty(context.getMessageFlag())) {
+                messageFlag = MessageFlag.valueOf(context.getMessageFlag());
+            }
 
 
 //                MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(topic, msgBytes, produceRequest.getMsgCode(), messageFlag, context.getSrcPartyId(),
@@ -219,11 +211,11 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
 //                context.putData(Dict.CURRENT_INDEX, transferQueue.getIndexQueue().getLogicOffset().get());
 
 
-                queue.putMessage(context,msgBytes,messageFlag,produceRequest.getMsgCode());
-                context.setReturnCode(StatusCode.PTP_SUCCESS);
-                ProduceResponse    produceResponse=  new ProduceResponse(StatusCode.PTP_SUCCESS,Dict.SUCCESS);
-                return produceResponse;
-            }
+            queue.putMessage(context, msgBytes, messageFlag, produceRequest.getMsgCode());
+            context.setReturnCode(StatusCode.PTP_SUCCESS);
+            ProduceResponse produceResponse = new ProduceResponse(StatusCode.PTP_SUCCESS, Dict.SUCCESS);
+            return produceResponse;
+        }
 //            else {
 //                /*
 //                 * 集群内转发
@@ -253,24 +245,24 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
 
     @Override
     protected ProduceResponse transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
-        return new ProduceResponse(exceptionInfo.getCode(),exceptionInfo.getMessage());
+        return new ProduceResponse(exceptionInfo.getCode(), exceptionInfo.getMessage());
     }
 
     @Override
     public ProduceRequest decode(Object object) {
-        ProduceRequest  produceRequest = null;
-        if(object instanceof Osx.PushInbound){
-            Osx.PushInbound inbound =  (Osx.PushInbound)object;
+        ProduceRequest produceRequest = null;
+        if (object instanceof Osx.PushInbound) {
+            Osx.PushInbound inbound = (Osx.PushInbound) object;
             produceRequest = buildProduceRequest(inbound);
         }
-        if(object instanceof HttpInvoke){
-            HttpInvoke inbound =  (HttpInvoke)object;
-            produceRequest= JsonUtil.json2Object(inbound.getPayload(),ProduceRequest.class);
+        if (object instanceof HttpInvoke) {
+            HttpInvoke inbound = (HttpInvoke) object;
+            produceRequest = JsonUtil.json2Object(inbound.getPayload(), ProduceRequest.class);
         }
-        if(object  instanceof  Osx.Inbound){
-            Osx.Inbound  inbound = (Osx.Inbound)object;
+        if (object instanceof Osx.Inbound) {
+            Osx.Inbound inbound = (Osx.Inbound) object;
             try {
-               Osx.PushInbound  pushInbound=  Osx.PushInbound.parseFrom(inbound.getPayload());
+                Osx.PushInbound pushInbound = Osx.PushInbound.parseFrom(inbound.getPayload());
                 produceRequest = buildProduceRequest(pushInbound);
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
@@ -281,16 +273,16 @@ public class ProduceService extends AbstractServiceAdaptorNew< ProduceRequest, P
 
     @Override
     public Osx.Outbound toOutbound(ProduceResponse response) {
-        Osx.Outbound.Builder  builder = Osx.Outbound.newBuilder();
+        Osx.Outbound.Builder builder = Osx.Outbound.newBuilder();
         builder.setCode(response.getCode());
         builder.setMessage(response.getMsg());
-        return  builder.build();
+        return builder.build();
     }
 
-    private   ProduceRequest buildProduceRequest(Osx.PushInbound  inbound){
-        ProduceRequest  produceRequest = new ProduceRequest();
+    private ProduceRequest buildProduceRequest(Osx.PushInbound inbound) {
+        ProduceRequest produceRequest = new ProduceRequest();
         produceRequest.setPayload(inbound.getPayload().toByteArray());
         produceRequest.setTopic(inbound.getTopic());
-        return   produceRequest;
+        return produceRequest;
     }
 }

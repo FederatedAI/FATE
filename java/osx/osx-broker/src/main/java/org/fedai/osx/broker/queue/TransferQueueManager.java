@@ -22,13 +22,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.webank.eggroll.core.meta.Meta;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.zookeeper.KeeperException;
-
 import org.fedai.osx.broker.callback.MsgEventCallback;
 import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.consumer.EventDriverRule;
@@ -39,7 +36,6 @@ import org.fedai.osx.core.config.MasterInfo;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.*;
 import org.fedai.osx.core.context.Protocol;
-import org.fedai.osx.core.exceptions.CreateTopicErrorException;
 import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.fedai.osx.core.exceptions.SysException;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
@@ -54,9 +50,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.fedai.osx.core.config.MetaInfo.*;
@@ -67,7 +65,7 @@ public class TransferQueueManager {
     final String MASTER_PATH = "/FATE-TRANSFER/MASTER";
     final String ZK_COMPONENTS_PREFIX = "/FATE-COMPONENTS/osx";
     ThreadPoolExecutor errorCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
-//    ThreadPoolExecutor completeCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
+    //    ThreadPoolExecutor completeCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
 //    ThreadPoolExecutor destroyCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
     Logger logger = LoggerFactory.getLogger(TransferQueueManager.class);
     volatile Map<String, TransferQueueApplyInfo> transferQueueApplyInfoMap = new ConcurrentHashMap<>();
@@ -90,30 +88,13 @@ public class TransferQueueManager {
             });
 
     ConcurrentHashMap<EventDriverRule, List<MsgEventCallback>> msgCallBackRuleMap = new ConcurrentHashMap<>();
-//    @Inject(optional = true)
-    CuratorZookeeperClient   zkClient;
+    //    @Inject(optional = true)
+    CuratorZookeeperClient zkClient;
     @Inject
-    ConsumerManager  consumerManager;
-
-    public MessageStore getMessageStore() {
-        return messageStore;
-    }
-
-    public void setMessageStore(MessageStore messageStore) {
-        this.messageStore = messageStore;
-    }
-
+    ConsumerManager consumerManager;
     MessageStore messageStore;
     AllocateMappedFileService allocateMappedFileService;
     volatile long transferApplyInfoVersion = -1;
-
-    public MessageStore createMessageStore(
-            AllocateMappedFileService allocateMappedFileService) {
-        MessageStore messageStore = new MessageStore(allocateMappedFileService
-                , MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID + File.separator + "message-store");
-        messageStore.start();
-        return messageStore;
-    }
     private ServiceThread cleanTask = new ServiceThread() {
         @Override
         public void run() {
@@ -122,19 +103,12 @@ public class TransferQueueManager {
                 checkAndClean();
             }
         }
+
         @Override
         public String getServiceName() {
             return "TransferQueueCleanTask";
         }
     };
-
-
-    AllocateMappedFileService createAllocateMappedFileService() {
-        AllocateMappedFileService allocateMappedFileService = new AllocateMappedFileService();
-        allocateMappedFileService.start();
-        return allocateMappedFileService;
-    }
-
     public TransferQueueManager() {
         allocateMappedFileService = createAllocateMappedFileService();
         messageStore = createMessageStore(allocateMappedFileService);
@@ -163,6 +137,65 @@ public class TransferQueueManager {
             handleClusterInstanceId(initInstanceIds);
         }
         cleanTask.start();
+    }
+
+    public static String assembleTopic(String sessionId, String topic) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(sessionId).append("_").append(topic);
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+
+        Cache<String, String> test = CacheBuilder.newBuilder()
+                .expireAfterAccess(1, TimeUnit.SECONDS)
+                .concurrencyLevel(4)
+                .maximumSize(1000)
+                .removalListener(new RemovalListener<String, String>() {
+                    @Override
+                    public void onRemoval(RemovalNotification<String, String> notification) {
+                        System.err.println("=============" + notification.getKey());
+                    }
+                })
+                .build();
+        test.put("test1", "test1");
+        test.put("test2", "test2");
+        test.put("test3", "test3");
+        test.put("test4", "test4");
+        test.put("test5", "test5");
+
+        test.cleanUp();
+        System.err.println(test.getIfPresent("test1"));
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.err.println(test.getIfPresent("test1"));
+
+
+    }
+
+    public MessageStore getMessageStore() {
+        return messageStore;
+    }
+
+    public void setMessageStore(MessageStore messageStore) {
+        this.messageStore = messageStore;
+    }
+
+    public MessageStore createMessageStore(
+            AllocateMappedFileService allocateMappedFileService) {
+        MessageStore messageStore = new MessageStore(allocateMappedFileService
+                , MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID + File.separator + "message-store");
+        messageStore.start();
+        return messageStore;
+    }
+
+    AllocateMappedFileService createAllocateMappedFileService() {
+        AllocateMappedFileService allocateMappedFileService = new AllocateMappedFileService();
+        allocateMappedFileService.start();
+        return allocateMappedFileService;
     }
 
     public Set<String> getInstanceIds() {
@@ -212,7 +245,6 @@ public class TransferQueueManager {
 
     /**
      * 平衡的策略暂时没有开发
-     *
      */
     private String doClusterBalance(String transferId,
                                     String instanceId,
@@ -246,6 +278,8 @@ public class TransferQueueManager {
         return JsonUtil.json2Object(masterContent, MasterInfo.class);
     }
 
+    ;
+
     private void handleClusterInstanceId(List<String> children) {
         this.instanceIds.clear();
         this.instanceIds.addAll(children);
@@ -275,29 +309,29 @@ public class TransferQueueManager {
                 logger.error("parse apply info from zk error", e);
             }
         });
-    };
+    }
 
     public List<String> cleanByParam(String sessionId, String topic) {
-        logger.info("try to clean {} : {}  session map {}",sessionId,topic,this.sessionQueueMap);
+        logger.info("try to clean {} : {}  session map {}", sessionId, topic, this.sessionQueueMap);
         List<String> result = Lists.newArrayList();
         if (StringUtils.isEmpty(topic)) {
             Set<String> topics = this.sessionQueueMap.get(sessionId);
             if (topics != null) {
                 List<String> topicList = Lists.newArrayList(topics);
                 for (String tempTopic : topicList) {
-                    String  indexKey = assembleTopic(sessionId,tempTopic);
+                    String indexKey = assembleTopic(sessionId, tempTopic);
                     try {
 
                         if (this.getQueueByIndexKey(indexKey) != null)
                             destroy(indexKey);
                         result.add(indexKey);
                     } catch (Exception e) {
-                        logger.error("destroyInner error {}",indexKey );
+                        logger.error("destroyInner error {}", indexKey);
                     }
                 }
             }
         } else {
-            String  indexKey = assembleTopic(sessionId,topic);
+            String indexKey = assembleTopic(sessionId, topic);
             try {
                 if (queueMap.get(indexKey) != null) {
                     destroy(indexKey);
@@ -310,11 +344,25 @@ public class TransferQueueManager {
         return result;
     }
 
+
+//    public Enumeration<String> getAllTransferIds() {
+//        return queueMap.keys();
+//    }
+
+//    public List<AbstractQueue> getTransferQueues(List<String> transferIds) {
+//        List<AbstractQueue> result = Lists.newArrayList();
+//        for (String transferId : transferIds) {
+//            result.add(this.queueMap.get(transferId));
+//        }
+//        return result;
+//    }
+//    ConcurrentHashMap<String, Lock>  clusterApplyLockMap  = new ConcurrentHashMap();
+
     private void destroyInner(AbstractQueue queue) {
         queue.destory();
         String sessionId = queue.getSessionId();
-        String topic  = queue.getTransferId();
-        String  indexKey = assembleTopic(sessionId,topic);
+        String topic = queue.getTransferId();
+        String indexKey = assembleTopic(sessionId, topic);
         queueMap.remove(indexKey);
         Set<String> transferIdSets = this.sessionQueueMap.get(sessionId);
         if (transferIdSets != null) {
@@ -348,21 +396,6 @@ public class TransferQueueManager {
         });
     }
 
-
-//    public Enumeration<String> getAllTransferIds() {
-//        return queueMap.keys();
-//    }
-
-//    public List<AbstractQueue> getTransferQueues(List<String> transferIds) {
-//        List<AbstractQueue> result = Lists.newArrayList();
-//        for (String transferId : transferIds) {
-//            result.add(this.queueMap.get(transferId));
-//        }
-//        return result;
-//    }
-//    ConcurrentHashMap<String, Lock>  clusterApplyLockMap  = new ConcurrentHashMap();
-
-
     public synchronized TransferQueueApplyInfo handleClusterApply(String transferId,
                                                                   String instanceId,
                                                                   String sessionId) {
@@ -383,20 +416,20 @@ public class TransferQueueManager {
         }
     }
 
-    public ReentrantLock getLock(String  transferId) throws ExecutionException {
+    public ReentrantLock getLock(String transferId) throws ExecutionException {
         return transferIdLockMap.get(transferId);
 
     }
 
-    public CreateQueueResult createNewQueue(String sessionId,String topic,  boolean forceCreateLocal, QueueType queueType)  {
+    public CreateQueueResult createNewQueue(String sessionId, String topic, boolean forceCreateLocal, QueueType queueType) {
         Preconditions.checkArgument(StringUtils.isNotEmpty(topic));
         CreateQueueResult createQueueResult = new CreateQueueResult();
         ReentrantLock transferCreateLock = null;
         try {
-            transferCreateLock= getLock(topic);
+            transferCreateLock = getLock(topic);
             transferCreateLock.lock();
-            AbstractQueue queue = this.getQueue(sessionId,topic);
-            if (queue!=null) {
+            AbstractQueue queue = this.getQueue(sessionId, topic);
+            if (queue != null) {
                 createQueueResult.setQueue(queue);
                 String[] elements = MetaInfo.INSTANCE_ID.split(":");
                 createQueueResult.setPort(Integer.parseInt(elements[1]));
@@ -461,7 +494,7 @@ public class TransferQueueManager {
                 /*
                  * 单机版部署，直接本地建Q
                  */
-                createQueueResult.setQueue(localCreate(topic, sessionId,queueType));
+                createQueueResult.setQueue(localCreate(topic, sessionId, queueType));
 //                String[] args = MetaInfo.INSTANCE_ID.split("_");
 //                String ip = args[0];
 //                String portString = args[1];
@@ -470,18 +503,15 @@ public class TransferQueueManager {
                 createQueueResult.setRedirectIp(NetUtils.getLocalHost());
             }
             return createQueueResult;
-        }
-        catch(Exception e){
-            logger.error("create local queue {} {} error",sessionId,topic,e);
-            throw new  SysException(StatusCode.PTP_SYSTEM_ERROR,"create queue error");
-        }
-        finally {
-            if( transferCreateLock!=null){
+        } catch (Exception e) {
+            logger.error("create local queue {} {} error", sessionId, topic, e);
+            throw new SysException(StatusCode.PTP_SYSTEM_ERROR, "create queue error");
+        } finally {
+            if (transferCreateLock != null) {
                 transferCreateLock.unlock();
             }
         }
     }
-
 
     private void registerTransferQueue(String transferId, String sessionId) {
         String path = buildZkPath(transferId);
@@ -501,7 +531,7 @@ public class TransferQueueManager {
         return ZK_QUEUE_PREFIX + "/" + transferId;
     }
 
-    private CreateQueueResult applyFromCluster(String transferId, String sessionId,QueueType queueType) {
+    private CreateQueueResult applyFromCluster(String transferId, String sessionId, QueueType queueType) {
         CreateQueueResult createQueueResult = null;
 
         if (MetaInfo.PROPERTY_USE_ZOOKEEPER) {
@@ -529,7 +559,7 @@ public class TransferQueueManager {
                 transferQueueApplyInfo = JsonUtil.json2Object(content, TransferQueueApplyInfo.class);
                 assert transferQueueApplyInfo != null;
                 if (MetaInfo.INSTANCE_ID.equals(transferQueueApplyInfo.getInstanceId())) {
-                    createQueueResult.setQueue(localCreate(transferId, sessionId,queueType));
+                    createQueueResult.setQueue(localCreate(transferId, sessionId, queueType));
                 } else {
                     String[] elements = MetaInfo.INSTANCE_ID.split(":");
                     createQueueResult.setPort(Integer.parseInt(elements[1]));
@@ -539,7 +569,6 @@ public class TransferQueueManager {
         }
         return createQueueResult;
     }
-
 
     public Osx.Outbound applyFromMaster(String topic, String sessionId, String instanceId) {
         if (!isMaster()) {
@@ -572,7 +601,6 @@ public class TransferQueueManager {
         }
     }
 
-
     private RouterInfo getMasterAddress() {
         RouterInfo routerInfo = new RouterInfo();
         String[] args = MetaInfo.masterInfo.getInstanceId().split(Dict.COLON);
@@ -582,6 +610,7 @@ public class TransferQueueManager {
         return routerInfo;
     }
 
+    ;
 
     private void unRegisterCluster(String transferId) {
 
@@ -601,57 +630,52 @@ public class TransferQueueManager {
                 //        logger.info("rule {} is not matched",rule);
             }
         });
-    };
-
-
-    public static String assembleTopic(String sessionId, String topic){
-        StringBuilder  sb = new StringBuilder();
-        sb.append(sessionId).append("_").append(topic);
-        return  sb.toString();
     }
 
-    private AbstractQueue localCreate(String topic, String sessionId,QueueType  queueType) {
-        logger.info("create local topic {} queue type {}", topic,queueType);
-        AbstractQueue queue=null;
-        switch ( queueType){
-            case NORMAL:   queue = new TransferQueue(topic, this,consumerManager ,MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
-            break;
-            case DIRECT: queue = new DirectQueue(topic);
-            break;
+    private AbstractQueue localCreate(String topic, String sessionId, QueueType queueType) {
+        logger.info("create local topic {} queue type {}", topic, queueType);
+        AbstractQueue queue = null;
+        switch (queueType) {
+            case NORMAL:
+                queue = new TransferQueue(topic, this, consumerManager, MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
+                break;
+            case DIRECT:
+                queue = new DirectQueue(topic);
+                break;
         }
         queue.setSessionId(sessionId);
         queue.start();
         queue.registerDestoryCallback(() -> {
-            this.queueMap.remove(assembleTopic(sessionId,topic));
+            this.queueMap.remove(assembleTopic(sessionId, topic));
             if (this.sessionQueueMap.get(sessionId) != null) {
                 this.sessionQueueMap.get(sessionId).remove(topic);
             }
             unRegisterCluster(topic);
         });
         setMsgCallBack(queue);
-        String  indexKey = assembleTopic(sessionId,topic);
+        String indexKey = assembleTopic(sessionId, topic);
         queueMap.put(indexKey, queue);
-        if(sessionQueueMap.get(sessionId)==null)
-                sessionQueueMap.put(sessionId, new HashSet<>());
+        if (sessionQueueMap.get(sessionId) == null)
+            sessionQueueMap.put(sessionId, new HashSet<>());
         sessionQueueMap.get(sessionId).add(topic);
         return queue;
     }
 
-    public AbstractQueue getQueue(String sessionId,String topic) {
-        String indexKey = this.assembleTopic(sessionId,topic);
+    public AbstractQueue getQueue(String sessionId, String topic) {
+        String indexKey = this.assembleTopic(sessionId, topic);
         return getQueueByIndexKey(indexKey);
-    }
-    public AbstractQueue  getQueueByIndexKey(String indexKey){
-        return queueMap.get(indexKey);
     }
 
 //    public Map<String, AbstractQueue> getAllLocalQueue() {
 //        return this.queueMap;
 //    }
 
+    public AbstractQueue getQueueByIndexKey(String indexKey) {
+        return queueMap.get(indexKey);
+    }
 
     private void destroy(String indexKey) throws ExecutionException {
-        logger.info("start clear topic queue , indexKey = {}",indexKey);
+        logger.info("start clear topic queue , indexKey = {}", indexKey);
 
         ReentrantLock transferIdLock = this.getLock(indexKey);
         if (transferIdLock != null) {
@@ -670,10 +694,9 @@ public class TransferQueueManager {
         }
     }
 
-
-    public void onError(String sessionId,String topic, Throwable throwable) {
-        String  indexKey = assembleTopic(sessionId,topic);
-        AbstractQueue   queue = this.getQueueByIndexKey(indexKey);
+    public void onError(String sessionId, String topic, Throwable throwable) {
+        String indexKey = assembleTopic(sessionId, topic);
+        AbstractQueue queue = this.getQueueByIndexKey(indexKey);
         if (queue != null) {
             /*
              * 这里需要处理的问题是，当异常发生时，消费者并没有接入，等触发之后才接入
@@ -682,22 +705,22 @@ public class TransferQueueManager {
         }
         try {
             this.destroy(indexKey);
-        }catch (Exception e){
-            logger.error("destory queue {} error",indexKey,e);
+        } catch (Exception e) {
+            logger.error("destory queue {} error", indexKey, e);
         }
     }
 
-    public void onCompleted(String sessionId ,String topic) {
-        logger.info("transfer queue session {}  topic prepare to destory",sessionId, topic);
-        String  indexKey = assembleTopic(sessionId,topic);
-        AbstractQueue   queue = this.getQueueByIndexKey(indexKey);
+    public void onCompleted(String sessionId, String topic) {
+        logger.info("transfer queue session {}  topic prepare to destory", sessionId, topic);
+        String indexKey = assembleTopic(sessionId, topic);
+        AbstractQueue queue = this.getQueueByIndexKey(indexKey);
         if (queue != null) {
             queue.onCompeleted();
         }
         try {
             this.destroy(indexKey);
-        }catch (Exception e){
-            logger.error("destory queue {} error",indexKey,e);
+        } catch (Exception e) {
+            logger.error("destory queue {} error", indexKey, e);
         }
 
     }
@@ -722,42 +745,9 @@ public class TransferQueueManager {
         });
     }
 
-
     public void addMsgCallBackRule(EventDriverRule rule, List<MsgEventCallback> callbacks) {
         this.msgCallBackRuleMap.put(rule, callbacks);
     }
-
-    public  static  void main(String[] args){
-
-        Cache<String, String> test = CacheBuilder.newBuilder()
-                .expireAfterAccess(1, TimeUnit.SECONDS)
-                .concurrencyLevel(4)
-                .maximumSize(1000)
-                .removalListener(new RemovalListener<String, String>() {
-                    @Override
-                    public void onRemoval(RemovalNotification<String, String> notification) {
-                            System.err.println("============="+notification.getKey());
-                    }
-                }  )
-                .build();
-        test.put("test1","test1");
-        test.put("test2","test2");
-        test.put("test3","test3");
-        test.put("test4","test4");
-        test.put("test5","test5");
-
-        test.cleanUp();
-        System.err.println(test.getIfPresent("test1"));
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.err.println(test.getIfPresent("test1"));
-
-
-    }
-
 
 
 }

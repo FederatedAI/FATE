@@ -10,8 +10,8 @@ public class InvokeResponse {
 //    string code = 3;                    // 状态码
 //    string message = 4;
 
-    String  code;
-    String  message;
-    byte[]  payload;
+    String code;
+    String message;
+    byte[] payload;
 
 }

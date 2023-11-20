@@ -1,37 +1,32 @@
-
-
 package org.fedai.osx.core.service;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.grpc.stub.AbstractStub;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ErrorMessageUtil;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
-import org.fedai.osx.core.utils.FlowLogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Description 默认的服务适配器
  * @Author
  **/
 
-public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAdaptorNew< req, resp> {
+public abstract class AbstractServiceAdaptorNew<req, resp> implements ServiceAdaptorNew<req, resp> {
 
     protected String serviceName;
     Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-//    ServiceAdaptor< req, resp> serviceAdaptor;
-    InterceptorChainNew< req, resp> preChain = new DefaultInterceptorChainNew<>();
-    InterceptorChainNew< req, resp> postChain = new DefaultInterceptorChainNew<>();
+    //    ServiceAdaptor< req, resp> serviceAdaptor;
+    InterceptorChainNew<req, resp> preChain = new DefaultInterceptorChainNew<>();
+    InterceptorChainNew<req, resp> postChain = new DefaultInterceptorChainNew<>();
     private Map<String, Method> methodMap = Maps.newHashMap();
     private AbstractStub serviceStub;
 
@@ -52,7 +47,7 @@ public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAd
         this.methodMap = methodMap;
     }
 
-    public AbstractServiceAdaptorNew< req, resp> addPreProcessor(InterceptorNew interceptor) {
+    public AbstractServiceAdaptorNew<req, resp> addPreProcessor(InterceptorNew interceptor) {
         preChain.addInterceptor(interceptor);
         return this;
     }
@@ -88,7 +83,7 @@ public abstract class AbstractServiceAdaptorNew< req, resp> implements ServiceAd
      */
     @Override
     public resp service(OsxContext context, req data) throws RuntimeException {
-        resp  result = null;
+        resp result = null;
 
         // context.preProcess();
         List<Throwable> exceptions = Lists.newArrayList();

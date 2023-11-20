@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
 @Singleton
 public class TokenApplyService implements Lifecycle {
 
@@ -55,22 +56,20 @@ public class TokenApplyService implements Lifecycle {
     DefaultTokenService defaultTokenService;
 
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub;
 
     public TokenApplyService() {
 
     }
 
-    PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub;
-
-
     public PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub buildBlockingStub(String address) {
-        String[] ipports=   address.split(":");
-        RouterInfo routerInfo =  new RouterInfo();
+        String[] ipports = address.split(":");
+        RouterInfo routerInfo = new RouterInfo();
         routerInfo.setHost(ipports[0]);
         routerInfo.setPort(Integer.parseInt(ipports[1]));
-        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub = PrivateTransferProtocolGrpc.newBlockingStub(channel);
-        return  blockingStub;
+        return blockingStub;
 
     }
 
@@ -79,7 +78,7 @@ public class TokenApplyService implements Lifecycle {
         if (MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.LOCAL.name())
                 || MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
             TokenResult localTokenResult = tryLocalLimit(resource, count);
-        //    logger.info("request token {} count {} result {}", resource, count, localTokenResult);
+            //    logger.info("request token {} count {} result {}", resource, count, localTokenResult);
             /**
              * 集群限流
              */
@@ -94,8 +93,6 @@ public class TokenApplyService implements Lifecycle {
             flowCounterManager.pass(resource, count);
         }
     }
-
-
 
 
     private TokenResult tryLocalLimit(String resource, int count) {
@@ -155,19 +152,19 @@ public class TokenApplyService implements Lifecycle {
         tokenRequest.setResource(resource);
         tokenRequest.setAcquireCount(count);
 
-        Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
+        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
 
-      //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
+        //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
         inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-      //  inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
-       // inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
-      //  inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
-      //  inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-      //  inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
+        //  inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
+        // inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
+        //  inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
+        //  inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
+        //  inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
         //inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionID");
         inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.APPLY_TOKEN.name());
-     //   inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "fateflow");
-     //   inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
+        //   inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "fateflow");
+        //   inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
         inboundBuilder.setPayload(ByteString.copyFrom(JsonUtil.object2Json(tokenRequest).getBytes(StandardCharsets.UTF_8)));
 
         if (blockingStub == null) {
@@ -178,10 +175,10 @@ public class TokenApplyService implements Lifecycle {
 
         do {
             Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
-            ByteString  payLoad = outbound.getPayload();
-            TokenResult tokenResult= null;
-            if(payLoad!=null){
-                tokenResult =  JsonUtil.json2Object(payLoad.toByteArray(),TokenResult.class) ;
+            ByteString payLoad = outbound.getPayload();
+            TokenResult tokenResult = null;
+            if (payLoad != null) {
+                tokenResult = JsonUtil.json2Object(payLoad.toByteArray(), TokenResult.class);
             }
 
             if (tokenResult != null) {

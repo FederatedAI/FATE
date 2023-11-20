@@ -24,6 +24,7 @@ public class ZkConfig {
 
     String address;
     int timeout;
+
     public ZkConfig(String address, int timeout) {
         this.address = address;
         this.timeout = timeout;

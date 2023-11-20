@@ -1,7 +1,6 @@
 package org.fedai.osx.broker.http;
 
 import com.google.common.collect.Maps;
-import com.google.protobuf.ByteString;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
@@ -25,10 +24,8 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
-import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.utils.OSXCertUtils;
 import org.fedai.osx.core.utils.OsxX509TrustManager;
-import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,8 +149,8 @@ public class HttpsClientPool {
         }
     }
 
-    public  static HttpDataWrapper getHttpResponse(HttpRequestBase request, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
-        HttpDataWrapper  httpDataWrapper = new  HttpDataWrapper();
+    public static HttpDataWrapper getHttpResponse(HttpRequestBase request, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+        HttpDataWrapper httpDataWrapper = new HttpDataWrapper();
         CloseableHttpResponse response = null;
         try {
             response = getConnection(caPath, clientCertPath, clientKeyPath).execute(request, HttpClientContext.create());
@@ -174,7 +171,7 @@ public class HttpsClientPool {
         } catch (IOException ex) {
             logger.error("get https response failed:", ex);
             ex.printStackTrace();
-            throw  ex;
+            throw ex;
         } finally {
             try {
                 if (response != null) {
@@ -187,10 +184,8 @@ public class HttpsClientPool {
     }
 
 
-
-
     private static HttpDataWrapper getHttpsResponse(HttpRequestBase request, String caPath, String clientCertPath, String clientKeyPath) throws Exception {
-        HttpDataWrapper  httpDataWrapper = new  HttpDataWrapper();
+        HttpDataWrapper httpDataWrapper = new HttpDataWrapper();
         CloseableHttpResponse response = null;
         try {
             response = getConnection(caPath, clientCertPath, clientKeyPath).execute(request, HttpClientContext.create());
@@ -211,7 +206,7 @@ public class HttpsClientPool {
         } catch (IOException ex) {
             logger.error("get https response failed:", ex);
             ex.printStackTrace();
-            throw  ex;
+            throw ex;
         } finally {
             try {
                 if (response != null) {

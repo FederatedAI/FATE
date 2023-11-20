@@ -40,19 +40,19 @@ public class CommandClient {
 
     private synchronized ManagedChannel buildManagedChannel(String ip, int port) {
         if (managedChannel == null) {
-        NettyChannelBuilder channelBuilder = NettyChannelBuilder
-                .forAddress(ip, port)
+            NettyChannelBuilder channelBuilder = NettyChannelBuilder
+                    .forAddress(ip, port)
 //                .keepAliveTime(60, TimeUnit.MINUTES)
 //                .keepAliveTimeout(60, TimeUnit.MINUTES)
 //                .keepAliveWithoutCalls(true)
-                .idleTimeout(120, TimeUnit.SECONDS)
-                .perRpcBufferLimit(128 << 20)
-                .flowControlWindow(32 << 20)
-                .maxInboundMessageSize(32 << 20)
-                .enableRetry()
-                .retryBufferSize(16 << 20)
-                .maxRetryAttempts(20);
-        channelBuilder.usePlaintext();
+                    .idleTimeout(120, TimeUnit.SECONDS)
+                    .perRpcBufferLimit(128 << 20)
+                    .flowControlWindow(32 << 20)
+                    .maxInboundMessageSize(32 << 20)
+                    .enableRetry()
+                    .retryBufferSize(16 << 20)
+                    .maxRetryAttempts(20);
+            channelBuilder.usePlaintext();
             managedChannel = channelBuilder.build();
         }
         return managedChannel;

@@ -124,7 +124,7 @@ public class OSXCertUtils {
         return str.length <= index || str[index] == null ? MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray() : str[index].toCharArray();
     }
 
-    public static String getTempStorePath(){
+    public static String getTempStorePath() {
         return "";
     }
 

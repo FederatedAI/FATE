@@ -35,9 +35,8 @@ import java.util.Map;
  **/
 public class ErrorMessageUtil {
 
-    static Logger logger = LoggerFactory.getLogger(ErrorMessageUtil.class);
-
     static final String MESSAGE_PREFIX = "PARTY_";
+    static Logger logger = LoggerFactory.getLogger(ErrorMessageUtil.class);
 
     public static String buildRemoteRpcErrorMsg(int code, String msg) {
         return new StringBuilder().append("host return code ").append(code)
@@ -76,8 +75,8 @@ public class ErrorMessageUtil {
         } else {
             result = Status.INTERNAL
                     .withCause(throwable)
-                   // .withDescription(throwable.getMessage())
-                    .withDescription(throwable.getMessage()+ ": " + ExceptionUtils.getStackTrace(throwable))
+                    // .withDescription(throwable.getMessage())
+                    .withDescription(throwable.getMessage() + ": " + ExceptionUtils.getStackTrace(throwable))
                     .asRuntimeException();
         }
 
@@ -89,16 +88,16 @@ public class ErrorMessageUtil {
         String selfPartyId = context.getSelfPartyId();
         String oriMessage = e.getMessage();
         String message = "";
-        if(StringUtils.isNotEmpty(selfPartyId)){
-            message = MESSAGE_PREFIX+selfPartyId+":"+oriMessage;
-        }else{
+        if (StringUtils.isNotEmpty(selfPartyId)) {
+            message = MESSAGE_PREFIX + selfPartyId + ":" + oriMessage;
+        } else {
             message = oriMessage;
         }
         if (e instanceof BaseException) {
             BaseException baseException = (BaseException) e;
             exceptionInfo.setCode(baseException.getRetcode());
         } else {
-            logger.error("SYSTEM_ERROR ==> " ,e);
+            logger.error("SYSTEM_ERROR ==> ", e);
             exceptionInfo.setCode(StatusCode.SYSTEM_ERROR);
         }
         exceptionInfo.setMessage(message);

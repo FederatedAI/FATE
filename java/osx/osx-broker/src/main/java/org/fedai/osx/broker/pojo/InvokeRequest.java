@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class InvokeRequest {
-    byte[]  payload;
+    byte[] payload;
 }

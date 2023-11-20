@@ -17,20 +17,14 @@ package org.fedai.osx.broker.grpc;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
-
 import lombok.extern.slf4j.Slf4j;
-import org.fedai.osx.broker.provider.FateTechProvider;
+import org.fedai.osx.broker.provider.TechProviderRegister;
 import org.fedai.osx.broker.util.ContextUtil;
 import org.fedai.osx.broker.util.DebugUtil;
-import org.fedai.osx.broker.util.TransferUtil;
-
-import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.SysException;
 import org.fedai.osx.core.provider.TechProvider;
-import org.fedai.osx.broker.provider.TechProviderRegister;
 import org.ppc.ptp.Osx;
 import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.slf4j.Logger;
@@ -64,30 +58,36 @@ public class PcpInterService extends PrivateTransferProtocolGrpc.PrivateTransfer
      */
     public void invoke(Osx.Inbound request,
                        io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver) {
-            DebugUtil.printGrpcParams(request);
-            OsxContext osxContext = new OsxContext();
-            ContextUtil.assableContextFromInbound(osxContext);
-            TechProvider techProvider = getTechProvider(osxContext);
-            techProvider.processGrpcInvoke(osxContext,request, responseObserver);
+        DebugUtil.printGrpcParams(request);
+        OsxContext osxContext = new OsxContext();
+        ContextUtil.assableContextFromInbound(osxContext);
+        TechProvider techProvider = getTechProvider(osxContext);
+        techProvider.processGrpcInvoke(osxContext, request, responseObserver);
     }
 
-    private  TechProvider  getTechProvider(OsxContext  context){
+    private TechProvider getTechProvider(OsxContext context) {
         TechProvider techProvider = techProviderRegister.select(context.getTechProviderCode());
         if (techProvider == null) {
             techProvider = techProviderRegister.select("default");
         }
-        return  techProvider;
+        return techProvider;
     }
 
+    private TechProvider prepare(OsxContext osxContext) {
+        ContextUtil.assableContextFromInbound(osxContext);
+        TechProvider techProvider = getTechProvider(osxContext);
+        return techProvider;
+    }
 
     public class PcpStreamObserver implements io.grpc.stub.StreamObserver<Osx.Inbound> {
 
         Logger logger = LoggerFactory.getLogger(PcpStreamObserver.class);
         boolean inited = false;
         TechProvider techProvider;
-        OsxContext  osxContext;
+        OsxContext osxContext;
         StreamObserver<Osx.Outbound> responseObserver;
         StreamObserver<Osx.Inbound> requestObserver;
+
         public PcpStreamObserver(StreamObserver<Osx.Outbound> responseObserver) {
             this.responseObserver = responseObserver;
         }
@@ -98,17 +98,17 @@ public class PcpInterService extends PrivateTransferProtocolGrpc.PrivateTransfer
             // String version = metaDataMap.get(Pcp.Header.Version.name());
             osxContext = new OsxContext();
             ContextUtil.assableContextFromInbound(osxContext);
-            logger.info("PcpStreamObserver init {}",metaDataMap);
+            logger.info("PcpStreamObserver init {}", metaDataMap);
 
             String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
             techProvider = techProviderRegister.select(osxContext);
             if (techProvider != null) {
                 DebugUtil.printGrpcParams(inbound);
-                requestObserver = techProvider.processGrpcTransport(osxContext,inbound, responseObserver);
+                requestObserver = techProvider.processGrpcTransport(osxContext, inbound, responseObserver);
             } else {
                 //抛出异常
-                logger.error("can not found TechProvider of {}",techProviderCode);
-                throw  new SysException("invalid TechProviderCode "+techProviderCode);
+                logger.error("can not found TechProvider of {}", techProviderCode);
+                throw new SysException("invalid TechProviderCode " + techProviderCode);
             }
             inited = true;
             logger.info("PcpStreamObserver init over");
@@ -140,15 +140,6 @@ public class PcpInterService extends PrivateTransferProtocolGrpc.PrivateTransfer
             }
         }
     }
-
-
-
-    private TechProvider prepare(OsxContext  osxContext){
-        ContextUtil.assableContextFromInbound(osxContext);
-        TechProvider techProvider = getTechProvider(osxContext);
-        return  techProvider;
-    }
-
 
 
 }

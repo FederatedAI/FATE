@@ -2,7 +2,6 @@ package org.fedai.osx.broker.service;
 
 import lombok.Data;
 import org.fedai.osx.broker.constants.ServiceType;
-import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
@@ -16,15 +15,16 @@ public class ServiceRegisterInfo {
     Protocol protocol;
     RouterInfo routerInfo;
     String nodeId;
-    boolean  allowInterUse;
+    boolean allowInterUse;
     AbstractServiceAdaptorNew serviceAdaptor;
-    public String  buildRegisterKey(){
-        return buildKey(nodeId,uri);
-    }
 
-    public  static  String   buildKey(String nodeId,String  uri){
-        StringBuilder  sb = new StringBuilder();
+    public static String buildKey(String nodeId, String uri) {
+        StringBuilder sb = new StringBuilder();
         sb.append(nodeId).append(":").append(UrlUtil.parseUri(uri));
         return sb.toString();
+    }
+
+    public String buildRegisterKey() {
+        return buildKey(nodeId, uri);
     }
 }
