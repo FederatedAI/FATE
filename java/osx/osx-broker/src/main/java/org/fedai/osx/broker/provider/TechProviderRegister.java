@@ -57,7 +57,7 @@ public class TechProviderRegister implements Lifecycle , ApplicationStartedRunne
     }
 
     final public TechProvider select(String  techProviderCode  ) {
-        logger.info("tech provider select {}",techProviderCode);
+//        logger.info("tech provider select {}",techProviderCode);
         if(StringUtils.isEmpty(techProviderCode)){
             throw  new ParameterException("techProviderCode is null");
         }

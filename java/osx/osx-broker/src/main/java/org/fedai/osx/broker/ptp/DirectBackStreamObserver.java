@@ -113,7 +113,7 @@ public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> 
             pushBuilder.setPayload(ByteString.copyFrom("onCompleted".getBytes(StandardCharsets.UTF_8)));
             pushBuilder.setTopic(backTopic);
             inboundBuilder.setPayload(pushBuilder.build().toByteString());
-            Osx.Outbound result =TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
+            Osx.Outbound result =(Osx.Outbound)TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
         }catch (Exception e){
             log.error("receive completed error",e);
         }finally {

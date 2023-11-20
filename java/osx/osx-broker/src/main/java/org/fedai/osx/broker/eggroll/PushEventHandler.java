@@ -76,7 +76,7 @@ public class PushEventHandler extends GrpcEventHandler {
             }
         }finally {
             String topic =  messageExt.getTopic();
-            transferQueueManager.onCompleted(topic);
+            transferQueueManager.onCompleted(sessionId,topic);
         }
     }
 
@@ -87,7 +87,7 @@ public class PushEventHandler extends GrpcEventHandler {
             }
         }finally {
            String topic =  messageExt.getTopic();
-           transferQueueManager.onCompleted(topic);
+           transferQueueManager.onCompleted(sessionId,topic);
         }
 
 
@@ -282,7 +282,7 @@ public class PushEventHandler extends GrpcEventHandler {
                 try {
                         Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(provider,desPartyId, srcPartyId, TargetMethod.PRODUCE_MSG.name(),
                                 backTopic, MessageFlag.COMPELETED, sessionId, "completed".getBytes(StandardCharsets.UTF_8));
-                        Osx.Outbound result =TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
+                        Osx.Outbound result =(Osx.Outbound)TransferUtil.redirect(context, inboundBuilder.build(), revertRouterInfo,true);
                 }catch (Exception e){
                     logger.error("receive completed error",e);
                 }

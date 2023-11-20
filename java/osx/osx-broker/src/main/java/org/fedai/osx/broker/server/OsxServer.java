@@ -32,7 +32,6 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-
 import org.fedai.osx.broker.grpc.PcpInnerService;
 import org.fedai.osx.broker.grpc.PcpInterService;
 import org.fedai.osx.broker.grpc.ProxyGrpcService;
@@ -40,17 +39,15 @@ import org.fedai.osx.broker.grpc.ServiceExceptionHandler;
 import org.fedai.osx.broker.http.DispatchServlet;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.frame.ContextPrepareInterceptor;
-import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.utils.OSXCertUtils;
 import org.fedai.osx.core.utils.OsxX509TrustManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -60,13 +57,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.fedai.osx.core.config.MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER;
+import static org.fedai.osx.core.config.MetaInfo.PROPERTY_OPEN_TLS_USE_KEYSTORE;
 
 /**
  * http1.X  + grpc
  */
 @Singleton
 @Slf4j
-public class OsxServer  {
+public class OsxServer {
     io.grpc.Server server;
     io.grpc.Server tlsServer;
     org.eclipse.jetty.server.Server httpServer;
@@ -78,12 +76,11 @@ public class OsxServer  {
     @Inject
     PcpInnerService pcpInnerService;
     @Inject
-    DispatchServlet  dispatchServlet;
+    DispatchServlet dispatchServlet;
 
     private synchronized void init() {
         try {
-//            proxyGrpcService = new ProxyGrpcService();
-//            pcpGrpcService = new PcpGrpcService();
+
             server = buildServer();
             if (MetaInfo.PROPERTY_OPEN_HTTP_SERVER) {
                 log.info("prepare to create http server");
@@ -100,8 +97,8 @@ public class OsxServer  {
                 }
             }
             tlsServer = buildTlsServer();
-        }catch(Exception e){
-            log.error("server init error ",e);
+        } catch (Exception e) {
+            log.error("server init error ", e);
             e.printStackTrace();
         }
     }
@@ -164,16 +161,6 @@ public class OsxServer  {
             connector.setAcceptedReceiveBufferSize(MetaInfo.PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE);
             server.addConnector(connector);
             server.setHandler(buildServlet());
-//            new Thread(()->{
-//                while (true){
-//                    try {
-//                        logger.info("========================= http连接数 = {}",server.getConnectors().length);
-//                        Thread.sleep(5000);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }).start();
             return server;
         } catch (Exception e) {
             log.error("build https server error = {}", e.getMessage());
@@ -185,7 +172,7 @@ public class OsxServer  {
     ServletContextHandler buildServlet() {
         ServletContextHandler context = new ServletContextHandler();
         context.setContextPath(MetaInfo.PROPERTY_HTTP_CONTEXT_PATH);
-        ServletHolder  servletHolder= new ServletHolder(dispatchServlet);
+        ServletHolder servletHolder = new ServletHolder(dispatchServlet);
         context.addServlet(servletHolder, MetaInfo.PROPERTY_HTTP_SERVLET_PATH);
         context.setMaxFormContentSize(Integer.MAX_VALUE);
         return context;
@@ -251,21 +238,55 @@ public class OsxServer  {
     }
 
     private io.grpc.Server buildTlsServer() {
-        String certChainFilePath = MetaInfo.PROPERTY_SERVER_CERT_CHAIN_FILE;
+        String serverCertChainFile = MetaInfo.PROPERTY_SERVER_CERT_CHAIN_FILE;
         String privateKeyFilePath = MetaInfo.PROPERTY_SERVER_PRIVATE_KEY_FILE;
-        String trustCertCollectionFilePath = MetaInfo.PROPERTY_SERVER_CA_FILE;
-        if (PROPERTY_OPEN_GRPC_TLS_SERVER && StringUtils.isNotBlank(certChainFilePath)
-                && StringUtils.isNotBlank(privateKeyFilePath) && StringUtils.isNotBlank(trustCertCollectionFilePath)) {
+        String serverCaFilePath = MetaInfo.PROPERTY_SERVER_CA_FILE;
+
+        // Define the JKS file and its password
+        String keyJksFilePath = MetaInfo.PROPERTY_SERVER_KEYSTORE_FILE;
+        String keyJksPassword = MetaInfo.PROPERTY_SERVER_KEYSTORE_FILE_PASSWORD;
+
+        // Define the JKS file and its password
+        String trustFilePath = MetaInfo.PROPERTY_SERVER_TRUST_KEYSTORE_FILE;
+        String trustJksPassword = MetaInfo.PROPERTY_SERVER_TRUST_FILE_PASSWORD;
+
+        if (PROPERTY_OPEN_GRPC_TLS_SERVER) {
             try {
                 SocketAddress address = new InetSocketAddress(MetaInfo.PROPERTY_BIND_HOST, MetaInfo.PROPERTY_GRPC_TLS_PORT);
                 NettyServerBuilder nettyServerBuilder = NettyServerBuilder.forAddress(address);
-                SslContextBuilder sslContextBuilder = GrpcSslContexts.forServer(new File(certChainFilePath), new File(privateKeyFilePath))
-                        .trustManager(new File(trustCertCollectionFilePath))
-                        .clientAuth(ClientAuth.REQUIRE)
-                        .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
-                        .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
+                SslContextBuilder sslContextBuilder = null;
+
+                if (PROPERTY_OPEN_TLS_USE_KEYSTORE) {
+                    // Load the truststore file
+                    KeyStore trustStore = loadKeyStore(trustFilePath, trustJksPassword);
+                    // Create a TrustManagerFactory and initialize it with the truststore
+                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    trustManagerFactory.init(trustStore);
+
+                    // Load the keystore file
+                    KeyStore keyStore = loadKeyStore(keyJksFilePath, keyJksPassword);
+                    // Create a keyManagerFactory and initialize it with the keystore
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    keyManagerFactory.init(keyStore, keyJksPassword.toCharArray());
+
+                    sslContextBuilder = SslContextBuilder.forServer(keyManagerFactory)
+                            .trustManager(trustManagerFactory)
+                            .clientAuth(ClientAuth.REQUIRE)
+                            .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
+                            .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
+                } else {
+
+
+                    sslContextBuilder = GrpcSslContexts.forServer(new File(serverCertChainFile), new File(privateKeyFilePath))
+                            .trustManager(new File(serverCaFilePath))
+                            .clientAuth(ClientAuth.REQUIRE)
+                            .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
+                            .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
+                }
+
+
                 log.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
-                        certChainFilePath, privateKeyFilePath, trustCertCollectionFilePath);
+                        serverCertChainFile, privateKeyFilePath, serverCaFilePath);
                 //serverBuilder.executor(executor);
                 nettyServerBuilder.sslContext(GrpcSslContexts.configure(sslContextBuilder, SslProvider.OPENSSL).build());
                 nettyServerBuilder.addService(ServerInterceptors.intercept(proxyGrpcService, new ServiceExceptionHandler(), new ContextPrepareInterceptor()));
@@ -293,8 +314,9 @@ public class OsxServer  {
                     nettyServerBuilder.maxConnectionAgeGrace(MetaInfo.PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC, TimeUnit.SECONDS);
 
                 return nettyServerBuilder.build();
-            } catch (SSLException e) {
-                throw new SecurityException(e);
+            } catch (Exception e) {
+
+                throw new RuntimeException(e);
             }
         }
         return null;
@@ -330,5 +352,12 @@ public class OsxServer  {
         return nettyServerBuilder.build();
     }
 
+    private static KeyStore loadKeyStore(String keyStorePath, String keyStorePassword) throws Exception {
+        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(fis, keyStorePassword.toCharArray());
+            return keyStore;
+        }
+    }
 
 }

@@ -20,7 +20,7 @@ import org.fedai.osx.broker.queue.TransferQueueManager;
 public class StreamConsumer extends LocalQueueConsumer {
 
 
-    public StreamConsumer(TransferQueueManager transferQueueManager ,long consumerId, String transferId) {
-        super(transferQueueManager,consumerId, transferId);
+    public StreamConsumer(TransferQueueManager transferQueueManager ,long consumerId,String sessionId, String topic) {
+        super(transferQueueManager,consumerId,sessionId, topic);
     }
 }

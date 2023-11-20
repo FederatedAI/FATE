@@ -78,7 +78,7 @@
 //                    TransferQueueApplyInfo transferQueueApplyInfo = transferQueueManager.queryGlobleQueue(topic);
 //                    if (transferQueueApplyInfo == null) {
 //                        throw new TransferQueueNotExistException("topic  "+topic+" not found" );
-////                        CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, context.getSessionId(), false);
+////                        CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(context.getSessionId(),topic, false);
 ////                        if (createQueueResult.getTransferQueue() == null) {
 ////                            //重定向
 ////                            Osx.TopicInfo topicInfo = Osx.TopicInfo.newBuilder()

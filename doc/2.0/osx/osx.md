@@ -176,7 +176,7 @@ self.party=9999
 
 
 
-## 源码打包：
+## 部署教程
 
 1. 下载源码，打包机器需要安装好maven  + jdk
 2. 进入源码目录/deploy,  执行sh auto-package.sh, 执行完之后会在当前目录出现osx.tar.gz。

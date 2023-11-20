@@ -27,5 +27,8 @@ public class RemoteRpcException extends BaseException {
     public RemoteRpcException(String message) {
         super(StatusCode.NET_ERROR, message);
     }
+    public RemoteRpcException(Exception e){
+        super(e);
+    }
 
 }

@@ -17,34 +17,44 @@ package org.fedai.osx.broker.http;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterService;
 import org.fedai.osx.broker.util.ContextUtil;
 import org.fedai.osx.broker.util.DebugUtil;
+import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.provider.TechProvider;
 import org.fedai.osx.broker.provider.TechProviderRegister;
+import org.fedai.osx.core.utils.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-@Singleton
-public class DispatchServlet extends HttpServlet {
+import java.nio.charset.StandardCharsets;
 
-    Logger logger = LoggerFactory.getLogger(DispatchServlet.class);
+import static org.fedai.osx.core.constant.UriConstants.*;
+
+@Singleton
+@Slf4j
+public class DispatchServlet extends HttpServlet {
     @Inject
     TechProviderRegister  providerRegistry ;
+
+    @Inject
+    DefaultFateRouterServiceImpl routerService;
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         handleInner(req,resp);
     }
-
-
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         handleInner(req,resp);
     }
@@ -53,7 +63,9 @@ public class DispatchServlet extends HttpServlet {
 
 
 
+
     private   void  handleInner(HttpServletRequest req, HttpServletResponse  resp) throws IOException {
+        log.info("handle inner====={}",req.getRequestURI());
         //处理get请求
         DebugUtil.printHttpParams(req);
         String protocol = req.getProtocol();
@@ -61,30 +73,35 @@ public class DispatchServlet extends HttpServlet {
             resp.sendError(405, "http.method_get_not_supported");
         }
         OsxContext  osxContext = ContextUtil.buildContextFromHttpRequest(req);
-        TechProvider techProvider = providerRegistry.select(osxContext);
-            if (techProvider != null) {
-                techProvider.processHttpInvoke(osxContext,req, resp);
-            } else {
-                resp.sendError(404, "tech-provider-code invalid");
-            }
+
         String requestUri = req.getRequestURI();
 
         switch (requestUri){
-            case "/v1/interconn/chan/pop":
+            case HTTP_POP:
+                TechProvider techProvider = providerRegistry.select(osxContext);
                 techProvider.processHttpPop(osxContext,req, resp);
                 break;
-            case "/v1/interconn/chan/push":
-                techProvider.processHttpPop(osxContext,req, resp);
+            case HTTP_PUSH:
+                 techProvider = providerRegistry.select(osxContext);
+                techProvider.processHttpPush(osxContext,req, resp);
                 break;
-            case "/v1/interconn/chan/peek":
+            case HTTP_PEEK:
+                 techProvider = providerRegistry.select(osxContext);
                 techProvider.processHttpPeek(osxContext,req, resp);
                 break;
-            case "/v1/interconn/chan/release":
+            case HTTP_RELEASE:
+                 techProvider = providerRegistry.select(osxContext);
                 techProvider.processHttpRelease(osxContext,req, resp);
                 break;
-            case "/v1/interconn/chan/invoke":
+            case HTTP_INVOKE:
+                 techProvider = providerRegistry.select(osxContext);
                 techProvider.processHttpInvoke(osxContext,req, resp);
                 break;
+
+            case HTTP_CHANGE_ROUTER:
+                byte[]  routerContent = TransferUtil.read(req.getInputStream());
+                routerService.saveRouterTable(osxContext,new String(routerContent));
+                TransferUtil.writeHttpRespose(resp,"ok", "ok","ok".getBytes(StandardCharsets.UTF_8));
             default:
                 resp.sendError(502, "invalid request "+requestUri);
         }

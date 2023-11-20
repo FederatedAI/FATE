@@ -58,8 +58,8 @@ public class PtpHttpHeader {
     static public  final String   TraceID = "x-ptp-trace-id";
     static public  final String   Token = "x-ptp-token";
     static public  final String   Uri= "x-ptp-uri";
-    static public  final String   FromNodeID = "x-ptp-from-node-id";
-    static public  final String   FromInstID = "x-ptp-from-inst-id";
+    static public  final String   FromNodeID = "x-ptp-source-node-id";
+    static public  final String   FromInstID = "x-ptp-source-inst-id";
     static public  final String   TargetNodeID = "x-ptp-target-node-id";
     static public  final String   TargetInstID = "x-ptp-target-inst-id";
     static public  final String   SessionID = "x-ptp-session-id";

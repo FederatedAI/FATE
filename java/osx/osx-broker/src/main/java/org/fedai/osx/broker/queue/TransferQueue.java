@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 public class TransferQueue extends AbstractQueue{
     Logger logger = LoggerFactory.getLogger(TransferQueue.class);
     AtomicReferenceArray<String> receivedMsgIds = new AtomicReferenceArray<>(MetaInfo.PROPERTY_TRANSFER_CACHED_MSGID_SIZE);
-    private Cache<String, OutboundPackage<Osx.Outbound>> receivedMsgCache;
+//    private Cache<String, OutboundPackage<Osx.Outbound>> receivedMsgCache;
     IndexQueue indexQueue;
     boolean hasEventMsgDestoryCallback = false;
 
@@ -64,7 +64,7 @@ public class TransferQueue extends AbstractQueue{
         this.lastWriteTimestamp = this.createTimestamp;
         this.indexQueue = new IndexQueue(transferId, path, MetaInfo.PROPERTY_INDEX_MAP_FILE_SIZE);
         this.consumerManager = consumerManager;
-        initReceivedMsgCache();
+//        initReceivedMsgCache();
     }
 
     public synchronized boolean checkMsgIdDuplicate(String msgId) {
@@ -174,26 +174,26 @@ public class TransferQueue extends AbstractQueue{
 
 
 
-    public void cacheReceivedMsg(String msgId, OutboundPackage<Osx.Outbound> outboundPackage) {
-
-        if(StringUtils.isNotEmpty(msgId))
-            receivedMsgCache.put(msgId, outboundPackage);
-    }
-
-    public OutboundPackage<Osx.Outbound> getReceivedMsgCache(String sessionId) {
-
-        return receivedMsgCache.getIfPresent(sessionId);
-    }
-
-    private void initReceivedMsgCache() {
-        if (receivedMsgCache == null) {
-            CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder().maximumSize(MetaInfo.PRODUCE_MSG_CACHE_MAX_SIZE);
-            if (MetaInfo.PRODUCE_MSG_CACHE_TIMEOUT != null && MetaInfo.PRODUCE_MSG_CACHE_TIMEOUT > 0) {
-                cacheBuilder.expireAfterWrite(MetaInfo.PRODUCE_MSG_CACHE_TIMEOUT, TimeUnit.MILLISECONDS);
-            }
-            receivedMsgCache = cacheBuilder.build();
-        }
-    }
+//    public void cacheReceivedMsg(String msgId, OutboundPackage<Osx.Outbound> outboundPackage) {
+//
+//        if(StringUtils.isNotEmpty(msgId))
+//            receivedMsgCache.put(msgId, outboundPackage);
+//    }
+//
+//    public OutboundPackage<Osx.Outbound> getReceivedMsgCache(String sessionId) {
+//
+//        return receivedMsgCache.getIfPresent(sessionId);
+//    }
+//
+//    private void initReceivedMsgCache() {
+//        if (receivedMsgCache == null) {
+//            CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder().maximumSize(MetaInfo.PRODUCE_MSG_CACHE_MAX_SIZE);
+//            if (MetaInfo.PRODUCE_MSG_CACHE_TIMEOUT != null && MetaInfo.PRODUCE_MSG_CACHE_TIMEOUT > 0) {
+//                cacheBuilder.expireAfterWrite(MetaInfo.PRODUCE_MSG_CACHE_TIMEOUT, TimeUnit.MILLISECONDS);
+//            }
+//            receivedMsgCache = cacheBuilder.build();
+//        }
+//    }
 
     public TranferQueueInfo getTransferQueueInfo() {
         TranferQueueInfo transferQueueInfo = new TranferQueueInfo();

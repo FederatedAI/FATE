@@ -15,10 +15,12 @@
  */
 package org.fedai.osx.broker.ptp;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.lang3.StringUtils;
 import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.consumer.UnaryConsumer;
 import org.fedai.osx.broker.pojo.ConsumeRequest;
@@ -38,7 +40,10 @@ import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.ppc.ptp.PrivateTransferTransportGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
- @Singleton
+
+import javax.servlet.AsyncContext;
+
+@Singleton
  @Register(uris= {UriConstants.POP,UriConstants.PEEK},allowInterUse = false)
  public class ConsumeService extends AbstractServiceAdaptorNew< ConsumeRequest, ConsumerResponse> {
 
@@ -54,18 +59,20 @@ import org.slf4j.LoggerFactory;
 
     @Override
     protected ConsumerResponse doService(OsxContext context, ConsumeRequest inbound) {
-
         context.setActionType(ActionType.DEFUALT_CONSUME.name());
+        String sessionId = context.getSessionId();
         String topic = inbound.getTopic();
+        Preconditions.checkArgument(StringUtils.isNotEmpty(sessionId));
+        Preconditions.checkArgument(StringUtils.isNotEmpty(topic));
         int timeout =  inbound.getTimeout()>0?inbound.getTimeout():MetaInfo.CONSUME_MSG_WAITING_TIMEOUT;
         context.setTopic(topic);
-        AbstractQueue transferQueue = transferQueueManager.getQueue(topic);
+        AbstractQueue transferQueue = transferQueueManager.getQueue(sessionId,topic);
             if (transferQueue == null) {
                 if (MetaInfo.isCluster()) {
                     TransferQueueApplyInfo transferQueueApplyInfo = transferQueueManager.queryGlobleQueue(topic);
                     if (transferQueueApplyInfo == null) {
                         throw new TransferQueueNotExistException("topic  "+topic+" not found" );
-//                        CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, context.getSessionId(), false);
+//                        CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(context.getSessionId(),topic, false);
 //                        if (createQueueResult.getTransferQueue() == null) {
 //                            //重定向
 //                            Osx.TopicInfo topicInfo = Osx.TopicInfo.newBuilder()
@@ -93,17 +100,17 @@ import org.slf4j.LoggerFactory;
                     /**
                      * 单机版直接创建队列
                      */
-                    logger.warn("create topic {} by consume request ", topic);
-                    CreateQueueResult createQueueResult = transferQueueManager.createNewQueue(topic, context.getSessionId(), true, QueueType.NORMAL);
+                    logger.warn("create session {} topic {} by consume request ", sessionId,topic);
+                    CreateQueueResult createQueueResult = transferQueueManager.createNewQueue(sessionId,topic, true, QueueType.NORMAL);
                     if (createQueueResult.getQueue() == null) {
                         throw new TransferQueueNotExistException();
                     }
                 }
             }
 
-            UnaryConsumer consumer = consumerManager.getOrCreateUnaryConsumer(topic);
+            UnaryConsumer consumer = consumerManager.getOrCreateUnaryConsumer(sessionId,topic);
             TransferQueueConsumeResult transferQueueConsumeResult = consumer.consume(context, -1);
-        transferQueueConsumeResult.getLogicIndexTotal();
+            transferQueueConsumeResult.getLogicIndexTotal();
             context.setReturnCode(transferQueueConsumeResult.getCode());
             if (transferQueueConsumeResult.getCode().equals(StatusCode.CONSUME_NO_MESSAGE)) {
                 // 由其他扫描线程应答
@@ -113,6 +120,7 @@ import org.slf4j.LoggerFactory;
                     longPullingHold.setGrpcContext(io.grpc.Context.current());
                     longPullingHold.setNeedOffset(-1);
                     longPullingHold.setStreamObserver(streamObserver);
+                    longPullingHold.setAsyncContext((AsyncContext) context.getData(Dict.HTTP_ASYNC_CONTEXT));
                     longPullingHold.setContext(context.subContext());
                     long current = System.currentTimeMillis();
                     longPullingHold.setExpireTimestamp(current + Long.valueOf(timeout));
@@ -126,8 +134,6 @@ import org.slf4j.LoggerFactory;
             if(transferQueueConsumeResult.getMessage()!=null)
                 consumeResponse.setPayload(transferQueueConsumeResult.getMessage().getBody());
             return   consumeResponse;
-
-
     }
 
      @Override

@@ -32,19 +32,54 @@ public class QueueTest {
     static String ip = "localhost";
     //int port = 8250;//nginx
     static int port = 9377;//nginx
-    static String desPartyId = "9999";
+    static String desPartyId = "10000";
     static String desRole = "";
     static String srcPartyId = "10000";
     static String srcRole = "";
     static String sessionId = "testSessionId";
-    static String topic ="testTopic";
-    static OsxContext  fateContext= new OsxContext();
-    static RouterInfo routerInfo= new RouterInfo();
+    static String topic = "testTopic";
+    static OsxContext fateContext = new OsxContext();
+    static RouterInfo routerInfo = new RouterInfo();
+//    static {
+//        routerInfo.setHost(ip);
+//        routerInfo.setPort(9884);
+//        routerInfo.setProtocol(Protocol.grpc);
+////        keyStoreFilePath": "D:\\webank\\osx\\test\\server.keystore",
+////        "keyStorePassword": "123456",
+////                "trustStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
+////                "trustStorePassword": "123456",
+////                "negotiationType": "TLS",
+////                "useSSL": true,
+//        routerInfo.setUseSSL(true);
+//        routerInfo.setUseKeyStore(true);
+//        routerInfo.setTrustStorePassword("123456");
+//        routerInfo.setTrustStoreFilePath("D:\\webank\\\\osx\\test\\server.keystore");
+//        routerInfo.setKeyStorePassword("123456");
+//        routerInfo.setKeyStoreFilePath("D:\\webank\\osx\\test\\server.keystore");
+//        routerInfo.setNegotiationType("TLS");
+//
+//      //  routerInfo.setUrl("http://localhost:8087/osx/inbound");
+//        //HttpClientPool.initPool();
+//    }
+
     static {
-        routerInfo.setHost(ip);
-        routerInfo.setPort(port);
+        routerInfo.setHost("127.0.0.1");
+        routerInfo.setPort(9884);
         routerInfo.setProtocol(Protocol.grpc);
-        routerInfo.setUrl("http://localhost:8087/osx/inbound");
+        routerInfo.setUseSSL(true);
+        routerInfo.setUseKeyStore(true);
+//        routerInfo.setTrustStorePassword("123456");
+//        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client_truststore.jks");
+//        routerInfo.setKeyStorePassword("123456");
+//        routerInfo.setKeyStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client.jks");
+
+        routerInfo.setTrustStorePassword("123456");
+        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test3\\\\client\\\\truststore.jks");
+        routerInfo.setKeyStorePassword("123456");
+        routerInfo.setKeyStoreFilePath("D:\\\\webank\\\\osx\\\\test3\\\\client\\\\identity.jks");
+        routerInfo.setNegotiationType("TLS");
+
+        //  routerInfo.setUrl("http://localhost:8087/osx/inbound");
         //HttpClientPool.initPool();
     }
 
@@ -78,22 +113,22 @@ public class QueueTest {
     public void init() {
     }
 
-    private  byte[] createBigArray(int size){
-        byte[]  result = new  byte[size];
-        for(int i=0;i<size;i++){
-            result[i]=1;
+    private byte[] createBigArray(int size) {
+        byte[] result = new byte[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = 1;
         }
-        return  result;
+        return result;
     }
 
 
     @Test
-    public void testPeek(){
+    public void testPeek() {
         //202310191251296433960_toy_example_0_0.202310191251296433960_toy_example_0_0-host-10000-guest-9999-host_index
         //202310191310469345390_toy_example_0_0.202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index
         Osx.PeekInbound.Builder inboundBuilder = Osx.PeekInbound.newBuilder();
         inboundBuilder.setTopic("202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index");
-        OsxContext  fateContext= new OsxContext();
+        OsxContext fateContext = new OsxContext();
         fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
         fateContext.setSessionId("202310191310469345390_toy_example_0_0");
 //        fateContext.setTopic("test_topic");
@@ -102,43 +137,41 @@ public class QueueTest {
         fateContext.setUri(UriConstants.PEEK);
         fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         OsxContext.pushThreadLocalContext(fateContext);
-        Osx.TransportOutbound outbound =TransferUtil.redirectPeek(fateContext,routerInfo,inboundBuilder.build());
-        System.err.println("result "+  outbound);
+        Osx.TransportOutbound outbound = TransferUtil.redirectPeek(fateContext, routerInfo, inboundBuilder.build());
+        System.err.println("result " + outbound);
     }
 
 
-
-
     @Test
-    public void testPop(){
+    public void testPop() {
 
         Osx.PopInbound.Builder inboundBuilder = Osx.PopInbound.newBuilder();
         inboundBuilder.setTopic(topic);
-        OsxContext  fateContext= new OsxContext();
+        OsxContext fateContext = new OsxContext();
         fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
         fateContext.setSessionId(sessionId);
         fateContext.setUri(UriConstants.POP);
         fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         OsxContext.pushThreadLocalContext(fateContext);
-        Osx.TransportOutbound outbound =TransferUtil.redirectPop(fateContext,routerInfo,inboundBuilder.build());
-        System.err.println("result : "+  new String(outbound.getPayload().toByteArray()));
+        Osx.TransportOutbound outbound = TransferUtil.redirectPop(fateContext, routerInfo, inboundBuilder.build());
+        System.err.println("result : " + new String(outbound.getPayload().toByteArray()));
     }
 
-        @Test
-        public void testPush() {
+    @Test
+    public void testPush() {
         for (int i = 0; i < 1; i++) {
 
             Osx.PushInbound.Builder pushInbound = Osx.PushInbound.newBuilder();
             pushInbound.setTopic(topic);
-            pushInbound.setPayload(ByteString.copyFrom(("my name is "+i).getBytes(StandardCharsets.UTF_8)));
-            OsxContext  fateContext= new OsxContext();
-            fateContext.setTraceId("fate-test-"+System.currentTimeMillis());
+            pushInbound.setPayload(ByteString.copyFrom(("my name is " + i).getBytes(StandardCharsets.UTF_8)));
+            OsxContext fateContext = new OsxContext();
+            fateContext.setTraceId("fate-test-" + System.currentTimeMillis());
             fateContext.setSessionId(sessionId);
             fateContext.setTopic(topic);
-            fateContext.setDesNodeId(desPartyId);
+            fateContext.setDesNodeId("10000");
             fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             OsxContext.pushThreadLocalContext(fateContext);
-            Osx.TransportOutbound outbound =TransferUtil.redirectPush(fateContext,pushInbound.build(),routerInfo,true);
+            Osx.TransportOutbound outbound = TransferUtil.redirectPush(fateContext, pushInbound.build(), routerInfo, true);
             System.err.println("response " + outbound);
         }
     }
@@ -159,20 +192,20 @@ public class QueueTest {
 
     @Test
     public void testRelease() {
-        Osx.ReleaseInbound.Builder  releaseInboundBuilder = Osx.ReleaseInbound.newBuilder();
+        Osx.ReleaseInbound.Builder releaseInboundBuilder = Osx.ReleaseInbound.newBuilder();
         releaseInboundBuilder.setTopic(topic);
-        OsxContext  fateContext= new OsxContext();
+        OsxContext fateContext = new OsxContext();
         fateContext.setSessionId(sessionId);
         fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-        Osx.ReleaseInbound releaseInbound=   releaseInboundBuilder.build();
+        Osx.ReleaseInbound releaseInbound = releaseInboundBuilder.build();
         OsxContext.pushThreadLocalContext(fateContext);
-        Osx.TransportOutbound  outbound = TransferUtil.redirectRelease(fateContext,routerInfo,releaseInbound);
+        Osx.TransportOutbound outbound = TransferUtil.redirectRelease(fateContext, routerInfo, releaseInbound);
         System.err.println(outbound);
     }
 
 
-    public  static  void  main(String[] args){
-        
+    public static void main(String[] args) {
+
 
     }
 

@@ -92,6 +92,7 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
     public Proxy.Packet unaryCall(OsxContext context, Proxy.Packet req) {
         Proxy.Packet result = null;
         context.setUri(UriConstants.UNARYCALL);
+        context.setActionType(ActionType.UNARY_CALL.name());
         RouterInfo routerInfo=context.getRouterInfo();
         if(routerInfo==null){
             String sourcePartyId = context.getSrcNodeId();
@@ -101,7 +102,7 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
         if(routerInfo.getProtocol().equals(Protocol.http)){
             Osx.Inbound  inbound = TransferUtil.
                     buildInboundFromPushingPacket(context,req, MetaInfo.PROPERTY_FATE_TECH_PROVIDER).build();
-            Osx.Outbound outbound = TransferUtil.redirect(context,inbound,routerInfo,true);
+            Osx.Outbound outbound = (Osx.Outbound)TransferUtil.redirect(context,inbound,routerInfo,true);
             if(outbound!=null) {
                 if (outbound.getCode().equals(StatusCode.SUCCESS)) {
                     try {
@@ -114,9 +115,18 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
                 }
             }
         }else {
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), true);
-            DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
-            result = stub.unaryCall(req);
+            ManagedChannel managedChannel = null;
+            try {
+                managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), false);
+                DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
+                result = stub.unaryCall(req);
+            } catch (Exception e) {
+                logger.error("new channel call exception", e);
+            } finally {
+                if (managedChannel != null) {
+                    managedChannel.shutdown();
+                }
+            }
         }
         return result;
     }
