@@ -188,38 +188,14 @@ def cross_validation(
                                              )
             booster.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
-
                 # train predict
                 train_scores = booster.get_train_predict()
                 train_scores = add_dataset_type(train_scores, consts.TRAIN_SET)
-
                 # validate predict
-                # save validate data
-                import pickle
-                with open('/home/cwj/FATE/FATE-2.0/FATE/validate_data.pkl', 'wb') as f:
-                    pickle.dump(validate_data.as_pd_df(), f)
-
                 sub_ctx = fold_ctx.sub_ctx("predict_validate")
                 validate_scores = booster.predict(sub_ctx, validate_data)
-                with open('/home/cwj/FATE/FATE-2.0/FATE/validate_scores_.pkl', 'wb') as f:
-                    pickle.dump(validate_scores.as_pd_df(), f)
                 validate_scores = add_dataset_type(validate_scores, consts.VALIDATE_SET)
-
-                # save predict result
-                # dump df
-                with open('/home/cwj/FATE/FATE-2.0/FATE/train_scores.pkl', 'wb') as f:
-                    train_scores._ctx = None
-                    pickle.dump(train_scores, f)
-                with open('/home/cwj/FATE/FATE-2.0/FATE/validate_scores.pkl', 'wb') as f:
-                    validate_scores._ctx = None
-                    pickle.dump(validate_scores, f)
-
                 predict_result = DataFrame.vstack([train_scores, validate_scores])
-
-                # dumpy df
-                with open('/home/cwj/FATE/FATE-2.0/FATE/predict_result.pkl', 'wb') as f:
-                    pickle.dump(predict_result.as_pd_df(), f)
-
                 next(cv_output_datas).write(predict_result)
 
         elif role.is_host:
