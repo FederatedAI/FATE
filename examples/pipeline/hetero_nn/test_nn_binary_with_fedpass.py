@@ -25,6 +25,7 @@ from fate_client.pipeline.components.fate.hetero_nn import HeteroNN, get_config_
 from fate_client.pipeline.components.fate.psi import PSI
 from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments
 from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate.nn.algo_params import FedPassArgument
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -64,9 +65,17 @@ def main(config="../../config.yaml", namespace=""):
     )
 
     host_conf = get_config_of_default_runner(
-        bottom_model=nn.Linear(20, 10),
+        bottom_model=nn.Linear(20, 20),
         optimizer=optim.Adam(lr=0.01),
-        training_args=training_args
+        training_args=training_args,
+        agglayer_arg=FedPassArgument(
+            layer_type='linear',
+            in_channels_or_features=20,
+            hidden_features=20,
+            out_channels_or_features=10,
+            passport_mode='single',
+            passport_distribute='gaussian'
+        )
     )
 
     hetero_nn_0 = HeteroNN(

@@ -22,11 +22,10 @@ class PassportBlock(nn.Module):
     def __init__(self, passport_distribute: Literal['gaussian', 'uniform'], passport_mode: Literal['single', 'multi']):
 
         super().__init__()
-        self._bias = None
-        self._scale = None
         self._fw_layer = None
         self._passport_distribute = passport_distribute
         self._passport_mode = passport_mode
+        self._out_scale, self._out_bias = None, None
         assert self._passport_distribute in ['gaussian', 'uniform'], 'passport_distribute must be in ["gaussian", "uniform"]'
         assert self._passport_mode in ['single', 'multi'], 'passport_mode must be in ["single", "multi"]'
         self._encode, self._leaky_relu, self._decode = None, None, None
@@ -42,6 +41,23 @@ class PassportBlock(nn.Module):
     def set_key(self, skey, bkey):
         self.register_buffer('skey', skey)
         self.register_buffer('bkey', bkey)
+
+    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
+                              missing_keys, unexpected_keys, error_msgs):
+
+        if 'skey' in state_dict:
+            self.register_buffer('skey', t.randn(*state_dict['skey'].size()))
+        if 'bkey' in state_dict:
+            self.register_buffer('bkey', t.randn(*state_dict['bkey'].size()))
+
+        if '_out_scale' in state_dict:
+            self.scale = nn.Parameter(t.randn(*state_dict['_out_scale'].size()))
+
+        if '_out_bias' in state_dict:
+            self.bias = nn.Parameter(t.randn(*state_dict['_out_bias'].size()))
+
+        super(PassportBlock, self)._load_from_state_dict(state_dict, prefix, local_metadata, strict,
+                                                         missing_keys, unexpected_keys, error_msgs)
 
     def _compute_para(self, key) -> float:
         pass
@@ -147,6 +163,7 @@ class LinearPassportBlock(PassportBlock):
         x = self._linear2(x)
         scale = self._get_scale()
         bias = self._get_bias()
+        self._out_scale, self._out_bias = scale, bias
         x = t.nn.Tanh()(scale) * x + t.nn.Tanh()(bias)
         return x
 
@@ -190,7 +207,6 @@ class ConvPassportBlock(PassportBlock):
         else:
             self._activation = None
         # running var
-        self.scale, self.bias = None, None
 
     def generate_key(self, *shape):
 
@@ -258,7 +274,7 @@ class ConvPassportBlock(PassportBlock):
         scale = self._get_scale()
         bias = self._get_bias()
         x = scale * x + bias
-        self.scale, self.bias = scale, bias
+        self._out_scale, self._out_bias = scale, bias
         return self._activation(x) if self._activation is not None else x
 
 

@@ -38,7 +38,7 @@ class DefaultRunner(NNRunner):
         super().__init__()
         self.bottom_model_conf = bottom_model_conf
         self.top_model_conf = top_model_conf
-        self.agglayer_arg_conf = agg_layer_conf
+        self.agglayer_arg_conf = agglayer_arg_conf
         self.top_model_strategy_arg_conf = top_model_strategy_arg_conf
         self.dataset_conf = dataset_conf
         self.optimizer_conf = optimizer_conf
@@ -96,6 +96,7 @@ class DefaultRunner(NNRunner):
         resume_path = None
         if saved_model is not None:
             model_dict = load_model_dict_from_path(saved_model)
+            logger.info('model is {}'.format(model))
             model.load_state_dict(model_dict)
             logger.info(f"loading model dict from {saved_model} to model done")
             if get_last_checkpoint(saved_model) is not None:
@@ -134,8 +135,11 @@ class DefaultRunner(NNRunner):
         # load top model
         t_model = loader_load_from_conf(self.top_model_conf)
 
+        agglayer_arg = None
         if self.agglayer_arg_conf is not None:
             agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
+
+        top_model_strategy = None
         if self.top_model_strategy_arg_conf is not None:
             top_model_strategy = TopModelStrategyArguments(**self.top_model_strategy_arg_conf)
 
@@ -146,7 +150,7 @@ class DefaultRunner(NNRunner):
             top_model=t_model,
             bottom_model=b_model,
             agglayer_arg=agglayer_arg,
-            top_arg=None
+            top_arg=top_model_strategy
         )
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerGuest(
@@ -169,9 +173,12 @@ class DefaultRunner(NNRunner):
                    output_dir=None,
                    saved_model=None
                    ):
+
         # load bottom model
         b_model = loader_load_from_conf(self.bottom_model_conf)
-        agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
+        agglayer_arg = None
+        if self.agglayer_arg_conf is not None:
+            agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
 
         model = HeteroNNModelHost(bottom_model=b_model, agglayer_arg=agglayer_arg)
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)

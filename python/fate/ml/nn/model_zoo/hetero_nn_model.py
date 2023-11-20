@@ -65,7 +65,7 @@ class FedPassArgument(StdAggLayerArgument):
 
     def to_dict(self):
         d = super().to_dict()
-        d['agg_type'] = 'fedpass'
+        d['agg_type'] = 'fed_pass'
         return d
 
 
@@ -76,14 +76,16 @@ class HESSArgument(object):
 
 def parse_agglayer_conf(agglayer_arg_conf):
 
+    import copy
     if 'agg_type' not in agglayer_arg_conf:
         raise ValueError('can not load agg layer conf, keyword agg_type not found')
+    agglayer_arg_conf = copy.deepcopy(agglayer_arg_conf)
     agg_type = agglayer_arg_conf['agg_type']
     agglayer_arg_conf.pop('agg_type')
     if agg_type == 'fed_pass':
-        agglayer_arg = FedPassArgument(**agglayer_arg_conf['fed_pass_arg'])
+        agglayer_arg = FedPassArgument(**agglayer_arg_conf)
     elif agg_type == 'std':
-        agglayer_arg = StdAggLayerArgument(**agglayer_arg_conf['std_arg'])
+        agglayer_arg = StdAggLayerArgument(**agglayer_arg_conf)
     else:
         raise ValueError(f'agg type {agg_type} not supported')
 
