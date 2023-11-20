@@ -58,11 +58,11 @@ class SSHEAggregator:
         rank_a,
         rank_b,
         lr,
-        input_has_grad=True,
         precision_bits=None,
         generator=None,
     ):
         self.ctx = ctx
+        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_aggregator_layer")
         self.wa = ctx.mpc.random_tensor(shape=(in_features_a, out_features), src=rank_a, generator=generator)
         self.wb = ctx.mpc.random_tensor(shape=(in_features_b, out_features), src=rank_b, generator=generator)
         self.phe_cipher = ctx.cipher.phe.setup()
@@ -73,10 +73,10 @@ class SSHEAggregator:
 
     @auto_trace(annotation="[z|rank_b] = [xa|rank_a] * <wa> + [xb|rank_b] * <wb>")
     def forward(self, input):
-        xa = input if self.ctx.rank == self.rank_a else None
-        xb = input if self.ctx.rank == self.rank_b else None
+        xa, xb = self.ctx.mpc.split_variable(input, self.rank_a, self.rank_b)
         out = self.ctx.mpc.sshe.cross_smm(
             ctx=self.ctx,
+            group=self.group,
             xa=xa,
             xb=xb,
             wa=self.wa,
@@ -101,13 +101,15 @@ class SSHEAggregator:
         )
 
         # update wa
-        ga = self.ctx.mpc.sshe.smm_lc(
+        ga = self.ctx.mpc.sshe.smm(
             self.ctx,
-            tensor_a=ha_encoded_t,
-            tensor_b=dz_encoded,
-            rank_a=self.rank_a,
-            rank_b=self.rank_b,
-            cipher=self.phe_cipher,
+            group=self.group,
+            op=torch.matmul,
+            rank_1=self.rank_a,
+            tensor_1=ha_encoded_t,
+            cipher_1=self.phe_cipher,
+            rank_2=self.rank_b,
+            tensor_2=dz_encoded,
         )
         ga.share = ga.div_(encoder.scale).share
         self.wa -= self.lr * ga

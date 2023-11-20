@@ -20,6 +20,7 @@ class SSHE:
     def cross_smm(
         cls,
         ctx: Context,
+        group,
         xa,
         xb,
         wa: ArithmeticSharedTensor,
@@ -63,6 +64,7 @@ class SSHE:
         # [xa|rank_a] @ [wa.share|rank_b]
         z += cls.smm(
             ctx,
+            group,
             op=lambda a, b: torch.matmul(b, a),
             rank_1=rank_b,
             tensor_1=ctx.mpc.option(wa.share, rank_b),
@@ -73,6 +75,7 @@ class SSHE:
         # [xb|rank_b] @ [wb.share|rank_a]
         z += cls.smm(
             ctx,
+            group,
             op=lambda a, b: torch.matmul(b, a),
             rank_1=rank_a,
             tensor_1=ctx.mpc.option(wb.share, rank_a),
@@ -89,6 +92,7 @@ class SSHE:
     def smm(
         cls,
         ctx: Context,
+        group,
         op: typing.Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         rank_1,
         tensor_1,
@@ -119,19 +123,22 @@ class SSHE:
         tensor_1_enc = ctx.mpc.communicator.broadcast_obj(
             obj=ctx.mpc.option_call(lambda: cipher_1.get_tensor_encryptor().encrypt_tensor(tensor_1), dst=rank_1),
             src=rank_1,
+            group=group,
         )
         return cls.phe_to_mpc(
             ctx,
-            src_rank=rank_2,
-            dst_rank=rank_1,
-            phe_cipher=ctx.mpc.option(cipher_1, dst=rank_1),
-            phe_tensor=ctx.mpc.option_call(lambda: op(tensor_1_enc, tensor_2), dst=rank_2),
+            group,
+            rank_a=rank_2,
+            rank_b=rank_1,
+            phe_cipher_b=ctx.mpc.option(cipher_1, dst=rank_1),
+            phe_tensor_a=ctx.mpc.option_call(lambda: op(tensor_1_enc, tensor_2), dst=rank_2),
         )
 
     @classmethod
     def smm_mpc_tensor(
         cls,
         ctx: Context,
+        group,
         *,
         op: typing.Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         mpc_tensor: ArithmeticSharedTensor,
@@ -149,6 +156,7 @@ class SSHE:
         """
         ga = cls.smm(
             ctx,
+            group,
             op=lambda a, b: op(a, b),
             rank_1=rank_2,
             tensor_1=ctx.mpc.cond_call(lambda: mpc_tensor.share, lambda: None, rank_2),
@@ -162,31 +170,62 @@ class SSHE:
 
     @classmethod
     @auto_trace
-    def phe_to_mpc(cls, ctx: Context, src_rank, dst_rank, phe_tensor=None, phe_cipher=None):
+    def phe_to_mpc(cls, ctx: Context, group, rank_a, rank_b, phe_tensor_a, phe_cipher_b):
         """
         Convert a phe-tensor to MPC encrypted tensor.
+
+        phe_tensor_a: a phe-tensor that belongs to rank_a with corresponding phe_cipher_b holding by rank_b.
         """
-        assert isinstance(src_rank, int) and 0 <= src_rank < ctx.world_size, f"invalid src_rank: {src_rank}"
-        assert isinstance(dst_rank, int) and 0 <= dst_rank < ctx.world_size, f"invalid dst_rank: {dst_rank}"
-        if ctx.rank == src_rank:
-            assert phe_tensor is not None, "he_tensor should not be None on src_rank"
-            assert phe_cipher is None, "phe_cipher should be None on src_rank"
-
-            src_share = generate_random_ring_element(
-                ctx, phe_tensor.shardings.shapes if isinstance(phe_tensor, DTensor) else phe_tensor.shape
-            )
-            dst_share = phe_tensor - src_share
-            ctx.mpc.communicator.send(dst_share, dst=dst_rank)
-            return ArithmeticSharedTensor.from_shares(ctx, src_share)
-
-        else:
-            assert phe_tensor is None, "he_tensor should be None on dst_rank"
-            assert phe_cipher is not None, "phe_cipher should not be None on dst_rank"
-            dst_share = ctx.mpc.communicator.recv(None, src=src_rank)
-            dst_share = phe_cipher.get_tensor_decryptor().decrypt_tensor(dst_share)
-            return ArithmeticSharedTensor.from_shares(ctx, dst_share)
+        ctx.mpc.option_assert(
+            lambda: phe_tensor_a is not None, "phe_tensor should not be None on src_rank", dst=rank_a
+        )
+        ctx.mpc.option_assert(lambda: phe_cipher_b is None, "phe_cipher should be None on src_rank", dst=rank_a)
+        ctx.mpc.option_assert(lambda: phe_tensor_a is None, "phe_tensor should be None on dst_rank", dst=rank_b)
+        ctx.mpc.option_assert(
+            lambda: phe_cipher_b is not None, "phe_cipher should not be None on dst_rank", dst=rank_b
+        )
+        assert isinstance(rank_a, int) and 0 <= rank_a < ctx.world_size, f"invalid src_rank: {rank_a}"
+        assert isinstance(rank_b, int) and 0 <= rank_b < ctx.world_size, f"invalid dst_rank: {rank_b}"
+        src_share = ctx.mpc.option_call(
+            lambda: generate_random_ring_element(
+                ctx, phe_tensor_a.shardings.shapes if isinstance(phe_tensor_a, DTensor) else phe_tensor_a.shape
+            ),
+            dst=rank_a,
+        )
+        dst_share = ctx.mpc.option_call(lambda: phe_tensor_a - src_share, dst=rank_a)
+        dst_share = ctx.mpc.communicator.broadcast(dst_share, src=rank_a, group=group)
+        dst_share = ctx.mpc.option_call(
+            lambda: phe_cipher_b.get_tensor_decryptor().decrypt_tensor(dst_share), dst=rank_b
+        )
+        share = ctx.mpc.cond(src_share, dst_share, dst=rank_a)
+        return ArithmeticSharedTensor.from_shares(ctx, share)
 
     @classmethod
     @auto_trace
     def mpc_to_he(cls, ctx: Context, src_rank, dst_rank, phe_tensor=None, phe_cipher=None):
         ...
+
+    @classmethod
+    @auto_trace
+    def mpc_square(cls, ctx: Context, group, rank_a, rank_b, x: ArithmeticSharedTensor, cipher_a):
+        """
+        Securely computes x * x, where:
+            1. x is a shared tensor that belongs to rank_a and rank_b.
+            2. cipher_a is a PHE cipher that belongs to rank_a.
+        """
+        x_a_enc = ctx.mpc.communicator.broadcast_obj(
+            obj=ctx.mpc.option_call(lambda: cipher_a.get_tensor_encryptor().encrypt_tensor(x.share), dst=rank_a),
+            src=rank_a,
+        )
+        x_ab = cls.phe_to_mpc(
+            ctx,
+            group,
+            rank_a=rank_b,
+            rank_b=rank_a,
+            phe_cipher_b=ctx.mpc.option(cipher_a, dst=rank_a),
+            phe_tensor_a=ctx.mpc.option_call(lambda: x_a_enc * x.share, dst=rank_b),
+        )
+        x_ab.share = x.share * x.share + x_ab.share * 2
+        with IgnoreEncodings([x_ab]):
+            x_ab.div_(x.encoder.scale)
+        return x_ab

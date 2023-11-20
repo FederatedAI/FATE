@@ -55,6 +55,9 @@ class DTensor:
     def size(self):
         return self.shardings.shapes
 
+    def dim(self):
+        return self.shardings.dim()
+
     @property
     @auto_trace
     def T(self):
@@ -147,6 +150,10 @@ class DTensor:
     @auto_trace
     def log(self):
         return torch.log(self)
+
+    @auto_trace
+    def sum(self, dim=None, **kwargs):
+        return torch.sum(self, dim=dim, **kwargs)
 
     @auto_trace
     def square(self):
@@ -319,6 +326,9 @@ class Shardings:
     @property
     def shapes(self):
         return self._shapes
+
+    def dim(self):
+        return len(self._shapes.shapes[0])
 
     @property
     def dtype(self):
