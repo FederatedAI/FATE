@@ -5,7 +5,7 @@
 [submodule "eggroll"]
 	path = eggroll
 	url = https://github.com/WeBankFinTech/eggroll.git
-	branch = v2.5.2
+	branch = v2.5.3
 [submodule "fateflow"]
 	path = fateflow
 	url = https://github.com/FederatedAI/FATE-Flow.git

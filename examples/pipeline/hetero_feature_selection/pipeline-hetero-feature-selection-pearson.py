@@ -49,9 +49,12 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
-    hetero_pearson_0 = HeteroPearson(name='hetero_pearson_0', column_indexes=-1)
+    hetero_pearson_0 = HeteroPearson(name='hetero_pearson_0', column_indexes=-1, fixpoint_bit_length=1024)
     hetero_binning_0 = HeteroFeatureBinning(name='hetero_binning_0')
     selection_param = {
         "select_col_indexes": -1,

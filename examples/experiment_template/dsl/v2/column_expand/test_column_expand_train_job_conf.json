@@ -35,6 +35,9 @@
                 "bin_num": 10,
                 "bin_indexes": -1,
                 "local_only": false,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_type": "bin_num"
@@ -73,6 +76,9 @@
                 "learning_rate": 0.15,
                 "init_param": {
                     "init_method": "random_uniform"
+                },
+                "encrypt_param": {
+                    "key_length": 1024
                 },
                 "max_iter": 10,
                 "early_stop": "diff",

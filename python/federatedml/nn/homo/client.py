@@ -246,7 +246,14 @@ class HomoNNClient(ModelBase):
         LOGGER.info('running predict')
         if self.trainer_inst is None:
             # init model
-            self.trainer_inst, model, optimizer, loss_fn, _ = self.init()
+            (self.trainer_inst, model, optimizer, loss_fn, extra_data,
+             self.optimizer, self.loss, self.warm_start_iter) =\
+                init(
+                    trainer=self.trainer, trainer_param=self.trainer_param, nn_define=self.nn_define,
+                    config_optimizer=self.optimizer, config_loss=self.loss, torch_seed=self.torch_seed,
+                    model_loaded_flag=self.model_loaded,
+                    loaded_model=self.model, ds_config=self.ds_config
+            )
             self.trainer_inst.set_model(model)
             self.trainer_inst.set_tracker(self.tracker)
 

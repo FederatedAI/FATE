@@ -33,7 +33,18 @@
                     "init_method": "zeros"
                 },
                 "max_iter": 20,
-                "early_stop": "weight_diff"
+                "early_stop": "weight_diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             },
             "label_transform_0": {
                 "label_encoder": {

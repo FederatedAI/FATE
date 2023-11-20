@@ -25,7 +25,7 @@ from pipeline import fate_torch_hook
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader, DataTransform, HomoNN, Evaluation
 from pipeline.component.nn import TrainerParam
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config
 
 fate_torch_hook(t)
@@ -72,9 +72,13 @@ def main(config="../../config.yaml", namespace=""):
                           torch_seed=100
                           )
 
+    nn_predict = HomoNN(name='nn_1')
+
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(nn_component, data=Data(train_data=data_transform_0.output.data))
+    pipeline.add_component(nn_predict, data=Data(test_data=data_transform_0.output.data),
+                           model=Model(model=nn_component.output.model))
     pipeline.add_component(Evaluation(name='eval_0'), data=Data(data=nn_component.output.data))
 
     pipeline.compile()

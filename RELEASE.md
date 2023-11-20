@@ -1,3 +1,12 @@
+## Release 1.11.4
+### Major Features and Improvements
+> FederatedML
+* Unified key length configuration of encryption algorithm, update default key length to 2048.
+
+> Bug-Fix
+* Modify hessian computation of softmax cross entropy in SecureBoost, to align with LightGBM.
+* Fix Model initialization error in Homo Neural Network predicting process.
+
 ## Release 1.11.3
 ### Major Features and Improvements
 > FederatedML
@@ -14,7 +23,7 @@
 * Hetero SecureBoost supports running multiple boosting rounds in complete secure mode with `complete_secure` option 
 
 > Bug-Fix
-* Fix hessian computation of softmax cross entropy in SecureBoostt
+* Fix hessian computation of softmax cross entropy in SecureBoost
 
 
 ## Release 1.11.1

@@ -47,6 +47,14 @@
                 "output_format": "dense",
                 "missing_fill": false
             },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
+            },
             "statistic_0": {
                 "statistics": [
                     "95%",

@@ -114,6 +114,9 @@
                     "enable": true,
                     "epoch": 100
                 },
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "optimizer": {
                     "lr": 0.01,
                     "betas": [
@@ -126,6 +129,7 @@
                     "optimizer": "Adam",
                     "config_type": "pytorch"
                 },
+
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": {
@@ -159,6 +163,14 @@
                 "top_nn_define": null,
                 "interactive_layer_define": null,
                 "loss": null
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
             }
         }
     }

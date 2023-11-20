@@ -6,7 +6,8 @@
                 "data": [
                     "data"
                 ]
-            }
+            },
+            "provider": "fate_flow"
         },
         "data_transform_0": {
             "module": "DataTransform",
@@ -24,7 +25,8 @@
                 "model": [
                     "model"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "hetero_ftl_0": {
             "module": "FTL",
@@ -42,7 +44,8 @@
                 "model": [
                     "model"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "evaluation_0": {
             "module": "Evaluation",
@@ -57,7 +60,8 @@
                 "data": [
                     "data"
                 ]
-            }
+            },
+            "provider": "fate"
         }
     }
 }

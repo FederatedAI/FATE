@@ -53,7 +53,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=20,
                            interactive_layer_lr=0.01, batch_size=-1, validation_freqs=1, task_type='classification')
@@ -90,7 +93,9 @@ def main(config="../../config.yaml", namespace=""):
     hetero_nn_0.compile(optimizer=optimizer, loss=loss)
 
     hetero_nn_1 = HeteroNN(name="hetero_nn_1", epochs=10,
-                           interactive_layer_lr=0.01, batch_size=128, validation_freqs=1, task_type='classification')
+                           interactive_layer_lr=0.01, batch_size=128,
+                           validation_freqs=1, task_type='classification',
+                           encrypt_param={"key_length": 1024})
 
     evaluation_0 = Evaluation(name='eval_0', eval_type='binary')
 

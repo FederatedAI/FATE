@@ -221,4 +221,4 @@ class SoftmaxCrossEntropyLoss(Loss):
         hessian : ndarray, the hessian of softmax cross entropy loss
 
         """
-        return 2 * y_pred * (1 - y_pred)
+        return y_pred * (1 - y_pred)

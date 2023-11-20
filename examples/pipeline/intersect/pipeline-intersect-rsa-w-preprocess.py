@@ -57,7 +57,7 @@ def main(config="../../config.yaml", namespace=""):
         "rsa_params": {
             "hash_method": "sha256",
             "final_hash_method": "sha256",
-            "key_length": 2048
+            "key_length": 1024
         },
         "run_preprocess": True,
         "intersect_preprocess_params": {

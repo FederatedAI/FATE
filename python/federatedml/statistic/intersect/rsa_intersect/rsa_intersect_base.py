@@ -18,6 +18,7 @@ import random
 
 from federatedml.param.intersect_param import DEFAULT_RANDOM_BIT
 from federatedml.secureprotol import gmpy_math
+from federatedml.secureprotol.conf import RSA_BIT_LENGTH
 from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.statistic.intersect import Intersect
@@ -95,7 +96,7 @@ class RsaIntersect(Intersect):
                                                                             hash_operator, salt))
 
     @staticmethod
-    def generate_rsa_key(rsa_bit=1024):
+    def generate_rsa_key(rsa_bit=RSA_BIT_LENGTH):
         LOGGER.info(f"Generate {rsa_bit}-bit RSA key.")
         encrypt_operator = RsaEncrypt()
         encrypt_operator.generate_key(rsa_bit)

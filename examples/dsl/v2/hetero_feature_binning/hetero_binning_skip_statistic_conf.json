@@ -79,6 +79,22 @@
                 "skip_static": true,
                 "local_only": false
             },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
+            },
+            "intersection_1": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
+                }
+            },
             "one_hot_encoder_0": {
                 "transform_col_indexes": -1,
                 "transform_col_names": [],

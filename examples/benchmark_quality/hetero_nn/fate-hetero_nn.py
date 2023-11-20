@@ -107,7 +107,10 @@ def main(
         role='host', party_id=host).component_param(
         with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
     guest_bottom, host_bottom, interactive_layer, top_layer = build(
         param, param['shape1'], param['shape2'])
@@ -128,6 +131,7 @@ def main(
         interactive_layer_lr=param["learning_rate"],
         batch_size=param["batch_size"],
         seed=100,
+        encrypt_param={"key_length": 1024},
         dataset=ds_param)
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)

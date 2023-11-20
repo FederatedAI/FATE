@@ -58,6 +58,9 @@
                 "adjustment_factor": 0.5,
                 "bin_num": 10,
                 "bin_indexes": -1,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_type": "bin_num"
@@ -95,6 +98,9 @@
                 "optimizer": "rmsprop",
                 "batch_size": -1,
                 "learning_rate": 0.15,
+                "encrypt_param": {
+                    "key_length": 1024
+                },
                 "init_param": {
                     "init_method": "random_uniform"
                 },
@@ -105,6 +111,14 @@
                     "shuffle": false,
                     "random_seed": 103,
                     "need_cv": false
+                }
+            },
+            "intersection_0": {
+                "intersect_method": "rsa",
+                "rsa_params": {
+                    "hash_method": "sha256",
+                    "final_hash_method": "sha256",
+                    "key_length": 1024
                 }
             },
             "evaluation_0": {

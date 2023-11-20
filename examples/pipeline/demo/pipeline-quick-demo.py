@@ -43,7 +43,10 @@ data_transform_0 = DataTransform(name="data_transform_0", with_label=True)
 data_transform_0.get_party_instance(role="host", party_id=10000).component_param(with_label=False)
 
 # Perform PSI for hetero-scenario.
-intersect_0 = Intersection(name="intersection_0")
+intersect_0 = Intersection(
+    name="intersection_0",
+    intersect_method="rsa",
+    rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 2048})
 
 # Define a hetero-secureboost component. The following parameters will be set for all parties involved.
 hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0",
@@ -51,7 +54,7 @@ hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0",
                                          bin_num=16,
                                          task_type="classification",
                                          objective_param={"objective": "cross_entropy"},
-                                         encrypt_param={"method": "paillier"},
+                                         encrypt_param={"method": "paillier", "key_length": 1024},
                                          tree_param={"max_depth": 3})
 
 # To show the evaluation result, an "Evaluation" component is needed.

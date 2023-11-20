@@ -69,7 +69,10 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(
+        name="intersection_0",
+        intersect_method="rsa",
+        rsa_params={"hash_method": "sha256", "final_hash_method": "sha256", "key_length": 1024})
 
     pipeline.add_component(reader_0)
 
@@ -82,7 +85,7 @@ def main(config="../../config.yaml", namespace=""):
                                               num_trees=3,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "Paillier"},
+                                              encrypt_param={"method": "Paillier", "key_length": 1024},
                                               tree_param={"max_depth": 3},
                                               validation_freqs=1)
 
