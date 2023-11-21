@@ -22,12 +22,13 @@ import typing
 from pickle import dumps as p_dumps
 from pickle import loads as p_loads
 
-from fate.arch.abc import CTableABC, FederationEngine, PartyMeta
+from fate.arch.abc import CTableABC, PartyMeta
 
 from ..federation import FederationDataType
 from ..federation._datastream import Datastream
 from ._gc import GarbageCollector
 from ._parties import Party
+from .federation import Federation
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ def _get_splits(obj, max_message_size):
         return kv, num_slice
 
 
-class FederationBase(FederationEngine):
+class FederationBase(Federation):
     def __init__(
         self,
         session_id,

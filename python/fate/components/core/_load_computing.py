@@ -23,7 +23,10 @@ def load_computing(computing, logger_config=None):
         from fate.arch.computing.standalone import CSession
 
         return CSession(
-            computing.metadata.computing_id, logger_config=logger_config, options=computing.metadata.options
+            session_id=computing.metadata.computing_id,
+            data_dir=computing.metadata.options.get("data_dir", None),
+            logger_config=logger_config,
+            options=computing.metadata.options,
         )
     if isinstance(computing, EggrollComputingSpec):
         from fate.arch.computing.eggroll import CSession

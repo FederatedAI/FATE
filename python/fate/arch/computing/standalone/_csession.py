@@ -14,28 +14,48 @@
 #  limitations under the License.
 
 import logging
-from collections.abc import Iterable
 from typing import Optional
 
-from fate.arch.abc import CSessionABC
+from ..table import KVTableContext
 
 from ..._standalone import Session
 from ...unify import URI, generate_computing_uuid, uuid
 from ._table import Table
+import os.path
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
-class CSession(CSessionABC):
+class CSession(KVTableContext):
     def __init__(
-        self, session_id: Optional[str] = None, logger_config: Optional[dict] = None, options: Optional[dict] = None
+        self,
+        session_id: Optional[str] = None,
+        data_dir=None,
+        logger_config: Optional[dict] = None,
+        options: Optional[dict] = None,
     ):
         if session_id is None:
             session_id = generate_computing_uuid()
+        if data_dir is None:
+            raise ValueError("data_dir is None")
+            # data_dir = os.environ.get(
+            #     "STANDALONE_DATA_PATH",
+            #     os.path.abspath(
+            #         os.path.join(
+            #             os.path.dirname(__file__),
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             os.path.pardir,
+            #             "data",
+            #         )
+            #     ),
+            # )
         if options is None:
             options = {}
         max_workers = options.get("task_cores", None)
-        self._session = Session(session_id, max_workers=max_workers, logger_config=logger_config)
+        self._session = Session(session_id, data_dir=data_dir, max_workers=max_workers, logger_config=logger_config)
 
     def get_standalone_session(self):
         return self._session
@@ -44,7 +64,12 @@ class CSession(CSessionABC):
     def session_id(self):
         return self._session.session_id
 
-    def load(self, uri: URI, schema: dict, options: dict = None):
+    def _load(
+        self,
+        uri: URI,
+        schema: dict,
+        options: dict,
+    ):
         if uri.scheme != "standalone":
             raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
         try:
@@ -53,19 +78,34 @@ class CSession(CSessionABC):
             raise ValueError(f"uri `{uri}` not valid, demo format: standalone://database_path/namespace/name") from e
 
         raw_table = self._session.load(name=name, namespace=namespace)
-        partitions = raw_table.partitions
-        raw_table = raw_table.save_as(
+        raw_table = raw_table.copy_as(
             name=f"{name}_{uuid()}",
             namespace=namespace,
-            partition=partitions,
             need_cleanup=True,
         )
         table = Table(raw_table)
         table.schema = schema
         return table
 
-    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
-        table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
+    def _parallelize(
+        self,
+        data,
+        total_partitions,
+        key_serdes,
+        key_serdes_type,
+        value_serdes,
+        value_serdes_type,
+        partitioner,
+        partitioner_type,
+    ):
+        table = self._session.parallelize(
+            data=data,
+            partition=total_partitions,
+            partitioner=partitioner,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+        )
         return Table(table)
 
     def cleanup(self, name, namespace):
@@ -79,13 +119,13 @@ class CSession(CSessionABC):
 
     def destroy(self):
         try:
-            LOGGER.info(f"clean table namespace {self.session_id}")
+            logger.debug(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")
-        except Exception:
-            LOGGER.warning(f"no found table namespace {self.session_id}")
+        except:
+            logger.warning(f"no found table namespace {self.session_id}")
 
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
+            logger.warning(f"stop storage session {self.session_id} failed, try to kill", e)
             self.kill()

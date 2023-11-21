@@ -145,6 +145,12 @@ class LazyBuildInComponentsLoader:
         return data_split
 
     @_lazy_cpn
+    def feature_correlation(self):
+        from .feature_correlation import feature_correlation
+
+        return feature_correlation
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
 

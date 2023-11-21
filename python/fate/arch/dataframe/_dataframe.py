@@ -180,7 +180,7 @@ class DataFrame(object):
     def empty_frame(self) -> "DataFrame":
         return DataFrame(
             self._ctx,
-            self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions),
+            self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.num_partitions),
             partition_order_mappings=dict(),
             data_manager=self._data_manager.duplicate(),
         )
@@ -483,7 +483,7 @@ class DataFrame(object):
             raise ValueError(f"Target should be sample_id or match_id, but {target} found")
 
         if self.shape[0] == 0:
-            return self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.partitions)
+            return self._ctx.computing.parallelize([], include_key=False, partition=self._block_table.num_partitions)
 
         target_name = getattr(self.schema, f"{target}_name")
         indexer = self.__convert_to_table(target_name)

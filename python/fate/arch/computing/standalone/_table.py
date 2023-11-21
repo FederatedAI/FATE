@@ -13,169 +13,124 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import itertools
 import logging
-import typing
-
-from fate.arch.abc import CTableABC
+from typing import Callable, Iterable, Any, Tuple
 
 from ...unify import URI
 from .._profile import computing_profile
 from .._type import ComputingEngine
+from ..table import KVTable, V, K
+from ..._standalone import Table as StandaloneTable
 
 LOGGER = logging.getLogger(__name__)
 
 
-class Table(CTableABC):
-    def __init__(self, table):
+class Table(KVTable):
+    def __init__(self, table: StandaloneTable):
         self._table = table
         self._engine = ComputingEngine.STANDALONE
+        super().__init__(
+            key_serdes_type=table.key_serdes_type,
+            value_serdes_type=table.value_serdes_type,
+            partitioner_type=table.partitioner_type,
+            num_partitions=table.partitions,
+        )
 
-        self._count = None
+    @property
+    def table(self):
+        return self._table
 
     @property
     def engine(self):
         return self._engine
 
-    def __getstate__(self):
+    def _destroy(self):
         pass
 
-    @property
-    def partitions(self):
-        return self._table.partitions
+    def _drop_num(self, num: int, partitioner):
+        for k, v in self._table.take(num=num):
+            self._table.delete(k, partitioner=partitioner)
+        return Table(table=self._table)
 
-    def copy(self):
-        return Table(self._table.mapValues(lambda x: x))
+    def _map_reduce_partitions_with_index(
+        self,
+        map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
+        reduce_partition_op: Callable[[Any, Any], Any],
+        shuffle: bool,
+        input_key_serdes,
+        input_key_serdes_type: int,
+        input_value_serdes,
+        input_value_serdes_type: int,
+        input_partitioner,
+        input_partitioner_type: int,
+        output_key_serdes,
+        output_key_serdes_type: int,
+        output_value_serdes,
+        output_value_serdes_type: int,
+        output_partitioner,
+        output_partitioner_type: int,
+        output_num_partitions: int,
+    ):
+        return Table(
+            table=self._table.map_reduce_partitions_with_index(
+                map_partition_op=map_partition_op,
+                reduce_partition_op=reduce_partition_op,
+                shuffle=shuffle,
+                output_key_serdes_type=output_key_serdes_type,
+                output_value_serdes_type=output_value_serdes_type,
+                output_partitioner=output_partitioner,
+                output_partitioner_type=output_partitioner_type,
+                output_num_partitions=output_num_partitions,
+            ),
+        )
+
+    def _binary_sorted_map_partitions_with_index(
+        self,
+        other: "Table",
+        binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        key_serdes,
+        key_serdes_type,
+        partitioner,
+        partitioner_type,
+        first_input_value_serdes,
+        first_input_value_serdes_type,
+        second_input_value_serdes,
+        second_input_value_serdes_type,
+        output_value_serdes,
+        output_value_serdes_type,
+    ):
+        return Table(
+            table=self._table.binary_sorted_map_partitions_with_index(
+                other=other._table,
+                binary_map_partitions_with_index_op=binary_map_partitions_with_index_op,
+                key_serdes_type=key_serdes_type,
+                partitioner_type=partitioner_type,
+                output_value_serdes_type=output_value_serdes_type,
+            ),
+        )
+
+    def _collect(self, **kwargs):
+        return self._table.collect(**kwargs)
+
+    def _take(self, num=1, **kwargs):
+        return self._table.take(num=num, **kwargs)
+
+    def _count(self):
+        return self._table.count()
+
+    def _reduce(self, func, **kwargs):
+        return self._table.reduce(func)
 
     @computing_profile
-    def save(self, uri: URI, schema, options: dict = None):
-        if options is None:
-            options = {}
-
+    def _save(self, uri: URI, schema, options: dict):
         if uri.scheme != "standalone":
             raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")
         try:
             *database, namespace, name = uri.path_splits()
         except Exception as e:
             raise ValueError(f"uri `{uri}` not supported with standalone backend") from e
-        self._table.save_as(
+        self._table.copy_as(
             name=name,
             namespace=namespace,
-            partition=options.get("partitions", self.partitions),
             need_cleanup=False,
         )
-        schema.update(self.schema)
-
-    @computing_profile
-    def count(self) -> int:
-        if self._count is None:
-            self._count = self._table.count()
-        return self._count
-
-    @computing_profile
-    def collect(self, **kwargs):
-        return self._table.collect(**kwargs)
-
-    @computing_profile
-    def take(self, n=1, **kwargs):
-        return self._table.take(n=n, **kwargs)
-
-    @computing_profile
-    def first(self, **kwargs):
-        resp = list(itertools.islice(self._table.collect(**kwargs), 1))
-        if len(resp) < 1:
-            raise RuntimeError("table is empty")
-        return resp[0]
-
-    @computing_profile
-    def reduce(self, func, **kwargs):
-        return self._table.reduce(func)
-
-    @computing_profile
-    def map(self, func):
-        return Table(self._table.map(func))
-
-    @computing_profile
-    def mapValues(self, func):
-        return Table(self._table.mapValues(func))
-
-    @computing_profile
-    def flatMap(self, func):
-        return Table(self._table.flatMap(func))
-
-    @computing_profile
-    def applyPartitions(self, func):
-        return Table(self._table.applyPartitions(func))
-
-    @computing_profile
-    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False):
-        if use_previous_behavior is True:
-            LOGGER.warning(
-                "please use `applyPartitions` instead of `mapPartitions` "
-                "if the previous behavior was expected. "
-                "The previous behavior will not work in future"
-            )
-            return Table(self._table.applyPartitions(func))
-        return Table(self._table.mapPartitions(func, preserves_partitioning=preserves_partitioning))
-
-    @computing_profile
-    def mapReducePartitions(self, mapper, reducer, **kwargs):
-        return Table(self._table.mapReducePartitions(mapper, reducer))
-
-    @computing_profile
-    def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
-        return Table(self._table.mapPartitionsWithIndex(func, preserves_partitioning=preserves_partitioning))
-
-    @computing_profile
-    def glom(self):
-        return Table(self._table.glom())
-
-    @computing_profile
-    def sample(
-        self,
-        *,
-        fraction: typing.Optional[float] = None,
-        num: typing.Optional[int] = None,
-        seed=None,
-    ):
-        if fraction is not None:
-            return Table(self._table.sample(fraction=fraction, seed=seed))
-
-        if num is not None:
-            total = self._table.count()
-            if num > total:
-                raise ValueError(f"not enough data to sample, own {total} but required {num}")
-
-            frac = num / float(total)
-            while True:
-                sampled_table = self._table.sample(fraction=frac, seed=seed)
-                sampled_count = sampled_table.count()
-                if sampled_count < num:
-                    frac += 0.1
-                else:
-                    break
-
-            if sampled_count > num:
-                drops = sampled_table.take(sampled_count - num)
-                for k, v in drops:
-                    sampled_table.delete(k)
-
-            return Table(sampled_table)
-
-        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
-
-    @computing_profile
-    def filter(self, func):
-        return Table(self._table.filter(func))
-
-    @computing_profile
-    def join(self, other: "Table", func):
-        return Table(self._table.join(other._table, func))
-
-    @computing_profile
-    def subtractByKey(self, other: "Table"):
-        return Table(self._table.subtractByKey(other._table))
-
-    @computing_profile
-    def union(self, other: "Table", func=lambda v1, v2: v1):
-        return Table(self._table.union(other._table, func))
