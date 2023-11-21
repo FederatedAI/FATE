@@ -62,6 +62,7 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
         # data binning
         bin_info = binning(train_data, max_bin=self.max_bin)
         bin_data: DataFrame = train_data.bucketize(boundaries=bin_info)
+        self._get_fid_name_mapping(train_data)
         logger.info("data binning done")
 
         # tree dimension
@@ -108,4 +109,7 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
         self._saved_tree = trees
         self._trees = [HeteroDecisionTreeHost.from_model(tree) for tree in trees]
         self._model_loaded = True
+        # load feature importances
+        self._load_feature_importance(model["feature_importance"])
+
         return self

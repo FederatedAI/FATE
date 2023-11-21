@@ -14,7 +14,7 @@
 #  limitations under the License.
 import numpy as np
 import pandas as pd
-from typing import Optional
+from typing import Optional, Union
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
@@ -40,7 +40,7 @@ def _compute_gh(data: DataFrame, scores: DataFrame, loss_func):
     return gh
 
 
-def _get_loss_func(objective: str, class_num=None) -> Optional[object]:
+def _get_loss_func(objective: str, class_num=None):
     # to lowercase
     objective = objective.lower()
     assert (
@@ -134,7 +134,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self.num_class = num_class
         self._accumulate_scores = None
         self._tree_dim = None  # tree dimension, if is multilcass task, tree dim > 1
-        self._loss_func = None
+        self._loss_func: Union[BINARY_BCE, MULTI_CE, REGRESSION_L2] = None
         self._train_predict = None
         self._hist_sub = hist_sub
         self._complete_secure = complete_secure
@@ -149,6 +149,9 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
 
         # model loaded
         self._model_loaded = False
+
+        # loss history
+        self._loss_history = []
 
     def _check_encrypt_kit(self, ctx: Context):
         if self._encrypt_kit is None:
@@ -256,6 +259,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         bin_info = binning(train_data, max_bin=self.max_bin)
         bin_data: DataFrame = train_data.bucketize(boundaries=bin_info)
         self._check_label(bin_data.label)
+        self._get_fid_name_mapping(train_data)
 
         # tree dimension
         self._set_tree_dim(ctx)
@@ -316,6 +320,10 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 self._saved_tree.append(tree.get_model())
                 self._update_feature_importance(tree.get_feature_importance())
                 logger.info("fitting guest decision tree iter {}, dim {} done".format(iter_dix, tree_dim))
+
+            # compute loss
+            # iter_loss = self._loss_func.compute_loss(train_data.label, self._accumulate_scores)
+            # self._loss_history.append(iter_loss)
 
         # compute train predict using cache scores
         train_predict: DataFrame = self._loss_func.predict(self._accumulate_scores)
@@ -381,6 +389,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
     def get_model(self) -> dict:
         ret_dict = super().get_model()
         ret_dict["init_score"] = self._init_score
+        ret_dict["loss_history"] = self._loss_history
         return ret_dict
 
     def from_model(self, model: dict):
@@ -389,7 +398,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._trees = [HeteroDecisionTreeGuest.from_model(tree) for tree in trees]
         hyper_parameter = model["hyper_param"]
 
-        # these parameter are related to predict
+        # these parameters are related to predict
         self.learning_rate = hyper_parameter["learning_rate"]
         self.num_class = hyper_parameter["num_class"]
         self.objective = hyper_parameter["objective"]
@@ -399,5 +408,9 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._loss_func = _get_loss_func(self.objective)
         # for warmstart
         self._model_loaded = True
+        # load loss
+        self._loss_history.extend(model["loss_history"])
+        # load feature importances
+        self._load_feature_importance(model["feature_importance"])
 
         return self

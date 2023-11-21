@@ -50,6 +50,11 @@ class BCELoss(Loss):
     def compute_loss(label: DataFrame, pred: DataFrame):
         sample_num = len(label)
         label_pred = DataFrame.hstack([label, pred])
+        print(label_pred.as_pd_df())
+        def test_func(s):
+            print(s)
+            print(s[1])
+        label_pred["loss"] = label_pred.apply_row(test_func, with_label=True)
         label_pred["loss"] = label_pred.apply_row(
             lambda s: -(s[0] * np.log(s[1]) + (1 - s[0]) * np.log(1 - s[1])), with_label=True
         )

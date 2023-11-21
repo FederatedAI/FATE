@@ -33,7 +33,7 @@ def apply_row(df: "DataFrame", func,
     data_manager = df.data_manager
     dst_data_manager, _ = data_manager.derive_new_data_manager(with_sample_id=True,
                                                                with_match_id=True,
-                                                               with_label=not with_weight,
+                                                               with_label=not with_label,
                                                                with_weight=not with_weight,
                                                                columns=None)
 
