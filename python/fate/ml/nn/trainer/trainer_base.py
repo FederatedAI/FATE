@@ -778,15 +778,11 @@ class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
         # on federation of fedcallback
         # callbacks of shortcutcallback
         new_callback_list = []
-        """
         for i in callback_handler.callbacks:
             if isinstance(i, PrinterCallback):
                 continue
             else:
                 new_callback_list.append(i)
-        """
-        for i in callback_handler.callbacks:
-            new_callback_list.append(i)
         new_callback_list.append(FatePrinterCallback())
         callback_handler.callbacks = new_callback_list
         callback_handler.callbacks.append(WrappedFedCallback(self.ctx, self))
