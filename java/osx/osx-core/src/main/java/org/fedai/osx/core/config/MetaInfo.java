@@ -91,6 +91,9 @@ public class MetaInfo {
     public static Integer PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
     @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
+    @Config(confKey = "grpc.ssl.open.client.validate", pattern = Dict.BOOLEAN_PATTERN)
+    public  static Boolean  PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE=  false;
+
     @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE = 65536;
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -136,9 +139,9 @@ public class MetaInfo {
     @Config(confKey = "use.remote.health.check", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_USE_REMOTE_HEALTH_CHECK = true;
     @Config(confKey = "http.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_PORT;
+    public static Integer PROPERTY_HTTP_PORT=8807;
     @Config(confKey = "https.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTPS_PORT;
+    public static Integer PROPERTY_HTTPS_PORT=8809;
     @Config(confKey = "open.http.server", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_OPEN_HTTP_SERVER = false;
     @Config(confKey = "open.https.server", pattern = Dict.BOOLEAN_PATTERN)
@@ -179,9 +182,9 @@ public class MetaInfo {
     public static Integer PROPERTY_FLOW_CONTROL_SAMPLE_INTERVAL = 1000;
     @Config(confKey = "stream.limit.mode")
     public static String PROPERTY_STREAM_LIMIT_MODE = StreamLimitMode.NOLIMIT.name();
-    @Config(confKey = "deploy.mode")
+
     public static String PROPERTY_DEPLOY_MODE = DeployMode.standalone.name();
-    @Config(confKey = "self.party")
+
     public static Set<String> PROPERTY_SELF_PARTY = Sets.newHashSet();//
     @Config(confKey = "flow.rule")
     public static String PROPERTY_FLOW_RULE_TABLE = "broker/flowRule.json";
@@ -251,7 +254,12 @@ public class MetaInfo {
     public static Integer PROPERTY_MAX_QUEUE_LOCK_LIVE = 600;
     @Config(confKey = "open.mock.eggpair")
     public static Boolean PROPERTY_OPEN_MOCK_EGGPAIR = false;
+    @Config(confKey = "router.check.interval")
+    public static Integer PROPERTY_ROUTER_CHECK_INTERVAL= 300000;
+
     static Logger logger = LoggerFactory.getLogger(MetaInfo.class);
+
+
 
     public static boolean isCluster() {
         return PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name());

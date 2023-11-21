@@ -62,7 +62,7 @@ public class PcpInterService extends PrivateTransferProtocolGrpc.PrivateTransfer
         OsxContext osxContext = new OsxContext();
         ContextUtil.assableContextFromInbound(osxContext);
         TechProvider techProvider = getTechProvider(osxContext);
-        techProvider.processGrpcInvoke(osxContext, request, responseObserver);
+        techProvider.processGrpcInvoke(osxContext, request, responseObserver,true);
     }
 
     private TechProvider getTechProvider(OsxContext context) {

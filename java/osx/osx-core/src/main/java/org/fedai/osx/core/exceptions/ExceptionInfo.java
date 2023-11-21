@@ -15,6 +15,7 @@
  */
 package org.fedai.osx.core.exceptions;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Maps;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.utils.JsonUtil;
@@ -26,6 +27,7 @@ public class ExceptionInfo {
 
     String code;
     String message;
+    @JsonIgnore
     Throwable throwable;
 
     public ExceptionInfo() {

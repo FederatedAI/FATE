@@ -50,23 +50,17 @@ public class ServiceRegisterManager implements ApplicationStartedRunner {
         log.info("register service {}", key);
     }
 
-//    public  void unRegister(ServiceRegisterInfo  serviceRegisterInfo ){
-//        serviceRegisterMap
-//    }
-
 
     public ServiceRegisterInfo getServiceWithLoadBalance(OsxContext osxContext, String node, String uri, boolean interInvoke) {
         long now = System.currentTimeMillis();
         ServiceRegisterInfo result = null;
         String key = ServiceRegisterInfo.buildKey(node, uri);
-//        log.info("=======query key {}",key);
         List<ServiceRegisterInfo> services = serviceRegisterMap.get(key);
         if (services != null && services.size() > 0) {
             result = services.get((int) (now % services.size()));
             if (interInvoke && result.isAllowInterUse()) {
                 throw new InvalidRequestException();
             }
-
         }
         return result;
     }
@@ -77,15 +71,14 @@ public class ServiceRegisterManager implements ApplicationStartedRunner {
         Reflections reflections = new Reflections("org.fedai.osx.broker");
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Register.class);
         classes.forEach(clazz -> {
-            MetaInfo.PROPERTY_SELF_PARTY.forEach(partyId -> {
+//            MetaInfo.PROPERTY_SELF_PARTY.forEach(partyId -> {
 
                 Register register = clazz.getAnnotation(Register.class);
                 String[] uris = register.uris();
                 for (String uri : uris) {
                     ServiceRegisterInfo serviceRegisterInfo = new ServiceRegisterInfo();
                     serviceRegisterInfo.setUri(uri);
-                    serviceRegisterInfo.setNodeId(partyId);
-//                        serviceRegisterInfo.setProtocol(register.protocol());
+                    //serviceRegisterInfo.setNodeId(partyId);
                     serviceRegisterInfo.setServiceType(ServiceType.inner);
                     AbstractServiceAdaptorNew serviceAdaptor = (AbstractServiceAdaptorNew) injector.getInstance(clazz);
                     serviceRegisterInfo.setServiceAdaptor(serviceAdaptor);
@@ -93,7 +86,7 @@ public class ServiceRegisterManager implements ApplicationStartedRunner {
                 }
             });
 
-        });
+//        });
 
     }
 

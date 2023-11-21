@@ -102,7 +102,7 @@ public class ContextUtil {
         String sourceInstID = request.getHeader(PtpHttpHeader.FromInstID);
         String targetInstID = request.getHeader(PtpHttpHeader.TargetInstID);
         String sessionID = request.getHeader(PtpHttpHeader.SessionID);
-        System.err.println("sessionId :" + sessionID);
+
         String uri = request.getHeader(PtpHttpHeader.Uri);
         String topic = request.getHeader(PtpHttpHeader.MessageTopic);
         String msgFlag = request.getHeader(PtpHttpHeader.MessageFlag);
@@ -126,7 +126,7 @@ public class ContextUtil {
         osxContext.setDesInstId(targetInstID);
         osxContext.setQueueType(queueType);
         osxContext.setMessageFlag(msgFlag);
-        System.err.println("xxxxxxxxxxx+" + osxContext.toString());
+
         return osxContext;
     }
 

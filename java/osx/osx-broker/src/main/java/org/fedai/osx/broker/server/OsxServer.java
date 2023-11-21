@@ -15,6 +15,7 @@
  */
 package org.fedai.osx.broker.server;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.grpc.ServerInterceptors;
@@ -36,7 +37,8 @@ import org.fedai.osx.broker.grpc.PcpInnerService;
 import org.fedai.osx.broker.grpc.PcpInterService;
 import org.fedai.osx.broker.grpc.ProxyGrpcService;
 import org.fedai.osx.broker.grpc.ServiceExceptionHandler;
-import org.fedai.osx.broker.http.DispatchServlet;
+import org.fedai.osx.broker.http.InnerServlet;
+import org.fedai.osx.broker.http.InterServlet;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.frame.ContextPrepareInterceptor;
 import org.fedai.osx.core.utils.OSXCertUtils;
@@ -46,6 +48,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.servlet.http.HttpServlet;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -56,8 +59,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.fedai.osx.core.config.MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER;
-import static org.fedai.osx.core.config.MetaInfo.PROPERTY_OPEN_TLS_USE_KEYSTORE;
+import static org.fedai.osx.core.config.MetaInfo.*;
 
 /**
  * http1.X  + grpc
@@ -76,7 +78,9 @@ public class OsxServer {
     @Inject
     PcpInnerService pcpInnerService;
     @Inject
-    DispatchServlet dispatchServlet;
+    InnerServlet innerServlet;
+    @Inject
+    InterServlet interServlet;
 
     private static KeyStore loadKeyStore(String keyStorePath, String keyStorePassword) throws Exception {
         try (FileInputStream fis = new FileInputStream(keyStorePath)) {
@@ -94,13 +98,13 @@ public class OsxServer {
                 log.info("prepare to create http server");
                 httpServer = buildHttpServer();
                 if (httpServer == null) {
-                    System.exit(0);
+                    System.exit(-1);
                 }
                 if (MetaInfo.PROPERTY_HTTP_USE_TLS) {
                     log.info("prepare to create http server with TLS");
                     httpsServer = buildHttpsServer();
                     if (httpsServer == null) {
-                        System.exit(0);
+                        System.exit(-1);
                     }
                 }
             }
@@ -123,9 +127,10 @@ public class OsxServer {
             connector.setAcceptQueueSize(MetaInfo.PROPERTY_HTTP_RECEIVE_QUEUE_SIZE);
             connector.setAcceptedReceiveBufferSize(MetaInfo.PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE);
             server.addConnector(connector);
-            server.setHandler(buildServlet());
+            server.setHandler(buildServlet(innerServlet));
             return server;
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("build http server error", e);
         }
         return null;
@@ -168,7 +173,7 @@ public class OsxServer {
             connector.setAcceptQueueSize(MetaInfo.PROPERTY_HTTP_RECEIVE_QUEUE_SIZE);
             connector.setAcceptedReceiveBufferSize(MetaInfo.PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE);
             server.addConnector(connector);
-            server.setHandler(buildServlet());
+            server.setHandler(buildServlet(interServlet));
             return server;
         } catch (Exception e) {
             log.error("build https server error = {}", e.getMessage());
@@ -177,10 +182,10 @@ public class OsxServer {
         return null;
     }
 
-    ServletContextHandler buildServlet() {
+    ServletContextHandler buildServlet(HttpServlet   servlet) {
         ServletContextHandler context = new ServletContextHandler();
         context.setContextPath(MetaInfo.PROPERTY_HTTP_CONTEXT_PATH);
-        ServletHolder servletHolder = new ServletHolder(dispatchServlet);
+        ServletHolder servletHolder = new ServletHolder(servlet);
         context.addServlet(servletHolder, MetaInfo.PROPERTY_HTTP_SERVLET_PATH);
         context.setMaxFormContentSize(Integer.MAX_VALUE);
         return context;
@@ -279,18 +284,23 @@ public class OsxServer {
 
                     sslContextBuilder = SslContextBuilder.forServer(keyManagerFactory)
                             .trustManager(trustManagerFactory)
-                            .clientAuth(ClientAuth.REQUIRE)
                             .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                             .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
+                    if(PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE){
+                        sslContextBuilder.clientAuth(ClientAuth.REQUIRE);
+                    }
+
                 } else {
-
-
                     sslContextBuilder = GrpcSslContexts.forServer(new File(serverCertChainFile), new File(privateKeyFilePath))
-                            .trustManager(new File(serverCaFilePath))
-                            .clientAuth(ClientAuth.REQUIRE)
+
                             .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                             .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
+                    if(PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE){
+                        Preconditions.checkArgument(StringUtils.isNotEmpty(serverCaFilePath),"config server.ca.file is null");
+                        sslContextBuilder.clientAuth(ClientAuth.REQUIRE).trustManager(new File(serverCaFilePath));
+                    }
                 }
+
 
 
                 log.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",

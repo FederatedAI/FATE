@@ -20,7 +20,8 @@ import com.google.inject.Singleton;
 import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
 import org.fedai.osx.broker.queue.TransferQueueManager;
-import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterServiceRegister;
+import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.exceptions.SysException;
@@ -35,7 +36,7 @@ public class PushService extends AbstractServiceAdaptorNew<InboundPackage<Stream
 
     Logger logger = LoggerFactory.getLogger(PushService.class);
     @Inject
-    DefaultFateRouterServiceImpl defaultFateRouterService;
+    RouterServiceRegister  routerServiceRegister;
     @Inject
     TransferQueueManager transferQueueManager;
 
@@ -46,7 +47,7 @@ public class PushService extends AbstractServiceAdaptorNew<InboundPackage<Stream
         StreamObserver backRespSO = data.getBody();
         // context.setNeedPrintFlowLog(false);
         QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context,
-                defaultFateRouterService, transferQueueManager,
+                routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER), transferQueueManager,
                 backRespSO);
         return queuePushReqStreamObserver;
     }

@@ -22,7 +22,7 @@ import com.google.inject.Singleton;
 import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.constants.ServiceType;
 import org.fedai.osx.broker.pojo.*;
-import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.service.ServiceRegisterInfo;
 import org.fedai.osx.broker.service.ServiceRegisterManager;
 import org.fedai.osx.broker.util.TransferUtil;
@@ -65,52 +65,47 @@ public class FateTechProvider implements TechProvider {
     @Inject
     ServiceRegisterManager serviceRegisterManager;
     @Inject
-    DefaultFateRouterServiceImpl routerService;
+    RouterServiceRegister  routerServiceRegister;
 
-    List<String> selfPartyIds;
+
     Base64.Encoder base64Encoder = Base64.getEncoder();
     Base64.Decoder base64Deonder = Base64.getDecoder();
 
     public FateTechProvider() {
-        selfPartyIds = Lists.newArrayList(MetaInfo.PROPERTY_SELF_PARTY);
+
     }
 
     @Override
-    public void processHttpInvoke(OsxContext osxContext, HttpServletRequest request, HttpServletResponse response) {
+    public void processHttpInvoke(OsxContext osxContext, HttpServletRequest request, HttpServletResponse response,boolean interInvoke) {
 
         try {
-            OsxContext.pushThreadLocalContext(osxContext);
+//            OsxContext.pushThreadLocalContext(osxContext);
             osxContext.setProtocol(Protocol.http);
             osxContext.putData(Dict.HTTP_SERVLET_RESPONSE, response);
             byte[] reqBody = TransferUtil.read(request.getInputStream());
-            System.err.println("receive======" + new String(reqBody));
             HttpInvoke httpInvoke = JsonUtil.json2Object(reqBody, HttpInvoke.class);
-//            System.err.println("req map ==="+ reqMap);
-//            byte[]  oriPayload = base64Deonder.decode(reqMap.get("payload").toString());
-//            System.err.println("oriPayload : "+new String (oriPayload));
-//            HttpInvoke  httpInvoke = new  HttpInvoke();
-//            httpInvoke.setData(oriPayload);
-//            System.err.println("ori payload ==="+new String(base64Deonder.decode(oriPayload)));
-            //inboundBuilder.setPayload(ByteString.copyFrom(payload));
-            HttpInvokeResult httpInvokeResult = (HttpInvokeResult) this.handleInner(osxContext, httpInvoke);
+            HttpInvokeResult httpInvokeResult = (HttpInvokeResult) this.handleInvoke(osxContext, httpInvoke,interInvoke);
             response.setContentType(Dict.CONTENT_TYPE_JSON_UTF8);
             TransferUtil.writeHttpRespose(response, httpInvokeResult.getCode(), httpInvokeResult.getMessage(), JsonUtil.object2Json(httpInvokeResult).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            OsxContext.popThreadLocalContext();
-            OsxContext.release();
         }
+//        finally {
+//            OsxContext.popThreadLocalContext();
+//            OsxContext.release();
+//        }
     }
 
 
+
+
     @Override
-    public void processGrpcInvoke(OsxContext context, Osx.Inbound request, StreamObserver<Osx.Outbound> responseObserver) {
+    public void processGrpcInvoke(OsxContext context, Osx.Inbound request, StreamObserver<Osx.Outbound> responseObserver,boolean interInvoke) {
         try {
             context.setProtocol(Protocol.grpc);
             context.putData(Dict.RESPONSE_STREAM_OBSERVER, responseObserver);
             OsxContext.pushThreadLocalContext(context);
-            Osx.Outbound result = (Osx.Outbound) handleInner(context, request);
+            Osx.Outbound result = (Osx.Outbound) handleInvoke(context, request,interInvoke);
             if (result != null) {
                 responseObserver.onNext(result);
                 responseObserver.onCompleted();
@@ -127,10 +122,9 @@ public class FateTechProvider implements TechProvider {
         context.setProtocol(Protocol.http);
         try {
             context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
-            //     OsxContext.pushThreadLocalContext(context);
             byte[] payload = TransferUtil.read(httpServletRequest.getInputStream());
             ConsumeRequest consumeRequest = JsonUtil.json2Object(new String(payload), ConsumeRequest.class);
-            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.PEEK, false);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, null, UriConstants.PEEK, false);
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
             ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
             ConsumerResponse consumerResponse = (ConsumerResponse) serviceAdaptor.service(context, consumeRequest);
@@ -139,8 +133,6 @@ public class FateTechProvider implements TechProvider {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-//            OsxContext.popThreadLocalContext();
-//            OsxContext.release();
             FlowLogUtil.printFlowLog(context);
         }
     }
@@ -154,16 +146,8 @@ public class FateTechProvider implements TechProvider {
 
             if (MetaInfo.PROPERTY_SELF_PARTY.contains(desNodeId)) {
                 context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
-                //OsxContext.pushThreadLocalContext(context);
-
                 ProduceRequest produceRequest = JsonUtil.json2Object(new String(body), ProduceRequest.class);
-//                    ProduceRequest produceRequest = new ProduceRequest();
-//                    produceRequest.setTopic(produceData.get(Dict.TOPIC) != null ? produceData.get(Dict.TOPIC).toString() : "");
-
-                //  byte[] oriData = base64Deonder.decode(produceData.get(Dict.PAYLOAD) != null ? produceData.get(Dict.PAYLOAD).toString() : null);
-                //  System.err.println("receive ======" + new String(oriData));
-                //  produceRequest.setPayload(oriData);
-                ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.PUSH, false);
+                ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.PUSH, false);
                 Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
                 ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
                 ProduceResponse produceResponse = (ProduceResponse) serviceAdaptor.service(context, produceRequest);
@@ -172,7 +156,7 @@ public class FateTechProvider implements TechProvider {
             } else {
                 HttpInvoke httpInvoke = new HttpInvoke();
                 httpInvoke.setPayload(body);
-                RouterInfo routerInfo = routerService.route(context.getSrcNodeId(), "", context.getDesNodeId(), "");
+                RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(context.getSrcNodeId(), "", context.getDesNodeId(), "");
                 context.setRouterInfo(routerInfo);
                 context.setActionType(ActionType.MSG_REDIRECT.name());
 
@@ -182,8 +166,6 @@ public class FateTechProvider implements TechProvider {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-//            OsxContext.popThreadLocalContext();
-//            OsxContext.release();
             FlowLogUtil.printFlowLog(context);
         }
     }
@@ -199,16 +181,13 @@ public class FateTechProvider implements TechProvider {
                 @Override
                 public void run() {
                     try {
-                        OsxContext.pushThreadLocalContext(context);
                         byte[] payload = TransferUtil.read(ctxt.getRequest().getInputStream());
                         ConsumeRequest consumeRequest = JsonUtil.json2Object(new String(payload), ConsumeRequest.class);
                         consumeRequest.setNeedBlock(true);
-                        ServiceRegisterInfo serviceRegisterInfo = serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.POP, false);
+                        ServiceRegisterInfo serviceRegisterInfo = serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.POP, false);
                         Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
                         ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
-
                         ConsumerResponse consumerResponse = (ConsumerResponse) serviceAdaptor.service(context, consumeRequest);
-                        logger.info("consumer result ==================== {}", consumerResponse);
                         if (consumerResponse != null) {
                             if (!StatusCode.CONSUME_NO_MESSAGE.equals(consumerResponse.getCode())) {
                                 httpServletResponse.setContentType(Dict.CONTENT_TYPE_JSON_UTF8);
@@ -219,9 +198,6 @@ public class FateTechProvider implements TechProvider {
                                 TransferUtil.writeHttpRespose(ctxt.getResponse(), consumerResponse.getCode(),
                                         consumerResponse.getMsg(), JsonUtil.object2Json(consumerResponse).getBytes(StandardCharsets.UTF_8));
                                 ctxt.complete();
-                            } else {
-
-
                             }
                         }
                     } catch (Exception e) {
@@ -229,14 +205,10 @@ public class FateTechProvider implements TechProvider {
                     }
                 }
             });
-
-
         } catch (Exception e) {
             e.printStackTrace();
             ExceptionInfo exceptionInfo = this.handleExceptionInfo(context, e);
         } finally {
-            OsxContext.popThreadLocalContext();
-            OsxContext.release();
             FlowLogUtil.printFlowLog(context);
         }
     }
@@ -246,60 +218,54 @@ public class FateTechProvider implements TechProvider {
         context.setProtocol(Protocol.http);
         try {
             context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
-            OsxContext.pushThreadLocalContext(context);
             byte[] payload = TransferUtil.read(httpServletRequest.getInputStream());
             ReleaseRequest releaseRequest = JsonUtil.json2Object(new String(payload), ReleaseRequest.class);
-
-            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.RELEASE, false);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.RELEASE, false);
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
             ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
             ReleaseResponse response = (ReleaseResponse) serviceAdaptor.service(context, releaseRequest);
             TransferUtil.writeHttpRespose(httpServletResponse, response.getCode(), response.getMessage(), JsonUtil.object2Json(response).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("process http release error",e);
         } finally {
-            OsxContext.popThreadLocalContext();
-            OsxContext.release();
             FlowLogUtil.printFlowLog(context);
         }
     }
 
 
-    private Object handleInner(OsxContext context, Object request) {
+    private Object doService(OsxContext context, Object request,String nodeId ,String uri,boolean  interInvoke){
+        Object  result= null;
+        ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, nodeId, uri, interInvoke);
+        if (serviceRegisterInfo != null) {
+            ServiceType serviceType = serviceRegisterInfo.getServiceType();
+            switch (serviceType) {
+                case inner:
+                    Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+                    ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+                    Object requestObj = serviceAdaptor.decode(request);
+                    Object responseObj = serviceAdaptor.service(context, requestObj);
+                    result = serviceAdaptor.toOutbound(responseObj);
+                    break;
+            }
+        } else {
+            logger.error("invalid  uri {}", uri);
+            throw new InvalidUriException();
+        }
+        return  result;
+    }
+
+
+    private Object handleInvoke(OsxContext context, Object request,boolean  interInvoke) {
         Object result = null;
         try {
             String uri = context.getUri();
-            String instId = context.getDesInstId();
             String nodeId = context.getDesNodeId();
             if (MetaInfo.PROPERTY_SELF_PARTY.contains(nodeId)) {
-                ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, nodeId, uri, true);
-                if (serviceRegisterInfo != null) {
-                    ServiceType serviceType = serviceRegisterInfo.getServiceType();
-                    switch (serviceType) {
-                        case inner:
-                            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
-                            ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
-                            Object requestObj = serviceAdaptor.decode(request);
-                            Object responseObj = serviceAdaptor.service(context, requestObj);
-                            result = serviceAdaptor.toOutbound(responseObj);
-                            break;
-//                        case  rpc:
-//                            RouterInfo routerInfo = serviceRegisterInfo.getRouterInfo();
-//                            result = TransferUtil.redirect(context,request,routerInfo,true);
-//                            break;
-                    }
-                } else {
-                    logger.error("invalid  uri {}", uri);
-                    throw new InvalidUriException();
-                }
+               result =  this.doService(context,request,nodeId,uri,true);
             } else {
-                //外部则转发
-                // RouterService routerService = routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-
-                RouterInfo routerInfo = routerService.routePtp(context.getSrcInstId(), context.getSrcNodeId(), context.getDesInstId(), context.getDesNodeId());
+                RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(context.getSrcNodeId(),"" ,context.getDesNodeId(), "" );
                 if (routerInfo != null) {
-                    // TODO: 2023/11/3   这里要根据request 类型不同做不同处理
-                    result = (HttpInvokeResult) TransferUtil.redirect(context, (Osx.Inbound) request, routerInfo, true);
+                    result = TransferUtil.redirect(context, (Osx.Inbound) request, routerInfo, true);
                 } else {
                     logger.error("can not found router info {} {}", context.getDesInstId(), context.getDesNodeId());
                     throw new NoRouterInfoException("can not found router info");
@@ -322,8 +288,6 @@ public class FateTechProvider implements TechProvider {
             }
         } finally {
             FlowLogUtil.printFlowLog(context);
-            OsxContext.popThreadLocalContext();
-            OsxContext.release();
         }
         return result;
     }
@@ -345,7 +309,7 @@ public class FateTechProvider implements TechProvider {
         OsxContext.pushThreadLocalContext(context);
         Osx.TransportOutbound result = null;
         try {
-            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.PEEK, false);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.PEEK, false);
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
             ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
             ConsumeRequest consumeRequest = new ConsumeRequest();
@@ -382,7 +346,7 @@ public class FateTechProvider implements TechProvider {
 
         try {
             if (MetaInfo.PROPERTY_SELF_PARTY.contains(desNodeId)) {
-                ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.PUSH, false);
+                ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.PUSH, false);
                 AbstractServiceAdaptorNew serviceAdaptor = serviceRegisterInfo.getServiceAdaptor();
                 ProduceRequest produceRequest = new ProduceRequest();
                 produceRequest.setPayload(inbound.getPayload().toByteArray());
@@ -392,7 +356,7 @@ public class FateTechProvider implements TechProvider {
                     result = Osx.TransportOutbound.newBuilder().setCode(produceResponse.getCode()).setMessage(produceResponse.getMsg()).build();
                 }
             } else {
-                RouterInfo routerInfo = routerService.route(srcNodeId, Dict.DEFAULT, desNodeId, Dict.DEFAULT);
+                RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(srcNodeId, Dict.DEFAULT, desNodeId, Dict.DEFAULT);
                 context.setActionType(MSG_REDIRECT.name());
                 Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
                 inboundBuilder.setPayload(inbound.toByteString());
@@ -430,7 +394,7 @@ public class FateTechProvider implements TechProvider {
         OsxContext.pushThreadLocalContext(context);
         Osx.TransportOutbound result = null;
         try {
-            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.POP, false);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.POP, false);
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
             ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
             ConsumeRequest consumeRequest = new ConsumeRequest();
@@ -468,24 +432,13 @@ public class FateTechProvider implements TechProvider {
         OsxContext.pushThreadLocalContext(context);
         Osx.TransportOutbound result = null;
         try {
-            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, selfPartyIds.get(0), UriConstants.RELEASE, false);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.RELEASE, false);
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
             ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
             ReleaseRequest releaseRequest = new ReleaseRequest();
             releaseRequest.setTopic(inbound.getTopic());
-
-
             ReleaseResponse consumerResponse = (ReleaseResponse) serviceAdaptor.service(context, releaseRequest);
-//            if(consumerResponse !=null){
-//                if(consumerResponse.isNeedRedirect()){
-//                    result = TransferUtil.redirectPop(context,consumerResponse.getRedirectRouterInfo(),inbound);
-//                }else {
-//                    result = consumerResponse.toTransportOutbound();
-//                }
-//            }
             result = Osx.TransportOutbound.newBuilder().setCode(consumerResponse.getCode()).setMessage(consumerResponse.getMessage()).build();
-
-
         } catch (Exception e) {
             ExceptionInfo exceptionInfo = this.handleExceptionInfo(context, e);
             result = Osx.TransportOutbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
@@ -500,41 +453,25 @@ public class FateTechProvider implements TechProvider {
         }
     }
 
-
-    private void writeHttpRespose(HttpServletResponse response, String code,
-                                  String msg,
-                                  byte[] content) {
+    public  void processRouterOperation(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
+        context.setProtocol(Protocol.http);
         try {
-            response.setHeader(PtpHttpHeader.ReturnCode, code);
-            response.setHeader(PtpHttpHeader.MessageCode, msg);
-            OutputStream outputStream = response.getOutputStream();
-            if (content != null) {
-                outputStream.write(content);
-            }
-            outputStream.flush();
+            context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
+            byte[] payload = TransferUtil.read(httpServletRequest.getInputStream());
+            String content = new String(payload);
+            RouterSetRequest routerSetRequest = JsonUtil.json2Object(content, RouterSetRequest.class);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.HTTP_CHANGE_ROUTER, false);
+            Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
+            ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
+            RouterSetResponse response = (RouterSetResponse) serviceAdaptor.service(context, routerSetRequest);
+            TransferUtil.writeHttpRespose(httpServletResponse, response.getCode(), response.getMsg(), JsonUtil.object2Json(response).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("process http release error",e);
+        } finally {
+            FlowLogUtil.printFlowLog(context);
         }
     }
 
-
-//    public  byte[] read(InputStream input) throws IOException {
-//
-//            byte[] result = null;
-//            byte[] split = new byte[1024];
-//            int length=0;
-//            int count;
-//            while( (count = input.read(split))!=-1){
-//                byte[] temp =new  byte[length+count];
-//                System.arraycopy(split, 0, temp, length, count);
-//                if(result!=null) {
-//                    System.arraycopy(result, 0,temp,0,length );
-//                }
-//                result =  temp;
-//                length =  result.length;
-//            }
-//            return result;
-//    }
 
 
 }

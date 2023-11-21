@@ -33,7 +33,8 @@ public enum ActionType {
     UNARY_CALL,
     UNARY_CALL_NEW,
     CLUSTER_TOKEN_APPLY,
-    TOPIC_APPLY;
+    TOPIC_APPLY,
+    SET_ROUTER;
 
 //    private   String alias;
 //    private  ActionType(String alias){

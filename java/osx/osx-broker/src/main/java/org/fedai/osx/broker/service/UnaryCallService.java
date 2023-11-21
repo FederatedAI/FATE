@@ -15,13 +15,17 @@
  */
 package org.fedai.osx.broker.service;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
+import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.ManagedChannel;
+import org.apache.commons.lang3.StringUtils;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.ActionType;
@@ -48,7 +52,7 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
     Logger logger = LoggerFactory.getLogger(UnaryCallService.class);
 
     @Inject
-    DefaultFateRouterServiceImpl routerService;
+    RouterServiceRegister routerServiceRegister;
 
 
     public UnaryCallService() {
@@ -57,11 +61,38 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
     @Override
     protected Proxy.Packet doService(OsxContext context, Proxy.Packet req) {
         TransferUtil.assableContextFromProxyPacket(context, req);
-        RouterInfo routerInfo = routerService.route(req);
+        RouterInfo routerInfo = route(req);
         context.setRouterInfo(routerInfo);
         Proxy.Packet resp = unaryCall(context, req);
         return resp;
     }
+
+
+
+    public RouterInfo route(Proxy.Packet packet) {
+        Preconditions.checkArgument(packet != null);
+        RouterInfo routerInfo = null;
+        Proxy.Metadata metadata = packet.getHeader();
+        Transfer.RollSiteHeader rollSiteHeader = null;
+        String dstPartyId = null;
+        try {
+            rollSiteHeader = Transfer.RollSiteHeader.parseFrom(metadata.getExt());
+            if (rollSiteHeader != null) {
+                dstPartyId = rollSiteHeader.getDstPartyId();
+            }
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+        if (StringUtils.isEmpty(dstPartyId)) {
+            dstPartyId = metadata.getDst().getPartyId();
+        }
+        String desRole = metadata.getDst().getRole();
+        String srcRole = metadata.getSrc().getRole();
+        String srcPartyId = metadata.getSrc().getPartyId();
+        routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(srcPartyId, srcRole, dstPartyId, desRole);
+        return routerInfo;
+    }
+
 
 //    @Override
 //    protected Proxy.Packet doService(OsxContext context, InboundPackage data) {

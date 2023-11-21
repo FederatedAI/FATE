@@ -24,32 +24,23 @@ import javax.servlet.http.HttpServletResponse;
 
 public interface TechProvider {
     //用于处理http1.X请求
-    default void processHttpInvoke(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-    }
-
-    ;
+     void processHttpInvoke(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,boolean  interInvoke);
 
     //用于处理grpc非流式请求
     void processGrpcInvoke(OsxContext context, Osx.Inbound request,
-                           io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver);
+                           io.grpc.stub.StreamObserver<Osx.Outbound> responseObserver,boolean  interInvoke);
 
-    default void processHttpPeek(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-    }
+     void processHttpPeek(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+    ;
+
+     void processHttpPush(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+    ;
+
+     void processHttpPop(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
 
     ;
 
-    default void processHttpPush(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-    }
-
-    ;
-
-    default void processHttpPop(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-    }
-
-    ;
-
-    default void processHttpRelease(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-    }
+     void processHttpRelease(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
 
     ;
 

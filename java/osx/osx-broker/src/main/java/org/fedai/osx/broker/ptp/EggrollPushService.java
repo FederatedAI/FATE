@@ -22,8 +22,10 @@ import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.grpc.QueuePushReqStreamObserver;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.service.TokenApplyService;
 import org.fedai.osx.broker.util.TransferUtil;
+import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
@@ -32,11 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-//@Register(uri=EGGROLL_PUSH)
 public class EggrollPushService extends AbstractServiceAdaptorNew<StreamObserver, StreamObserver> {
     Logger logger = LoggerFactory.getLogger(EggrollPushService.class);
     @Inject
-    DefaultFateRouterServiceImpl routerService;
+    RouterServiceRegister  routerServiceRegister;
     @Inject
     TokenApplyService tokenApplyService;
     @Inject
@@ -47,7 +48,7 @@ public class EggrollPushService extends AbstractServiceAdaptorNew<StreamObserver
         context.setNeedPrintFlowLog(false);
         return new StreamObserver<Osx.Inbound>() {
             Logger logger = LoggerFactory.getLogger(EggrollPushService.class);
-            QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context, routerService,
+            QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context, routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER),
                     transferQueueManager,
                     data);
 

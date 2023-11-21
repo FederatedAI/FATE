@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fedai.osx.broker.provider;
+package org.fedai.osx.broker.router;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -38,26 +38,24 @@ import java.util.concurrent.ConcurrentMap;
  * 厂商选择
  */
 @Singleton
-public class TechProviderRegister implements Lifecycle, ApplicationStartedRunner {
+public class RouterServiceRegister implements Lifecycle, ApplicationStartedRunner {
 
-    final String configFileName = "components/provider.properties";
-    Logger logger = LoggerFactory.getLogger(TechProviderRegister.class);
+    final String configFileName = "components/router.properties";
+    Logger logger = LoggerFactory.getLogger(RouterServiceRegister.class);
     @Inject
     Injector injector;
-    ConcurrentMap<String, TechProvider> registerMap = new ConcurrentHashMap<>();
+    ConcurrentMap<String, RouterService> registerMap = new ConcurrentHashMap<>();
 
-    final public TechProvider select(OsxContext fateContext) {
-
+    final public RouterService select(OsxContext fateContext) {
         if (StringUtils.isEmpty(fateContext.getTechProviderCode())) {
-              fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+            fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         }
         return this.select(fateContext.getTechProviderCode());
     }
 
-    final public TechProvider select(String techProviderCode) {
-//        logger.info("tech provider select {}",techProviderCode);
-        if (StringUtils.isEmpty(techProviderCode)) {
-            throw new ParameterException("techProviderCode is null");
+    final public RouterService select(String techProviderCode) {
+        if(StringUtils.isEmpty(techProviderCode)){
+            techProviderCode = MetaInfo.PROPERTY_FATE_TECH_PROVIDER;
         }
         if (this.registerMap.containsKey(techProviderCode)) {
             return this.registerMap.get(techProviderCode);
@@ -66,12 +64,12 @@ public class TechProviderRegister implements Lifecycle, ApplicationStartedRunner
         }
     }
 
-    public TechProvider getTechProvider(OsxContext context) {
-        TechProvider techProvider = this.select(context.getTechProviderCode());
-        if (techProvider == null) {
-            techProvider = this.select("default");
+    public RouterService getTechProvider(OsxContext context) {
+        RouterService routerService = this.select(context.getTechProviderCode());
+        if (routerService == null) {
+            routerService = this.select("default");
         }
-        return techProvider;
+        return routerService;
     }
 
 
@@ -79,12 +77,12 @@ public class TechProviderRegister implements Lifecycle, ApplicationStartedRunner
         Properties properties = PropertiesUtil.getProperties(MetaInfo.PROPERTY_CONFIG_DIR + Dict.SLASH + Dict.SLASH + configFileName);
         properties.forEach((k, v) -> {
             try {
-                this.registerMap.put(k.toString(), (TechProvider) injector.getInstance(Class.forName(v.toString())));
+                this.registerMap.put(k.toString(), (RouterService) injector.getInstance(Class.forName(v.toString())));
             } catch (Exception e) {
-                logger.error("provider {} class {} init error", k, v, e);
+                logger.error("router {} class {} init error", k, v, e);
             }
         });
-        logger.info("tech provider register : {}", this.registerMap);
+        logger.info("router service register : {}", this.registerMap);
     }
 
     @Override

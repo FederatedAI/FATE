@@ -16,36 +16,70 @@
 
 package org.fedai.osx.core.router;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.fedai.osx.core.context.Protocol;
 
 
 @Data
 public class RouterInfo {
+
+    public static class  BooleanFilter{
+        @Override
+        public boolean equals(Object obj) {
+//            System.err.println(obj.getClass());
+            if(obj instanceof Boolean){
+
+
+                boolean result=   !(Boolean)obj;
+                System.err.println("ppppppp"+ result);
+                return result;
+            }
+//            return false;
+            return  true;
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Protocol protocol;
+    @JsonIgnore
     private String sourcePartyId;
+    @JsonIgnore
     private String desPartyId;
+    @JsonIgnore
     private String desRole;
+    @JsonIgnore
     private String sourceRole;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String url;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("ip")
     private String host;
     private Integer port;
+    @JsonInclude(value = JsonInclude.Include.CUSTOM,valueFilter = BooleanFilter.class)
     private boolean useSSL = false;
-    //    private String negotiationType;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String certChainFile;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String privateKeyFile;
-    //   private String trustCertCollectionFile;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String caFile;
-
-    private boolean useKeyStore = true;
+    @JsonInclude(value = JsonInclude.Include.CUSTOM,valueFilter = BooleanFilter.class)
+    private boolean useKeyStore = false ;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String keyStoreFilePath;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String keyStorePassword;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String trustStoreFilePath;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String trustStorePassword;
 
-    private String version;
-    private String instId;
-    private boolean isCycle;
+
+
+
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();
@@ -63,7 +97,7 @@ public class RouterInfo {
     public String toString() {
         return toKey();
     }
-
+    @JsonIgnore
     public String getResource() {
         StringBuilder sb = new StringBuilder();
         sb.append(sourcePartyId).append("-").append(desPartyId);

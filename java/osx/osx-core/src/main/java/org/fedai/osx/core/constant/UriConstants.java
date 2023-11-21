@@ -31,6 +31,8 @@ public class UriConstants {
 
 
     public static final String HTTP_CHANGE_ROUTER = "/v1/inner/router/set";
+    public static final String HTTP_CHANGE_ROUTER_REPLACE =  "/v1/inner/router/replace";
+    public static final String HTTP_GET_ROUTER_INFO = "/v1/inner/router/get";
 
 
     public static final String CLUSTER_TOKEN_APPLY = "/org.fedai.osx.proxy/tokenApply";

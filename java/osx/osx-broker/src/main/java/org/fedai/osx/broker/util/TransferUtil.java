@@ -441,9 +441,9 @@ public class TransferUtil {
         AssertUtil.notNull(routerInfo, context.getDesNodeId() != null ? "des partyId " + context.getDesNodeId() + " router info is null" : " error router info");
         Osx.Outbound result = null;
 
-        if (routerInfo.isCycle()) {
-            throw new CycleRouteInfoException("cycle router info");
-        }
+//        if (routerInfo.getIsCycle()) {
+//            throw new CycleRouteInfoException("cycle router info");
+//        }
         if (routerInfo.getProtocol() == null || Protocol.grpc.equals(context.getProtocol()) && Protocol.grpc.equals(routerInfo.getProtocol())) {
             //来自旧版fateflow的请求，需要用旧版的stub
             Osx.Inbound inbound = (Osx.Inbound) data;

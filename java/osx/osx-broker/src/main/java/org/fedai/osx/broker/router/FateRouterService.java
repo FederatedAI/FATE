@@ -21,6 +21,5 @@ import org.fedai.osx.core.router.RouterInfo;
 
 public interface FateRouterService extends RouterService {
 
-    RouterInfo route(Proxy.Packet packet);
 
 }

@@ -6,6 +6,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterService;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.TransferStatus;
@@ -21,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> {
 
     TransferStatus transferStatus = TransferStatus.INIT;
-    DefaultFateRouterServiceImpl defaultFateRouterService;
+    RouterService defaultFateRouterService;
     OsxContext context;
     String oriTopic;
     String backTopic;
@@ -29,7 +30,7 @@ public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> 
     String srcNodeId;
     String desNodeId;
     RouterInfo revertRouterInfo;
-    DirectBackStreamObserver(DefaultFateRouterServiceImpl defaultFateRouterService,
+    DirectBackStreamObserver(RouterService defaultFateRouterService,
                              String oriTopic, String sessionId, String srcNodeId, String desNodeId) {
         this.defaultFateRouterService = defaultFateRouterService;
         this.oriTopic = oriTopic;
@@ -44,7 +45,7 @@ public class DirectBackStreamObserver implements StreamObserver<Proxy.Metadata> 
         context.setUri(UriConstants.PUSH);
         context.setSrcNodeId(srcNodeId);
         context.setDesNodeId(desNodeId);
-        revertRouterInfo = defaultFateRouterService.routePtp("", srcNodeId, "", desNodeId);
+        revertRouterInfo = defaultFateRouterService.route(srcNodeId,"",desNodeId , "" );
         transferStatus = TransferStatus.TRANSFERING;
         backTopic = buildBackTopic(oriTopic);
     }

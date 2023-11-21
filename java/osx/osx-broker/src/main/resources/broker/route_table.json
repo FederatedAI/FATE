@@ -1,42 +1,59 @@
 {
-  "route_table":
-  {
-    "9999":
-    {
-      "default":[{
-        "protocol":"grpc",
-        "url": "http://127.0.0.1:7304/v1/interconn/chan/invoke",
-        "ip": "127.0.0.1",
-        "port": 7304
-      }]
-    },
-    "10000":{
-      "default":[{
-        "protocol":"grpc",
-        "url": "https://127.0.0.1:8088/osx/inbound",
-         "keyStoreFilePath": "D:\\webank\\osx\\test\\server.keystore",
-        "keyStorePassword": "123456",
-         "trustStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
-        "trustStorePassword": "123456",
-        "negotiationType": "TLS",
-        "useSSL": true,
-        "port": 9884,
-        "ip": "127.0.0.1"
-      }]
-    },
-    "10001":{
-      "default":[{
-        "protocol":"grpc",
-        "url": "http://127.0.0.1:8087/osx/inbound",
-        "ip": "127.0.0.1",
-        "port": 9375
-      }]
-    }
+	"route_table":{
+		"3488":{
+			"default":[
+				{
 
-
-  },
-  "permission":
-  {
-    "default_allow": true
-  }
+					"port":8888,
+					"ip":"localhost"
+				}
+			]
+		},
+		"3477":{
+			"default":[
+				{
+					"port":8889,
+					"ip":"localhost"
+				}
+			]
+		},
+		"10000":{
+			"default":[
+				{
+					"trustStorePassword":"123456",
+					"protocol":"grpc",
+					"keyStorePassword":"123456",
+					"port":9884,
+					"keyStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
+					"ip":"127.0.0.1",
+					"trustStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
+					"url":"https://127.0.0.1:8088/osx/inbound",
+					"useSSL":true
+				}
+			]
+		},
+		"9999":{
+			"default":[
+				{
+					"protocol":"grpc",
+					"port":7304,
+					"url":"http://127.0.0.1:7304/v1/interconn/chan/invoke",
+					"ip":"127.0.0.1"
+				}
+			]
+		},
+		"10001":{
+			"default":[
+				{
+					"protocol":"grpc",
+					"port":9375,
+					"url":"http://127.0.0.1:8087/osx/inbound",
+					"ip":"127.0.0.1"
+				}
+			]
+		}
+	},
+	"self_party":[
+		"10000"
+	]
 }

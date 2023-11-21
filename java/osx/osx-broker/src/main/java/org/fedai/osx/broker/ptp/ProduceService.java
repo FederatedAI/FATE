@@ -27,9 +27,10 @@ import org.fedai.osx.broker.pojo.HttpInvoke;
 import org.fedai.osx.broker.pojo.ProduceRequest;
 import org.fedai.osx.broker.pojo.ProduceResponse;
 import org.fedai.osx.broker.queue.*;
-import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.service.Register;
 import org.fedai.osx.broker.service.TokenApplyService;
+import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.ActionType;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.QueueType;
@@ -64,7 +65,7 @@ public class ProduceService extends AbstractServiceAdaptorNew<ProduceRequest, Pr
     @Inject
     FlowCounterManager flowCounterManager;
     @Inject
-    DefaultFateRouterServiceImpl defaultFateRouterService;
+    RouterServiceRegister routerServiceRegister;
 
     Base64.Decoder base64Decoder = Base64.getDecoder();
 
@@ -134,10 +135,10 @@ public class ProduceService extends AbstractServiceAdaptorNew<ProduceRequest, Pr
             }
             queue = createQueueResult.getQueue();
             if (QueueType.DIRECT.equals(queueType)) {
-                DirectBackStreamObserver directBackStreamObserver = new DirectBackStreamObserver(defaultFateRouterService, context.getTopic(),
+                DirectBackStreamObserver directBackStreamObserver = new DirectBackStreamObserver(routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER), context.getTopic(),
                         context.getSessionId(), context.getDesNodeId(), context.getSrcNodeId());
                 QueuePushReqStreamObserver queuePushReqStreamObserver = new QueuePushReqStreamObserver(context,
-                        defaultFateRouterService, transferQueueManager, directBackStreamObserver);
+                        routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER), transferQueueManager, directBackStreamObserver);
                 ((DirectQueue) queue).setStreamObserver(queuePushReqStreamObserver);
                 ((DirectQueue) queue).setInputParser(new DataParser() {
                     @Override
