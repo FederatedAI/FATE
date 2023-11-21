@@ -634,7 +634,7 @@ class Session(object):
 
 class RichProcessPool:
     def __init__(self, pool, process_infos, log_level):
-        import rich
+        import rich.console
 
         self._pool = pool
         self._exception_tb = {}
