@@ -17,10 +17,10 @@
 package org.fedai.osx.core.service;
 
 
-import org.fedai.osx.api.context.Context;
 
-public interface InterceptorChain<ctx extends Context,req, resp> extends Interceptor<ctx ,req, resp> {
 
-    public void addInterceptor(Interceptor<ctx,req, resp> interceptor);
+public interface InterceptorChain<req, resp> extends Interceptor<req, resp> {
+
+    public void addInterceptor(Interceptor<req, resp> interceptor);
 
 }

@@ -27,6 +27,9 @@ public class BaseException extends RuntimeException {
     public BaseException() {
 
     }
+    public BaseException(Exception e){
+        super(e);
+    }
 
     public String getRetcode() {
         return retcode;
