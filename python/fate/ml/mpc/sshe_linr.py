@@ -4,16 +4,16 @@ import logging
 from fate.arch import Context
 from ..abc.module import Module
 from fate.arch.dataframe import DataFrame
-from fate.arch.protocol.mpc.nn.sshe.lr_layer import (
-    SSHELogisticRegressionLayer,
-    SSHELogisticRegressionLossLayer,
+from fate.arch.protocol.mpc.nn.sshe.linr_layer import (
+    SSHELinearRegressionLayer,
+    SSHELinearRegressionLossLayer,
     SSHEOptimizerSGD,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class SSHELogisticRegression(Module):
+class SSHELinearRegression(Module):
     def __init__(self, lr=0.05):
         self.lr = lr
 
@@ -22,7 +22,7 @@ class SSHELogisticRegression(Module):
         y = ctx.mpc.cond_call(lambda: input_data.label.as_tensor(), lambda: None, dst=rank_b)
         h = input_data.as_tensor()
         # generator = torch.Generator().manual_seed(0)
-        layer = SSHELogisticRegressionLayer(
+        layer = SSHELinearRegressionLayer(
             ctx,
             in_features_a=ctx.mpc.option_call(lambda: h.shape[1], dst=rank_a),
             in_features_b=ctx.mpc.option_call(lambda: h.shape[1], dst=rank_b),
@@ -31,7 +31,7 @@ class SSHELogisticRegression(Module):
             rank_b=rank_b,
             # generator=generator,
         )
-        loss_fn = SSHELogisticRegressionLossLayer(ctx, rank_a=rank_a, rank_b=rank_b)
+        loss_fn = SSHELinearRegressionLossLayer(ctx, rank_a=rank_a, rank_b=rank_b)
         optimizer = SSHEOptimizerSGD(ctx, layer.parameters(), lr=self.lr)
 
         for i in range(20):

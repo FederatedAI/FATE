@@ -1,11 +1,10 @@
-import torch
 from fate.arch.context import Context
 from fate.arch.utils.trace import auto_trace
 from fate.arch.protocol.mpc.common.encoding import IgnoreEncodings
 from fate.arch.protocol.mpc.mpc import FixedPointEncoder
 
 
-class SSHELogisticRegressionLayer:
+class SSHELinearRegressionLayer:
     def __init__(
         self,
         ctx: Context,
@@ -47,11 +46,10 @@ class SSHELogisticRegressionLayer:
         self.phe_cipher = ctx.cipher.phe.setup()
         self.precision_bits = precision_bits
 
-    @auto_trace(annotation="[z|rank_b] = 0.25 * ([xa|rank_a] * <wa> + [xb|rank_b] * <wb>) + 0.5")
+    @auto_trace(annotation="[z|rank_b] = [xa|rank_a] * <wa> + [xb|rank_b] * <wb>")
     def forward(self, x):
-        xa = x if self.ctx.rank == self.rank_a else None
-        xb = x if self.ctx.rank == self.rank_b else None
-        s = self.ctx.mpc.sshe.cross_smm(
+        xa, xb = self.ctx.mpc.split_variable(x, self.rank_a, self.rank_b)
+        z = self.ctx.mpc.sshe.cross_smm(
             ctx=self.ctx,
             group=self.group,
             xa=xa,
@@ -63,10 +61,9 @@ class SSHELogisticRegressionLayer:
             phe_cipher=self.phe_cipher,
             precision_bits=self.precision_bits,
         )
-        z = 0.25 * s + 0.5
 
         # set backward function
-        z.backward = SSHELogisticRegressionLayerBackwardFunction(
+        z.backward = SSHELinearRegressionLayerBackwardFunction(
             ctx=self.ctx,
             group=self.group,
             rank_a=self.rank_a,
@@ -87,7 +84,7 @@ class SSHELogisticRegressionLayer:
         return [self.wa, self.wb]
 
 
-class SSHELogisticRegressionLayerBackwardFunction:
+class SSHELinearRegressionLayerBackwardFunction:
     def __init__(self, ctx, group, rank_a, rank_b, phe_cipher, encoder, wa, wb, dz, x):
         self.ctx = ctx
         self.group = group
@@ -101,7 +98,7 @@ class SSHELogisticRegressionLayerBackwardFunction:
         self.dz = dz
         self.x = x
 
-    @auto_trace(annotation="<ga> = <d.T> @ [xa|rank_a]; <gb> = <d.T> @ [xb|rank_b]")
+    @auto_trace
     def __call__(self, dz):
         xa, xb = self.ctx.mpc.split_variable(self.x, self.rank_a, self.rank_b)
 
@@ -141,7 +138,7 @@ class SSHELogisticRegressionLayerBackwardFunction:
         self.wb.grad = gb
 
 
-class SSHELogisticRegressionLossLayer:
+class SSHELinearRegressionLossLayer:
     def __init__(self, ctx: Context, rank_a, rank_b):
         self.ctx = ctx
         self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_loss_layer")
@@ -149,12 +146,11 @@ class SSHELogisticRegressionLossLayer:
         self.rank_b = rank_b
         self.phe_cipher = ctx.cipher.phe.setup()
 
-    @auto_trace(annotation="<dz> = <z> - y")
     def forward(self, z, y):
         dz = z.clone()
         if self.ctx.rank == self.rank_b:
             dz = dz - y
-        return SSHESSHELogisticRegressionLossLayerLazyLoss(
+        return SSHESSHELinearRegressionLossLayerLazyLoss(
             self.ctx, self.group, self.rank_a, self.rank_b, self.phe_cipher, dz, z
         )
 
@@ -162,7 +158,7 @@ class SSHELogisticRegressionLossLayer:
         return self.forward(z, y)
 
 
-class SSHESSHELogisticRegressionLossLayerLazyLoss:
+class SSHESSHELinearRegressionLossLayerLazyLoss:
     """
     Loss carried out lazily to avoid unnecessary communication
     """
@@ -176,12 +172,11 @@ class SSHESSHELogisticRegressionLossLayerLazyLoss:
         self.dz = dz
         self.z = z
 
-    @auto_trace(annotation="loss = 2 * (dz^2).mean() - 0.5 + log(2)")
     def get(self):
         """
         Computes and returns the loss
 
-        loss = 2 * (dz^2).mean() - 0.5 + log(2)
+        loss = (dz^2).mean()
         """
         dz_mean_square = (
             self.ctx.mpc.sshe.mpc_square(
@@ -195,7 +190,7 @@ class SSHESSHELogisticRegressionLossLayerLazyLoss:
             .mean()
             .get_plain_text()
         )
-        return 2 * dz_mean_square - 0.5 + torch.log(torch.tensor(2.0))
+        return dz_mean_square
 
     def backward(self):
         self.z.backward(self.dz / self.dz.share.shape[0])
@@ -207,7 +202,6 @@ class SSHEOptimizerSGD:
         self.params = params
         self.lr = lr
 
-    @auto_trace(annotation="<param> -= <lr> * <param.grad>")
     def step(self):
         for param in self.params:
             if param.grad is None:
