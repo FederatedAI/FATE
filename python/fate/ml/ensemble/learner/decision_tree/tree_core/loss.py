@@ -91,11 +91,9 @@ class CELoss(Loss):
     @staticmethod
     def compute_loss(label: DataFrame, pred: DataFrame):
         loss_col = label.create_frame()
-        print(label.as_pd_df())
-        print(pred.as_pd_df())
-        label_pred = label.hstack(pred)
+        label_pred =  DataFrame.hstack([label, pred])
         sample_num = len(label)
-        loss_col["loss"] = label_pred.apply_row(lambda s: np.log(s[1:][int(s[0])]))
+        loss_col["loss"] = label_pred.apply_row(lambda s: -np.log(s[1][int(s[0])]), with_label=True)
         loss_col["loss"].fillna(1)
         reduce_loss = loss_col["loss"].sum() / sample_num
         return reduce_loss

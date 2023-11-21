@@ -42,7 +42,7 @@ def create_ctx(local):
 if __name__ == "__main__":
     party = sys.argv[1]
     max_depth = 2
-    num_tree = 1
+    num_tree = 5
 
     # import acc from sklearn
     from sklearn.metrics import accuracy_score as acc
@@ -52,7 +52,6 @@ if __name__ == "__main__":
         df = pd.read_csv("./../../../../../../../examples/data/vehicle_scale_hetero_guest.csv")
         df["sample_id"] = [i for i in range(len(df))]
         reader = PandasReader(sample_id_name="sample_id", match_id_name="id", label_name="y", dtype="float32")
-
         data_guest = reader.to_frame(ctx, df)
         print('num tree is {}'.format(num_tree))
         trees = HeteroSecureBoostGuest(
