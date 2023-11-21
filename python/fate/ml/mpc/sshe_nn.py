@@ -29,7 +29,7 @@ class SSHENN(MPCModule):
         hb = torch.rand(num_samples, in_features_b, requires_grad=True, generator=torch.Generator().manual_seed(1))
         h = ctx.mpc.cond_call(lambda: ha, lambda: hb, dst=0)
 
-        generator = torch.Generator().manual_seed(0)
+        # generator = torch.Generator().manual_seed(0)
         layer = SSHEAggregatorLayer(
             ctx,
             in_features_a=in_features_a,
@@ -38,7 +38,7 @@ class SSHENN(MPCModule):
             rank_a=0,
             rank_b=1,
             lr=lr,
-            generator=generator,
+            # generator=generator,
         )
         z = layer(h)
         ctx.mpc.info(f"forward={z}", dst=[1])

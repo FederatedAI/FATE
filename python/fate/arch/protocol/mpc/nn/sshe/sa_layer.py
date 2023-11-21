@@ -41,7 +41,6 @@ class SSHEAggregatorFunction(torch.autograd.Function):
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         aggregator: "SSHEAggregator" = ctx.aggregator
-        aggregator.ctx.mpc.info(f"grad_outputs={grad_outputs}", dst=[0, 1])
         ha = ctx.saved_tensors[0] if aggregator.ctx.rank == aggregator.rank_a else None
         hb = ctx.saved_tensors[0] if aggregator.ctx.rank == aggregator.rank_b else None
         dz = grad_outputs[0] if aggregator.ctx.rank == aggregator.rank_b else None
