@@ -14,4 +14,14 @@ aggregator_map = {
 }
 
 
-__all__ = ['PlainTextAggregatorClient', 'PlainTextAggregatorServer', 'SecureAggregatorClient', 'SecureAggregatorServer']
+from fate.ml.aggregator.aggregator_wrapper import AggregatorClientWrapper, AggregatorServerWrapper
+
+
+__all__ = [
+    'PlainTextAggregatorClient',
+    'PlainTextAggregatorServer',
+    'SecureAggregatorClient',
+    'SecureAggregatorServer',
+    "AggregatorServerWrapper",
+    "AggregatorClientWrapper"
+]

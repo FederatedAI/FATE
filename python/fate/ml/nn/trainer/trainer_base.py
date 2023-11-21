@@ -122,6 +122,7 @@ class TrainingArguments(_hf_TrainingArguments):
     checkpoint_idx: int = field(default=None)
     # by default we use constant learning rate, the same as FATE-1.X
     lr_scheduler_type: str = field(default="constant")
+    deepspeed: Optional[str] = field(default=None)
 
     def __post_init__(self):
         # Always use default values for hub-related attributes
@@ -288,7 +289,7 @@ class FedCallbackInterface(object):
     ):
         pass
 
-    def init_aggregator(self, fed_arg: FedArguments):
+    def init_aggregator(self, training_args: TrainingArguments, fed_arg: FedArguments):
         raise NotImplementedError("init_aggregator() must be implemented in subclass, init aggregator here")
 
 
@@ -572,7 +573,7 @@ class WrappedFedCallback(CallbackWrapper):
         if self.wrapped_trainer.local_mode:
             logger.info("local mode, skip federation aggregator initialization, aggregator will be None")
         else:
-            self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator(self.ctx, self.fed_arg)
+            self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator(self.ctx, args, self.fed_arg)
 
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.wrapped_trainer.local_mode:
@@ -777,11 +778,15 @@ class StdFedTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
         # on federation of fedcallback
         # callbacks of shortcutcallback
         new_callback_list = []
+        """
         for i in callback_handler.callbacks:
             if isinstance(i, PrinterCallback):
                 continue
             else:
                 new_callback_list.append(i)
+        """
+        for i in callback_handler.callbacks:
+            new_callback_list.append(i)
         new_callback_list.append(FatePrinterCallback())
         callback_handler.callbacks = new_callback_list
         callback_handler.callbacks.append(WrappedFedCallback(self.ctx, self))
@@ -893,7 +898,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
 
         self._add_fate_callback(self.callback_handler)
 
-    def init_aggregator(self, ctx: Context, fed_arg: FedArguments):
+    def init_aggregator(self, ctx: Context, train_args: TrainingArguments, fed_arg: FedArguments):
         return None
 
     def compute_loss(self, model, inputs, **kwargs):
