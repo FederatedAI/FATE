@@ -323,7 +323,9 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
 
             # compute loss
             iter_loss = self._loss_func.compute_loss(train_data.label, self._loss_func.predict(self._accumulate_scores))
-            self._loss_history.append(float(iter_loss.iloc[0]))
+            iter_loss = float(iter_loss.iloc[0])
+            self._loss_history.append(iter_loss)
+            tree_ctx.metrics.log_loss('sbt_loss', iter_loss)
 
         # compute train predict using cache scores
         train_predict: DataFrame = self._loss_func.predict(self._accumulate_scores)
