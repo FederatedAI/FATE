@@ -60,7 +60,7 @@ class FeatureImputation(ModelBase):
     def load_model(self, model_dict):
         param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
-        self.header = param_obj.header
+        self.header = list(param_obj.header)
         self.missing_fill, self.missing_fill_method, \
             self.missing_impute, self.fill_value, self.skip_cols = load_feature_imputer_model(self.header,
                                                                                               "Imputer",
@@ -68,7 +68,7 @@ class FeatureImputation(ModelBase):
                                                                                               param_obj.imputer_param)
 
     def save_model(self):
-        meta_obj, param_obj = save_feature_imputer_model(missing_fill=True,
+        meta_obj, param_obj = save_feature_imputer_model(missing_fill=self.model_param.need_run,
                                                          missing_replace_method=self.missing_fill_method,
                                                          cols_replace_method=self.cols_replace_method,
                                                          missing_impute=self.missing_impute,
@@ -159,10 +159,11 @@ def save_feature_imputer_model(missing_fill=False,
 
         if missing_fill_value is not None and header is not None:
             fill_header = [col for col in header if col not in skip_cols]
-            feature_value_dict = dict(zip(fill_header, map(str, missing_fill_value)))
+            fill_value = [missing_fill_value[header.index(col)] for col in fill_header]
+            feature_value_dict = dict(zip(fill_header, map(str, fill_value)))
 
             model_param.missing_replace_value.update(feature_value_dict)
-            missing_fill_value_type = [type(v).__name__ for v in missing_fill_value]
+            missing_fill_value_type = [type(v).__name__ for v in fill_value]
             feature_value_type_dict = dict(zip(fill_header, missing_fill_value_type))
             model_param.missing_replace_value_type.update(feature_value_type_dict)
 

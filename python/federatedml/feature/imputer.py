@@ -234,19 +234,19 @@ class Imputer(object):
                 raise ValueError("Unknown replace method:{}".format(replace_method))
             cols_transform_value[feature] = transform_value
 
-        # LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         cols_transform_value = [cols_transform_value[key] for key in header]
         # cols_transform_value = {i: round(cols_transform_value[key], 6) for i, key in enumerate(header)}
         # LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         return cols_transform_value
 
     @staticmethod
-    def _transform_nan(instance):
+    def _transform_nan(instance, skip_idx):
         feature_shape = instance.features.shape[0]
         new_features = []
         contains_na = False
+        skip_idx = set(skip_idx)
         for i in range(feature_shape):
-            if instance.features[i] != instance.features[i]:
+            if instance.features[i] != instance.features[i] and i not in skip_idx:
                 new_features.append(NoneType())
                 contains_na = True
             else:
@@ -264,23 +264,23 @@ class Imputer(object):
         replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
 
         schema = data.schema
+        skip_idx = [get_header(data).index(v) for v in skip_cols]
         if isinstance(data.first()[1], Instance):
-            data = data.mapValues(lambda v: Imputer._transform_nan(v))
+            data = data.mapValues(lambda v: Imputer._transform_nan(v, skip_idx))
             data.schema = schema
         cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
                                                                replace_value=replace_value,
                                                                col_replace_value=col_replace_value,
                                                                error=error, multi_mode=multi_mode)
         self.skip_cols = skip_cols
-        skip_cols = [get_header(data).index(v) for v in skip_cols]
         if output_format is not None:
             f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
                                   transform_list=cols_transform_value, missing_value_list=self.abnormal_value_set,
-                                  output_format=output_format, skip_cols=set(skip_cols))
+                                  output_format=output_format, skip_cols=set(skip_idx))
         else:
             f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
                                   transform_list=cols_transform_value, missing_value_list=self.abnormal_value_set,
-                                  skip_cols=set(skip_cols))
+                                  skip_cols=set(skip_idx))
 
         transform_data = data.mapValues(f)
         self.cols_replace_method = replace_method_per_col
@@ -289,11 +289,11 @@ class Imputer(object):
         return transform_data, cols_transform_value
 
     def __transform_replace(self, data, transform_value, replace_area, output_format, skip_cols):
-        skip_cols = [get_header(data).index(v) for v in skip_cols]
+        skip_idx = [get_header(data).index(v) for v in skip_cols]
 
         schema = data.schema
         if isinstance(data.first()[1], Instance):
-            data = data.mapValues(lambda v: Imputer._transform_nan(v))
+            data = data.mapValues(lambda v: Imputer._transform_nan(v, skip_idx))
             data.schema = schema
 
         if replace_area == 'all':
@@ -309,11 +309,11 @@ class Imputer(object):
                 f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
                                       transform_list=transform_value, missing_value_list=self.abnormal_value_set,
                                       output_format=output_format,
-                                      skip_cols=set(skip_cols))
+                                      skip_cols=set(skip_idx))
             else:
                 f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
                                       transform_list=transform_value, missing_value_list=self.abnormal_value_set,
-                                      skip_cols=set(skip_cols))
+                                      skip_cols=set(skip_idx))
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))
 
