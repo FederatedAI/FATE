@@ -25,7 +25,7 @@ from ..utils._auto_column_name_generated import generated_default_column_names
 
 
 def apply_row(df: "DataFrame", func,
-              columns: list=None, with_label=False, with_weight=False,
+              columns: list = None, with_label=False, with_weight=False,
               enable_type_align_checking=True) -> "DataFrame":
     """
     In current version, assume that the apply_row results' lengths are equal
@@ -40,7 +40,15 @@ def apply_row(df: "DataFrame", func,
     non_operable_field_names = dst_data_manager.get_field_name_list()
     non_operable_blocks = [data_manager.loc_block(field_name,
                                                   with_offset=False) for field_name in non_operable_field_names]
-    operable_blocks = data_manager.infer_operable_blocks()
+    fields_loc = data_manager.get_fields_loc(with_sample_id=False, with_match_id=False,
+                                             with_label=with_label, with_weight=with_weight)
+
+    fields_name = data_manager.get_field_name_list(with_sample_id=False,
+                                                   with_match_id=False,
+                                                   with_label=with_label,
+                                                   with_weight=with_weight)
+
+    operable_blocks = sorted(list(set(data_manager.loc_block(fields_name, with_offset=False))))
     is_numeric = True
     for bid in operable_blocks:
         if not data_manager.get_block(bid).is_numeric():
@@ -51,14 +59,6 @@ def apply_row(df: "DataFrame", func,
         for bid in operable_blocks:
             field_indexes = data_manager.get_block(bid).field_indexes
             block_column_in_orders.extend([data_manager.get_field_name(field_index) for field_index in field_indexes])
-
-    fields_loc = data_manager.get_fields_loc(with_sample_id=False, with_match_id=False,
-                                             with_label=with_label, with_weight=with_weight)
-
-    fields_name = data_manager.get_field_name_list(with_sample_id=False,
-                                                   with_match_id=False,
-                                                   with_label=with_label,
-                                                   with_weight=with_weight)
 
     _apply_func = functools.partial(_apply, func=func, src_operable_blocks=operable_blocks, src_field_names=fields_name,
                                     src_fields_loc=fields_loc, src_non_operable_blocks=non_operable_blocks,

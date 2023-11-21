@@ -24,7 +24,7 @@ configpath=$(cd $basepath/conf;pwd)
 libpath=$(cd $basepath/lib;pwd)
 #module=transfer
 #main_class=com.firework.transfer.Bootstrap
-module_version=1.0.0-beta
+module_version=1.0.0-alpha
 project_name=osx
 
 

@@ -90,7 +90,7 @@
         -->
 
         <AsyncRoot level="info" includeLocation="true">
-            <AppenderRef ref="console" level="info"/>
+            <AppenderRef ref="console" level="debug"/>
             <AppenderRef ref="info" level="info"/>
             <AppenderRef ref="error" level="error"/>
         </AsyncRoot>

@@ -15,9 +15,10 @@
  */
 
 package org.fedai.osx.api.router;
-import org.fedai.osx.api.constants.Protocol;
+import lombok.Data;
 
 
+@Data
 public class RouterInfo {
     private Protocol protocol;
     private String sourcePartyId;
@@ -34,135 +35,7 @@ public class RouterInfo {
     private String trustCertCollectionFile;
     private String caFile;
     private String version;
-
-    public Protocol getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(Protocol protocol) {
-        this.protocol = protocol;
-    }
-
-    public String getSourcePartyId() {
-        return sourcePartyId;
-    }
-
-    public void setSourcePartyId(String sourcePartyId) {
-        this.sourcePartyId = sourcePartyId;
-    }
-
-    public String getDesPartyId() {
-        return desPartyId;
-    }
-
-    public void setDesPartyId(String desPartyId) {
-        this.desPartyId = desPartyId;
-    }
-
-    public String getDesRole() {
-        return desRole;
-    }
-
-    public void setDesRole(String desRole) {
-        this.desRole = desRole;
-    }
-
-    public String getSourceRole() {
-        return sourceRole;
-    }
-
-    public void setSourceRole(String sourceRole) {
-        this.sourceRole = sourceRole;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public Integer getPort() {
-        return port;
-    }
-
-    public void setPort(Integer port) {
-        this.port = port;
-    }
-
-    public boolean isUseSSL() {
-        return useSSL;
-    }
-
-    public void setUseSSL(boolean useSSL) {
-        this.useSSL = useSSL;
-    }
-
-    public String getNegotiationType() {
-        return negotiationType;
-    }
-
-    public void setNegotiationType(String negotiationType) {
-        this.negotiationType = negotiationType;
-    }
-
-    public String getCertChainFile() {
-        return certChainFile;
-    }
-
-    public void setCertChainFile(String certChainFile) {
-        this.certChainFile = certChainFile;
-    }
-
-    public String getPrivateKeyFile() {
-        return privateKeyFile;
-    }
-
-    public void setPrivateKeyFile(String privateKeyFile) {
-        this.privateKeyFile = privateKeyFile;
-    }
-
-    public String getTrustCertCollectionFile() {
-        return trustCertCollectionFile;
-    }
-
-    public void setTrustCertCollectionFile(String trustCertCollectionFile) {
-        this.trustCertCollectionFile = trustCertCollectionFile;
-    }
-
-    public String getCaFile() {
-        return caFile;
-    }
-
-    public void setCaFile(String caFile) {
-        this.caFile = caFile;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public boolean isCycle() {
-        return isCycle;
-    }
-
-    public void setCycle(boolean cycle) {
-        isCycle = cycle;
-    }
-
+    private String instId;
     private boolean isCycle;
 
     public String toKey() {

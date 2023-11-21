@@ -1,13 +1,13 @@
 package org.fedai.osx.broker.security;
 
 
-import org.fedai.osx.api.context.Context;
+import org.fedai.osx.core.context.OsxContext;
 
 public class MockTokenGenerator implements TokenGenerator{
 
 
     @Override
-    public String createNewToken(Context context) {
+    public String createNewToken(OsxContext context) {
         return "mock";
     }
 }

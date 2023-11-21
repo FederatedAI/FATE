@@ -17,11 +17,11 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>osx</groupId>
-            <artifactId>osx-api</artifactId>
-            <version>${osx.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>osx</groupId>-->
+<!--            <artifactId>osx-api</artifactId>-->
+<!--            <version>${osx.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -86,6 +86,12 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+            <scope>compile</scope>
         </dependency>
 
     </dependencies>

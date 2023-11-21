@@ -457,7 +457,7 @@ class FederationBase(FederationEngine):
         raise NotImplementedError()
 
     def _consume_ack(self, channel_info, id):
-        raise NotImplementedError()
+        return
 
     def _query_receive_topic(self, channel_info):
         return channel_info
@@ -473,7 +473,7 @@ class FederationBase(FederationEngine):
             del self._message_cache[wish_cache_key]
             return recv_obj
 
-        channel_info = self._query_receive_topic(channel_info)
+        # channel_info = self._query_receive_topic(channel_info)
 
         for id, properties, body in self._get_consume_message(channel_info):
             LOGGER.debug(f"[federation._receive_obj] properties: {properties}")
