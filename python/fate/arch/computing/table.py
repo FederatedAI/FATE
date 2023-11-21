@@ -6,7 +6,9 @@ from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar, Optional
 
 from fate.arch.unify.partitioner import get_partitioner_by_type
 from fate.arch.unify.serdes import get_serdes_by_type
+from fate.arch.utils.trace import auto_trace
 from ..unify import URI
+import functools
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +27,22 @@ def _add_padding(message, count):
 
 
 def _compute_info(func):
-    def wrapper(*args, **kwargs):
-        global _level
-        logger.debug(_add_padding(f"computing enter {func.__name__}", _level * 2))
-        try:
-            _level += 1
-            stacks = _add_padding("".join(traceback.format_stack(limit=5)[:-1]), _level * 2)
-            logger.debug(f'{_add_padding("stack:", _level * 2)}\n{stacks}')
-            return func(*args, **kwargs)
-        finally:
-            _level -= 1
-            logger.debug(f"{' ' * _level}computing exit {func.__name__}")
+    return func
 
-    return wrapper
+    # @functools.wraps(func)
+    # def wrapper(*args, **kwargs):
+    #     global _level
+    #     logger.debug(_add_padding(f"computing enter {func.__name__}", _level * 2))
+    #     try:
+    #         _level += 1
+    #         stacks = _add_padding("".join(traceback.format_stack(limit=5)[:-1]), _level * 2)
+    #         logger.debug(f'{_add_padding("stack:", _level * 2)}\n{stacks}')
+    #         return func(*args, **kwargs)
+    #     finally:
+    #         _level -= 1
+    #         logger.debug(f"{' ' * _level}computing exit {func.__name__}")
+    #
+    # return wrapper
 
 
 class KVTableContext:
@@ -208,6 +213,7 @@ class KVTable(Generic[K, V]):
     def destroy(self):
         self._destroy()
 
+    @auto_trace
     @_compute_info
     def map_reduce_partitions_with_index(
         self,
@@ -256,6 +262,7 @@ class KVTable(Generic[K, V]):
             output_num_partitions=output_num_partitions,
         )
 
+    @auto_trace
     @_compute_info
     def mapPartitionsWithIndex(
         self,
@@ -272,6 +279,7 @@ class KVTable(Generic[K, V]):
             output_partitioner_type=output_partitioner_type,
         )
 
+    @auto_trace
     @_compute_info
     def mapReducePartitions(
         self,
@@ -291,6 +299,7 @@ class KVTable(Generic[K, V]):
             output_partitioner_type=output_partitioner_type,
         )
 
+    @auto_trace
     @_compute_info
     def applyPartitions(self, func, output_value_serdes_type=None):
         return self.map_reduce_partitions_with_index(
@@ -300,6 +309,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def mapPartitions(
         self, func, use_previous_behavior=False, preserves_partitioning=False, output_value_serdes_type=None
@@ -313,6 +323,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def map(
         self,
@@ -329,6 +340,7 @@ class KVTable(Generic[K, V]):
             output_partitioner_type=output_partitioner_type,
         )
 
+    @auto_trace
     @_compute_info
     def mapValues(self, map_value_op: Callable[[Any], Any], output_value_serdes_type=None):
         return self.map_reduce_partitions_with_index(
@@ -338,10 +350,12 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def copy(self):
         return self.mapValues(lambda x: x, output_value_serdes_type=self.value_serdes_type)
 
+    @auto_trace
     @_compute_info
     def flatMap(
         self,
@@ -356,6 +370,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def filter(self, filter_op: Callable[[Any], bool]):
         return self.map_reduce_partitions_with_index(
@@ -373,15 +388,18 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=self.value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def collect(self):
         for k, v in self._collect():
             yield self.key_serdes.deserialize(k), self.value_serdes.deserialize(v)
 
+    @auto_trace
     @_compute_info
     def take(self, n):
         return [(self.key_serdes.deserialize(k), self.value_serdes.deserialize(v)) for k, v in self._take(n)]
 
+    @auto_trace
     @_compute_info
     def first(self):
         resp = self.take(n=1)
@@ -389,16 +407,19 @@ class KVTable(Generic[K, V]):
             raise RuntimeError("table is empty")
         return resp[0]
 
+    @auto_trace
     @_compute_info
     def reduce(self, func: Callable[[V, V], V]) -> V:
         return self.value_serdes.deserialize(self._reduce(_lifted_reduce_to_serdes(func, self.value_serdes)))
 
+    @auto_trace
     @_compute_info
     def count(self) -> int:
         if self._count_cache is None:
             self._count_cache = self._count()
         return self._count_cache
 
+    @auto_trace
     @_compute_info
     def join(
         self,
@@ -412,6 +433,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def union(self, other, merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
         return self.binarySortedMapPartitionsWithIndex(
@@ -420,6 +442,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def subtractByKey(self, other: "KVTable"):
         return self.binarySortedMapPartitionsWithIndex(
@@ -466,6 +489,7 @@ class KVTable(Generic[K, V]):
             output_value_serdes_type=output_value_serdes_type,
         )
 
+    @auto_trace
     @_compute_info
     def repartition(self, num_partitions, partitioner_type=None, key_serdes_type=None) -> "KVTable":
         if (
@@ -517,6 +541,7 @@ class KVTable(Generic[K, V]):
             output_num_partitions=num_partitions,
         )
 
+    @auto_trace
     @_compute_info
     def repartition_with(self, other: "KVTable") -> Tuple["KVTable", "KVTable"]:
         if self.partitioner_type == other.partitioner_type and self.num_partitions == other.num_partitions:
@@ -526,6 +551,7 @@ class KVTable(Generic[K, V]):
         else:
             return self.repartition(other.num_partitions, other.partitioner_type), other
 
+    @auto_trace
     @_compute_info
     def save(self, uri: URI, schema, options: dict = None):
         options = options or {}
@@ -535,6 +561,7 @@ class KVTable(Generic[K, V]):
             self._save(uri, schema, options)
         schema.update(self.schema)
 
+    @auto_trace
     @_compute_info
     def sample(
         self,

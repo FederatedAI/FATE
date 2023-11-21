@@ -58,7 +58,8 @@ class Context:
         if self._namespace is None:
             self._namespace = default_ns
         if self._cipher is None:
-            self._cipher: CipherKit = CipherKit(self, device)
+            self._cipher: CipherKit = CipherKit(device)
+        self._cipher.set_ctx(self)
 
         self._role_to_parties = None
         self._is_destroyed = False

@@ -1,12 +1,10 @@
 import logging
 
-
 import torch
 
+from fate.arch import Context
+from fate.arch.protocol.mpc.nn.sshe.nn_layer import SSHENeuralNetworkAggregatorLayer, SSHENeuralNetworkOptimizerSGD
 from . import MPCModule
-from ...arch import Context
-from ...arch.tensor import DTensor
-from .mpc_sa_layer import SSHEAggregatorLayer
 
 logger = logging.getLogger(__name__)
 
@@ -31,27 +29,30 @@ class SSHENN(MPCModule):
         h = ctx.mpc.cond_call(lambda: ha, lambda: hb, dst=0)
 
         generator = torch.Generator().manual_seed(0)
-        layer = SSHEAggregatorLayer(
+        layer = SSHENeuralNetworkAggregatorLayer(
             ctx,
             in_features_a=in_features_a,
             in_features_b=in_features_b,
             out_features=out_features,
             rank_a=0,
             rank_b=1,
-            lr=lr,
             generator=generator,
         )
+        optimizer = SSHENeuralNetworkOptimizerSGD(ctx, layer.parameters(), lr=lr)
         z = layer(h)
         ctx.mpc.info(f"forward={z}", dst=[1])
         ctx.mpc.info(z)
         z2 = z.exp()
         loss = z2.sum()
         loss.backward()
+
+        optimizer.step()
         ctx.mpc.info(f"after backward:\nwa={layer.get_wa()}\nwb={layer.get_wb()}", dst=[1])
         ctx.mpc.info(f"ha.grad={h.grad}", dst=[0])
         ctx.mpc.info(f"hb.grad={h.grad}", dst=[1])
 
         import time
+
         time.sleep(3)
         ctx.mpc.info(f"==================ground truth==================")
         ha = torch.rand(num_samples, in_features_a, requires_grad=True, generator=torch.Generator().manual_seed(0))

@@ -19,27 +19,31 @@
 
 # Note: This file is modified from crypton
 
-import time
-from typing import List
+import datetime
+import logging
+import multiprocessing
 import signal
+import time
+import uuid
+from argparse import Namespace
+from dataclasses import dataclass, field
+from multiprocessing import Queue, Event
+from typing import List
+
 import rich
 import rich.console
 import rich.panel
 import rich.traceback
-import logging
-import datetime
-import uuid
-import multiprocessing
-from multiprocessing import Queue, Event
-from dataclasses import dataclass, field
+
+from fate.arch.utils import trace
 from .argparser import HfArgumentParser
-from argparse import Namespace
+
+logger = logging.getLogger(__name__)
 
 
 class MultiProcessLauncher:
     def __init__(
         self,
-        f,
         console: rich.console.Console,
         parties: List[str] = None,
         federation_session_id: str = None,
@@ -61,30 +65,39 @@ class MultiProcessLauncher:
             if isinstance(args.parties[i], str):
                 args.parties[i] = tuple(args.parties[i].split(":"))
 
-        world_size = len(args.parties)
         multiprocessing.set_start_method("spawn")
+        self.world_size = len(args.parties)
         self.processes: List[multiprocessing.Process] = []
         self.output_or_exception_q = Queue()
         self.safe_to_exit = Event()  # barrier
-        self._console = console
+        self.console = console
         self._exception_tb = {}
-        for rank in range(world_size):
+        self.federation_session_id = args.federation_session_id
+        self.parties = args.parties
+        self.data_dir = args.data_dir
+        self.log_level = args.log_level
+
+    def start(self, f, carrier=None):
+        if carrier is None:
+            carrier = {}
+        for rank in range(self.world_size):
             process_name = "process " + str(rank)
             output_or_exception_q = self.output_or_exception_q
             safe_to_exit = self.safe_to_exit
-            width = console.width
+            width = self.console.width
             process = multiprocessing.Process(
                 target=self.__class__._run_process,
                 name=process_name,
                 args=(
+                    carrier,
                     output_or_exception_q,
                     safe_to_exit,
                     width,
                     rank,
-                    args.parties,
-                    args.federation_session_id,
-                    args.data_dir,
-                    args.log_level,
+                    self.parties,
+                    self.federation_session_id,
+                    self.data_dir,
+                    self.log_level,
                     f,
                 ),
             )
@@ -97,9 +110,12 @@ class MultiProcessLauncher:
             ttp_process = multiprocessing.Process(
                 target=self.__class__._run_ttp_server,
                 name="TTP",
-                args=(world_size,),
+                args=(self.world_size,),
             )
             self.processes.append(ttp_process)
+
+        for process in self.processes:
+            process.start()
 
     @classmethod
     def _run_ttp_server(cls, world_size):
@@ -110,6 +126,7 @@ class MultiProcessLauncher:
     @classmethod
     def _run_process(
         cls,
+        carrier: dict,
         output_or_exception_q: Queue,
         safe_to_exit: Event,
         width,
@@ -122,38 +139,43 @@ class MultiProcessLauncher:
     ):
         from fate.arch.utils.logger import set_up_logging
         from fate.arch.utils.context_helper import init_standalone_context
+        from fate.arch.utils.trace import setup_tracing
+
+        if rank >= len(parties):
+            raise ValueError(f"rank {rank} is out of range {len(parties)}")
+        party = parties[rank]
+        csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
 
         # set up logging
         set_up_logging(rank, log_level)
         logger = logging.getLogger(__name__)
 
-        # init context
-        if rank >= len(parties):
-            raise ValueError(f"rank {rank} is out of range {len(parties)}")
-        party = parties[rank]
-        csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
-        ctx = init_standalone_context(csession_id, federation_session_id, party, parties, data_dir)
+        # set up tracing
+        setup_tracing(f"fate:{party[0]}-{party[1]}")
+        tracer = trace.get_tracer(__name__)
 
-        try:
-            f(ctx)
-            output_or_exception_q.put((rank, None, None))
-            safe_to_exit.wait()
+        with tracer.start_as_current_span(name=csession_id, context=trace.extract_carrier(carrier)) as span:
+            # init context
+            ctx = init_standalone_context(csession_id, federation_session_id, party, parties, data_dir)
 
-        except Exception as e:
-            logger.error(f"exception in rank {rank}: {e}", stack_info=False)
-            exc_traceback = rich.traceback.Traceback.from_exception(
-                type(e), e, traceback=e.__traceback__, width=width, show_locals=True
-            )
-            output_or_exception_q.put((rank, e, exc_traceback))
-        finally:
             try:
-                ctx.destroy()
-            except Exception:
-                pass
+                f(ctx)
+                output_or_exception_q.put((rank, None, None))
+                safe_to_exit.wait()
 
-    def start(self):
-        for process in self.processes:
-            process.start()
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(trace.StatusCode.ERROR, str(e))
+                logger.error(f"exception in rank {rank}: {e}", stack_info=False)
+                exc_traceback = rich.traceback.Traceback.from_exception(
+                    type(e), e, traceback=e.__traceback__, width=width, show_locals=True
+                )
+                output_or_exception_q.put((rank, e, exc_traceback))
+            finally:
+                try:
+                    ctx.destroy()
+                except Exception:
+                    pass
 
     def wait(self) -> int:
         logger = logging.getLogger(__name__)
@@ -182,7 +204,30 @@ class MultiProcessLauncher:
 
     def show_exceptions(self):
         for rank, tb in self._exception_tb.items():
-            self._console.print(rich.panel.Panel(tb, title=f"rank {rank} exception", expand=False, border_style="red"))
+            self.console.print(rich.panel.Panel(tb, title=f"rank {rank} exception", expand=False, border_style="red"))
+
+    def block_run(self, f):
+        from fate.arch.utils.trace import setup_tracing
+
+        setup_tracing("multi_process_launcher")
+        with trace.get_tracer(__name__).start_as_current_span(self.federation_session_id):
+            carrier = trace.inject_carrier()
+            self.start(f, carrier=carrier)
+
+            def sigterm_handler(signum, frame):
+                self.terminate()
+                exit(1)
+
+            signal.signal(signal.SIGTERM, sigterm_handler)
+            logger.info("waiting for all processes to exit")
+            exit_code = self.wait()
+            logger.info("all processes exited")
+            logger.info("cleaning up")
+            self.terminate()
+            logger.info("done")
+            if exit_code != 0:
+                self.show_exceptions()
+            exit(exit_code)
 
 
 @dataclass
@@ -191,6 +236,7 @@ class LauncherArguments:
     federation_session_id: str = field(
         default_factory=lambda: f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid1().hex[:6]}"
     )
+    tracer_id: str = field(default_factory=lambda: uuid.uuid1().hex[:6])
     data_dir: str = field(default=None)
     log_level: str = field(default="INFO")
 
@@ -212,8 +258,6 @@ def launch(f, **kwargs):
 
     from fate.arch.utils.logger import set_up_logging
 
-    logger = logging.getLogger(__name__)
-
     set_up_logging(-1, args.log_level)
 
     logger.info("========================================================")
@@ -222,22 +266,5 @@ def launch(f, **kwargs):
     logger.info(f"data dir: {args.data_dir}")
     logger.info("========================================================")
     console = rich.console.Console()
-    launcher = MultiProcessLauncher(
-        f, console, args.parties, args.federation_session_id, args.data_dir, args.log_level
-    )
-    launcher.start()
-
-    def sigterm_handler(signum, frame):
-        launcher.terminate()
-        exit(1)
-
-    signal.signal(signal.SIGTERM, sigterm_handler)
-    logger.info("waiting for all processes to exit")
-    exit_code = launcher.wait()
-    logger.info("all processes exited")
-    logger.info("cleaning up")
-    launcher.terminate()
-    logger.info("done")
-    if exit_code != 0:
-        launcher.show_exceptions()
-    exit(exit_code)
+    launcher = MultiProcessLauncher(console, args.parties, args.federation_session_id, args.data_dir, args.log_level)
+    launcher.block_run(f)

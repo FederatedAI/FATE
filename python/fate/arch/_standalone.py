@@ -19,7 +19,6 @@ import itertools
 import logging
 import logging.config
 import os
-from typing import Callable, Any, Iterable, Optional
 import shutil
 import signal
 import threading
@@ -31,12 +30,18 @@ from functools import partial
 from heapq import heapify, heappop, heapreplace
 from operator import is_not
 from pathlib import Path
+from typing import Callable, Any, Iterable, Optional
 from typing import List, Tuple, Literal
 
 import cloudpickle as f_pickle
 import lmdb
 
+from fate.arch.utils import trace
+
 PartyMeta = Tuple[Literal["guest", "host", "arbiter", "local"], str]
+
+logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 def _watch_thread_react_to_parent_die(ppid, logger_config):
@@ -64,46 +69,12 @@ def _watch_thread_react_to_parent_die(ppid, logger_config):
     thread = threading.Thread(target=f, daemon=True)
     thread.start()
 
+    # initialize tracer
+    trace.setup_tracing("standalone_computing")
+
     # initialize loggers
     if logger_config is not None:
         logging.config.dictConfig(logger_config)
-    # else:
-    #     level = os.getenv("DEBUG_MODE_LOG_LEVEL", "DEBUG")
-    #     try:
-    #         import rich.logging
-    #
-    #         logging_class = "rich.logging.RichHandler"
-    #         logging_formatters = {}
-    #         handlers = {
-    #             "console": {
-    #                 "class": logging_class,
-    #                 "level": level,
-    #                 "filters": [],
-    #             }
-    #         }
-    #     except ImportError:
-    #         logging_class = "logging.StreamHandler"
-    #         logging_formatters = {
-    #             "console": {
-    #                 "format": "[%(levelname)s][%(asctime)-8s][%(process)s][%(module)s.%(funcName)s][line:%(lineno)d]: %(message)s"
-    #             }
-    #         }
-    #         handlers = {
-    #             "console": {
-    #                 "class": logging_class,
-    #                 "level": level,
-    #                 "formatter": "console",
-    #             }
-    #         }
-    #     logging.config.dictConfig(dict(
-    #         version=1,
-    #         formatters=logging_formatters,
-    #         handlers=handlers,
-    #         filters={},
-    #         loggers={},
-    #         root=dict(handlers=["console"], level="DEBUG"),
-    #         disable_existing_loggers=False,
-    #     ))
 
 
 # noinspection PyPep8Naming
@@ -216,6 +187,7 @@ class Table(object):
                 else:
                     _, _, _, it = heappop(entries)
 
+    @trace.auto_trace
     def reduce(self, func):
         return self._session.submit_reduce(
             func,
@@ -225,6 +197,7 @@ class Table(object):
             namespace=self._namespace,
         )
 
+    @trace.auto_trace
     def binary_sorted_map_partitions_with_index(
         self,
         other: "Table",
@@ -270,6 +243,7 @@ class Table(object):
             partitioner_type=partitioner_type,
         )
 
+    @trace.auto_trace
     def map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
@@ -479,6 +453,7 @@ class Session(object):
                 logger_config,
             ),
         )
+        self._enable_process_logger = True
 
     def __getstate__(self):
         # session won't be pickled
@@ -645,16 +620,121 @@ class Session(object):
         )
 
     def _submit_process(self, do_func, process_infos):
-        futures = []
-        for process_info in process_infos:
-            futures.append(
-                self._pool.submit(
-                    do_func,
-                    process_info,
+        if self._enable_process_logger:
+            log_level = logging.getLevelName(logger.getEffectiveLevel())
+        else:
+            log_level = None
+        rich_process_pool = RichProcessPool(
+            self._pool,
+            process_infos,
+            log_level,
+        )
+        return rich_process_pool.submit(do_func)
+
+
+class RichProcessPool:
+    def __init__(self, pool, process_infos, log_level):
+        import rich.console
+
+        self._pool = pool
+        self._exception_tb = {}
+        self.process_infos = list(process_infos)
+        self.log_level = log_level
+        self.console = rich.console.Console()
+        self.width = self.console.width
+
+    def submit(self, func):
+        features = []
+        outputs = {}
+
+        with tracer.start_as_current_span("submit_process"):
+            carrier = trace.inject_carrier()
+            for p in range(len(self.process_infos)):
+                features.append(
+                    self._pool.submit(
+                        RichProcessPool._process_wrapper,
+                        carrier,
+                        func,
+                        self.process_infos[p],
+                        self.log_level,
+                        self.width,
+                    )
                 )
+
+        from concurrent.futures import wait, FIRST_COMPLETED
+
+        not_done = features
+        while not_done:
+            done, not_done = wait(not_done, return_when=FIRST_COMPLETED)
+            for f in done:
+                partition_id, output, e, exc_traceback = f.result()
+                if e is not None:
+                    import rich.panel
+
+                    self._exception_tb[partition_id] = exc_traceback
+                    self.console.print(
+                        rich.panel.Panel(
+                            exc_traceback,
+                            title=f"partition {partition_id} exception",
+                            expand=False,
+                            border_style="red",
+                        )
+                    )
+                    raise RuntimeError(f"Partition {partition_id} exec failed: {e}")
+                else:
+                    outputs[partition_id] = output
+
+        outputs = [outputs[p] for p in range(len(self.process_infos))]
+        return outputs
+
+    @classmethod
+    def _process_wrapper(cls, carrier, do_func, process_info, log_level, width):
+        trace_context = trace.extract_carrier(carrier)
+        with tracer.start_as_current_span(f"partition:{process_info.partition_id}", context=trace_context):
+            if log_level is not None:
+                RichProcessPool._set_up_process_logger(process_info.partition_id, log_level)
+            try:
+                output = do_func(process_info)
+                return process_info.partition_id, output, None, None
+            except Exception as e:
+                import rich.traceback
+
+                logger.error(f"exception in rank {process_info.partition_id}: {e}", stack_info=False)
+                exc_traceback = rich.traceback.Traceback.from_exception(
+                    type(e), e, traceback=e.__traceback__, width=width, show_locals=True
+                )
+                return process_info.partition_id, None, e, exc_traceback
+
+    def show_exceptions(self):
+        import rich.panel
+
+        console = rich.console.Console()
+        for rank, tb in self._exception_tb.items():
+            console.print(rich.panel.Panel(tb, title=f"rank {rank} exception", expand=False, border_style="red"))
+
+    @classmethod
+    def _set_up_process_logger(cls, rank, log_level="DEBUG"):
+        message_header = f"[[bold green blink]Rank:{rank}[/]]"
+
+        logging.config.dictConfig(
+            dict(
+                version=1,
+                formatters={"with_rank": {"format": f"{message_header} %(message)s", "datefmt": "[%X]"}},
+                handlers={
+                    "base": {
+                        "class": "rich.logging.RichHandler",
+                        "level": log_level,
+                        "filters": [],
+                        "formatter": "with_rank",
+                        "tracebacks_show_locals": True,
+                        "markup": True,
+                    }
+                },
+                loggers={},
+                root=dict(handlers=["base"], level=log_level),
+                disable_existing_loggers=False,
             )
-        results = [r.result() for r in futures]
-        return results
+        )
 
 
 class Federation(object):

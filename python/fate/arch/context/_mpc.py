@@ -9,7 +9,6 @@ import logging
 
 if typing.TYPE_CHECKING:
     from fate.arch.context import Context
-    from fate.arch.tensor.phe import PHETensor, PHETensorDecryptor
     from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor
 logger = logging.getLogger(__name__)
 
@@ -156,8 +155,14 @@ class MPC:
         if self.rank in dst:
             logger.log(msg=message, stacklevel=3, level=level)
 
+    def cond(self, value1, value2, dst):
+        """
+        Returns value1 if rank == dst, otherwise returns value2.
+        """
+        return value1 if self.rank == dst else value2
+
     def cond_call(
-        self, func1: typing.Callable[[], TO1], func2: typing.Callable[[], TO2] = None, dst=0
+        self, func1: typing.Callable[[], TO1], func2: typing.Callable[[], TO2], dst
     ) -> typing.Union[TO1, TO2]:
         """
         Calls func1 if rank == dst, otherwise calls func2.
@@ -167,9 +172,34 @@ class MPC:
         else:
             return func2() if func2 is not None else None
 
+    def option(self, value, dst):
+        """
+        Returns value if rank == dst, otherwise returns None.
+        """
+        return value if self.rank == dst else None
+
+    def option_call(self, func: typing.Callable[[], TO1], dst) -> typing.Union[TO1, None]:
+        """
+        Calls func if rank == dst, otherwise returns None.
+        """
+        return func() if self.rank == dst else None
+
+    def option_assert(self, cond, message, dst):
+        """
+        Asserts cond if rank == dst, otherwise returns None.
+        """
+        if self.rank == dst:
+            assert cond, f"rank:{dst} {message}"
+
+    def split_variable(self, x, *ranks: typing.List[int]):
+        """
+        Split x into len(ranks) parts, each part is None except the part corresponding to the rank in ranks.
+        """
+        return (x if self.rank == rank else None for rank in ranks)
+
     @property
     def sshe(self):
-        from fate.arch.protocol.mpc.sshe import SSHE
+        from fate.arch.protocol.mpc.primitives.sshe import SSHE
 
         return SSHE
 

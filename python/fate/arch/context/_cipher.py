@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class CipherKit:
-    def __init__(self, ctx: "Context", device: device, cipher_mapping: typing.Optional[dict] = None) -> None:
-        self.ctx = ctx
+    def __init__(self, device: device, cipher_mapping: typing.Optional[dict] = None) -> None:
         self._device = device
         if cipher_mapping is None:
             self._cipher_mapping = {}
@@ -34,6 +33,11 @@ class CipherKit:
             self._cipher_mapping = cipher_mapping
         self._allow_custom_random_seed = False
         self._custom_random_seed = 42
+
+        self.ctx = None
+
+    def set_ctx(self, ctx: "Context"):
+        self.ctx = ctx
 
     def set_phe(self, device: device, options: typing.Optional[dict]):
         if "phe" not in self._cipher_mapping:
@@ -54,6 +58,8 @@ class CipherKit:
 
     @property
     def phe(self):
+        if self.ctx is None:
+            raise ValueError("context not set")
         self._set_default_phe()
         if self._device not in self._cipher_mapping["phe"]:
             raise ValueError(f"no impl exists for device {self._device}")

@@ -9,6 +9,7 @@ from torch.distributed import ReduceOp
 from torch.distributed import ReduceOp
 
 from fate.arch.context import Context, NS, Parties
+from fate.arch.utils import trace
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ class Communicator:
         self.rank = rank
         self.rank_to_party = rank_to_party
         self.world_size = world_size
-        self._pool = ThreadPoolExecutor(max_workers=world_size)
+        self._pool = trace.instrument_thread_pool_executor(ThreadPoolExecutor(max_workers=world_size))
         self.main_group = main_group
 
     @classmethod
@@ -131,39 +132,67 @@ class Communicator:
     def shutdown(cls):
         pass
 
-    def send(self, tensor, dst):
-        send_index = self.main_group.tensor_send_index_inc()
-        return self._send(send_index, tensor, dst)
+    def send(self, tensor, dst, group=None):
+        if group is None:
+            group = self.main_group
+        send_index = group.tensor_send_index_inc()
+        recv_index = group.tensor_recv_index_inc()
+        out = self._send(send_index, tensor, dst, group=group)
+        return out
 
-    def send_obj(self, obj, dst):
-        send_index = self.main_group.object_send_index_inc()
-        return self._send_obj(send_index, obj, dst)
+    def send_obj(self, obj, dst, group=None):
+        if group is None:
+            group = self.main_group
+        send_index = group.object_send_index_inc()
+        recv_index = group.object_recv_index_inc()
+        out = self._send_obj(send_index, obj, dst, group=group)
+        return out
 
-    def recv(self, tensor, src):
-        recv_index = self.main_group.tensor_recv_index_inc()
-        return self._recv(recv_index, tensor, src)
+    def recv(self, tensor, src, group=None):
+        if group is None:
+            group = self.main_group
+        recv_index = group.tensor_recv_index_inc()
+        send_index = group.tensor_send_index_inc()
+        out = self._recv(recv_index, tensor, src, group=group)
+        return out
 
-    def recv_obj(self, src):
-        recv_index = self.main_group.object_recv_index_inc()
-        return self._recv_obj(recv_index, src)
+    def recv_obj(self, src, obj=None, group=None):
+        if group is None:
+            group = self.main_group
+        send_index = group.object_send_index_inc()
+        recv_index = group.object_recv_index_inc()
+        out = self._recv_obj(recv_index, src, group=group)
+        return out
 
-    def isend(self, tensor, dst):
-        send_index = self.main_group.tensor_send_index_inc()
-        feature = self._pool.submit(self._send, send_index, tensor, dst)
-        return WaitableFuture(feature, f"send_{send_index}_{dst}")
+    def isend(self, tensor, dst, group=None):
+        if group is None:
+            group = self.main_group
+        send_index = group.tensor_send_index_inc()
+        feature = self._pool.submit(self._send, send_index, tensor, dst, group=group)
+        out = WaitableFuture(feature, f"isend: index={send_index} dst={dst}")
+        return out
 
-    def irecv(self, tensor: torch.Tensor, src=None):
-        recv_index = self.main_group.tensor_recv_index_inc()
-
-        future = self._pool.submit(self._recv, recv_index, tensor, src)
-        return WaitableFuture(future, f"recv_{recv_index}_{src}")
+    def irecv(self, tensor: torch.Tensor, src=None, group=None):
+        if src is None:
+            src = self.rank
+        if group is None:
+            group = self.main_group
+        recv_index = group.tensor_recv_index_inc()
+        future = self._pool.submit(self._recv, recv_index, tensor, src, group=group)
+        out = WaitableFuture(future, f"irecv: index={recv_index} src={src}")
+        return out
 
     def scatter(self, scatter_list, src, size=None, async_op=False):
         raise NotImplementedError
 
-    def reduce(self, tensor, dst, op=None, async_op=False):
+    def reduce(self, tensor, dst, op=None, async_op=False, group=None):
+        if group is None:
+            group = self.main_group
+        if self.rank not in group.ranks:
+            raise ValueError(f"rank {self.rank} not in group {group}")
+        recv_index = group.tensor_recv_index_inc()
+        send_index = group.tensor_send_index_inc()
         if self.rank == dst:
-            recv_index = self.main_group.tensor_recv_index_inc()
             for i in range(self.world_size):
                 if i != dst:
                     tensor.add_(
@@ -171,19 +200,22 @@ class Communicator:
                             index=recv_index,
                             tensor=None,
                             src=i,
+                            group=group,
                         )
                     )
             return tensor
         else:
-            send_index = self.main_group.tensor_recv_index_inc()
             self._send(
                 index=send_index,
                 tensor=tensor,
                 dst=dst,
+                group=group,
             )
             return None
 
-    def all_reduce(self, input, op=ReduceOp.SUM, batched=False):
+    def all_reduce(self, input, op=ReduceOp.SUM, batched=False, group=None):
+        if group is None:
+            group = self.main_group
         if batched:
             assert isinstance(input, list), "batched reduce input must be a list"
             results = []
@@ -191,7 +223,7 @@ class Communicator:
                 results.append(self.all_reduce(tensor, op, batched=False))
             return results
         else:
-            ag = self.all_gather(input)
+            ag = self.all_gather(input, group=group)
             if op == torch.distributed.ReduceOp.SUM:
                 return self._sum(ag)
             elif op == torch.distributed.ReduceOp.BXOR:
@@ -210,18 +242,22 @@ class Communicator:
     def gather(self, tensor, dst, async_op=False):
         raise NotImplementedError
 
-    def all_gather(self, tensor, async_op=False):
+    def all_gather(self, tensor, async_op=False, group=None):
         if async_op:
             raise NotImplementedError()
 
-        send_index = self.main_group.tensor_send_index_inc()
+        if group is None:
+            group = self.main_group
+
+        send_index = group.tensor_send_index_inc()
         self._send_many(
             index=send_index,
             tensor=tensor,
             dst_list=[rank for rank in range(self.world_size) if rank != self.rank],
+            group=group,
         )
         # self.barrier.wait()
-        recv_index = self.main_group.tensor_recv_index_inc()
+        recv_index = group.tensor_recv_index_inc()
         result = []
         for i in range(self.world_size):
             if i == self.rank:
@@ -232,6 +268,7 @@ class Communicator:
                         index=recv_index,
                         tensor=tensor.clone(),
                         src=i,
+                        group=group,
                     )
                 )
         return result
@@ -245,26 +282,33 @@ class Communicator:
             for tensor in input:
                 reqs.append(self.broadcast(tensor.data, src, group=group, batched=False))
         else:
-            assert torch.is_tensor(input.data), "unbatched input for reduce must be a torch tensor"
             send_index = group.tensor_send_index_inc()
             recv_index = group.tensor_recv_index_inc()
             if src == self.rank:
                 self._send_many(
                     index=send_index,
-                    tensor=input.data,
+                    tensor=input,
                     dst_list=[rank for rank in group.ranks if rank != self.rank],
+                    group=group,
                 )
+                return input
             else:
-                self._recv(
+                recv_tensor = self._recv(
                     index=recv_index,
-                    tensor=input.data,
+                    tensor=input,
                     src=src,
+                    group=group,
                 )
-        return input
+                if input is not None:
+                    input.copy_(recv_tensor)
+                    return input
+                else:
+                    return recv_tensor
 
     def broadcast_obj(self, src, obj=None, group=None):
         self._assert_initialized()
-        group = self.main_group if group is None else group
+        if group is None:
+            group = self.main_group
         send_index = group.object_send_index_inc()
         recv_index = group.object_recv_index_inc()
         if src == self.rank:
@@ -272,11 +316,13 @@ class Communicator:
                 index=send_index,
                 obj=obj,
                 dst_list=[rank for rank in group.ranks if rank != self.rank],
+                group=group,
             )
         else:
             obj = self._recv_obj(
                 index=recv_index,
                 src=src,
+                group=group,
             )
         return obj
 
@@ -333,41 +379,53 @@ class Communicator:
     def _get_parties_by_ranks(self, ranks: List[int], namespace: NS):
         return self._get_parties([self.rank_to_party[rank] for rank in ranks], namespace)
 
-    def _send(self, index, tensor, dst):
-        parties = self._get_parties_by_rank(dst, self.main_group.namespace_tensor)
+    def _send(self, index, tensor, dst, group=None):
+        if group is None:
+            group = self.main_group
+        parties = self._get_parties_by_rank(dst, group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst}, parties={parties}")
-        parties.put(self.main_group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
+        parties.put(group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
 
-    def _send_obj(self, index, obj, dst):
-        parties = self._get_parties_by_rank(dst, self.main_group.namespace_obj)
+    def _send_obj(self, index, obj, dst, group=None):
+        if group is None:
+            group = self.main_group
+        parties = self._get_parties_by_rank(dst, group.namespace_obj)
         logger.debug(f"[{self.ctx.local}]sending obj, index={index}, dst={dst}, parties={parties}")
-        parties.put(self.main_group.namespace_obj.indexed_ns(index).federation_tag, obj)
+        parties.put(group.namespace_obj.indexed_ns(index).federation_tag, obj)
 
-    def _recv(self, index, tensor, src):
-        parties = self._get_parties_by_rank(src, self.main_group.namespace_tensor)
+    def _recv(self, index, tensor, src, group=None):
+        if group is None:
+            group = self.main_group
+        parties = self._get_parties_by_rank(src, group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]receiving, index={index}, src={src}, parties={parties}")
-        got_tensor = parties.get(self.main_group.namespace_tensor.indexed_ns(index).federation_tag)[0]
+        got_tensor = parties.get(group.namespace_tensor.indexed_ns(index).federation_tag)[0]
         if tensor is None:
             return got_tensor
         else:
             tensor.copy_(got_tensor)
         return tensor
 
-    def _recv_obj(self, index, src):
-        parties = self._get_parties_by_rank(src, self.main_group.namespace_obj)
+    def _recv_obj(self, index, src, group=None):
+        if group is None:
+            group = self.main_group
+        parties = self._get_parties_by_rank(src, group.namespace_obj)
         logger.debug(f"[{self.ctx.local}]receiving, index={index}, src={src}, parties={parties}")
-        got_obj = parties.get(self.main_group.namespace_obj.indexed_ns(index).federation_tag)[0]
+        got_obj = parties.get(group.namespace_obj.indexed_ns(index).federation_tag)[0]
         return got_obj
 
-    def _send_many(self, index, tensor, dst_list):
-        parties = self._get_parties_by_ranks(dst_list, self.main_group.namespace_tensor)
+    def _send_many(self, index, tensor, dst_list, group=None):
+        if group is None:
+            group = self.main_group
+        parties = self._get_parties_by_ranks(dst_list, group.namespace_tensor)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst_list}, parties={parties}")
-        parties.put(self.main_group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
+        parties.put(group.namespace_tensor.indexed_ns(index).federation_tag, tensor)
 
-    def _send_obj_many(self, index, obj, dst_list):
-        parties = self._get_parties_by_ranks(dst_list, self.main_group.namespace_obj)
+    def _send_obj_many(self, index, obj, dst_list, group=None):
+        if group is None:
+            group = self.main_group
+        parties = self._get_parties_by_ranks(dst_list, group.namespace_obj)
         logger.debug(f"[{self.ctx.local}]sending, index={index}, dst={dst_list}, parties={parties}")
-        parties.put(self.main_group.namespace_obj.indexed_ns(index).federation_tag, obj)
+        parties.put(group.namespace_obj.indexed_ns(index).federation_tag, obj)
 
 
 class WaitableFuture:
@@ -376,8 +434,9 @@ class WaitableFuture:
         self.tag = tag
 
     def wait(self):
+        logger.debug(f"waiting {self.tag}")
         self.future.result()
-        logger.info(f"wait {self.tag} done")
+        logger.debug(f"wait {self.tag} done")
 
 
 def _logging(func):
