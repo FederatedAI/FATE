@@ -322,8 +322,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 logger.info("fitting guest decision tree iter {}, dim {} done".format(iter_dix, tree_dim))
 
             # compute loss
-            # iter_loss = self._loss_func.compute_loss(train_data.label, self._accumulate_scores)
-            # self._loss_history.append(iter_loss)
+            iter_loss = self._loss_func.compute_loss(train_data.label, self._loss_func.predict(self._accumulate_scores))
+            self._loss_history.append(float(iter_loss.iloc[0]))
 
         # compute train predict using cache scores
         train_predict: DataFrame = self._loss_func.predict(self._accumulate_scores)
@@ -355,9 +355,6 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             return leaf_pos
         result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func,
                                         num_dim=self._tree_dim)
-
-        print('result df is {}'.format(result.as_pd_df()))
-
         if task_type == REGRESSION:
             logger.debug("regression task, add init score")
             result = self._init_score + result 

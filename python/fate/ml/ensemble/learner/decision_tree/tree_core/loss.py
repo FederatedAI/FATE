@@ -50,11 +50,6 @@ class BCELoss(Loss):
     def compute_loss(label: DataFrame, pred: DataFrame):
         sample_num = len(label)
         label_pred = DataFrame.hstack([label, pred])
-        print(label_pred.as_pd_df())
-        def test_func(s):
-            print(s)
-            print(s[1])
-        label_pred["loss"] = label_pred.apply_row(test_func, with_label=True)
         label_pred["loss"] = label_pred.apply_row(
             lambda s: -(s[0] * np.log(s[1]) + (1 - s[0]) * np.log(1 - s[1])), with_label=True
         )
@@ -94,14 +89,14 @@ class CELoss(Loss):
         return pred_rs
 
     @staticmethod
-    def compute_loss(label: DataFrame, pred: DataFrame, weight: DataFrame):
+    def compute_loss(label: DataFrame, pred: DataFrame):
         loss_col = label.create_frame()
+        print(label.as_pd_df())
+        print(pred.as_pd_df())
         label_pred = label.hstack(pred)
         sample_num = len(label)
         loss_col["loss"] = label_pred.apply_row(lambda s: np.log(s[1:][int(s[0])]))
         loss_col["loss"].fillna(1)
-        if weight:
-            loss_col["loss"] = apply_weight(loss_col, weight)
         reduce_loss = loss_col["loss"].sum() / sample_num
         return reduce_loss
 

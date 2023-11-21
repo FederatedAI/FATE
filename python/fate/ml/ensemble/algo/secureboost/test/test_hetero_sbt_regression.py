@@ -42,7 +42,7 @@ def create_ctx(local):
 if __name__ == "__main__":
     party = sys.argv[1]
     max_depth = 3
-    num_tree = 1
+    num_tree = 10
     from sklearn.metrics import roc_auc_score as auc
 
     if party == "guest":
