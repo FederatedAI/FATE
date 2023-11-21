@@ -34,9 +34,5 @@ data:
     namespace: experiment
     role: host_0
 tasks:
-  scale-min-max:
-    script: test_scale_min_max.py
-  scale-standard:
-    script: test_scale_standard.py
-  scale-with-lr:
-    script: test_scale_w_lr.py
+  feature-correlation:
+    script: test_feature_correlation.py
