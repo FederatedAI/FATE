@@ -162,6 +162,7 @@ class HeteroBinningModuleHost(HeteroModule):
         self.bin_col = bin_col
         self.category_col = category_col
         self.anonymous_col_bin = None
+        self.column_anonymous_map = None
 
     def set_transform_method(self, new_transform_method):
         self._bin_obj.transform_method = new_transform_method
@@ -237,6 +238,7 @@ class HeteroBinningModuleHost(HeteroModule):
                 "category_col": self.category_col,
                 "n_bins": self.n_bins,
                 "model_type": "binning",
+                "column_anonymous_map": self.column_anonymous_map
             },
         }
         return model
