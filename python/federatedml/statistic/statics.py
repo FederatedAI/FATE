@@ -566,7 +566,7 @@ class MultivariateStatisticalSummary(object):
                     if col_dict[col_name]['max_count'] < v:
                         col_dict[col_name] = {'max_count': v, 'max_val': [k[1]]}
                     elif col_dict[col_name]['max_count'] == v:
-                        col_dict[col_name]['max_val'].append(k[1])
+                        col_dict[col_name]['max_val'] = random.choice([k[1], col_dict[col_name]['max_val']])
             return col_dict
 
         func = functools.partial(__aggregate_count_per_val_in_col, header=data.schema.get('header'))
