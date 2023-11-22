@@ -1,5 +1,6 @@
-import os
 import functools
+import os
+
 from opentelemetry import trace, context
 
 _ENABLE_TRACING = None
