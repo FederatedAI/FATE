@@ -542,7 +542,7 @@ class MultivariateStatisticalSummary(object):
             new_dict[col_name] = static_1
         return new_dict
 
-    def compute_mode(self, data):
+    def compute_mode(self, data, raise_multi_mode=False):
 
         def __mapper(kv_iterator):
             for _, v in kv_iterator:
@@ -561,12 +561,12 @@ class MultivariateStatisticalSummary(object):
                     continue
                 col_name = header[k[0]]
                 if col_name not in col_dict:
-                    col_dict[col_name] = {'max_count': v, 'max_val': [k[1]]}
+                    col_dict[col_name] = {'max_count': v, 'max_val': k[1]}
                 else:
                     if col_dict[col_name]['max_count'] < v:
-                        col_dict[col_name] = {'max_count': v, 'max_val': [k[1]]}
+                        col_dict[col_name] = {'max_count': v, 'max_val': k[1]}
                     elif col_dict[col_name]['max_count'] == v:
-                        col_dict[col_name]['max_val'].append(k[1])
+                        col_dict[col_name]['max_val'] = random.choice([k[1], col_dict[col_name]['max_val']])
             return col_dict
 
         func = functools.partial(__aggregate_count_per_val_in_col, header=data.schema.get('header'))
@@ -579,6 +579,8 @@ class MultivariateStatisticalSummary(object):
                     if v['max_count'] > x[k]['max_count']:
                         x[k] = v
                     elif v['max_count'] == x[k]['max_count']:
+                        if raise_multi_mode:
+                            raise ValueError(f"There are multiple modes in column {k}, please check.")
                         # x[k]['max_val'].extend(v['max_val'])
                         x[k]['max_val'] = random.choice([x[k]['max_val'], v['max_val']])
 
@@ -587,7 +589,7 @@ class MultivariateStatisticalSummary(object):
         data_mode_summary = data_reduce_by_col_val.mapPartitions(func).reduce(merge_count_dict)
         return data_mode_summary
 
-    def get_mode(self, col=None):
+    def get_mode(self, col=None, multi_mode='random'):
         """
         Return the mode value(s) of the given column
 
@@ -607,7 +609,10 @@ class MultivariateStatisticalSummary(object):
         new_schema['header'] = new_header
         data.schema = new_schema
         if not self.mode_:
-            self.mode_ = self.compute_mode(data)
+            raise_multi_mode = False
+            if multi_mode == 'raise':
+                raise_multi_mode = True
+            self.mode_ = self.compute_mode(data, raise_multi_mode)
         return self.mode_
 
     def get_median(self):

@@ -216,14 +216,16 @@ class Imputer(object):
             elif replace_method[feature] == consts.MEDIAN:
                 transform_value = summary_obj.get_median()[feature]
             elif replace_method[feature] == consts.MODE:
-                mode = summary_obj.get_mode(to_compute_mode_col)[feature]
-                if len(mode['max_val']) > 1:
+                mode = summary_obj.get_mode(to_compute_mode_col, multi_mode=multi_mode)[feature]
+                transform_value = mode['max_val']
+                # LOGGER.debug(f"transform value is: {transform_value}")
+                """if len(mode['max_val']) > 1:
                     if multi_mode == 'random':
                         transform_value = np.random.choice(mode['max_val'])
                     else:
                         raise ValueError("There are multiple modes in column {}, please check.".format(feature))
                 else:
-                    transform_value = mode['max_val'][0]
+                    transform_value = mode['max_val'][0]"""
             elif replace_method[feature] == consts.DESIGNATED:
                 if isinstance(col_replace_value, dict):
                     transform_value = col_replace_value.get(feature, replace_value)
