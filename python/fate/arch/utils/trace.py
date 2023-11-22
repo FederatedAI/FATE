@@ -9,7 +9,7 @@ _ENABLE_TRACING_DEFAULT = True
 def _is_tracing_enabled():
     global _ENABLE_TRACING
     if _ENABLE_TRACING is None:
-        _ENABLE_TRACING = os.environ.get("FATE_ENABLE_TRACING", str(_ENABLE_TRACING_DEFAULT)).lower() == "true"
+        _ENABLE_TRACING = os.environ.get("FATE_ENABLE_TRACING", str(_ENABLE_TRACING_DEFAULT)).lower() == "false"
     return _ENABLE_TRACING
 
 

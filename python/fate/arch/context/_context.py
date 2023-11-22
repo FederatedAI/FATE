@@ -268,12 +268,12 @@ class Context:
             try:
                 self.federation.destroy()
                 logger.debug("federation engine destroy done")
-            except:
-                logger.exception("federation engine destroy failed", stack_info=True)
+            except Exception as e:
+                logger.exception("federation engine destroy failed: {e}")
 
             try:
                 self.computing.destroy()
                 logger.debug("computing engine destroy done")
             except Exception as e:
-                logger.exception(f"computing engine destroy failed: {e}", stack_info=True)
+                logger.exception(f"computing engine destroy failed: {e}")
             self._is_destroyed = True

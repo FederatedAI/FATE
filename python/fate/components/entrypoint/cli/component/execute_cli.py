@@ -108,7 +108,6 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         computing = load_computing(config.conf.computing, config.conf.logger.config)
         federation = load_federation(config.conf.federation, computing)
         cipher = CipherKit(device=device)
-
         ctx = Context(
             device=device,
             computing=computing,

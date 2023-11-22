@@ -119,5 +119,5 @@ class CSession(KVTableContext):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
+            LOGGER.exception(f"stop storage session {self.session_id} failed, try to kill", e)
             self.kill()
