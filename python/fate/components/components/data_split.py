@@ -13,14 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import logging
 from typing import Union
 
 from fate.arch import Context
 from fate.components.core import GUEST, HOST, Role, cpn, params
 from fate.ml.model_selection.data_split import DataSplitModuleGuest, DataSplitModuleHost
-
-logger = logging.getLogger(__name__)
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
@@ -54,7 +51,6 @@ def data_split(
         validate_size = 0.2
         test_size = 0.0
 
-    # logger.info(f"in cpn received train_size: {train_size}, validate_size: {validate_size}, test_size: {test_size}")
     # check if local but federated sample
     if hetero_sync and len(ctx.parties.ranks) < 2:
         raise ValueError(f"federated sample can only be called when both 'guest' and 'host' present. Please check")
@@ -68,9 +64,12 @@ def data_split(
 
     train_data_set, validate_data_set, test_data_set = module.fit(sub_ctx, input_data)
     # train_data_set, validate_data_set, test_data_set = module.split_data(train_data)
-    logger.info(f"output train size: {train_data_set.shape if train_data_set else None}, "
-                f"validate size: {validate_data_set.shape if validate_data_set else None},"
-                f"test size: {test_data_set.shape if test_data_set else None}")
+    data_split_summary = {'original_count': input_data.shape[0],
+                          'train_count': train_data_set.shape[0] if train_data_set else None,
+                          'validate_count': validate_data_set.shape[0] if validate_data_set else None,
+                          'test_count': test_data_set.shape[0] if test_data_set else None,
+                          'stratified': stratified}
+    ctx.metrics.log_metrics(data_split_summary, "summary")
     if train_data_set:
         train_output_data.write(train_data_set)
     if validate_data_set:

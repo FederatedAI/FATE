@@ -34,7 +34,7 @@ base_path = os.path.abspath(os.path.join(__file__, os.path.pardir))
 guest_data_path = os.path.join(base_path, "breast_hetero_guest.csv")
 host_data_path = os.path.join(base_path, "breast_hetero_host.csv")
 
-data_pipeline = FateFlowPipeline().set_roles(local="0")
+data_pipeline = FateFlowPipeline().set_parties(local="0")
 guest_meta = {
     "delimiter": ",", "dtype": "float64", "label_type": "int64","label_name": "y", "match_id_name": "id"
 }
@@ -59,14 +59,14 @@ from fate_client.pipeline.interface import DataWarehouseChannel
 
 
 # create pipeline for training
-pipeline = FateFlowPipeline().set_roles(guest="9999", host="10000")
+pipeline = FateFlowPipeline().set_parties(guest="9999", host="10000")
 
 # create psi component_desc
 psi_0 = PSI("psi_0")
-psi_0.guest.component_setting(
+psi_0.guest.task_setting(
     input_data=DataWarehouseChannel(name="breast_hetero_guest", namespace="experiment")
 )
-psi_0.hosts[0].component_setting(
+psi_0.hosts[0].task_setting(
     input_data=DataWarehouseChannel(name="breast_hetero_host", namespace="experiment")
 )
 
@@ -103,10 +103,10 @@ predict_pipeline = FateFlowPipeline()
 
 # add input to deployed_pipeline
 deployed_pipeline = pipeline.get_deployed_pipeline()
-deployed_pipeline.psi_0.guest.component_setting(
+deployed_pipeline.psi_0.guest.task_setting(
     input_data=DataWarehouseChannel(name="breast_hetero_guest", namespace=f"experiment")
 )
-deployed_pipeline.psi_0.hosts[0].component_setting(
+deployed_pipeline.psi_0.hosts[0].task_setting(
     input_data=DataWarehouseChannel(name="breast_hetero_host", namespace=f"experiment")
 )
 

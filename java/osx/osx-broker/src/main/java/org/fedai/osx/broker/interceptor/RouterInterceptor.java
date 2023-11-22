@@ -15,37 +15,38 @@
  */
 package org.fedai.osx.broker.interceptor;
 
-import org.fedai.osx.api.context.Context;
-import org.fedai.osx.api.router.RouterInfo;
-import org.fedai.osx.broker.ServiceContainer;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.router.FateRouterService;
 import org.fedai.osx.broker.router.RouterService;
+import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.service.InboundPackage;
 import org.fedai.osx.core.service.Interceptor;
 import org.fedai.osx.core.service.OutboundPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+@Singleton
 public class RouterInterceptor implements Interceptor {
 
     Logger logger = LoggerFactory.getLogger(RouterInterceptor.class);
-    public RouterInterceptor(){
-        this.fateRouterService = fateRouterService;
-    }
-    FateRouterService  fateRouterService;
+
+    @Inject
+    DefaultFateRouterServiceImpl  routerService;
+
     @Override
-    public void doProcess(Context context, InboundPackage inboundPackage, OutboundPackage outboundPackage) throws Exception {
+    public void doProcess(OsxContext context, InboundPackage inboundPackage, OutboundPackage outboundPackage) throws Exception {
         String routerKey = buildRouterKey(context);
-        RouterService routerService = ServiceContainer.routerRegister.getRouterService(routerKey);
-        String sourcePartyId = context.getSrcPartyId();
-        String desPartyId = context.getDesPartyId();
+        String srcPartyId = context.getSrcNodeId();
+        String desPartyId = context.getDesNodeId();
         String sourceComponentName  = context.getSrcComponent();
         String desComponentName = context.getDesComponent();
-        RouterInfo routerInfo = routerService.route(sourcePartyId,sourceComponentName,desPartyId,desComponentName);
+        RouterInfo routerInfo = routerService.route(srcPartyId,sourceComponentName,desPartyId,desComponentName);
 //        logger.info("router===================={}  =============={}",routerService,routerInfo);
         context.setRouterInfo(routerInfo);
     }
-    private String buildRouterKey (Context context){
+    private String buildRouterKey (OsxContext context){
         return  context.getTechProviderCode();
     }
 }

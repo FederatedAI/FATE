@@ -18,16 +18,16 @@ package org.fedai.osx.broker.router;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.api.constants.Protocol;
-import org.fedai.osx.api.context.Context;
-import org.fedai.osx.api.router.RouterInfo;
 import org.fedai.osx.broker.util.TelnetUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
+import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.datasource.FileRefreshableDataSource;
 import org.fedai.osx.core.exceptions.CycleRouteInfoException;
 import org.fedai.osx.core.exceptions.ErrorMessageUtil;
@@ -36,6 +36,8 @@ import org.fedai.osx.core.exceptions.InvalidRouteInfoException;
 import org.fedai.osx.core.flow.PropertyListener;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.frame.ServiceThread;
+import org.fedai.osx.core.router.RouterInfo;
+import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.service.InboundPackage;
 import org.fedai.osx.core.utils.FileUtils;
 import org.fedai.osx.core.utils.JsonUtil;
@@ -44,14 +46,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycle {
+@Singleton
+public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycle , ApplicationStartedRunner {
 
     private static final String IP = "ip";
     private static final String PORT = "port";
@@ -129,6 +132,12 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         routerInfo.setCaFile(endpoint.get(Dict.CA_FILE) != null ? endpoint.get(Dict.CA_FILE).toString() : "");
         routerInfo.setCertChainFile(endpoint.get(Dict.CERT_CHAIN_FILE) != null ? endpoint.get(Dict.CERT_CHAIN_FILE).toString() : "");
         routerInfo.setPrivateKeyFile(endpoint.get(Dict.PRIVATE_KEY_FILE) != null ? endpoint.get(Dict.PRIVATE_KEY_FILE).toString() : "");
+
+        routerInfo.setKeyStoreFilePath(endpoint.get(Dict.KEYSTORE_FILE) != null ? endpoint.get(Dict.KEYSTORE_FILE).toString() : "");
+        routerInfo.setKeyStorePassword(endpoint.get(Dict.KEYSTORE_PASSWORD) != null ? endpoint.get(Dict.KEYSTORE_PASSWORD).toString() : "");
+        routerInfo.setTrustStoreFilePath(endpoint.get(Dict.TRUSTSTORE_FILE) != null ? endpoint.get(Dict.TRUSTSTORE_FILE).toString() : "");
+        routerInfo.setTrustStorePassword(endpoint.get(Dict.TRUSTSTORE_PASSWORD) != null ? endpoint.get(Dict.TRUSTSTORE_PASSWORD).toString() : "");
+
         if (routerInfo.getProtocol().equals(Protocol.http)) {
             if (StringUtils.isEmpty(routerInfo.getUrl())) {
                 throw new InvalidRouteInfoException();
@@ -142,9 +151,10 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     }
 
     public RouterInfo route(String srcPartyId, String srcRole, String dstPartyId, String desRole) {
-        // logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
+//        logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
         RouterInfo routerInfo = null;
         Map<String, List<Map>> partyIdMap = this.endPointMap.containsKey(dstPartyId)?this.endPointMap.get(dstPartyId):this.endPointMap.get(DEFAULT);
+
         if (partyIdMap != null) {
             if (StringUtils.isNotEmpty(desRole) && partyIdMap.get(desRole) != null) {
                 List<Map> ips = partyIdMap.getOrDefault(desRole, null);
@@ -166,6 +176,14 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         }
 
         return routerInfo;
+    }
+
+    @Override
+    public RouterInfo routePtp(String srcInstId, String srcNodeId, String dstInstId, String dstNodeId) {
+        String  desPartyId = dstNodeId;
+        String  srcPartyId = srcNodeId;
+        return  this.route(srcPartyId,DEFAULT,desPartyId,DEFAULT);
+
     }
 
 
@@ -353,6 +371,11 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         return cycle;
     }
 
+    @Override
+    public void run(String[] args) throws Exception {
+        this.start();
+    }
+
 
     private class RouterTableListener implements PropertyListener<String> {
 
@@ -393,7 +416,34 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         return result;
     }
 
-    public boolean saveRouterTable(Context context, InboundPackage<Proxy.Packet> data) {
+    public void saveRouterTable(OsxContext context, String  content){
+        String routerTablePath = getRouterTablePath();
+        File routerTableFile = new File(routerTablePath);
+        if (!routerTableFile.exists()) {
+            if (!routerTableFile.getParentFile().exists()) {
+                if (!routerTableFile.getParentFile().mkdirs()) {
+                    logger.warn("mkdir failed : {}", routerTableFile.getParent());
+                   // return false;
+                }
+            }
+            try {
+                if (!routerTableFile.createNewFile()) {
+                    logger.warn("create router_table.json failed  : {}", routerTableFile.getAbsoluteFile());
+                   // return false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+             FileUtils.writeStr2ReplaceFileSync(JsonUtil.formatJson(content), routerTablePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public boolean saveRouterTable(OsxContext context, InboundPackage<Proxy.Packet> data) {
         try {
             String inboundRouteJson = (String) context.getData("route");
             if (StringUtils.isNotBlank(inboundRouteJson)) {

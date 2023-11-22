@@ -27,22 +27,22 @@ def main(config="../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                             namespace=f"experiment{namespace}"))
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                namespace=f"experiment{namespace}"))
 
     psi_1 = PSI("psi_1")
-    psi_1.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
-    psi_1.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+    psi_1.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                             namespace=f"experiment{namespace}"))
+    psi_1.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                namespace=f"experiment{namespace}"))
 
     sample_0 = Sample("sample_0",
                       runtime_roles=["guest"],

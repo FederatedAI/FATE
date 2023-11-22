@@ -70,7 +70,31 @@ def sample(
     else:
         raise ValueError(f"unknown role")
     input_data = input_data.read()
+    original_count = {}
+    if input_data.label is not None:
+        binarized_label = input_data.label.get_dummies()
+        for label_name in binarized_label.schema.columns:
+            label_count = binarized_label[label_name].sum().to_list()[0]
+            true_label_name = int(label_name.split('_')[1])
+            original_count[true_label_name] = label_count
+            if isinstance(frac, dict):
+                if true_label_name not in frac.keys():
+                    frac[true_label_name] = 1.0
+        module.frac = frac
 
     sampled_data = module.fit(sub_ctx, input_data)
+    sample_result_summary = {"total": {'original_count': input_data.shape[0],
+                                       'sampled_count': sampled_data.shape[0]}}
+    if input_data.label is not None:
+        original_binzied_label = input_data.label.get_dummies()
+        sampled_binarized_label = sampled_data.label.get_dummies()
+        for label_name in binarized_label.schema.columns:
+            original_label_count = original_binzied_label[label_name].sum().to_list()[0]
+            sampled_label_count = sampled_binarized_label[label_name].sum().to_list()[0]
+            label_summary = {'original_count': original_label_count,
+                             'sampled_count': sampled_label_count}
+            sample_result_summary[label_name.split('_')[1]] = label_summary
+
+    ctx.metrics.log_metrics(sample_result_summary, 'summary')
 
     output_data.write(sampled_data)

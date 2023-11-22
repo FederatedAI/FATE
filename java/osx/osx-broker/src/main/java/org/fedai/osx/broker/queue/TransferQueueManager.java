@@ -16,31 +16,36 @@
 package org.fedai.osx.broker.queue;
 
 import com.google.common.base.Preconditions;
+import com.google.common.cache.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.webank.eggroll.core.meta.Meta;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.zookeeper.KeeperException;
-import org.fedai.osx.api.constants.Protocol;
-import org.fedai.osx.api.router.RouterInfo;
-import org.fedai.osx.broker.ServiceContainer;
+
 import org.fedai.osx.broker.callback.MsgEventCallback;
+import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.consumer.EventDriverRule;
 import org.fedai.osx.broker.message.AllocateMappedFileService;
 import org.fedai.osx.broker.store.MessageStore;
+import org.fedai.osx.broker.zk.CuratorZookeeperClient;
 import org.fedai.osx.core.config.MasterInfo;
 import org.fedai.osx.core.config.MetaInfo;
-import org.fedai.osx.core.constant.DeployMode;
-import org.fedai.osx.core.constant.Dict;
-import org.fedai.osx.core.constant.StatusCode;
-import org.fedai.osx.core.constant.TransferStatus;
+import org.fedai.osx.core.constant.*;
+import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.exceptions.CreateTopicErrorException;
 import org.fedai.osx.core.exceptions.RemoteRpcException;
+import org.fedai.osx.core.exceptions.SysException;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.frame.ServiceThread;
 import org.fedai.osx.core.ptp.TargetMethod;
+import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.utils.JsonUtil;
 import org.fedai.osx.core.utils.NetUtils;
 import org.ppc.ptp.Osx;
@@ -50,29 +55,45 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static org.fedai.osx.core.config.MetaInfo.*;
+
+@Singleton
 public class TransferQueueManager {
     final String ZK_QUEUE_PREFIX = "/FATE-TRANSFER/QUEUE";
     final String MASTER_PATH = "/FATE-TRANSFER/MASTER";
     final String ZK_COMPONENTS_PREFIX = "/FATE-COMPONENTS/osx";
     ThreadPoolExecutor errorCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
-    ThreadPoolExecutor completeCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
-    ThreadPoolExecutor destroyCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
+//    ThreadPoolExecutor completeCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
+//    ThreadPoolExecutor destroyCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
     Logger logger = LoggerFactory.getLogger(TransferQueueManager.class);
     volatile Map<String, TransferQueueApplyInfo> transferQueueApplyInfoMap = new ConcurrentHashMap<>();
     volatile Map<String, TransferQueueApplyInfo> masterQueueApplyInfoMap = new ConcurrentHashMap<>();
     Map<String, Integer> clusterTransferQueueCountMap = Maps.newHashMap();
     volatile Set<String> instanceIds = new HashSet<>();
-    ConcurrentHashMap<String, TransferQueue> transferQueueMap = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, AbstractQueue> queueMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, Set<String>> sessionQueueMap = new ConcurrentHashMap<>();
-    ConcurrentHashMap<String, ReentrantLock> transferIdLockMap = new ConcurrentHashMap<>();
+
+    //ConcurrentHashMap<String, ReentrantLock> transferIdLockMap = new ConcurrentHashMap<>();
+    LoadingCache<String, ReentrantLock> transferIdLockMap = CacheBuilder.newBuilder()
+            .expireAfterAccess(PROPERTY_MAX_QUEUE_LOCK_LIVE, TimeUnit.SECONDS)
+            .concurrencyLevel(4)
+            .maximumSize(PROPERTY_MAX_TRANSFER_QUEUE_SIZE)
+            .build(new CacheLoader<String, ReentrantLock>() {
+                @Override
+                public ReentrantLock load(String s) throws Exception {
+                    return new ReentrantLock();
+                }
+            });
+
     ConcurrentHashMap<EventDriverRule, List<MsgEventCallback>> msgCallBackRuleMap = new ConcurrentHashMap<>();
+//    @Inject(optional = true)
+    CuratorZookeeperClient   zkClient;
+    @Inject
+    ConsumerManager  consumerManager;
 
     public MessageStore getMessageStore() {
         return messageStore;
@@ -92,9 +113,7 @@ public class TransferQueueManager {
                 , MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID + File.separator + "message-store");
         messageStore.start();
         return messageStore;
-
     }
-
     private ServiceThread cleanTask = new ServiceThread() {
         @Override
         public void run() {
@@ -103,7 +122,6 @@ public class TransferQueueManager {
                 checkAndClean();
             }
         }
-
         @Override
         public String getServiceName() {
             return "TransferQueueCleanTask";
@@ -122,15 +140,15 @@ public class TransferQueueManager {
         messageStore = createMessageStore(allocateMappedFileService);
         instanceIds.add(MetaInfo.INSTANCE_ID);
         if (MetaInfo.isCluster()) {
-            boolean pathExists = ServiceContainer.zkClient.checkExists(ZK_QUEUE_PREFIX);
+            boolean pathExists = zkClient.checkExists(ZK_QUEUE_PREFIX);
             if (!pathExists) {
-                ServiceContainer.zkClient.create(ZK_QUEUE_PREFIX, false);
+                zkClient.create(ZK_QUEUE_PREFIX, false);
             }
-            List<String> initApplyInfo = ServiceContainer.zkClient.addChildListener(ZK_QUEUE_PREFIX, (path, children) -> parseApplyInfo(children));
+            List<String> initApplyInfo = zkClient.addChildListener(ZK_QUEUE_PREFIX, (path, children) -> parseApplyInfo(children));
             parseApplyInfo(initApplyInfo);
-            ServiceContainer.zkClient.create(ZK_COMPONENTS_PREFIX + "/" + MetaInfo.INSTANCE_ID, true);
-            List<String> initInstanceIds = ServiceContainer.zkClient.addChildListener(ZK_COMPONENTS_PREFIX, (path, children) -> handleClusterInstanceId(children));
-            ServiceContainer.zkClient.addDataListener(MASTER_PATH, (path, data, type) -> {
+            zkClient.create(ZK_COMPONENTS_PREFIX + "/" + MetaInfo.INSTANCE_ID, true);
+            List<String> initInstanceIds = zkClient.addChildListener(ZK_COMPONENTS_PREFIX, (path, children) -> handleClusterInstanceId(children));
+            zkClient.addDataListener(MASTER_PATH, (path, data, type) -> {
                 logger.info("master event {} {}", type, data);
                 if (data != null) {
                     try {
@@ -168,7 +186,7 @@ public class TransferQueueManager {
             MasterInfo electMasterInfo = new MasterInfo();
             electMasterInfo.setInstanceId(MetaInfo.INSTANCE_ID);
             logger.info("try to elect master !!!");
-            ServiceContainer.zkClient.createEphemeral(MASTER_PATH, JsonUtil.object2Json(electMasterInfo));
+            zkClient.createEphemeral(MASTER_PATH, JsonUtil.object2Json(electMasterInfo));
             logger.info("this instance is master !!!");
             this.masterQueueApplyInfoMap = this.transferQueueApplyInfoMap;
             new ServiceThread() {
@@ -248,7 +266,7 @@ public class TransferQueueManager {
         needRemoveSet.forEach(k -> transferQueueApplyInfoMap.remove(k));
         needAddSet.forEach(k -> {
             try {
-                String content = ServiceContainer.zkClient.getContent(buildZkPath(k));
+                String content = zkClient.getContent(buildZkPath(k));
                 TransferQueueApplyInfo transferQueueApplyInfo = JsonUtil.json2Object(content, TransferQueueApplyInfo.class);
                 if (transferQueueApplyInfo != null) {
                     transferQueueApplyInfoMap.put(k, transferQueueApplyInfo);
@@ -257,46 +275,50 @@ public class TransferQueueManager {
                 logger.error("parse apply info from zk error", e);
             }
         });
-    }
+    };
 
-    ;
-
-    public List<String> cleanByParam(String sessionId, String paramTransferId) {
+    public List<String> cleanByParam(String sessionId, String topic) {
+        logger.info("try to clean {} : {}  session map {}",sessionId,topic,this.sessionQueueMap);
         List<String> result = Lists.newArrayList();
-        if (StringUtils.isEmpty(paramTransferId)) {
-            Set<String> transferIdSets = this.sessionQueueMap.get(sessionId);
-            if (transferIdSets != null) {
-                List<String> transferIdList = Lists.newArrayList(transferIdSets);
-                for (String transferId : transferIdList) {
+        if (StringUtils.isEmpty(topic)) {
+            Set<String> topics = this.sessionQueueMap.get(sessionId);
+            if (topics != null) {
+                List<String> topicList = Lists.newArrayList(topics);
+                for (String tempTopic : topicList) {
+                    String  indexKey = assembleTopic(sessionId,tempTopic);
                     try {
-                        if (transferQueueMap.get(transferId) != null)
-                            destroy(transferId);
-                        result.add(transferId);
+
+                        if (this.getQueueByIndexKey(indexKey) != null)
+                            destroy(indexKey);
+                        result.add(indexKey);
                     } catch (Exception e) {
-                        logger.error("destroyInner error {}", transferId);
+                        logger.error("destroyInner error {}",indexKey );
                     }
                 }
             }
         } else {
+            String  indexKey = assembleTopic(sessionId,topic);
             try {
-                if (transferQueueMap.get(paramTransferId) != null) {
-                    destroy(paramTransferId);
-                    result.add(paramTransferId);
+                if (queueMap.get(indexKey) != null) {
+                    destroy(indexKey);
+                    result.add(indexKey);
                 }
             } catch (Exception e) {
-                logger.error("destroy error {}", paramTransferId);
+                logger.error("destroy error {}", indexKey);
             }
         }
         return result;
     }
 
-    private void destroyInner(TransferQueue transferQueue) {
-        transferQueue.destory();
-        transferQueueMap.remove(transferQueue.getTransferId());
-        String sessionId = transferQueue.getSessionId();
+    private void destroyInner(AbstractQueue queue) {
+        queue.destory();
+        String sessionId = queue.getSessionId();
+        String topic  = queue.getTransferId();
+        String  indexKey = assembleTopic(sessionId,topic);
+        queueMap.remove(indexKey);
         Set<String> transferIdSets = this.sessionQueueMap.get(sessionId);
         if (transferIdSets != null) {
-            transferIdSets.remove(transferQueue.getTransferId());
+            transferIdSets.remove(topic);
             if (transferIdSets.size() == 0) {
                 sessionQueueMap.remove(sessionId);
             }
@@ -305,8 +327,8 @@ public class TransferQueueManager {
 
     private void checkAndClean() {
         long now = System.currentTimeMillis();
-        logger.info("the total topic size is {}, total session size is {}", transferQueueMap.size(), sessionQueueMap.size());
-        transferQueueMap.forEach((transferId, transferQueue) -> {
+        logger.info("the total topic size is {}, total session size is {}", queueMap.size(), sessionQueueMap.size());
+        queueMap.forEach((transferId, transferQueue) -> {
             try {
                 long lastReadTimestamp = transferQueue.getLastReadTimestamp();
                 long lastWriteTimestamp = transferQueue.getLastWriteTimestamp();
@@ -314,7 +336,7 @@ public class TransferQueueManager {
                 if (transferQueue.getTransferStatus() == TransferStatus.ERROR || transferQueue.getTransferStatus() == TransferStatus.FINISH) {
                     destroy(transferId);
                 }
-                if (freeTime > MetaInfo.PROPERTY_QUEUE_MAX_FREE_TIME) {
+                if (freeTime > PROPERTY_QUEUE_MAX_FREE_TIME) {
                     if (logger.isInfoEnabled()) {
                         logger.info("topic : {} freetime  {} need to be destroy", transferId, freeTime);
                     }
@@ -327,18 +349,18 @@ public class TransferQueueManager {
     }
 
 
-    public Enumeration<String> getAllTransferIds() {
-        return transferQueueMap.keys();
-    }
+//    public Enumeration<String> getAllTransferIds() {
+//        return queueMap.keys();
+//    }
 
-    public List<TransferQueue> getTransferQueues(List<String> transferIds) {
-        List<TransferQueue> result = Lists.newArrayList();
-        for (String transferId : transferIds) {
-            result.add(this.transferQueueMap.get(transferId));
-        }
-        return result;
-    }
-    ConcurrentHashMap<String, Lock>  clusterApplyLockMap  = new ConcurrentHashMap();
+//    public List<AbstractQueue> getTransferQueues(List<String> transferIds) {
+//        List<AbstractQueue> result = Lists.newArrayList();
+//        for (String transferId : transferIds) {
+//            result.add(this.queueMap.get(transferId));
+//        }
+//        return result;
+//    }
+//    ConcurrentHashMap<String, Lock>  clusterApplyLockMap  = new ConcurrentHashMap();
 
 
     public synchronized TransferQueueApplyInfo handleClusterApply(String transferId,
@@ -361,91 +383,85 @@ public class TransferQueueManager {
         }
     }
 
+    public ReentrantLock getLock(String  transferId) throws ExecutionException {
+        return transferIdLockMap.get(transferId);
 
-    public ReentrantLock getLock(String  transferId){
-        ReentrantLock transferCreateLock = transferIdLockMap.get(transferId);
-        if (transferCreateLock == null) {
-            transferIdLockMap.putIfAbsent(transferId, new ReentrantLock(false));
-        }
-        transferCreateLock = transferIdLockMap.get(transferId);
-        return  transferCreateLock;
     }
 
-
-
-
-    public CreateQueueResult createNewQueue(String transferId, String sessionId, boolean forceCreateLocal) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
+    public CreateQueueResult createNewQueue(String sessionId,String topic,  boolean forceCreateLocal, QueueType queueType)  {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(topic));
         CreateQueueResult createQueueResult = new CreateQueueResult();
-        ReentrantLock transferCreateLock= getLock(transferId);
+        ReentrantLock transferCreateLock = null;
         try {
+            transferCreateLock= getLock(topic);
             transferCreateLock.lock();
-            boolean exist = this.transferQueueMap.get(transferId) != null;
-            if (exist) {
-                createQueueResult.setTransferQueue(this.transferQueueMap.get(transferId));
+            AbstractQueue queue = this.getQueue(sessionId,topic);
+            if (queue!=null) {
+                createQueueResult.setQueue(queue);
                 String[] elements = MetaInfo.INSTANCE_ID.split(":");
                 createQueueResult.setPort(Integer.parseInt(elements[1]));
                 createQueueResult.setRedirectIp(elements[0]);
                 return createQueueResult;
             }
             if (MetaInfo.PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name()) && !forceCreateLocal) {
-                /*
-                 * 缓存的集群信息中能够找到，直接返回信息
-                 */
-                if (this.transferQueueApplyInfoMap.get(transferId) != null) {
-                    TransferQueueApplyInfo transferQueueApplyInfo = this.transferQueueApplyInfoMap.get(transferId);
-                    if (!transferQueueApplyInfo.getInstanceId().equals(MetaInfo.INSTANCE_ID)) {
-                        String instanceId = transferQueueApplyInfo.getInstanceId();
-                        String[] args = instanceId.split(":");
-                        String ip = args[0];
-                        String portString = args[1];
-                        createQueueResult.setPort(Integer.parseInt(portString));
-                        createQueueResult.setRedirectIp(ip);
-                        return createQueueResult;
-                    } else {
-                        /*
-                         * 这种情况存在于本地已删除，而集群信息未同步更新，可能存在延迟，这时重走申请流程
-                         */
-                    }
-                }
-                Osx.Outbound applyTopicResponse = this.applyFromMaster(transferId, sessionId, MetaInfo.INSTANCE_ID);
-                logger.info("apply topic response {}", applyTopicResponse);
-
-                if (applyTopicResponse != null) {
-
-                    /*
-                     * 从clustermananger 返回的结果中比对instantceId ，如果为本实例，则在本地建Q
-                     */
-                    String applyInstanceId = applyTopicResponse.getMetadataMap().get(Osx.Metadata.InstanceId.name());
-
-                    if (MetaInfo.INSTANCE_ID.equals(applyInstanceId)) {
-
-                        String[] elements = MetaInfo.INSTANCE_ID.split(":");
-                        createQueueResult.setPort(Integer.parseInt(elements[1]));
-                        createQueueResult.setRedirectIp(elements[0]);
-                        createQueueResult.setTransferQueue(localCreate(transferId, sessionId));
-                        registerTransferQueue(transferId, sessionId);
-                        //createQueueResult = applyFromCluster(transferId,sessionId);
-                    } else {
-                        if (applyInstanceId != null) {
-                            String[] args = applyInstanceId.split(":");
-                            String ip = args[0];
-                            String portString = args[1];
-                            int grpcPort = Integer.parseInt(portString);
-                            createQueueResult.setRedirectIp(ip);
-                            createQueueResult.setPort(grpcPort);
-                        } else {
-                            throw new CreateTopicErrorException("apply topic from master error");
-                        }
-                    }
-                } else {
-                    throw new RuntimeException();
-                }
+                // TODO: 2023/11/6   集群功能先屏蔽
+//                /*
+//                 * 缓存的集群信息中能够找到，直接返回信息
+//                 */
+//                if (this.transferQueueApplyInfoMap.get(transferId) != null) {
+//                    TransferQueueApplyInfo transferQueueApplyInfo = this.transferQueueApplyInfoMap.get(transferId);
+//                    if (!transferQueueApplyInfo.getInstanceId().equals(MetaInfo.INSTANCE_ID)) {
+//                        String instanceId = transferQueueApplyInfo.getInstanceId();
+//                        String[] args = instanceId.split(":");
+//                        String ip = args[0];
+//                        String portString = args[1];
+//                        createQueueResult.setPort(Integer.parseInt(portString));
+//                        createQueueResult.setRedirectIp(ip);
+//                        return createQueueResult;
+//                    } else {
+//                        /*
+//                         * 这种情况存在于本地已删除，而集群信息未同步更新，可能存在延迟，这时重走申请流程
+//                         */
+//                    }
+//                }
+//                Osx.Outbound applyTopicResponse = this.applyFromMaster(transferId, sessionId, MetaInfo.INSTANCE_ID);
+//                logger.info("apply topic response {}", applyTopicResponse);
+//
+//                if (applyTopicResponse != null) {
+//
+//                    /*
+//                     * 从clustermananger 返回的结果中比对instantceId ，如果为本实例，则在本地建Q
+//                     */
+//                    String applyInstanceId = applyTopicResponse.getMetadataMap().get(Osx.Metadata.InstanceId.name());
+//
+//                    if (MetaInfo.INSTANCE_ID.equals(applyInstanceId)) {
+//
+//                        String[] elements = MetaInfo.INSTANCE_ID.split(":");
+//                        createQueueResult.setPort(Integer.parseInt(elements[1]));
+//                        createQueueResult.setRedirectIp(elements[0]);
+//                        createQueueResult.setQueue(localCreate(transferId, sessionId,queueType));
+//                        registerTransferQueue(transferId, sessionId);
+//                        //createQueueResult = applyFromCluster(transferId,sessionId);
+//                    } else {
+//                        if (applyInstanceId != null) {
+//                            String[] args = applyInstanceId.split(":");
+//                            String ip = args[0];
+//                            String portString = args[1];
+//                            int grpcPort = Integer.parseInt(portString);
+//                            createQueueResult.setRedirectIp(ip);
+//                            createQueueResult.setPort(grpcPort);
+//                        } else {
+//                            throw new CreateTopicErrorException("apply topic from master error");
+//                        }
+//                    }
+//                } else {
+//                    throw new RuntimeException();
+//                }
             } else {
                 /*
                  * 单机版部署，直接本地建Q
                  */
-                createQueueResult.setTransferQueue(localCreate(transferId, sessionId));
+                createQueueResult.setQueue(localCreate(topic, sessionId,queueType));
 //                String[] args = MetaInfo.INSTANCE_ID.split("_");
 //                String ip = args[0];
 //                String portString = args[1];
@@ -454,9 +470,15 @@ public class TransferQueueManager {
                 createQueueResult.setRedirectIp(NetUtils.getLocalHost());
             }
             return createQueueResult;
-        } finally {
-            transferCreateLock.unlock();
-
+        }
+        catch(Exception e){
+            logger.error("create local queue {} {} error",sessionId,topic,e);
+            throw new  SysException(StatusCode.PTP_SYSTEM_ERROR,"create queue error");
+        }
+        finally {
+            if( transferCreateLock!=null){
+                transferCreateLock.unlock();
+            }
         }
     }
 
@@ -469,7 +491,7 @@ public class TransferQueueManager {
         transferQueueApplyInfo.setInstanceId(MetaInfo.INSTANCE_ID);
         transferQueueApplyInfo.setApplyTimestamp(System.currentTimeMillis());
         try {
-            ServiceContainer.zkClient.create(path, JsonUtil.object2Json(transferQueueApplyInfo), true);
+            zkClient.create(path, JsonUtil.object2Json(transferQueueApplyInfo), true);
         } catch (KeeperException.NodeExistsException e) {
             logger.error("register path {} to zk error", path);
         }
@@ -479,15 +501,15 @@ public class TransferQueueManager {
         return ZK_QUEUE_PREFIX + "/" + transferId;
     }
 
-    private CreateQueueResult applyFromCluster(String transferId, String sessionId) {
+    private CreateQueueResult applyFromCluster(String transferId, String sessionId,QueueType queueType) {
         CreateQueueResult createQueueResult = null;
 
         if (MetaInfo.PROPERTY_USE_ZOOKEEPER) {
             createQueueResult = new CreateQueueResult();
             String path = buildZkPath(transferId);
-            boolean exist = ServiceContainer.zkClient.checkExists(path);
+            boolean exist = zkClient.checkExists(path);
             if (exist) {
-                String content = ServiceContainer.zkClient.getContent(path);
+                String content = zkClient.getContent(path);
                 TransferQueueApplyInfo transferQueueApplyInfo = JsonUtil.json2Object(content, TransferQueueApplyInfo.class);
             } else {
                 /*
@@ -499,15 +521,15 @@ public class TransferQueueManager {
                 transferQueueApplyInfo.setInstanceId(MetaInfo.INSTANCE_ID);
                 transferQueueApplyInfo.setApplyTimestamp(System.currentTimeMillis());
                 try {
-                    ServiceContainer.zkClient.create(path, JsonUtil.object2Json(transferQueueApplyInfo), true);
+                    zkClient.create(path, JsonUtil.object2Json(transferQueueApplyInfo), true);
                 } catch (KeeperException.NodeExistsException e) {
                     logger.error("register path {} in zk error", path);
                 }
-                String content = ServiceContainer.zkClient.getContent(path);
+                String content = zkClient.getContent(path);
                 transferQueueApplyInfo = JsonUtil.json2Object(content, TransferQueueApplyInfo.class);
                 assert transferQueueApplyInfo != null;
                 if (MetaInfo.INSTANCE_ID.equals(transferQueueApplyInfo.getInstanceId())) {
-                    createQueueResult.setTransferQueue(localCreate(transferId, sessionId));
+                    createQueueResult.setQueue(localCreate(transferId, sessionId,queueType));
                 } else {
                     String[] elements = MetaInfo.INSTANCE_ID.split(":");
                     createQueueResult.setPort(Integer.parseInt(elements[1]));
@@ -520,7 +542,6 @@ public class TransferQueueManager {
 
 
     public Osx.Outbound applyFromMaster(String topic, String sessionId, String instanceId) {
-
         if (!isMaster()) {
             RouterInfo routerInfo = this.getMasterAddress();
             //context.setRouterInfo(routerInfo);
@@ -566,67 +587,82 @@ public class TransferQueueManager {
 
         if (MetaInfo.isCluster() && MetaInfo.isCluster()) {
             logger.info("unRegister topic {} from zk", transferId);
-            ServiceContainer.zkClient.delete(buildZkPath(transferId));
+            zkClient.delete(buildZkPath(transferId));
         }
     }
 
-    private void setMsgCallBack(TransferQueue transferQueue) {
+    private void setMsgCallBack(AbstractQueue queue) {
         this.msgCallBackRuleMap.forEach((rule, msgCallbacks) -> {
 
-            if (rule.isMatch(transferQueue)) {
+            if (rule.isMatch(queue)) {
                 //      logger.info("rule {} is mactched",rule);
-                transferQueue.registerMsgCallback(msgCallbacks);
+                queue.registerMsgCallback(msgCallbacks);
             } else {
                 //        logger.info("rule {} is not matched",rule);
             }
         });
+    };
+
+
+    public static String assembleTopic(String sessionId, String topic){
+        StringBuilder  sb = new StringBuilder();
+        sb.append(sessionId).append("_").append(topic);
+        return  sb.toString();
     }
 
-    ;
-
-
-    private TransferQueue localCreate(String topic, String sessionId) {
-        logger.info("create local topic {}", topic);
-        TransferQueue transferQueue = new TransferQueue(topic, this, MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
-        transferQueue.setSessionId(sessionId);
-        transferQueue.start();
-        transferQueue.registerDestoryCallback(() -> {
-            this.transferQueueMap.remove(topic);
+    private AbstractQueue localCreate(String topic, String sessionId,QueueType  queueType) {
+        logger.info("create local topic {} queue type {}", topic,queueType);
+        AbstractQueue queue=null;
+        switch ( queueType){
+            case NORMAL:   queue = new TransferQueue(topic, this,consumerManager ,MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
+            break;
+            case DIRECT: queue = new DirectQueue(topic);
+            break;
+        }
+        queue.setSessionId(sessionId);
+        queue.start();
+        queue.registerDestoryCallback(() -> {
+            this.queueMap.remove(assembleTopic(sessionId,topic));
             if (this.sessionQueueMap.get(sessionId) != null) {
                 this.sessionQueueMap.get(sessionId).remove(topic);
             }
             unRegisterCluster(topic);
         });
-        setMsgCallBack(transferQueue);
-        transferQueueMap.put(topic, transferQueue);
-        sessionQueueMap.putIfAbsent(sessionId, new HashSet<>());
+        setMsgCallBack(queue);
+        String  indexKey = assembleTopic(sessionId,topic);
+        queueMap.put(indexKey, queue);
+        if(sessionQueueMap.get(sessionId)==null)
+                sessionQueueMap.put(sessionId, new HashSet<>());
         sessionQueueMap.get(sessionId).add(topic);
-        return transferQueue;
+        return queue;
     }
 
-    public TransferQueue getQueue(String topic) {
-        return transferQueueMap.get(topic);
+    public AbstractQueue getQueue(String sessionId,String topic) {
+        String indexKey = this.assembleTopic(sessionId,topic);
+        return getQueueByIndexKey(indexKey);
+    }
+    public AbstractQueue  getQueueByIndexKey(String indexKey){
+        return queueMap.get(indexKey);
     }
 
-    public Map<String, TransferQueue> getAllLocalQueue() {
-        return this.transferQueueMap;
-    }
+//    public Map<String, AbstractQueue> getAllLocalQueue() {
+//        return this.queueMap;
+//    }
 
 
-    private void destroy(String topic) {
-        logger.info("start clear topic queue , topic = {}",topic);
-        Preconditions.checkArgument(StringUtils.isNotEmpty(topic));
-        ReentrantLock transferIdLock = this.transferIdLockMap.get(topic);
+    private void destroy(String indexKey) throws ExecutionException {
+        logger.info("start clear topic queue , indexKey = {}",indexKey);
+
+        ReentrantLock transferIdLock = this.getLock(indexKey);
         if (transferIdLock != null) {
             transferIdLock.lock();
         }
         try {
-            TransferQueue transferQueue = getQueue(topic);
+            AbstractQueue transferQueue = getQueueByIndexKey(indexKey);
             if (transferQueue != null) {
                 destroyInner(transferQueue);
-                transferIdLockMap.remove(topic);
+                //transferIdLockMap.remove(indexKey);
             }
-
         } finally {
             if (transferIdLock != null) {
                 transferIdLock.unlock();
@@ -635,25 +671,35 @@ public class TransferQueueManager {
     }
 
 
-    public void onError(String transferId, Throwable throwable) {
-        TransferQueue transferQueue = transferQueueMap.get(transferId);
-        if (transferQueue != null) {
+    public void onError(String sessionId,String topic, Throwable throwable) {
+        String  indexKey = assembleTopic(sessionId,topic);
+        AbstractQueue   queue = this.getQueueByIndexKey(indexKey);
+        if (queue != null) {
             /*
              * 这里需要处理的问题是，当异常发生时，消费者并没有接入，等触发之后才接入
              */
-            errorCallBackExecutor.execute(() -> transferQueue.onError(throwable));
+            errorCallBackExecutor.execute(() -> queue.onError(throwable));
         }
-        this.destroy(transferId);
+        try {
+            this.destroy(indexKey);
+        }catch (Exception e){
+            logger.error("destory queue {} error",indexKey,e);
+        }
     }
 
-    public void onCompleted(String transferId) {
-        logger.info("transfer queue {} prepare to destory", transferId);
-        TransferQueue transferQueue = transferQueueMap.get(transferId);
-        if (transferQueue != null) {
-            transferQueue.onCompeleted();
+    public void onCompleted(String sessionId ,String topic) {
+        logger.info("transfer queue session {}  topic prepare to destory",sessionId, topic);
+        String  indexKey = assembleTopic(sessionId,topic);
+        AbstractQueue   queue = this.getQueueByIndexKey(indexKey);
+        if (queue != null) {
+            queue.onCompeleted();
         }
-        this.destroy(transferId);
-        logger.info("transfer queue {} destoryed", transferId);
+        try {
+            this.destroy(indexKey);
+        }catch (Exception e){
+            logger.error("destory queue {} error",indexKey,e);
+        }
+
     }
 
     public TransferQueueApplyInfo queryGlobleQueue(String transferId) {
@@ -664,14 +710,14 @@ public class TransferQueueManager {
         if (MetaInfo.isCluster()) {
             try {
                 if (this.isMaster()) {
-                    ServiceContainer.zkClient.delete(MASTER_PATH);
+                    zkClient.delete(MASTER_PATH);
                 }
-                ServiceContainer.zkClient.close();
+                zkClient.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        this.transferQueueMap.forEach((transferId, transferQueue) -> {
+        this.queueMap.forEach((transferId, transferQueue) -> {
             transferQueue.destory();
         });
     }
@@ -680,4 +726,38 @@ public class TransferQueueManager {
     public void addMsgCallBackRule(EventDriverRule rule, List<MsgEventCallback> callbacks) {
         this.msgCallBackRuleMap.put(rule, callbacks);
     }
+
+    public  static  void main(String[] args){
+
+        Cache<String, String> test = CacheBuilder.newBuilder()
+                .expireAfterAccess(1, TimeUnit.SECONDS)
+                .concurrencyLevel(4)
+                .maximumSize(1000)
+                .removalListener(new RemovalListener<String, String>() {
+                    @Override
+                    public void onRemoval(RemovalNotification<String, String> notification) {
+                            System.err.println("============="+notification.getKey());
+                    }
+                }  )
+                .build();
+        test.put("test1","test1");
+        test.put("test2","test2");
+        test.put("test3","test3");
+        test.put("test4","test4");
+        test.put("test5","test5");
+
+        test.cleanUp();
+        System.err.println(test.getIfPresent("test1"));
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.err.println(test.getIfPresent("test1"));
+
+
+    }
+
+
+
 }

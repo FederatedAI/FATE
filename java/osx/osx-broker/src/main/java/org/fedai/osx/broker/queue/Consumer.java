@@ -16,11 +16,12 @@
 package org.fedai.osx.broker.queue;
 
 
-import org.fedai.osx.api.context.Context;
+
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.frame.Lifecycle;
 
 public interface Consumer<T> extends Lifecycle {
 
-    public T consume(Context context, long offset);
+    public T consume(OsxContext context, long offset);
 
 }

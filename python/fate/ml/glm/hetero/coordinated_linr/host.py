@@ -127,6 +127,7 @@ class CoordinatedLinREstimatorHost(HeteroModule):
         self.start_epoch = 0
         self.end_epoch = -1
         self.is_converged = False
+        self.header = None
 
     def asynchronous_compute_gradient(self, batch_ctx, encryptor, w, X):
         h = X.shape[0]
@@ -164,6 +165,7 @@ class CoordinatedLinREstimatorHost(HeteroModule):
         return g
 
     def fit_model(self, ctx: Context, encryptor, train_data, validate_data=None) -> None:
+        self.header = train_data.schema.columns.to_list()
         batch_loader = DataLoader(train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
 
         coef_count = train_data.shape[1]
@@ -221,6 +223,7 @@ class CoordinatedLinREstimatorHost(HeteroModule):
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
+            "header": self.header
         }
 
     def restore(self, model):
