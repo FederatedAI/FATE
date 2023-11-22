@@ -587,6 +587,9 @@ class MultivariateStatisticalSummary(object):
             return x
 
         data_mode_summary = data_reduce_by_col_val.mapPartitions(func).reduce(merge_count_dict)
+        diff = set(data_overview.get_header(data)).difference(set(data_mode_summary.keys()))
+        if diff:
+            LOGGER.warning(f"Following columns do not have mode: {diff}.")
         return data_mode_summary
 
     def get_mode(self, col=None, multi_mode='random'):
