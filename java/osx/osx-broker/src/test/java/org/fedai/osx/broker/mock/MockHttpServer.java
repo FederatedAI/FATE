@@ -1,6 +1,6 @@
 package org.fedai.osx.broker.mock;
 
-import org.fedai.osx.broker.ServiceContainer;
+
 import org.fedai.osx.core.config.MetaInfo;
 
 import java.util.HashSet;
@@ -19,7 +19,7 @@ public class MockHttpServer {
         MetaInfo.PROPERTY_GRPC_PORT=9372;
         MetaInfo.PROPERTY_HTTP_PORT=8222;
         MetaInfo.PROPERTY_OPEN_HTTP_SERVER = Boolean.TRUE;
-        ServiceContainer.init();
+      //  ServiceContainer.init();
     }
 
 

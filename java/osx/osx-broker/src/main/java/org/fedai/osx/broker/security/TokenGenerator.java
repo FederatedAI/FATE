@@ -1,10 +1,11 @@
 package org.fedai.osx.broker.security;
 
 
-import org.fedai.osx.api.context.Context;
+
+import org.fedai.osx.core.context.OsxContext;
 
 public interface TokenGenerator {
 
-    String  createNewToken(Context context);
+    String  createNewToken(OsxContext context);
 
 }

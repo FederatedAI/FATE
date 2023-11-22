@@ -20,9 +20,9 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.fedai.osx.api.context.Context;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.StatusCode;
+import org.fedai.osx.core.context.OsxContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class ErrorMessageUtil {
         return retcode;
     }
 
-    public static StatusRuntimeException throwableToException(Context context, Throwable throwable) {
+    public static StatusRuntimeException throwableToException(OsxContext context, Throwable throwable) {
         if (throwable instanceof StatusRuntimeException) {
             return (StatusRuntimeException) throwable;
         }
@@ -84,7 +84,7 @@ public class ErrorMessageUtil {
         return result;
     }
 
-    public static ExceptionInfo handleExceptionExceptionInfo(Context context, Throwable e) {
+    public static ExceptionInfo handleExceptionExceptionInfo(OsxContext context, Throwable e) {
         ExceptionInfo exceptionInfo = new ExceptionInfo();
         String selfPartyId = context.getSelfPartyId();
         String oriMessage = e.getMessage();

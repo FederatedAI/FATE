@@ -87,8 +87,8 @@ message PopInbound {
 }
 
 message PushInbound{
-  bytes payload = 1;                  // 二进制报文
-  string topic = 2;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  string topic = 1;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  bytes payload = 2;                  // 二进制报文
   map<string, string> metadata = 3;   // optional 保留参数，用于扩展性
 }
 
@@ -98,10 +98,13 @@ message ReleaseInbound {
 }
 
 message TransportOutbound {
-  bytes payload = 1;                  // 二进制报文
-  string code = 2;                    // 状态码
-  string message = 3;                 // 状态说明
+  map<string, string>  metadata = 1;  // 可选，预留扩展，Dict，序列化协议由通信层统一实现
+  bytes payload = 2;                  // 二进制报文
+  string code = 3;                    // 状态码
+  string message = 4;                 // 状态说明
 }
+
+
 
 
 // 互联互通如果使用异步传输协议作为标准参考，Header会复用metadata传输互联互通协议报头，且metadata中会传输异步场景下的消息相关属性
@@ -111,8 +114,16 @@ message TransportOutbound {
 service PrivateTransferProtocol {
   rpc transport (stream Inbound) returns (stream Outbound);
   rpc invoke (Inbound) returns (Outbound);
-  rpc test(stream Inbound)  returns (stream Outbound);
+//  rpc clusterTokenApply(stream Inbound)  returns (stream Outbound);
+//  rpc clusterTopicApply(stream Inbound)  returns (stream Outbound);
 
+//  rpc peek (PeekInbound) returns (TransportOutbound);
+//  rpc pop (PopInbound) returns (TransportOutbound);
+//  rpc push (PushInbound) returns (TransportOutbound);
+//  rpc release (ReleaseInbound) returns (TransportOutbound);
+}
+
+service PrivateTransferTransport {
   rpc peek (PeekInbound) returns (TransportOutbound);
   rpc pop (PopInbound) returns (TransportOutbound);
   rpc push (PushInbound) returns (TransportOutbound);

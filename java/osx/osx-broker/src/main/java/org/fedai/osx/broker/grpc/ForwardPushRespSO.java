@@ -18,10 +18,10 @@ package org.fedai.osx.broker.grpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.stub.StreamObserver;
-import org.fedai.osx.api.context.Context;
 import org.fedai.osx.broker.callback.CompleteCallback;
 import org.fedai.osx.broker.callback.ErrorCallback;
 import org.fedai.osx.broker.util.TransferUtil;
+import org.fedai.osx.core.context.OsxContext;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +30,15 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
 
     Logger logger = LoggerFactory.getLogger(ForwardPushRespSO.class);
     StreamObserver backPushRespSO;
-    Class  backPushRespClass;
+
     CompleteCallback completeCallback;
     ErrorCallback errorCallback;
-    Context context;
+    OsxContext context;
 
 
-    public ForwardPushRespSO(Context context, StreamObserver backPushRespSO,    Class  backPushRespClass, CompleteCallback completeCallback, ErrorCallback errorCallback) {
+    public ForwardPushRespSO(OsxContext context, StreamObserver backPushRespSO, CompleteCallback completeCallback, ErrorCallback errorCallback) {
         this.backPushRespSO = backPushRespSO;
-        this.backPushRespClass = backPushRespClass;
+
         this.context = context;
         this.completeCallback = completeCallback;
         this.errorCallback = errorCallback;
@@ -54,12 +54,12 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
 
     @Override
     public void onNext(Proxy.Metadata value) {
-        if(backPushRespClass.equals(Proxy.Metadata.class)) {
+   //     if(backPushRespClass.equals(Proxy.Metadata.class)) {
             backPushRespSO.onNext(value);
-        }else{
-            Osx.Outbound  outbound = TransferUtil.buildOutboundFromProxyMetadata(value);
-            backPushRespSO.onNext(outbound);
-        }
+//        }else{
+//            Osx.Outbound  outbound = TransferUtil.buildOutboundFromProxyMetadata(value);
+//            backPushRespSO.onNext(outbound);
+//        }
     }
 
     @Override

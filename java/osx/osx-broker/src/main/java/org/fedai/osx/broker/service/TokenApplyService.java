@@ -16,18 +16,20 @@
 package org.fedai.osx.broker.service;
 
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
-import org.fedai.osx.api.context.Context;
-import org.fedai.osx.api.router.RouterInfo;
-import org.fedai.osx.broker.ServiceContainer;
+import org.fedai.osx.broker.token.DefaultTokenService;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.StreamLimitMode;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
+import org.fedai.osx.core.flow.FlowCounterManager;
 import org.fedai.osx.core.flow.FlowRule;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.ptp.TargetMethod;
+import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.token.TokenRequest;
 import org.fedai.osx.core.token.TokenResult;
 import org.fedai.osx.core.token.TokenResultStatus;
@@ -42,10 +44,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
+@Singleton
 public class TokenApplyService implements Lifecycle {
 
     static Logger logger = LoggerFactory.getLogger(TokenApplyService.class);
+    @Inject
+    FlowCounterManager flowCounterManager;
+
+    @Inject
+    DefaultTokenService defaultTokenService;
+
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     public TokenApplyService() {
@@ -66,12 +74,12 @@ public class TokenApplyService implements Lifecycle {
 
     }
 
-    public void applyToken(FateContext context, String resource, int count) {
+    public void applyToken(OsxContext context, String resource, int count) {
 
         if (MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.LOCAL.name())
                 || MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
-            TokenResult localTokenResult = tryLocalLimit(context,resource, count);
-            logger.info("request token {} count {} result {}", resource, count, localTokenResult);
+            TokenResult localTokenResult = tryLocalLimit(resource, count);
+        //    logger.info("request token {} count {} result {}", resource, count, localTokenResult);
             /**
              * 集群限流
              */
@@ -83,21 +91,20 @@ public class TokenApplyService implements Lifecycle {
                     tryClusterLimit(resource, count);
                 }
             }
-           // ServiceContainer.flowCounterManager.pass(resource, count);
+            flowCounterManager.pass(resource, count);
         }
     }
 
 
 
 
-    private TokenResult tryLocalLimit(FateContext context,String resource, int count) {
+    private TokenResult tryLocalLimit(String resource, int count) {
         boolean needLoop = false;
         int tryTime = 0;
         TokenResult tokenResult;
-        int totalSleepMs = 0;
         do {
 
-            tokenResult = ServiceContainer.defaultTokenService.requestToken(resource, count, true);
+            tokenResult = defaultTokenService.requestToken(resource, count, true);
             if (tokenResult != null) {
                 ++tryTime;
                 //logger.info("prepare to apply token {} {} result {}", resource, count,tokenResult);
@@ -121,11 +128,9 @@ public class TokenApplyService implements Lifecycle {
                         try {
                             sleepMs = tokenResult.getWaitInMs();
                             if (sleepMs > 0) {
-                                totalSleepMs+=sleepMs;
                                 Thread.sleep(sleepMs);
-
                             }
-                         //   logger.info("should block {} ms try time {}", sleepMs, tryTime);
+                            logger.info("should block {} ms try time {}", sleepMs, tryTime);
                         } catch (InterruptedException e) {
                             logger.error("");
                         }
@@ -138,7 +143,7 @@ public class TokenApplyService implements Lifecycle {
                 }
             }
         } while (needLoop && tryTime < MetaInfo.PROPERTY_STREAM_LIMIT_MAX_TRY_TIME);
-        context.setSleepTime(totalSleepMs);
+
         return tokenResult;
 
     }
