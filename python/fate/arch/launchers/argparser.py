@@ -193,3 +193,13 @@ class HfArgumentParser(ArgumentParser):
             obj = dtype(**inputs)
             outputs.append(obj)
         return (*outputs,)
+
+
+def get_parties(parties):
+    _parties = []
+    for party in parties:
+        if isinstance(party, str):
+            _parties.append(tuple(party.split(":")))
+        else:
+            _parties.append(party)
+    return _parties

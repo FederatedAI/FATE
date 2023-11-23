@@ -1,6 +1,5 @@
 import importlib
 
-import click
 from dataclasses import dataclass, field
 
 from fate.arch.launchers.multiprocess_launcher import launch
