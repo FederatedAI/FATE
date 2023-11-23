@@ -21,6 +21,10 @@
             <artifactId>grpc-netty-shaded</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
         </dependency>
@@ -38,6 +42,7 @@
             <artifactId>jetty-servlet</artifactId>
 
         </dependency>
+
 
 
     </dependencies>

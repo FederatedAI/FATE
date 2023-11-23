@@ -1,7 +1,8 @@
 package org.fedai.osx.broker.util;
 
-import org.fedai.osx.api.constants.Protocol;
+
 import org.fedai.osx.core.config.MetaInfo;
+import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.utils.JsonUtil;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;

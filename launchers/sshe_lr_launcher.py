@@ -19,12 +19,12 @@ class SSHEArguments:
 
 
 def run_sshe_lr(ctx: "Context"):
-    from fate.ml.mpc.sshe_lr import SSHELR
+    from fate.ml.mpc.sshe_lr import SSHELogisticRegression
     from fate.arch import dataframe
 
     ctx.mpc.init()
     args, _ = HfArgumentParser(SSHEArguments).parse_args_into_dataclasses(return_remaining_strings=True)
-    inst = SSHELR(args.lr)
+    inst = SSHELogisticRegression(args.lr)
     if ctx.is_on_guest:
         kwargs = {
             "sample_id_name": None,

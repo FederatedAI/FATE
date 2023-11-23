@@ -1,17 +1,14 @@
 package org.fedai.osx.broker.consumer;
-
-
-import org.fedai.osx.api.router.RouterInfo;
-import org.fedai.osx.broker.ServiceContainer;
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.message.MessageExt;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.TransferStatus;
-import org.fedai.osx.core.context.FateContext;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.ptp.TargetMethod;
+import org.fedai.osx.core.router.RouterInfo;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 public abstract class GrpcEventHandler  {
 
     Logger logger = LoggerFactory.getLogger(GrpcEventHandler.class);
+
     public  GrpcEventHandler(String provider){
         this.provider = provider;
     }
@@ -34,7 +32,8 @@ public abstract class GrpcEventHandler  {
     protected String topic;
     protected String backTopic;
     protected RouterInfo backRouterInfo;
-    protected FateContext context;
+    protected OsxContext context;
+
 
     public  void  sendBackException(ExceptionInfo e){
         if(transferStatus==TransferStatus.TRANSFERING) {
@@ -77,7 +76,7 @@ public abstract class GrpcEventHandler  {
 //                messageEvent.setSrcPartyId(message.getSrcPartyId());
 //                messageEvent.setDesPartyId(message.getDesPartyId());
 //                messageEvent.setSessionId(message.getProperty(Dict.SESSION_ID));
-                context =  new FateContext();
+                context =  new OsxContext();
                 topic = message.getTopic();
                 desComponent = message.getProperty(Dict.DES_COMPONENT);
                 srcComponent = message.getProperty(Dict.SOURCE_COMPONENT);
@@ -89,7 +88,8 @@ public abstract class GrpcEventHandler  {
                 } else if (topic.startsWith(Dict.STREAM_BACK_TOPIC_PREFIX)) {
                     backTopic = topic.replaceAll(Dict.STREAM_BACK_TOPIC_PREFIX, Dict.STREAM_SEND_TOPIC_PREFIX);
                 }
-                backRouterInfo = ServiceContainer.routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,"",srcPartyId,"");
+                // TODO: 2023/9/20  临时屏蔽
+                //backRouterInfo = routerRegister.getRouterService(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(desPartyId,"",srcPartyId,"");
                 handleInit(message);
                 transferStatus = TransferStatus.TRANSFERING;
             }catch(Throwable e){

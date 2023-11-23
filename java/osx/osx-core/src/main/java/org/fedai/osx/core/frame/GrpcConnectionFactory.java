@@ -21,16 +21,21 @@ import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.api.router.RouterInfo;
 import org.fedai.osx.core.config.GrpcChannelInfo;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.exceptions.NoRouterInfoException;
 import org.fedai.osx.core.exceptions.SysException;
+import org.fedai.osx.core.router.RouterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -44,31 +49,31 @@ public class GrpcConnectionFactory {
     private GrpcConnectionFactory() {
     }
 
-    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo,boolean usePooled) {
-        if(routerInfo==null){
+    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, boolean usePooled) {
+        if (routerInfo == null) {
             throw new NoRouterInfoException("no router info");
         }
-        if(usePooled) {
+        if (usePooled) {
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
                 ManagedChannel targetChannel = managedChannelPool.get(routerInfo.toKey());
-               // logger.info("channel  is shutdown : {} isTerminated {}",targetChannel.isShutdown() ,targetChannel.isTerminated() ,targetChannel.getState(true));
+                // logger.info("channel  is shutdown : {} isTerminated {}",targetChannel.isShutdown() ,targetChannel.isTerminated() ,targetChannel.getState(true));
                 return managedChannelPool.get(routerInfo.toKey());
             } else {
                 ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
-                if(managedChannel!=null) {
+                if (managedChannel != null) {
                     managedChannelPool.put(routerInfo.toKey(), managedChannel);
                 }
                 return managedChannel;
             }
-        }else{
+        } else {
             ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
-            return  managedChannel;
+            return managedChannel;
         }
     }
 
 
-    private static  GrpcChannelInfo  buildDefaultGrpcChannelInfo(){
-        GrpcChannelInfo  grpcChannelInfo = new  GrpcChannelInfo();
+    private static GrpcChannelInfo buildDefaultGrpcChannelInfo() {
+        GrpcChannelInfo grpcChannelInfo = new GrpcChannelInfo();
         grpcChannelInfo.setKeepAliveTime(MetaInfo.PROPERTY_GRPC_CLIENT_KEEPALIVE_TIME_SEC);
         grpcChannelInfo.setKeepAliveTimeout(MetaInfo.PROPERTY_GRPC_CLIENT_KEEPALIVE_TIMEOUT_SEC);
         grpcChannelInfo.setKeepAliveWithoutCalls(MetaInfo.PROPERTY_GRPC_CLIENT_KEEPALIVE_WITHOUT_CALLS_ENABLED);
@@ -84,8 +89,8 @@ public class GrpcConnectionFactory {
 
     public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, GrpcChannelInfo channelInfo) {
         try {
-            if(channelInfo==null){
-                throw  new SysException("grpc channel info is null");
+            if (channelInfo == null) {
+                throw new SysException("grpc channel info is null");
             }
             NettyChannelBuilder channelBuilder = NettyChannelBuilder
                     .forAddress(routerInfo.getHost(), routerInfo.getPort())
@@ -98,25 +103,71 @@ public class GrpcConnectionFactory {
                     .maxInboundMessageSize(channelInfo.getMaxInboundMessageSize())
                     .enableRetry()
                     .retryBufferSize(channelInfo.getRetryBufferSize())
+                    .intercept(ContextPrepareInterceptor.INTERCEPTOR)
                     .maxRetryAttempts(channelInfo.getMaxRetryAttemps());
-            if (routerInfo.isUseSSL() && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType()) && StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
-                SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
-                        .keyManager(new File(routerInfo.getCertChainFile()), new File(routerInfo.getPrivateKeyFile()))
-                        .trustManager(new File(routerInfo.getCaFile()))
-                        .sessionTimeout(3600 << 4)
-                        .sessionCacheSize(65536);
 
-                channelBuilder.sslContext(sslContextBuilder.build()).useTransportSecurity().overrideAuthority(routerInfo.getHost());
+            if (routerInfo.isUseSSL()) {
+                if (routerInfo.isUseKeyStore() && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType())) {
+
+                    // Load the truststore file
+                    KeyStore trustStore = loadKeyStore(routerInfo.getTrustStoreFilePath(), routerInfo.getTrustStorePassword());
+                    // Create a TrustManagerFactory and initialize it with the truststore
+                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    trustManagerFactory.init(trustStore);
+
+
+                    // Load the keystore file
+                    KeyStore keyStore = loadKeyStore(routerInfo.getKeyStoreFilePath(), routerInfo.getKeyStorePassword());
+                    // Create a keyManagerFactory and initialize it with the keystore
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    keyManagerFactory.init(keyStore, routerInfo.getKeyStorePassword().toCharArray());
+
+                    SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
+                            .keyManager(keyManagerFactory)
+                            .trustManager(trustManagerFactory)
+                            .sessionTimeout(3600 << 4)
+                            .sessionCacheSize(65536)
+                            .sslProvider(SslProvider.OPENSSL);
+
+                    channelBuilder.negotiationType(NegotiationType.TLS).sslContext(sslContextBuilder.build()).useTransportSecurity();
+
+                } else if (NegotiationType.TLS.name().equals(routerInfo.getNegotiationType()) && StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
+                    SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
+                            .keyManager(new File(routerInfo.getCertChainFile()), new File(routerInfo.getPrivateKeyFile()))
+                            .trustManager(new File(routerInfo.getCaFile()))
+                            .sessionTimeout(3600 << 4)
+                            .sessionCacheSize(65536);
+                    channelBuilder.negotiationType(NegotiationType.TLS).sslContext(sslContextBuilder.build()).useTransportSecurity().overrideAuthority(routerInfo.getHost());
+                }
             } else {
                 channelBuilder.usePlaintext();
             }
+
+//            if (routerInfo.isUseSSL() && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType()) && StringUtils.isNotBlank(routerInfo.getCertChainFile()) && StringUtils.isNotBlank(routerInfo.getPrivateKeyFile()) && StringUtils.isNotBlank(routerInfo.getCaFile())) {
+//                SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient()
+//                        .keyManager(new File(routerInfo.getCertChainFile()), new File(routerInfo.getPrivateKeyFile()))
+//                        .trustManager(new File(routerInfo.getCaFile()))
+//                        .sessionTimeout(3600 << 4)
+//                        .sessionCacheSize(65536);
+//
+//                channelBuilder.sslContext(sslContextBuilder.build()).useTransportSecurity().overrideAuthority(routerInfo.getHost());
+//            } else {
+//                channelBuilder.usePlaintext();
+//            }
             return channelBuilder.build();
         } catch (Exception e) {
-            logger.error("create channel to {} error : ",routerInfo, e);
+            logger.error("create channel to {} error : ", routerInfo, e);
             //e.printStackTrace();
         }
         return null;
     }
 
+    private static KeyStore loadKeyStore(String keyStorePath, String keyStorePassword) throws Exception {
+        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(fis, keyStorePassword.toCharArray());
+            return keyStore;
+        }
+    }
 
 }

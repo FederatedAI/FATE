@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 class Federation:
     def __init__(self, session_id: str, party: PartyMeta, parties: List[PartyMeta]):
         logger.debug(f"[federation]initializing({self.__class__.__name__}): {session_id=}, {party=}, {parties=}")
+        if session_id is None:
+            raise ValueError("session_id is None")
         self._session_id = session_id
         self._local_party = party
         self._parties = parties

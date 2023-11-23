@@ -16,8 +16,9 @@
 package org.fedai.osx.broker.util;
 
 
-import org.fedai.osx.api.router.RouterInfo;
+
 import org.fedai.osx.broker.constants.Direction;
+import org.fedai.osx.core.router.RouterInfo;
 
 
 public class ResourceUtil {

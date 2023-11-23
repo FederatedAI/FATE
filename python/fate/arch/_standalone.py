@@ -751,7 +751,7 @@ class Federation(object):
         self._federation_status_table_cache = None
         self._federation_object_table_cache = None
 
-        self._meta = _FederationMetaManager(session_id, data_dir, party)
+        self._meta = _FederationMetaManager(session_id=session_id, data_dir=data_dir, party=party)
 
     @classmethod
     def create(cls, session: Session, session_id: str, party: Tuple[str, str]):

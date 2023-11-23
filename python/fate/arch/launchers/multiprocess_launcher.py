@@ -29,6 +29,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from multiprocessing import Queue, Event
 from typing import List
+import sys
 
 import rich
 import rich.console
@@ -61,10 +62,6 @@ class MultiProcessLauncher:
             namespace.log_level = log_level
         args = HfArgumentParser(LauncherArguments).parse_known_args(namespace=namespace)[0]
 
-        for i in range(len(args.parties)):
-            if isinstance(args.parties[i], str):
-                args.parties[i] = tuple(args.parties[i].split(":"))
-
         multiprocessing.set_start_method("spawn")
         self.world_size = len(args.parties)
         self.processes: List[multiprocessing.Process] = []
@@ -73,9 +70,6 @@ class MultiProcessLauncher:
         self.console = console
         self._exception_tb = {}
         self.federation_session_id = args.federation_session_id
-        self.parties = args.parties
-        self.data_dir = args.data_dir
-        self.log_level = args.log_level
 
     def start(self, f, carrier=None):
         if carrier is None:
@@ -85,6 +79,9 @@ class MultiProcessLauncher:
             output_or_exception_q = self.output_or_exception_q
             safe_to_exit = self.safe_to_exit
             width = self.console.width
+            argv = sys.argv.copy()
+            argv.extend(["--federation_session_id", self.federation_session_id])
+            argv.extend(["--rank", str(rank)])
             process = multiprocessing.Process(
                 target=self.__class__._run_process,
                 name=process_name,
@@ -93,11 +90,7 @@ class MultiProcessLauncher:
                     output_or_exception_q,
                     safe_to_exit,
                     width,
-                    rank,
-                    self.parties,
-                    self.federation_session_id,
-                    self.data_dir,
-                    self.log_level,
+                    argv,
                     f,
                 ),
             )
@@ -130,24 +123,23 @@ class MultiProcessLauncher:
         output_or_exception_q: Queue,
         safe_to_exit: Event,
         width,
-        rank,
-        parties,
-        federation_session_id,
-        data_dir,
-        log_level,
+        argv,
         f,
     ):
+        sys.argv = argv
+        args = HfArgumentParser(LauncherProcessArguments).parse_args_into_dataclasses(return_remaining_strings=True)[0]
         from fate.arch.utils.logger import set_up_logging
-        from fate.arch.utils.context_helper import init_standalone_context
+        from fate.arch.launchers.context_helper import init_context
         from fate.arch.utils.trace import setup_tracing
 
-        if rank >= len(parties):
-            raise ValueError(f"rank {rank} is out of range {len(parties)}")
-        party = parties[rank]
-        csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
+        if args.rank >= len(args.parties):
+            raise ValueError(f"rank {args.rank} is out of range {len(args.parties)}")
+        parties = args.get_parties()
+        party = parties[args.rank]
+        csession_id = f"{args.federation_session_id}_{party[0]}_{party[1]}"
 
         # set up logging
-        set_up_logging(rank, log_level)
+        set_up_logging(args.rank, args.log_level)
         logger = logging.getLogger(__name__)
 
         # set up tracing
@@ -155,22 +147,21 @@ class MultiProcessLauncher:
         tracer = trace.get_tracer(__name__)
 
         with tracer.start_as_current_span(name=csession_id, context=trace.extract_carrier(carrier)) as span:
-            # init context
-            ctx = init_standalone_context(csession_id, federation_session_id, party, parties, data_dir)
+            ctx = init_context()
 
             try:
                 f(ctx)
-                output_or_exception_q.put((rank, None, None))
+                output_or_exception_q.put((args.rank, None, None))
                 safe_to_exit.wait()
 
             except Exception as e:
                 span.record_exception(e)
                 span.set_status(trace.StatusCode.ERROR, str(e))
-                logger.error(f"exception in rank {rank}: {e}", stack_info=False)
+                logger.error(f"exception in rank {args.rank}: {e}", stack_info=True)
                 exc_traceback = rich.traceback.Traceback.from_exception(
                     type(e), e, traceback=e.__traceback__, width=width, show_locals=True
                 )
-                output_or_exception_q.put((rank, e, exc_traceback))
+                output_or_exception_q.put((args.rank, e, exc_traceback))
             finally:
                 try:
                     ctx.destroy()
@@ -239,6 +230,23 @@ class LauncherArguments:
     tracer_id: str = field(default_factory=lambda: uuid.uuid1().hex[:6])
     data_dir: str = field(default=None)
     log_level: str = field(default="INFO")
+
+
+@dataclass
+class LauncherProcessArguments:
+    federation_session_id: str = field()
+    log_level: str = field()
+    rank: int = field()
+    parties: List[str] = field(metadata={"required": True})
+
+    def get_parties(self):
+        parties = []
+        for party in self.parties:
+            if isinstance(party, str):
+                parties.append(tuple(party.split(":")))
+            else:
+                parties.append(party)
+        return parties
 
 
 def launch(f, **kwargs):

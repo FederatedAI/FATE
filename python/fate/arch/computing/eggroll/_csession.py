@@ -28,7 +28,7 @@ try:
 except ImportError:
     raise EnvironmentError("eggroll not found in pythonpath")
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class CSession(KVTableContext):
@@ -111,13 +111,15 @@ class CSession(KVTableContext):
 
     def destroy(self):
         try:
-            LOGGER.info(f"clean table namespace {self.session_id}")
+            logger.info(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")
         except Exception:
-            LOGGER.warning(f"no found table namespace {self.session_id}")
+            logger.warning(f"no found table namespace {self.session_id}")
 
         try:
             self.stop()
         except Exception as e:
-            LOGGER.exception(f"stop storage session {self.session_id} failed, try to kill", e)
+            logger.exception(f"stop storage session {self.session_id} failed, try to kill")
             self.kill()
+        else:
+            logger.info(f"stop storage session {self.session_id} success")

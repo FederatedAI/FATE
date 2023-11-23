@@ -26,7 +26,7 @@ public class PutBatchSinkUtil {
 
             CacheBuilder.newBuilder()
                     .maximumSize(2000)
-                    .expireAfterWrite(10, TimeUnit.MINUTES)
+                    .expireAfterWrite(10, TimeUnit.SECONDS)
                     .concurrencyLevel(100)
                     .recordStats()
                     .softValues()
