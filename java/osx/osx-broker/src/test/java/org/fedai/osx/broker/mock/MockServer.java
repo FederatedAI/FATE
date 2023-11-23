@@ -6,6 +6,8 @@ package org.fedai.osx.broker.mock;
 import com.google.protobuf.ByteString;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
+import com.webank.eggroll.core.transfer.Transfer;
+import com.webank.eggroll.core.transfer.TransferServiceGrpc;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -40,6 +42,7 @@ public class MockServer {
         NettyServerBuilder nettyServerBuilder = NettyServerBuilder.forAddress(addr);
         nettyServerBuilder.addService(new MockService());
         nettyServerBuilder.addService(new PtpService());
+        nettyServerBuilder.addService(new MockEggpair());
         //nettyServerBuilder.addService(new QueueMockService());
         //nettyServerBuilder.addService(ServerInterceptors.intercept(new QueueMockService(), new ServiceExceptionHandler(),new ContextPrepareInterceptor()));
         Server server = nettyServerBuilder.build();
@@ -132,6 +135,35 @@ public class MockServer {
 
     }
 
+
+
+    private static class MockEggpair extends TransferServiceGrpc.TransferServiceImplBase{
+
+        public io.grpc.stub.StreamObserver<com.webank.eggroll.core.transfer.Transfer.TransferBatch> send(
+                io.grpc.stub.StreamObserver<com.webank.eggroll.core.transfer.Transfer.TransferBatch> responseObserver) {
+             return   new StreamObserver<Transfer.TransferBatch>(){
+                   @Override
+                   public void onNext(Transfer.TransferBatch transferBatch) {
+                        System.err.println("======== on next "+ transferBatch);
+                   }
+
+                   @Override
+                   public void onError(Throwable throwable) {
+                       System.err.println("======== on error "+ throwable);
+                   }
+
+                   @Override
+                   public void onCompleted() {
+
+                       System.err.println("======== on completed ");
+                       responseObserver.onCompleted();
+                   }
+               };
+
+
+        };
+
+    }
     private static class MockService extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
         public void unaryCall(com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet request,

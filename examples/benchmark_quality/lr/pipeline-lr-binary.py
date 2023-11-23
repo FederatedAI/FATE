@@ -16,13 +16,12 @@
 
 import argparse
 
-from fate_test.utils import parse_summary_result
-
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
+from fate_test.utils import parse_summary_result
 
 
 def main(config="../../config.yaml", param="./breast_config.yaml", namespace=""):
@@ -44,13 +43,13 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                                  namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                     namespace=host_train_data["namespace"]))
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
+                                                             namespace=guest_train_data["namespace"]))
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
+                                                                namespace=host_train_data["namespace"]))
 
     lr_param = {
     }

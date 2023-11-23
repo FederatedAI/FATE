@@ -15,68 +15,96 @@
  */
 package org.fedai.osx.broker.http;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.ServiceContainer;
+
+import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
+import org.fedai.osx.broker.router.RouterService;
+import org.fedai.osx.broker.util.ContextUtil;
 import org.fedai.osx.broker.util.DebugUtil;
+import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.constant.PtpHttpHeader;
+import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.provider.TechProvider;
+import org.fedai.osx.broker.provider.TechProviderRegister;
+import org.fedai.osx.core.utils.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
+import static org.fedai.osx.core.constant.UriConstants.*;
+
+@Singleton
+@Slf4j
 public class DispatchServlet extends HttpServlet {
+    @Inject
+    TechProviderRegister  providerRegistry ;
 
-    Logger logger = LoggerFactory.getLogger(DispatchServlet.class);
+    @Inject
+    DefaultFateRouterServiceImpl routerService;
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        handleInner(req,resp);
+    }
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        handleInner(req,resp);
+    }
+
+
+
+
+
+
+    private   void  handleInner(HttpServletRequest req, HttpServletResponse  resp) throws IOException {
+        log.info("handle inner====={}",req.getRequestURI());
         //处理get请求
         DebugUtil.printHttpParams(req);
         String protocol = req.getProtocol();
         if (!protocol.endsWith("1.1")) {
             resp.sendError(405, "http.method_get_not_supported");
         }
-        String techProviderCode = req.getHeader(PtpHttpHeader.TechProviderCode);
-        if (StringUtils.isNotEmpty(techProviderCode)) {
-            TechProvider techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
-            if (techProvider != null) {
-                techProvider.processHttpInvoke(req, resp);
-            } else {
-                resp.sendError(404, "tech-provider-code invalid");
-            }
-        } else {
-            resp.sendError(404, "tech-provider-code invalid");
-        }
+        OsxContext  osxContext = ContextUtil.buildContextFromHttpRequest(req);
+
         String requestUri = req.getRequestURI();
-        logger.info("receive request uri  {}", requestUri);
-    }
 
+        switch (requestUri){
+            case HTTP_POP:
+                TechProvider techProvider = providerRegistry.select(osxContext);
+                techProvider.processHttpPop(osxContext,req, resp);
+                break;
+            case HTTP_PUSH:
+                 techProvider = providerRegistry.select(osxContext);
+                techProvider.processHttpPush(osxContext,req, resp);
+                break;
+            case HTTP_PEEK:
+                 techProvider = providerRegistry.select(osxContext);
+                techProvider.processHttpPeek(osxContext,req, resp);
+                break;
+            case HTTP_RELEASE:
+                 techProvider = providerRegistry.select(osxContext);
+                techProvider.processHttpRelease(osxContext,req, resp);
+                break;
+            case HTTP_INVOKE:
+                 techProvider = providerRegistry.select(osxContext);
+                techProvider.processHttpInvoke(osxContext,req, resp);
+                break;
 
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        //处理post请求
-        DebugUtil.printHttpParams(req);
-        String requestUri = req.getRequestURI();
-        //logger.info("receive request uri  {}",requestUri);
-        String protocol = req.getProtocol();
-        if (!protocol.endsWith("1.1")) {
-            resp.sendError(405, "http.method_get_not_supported");
+            case HTTP_CHANGE_ROUTER:
+                byte[]  routerContent = TransferUtil.read(req.getInputStream());
+                routerService.saveRouterTable(osxContext,new String(routerContent));
+                TransferUtil.writeHttpRespose(resp,"ok", "ok","ok".getBytes(StandardCharsets.UTF_8));
+            default:
+                resp.sendError(502, "invalid request "+requestUri);
         }
-        String techProviderCode = req.getHeader(PtpHttpHeader.TechProviderCode);
-        if (StringUtils.isNotEmpty(techProviderCode)) {
-            TechProvider techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
-            if (techProvider != null) {
-                techProvider.processHttpInvoke(req, resp);
-            } else {
-                resp.sendError(404, "tech-provider-code invalid");
-            }
-        } else {
-            resp.sendError(404, "tech-provider-code invalid");
-        }
+
     }
-
-
 }

@@ -3,21 +3,37 @@
   {
     "9999":
     {
-      "fateflow":[
-        {
-          "port": 9360,
-          "ip": "127.0.0.1"
-        }
-      ]
+      "default":[{
+        "protocol":"grpc",
+        "url": "http://127.0.0.1:7304/v1/interconn/chan/invoke",
+        "ip": "127.0.0.1",
+        "port": 7304
+      }]
     },
     "10000":{
       "default":[{
-        "protocol":"http",
+        "protocol":"grpc",
+        "url": "https://127.0.0.1:8088/osx/inbound",
+         "keyStoreFilePath": "D:\\webank\\osx\\test\\server.keystore",
+        "keyStorePassword": "123456",
+         "trustStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
+        "trustStorePassword": "123456",
+        "negotiationType": "TLS",
+        "useSSL": true,
+        "port": 9884,
+        "ip": "127.0.0.1"
+      }]
+    },
+    "10001":{
+      "default":[{
+        "protocol":"grpc",
         "url": "http://127.0.0.1:8087/osx/inbound",
         "ip": "127.0.0.1",
-        "port": 9370
+        "port": 9375
       }]
     }
+
+
   },
   "permission":
   {

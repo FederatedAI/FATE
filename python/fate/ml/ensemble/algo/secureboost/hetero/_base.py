@@ -27,6 +27,7 @@ class HeteroBoostingTree(HeteroModule):
         self._global_feature_importance = {}
         self._trees = []
         self._saved_tree = []
+        self._fid_name_mapping = {}
 
     def _update_feature_importance(self, fi_dict: Dict[int, FeatureImportance]):
         for fid, fi in fi_dict.items():
@@ -53,6 +54,11 @@ class HeteroBoostingTree(HeteroModule):
         predict_score["score"] = leaf_pos.apply_row(apply_func)
         return loss_func.predict(predict_score)
 
+    def _get_fid_name_mapping(self, data_instances: DataFrame):
+        columns = data_instances.schema.columns
+        for idx, col in enumerate(columns):
+            self._fid_name_mapping[idx] = col
+
     def get_trees(self):
         return self._trees
 
@@ -70,11 +76,14 @@ class HeteroBoostingTree(HeteroModule):
     def _get_hyper_param(self) -> dict:
         pass
 
+    def _load_feature_importance(self, feature_importance: dict):
+        self._global_feature_importance = {k: FeatureImportance.from_dict(v) for k, v in feature_importance.items()}
     def get_model(self) -> dict:
         import copy
-
         hyper_param = self._get_hyper_param()
         result = {}
         result["hyper_param"] = hyper_param
         result["trees"] = copy.deepcopy(self._saved_tree)
+        result['fid_name_mapping'] = self._fid_name_mapping
+        result['feature_importance'] = {k: v.to_dict() for k, v in self._global_feature_importance.items()}
         return result

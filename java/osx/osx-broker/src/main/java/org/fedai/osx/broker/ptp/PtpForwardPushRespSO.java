@@ -17,10 +17,11 @@ package org.fedai.osx.broker.ptp;
 
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-import org.fedai.osx.api.context.Context;
+
 import org.fedai.osx.broker.callback.CompleteCallback;
 import org.fedai.osx.broker.callback.ErrorCallback;
 import org.fedai.osx.broker.util.TransferUtil;
+import org.fedai.osx.core.context.OsxContext;
 import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +34,9 @@ public class PtpForwardPushRespSO implements StreamObserver<Osx.Outbound> {
     Class backPushRespSOClass;
     CompleteCallback completeCallback;
     ErrorCallback errorCallback;
-    Context context;
+    OsxContext context;
 
-    public PtpForwardPushRespSO(Context context, StreamObserver backPushRespSO, Class backPushRespSOClass , CompleteCallback completeCallback, ErrorCallback errorCallback) {
+    public PtpForwardPushRespSO(OsxContext context, StreamObserver backPushRespSO, Class backPushRespSOClass , CompleteCallback completeCallback, ErrorCallback errorCallback) {
 
         this.backPushRespSOClass = backPushRespSOClass;
         this.backPushRespSO = backPushRespSO;

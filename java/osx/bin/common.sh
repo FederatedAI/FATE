@@ -21,9 +21,9 @@ error_exit (){
 
 [ ! -e "$JAVA_HOME/bin/java" ] && JAVA_HOME=$HOME/jdk/java
 [ ! -e "$JAVA_HOME/bin/java" ] && JAVA_HOME=/usr/java
-[ ! -e "$JAVA_HOME/bin/java" ] && error_exit "Please set the JAVA_HOME variable in your environment, We need java(x64)!"
-export JAVA_HOME
 export JAVA="$JAVA_HOME/bin/java"
+[ ! -e "$JAVA_HOME/bin/java" ] &&  export JAVA="java"
+export JAVA_HOME
 export BASE_DIR=$(dirname $0)/..
 export CLASSPATH=.:${BASE_DIR}/conf:${BASE_DIR}/lib/*:${CLASSPATH}
 
@@ -78,7 +78,7 @@ choose_gc_options()
 
 choose_gc_log_directory
 
-JAVA_OPT="${JAVA_OPT} -server -Xms2g -Xmx2g"
+JAVA_OPT="${JAVA_OPT} -server -Xms4g -Xmx4g"
 choose_gc_options
 JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
 JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
@@ -92,9 +92,11 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid |grep 'org.fedai.osx' | grep -v "grep" | wc -l)
+    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
-      rm ./bin/broker.pid
+      if [ -e "./bin/broker.pid" ]; then
+          rm ./bin/broker.pid
+      fi
       unset pid
     fi
   fi
@@ -119,6 +121,7 @@ start() {
     JAVA_OPT="${JAVA_OPT} -c ${configpath} "
     echo $JAVA ${JAVA_OPT}
     nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
+#    $JAVA ${JAVA_OPT} >/dev/null 2>&1
     inspect_pid 5 $!
     if [[ "$exist" = 1 ]]; then
        echo $! >./bin/${module}.pid
@@ -135,11 +138,11 @@ start() {
 debug() {
   echo "try to start $1"
   module=broker
-  main_class=org.fedai.osx.broker.Bootstrap
+  main_class= org.fedai.osx.broker.Bootstrap
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
-    JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007 -cp conf/broker/:lib/*:extension/*:${BASE_DIR}/${project_name}-${module}-${module_version}.jar"
+    JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8008 -cp conf/broker/:lib/*:extension/*:${BASE_DIR}/${project_name}-${module}-${module_version}.jar"
     JAVA_OPT="${JAVA_OPT} ${main_class}"
     JAVA_OPT="${JAVA_OPT} -c ${configpath} "
     echo $JAVA ${JAVA_OPT}
