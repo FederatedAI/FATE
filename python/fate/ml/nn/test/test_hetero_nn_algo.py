@@ -55,7 +55,7 @@ if __name__ == "__main__":
     epoch = 10
     guest_bottom = t.nn.Linear(10, 4).double()
     guest_top = t.nn.Sequential(
-                                 t.nn.Linear(8, 1),
+                                 t.nn.Linear(4, 1),
                                  t.nn.Sigmoid()
                                ).double()
     host_bottom = t.nn.Linear(20, 4).double()
@@ -65,6 +65,8 @@ if __name__ == "__main__":
 
     if party == "guest":
 
+        from fate.ml.evaluation.metric_base import MetricEnsemble
+        from fate.ml.evaluation.classification import MultiAccuracy
         ctx = create_ctx(guest, get_current_datetime_str())
         df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_guest.csv')
         X_g = t.Tensor(df.drop(columns=['id', 'y']).values).type(t.float64)[0: sample_num]
@@ -82,7 +84,6 @@ if __name__ == "__main__":
         args = TrainingArguments(
             num_train_epochs=5,
             per_device_train_batch_size=16,
-            disable_tqdm=False,
             no_cuda=True
         )
         trainer = HeteroNNTrainerGuest(
@@ -91,9 +92,10 @@ if __name__ == "__main__":
             optimizer=optimizer,
             train_set=dataset,
             loss_fn=loss_fn,
-            training_args=args,
+            training_args=args
         )
-        # trainer.train()
+        trainer.train()
+        print('cwj done')
         # pred = trainer.predict(dataset)
         # # compute auc
         # from sklearn.metrics import roc_auc_score
@@ -115,7 +117,6 @@ if __name__ == "__main__":
         args = TrainingArguments(
             num_train_epochs=5,
             per_device_train_batch_size=16,
-            disable_tqdm=False,
             no_cuda=True
         )
 

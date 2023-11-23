@@ -240,4 +240,4 @@ class BaseAggregatorServer(Aggregator):
         self.model_aggregator.secure_aggregate(ctx, ranks=ranks)
 
     def loss_aggregation(self, ctx, ranks=None):
-        self.loss_aggregator.secure_aggregate(ctx, ranks=ranks)
+        return float(self.loss_aggregator.secure_aggregate(ctx, ranks=ranks)[0])

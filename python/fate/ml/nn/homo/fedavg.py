@@ -113,7 +113,8 @@ class FedAVGServer(HomoTrainerServer):
         aggregator = aggregator_server(ctx, aggregator_name=aggregator_name)
         return aggregator
 
-    def on_federation(self, ctx: Context, aggregator: Union[SecureAggregatorServer, PlainTextAggregatorServer]):
+    def on_federation(self, ctx: Context, aggregator: Union[SecureAggregatorServer, PlainTextAggregatorServer],
+                      agg_iter_idx: int):
         aggregator.model_aggregation(ctx)
 
 

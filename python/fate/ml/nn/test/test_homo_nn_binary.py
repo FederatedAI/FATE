@@ -37,14 +37,13 @@ if __name__ == "__main__":
     model = t.nn.Sequential(t.nn.Linear(30, 1), t.nn.Sigmoid())
 
     ds = TableDataset(return_dict=False, to_tensor=True)
-    ds.load("../../../../../../examples/data/breast_homo_guest.csv")
+    ds.load("/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_homo_guest.csv")
 
     if sys.argv[1] == "guest":
         ctx = create_ctx(guest)
-        fed_args = FedArguments(aggregate_strategy="epochs", aggregate_freq=1, aggregator="secure_aggregate")
+        fed_args = FedArguments(aggregate_strategy="epoch", aggregate_freq=1, aggregator="secure_aggregate")
         args = TrainingArguments(
-            num_train_epochs=5, per_device_train_batch_size=16, logging_strategy="steps",
-            log_level='info'
+            num_train_epochs=5, per_device_train_batch_size=16
         )
         trainer = FedAVGClient(
             ctx=ctx,
@@ -53,14 +52,13 @@ if __name__ == "__main__":
             training_args=args,
             loss_fn=t.nn.BCELoss(),
             optimizer=t.optim.SGD(model.parameters(), lr=0.01),
-            train_set=ds,
+            train_set=ds
         )
-        trainer.set_local_mode()
         trainer.train()
 
     elif sys.argv[1] == "host":
         ctx = create_ctx(host)
-        fed_args = FedArguments(aggregate_strategy="epochs", aggregate_freq=1, aggregator="secure_aggregate")
+        fed_args = FedArguments(aggregate_strategy="epoch", aggregate_freq=1, aggregator="secure_aggregate")
         args = TrainingArguments(num_train_epochs=5, per_device_train_batch_size=16)
         trainer = FedAVGClient(
             ctx=ctx,

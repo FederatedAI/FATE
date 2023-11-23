@@ -49,7 +49,6 @@ def main(config="../../config.yaml", namespace=""):
             per_device_train_batch_size=16,
             logging_strategy='epoch',
             no_cuda=True,
-            disable_tqdm=False
         )
 
     guest_conf = get_config_of_default_runner(

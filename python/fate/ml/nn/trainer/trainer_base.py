@@ -36,11 +36,11 @@ from transformers import logging as transformers_logging
 from transformers.trainer_callback import TrainerCallback, TrainerControl, TrainerState
 from typing import Optional
 from dataclasses import dataclass, field, fields
-from transformers.trainer_callback import PrinterCallback
 from fate.ml.aggregator import AggregatorType
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from transformers.trainer import logger as logger_
 from fate.ml.evaluation.metric_base import MetricEnsemble
+from transformers import IntervalStrategy, DefaultFlowCallback
 
 
 # Reset the logger to redirect logs output
@@ -77,7 +77,7 @@ Fed Arguments
 
 
 class AggregateStrategy(Enum):
-    EPOCH = "epochs"
+    EPOCH = "epoch"
     STEP = "steps"
 
 
@@ -115,6 +115,7 @@ class _TrainingArguments(_hf_TrainingArguments):
     disable_tqdm: bool = field(default=True)
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
+    logging_steps: int = field(default=1)
     evaluation_strategy: str = field(default="no")
     logging_dir: str = field(default=None)
     checkpoint_idx: int = field(default=None)
@@ -332,9 +333,27 @@ def compute_max_aggregation(
     elif fed_args.aggregate_strategy == AggregateStrategy.STEP.value:
         max_aggregation = int((max_steps - steps_trained) / aggregate_freq)
     else:
-        raise ValueError('aggregate_strategy must be either "epochs" or "steps"')
+        raise ValueError('aggregate_strategy must be either "epoch" or "steps"')
 
     return max_aggregation, aggregate_freq
+
+
+def can_aggregate_loss(args: TrainingArguments, fed_args: FedArguments):
+    # check if logging strategy is aligned with aggregation strategy
+    # make sure that the aggregated loss is correct
+    can_aggregate = False
+    if args.logging_strategy == fed_args.aggregate_strategy:
+        if fed_args.aggregate_strategy == 'epoch':
+            if args.logging_steps == fed_args.aggregate_freq:
+                can_aggregate = True
+
+    if not can_aggregate:
+        logger.warning('Not able to aggregate loss, '
+                       'Trainer is only able to aggregate loss on server when aggregate strategy and logging strategy are "epoch",'
+                       ' and aggregate_freq and logging_freq are the same'
+        )
+
+    return can_aggregate
 
 
 class AggregationChecker:
@@ -347,24 +366,27 @@ class AggregationChecker:
         max_steps: int,
         epochs_trained: int,
         steps_trained: int,
+        can_aggregate_loss: bool
     ):
         self.fed_args = fed_args
         self.max_epoch = max_epoch
         self.max_steps = max_steps
         self.epochs_trained = epochs_trained
         self.steps_trained = steps_trained
-        self.aggregation_count = 0
+        self.model_aggregation_count = 0
+        self.loss_aggregation_count = 0
         self.aggregate_freq = aggregate_freq
         self.max_aggregation = max_aggregation
+        self.can_aggregate_loss = can_aggregate_loss
 
     def report(self):
-        logger.info(f"Aggregation count: {self.aggregation_count} / {self.max_aggregation}")
+        logger.info(f"Aggregation count: {self.model_aggregation_count} / {self.max_aggregation}")
 
     def should_aggregate(self, state: TrainerState) -> bool:
         cur_epoch = int(state.epoch)
         cur_step = int(state.global_step)
 
-        if self.aggregation_count >= self.max_aggregation:
+        if self.model_aggregation_count >= self.max_aggregation:
             return False
 
         if cur_epoch > self.max_epoch:
@@ -381,9 +403,34 @@ class AggregationChecker:
 
         return False
 
-    def inc_aggregation_count(self):
-        self.aggregation_count += 1
+    def inc_model_agg_count(self):
+        self.model_aggregation_count += 1
         self.report()
+
+    def inc_loss_agg_count(self):
+        self.loss_aggregation_count += 1
+
+
+class LossLoggingCallback(TrainerCallback):
+
+    def __init__(
+        self,
+        ctx: Context
+    ):
+        self.ctx = ctx
+        self.sub_ctx = self.ctx.sub_ctx('nn_loss')
+    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        latest_log = state.log_history[-1]
+        logger.info(latest_log)
+        if 'loss' in latest_log:
+            loss = latest_log['loss']
+            if args.logging_strategy == IntervalStrategy.EPOCH:
+                idx = int(state.log_history[-1]["epoch"])
+            elif args.logging_strategy == IntervalStrategy.STEPS:
+                idx = int(state.log_history[-1]["step"])
+            else:
+                raise RuntimeError('unknown logging strategy')
+            self.sub_ctx.indexed_ctx(idx).metrics.log_loss('loss', loss)
 
 
 class FedParameterAlignCallback(TrainerCallback):
@@ -400,6 +447,7 @@ class FedParameterAlignCallback(TrainerCallback):
         self.ctx = ctx
         self.is_server = is_server
         self.training_args = training_args
+        self.can_aggregate_loss = False
         self.fed_args = fed_args
         self._suffix = "fed_para"
         self._send_count = 0
@@ -449,6 +497,10 @@ class FedParameterAlignCallback(TrainerCallback):
         )
         logger.info("computed max_aggregation is {}".format(max_aggregation))
 
+        # if able to aggregate loss
+        if can_aggregate_loss(args, self.fed_args):
+            self.can_aggregate_loss = True
+
         # send parameters
         parameters = {
             "num_train_epochs": num_train_epochs,
@@ -459,11 +511,13 @@ class FedParameterAlignCallback(TrainerCallback):
             "max_aggregation": max_aggregation,
             "aggregate_freq": aggregate_freq,
             "aggregation_strategy": self.fed_args.aggregate_strategy,
+            "can_aggregate_loss": self.can_aggregate_loss
         }
 
         logger.info("parameters is {}".format(parameters))
 
         self.ctx.arbiter.put(self._suffix + "_" + str(self._send_count), parameters)
+        self.can_aggregate_loss = self.ctx.arbiter.get('agg_loss_' + str(self._send_count))
         self._send_count += 1
         self._parameters = parameters
         self.trainer_class.aggregation_checker = AggregationChecker(
@@ -474,6 +528,7 @@ class FedParameterAlignCallback(TrainerCallback):
             max_steps,
             epochs_trained,
             state.global_step,
+            self.can_aggregate_loss
         )
 
     def get_parameters(self):
@@ -517,16 +572,28 @@ class FedParameterAlignCallback(TrainerCallback):
             )
         return agg_round[0]
 
+    def _check_aggregate_loss(self, parameters):
+        aggregate_loss = True
+        for p in parameters:
+            flag = p["can_aggregate_loss"]
+            if not flag:
+                return False
+        return aggregate_loss
+
     def _server_check_parameters(self):
         # check if all clients parameters of aggregation match
         para_1 = self.ctx.hosts.get(self._suffix + "_" + str(self._send_count))
         para_2 = self.ctx.guest.get(self._suffix + "_" + str(self._send_count))
-        self._send_count += 1
         para_1.append(para_2)
         para = para_1
         # strategy = self._check_fed_strategy(para)
         agg_round = self._check_federation_round(para)
+        self.can_aggregate_loss = self._check_aggregate_loss(para)
         self._parameters = {"max_aggregation": agg_round}
+        self._parameters['can_aggregate_loss'] = self.can_aggregate_loss
+        self.ctx.guest.put('agg_loss_' + str(self._send_count), self.can_aggregate_loss)
+        self.ctx.hosts.put('agg_loss_' + str(self._send_count), self.can_aggregate_loss)
+        self._send_count += 1
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.trainer_class.local_mode:
@@ -549,7 +616,6 @@ class CallbackWrapper(TrainerCallback):
     def _call_wrapped(self, ctx, aggregator, fed_arg, event_name: str, **kwargs):
         event = getattr(self.wrapped_trainer, event_name)
         kwargs["scheduler"] = kwargs.pop("lr_scheduler", None)
-
         train_dataloader = kwargs.pop("train_dataloader", None)
         eval_dataloader = kwargs.pop("eval_dataloader", None)
         dataloaders = tuple(filter(None, (train_dataloader, eval_dataloader)))
@@ -570,13 +636,28 @@ class WrappedFedCallback(CallbackWrapper):
         else:
             self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator(self.ctx, self.fed_arg)
 
+    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.wrapped_trainer.local_mode:
+            return
+        # aggregate loss
+        if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
+            if self.wrapped_trainer.aggregation_checker.can_aggregate_loss:
+                if 'train_loss' in state.log_history[-1]:  # final log is ignored
+                    return
+                loss = state.log_history[-1]["loss"]
+                agg_round = self.wrapped_trainer.aggregation_checker.loss_aggregation_count
+                aggregator = self.wrapped_trainer.aggregator
+                sub_ctx = self.ctx.sub_ctx("loss_aggregation").indexed_ctx(agg_round)
+                aggregator.loss_aggregation(sub_ctx, loss)
+                self.wrapped_trainer.aggregation_checker.inc_loss_agg_count()
+
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.wrapped_trainer.local_mode:
             return
         if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(state):
                 logger.info("aggregation on epoch end")
-                agg_round = self.wrapped_trainer.aggregation_checker.aggregation_count
+                agg_round = self.wrapped_trainer.aggregation_checker.model_aggregation_count
                 sub_ctx = self.ctx.sub_ctx("aggregation").indexed_ctx(agg_round)
                 ret = self._call_wrapped(
                     sub_ctx,
@@ -588,7 +669,7 @@ class WrappedFedCallback(CallbackWrapper):
                     control=control,
                     **kwargs,
                 )
-                self.wrapped_trainer.aggregation_checker.inc_aggregation_count()
+                self.wrapped_trainer.aggregation_checker.inc_model_agg_count()
                 return ret
 
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
@@ -596,9 +677,8 @@ class WrappedFedCallback(CallbackWrapper):
             return
         if self.fed_arg.aggregate_strategy == AggregateStrategy.STEP.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(state):
-                logger.info("state is {}".format(state))
                 logger.info("aggregation on step end")
-                agg_round = self.wrapped_trainer.aggregation_checker.aggregation_count
+                agg_round = self.wrapped_trainer.aggregation_checker.model_aggregation_count
                 sub_ctx = self.ctx.sub_ctx("aggregation").indexed_ctx(agg_round)
                 ret = self._call_wrapped(
                     sub_ctx,
@@ -610,7 +690,7 @@ class WrappedFedCallback(CallbackWrapper):
                     control=control,
                     **kwargs,
                 )
-                self.wrapped_trainer.aggregation_checker.inc_aggregation_count()
+                self.wrapped_trainer.aggregation_checker.inc_model_agg_count()
                 return ret
 
 
@@ -824,20 +904,13 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
         # fed callback aggregator init(once), parameter check(once),
         # on federation of fedcallback
         # callbacks of shortcutcallback
-        new_callback_list = []
-        for i in callback_handler.callbacks:
-            if isinstance(i, PrinterCallback):
-                continue
-            else:
-                new_callback_list.append(i)
-        callback_handler.callbacks = new_callback_list
+        callback_handler.callbacks.append(LossLoggingCallback(self.ctx))
         callback_handler.callbacks.append(WrappedFedCallback(self.ctx, self))
         callback_handler.callbacks.append(
             FedParameterAlignCallback(
                 self, self.ctx, fed_args=self._fed_args, training_args=self._args, is_server=False
             )
         )
-
         callback_handler.callbacks.append(WrappedShortcutCallback(self.ctx, self))
 
     def _remove_fed_callback(self, callback_class):
@@ -921,13 +994,7 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
         )
 
         # update callbacks
-        new_callback_list = []
-        for i in self.callback_handler.callbacks:
-            if isinstance(i, PrinterCallback):
-                continue
-            else:
-                new_callback_list.append(i)
-        self.callback_handler.callbacks = new_callback_list
+        self.callback_handler.callbacks.append(LossLoggingCallback(ctx))
 
 
 class HomoTrainerClient(Trainer, HomoTrainerMixin):
@@ -1048,6 +1115,7 @@ class HomoTrainerServer(object):
         self._parameter_check_callback = FedParameterAlignCallback(self, self.ctx, None, None, is_server=True)
         self._max_aggregation = None
         self.aggregator = None
+        self.can_aggregate_loss = True
 
     def set_fed_context(self, ctx: Context):
         assert isinstance(ctx, Context), "ctx must be a Context object, but got {}".format(ctx)
@@ -1070,10 +1138,13 @@ class HomoTrainerServer(object):
     def on_init_end(self, ctx: Context, aggregator: Aggregator):
         pass
 
-    def on_federation(self, ctx: Context, aggregator: Aggregator):
+    def on_federation(self, ctx: Context, aggregator: Aggregator, agg_iter_idx: int):
         pass
 
     def init_aggregator(self, ctx: Context) -> Aggregator:
+        pass
+
+    def _aggregate_loss(self, ctx):
         pass
 
     def train(self):
@@ -1086,6 +1157,7 @@ class HomoTrainerServer(object):
         self._parameter_check_callback.on_train_begin(None, None, None)  # only get parameters from clients and align
         parameters = self._parameter_check_callback.get_parameters()
         self._max_aggregation = parameters["max_aggregation"]
+        self.can_aggregate_loss = parameters["can_aggregate_loss"]
         logger.info("checked parameters are {}".format(parameters))
 
         self.on_init_end(self.ctx, aggregator=self.aggregator)
@@ -1094,7 +1166,11 @@ class HomoTrainerServer(object):
         ctx = self.ctx
         for i in range(self._max_aggregation):
             sub_ctx = ctx.sub_ctx("aggregation").indexed_ctx(i)
-            self.on_federation(sub_ctx, aggregator=self.aggregator)
+            self.on_federation(sub_ctx, aggregator=self.aggregator, agg_iter_idx=i)
+            if self.can_aggregate_loss:
+                loss_sub_ctx = ctx.sub_ctx("loss_aggregation").indexed_ctx(i)
+                loss = self.aggregator.loss_aggregation(loss_sub_ctx)
+                print('loss is ', loss)
 
         self.on_train_end(self.ctx, aggregator=self.aggregator)
 
