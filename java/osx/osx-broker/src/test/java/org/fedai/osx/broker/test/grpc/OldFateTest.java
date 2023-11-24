@@ -76,7 +76,7 @@ public class OldFateTest {
         DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
         Proxy.Packet.Builder builder = Proxy.Packet.newBuilder();
         Transfer.RollSiteHeader.Builder headerBuilder = Transfer.RollSiteHeader.newBuilder();
-        headerBuilder.setDstPartyId("10001");
+        headerBuilder.setDstPartyId("10000");
         builder.setHeader(Proxy.Metadata.newBuilder().setExt(headerBuilder.build().toByteString()));
         Proxy.Data.Builder dataBuilder = Proxy.Data.newBuilder();
         dataBuilder.setKey("name");

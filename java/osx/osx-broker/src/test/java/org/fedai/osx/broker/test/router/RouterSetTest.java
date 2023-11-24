@@ -2,7 +2,7 @@ package org.fedai.osx.broker.test.router;
 
 import com.google.common.collect.Maps;
 import okhttp3.*;
-import org.fedai.osx.broker.pojo.RouterSetRequest;
+import org.fedai.osx.broker.pojo.RouterAddRequest;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.constant.UriConstants;
@@ -21,7 +21,7 @@ public class RouterSetTest {
     public void testSetRouter() {
 
 
-        RouterSetRequest routerInfo = new RouterSetRequest();
+        RouterAddRequest routerInfo = new RouterAddRequest();
         routerInfo.setDesPartyId("3477");
         routerInfo.setIp("localhost");
         routerInfo.setPort(8889);
@@ -34,7 +34,7 @@ public class RouterSetTest {
         String requestContent = JsonUtil.object2Json(routerInfo);
         System.err.println("request content "+requestContent);
         RequestBody requestBody = RequestBody.create(requestContent, jsonMime);
-        Request request = builder.url(url + UriConstants.HTTP_CHANGE_ROUTER).post(requestBody)
+        Request request = builder.url(url + UriConstants.HTTP_ADD_ROUTER).post(requestBody)
                 .build();
         try {
             Response response = okHttpClient.newCall(request).execute();

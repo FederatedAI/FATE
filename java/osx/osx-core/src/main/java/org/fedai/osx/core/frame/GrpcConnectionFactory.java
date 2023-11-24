@@ -16,6 +16,7 @@
 
 package org.fedai.osx.core.frame;
 
+import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
@@ -36,8 +37,11 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.fedai.osx.core.config.MetaInfo.PROPERTY_GRPC_TLS_SESSION_SIZE;
 import static org.fedai.osx.core.config.MetaInfo.PROPERTY_GRPC_TLS_SESSION_TIMEOUT;
@@ -50,13 +54,60 @@ public class GrpcConnectionFactory {
     private GrpcConnectionFactory() {
     }
 
-    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, boolean usePooled) {
+    private static AtomicLong   historyCount = new AtomicLong(0);
+
+    static {
+        // 创建守护线程
+        Thread daemonThread = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(MetaInfo.PROPERTY_CHANNEL_POOL_INFO);
+                    int activeNum = 0;
+                    int total = managedChannelPool.size();
+                    // 遍历并删除元素
+                    Iterator<Map.Entry<String, ManagedChannel>> iterator = managedChannelPool.entrySet().iterator();
+                    while (iterator.hasNext()) {
+                        Map.Entry<String, ManagedChannel> entry = iterator.next();
+                        String key = entry.getKey();
+                        ManagedChannel channel = entry.getValue();
+                        boolean shutdown = channel.isShutdown();
+                        boolean terminated = channel.isTerminated();
+                        ConnectivityState state = channel.getState(true);
+                        if (shutdown || terminated || state == ConnectivityState.SHUTDOWN) {
+                            // 在迭代器中使用 remove() 方法删除元素
+                            iterator.remove();
+                            logger.info("remove channel: {} shutdown : {} terminated : {} status : {}", key,shutdown,terminated,state);
+                        } else {
+                            activeNum++;
+                        }
+                    }
+                    logger.info("grpc pool info：history {} conc：{}, active:{}", historyCount.get(),total, activeNum);
+                } catch (Exception e) {
+                    logger.error("exception：", e);
+                }
+            }
+        });
+        daemonThread.setDaemon(true);
+        daemonThread.start();
+    }
+
+
+    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo) {
         if (routerInfo == null) {
             throw new NoRouterInfoException("no router info");
         }
-        if (usePooled) {
+
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
                 ManagedChannel targetChannel = managedChannelPool.get(routerInfo.toKey());
+                boolean shutdown = targetChannel.isShutdown();
+                boolean terminated = targetChannel.isTerminated();
+                ConnectivityState state = targetChannel.getState(true);
+                if (shutdown || terminated || state == ConnectivityState.SHUTDOWN) {
+                    ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
+                    if (managedChannel != null) {
+                        managedChannelPool.put(routerInfo.toKey(), managedChannel);
+                    }
+                }
                 return managedChannelPool.get(routerInfo.toKey());
             } else {
                 ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
@@ -65,10 +116,6 @@ public class GrpcConnectionFactory {
                 }
                 return managedChannel;
             }
-        } else {
-            ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
-            return managedChannel;
-        }
     }
 
 
@@ -88,6 +135,8 @@ public class GrpcConnectionFactory {
 
 
     public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, GrpcChannelInfo channelInfo) {
+
+
         try {
             if (channelInfo == null) {
                 throw new SysException("grpc channel info is null");
@@ -139,6 +188,7 @@ public class GrpcConnectionFactory {
             } else {
                 channelBuilder.usePlaintext();
             }
+            historyCount.addAndGet(1);
             return channelBuilder.build();
         } catch (Exception e) {
             logger.error("create channel to {} error : ", routerInfo, e);

@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public interface TechProvider {
     //用于处理http1.X请求
-     void processHttpInvoke(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,boolean  interInvoke);
+     void processHttpInvoke(OsxContext context, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse);
 
     //用于处理grpc非流式请求
     void processGrpcInvoke(OsxContext context, Osx.Inbound request,

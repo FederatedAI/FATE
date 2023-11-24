@@ -1,6 +1,9 @@
 package org.fedai.osx.broker.test.grpc;
 
 import com.google.protobuf.ByteString;
+import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
+import com.webank.ai.eggroll.api.networking.proxy.Proxy;
+import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.fedai.osx.broker.util.TransferUtil;
@@ -24,8 +27,7 @@ import java.util.concurrent.TimeUnit;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QueueTest {
     static String ip = "localhost";
-    //int port = 8250;//nginx
-    static int port = 9377;//nginx
+    static int port = 9377;
     static String desPartyId = "10000";
     static String desRole = "";
     static String srcPartyId = "10000";
@@ -36,10 +38,10 @@ public class QueueTest {
     static RouterInfo routerInfo = new RouterInfo();
 
     static {
-        routerInfo.setHost("localhost");
-        routerInfo.setPort(9371);
+        routerInfo.setHost(ip);
+        routerInfo.setPort(port);
         routerInfo.setProtocol(Protocol.grpc);
-        routerInfo.setUseSSL(true);
+//        routerInfo.setUseSSL(true);
         routerInfo.setUseKeyStore(false);
 //        routerInfo.setTrustStorePassword("123456");
 //        routerInfo.setTrustStoreFilePath("D:\\\\webank\\\\osx\\\\test2\\\\client_truststore.jks");
@@ -128,13 +130,11 @@ public class QueueTest {
 
     @Test
     public void testPeek() {
-        //202310191251296433960_toy_example_0_0.202310191251296433960_toy_example_0_0-host-10000-guest-9999-host_index
-        //202310191310469345390_toy_example_0_0.202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index
         Osx.PeekInbound.Builder inboundBuilder = Osx.PeekInbound.newBuilder();
-        inboundBuilder.setTopic("202310191310469345390_toy_example_0_0-host-10000-guest-9999-host_index");
+        inboundBuilder.setTopic(topic);
         OsxContext fateContext = new OsxContext();
         fateContext.setTraceId(Long.toString(System.currentTimeMillis()));
-        fateContext.setSessionId("202310191310469345390_toy_example_0_0");
+        fateContext.setSessionId(sessionId);
 //        fateContext.setTopic("test_topic");
         //fateContext.setDesInstId("webank");
 //        fateContext.setDesNodeId("10000");
@@ -218,6 +218,24 @@ public class QueueTest {
         Object result = TransferUtil.redirect(fateContext, inboundBuilder.build(), routerInfo, true);
         System.err.println("result:" + result);
 
+    }
+
+
+    @Test
+    public  void testUnaryCall() {
+
+        ManagedChannel managedChannel = createManagedChannel(ip, port);
+        DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
+        Proxy.Packet.Builder builder = Proxy.Packet.newBuilder();
+        Transfer.RollSiteHeader.Builder headerBuilder = Transfer.RollSiteHeader.newBuilder();
+        headerBuilder.setDstPartyId(desPartyId);
+        builder.setHeader(Proxy.Metadata.newBuilder().setExt(headerBuilder.build().toByteString()));
+        Proxy.Data.Builder dataBuilder = Proxy.Data.newBuilder();
+        dataBuilder.setKey("name");
+        dataBuilder.setValue(ByteString.copyFrom(("xiaoxiao").getBytes()));
+        builder.setBody(Proxy.Data.newBuilder().setValue(ByteString.copyFromUtf8("hello world")));
+        Proxy.Packet result = stub.unaryCall(builder.build());
+        System.err.println(result);
     }
 
 }

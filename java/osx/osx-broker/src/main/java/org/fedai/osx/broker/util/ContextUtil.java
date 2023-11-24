@@ -88,17 +88,11 @@ public class ContextUtil {
     public static OsxContext buildContextFromHttpRequest(HttpServletRequest request) {
         OsxContext osxContext = new OsxContext();
         String version = request.getHeader(PtpHttpHeader.Version);
-//        System.err.println("version :" +version);
         String techProviderCode = request.getHeader(PtpHttpHeader.TechProviderCode);
-//        System.err.println("techProviderCode :" +techProviderCode);
         String traceID = request.getHeader(PtpHttpHeader.TraceID);
-//        System.err.println("TraceID :" +traceID);
         String token = request.getHeader(PtpHttpHeader.Token);
-//        System.err.println("Token :" +token);
         String sourceNodeID = request.getHeader(PtpHttpHeader.FromNodeID);
-//        System.err.println("FromNodeID :" +sourceNodeID);
         String targetNodeID = request.getHeader(PtpHttpHeader.TargetNodeID);
-//        System.err.println("TargetNodeID :" +targetNodeID);
         String sourceInstID = request.getHeader(PtpHttpHeader.FromInstID);
         String targetInstID = request.getHeader(PtpHttpHeader.TargetInstID);
         String sessionID = request.getHeader(PtpHttpHeader.SessionID);

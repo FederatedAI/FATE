@@ -24,7 +24,6 @@ public abstract class AbstractServiceAdaptorNew<req, resp> implements ServiceAda
 
     protected String serviceName;
     Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    //    ServiceAdaptor< req, resp> serviceAdaptor;
     InterceptorChainNew<req, resp> preChain = new DefaultInterceptorChainNew<>();
     InterceptorChainNew<req, resp> postChain = new DefaultInterceptorChainNew<>();
     private Map<String, Method> methodMap = Maps.newHashMap();
@@ -84,27 +83,15 @@ public abstract class AbstractServiceAdaptorNew<req, resp> implements ServiceAda
     @Override
     public resp service(OsxContext context, req data) throws RuntimeException {
         resp result = null;
-
-        // context.preProcess();
         List<Throwable> exceptions = Lists.newArrayList();
         context.setReturnCode(StatusCode.PTP_SUCCESS);
-//        if (!isOpen) {
-//            return this.serviceFailInner(context, data, new ShowDownRejectException());
-//        }
-//        if (data.getBody() != null) {
-//            context.putData(Dict.INPUT_DATA, data.getBody());
-//        }
-
         try {
-
-
             context.setServiceName(this.serviceName);
             try {
                 preChain.doProcess(context, data, null);
                 result = doService(context, data);
             } catch (Throwable e) {
                 exceptions.add(e);
-                e.printStackTrace();
                 logger.error("do service fail, {} ", ExceptionUtils.getStackTrace(e));
             }
 
@@ -118,24 +105,8 @@ public abstract class AbstractServiceAdaptorNew<req, resp> implements ServiceAda
                     result = this.serviceFail(context, data, exceptions);
                 }
             } finally {
-//                if(context instanceof OsxContext )
-//                {
-//                    OsxContext fateContext =(OsxContext )context;
-//                    if(fateContext.needPrintFlowLog()){
-//                        FlowLogUtil.printFlowLog(context);
-//                    }
-//                }else {
-//
-//                    FlowLogUtil.printFlowLog(context);
-//                }
+
             }
-            //  int returnCode = context.getReturnCode();
-
-//            if(outboundPackage.getData()!=null) {
-//                context.putData(Dict.OUTPUT_DATA, outboundPackage.getData());
-//            }
-            // context.postProcess(data, outboundPackage);
-
         }
         try {
             postChain.doProcess(context, data, result);
@@ -145,13 +116,8 @@ public abstract class AbstractServiceAdaptorNew<req, resp> implements ServiceAda
         return result;
     }
 
-//    protected void printFlowLog(ctx context) {
-////        context.printFlowLog();
-//        FlowLogUtil.printFlowLog(context);
-//    }
 
     protected resp serviceFailInner(OsxContext context, req data, Throwable e) {
-
         ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
         context.setReturnCode(exceptionInfo.getCode());
         context.setReturnMsg(exceptionInfo.getMessage());

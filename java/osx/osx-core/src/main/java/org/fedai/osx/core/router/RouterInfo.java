@@ -83,7 +83,7 @@ public class RouterInfo {
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();
-        if (Protocol.grpc.equals(protocol)) {
+        if (Protocol.grpc.equals(protocol)||protocol==null) {
             sb.append(host).append("_").append(port);
             if (useSSL)
                 sb.append("_").append("tls");

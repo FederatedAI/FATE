@@ -30,10 +30,7 @@ import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.datasource.FileRefreshableDataSource;
-import org.fedai.osx.core.exceptions.CycleRouteInfoException;
-import org.fedai.osx.core.exceptions.ErrorMessageUtil;
-import org.fedai.osx.core.exceptions.ExceptionInfo;
-import org.fedai.osx.core.exceptions.InvalidRouteInfoException;
+import org.fedai.osx.core.exceptions.*;
 import org.fedai.osx.core.flow.PropertyListener;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.frame.ServiceThread;
@@ -76,13 +73,14 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
 
     Map<String, List<RouterInfo>> routerInfoMap = new ConcurrentHashMap<String, List<RouterInfo>>();
     Map<String, Map<String, List<Map>>> endPointMap = new ConcurrentHashMap<>();
+    Map totalConfig;
+
     FileRefreshableDataSource fileRefreshableDataSource;
 
     private  Map parseRouterInfoToMap(RouterInfo  routerInfo){
         Map  content =  JsonUtil.object2Objcet(routerInfo,Map.class);
         return  content;
     }
-
     private void validateRouterInfo(RouterInfo  routerInfo){
         String desPartyId =  routerInfo.getDesPartyId();
         Preconditions.checkArgument(StringUtils.isNotEmpty(desPartyId),"des party id is null");
@@ -90,9 +88,6 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
             Preconditions.checkArgument(StringUtils.isNotEmpty(routerInfo.getHost()), "host/ip is null");
             Preconditions.checkArgument(routerInfo.getPort()!=null, "port is null");
         }
-
-
-
     }
 
     @Override
@@ -116,18 +111,31 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
             }
            this.endPointMap.putIfAbsent(desPartyId,newElem);
        }
-       Map  totolConfig = new HashMap();
-       totolConfig.put(SELF_PARTY,MetaInfo.PROPERTY_SELF_PARTY);
-       totolConfig.put(ROUTE_TABLE,this.endPointMap);
-       String content = JsonUtil.object2Json(totolConfig);
+       totalConfig.put(ROUTE_TABLE,this.endPointMap);
+       String content = JsonUtil.object2Json(totalConfig);
        this.saveRouterTable(content);
        return  content;
     }
 
     @Override
-    public String getAllRouterInfo() {
-        return null;
+    public void setRouterTable(String content) {
+        if(JsonUtil.validateJson(content)){
+            this.saveRouterTable(content);
+        }else {
+            throw new ParameterException("invalid json");
+        }
     }
+
+    @Override
+    public String getRouterTable() {
+        return JsonUtil.formatJson(JsonUtil.object2Json(totalConfig));
+    }
+
+    public void setSelfPartyIds(Set<String> selfPartyIds){
+        totalConfig.put(SELF_PARTY,selfPartyIds);
+        this.saveRouterTable(JsonUtil.object2Json(totalConfig));
+    }
+
 
     private RouterInfo buildRouterInfo(Map endpoint, String srcPartyId, String srcRole, String dstPartyId, String desRole) {
 
@@ -403,7 +411,7 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
 
 
 
-    public boolean saveRouterTable( String  content) {
+    public synchronized boolean saveRouterTable( String  content) {
         try {
             String routerTablePath = getRouterTablePath();
             File routerTableFile = new File(routerTablePath);
@@ -428,46 +436,43 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         }
     }
 
+    private void loadSelfParty(Map totalConfig){
+        List selfParties = (List)totalConfig.get(SELF_PARTY);
+        logger.info("load self party {}",selfParties);
+        if(selfParties!=null){
+            MetaInfo.PROPERTY_SELF_PARTY = new HashSet<>(selfParties);
+        }else{
+            logger.error("self_party is not found in route_table.json");
+        }
+    }
+
+    public void loadRouterTable(String  conf){
+        Map tempConf = JsonUtil.json2Object(conf, Map.class);
+        if (tempConf != null) {
+            loadSelfParty(tempConf);
+            Map content = (Map) tempConf.get(ROUTE_TABLE);
+            endPointMap = initRouteTable(content);
+            logger.info("load router table {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
+        } else {
+            logger.error("content of route_table.json is invalid , content is {}", conf);
+        }
+
+        totalConfig= tempConf;
+    }
+
+
     private class RouterTableListener implements PropertyListener<String> {
 
         @Override
         public void configUpdate(String value) {
-            logger.info("found router_table.json has been changed, update content {}", value);
-            Map confJson = JsonUtil.json2Object(value, Map.class);
-            Map content = (Map) confJson.get(ROUTE_TABLE);
-            endPointMap = initRouteTable(content);
+            logger.warn("found router_table.json has been changed, reload " );
+            loadRouterTable(value);
         }
 
         @Override
         public void configLoad(String value) {
-            Map confJson = JsonUtil.json2Object(value, Map.class);
-            if (confJson != null) {
-                List selfParties = (List)confJson.get(SELF_PARTY);
-                logger.info("load self party {}",selfParties);
-                if(selfParties!=null){
-                    MetaInfo.PROPERTY_SELF_PARTY = new HashSet<>(selfParties);
-                }else{
-                    logger.error("self_party is not found in route_table.json");
-                }
-
-                Map content = (Map) confJson.get("route_table");
-                endPointMap = initRouteTable(content);
-                logger.info("load router table {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
-
-            } else {
-                logger.error("content of route_table.json is invalid , content is {}", value);
-
-            }
+            loadRouterTable(value);
         }
     }
-
-    public  static  void  main(String[] args){
-        RouterInfo  routerInfo = new RouterInfo();
-        routerInfo.setDesPartyId("9999");
-        routerInfo.setHost("localhost");
-        routerInfo.setPort(8888);
-        System.err.println(JsonUtil.object2Json(routerInfo));
-    }
-
 
 }

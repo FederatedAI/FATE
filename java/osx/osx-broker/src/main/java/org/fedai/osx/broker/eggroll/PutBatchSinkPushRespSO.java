@@ -18,6 +18,7 @@ package org.fedai.osx.broker.eggroll;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.stub.StreamObserver;
+import org.fedai.osx.core.router.RouterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +31,15 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
     Proxy.Metadata reqHeader;
     Future<ErTask> commandFuture;
     CountDownLatch finishLatch;
+    RouterInfo routerInfo;
     Logger logger = LoggerFactory.getLogger(PutBatchSinkPushRespSO.class);
 
     public PutBatchSinkPushRespSO(Proxy.Metadata reqHeader,
                                   Future<ErTask> commandFuture,
                                   StreamObserver<Proxy.Metadata> eggSiteServicerPushRespSO,
-                                  CountDownLatch finishLatch
-    ) {
+                                  CountDownLatch finishLatch, RouterInfo routerInfo
+                                  ) {
+        this.routerInfo = routerInfo;
         this.reqHeader = reqHeader;
         this.commandFuture = commandFuture;
         this.eggSiteServicerPushRespSO = eggSiteServicerPushRespSO;
@@ -56,6 +59,7 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
 
     @Override
     public void onError(Throwable throwable) {
+        logger.error("eggpair {} return error",routerInfo,throwable);
         eggSiteServicerPushRespSO.onError(throwable);
     }
 

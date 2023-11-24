@@ -145,16 +145,17 @@ public class OsxServer {
 //            //如果PROPERTY_HTTP_SSL_TRUST_STORE_PATH 为空， 则去读取证书套件，然后生成一个TRUST_STORE
             if (StringUtils.isNotBlank(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH)) {
                 sslServer.setTrustStoreType(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE.toUpperCase());
-                sslServer.setKeyStorePath(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH);
+                sslServer.setTrustStorePath(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH);
                 sslServer.setTrustStore(OSXCertUtils.getTrustStore(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE));
                 if (StringUtils.isAllBlank(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD)) {
                     throw new IllegalArgumentException("http.ssl.key.store.password/http.ssl.trust.store.password is not set,please check config file");
                 }
                 sslServer.setTrustStorePassword(StringUtils.firstNonBlank(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD));
+                sslServer.setKeyStorePath(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PATH);
                 sslServer.setKeyStorePassword(StringUtils.firstNonBlank(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD));
                 sslServer.setTrustStoreProvider(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PROVIDER);
             } else {
-                SSLContext sslContext = SSLContext.getInstance("SSL");
+                SSLContext sslContext = SSLContext.getInstance("TLS");
                 KeyStore keyStore = OSXCertUtils.getKeyStore(MetaInfo.PROPERTY_SERVER_CA_FILE, MetaInfo.PROPERTY_SERVER_CERT_CHAIN_FILE, MetaInfo.PROPERTY_SERVER_PRIVATE_KEY_FILE);
                 TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
                 // Load client certificate

@@ -39,7 +39,7 @@ public class Grpc_UC {
         RouterInfo routerInfo = JsonUtil.json2Object(routerJson, RouterInfo.class);
         PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
         if (context.getData(Dict.BLOCKING_STUB) == null) {
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
             stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
         } else {
             stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);

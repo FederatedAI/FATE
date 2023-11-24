@@ -1,8 +1,7 @@
 package org.fedai.osx.broker.router;
-
-
-import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import org.fedai.osx.core.router.RouterInfo;
+
+import java.util.Set;
 
 public interface RouterService {
 
@@ -10,6 +9,10 @@ public interface RouterService {
 
     public String addRouterInfo(RouterInfo  routerInfo);
 
-    public String  getAllRouterInfo();
+    public void  setRouterTable(String  content);
+
+    public String getRouterTable();
+
+    public void  setSelfPartyIds(Set<String> partyIds);
 
 }

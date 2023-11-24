@@ -30,13 +30,11 @@ import org.fedai.osx.broker.http.HttpDataWrapper;
 import org.fedai.osx.broker.http.HttpsClientPool;
 import org.fedai.osx.broker.pojo.HttpInvoke;
 import org.fedai.osx.broker.pojo.HttpInvokeResult;
+import org.fedai.osx.broker.pojo.SerializeAware;
 import org.fedai.osx.broker.queue.TransferQueueConsumeResult;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.config.TransferMeta;
-import org.fedai.osx.core.constant.ActionType;
-import org.fedai.osx.core.constant.Dict;
-import org.fedai.osx.core.constant.PtpHttpHeader;
-import org.fedai.osx.core.constant.StatusCode;
+import org.fedai.osx.core.constant.*;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.exceptions.*;
@@ -126,14 +124,7 @@ public class TransferUtil {
         }
     }
 
-    public static Osx.Inbound.Builder buildInbound(String provider,
-                                                   String srcPartyId,
-                                                   String desPartyId,
-                                                   String targetMethod,
-                                                   String topic,
-                                                   MessageFlag messageFlag,
-                                                   String sessionId,
-                                                   byte[] payLoad) {
+    public static Osx.Inbound.Builder buildInbound(String provider, String srcPartyId, String desPartyId, String targetMethod, String topic, MessageFlag messageFlag, String sessionId, byte[] payLoad) {
 
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
 
@@ -219,24 +210,10 @@ public class TransferUtil {
     }
 
 
-    public static Osx.Inbound.Builder buildInboundFromPushingPacket(OsxContext context, Proxy.Packet packet, String provider) {
+    public static Osx.Inbound.Builder buildInboundFromPushingPacket(OsxContext context, Proxy.Packet packet) {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-        TransferMeta transferMeta = parseTransferMetaFromProxyPacket(packet);
         inboundBuilder.setPayload(packet.toByteString());
-//        inboundBuilder.putMetadata(Osx.Header.Version.name(), MetaInfo.CURRENT_VERSION);
-//        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), provider);
-//        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
-//        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), transferMeta.getSrcPartyId());
-//        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), transferMeta.getDesPartyId());
-//        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-//        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-//        inboundBuilder.putMetadata(Osx.Metadata.SourceMethod.name(), sourceMethod);
-//        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), transferMeta.getSessionId());
-//        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), targetMethod);
-//        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), transferMeta.getDesRole());
-//        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
         return inboundBuilder;
-
     }
 
     ;
@@ -275,45 +252,12 @@ public class TransferUtil {
 //        context.setActionType(targetMethod);
         context.setUri(uri);
         context.setProtocol(Protocol.http);
-//        inboundBuilder.putMetadata(Osx.Header.Version.name(), version != null ? version : "");
-//        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), techProviderCode != null ? techProviderCode : "");
-//        inboundBuilder.putMetadata(Osx.Header.Token.name(), token != null ? token : "");
-//        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), sourceNodeID != null ? sourceNodeID : "");
-//        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), targetNodeID != null ? targetNodeID : "");
-//        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), sourceInstID != null ? sourceInstID : "");
-//        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), targetInstID != null ? targetInstID : "");
-//        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), sessionID != null ? sessionID : "");
-////        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), targetMethod != null ? targetMethod : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), targetComponentName != null ? targetComponentName : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), sourceComponentName != null ? sourceComponentName : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), messageTopic != null ? messageTopic : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.MessageOffSet.name(), messageOffSet != null ? messageOffSet : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.InstanceId.name(), instanceId != null ? instanceId : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.Timestamp.name(), timestamp != null ? timestamp : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.SourceMethod.name(), sourceMethod != null ? sourceMethod : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.MessageFlag.name(), messageFlag != null ? messageFlag : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.JobId.name(), jobId != null ? jobId : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.MessageCode.name(), messageCode != null ? messageCode : "");
-//        inboundBuilder.putMetadata(Osx.Metadata.RetryCount.name(), retryCount != null ? retryCount : "");
+
         return inboundBuilder;
     }
 
 
     static public Map parseHttpHeader(OsxContext context) {
-
-//        static public  final String   Version="x-ptp-version";
-//        static public  final String   TechProviderCode  = "x-ptp-tech-provider-code";
-//        static public  final String   TraceID = "x-ptp-trace-id";
-//        static public  final String   Token = "x-ptp-token";
-//        static public  final String   Uri= "x-ptp-uri";
-//        static public  final String   FromNodeID = "x-ptp-from-node-id";
-//        static public  final String   FromInstID = "x-ptp-from-inst-id";
-//        static public  final String   TargetNodeID = "x-ptp-target-node-id";
-//        static public  final String   TargetInstID = "x-ptp-target-inst-id";
-//        static public  final String   SessionID = "x-ptp-session-id";
-//        static public  final String   MessageTopic = "x-ptp-topic";
-
-
         Map header = Maps.newHashMap();
         header.put(PtpHttpHeader.Version, context.getVersion());
         header.put(PtpHttpHeader.TechProviderCode, context.getTechProviderCode());
@@ -328,28 +272,6 @@ public class TransferUtil {
         header.put(PtpHttpHeader.MessageTopic, context.getTopic());
         header.put(PtpHttpHeader.QueueType, context.getQueueType());
         header.put(PtpHttpHeader.MessageFlag, context.getMessageFlag());
-
-//        header.put(PtpHttpHeader.Version, version != null ? version : "");
-//        header.put(PtpHttpHeader.TechProviderCode, techProviderCode != null ? techProviderCode : "");
-//        header.put(PtpHttpHeader.TraceID, traceId != null ? traceId : "");
-//        header.put(PtpHttpHeader.Token, token != null ? token : "");
-//        header.put(PtpHttpHeader.SourceNodeID, sourceNodeId != null ? sourceNodeId : "");
-//        header.put(PtpHttpHeader.TargetNodeID, targetNodeId != null ? targetNodeId : "");
-//        header.put(PtpHttpHeader.SourceInstID, sourceInstId != null ? sourceInstId : "");
-//        header.put(PtpHttpHeader.TargetInstID, targetInstId != null ? targetInstId : "");
-//        header.put(PtpHttpHeader.SessionID, sessionId != null ? sessionId : "");
-//        header.put(PtpHttpHeader.MessageTopic, topic != null ? topic : "");
-//        header.put(PtpHttpHeader.MessageCode, messageCode);
-//        header.put(PtpHttpHeader.SourceComponentName, sourceComponentName != null ? sourceComponentName : "");
-//        header.put(PtpHttpHeader.TargetComponentName, targetComponentName != null ? targetComponentName : "");
-//        header.put(PtpHttpHeader.TargetMethod, targetMethod != null ? targetMethod : "");
-//        header.put(PtpHttpHeader.SourceMethod, sourceMethod != null ? sourceMethod : "");
-//        header.put(PtpHttpHeader.MessageOffSet, offsetString != null ? offsetString : "");
-//        header.put(PtpHttpHeader.InstanceId, InstanceId != null ? InstanceId : "");
-//        header.put(PtpHttpHeader.Timestamp, timestamp != null ? timestamp : "");
-//        header.put(PtpHttpHeader.MessageFlag, messageFlag != null ? messageFlag : "");
-//        header.put(PtpHttpHeader.JobId, jobId != null ? jobId : "");
-
         return header;
     }
 
@@ -367,7 +289,7 @@ public class TransferUtil {
         Osx.TransportOutbound result = null;
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = null;
         if (context.getData(Dict.BLOCKING_STUB) == null) {
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
+            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
             stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         } else {
             stub = (PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub) context.getData(Dict.BLOCKING_STUB);
@@ -393,15 +315,15 @@ public class TransferUtil {
             if (routerInfo.getProtocol().equals(Protocol.http)) {
 
                 if (routerInfo.isUseSSL()) {
-                    httpDataWrapper = HttpsClientPool.sendPostWithCert(url, produceRequest.getPayload().toByteArray(), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
+                    //httpDataWrapper = HttpsClientPool.sendPostWithCert(url, produceRequest.getPayload().toByteArray(), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
+                    httpDataWrapper = HttpsClientPool.sendPostWithCert(header, produceRequest.getPayload().toByteArray(), routerInfo);
                 } else {
                     httpDataWrapper = HttpClientPool.sendPost(url, produceRequest.getPayload().toByteArray(), header);
                 }
             }
         } catch (Exception e) {
 //            e.printStackTrace();
-            logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n"
-                    , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), JsonUtil.object2Json(produceRequest.getPayload()), e);
+            logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n", url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), JsonUtil.object2Json(produceRequest.getPayload()), e);
             ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
             result = Osx.TransportOutbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
         }
@@ -416,99 +338,136 @@ public class TransferUtil {
     }
 
     static public Osx.TransportOutbound redirectPop(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);
     }
 
     static public Osx.TransportOutbound redirectPeek(OsxContext context, RouterInfo routerInfo, Osx.PeekInbound inbound) {
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.peek(inbound);
     }
 
     static public Osx.TransportOutbound redirectRelease(OsxContext context, RouterInfo routerInfo, Osx.ReleaseInbound inbound) {
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         context.setActionType(ActionType.CANCEL_TOPIC.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.release(inbound);
     }
 
+    static public Object transfomateResult(OsxContext context, Object oriResult) {
+
+        if (Protocol.grpc.equals(context.getProtocol())) {
+            if (oriResult instanceof Osx.Outbound) {
+                return oriResult;
+            } else if (oriResult instanceof HttpInvokeResult) {
+                HttpInvokeResult httpInvokeResult = (HttpInvokeResult) oriResult;
+                Osx.Outbound.Builder outboundBuilder = Osx.Outbound.newBuilder();
+                if (httpInvokeResult.getCode() != null)
+                    outboundBuilder.setCode(httpInvokeResult.getCode());
+                if (httpInvokeResult.getMessage() != null)
+                    outboundBuilder.setMessage(httpInvokeResult.getMessage());
+                if (httpInvokeResult.getPayload() != null)
+                    outboundBuilder.setPayload(ByteString.copyFrom(httpInvokeResult.getPayload()));
+                return outboundBuilder.build();
+            }
+        } else if (Protocol.http.equals(context.getProtocol())) {
+            if (oriResult instanceof Osx.Outbound) {
+                Osx.Outbound outbound = (Osx.Outbound) oriResult;
+                HttpInvokeResult httpInvokeResult = new HttpInvokeResult();
+                if (outbound.getPayload() != null)
+                    httpInvokeResult.setPayload(outbound.getPayload().toByteArray());
+                httpInvokeResult.setCode(outbound.getCode());
+                httpInvokeResult.setMessage(outbound.getMessage());
+                return httpInvokeResult;
+            } else if (oriResult instanceof HttpInvokeResult) {
+                return oriResult;
+            }
+        }
+        throw new SysException("invalid result class " + oriResult.getClass());
+
+    }
+
     static public Object redirect(OsxContext context, Object
             data, RouterInfo routerInfo, boolean usePooled) {
         AssertUtil.notNull(routerInfo, context.getDesNodeId() != null ? "des partyId " + context.getDesNodeId() + " router info is null" : " error router info");
-        Osx.Outbound result = null;
-
-//        if (routerInfo.getIsCycle()) {
-//            throw new CycleRouteInfoException("cycle router info");
-//        }
-        if (routerInfo.getProtocol() == null || Protocol.grpc.equals(context.getProtocol()) && Protocol.grpc.equals(routerInfo.getProtocol())) {
-            //来自旧版fateflow的请求，需要用旧版的stub
-            Osx.Inbound inbound = (Osx.Inbound) data;
-            context.setDataSize(inbound.getSerializedSize());
-
-//            if (context.isDestination() && Role.fateflow.name().equals(routerInfo.getDesRole())
-//                    && SourceMethod.OLDUNARY_CALL.name().equals(produceRequest.getMetadataMap().get(Osx.Metadata.SourceMethod.name()))) {
-//                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
-//                DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
-//                Proxy.Packet request;
-//                try {
-//                    request = Proxy.Packet.parseFrom(produceRequest.getPayload().toByteArray());
-//                } catch (InvalidProtocolBufferException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                Proxy.Packet response = stub.unaryCall(request);
-//                result = Osx.Outbound.newBuilder().setPayload(response.toByteString()).setCode(StatusCode.SUCCESS).build();
-//            } else
-            {
-
-                PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
-                if (context.getData(Dict.BLOCKING_STUB) == null) {
-                    ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, usePooled);
-                    stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-                } else {
-                    stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
-                }
-                try {
-                    result = stub.invoke(inbound);
-                } catch (StatusRuntimeException e) {
-                    logger.error("redirect error", e);
-                    throw new RemoteRpcException(StatusCode.NET_ERROR, "send to " + routerInfo.toKey() + " error : " + e.getMessage());
-                }
+        Object result = null;
+        if (routerInfo.getProtocol() == null ||Protocol.grpc.equals(routerInfo.getProtocol())) {
+            Osx.Inbound inbound = null;
+            if(data instanceof Osx.Inbound){
+                inbound = (Osx.Inbound) data;
+            }else if(data instanceof HttpInvoke){
+                HttpInvoke httpInvoke = (HttpInvoke)data;
+                Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
+                if(httpInvoke.getPayload()!=null)
+                    inboundBuilder.setPayload(ByteString.copyFrom(httpInvoke.getPayload()));
+                inbound = inboundBuilder.build();
             }
-            // ServiceContainer.tokenApplyService.applyToken(context,routerInfo.getResource(),produceRequest.getSerializedSize());
-        } else {
+            if(inbound==null){
+                throw new InvalidRequestException();
+            }
 
-            HttpInvoke httpInvoke = (HttpInvoke) data;
+            context.setDataSize(inbound.getSerializedSize());
+            PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = null;
+            if (context.getData(Dict.BLOCKING_STUB) == null) {
+                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
+                stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+            } else {
+                stub = (PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub) context.getData(Dict.BLOCKING_STUB);
+            }
+            try {
+                result = stub.invoke(inbound);
+            } catch (StatusRuntimeException e) {
+                logger.error("redirect error", e);
+                throw new RemoteRpcException(StatusCode.NET_ERROR, "send to " + routerInfo.toKey() + " error : " + e.getMessage());
+            }
+
+        } else {
+            HttpInvoke httpInvoke = null;
+            if (data instanceof Osx.Inbound) {
+                httpInvoke = new HttpInvoke();
+                httpInvoke.setPayload(((Osx.Inbound) data).getPayload().toByteArray());
+            } else if (data instanceof HttpInvoke) {
+                httpInvoke = (HttpInvoke) data;
+            } else if (data instanceof SerializeAware) {
+                SerializeAware serializeAware = (SerializeAware) data;
+                httpInvoke = new HttpInvoke();
+                httpInvoke.setPayload(serializeAware.serialize());
+            } else if (data instanceof Proxy.Packet) {
+                httpInvoke = new HttpInvoke();
+                httpInvoke.setPayload(((Proxy.Packet) data).toByteArray());
+            } else {
+                logger.error("invalid request data type : {}", data.getClass());
+                throw new ParameterException("invalid request data ");
+            }
             String url = routerInfo.getUrl();
             Map header = parseHttpHeader(context);
-
+            context.setDataSize(httpInvoke.getPayload() != null ? httpInvoke.getPayload().length : 0);
             long startTime = System.currentTimeMillis();
             try {
                 if (routerInfo.getProtocol().equals(Protocol.http)) {
                     HttpDataWrapper httpDataWrapper = null;
                     if (routerInfo.isUseSSL()) {
-                        httpDataWrapper = HttpsClientPool.sendPostWithCert(url, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header, routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
+                        httpDataWrapper = HttpsClientPool.sendPostWithCert(header, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), routerInfo);
                     } else {
                         httpDataWrapper = HttpClientPool.sendPost(url, JsonUtil.object2Json(httpInvoke).getBytes(StandardCharsets.UTF_8), header);
                     }
                     if (httpDataWrapper != null) {
-                        HttpInvokeResult httpInvokeResult = JsonUtil.json2Object(httpDataWrapper.getPayload(), HttpInvokeResult.class);
-                        return httpInvokeResult;
+                        result = JsonUtil.json2Object(httpDataWrapper.getPayload(), HttpInvokeResult.class);
+
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-//                logger.error("sendPtpPost failed : url = {}, startTime = {}  , cost = {} ,header = {} , body = {} \n"
-//                        , url, startTime, System.currentTimeMillis() - startTime, JsonUtil.object2Json(header), , e);
-//                ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
-//                result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
-                throw new RemoteRpcException(e);
+                logger.error("调用异常：", e);
+                throw new RemoteRpcException(e.getMessage());
             }
         }
-        return result;
+
+        return transfomateResult(context, result);
+
     }
 
 

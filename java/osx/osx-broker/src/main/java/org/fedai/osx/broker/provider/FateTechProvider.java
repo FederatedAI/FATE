@@ -15,10 +15,10 @@
  */
 package org.fedai.osx.broker.provider;
 
-
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.constants.ServiceType;
 import org.fedai.osx.broker.pojo.*;
@@ -48,10 +48,9 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.OutputStream;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 
 import static org.fedai.osx.core.constant.ActionType.MSG_REDIRECT;
 
@@ -76,7 +75,7 @@ public class FateTechProvider implements TechProvider {
     }
 
     @Override
-    public void processHttpInvoke(OsxContext osxContext, HttpServletRequest request, HttpServletResponse response,boolean interInvoke) {
+    public void processHttpInvoke(OsxContext osxContext, HttpServletRequest request, HttpServletResponse response) {
 
         try {
 //            OsxContext.pushThreadLocalContext(osxContext);
@@ -84,7 +83,8 @@ public class FateTechProvider implements TechProvider {
             osxContext.putData(Dict.HTTP_SERVLET_RESPONSE, response);
             byte[] reqBody = TransferUtil.read(request.getInputStream());
             HttpInvoke httpInvoke = JsonUtil.json2Object(reqBody, HttpInvoke.class);
-            HttpInvokeResult httpInvokeResult = (HttpInvokeResult) this.handleInvoke(osxContext, httpInvoke,interInvoke);
+            Object  result =  this.handleInvoke(osxContext, httpInvoke,true);
+            HttpInvokeResult httpInvokeResult= (HttpInvokeResult)TransferUtil.transfomateResult(osxContext,result);
             response.setContentType(Dict.CONTENT_TYPE_JSON_UTF8);
             TransferUtil.writeHttpRespose(response, httpInvokeResult.getCode(), httpInvokeResult.getMessage(), JsonUtil.object2Json(httpInvokeResult).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
@@ -143,10 +143,10 @@ public class FateTechProvider implements TechProvider {
         try {
             String desNodeId = context.getDesNodeId();
             byte[] body = TransferUtil.read(httpServletRequest.getInputStream());
-
+            ProduceRequest produceRequest = JsonUtil.json2Object(new String(body), ProduceRequest.class);
             if (MetaInfo.PROPERTY_SELF_PARTY.contains(desNodeId)) {
                 context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
-                ProduceRequest produceRequest = JsonUtil.json2Object(new String(body), ProduceRequest.class);
+
                 ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.PUSH, false);
                 Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
                 ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
@@ -159,8 +159,22 @@ public class FateTechProvider implements TechProvider {
                 RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(context.getSrcNodeId(), "", context.getDesNodeId(), "");
                 context.setRouterInfo(routerInfo);
                 context.setActionType(ActionType.MSG_REDIRECT.name());
+                OsxContext.pushThreadLocalContext(context);
+                try {
+                    if(Protocol.grpc.equals(routerInfo.getProtocol())){
 
-                TransferUtil.redirect(context, httpInvoke, routerInfo, true);
+                        Osx.PushInbound.Builder  pushInboundBuilder = Osx.PushInbound.newBuilder();
+                        pushInboundBuilder.setTopic(produceRequest.getTopic());
+                        pushInboundBuilder.setPayload(ByteString.copyFrom(produceRequest.getPayload()));
+                        httpInvoke.setPayload(pushInboundBuilder.build().toByteArray());
+                    }
+
+                    HttpInvokeResult httpInvokeResult = (HttpInvokeResult) TransferUtil.redirect(context, httpInvoke, routerInfo, true);
+                    TransferUtil.writeHttpRespose(httpServletResponse, httpInvokeResult.getCode(), httpInvokeResult.getMessage(), JsonUtil.object2Json(httpInvokeResult).getBytes(StandardCharsets.UTF_8));
+                }finally {
+                    OsxContext.popThreadLocalContext();
+                    OsxContext.release();
+                }
             }
             // TODO: 2023/11/6   这里需要对异常情况进行处理
         } catch (IOException e) {
@@ -235,7 +249,7 @@ public class FateTechProvider implements TechProvider {
 
     private Object doService(OsxContext context, Object request,String nodeId ,String uri,boolean  interInvoke){
         Object  result= null;
-        ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, nodeId, uri, interInvoke);
+        ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", uri, interInvoke);
         if (serviceRegisterInfo != null) {
             ServiceType serviceType = serviceRegisterInfo.getServiceType();
             switch (serviceType) {
@@ -265,7 +279,7 @@ public class FateTechProvider implements TechProvider {
             } else {
                 RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(context.getSrcNodeId(),"" ,context.getDesNodeId(), "" );
                 if (routerInfo != null) {
-                    result = TransferUtil.redirect(context, (Osx.Inbound) request, routerInfo, true);
+                    result = TransferUtil.redirect(context, request, routerInfo, true);
                 } else {
                     logger.error("can not found router info {} {}", context.getDesInstId(), context.getDesNodeId());
                     throw new NoRouterInfoException("can not found router info");
@@ -336,6 +350,13 @@ public class FateTechProvider implements TechProvider {
         }
     }
 
+    private ProduceRequest buildProduceRequestFromGrpc( Osx.PushInbound inbound ){
+        ProduceRequest produceRequest = new ProduceRequest();
+        produceRequest.setPayload(inbound.getPayload().toByteArray());
+        produceRequest.setTopic(inbound.getTopic());
+        return produceRequest;
+    }
+
     @Override
     public void processGrpcPush(OsxContext context, Osx.PushInbound inbound, StreamObserver<Osx.TransportOutbound> responseObserver) {
         Osx.TransportOutbound result = null;
@@ -348,9 +369,10 @@ public class FateTechProvider implements TechProvider {
             if (MetaInfo.PROPERTY_SELF_PARTY.contains(desNodeId)) {
                 ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.PUSH, false);
                 AbstractServiceAdaptorNew serviceAdaptor = serviceRegisterInfo.getServiceAdaptor();
-                ProduceRequest produceRequest = new ProduceRequest();
-                produceRequest.setPayload(inbound.getPayload().toByteArray());
-                produceRequest.setTopic(inbound.getTopic());
+//                ProduceRequest produceRequest = new ProduceRequest();
+//                produceRequest.setPayload(inbound.getPayload().toByteArray());
+//                produceRequest.setTopic(inbound.getTopic());
+                ProduceRequest produceRequest  = buildProduceRequestFromGrpc(inbound);
                 ProduceResponse produceResponse = (ProduceResponse) serviceAdaptor.service(context, produceRequest);
                 if (produceResponse != null) {
                     result = Osx.TransportOutbound.newBuilder().setCode(produceResponse.getCode()).setMessage(produceResponse.getMsg()).build();
@@ -358,12 +380,18 @@ public class FateTechProvider implements TechProvider {
             } else {
                 RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(srcNodeId, Dict.DEFAULT, desNodeId, Dict.DEFAULT);
                 context.setActionType(MSG_REDIRECT.name());
-                Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-                inboundBuilder.setPayload(inbound.toByteString());
+                Object  sendObject = null;
+                if(Protocol.http.equals(routerInfo.getProtocol())){
+                    sendObject = buildProduceRequestFromGrpc(inbound);
+                }else {
+                    Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+                    inboundBuilder.setPayload(inbound.toByteString());
+                    sendObject = inboundBuilder.build();
+                }
                 context.setUri(UriConstants.PUSH);
                 context.setTopic(inbound.getTopic());
                 context.setRouterInfo(routerInfo);
-                Osx.Outbound outbound = (Osx.Outbound) TransferUtil.redirect(context, inboundBuilder.build(), routerInfo, true);
+                Osx.Outbound outbound = (Osx.Outbound) TransferUtil.redirect(context, sendObject, routerInfo, true);
                 Osx.TransportOutbound.Builder transportOutboundBuilder = Osx.TransportOutbound.newBuilder();
                 context.setReturnCode(outbound.getCode());
                 context.setReturnMsg(outbound.getMessage());
@@ -459,12 +487,13 @@ public class FateTechProvider implements TechProvider {
             context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
             byte[] payload = TransferUtil.read(httpServletRequest.getInputStream());
             String content = new String(payload);
-            RouterSetRequest routerSetRequest = JsonUtil.json2Object(content, RouterSetRequest.class);
-            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.HTTP_CHANGE_ROUTER, false);
+            ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", context.getUri(), false);
+            Preconditions.checkArgument(serviceRegisterInfo!=null,"uri : " +context.getUri()+" can not found service ");
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
             ServiceAdaptorNew serviceAdaptor = (ServiceAdaptorNew) serviceAdaptorObject;
-            RouterSetResponse response = (RouterSetResponse) serviceAdaptor.service(context, routerSetRequest);
-            TransferUtil.writeHttpRespose(httpServletResponse, response.getCode(), response.getMsg(), JsonUtil.object2Json(response).getBytes(StandardCharsets.UTF_8));
+            Object reqObj = serviceAdaptor.decode(content);
+            Object response =  serviceAdaptor.service(context, reqObj);
+            TransferUtil.writeHttpRespose(httpServletResponse, "", "", JsonUtil.object2Json(response).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             logger.error("process http release error",e);
         } finally {

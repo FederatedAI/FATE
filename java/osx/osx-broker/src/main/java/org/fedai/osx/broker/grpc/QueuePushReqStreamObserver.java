@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> {
+public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> {
 
     static public ConcurrentHashMap<Integer, QueuePushReqStreamObserver> queueIdMap = new ConcurrentHashMap<>();
     static AtomicInteger seq = new AtomicInteger(0);
@@ -69,8 +69,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     private boolean needPrintFlow = true;
     private StreamObserver<Proxy.Packet> forwardPushReqSO;
     private StreamObserver<Proxy.Metadata> backRespSO;
-    private String transferId;
-    private Integer queueId;
     private RouterService routerService;
     private TransferQueueManager transferQueueManager;
     private ManagedChannel channel;
@@ -81,12 +79,8 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         this.context = context;
         this.routerService = routerService;
         this.backRespSO = backRespSO;
-        //this.context = context.subContext();
-        //this.context.setNeedPrintFlowLog(true);
         this.context.setServiceName("pushTransfer");
         this.transferQueueManager = transferQueueManager;
-
-
     }
 
     public StreamObserver<Proxy.Packet> getForwardPushReqSO() {
@@ -111,18 +105,15 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         if (MetaInfo.PROPERTY_SELF_PARTY.contains(desPartyId)) {
             isDst = true;
-        } else {
-            logger.info("des party id {} is not in {}", desPartyId, MetaInfo.PROPERTY_SELF_PARTY);
         }
         /**
          * 检查目的地是否为自己
          */
         if (!isDst) {
             routerInfo = routerService.route(context.getSrcNodeId(), context.getSrcComponent(), context.getDesNodeId(), context.getDesComponent());
-            if (routerInfo != null) {
-                this.transferId = routerInfo.getResource();
-            } else {
-                throw new NoRouterInfoException("no router");
+            if (routerInfo == null) {
+                logger.error("no router info is found for party id {}",context.getDesNodeId());
+                throw new NoRouterInfoException("no router is found for party id"+context.getDesNodeId());
             }
         }
         if (isDst) {
@@ -132,23 +123,15 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                 initEggroll(context, packet);
             }
         } else {
-
             context.setActionType(ActionType.PUSH_REMOTE.name());
             context.setRouterInfo(routerInfo);
             context.setSrcNodeId(routerInfo.getSourcePartyId());
             context.setDesNodeId(routerInfo.getDesPartyId());
-
-            logger.info("router info {}", routerInfo);
             if (routerInfo.getProtocol().equals(Protocol.http)) {
-                //由本方发起的传输且使用队列替代流式传输，需要在本地建立接受应答的队列,
-                context.setUri(UriConstants.PUSH);
-
-                forwardPushReqSO = QueueStreamBuilder.createStreamFromOrigin(context, transferQueueManager, backRespSO, Proxy.Packet.parser(),
-                        routerInfo, srcPartyId, desPartyId, rsHeader.getRollSiteSessionId(), finishLatch);
-
+                logger.error("invalid router info {}, grpc stream is not support http1.x",routerInfo);
+                throw new SysException("invalid router info for grpc stream");
             } else {
-                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), true);
-//                if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
+                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo());
                 DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
                 ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, () -> {
                     finishLatch.countDown();
@@ -156,34 +139,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                     finishLatch.countDown();
                 });
                 forwardPushReqSO = stub.push(forwardPushRespSO);
-//                }
-//                else {
-//                    // TODO: 2023/9/25   互联互通并没有使用这个流式 ，所以屏蔽，流式直接使用旧FATE接口
-//                        PtpForwardPushRespSO ptpForwardPushRespSO = new PtpForwardPushRespSO(context, backRespSO, backRespSOClass, () -> {
-//                            finishLatch.countDown();
-//                        }, (t) -> {
-//                            finishLatch.countDown();
-//                        });
-//                        PrivateTransferProtocolGrpc.PrivateTransferProtocolStub stub = PrivateTransferProtocolGrpc.newStub(managedChannel);
-//                        StreamObserver<Osx.Inbound> ptpForwardPushReqSO = stub.transport(ptpForwardPushRespSO);
-//                        forwardPushReqSO = new StreamObserver<Proxy.Packet>() {
-//                            @Override
-//                            public void onNext(Proxy.Packet packet) {
-//                                Osx.Inbound inbound = TransferUtil.buildInboundFromPushingPacket(context,packet, MetaInfo.PROPERTY_FATE_TECH_PROVIDER).build();
-//                                ptpForwardPushReqSO.onNext(inbound);
-//                            }
-//
-//                            @Override
-//                            public void onError(Throwable throwable) {
-//                                ptpForwardPushReqSO.onError(throwable);
-//                            }
-//
-//                            @Override
-//                            public void onCompleted() {
-//                                ptpForwardPushReqSO.onCompleted();
-//                            }
-//                        };
-//                }
             }
         }
         transferStatus = TransferStatus.TRANSFERING;
@@ -195,27 +150,23 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         context.setRouterInfo(routerInfo);
         routerInfo.setHost(MetaInfo.PROPERTY_MOCK_EGGPAIR_IP);
         routerInfo.setPort(MetaInfo.PROPERTY_MOCK_EGGPAIR_PORT);
-
         context.setSrcNodeId(routerInfo.getSourcePartyId());
         context.setDesNodeId(MetaInfo.PROPERTY_MOCK_EGGPAIR_PARTYID);
-        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo, false);
+        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
-
         CompletableFuture<ErTask> commandFuture = new CompletableFuture<>();
         commandFuture.complete(new ErTask());
-        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch));
+        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch,routerInfo));
     }
 
     private void initEggroll(OsxContext context, Proxy.Packet firstRequest) {
-
-
         if (StringUtils.isEmpty(MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP)) {
             throw new SysException("eggroll cluter manager ip is not found");
         }
 
         metadata = firstRequest.getHeader();
         String oneLineStringMetadata = ToStringUtils.toOneLineString(metadata);
-        context.setActionType(ActionType.PUSH_EGGROLL.name());
+        context.setActionType(ActionType.PUSH_EGGPAIR.name());
         String rsKey = rsHeader.getRsKey("#", "__rsk");
         String sessionId = String.join("_", rsHeader.getRollSiteSessionId(), rsHeader.getDstRole(), rsHeader.getDstPartyId());
         context.setSessionId(sessionId);
@@ -282,15 +233,19 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             }
             return null;
         });
-        routerInfo = new RouterInfo();
+        RouterInfo routerInfo = new RouterInfo();
+        routerInfo.setProtocol(Protocol.grpc);
         context.setRouterInfo(routerInfo);
         routerInfo.setHost(egg.getTransferEndpoint().getHost());
         routerInfo.setPort(egg.getTransferEndpoint().getPort());
         context.setSrcNodeId(routerInfo.getSourcePartyId());
         context.setDesNodeId(routerInfo.getDesPartyId());
-        this.channel = GrpcConnectionFactory.createManagedChannel(routerInfo, false);
+        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
-        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch));
+        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch,routerInfo));
+
+
+
 
 
     }
@@ -299,6 +254,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     @Override
     public void onNext(Proxy.Packet value) {
         try {
+            if(value.getHeader()!=null){
+                context.setTraceId(Long.toString(value.getHeader().getSeq()));
+            }
 //            long seq = value.getHeader().getSeq();
             context.setDataSize(value.getSerializedSize());
 //            context.setCaseId(Long.toString(seq));
@@ -307,6 +265,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             }
             if (transferStatus.equals(TransferStatus.TRANSFERING)) {
                 if (isDst) {
+                    context.setActionType(ActionType.PUSH_EGGPAIR.name());
                     Transfer.TransferHeader.Builder transferHeaderBuilder = Transfer.TransferHeader.newBuilder();
                     Transfer.TransferHeader tbHeader = transferHeaderBuilder.setId((int) metadata.getSeq())
                             .setTag(brokerTag)
@@ -352,14 +311,10 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                 forwardPushReqSO.onError(t);
             }
         }
-
-
     }
 
     @Override
     public void onCompleted() {
-
-        logger.info("transferId {} receive completed", transferId);
         if (isDst) {
             if (putBatchSinkPushReqSO != null) {
                 putBatchSinkPushReqSO.onCompleted();
@@ -371,10 +326,11 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                     if (!finishLatch.await(MetaInfo.PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT, TimeUnit.SECONDS)) {
                         onError(new TimeoutException());
                         needPrintFlow = false;
-                        if (this.channel != null) {
-                            this.channel.shutdown();
-                        }
                     }
+                    if (this.channel != null) {
+                        this.channel.shutdown();
+                    }
+
                 } catch (InterruptedException e) {
                     onError(e);
                     needPrintFlow = false;

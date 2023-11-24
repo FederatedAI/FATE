@@ -29,10 +29,10 @@ public class UriConstants {
 
     public static final String HTTP_INVOKE = "/v1/interconn/chan/invoke";
 
-
-    public static final String HTTP_CHANGE_ROUTER = "/v1/inner/router/set";
-    public static final String HTTP_CHANGE_ROUTER_REPLACE =  "/v1/inner/router/replace";
-    public static final String HTTP_GET_ROUTER_INFO = "/v1/inner/router/get";
+    public static final String HTTP_SET_SELF =   "/v1/inner/router/self";
+    public static final String HTTP_ADD_ROUTER = "/v1/inner/router/add";
+    public static final String HTTP_SET_ROUTER = "/v1/inner/router/set";
+    public static final String HTTP_GET_ROUTER = "/v1/inner/router/get";
 
 
     public static final String CLUSTER_TOKEN_APPLY = "/org.fedai.osx.proxy/tokenApply";

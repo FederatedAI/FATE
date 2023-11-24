@@ -2,12 +2,14 @@ package org.fedai.osx.core.utils;
 
 
 import org.fedai.osx.core.config.MetaInfo;
+import org.fedai.osx.core.router.RouterInfo;
 import sun.misc.BASE64Decoder;
 import sun.security.x509.X509CertImpl;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
@@ -54,8 +56,7 @@ public class OSXCertUtils {
             KeyStore keyStore = KeyStore.getInstance(type);
             keyStore.load(is, toCharArray(I0, cs));
             String alias = keyStore.aliases().nextElement();
-            return new X509AndKey(((X509CertImpl) keyStore.getCertificate(alias)),
-                    ((PrivateKey) keyStore.getKey(alias, toCharArray(I1, cs))));
+            return new X509AndKey(((X509CertImpl) keyStore.getCertificate(alias)), ((PrivateKey) keyStore.getKey(alias, toCharArray(I1, cs))));
         }
     }
 
@@ -71,11 +72,45 @@ public class OSXCertUtils {
         return sslContext;
     }
 
+    public static SSLContext getSSLContext(RouterInfo routerInfo) throws Exception {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        if (routerInfo.isUseKeyStore()) {
+            KeyStore keyStore = loadKeyStore(routerInfo.getKeyStoreFilePath(), routerInfo.getKeyStorePassword());
+            KeyStore trustStore = loadKeyStore(routerInfo.getTrustStoreFilePath(), routerInfo.getTrustStorePassword());
+            // 创建 KeyManagerFactory 和 TrustManagerFactory
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, routerInfo.getKeyStorePassword().toCharArray());
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+
+            // 初始化 SSLContext
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+
+        } else {
+            KeyStore keyStore = getKeyStore(routerInfo.getCaFile(), routerInfo.getCertChainFile(), routerInfo.getPrivateKeyFile());
+            // Initialize the ssl context object
+            TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
+            // Load client certificate
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(keyStore, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+            sslContext.init(kmf.getKeyManagers(), tm, new SecureRandom());
+            return sslContext;
+        }
+        return sslContext;
+    }
+
+    private static KeyStore loadKeyStore(String keyStorePath, String keyStorePassword) throws Exception {
+        try (FileInputStream fis = new FileInputStream(keyStorePath)) {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(fis, keyStorePassword.toCharArray());
+            return keyStore;
+        }
+    }
+
     public static KeyStore getKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(null);
-        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray(),
-                new Certificate[]{importCert(clientCertPath), importCert(caPath)});
+        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
         return keyStore;
     }
 
@@ -105,7 +140,7 @@ public class OSXCertUtils {
 
     // Import private key
     public static PrivateKey importPrivateKey(String privateKeyFile) throws Exception {
-        try (FileInputStream keyStream = new FileInputStream(privateKeyFile)) {
+       /* try (FileInputStream keyStream = new FileInputStream(privateKeyFile)) {
             String space = "";
             byte[] bytes = new byte[keyStream.available()];
             int length = keyStream.read(bytes);
@@ -115,7 +150,26 @@ public class OSXCertUtils {
             }
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(new BASE64Decoder().decodeBuffer(keyString));
             return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+        }*/
+        String privateKey = readFileContent(privateKeyFile);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(new BASE64Decoder().decodeBuffer(privateKey));
+        return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+    }
+
+    private static String readFileContent(String filePath) throws Exception {
+        File file = new File(filePath);
+        StringBuffer key = new StringBuffer();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+            String tempString = null;
+
+            while ((tempString = reader.readLine()) != null) {
+                if (!tempString.startsWith("--")) {
+                    key.append(tempString);
+                }
+            }
         }
+        return key.toString();
     }
 
 
@@ -139,6 +193,5 @@ public class OSXCertUtils {
             this.x509Cert = x509Certificate;
             this.privateKey = privateKey;
         }
-
     }
 }

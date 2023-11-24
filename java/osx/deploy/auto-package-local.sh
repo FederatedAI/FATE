@@ -29,6 +29,6 @@ cp  bin/common.sh  deploy/osx/bin
 cd  deploy
 tar -czf osx.tar.gz  osx
 cd $pwd
-cp osx/lib/*   /data/projects/fate/osx-ptp/osx/lib
-cd /data/projects/fate/osx-ptp/osx
+cp osx/lib/*   /data/projects/fate/osx/osx/lib
+cd /data/projects/fate/osx/osx
 sh  service.sh  restart

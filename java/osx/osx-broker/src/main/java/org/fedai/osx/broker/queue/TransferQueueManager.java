@@ -14,41 +14,24 @@
  * limitations under the License.
  */
 package org.fedai.osx.broker.queue;
-
 import com.google.common.base.Preconditions;
 import com.google.common.cache.*;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.grpc.ManagedChannel;
-import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zookeeper.KeeperException;
 import org.fedai.osx.broker.callback.MsgEventCallback;
 import org.fedai.osx.broker.consumer.ConsumerManager;
 import org.fedai.osx.broker.consumer.EventDriverRule;
 import org.fedai.osx.broker.message.AllocateMappedFileService;
 import org.fedai.osx.broker.store.MessageStore;
-import org.fedai.osx.broker.zk.CuratorZookeeperClient;
-import org.fedai.osx.core.config.MasterInfo;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.*;
-import org.fedai.osx.core.context.Protocol;
-import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.fedai.osx.core.exceptions.SysException;
-import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.frame.ServiceThread;
-import org.fedai.osx.core.ptp.TargetMethod;
-import org.fedai.osx.core.router.RouterInfo;
-import org.fedai.osx.core.utils.JsonUtil;
 import org.fedai.osx.core.utils.NetUtils;
-import org.ppc.ptp.Osx;
-import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
-
 import static org.fedai.osx.core.config.MetaInfo.*;
 
 @Singleton
@@ -143,7 +125,6 @@ public class TransferQueueManager {
                 for (String tempTopic : topicList) {
                     String indexKey = assembleTopic(sessionId, tempTopic);
                     try {
-
                         if (this.getQueueByIndexKey(indexKey) != null)
                             destroy(indexKey);
                         result.add(indexKey);
@@ -203,9 +184,6 @@ public class TransferQueueManager {
             }
         });
     }
-
-
-
     public ReentrantLock getLock(String transferId) throws ExecutionException {
         return transferIdLockMap.get(transferId);
 
@@ -244,25 +222,17 @@ public class TransferQueueManager {
             }
         }
     }
-
-
-
-
-
     private void setMsgCallBack(AbstractQueue queue) {
         this.msgCallBackRuleMap.forEach((rule, msgCallbacks) -> {
-
             if (rule.isMatch(queue)) {
-                //      logger.info("rule {} is mactched",rule);
                 queue.registerMsgCallback(msgCallbacks);
             } else {
-                //        logger.info("rule {} is not matched",rule);
             }
         });
     }
 
     private AbstractQueue localCreate(String topic, String sessionId, QueueType queueType) {
-        logger.info("create local topic {} queue type {}", topic, queueType);
+        logger.info("create local topic {} session {} queue type {}", topic,sessionId, queueType);
         AbstractQueue queue = null;
         switch (queueType) {
             case NORMAL:
@@ -346,7 +316,6 @@ public class TransferQueueManager {
         } catch (Exception e) {
             logger.error("destory queue {} error", indexKey, e);
         }
-
     }
 
     public TransferQueueApplyInfo queryGlobleQueue(String transferId) {

@@ -30,7 +30,7 @@ public class InterServlet extends InnerServlet {
         OsxContext osxContext = ContextUtil.buildContextFromHttpRequest(req);
         try {
 
-            DebugUtil.printHttpParams(req);
+//             DebugUtil.printHttpParams(req);
             String protocol = req.getProtocol();
             if (!protocol.endsWith("1.1")) {
                 resp.sendError(405, "http.method_get_not_supported");
@@ -39,7 +39,7 @@ public class InterServlet extends InnerServlet {
             TechProvider techProvider = providerRegistry.select(osxContext);
             switch (requestUri) {
                 case HTTP_INVOKE:
-                    techProvider.processHttpInvoke(osxContext, req, resp,true);
+                    techProvider.processHttpInvoke(osxContext, req, resp);
                     break;
                 default:
                     resp.sendError(502, "invalid request " + requestUri);

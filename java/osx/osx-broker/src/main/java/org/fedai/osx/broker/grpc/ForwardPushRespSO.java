@@ -25,26 +25,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
-
     Logger logger = LoggerFactory.getLogger(ForwardPushRespSO.class);
     StreamObserver backPushRespSO;
-
     CompleteCallback completeCallback;
     ErrorCallback errorCallback;
     OsxContext context;
 
-
     public ForwardPushRespSO(OsxContext context, StreamObserver backPushRespSO, CompleteCallback completeCallback, ErrorCallback errorCallback) {
         this.backPushRespSO = backPushRespSO;
-
         this.context = context;
         this.completeCallback = completeCallback;
         this.errorCallback = errorCallback;
     }
 
-    public static void main(String[] args) {
-        System.err.println(Transfer.TransferBatch.class.getCanonicalName());
-    }
 
     public StreamObserver getBackPushRespSO() {
         return backPushRespSO;
@@ -66,7 +59,7 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
 
     @Override
     public void onError(Throwable t) {
-        logger.error("onError {}", t);
+        logger.error("stream stream {} to {} return error",context.getTopic(), context.getRouterInfo(), t);
         if (errorCallback != null) {
             errorCallback.callback(t);
         }

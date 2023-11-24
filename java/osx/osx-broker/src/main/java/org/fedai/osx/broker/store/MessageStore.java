@@ -37,7 +37,7 @@ public class MessageStore {
     long lastStatusChangeTimestamp;
     long lastWriteTimestamp;
     long lastReadTimestamp;
-    TransferQueueManager transferQueueManager;
+
     MappedFileQueue mappedFileQueue;
     ReentrantLock putMessageLock = new ReentrantLock();
     long beginTimeInLock;

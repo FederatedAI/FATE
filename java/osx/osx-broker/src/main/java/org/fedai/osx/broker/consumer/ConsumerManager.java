@@ -30,17 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
-public class ConsumerManager implements Lifecycle {
+public class ConsumerManager   {
     Logger logger = LoggerFactory.getLogger(ConsumerManager.class);
     @Inject
     TransferQueueManager transferQueueManager;
     @Inject
     ConsumerManager consumerManager;
-
     ConcurrentHashMap<String, UnaryConsumer> unaryConsumerMap = new ConcurrentHashMap<>();
-    //ConcurrentHashMap<String, EventDrivenConsumer> eventDrivenConsumerMap = new ConcurrentHashMap<>();
     AtomicLong consumerIdIndex = new AtomicLong(0);
-
     ServiceThread monitorThread = new ServiceThread() {
         @Override
         public String getServiceName() {
@@ -54,7 +51,7 @@ public class ConsumerManager implements Lifecycle {
                     report();
                 } catch (Exception igore) {
                 }
-                this.waitForRunning(60000);
+                this.waitForRunning(300000);
             }
         }
     };
@@ -75,14 +72,7 @@ public class ConsumerManager implements Lifecycle {
                     longPullingWaitingSize.set(0);
                     answerCount.set(0);
                     unaryConsumerMap.forEach((transferId, unaryConsumer) -> {
-
                         try {
-                            //TODO 当transferId 对应的grpc连接断开之后从unaryConsumerMap中移除该transferId
-//                            if(context.getGprcContext().isCancelled()){
-//                                unaryConsumerMap.remove(transferId);
-//                                return;
-//                            }
-
                             answerCount.addAndGet(unaryConsumer.answerLongPulling());
                             longPullingWaitingSize.addAndGet(unaryConsumer.getLongPullingQueueSize());
                         } catch (Exception igore) {
@@ -96,24 +86,15 @@ public class ConsumerManager implements Lifecycle {
                         interval = 1000;
                     }
                 } catch (Exception igore) {
-
                 }
-
                 this.waitForRunning(interval);
             }
-
         }
     };
-
     public ConsumerManager() {
         longPullingThread.start();
         monitorThread.start();
     }
-
-    public Map<String, UnaryConsumer> getUnaryConsumerMap() {
-        return Maps.newHashMap(this.unaryConsumerMap);
-    }
-
     public void report() {
         AtomicInteger longPullingSize = new AtomicInteger(0);
         longPullingSize.set(0);
@@ -121,31 +102,7 @@ public class ConsumerManager implements Lifecycle {
             longPullingSize.addAndGet(unaryConsumer.getLongPullingQueueSize());
         });
         logger.info("consumer monitor,long pulling waiting {} ,total num {}", longPullingSize.get(), unaryConsumerMap.size());
-
     }
-
-    public UnaryConsumer getUnaryConsumer(String transferId) {
-        return unaryConsumerMap.get(transferId);
-    }
-
-//    public EventDrivenConsumer  getEventDrivenConsumer(String topic){
-//
-//        return this.eventDrivenConsumerMap.get(topic);
-//
-//    }
-
-//    public EventDrivenConsumer  createEventDrivenConsumer(String topic, GrpcEventHandler  eventHandler){
-//        logger.info("create event driven consumer , {}",topic);
-//        if (eventDrivenConsumerMap.get(topic) == null) {
-//            EventDrivenConsumer  eventDrivenConsumer =
-//                    new EventDrivenConsumer(transferQueueManager,consumerIdIndex.get(), topic,eventHandler);
-//            eventDrivenConsumerMap.putIfAbsent(topic, eventDrivenConsumer);
-//            return eventDrivenConsumerMap.get(topic);
-//        } else {
-//            return eventDrivenConsumerMap.get(topic);
-//        }
-//    }
-
     public UnaryConsumer getOrCreateUnaryConsumer(String sessionId, String topic) {
         String indexKey = TransferQueueManager.assembleTopic(sessionId, topic);
         if (unaryConsumerMap.get(indexKey) == null) {
@@ -157,43 +114,11 @@ public class ConsumerManager implements Lifecycle {
             return unaryConsumerMap.get(indexKey);
         }
     }
-
     public void onComplete(String indexKey) {
-
         if (this.unaryConsumerMap.containsKey(indexKey)) {
             this.unaryConsumerMap.get(indexKey).destroy();
             this.unaryConsumerMap.remove(indexKey);
-        } else {
-            // logger.error("cannot found {} in consumer map ",indexKey);
         }
-//        if(this.eventDrivenConsumerMap.contains(indexKey)){
-//            this.eventDrivenConsumerMap.get(indexKey).destroy();
-//           // this.eventDrivenConsumerMap.remove(transferId);
-//        }
         logger.info("remove consumer index key {}", indexKey);
     }
-
-
-    @Override
-    public void init() {
-
-
-    }
-
-    @Override
-    public void start() {
-
-    }
-
-    @Override
-    public void destroy() {
-
-    }
-
-    public static class ReportData {
-
-
-    }
-
-
 }

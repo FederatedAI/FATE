@@ -20,15 +20,10 @@
 		"10000":{
 			"default":[
 				{
-					"trustStorePassword":"123456",
 					"protocol":"grpc",
-					"keyStorePassword":"123456",
-					"port":9884,
-					"keyStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
-					"ip":"127.0.0.1",
-					"trustStoreFilePath":"D:\\webank\\osx\\test\\server.keystore",
-					"url":"https://127.0.0.1:8088/osx/inbound",
-					"useSSL":true
+					"ip":"localhost",
+					"port":9366,
+					"url":"http://127.0.0.1:8122/v1/interconn/chan/invoke"
 				}
 			]
 		},
@@ -37,7 +32,6 @@
 				{
 					"protocol":"grpc",
 					"port":7304,
-					"url":"http://127.0.0.1:7304/v1/interconn/chan/invoke",
 					"ip":"127.0.0.1"
 				}
 			]
@@ -54,6 +48,6 @@
 		}
 	},
 	"self_party":[
-		"10000"
+		"9999"
 	]
 }

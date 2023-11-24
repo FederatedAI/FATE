@@ -24,7 +24,7 @@ public class HttpTest {
     //    String ip = "localhost";
 //    //int port = 8250;//nginx
 //    int port = 9889;//nginx
-    String url = "http://localhost:7304";
+    String url = "http://localhost:8807";
     String desPartyId = "9999";
     String desRole = "";
     String srcPartyId = "9999";

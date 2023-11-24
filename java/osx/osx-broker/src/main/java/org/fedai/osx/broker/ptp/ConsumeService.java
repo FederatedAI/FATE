@@ -144,7 +144,7 @@ public class ConsumeService extends AbstractServiceAdaptorNew<ConsumeRequest, Co
     }
 
     private Osx.TransportOutbound redirect(OsxContext context, RouterInfo routerInfo, Osx.PopInbound inbound) {
-        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo, true);
+        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         context.setActionType(ActionType.REDIRECT_CONSUME.name());
         PrivateTransferTransportGrpc.PrivateTransferTransportBlockingStub stub = PrivateTransferTransportGrpc.newBlockingStub(managedChannel);
         return stub.pop(inbound);

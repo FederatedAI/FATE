@@ -24,6 +24,8 @@ import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.ManagedChannel;
 import org.apache.commons.lang3.StringUtils;
+import org.fedai.osx.broker.pojo.HttpInvoke;
+import org.fedai.osx.broker.pojo.HttpInvokeResult;
 import org.fedai.osx.broker.router.DefaultFateRouterServiceImpl;
 import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.util.TransferUtil;
@@ -35,6 +37,7 @@ import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.exceptions.NoRouterInfoException;
+import org.fedai.osx.core.exceptions.ParameterException;
 import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.router.RouterInfo;
@@ -47,13 +50,11 @@ import org.slf4j.LoggerFactory;
  * 用于兼容旧版FATE
  */
 @Singleton
+@Register(uris = {UriConstants.UNARYCALL},allowInterUse=true)
 public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Proxy.Packet> {
-
     Logger logger = LoggerFactory.getLogger(UnaryCallService.class);
-
     @Inject
     RouterServiceRegister routerServiceRegister;
-
 
     public UnaryCallService() {
     }
@@ -93,18 +94,6 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
         return routerInfo;
     }
 
-
-//    @Override
-//    protected Proxy.Packet doService(OsxContext context, InboundPackage data) {
-//        context.setActionType(ActionType.UNARY_CALL.getAlias());
-//        Proxy.Packet req = (Proxy.Packet) data.getBody();
-//        RouterInfo routerInfo = routerService.route(req);
-//        context.setRouterInfo(routerInfo);
-//        Proxy.Packet resp = unaryCall(context, req);
-//        return resp;
-//    }
-
-
     protected Proxy.Packet transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
 
         throw new RemoteRpcException(exceptionInfo.toString());
@@ -130,27 +119,28 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
         }
         if (routerInfo.getProtocol().equals(Protocol.http)) {
             Osx.Inbound inbound = TransferUtil.
-                    buildInboundFromPushingPacket(context, req, MetaInfo.PROPERTY_FATE_TECH_PROVIDER).build();
-            Osx.Outbound outbound = (Osx.Outbound) TransferUtil.redirect(context, inbound, routerInfo, true);
-            if (outbound != null) {
-                if (outbound.getCode().equals(StatusCode.SUCCESS)) {
+                    buildInboundFromPushingPacket(context, req).build();
+            Osx.Outbound  transferResult =( Osx.Outbound) TransferUtil.redirect(context, inbound, routerInfo, true);
+            if (transferResult != null) {
+                if (transferResult.getPayload()!=null) {
                     try {
-                        result = Proxy.Packet.parseFrom(outbound.getPayload().toByteArray());
+                        result = Proxy.Packet.parseFrom(transferResult.getPayload());
                     } catch (InvalidProtocolBufferException e) {
                         e.printStackTrace();
                     }
                 } else {
-                    throw new RemoteRpcException(outbound.getMessage());
+                    throw new RemoteRpcException("");
                 }
             }
         } else {
             ManagedChannel managedChannel = null;
             try {
-                managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), false);
+                managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo());
                 DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
                 result = stub.unaryCall(req);
             } catch (Exception e) {
                 logger.error("new channel call exception", e);
+                throw new RemoteRpcException("uncary call rpc error : "+e.getMessage());
             } finally {
                 if (managedChannel != null) {
                     managedChannel.shutdown();
@@ -163,11 +153,19 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
 
     @Override
     public Proxy.Packet decode(Object object) {
-        return null;
+        if(object instanceof HttpInvoke){
+            HttpInvoke httpInvoke = (HttpInvoke)object;
+            try {
+             return    Proxy.Packet.parseFrom(httpInvoke.getPayload());
+            } catch (InvalidProtocolBufferException e) {
+                e.printStackTrace();
+            }
+        }
+        throw  new ParameterException("invalid request data  ");
     }
 
     @Override
     public Osx.Outbound toOutbound(Proxy.Packet response) {
-        return null;
+        return Osx.Outbound.newBuilder().setPayload(response.toByteString()).build();
     }
 }

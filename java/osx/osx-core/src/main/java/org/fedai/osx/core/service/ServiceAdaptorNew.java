@@ -12,8 +12,8 @@ public interface ServiceAdaptorNew<req, rsp> {
 
     public rsp serviceFail(OsxContext context, req data, List<Throwable> e);
 
-    public req decode(Object object);
+    default public req decode(Object object){return null;};
 
-    public Osx.Outbound toOutbound(rsp response);
+    default  public Osx.Outbound toOutbound(rsp response){return null;};
 
 }
