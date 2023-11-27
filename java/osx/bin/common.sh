@@ -186,7 +186,7 @@ stop() {
         echo "please retry"
       fi
     else
-      echo "kill error"
+      echo "kill error "
     fi
   else
     echo "service not running "
