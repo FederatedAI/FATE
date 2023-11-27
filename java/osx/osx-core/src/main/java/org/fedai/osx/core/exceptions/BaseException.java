@@ -15,6 +15,7 @@
  */
 
 package org.fedai.osx.core.exceptions;
+
 public class BaseException extends RuntimeException {
 
     protected String retcode;
@@ -27,7 +28,8 @@ public class BaseException extends RuntimeException {
     public BaseException() {
 
     }
-    public BaseException(Exception e){
+
+    public BaseException(Exception e) {
         super(e);
     }
 

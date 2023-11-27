@@ -20,6 +20,8 @@ import com.webank.eggroll.core.command.Command;
 import com.webank.eggroll.core.command.CommandServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import org.fedai.osx.core.frame.GrpcConnectionFactory;
+import org.fedai.osx.core.router.RouterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,20 +42,25 @@ public class CommandClient {
 
     private synchronized ManagedChannel buildManagedChannel(String ip, int port) {
         if (managedChannel == null) {
-        NettyChannelBuilder channelBuilder = NettyChannelBuilder
-                .forAddress(ip, port)
+//            NettyChannelBuilder channelBuilder = NettyChannelBuilder
+//                    .forAddress(ip, port)
 //                .keepAliveTime(60, TimeUnit.MINUTES)
 //                .keepAliveTimeout(60, TimeUnit.MINUTES)
 //                .keepAliveWithoutCalls(true)
-                .idleTimeout(120, TimeUnit.SECONDS)
-                .perRpcBufferLimit(128 << 20)
-                .flowControlWindow(32 << 20)
-                .maxInboundMessageSize(32 << 20)
-                .enableRetry()
-                .retryBufferSize(16 << 20)
-                .maxRetryAttempts(20);
-        channelBuilder.usePlaintext();
-            managedChannel = channelBuilder.build();
+////                    .idleTimeout(120, TimeUnit.SECONDS)
+//                    .perRpcBufferLimit(128 << 20)
+//                    .flowControlWindow(32 << 20)
+//                    .maxInboundMessageSize(32 << 20)
+//                    .enableRetry()
+//                    .retryBufferSize(16 << 20)
+//                    .maxRetryAttempts(20);
+//            channelBuilder.usePlaintext();
+//            managedChannel = channelBuilder.build();
+            RouterInfo   routerInfo = new RouterInfo();
+            routerInfo.setHost(ip);
+            routerInfo.setPort(port);
+
+            managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         }
         return managedChannel;
     }

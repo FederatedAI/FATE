@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fedai.osx.core.datasource;
+
 import org.fedai.osx.core.flow.Property;
 
 public interface ReadableDataSource<S, T> {

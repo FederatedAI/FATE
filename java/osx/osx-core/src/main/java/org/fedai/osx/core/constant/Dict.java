@@ -24,11 +24,11 @@ public class Dict {
     public static final String NONE = "NONE";
     public static final String GET_REMOTE_PARTY_RESULT = "getRemotePartyResult";
     public static final String PORT = "port";
-    public static final String HTTP_PORT ="http.port";
+    public static final String HTTP_PORT = "http.port";
 
     public static final String INSTANCE_ID = "instanceId";
     public static final String POSITIVE_INTEGER_PATTERN = "^[1-9]\\d*$";
-    public static final String BOOLEAN_PATTERN="^(true)|(false)$";
+    public static final String BOOLEAN_PATTERN = "^(true)|(false)$";
     public static final String REQUEST_SEQNO = "REQUEST_SEQNO";
     public static final String VERSION = "version";
     public static final String GRPC_TYPE = "grpcType";
@@ -38,7 +38,7 @@ public class Dict {
     public static final String SOURCE_PARTY_ID = "sourcePartyId";
     public static final String DES_PARTY_ID = "desPartyId";
     public static final String SOURCE_COMPONENT = "sourceComponent";
-    public static final String DES_COMPONENT =  "desComponent";
+    public static final String DES_COMPONENT = "desComponent";
 
     public static final String DOWN_STREAM_COST = "downstreamCost";
     public static final String DOWN_STREAM_BEGIN = "downstreamBegin";
@@ -47,8 +47,6 @@ public class Dict {
     //HttpServletResponse
     public static final String HTTP_SERVLET_RESPONSE = "httpServletResponse";
     public static final String HTTP_ASYNC_CONTEXT = "AsyncContext";
-
-
 
 
 //    public static final String PROPERTY_BIND_HOST_KEY = "bind.host";
@@ -68,10 +66,6 @@ public class Dict {
     public static final String CURRENT_VERSION = "currentVersion";
 
     public static final String PROPERTY_COORDINATOR = "coordinator";
-
-
-
-
 
 
     public static final String ACTION_TYPE_ASYNC_EXECUTE = "ASYNC_EXECUTE";
@@ -222,7 +216,7 @@ public class Dict {
     public final static String META = "meta";
     public final static String SEND_START = "send_start";
 
-//        public final static String HOST = "host";
+    //        public final static String HOST = "host";
 //        public final static String PORT = "port";
     public final static String SEND_END = "send_end";
     public final static String DEFAULT = "default";
@@ -271,25 +265,24 @@ public class Dict {
     public final static String SERDES = "serdes";
     public final static String TRANSFER_BROKER_NAME = "transfer_broker_name";
     public final static String TRANSFER_QUEUE = "transfer_queue";
-    public final static String IS_CYCLE="cycle";
-//    public final static String EGGROLL_SEND_TOPIC_PREFIX="EGGROLL_SEND_";
+    public final static String IS_CYCLE = "cycle";
+    //    public final static String EGGROLL_SEND_TOPIC_PREFIX="EGGROLL_SEND_";
 //    public final static String EGGROLL_BACK_TOPIC_PREFIX="EGGROLL_BACK_";
     public final static String STREAM_SEND_TOPIC_PREFIX = "STREAM_SEND_";
     public final static String STREAM_BACK_TOPIC_PREFIX = "STREAM_BACK_";
     public final static String BLOCKING_STUB = "BLOCKING_STUB";
     public final static String PROTOCOL = "protocol";
-    public final static String URL="url";
+    public final static String URL = "url";
 
-    public final static String USE_SSL="useSSL";
-    public final static String CA_FILE="caFile";
-    public final static String CERT_CHAIN_FILE="certChainFile";
-    public final static String PRIVATE_KEY_FILE="privateKeyFile";
+    public final static String USE_SSL = "useSSL";
+    public final static String CA_FILE = "caFile";
+    public final static String CERT_CHAIN_FILE = "certChainFile";
+    public final static String PRIVATE_KEY_FILE = "privateKeyFile";
 
-    public final static String KEYSTORE_FILE="keyStoreFile";
-    public final static String TRUSTSTORE_FILE="trustStoreFile";
-    public final static String KEYSTORE_PASSWORD="keyStorePassword";
-    public final static String TRUSTSTORE_PASSWORD="trustStorePassword";
-
+    public final static String KEYSTORE_FILE = "keyStoreFile";
+    public final static String TRUSTSTORE_FILE = "trustStoreFile";
+    public final static String KEYSTORE_PASSWORD = "keyStorePassword";
+    public final static String TRUSTSTORE_PASSWORD = "trustStorePassword";
 
 
 }

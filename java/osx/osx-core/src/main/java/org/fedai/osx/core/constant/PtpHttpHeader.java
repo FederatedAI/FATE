@@ -15,8 +15,6 @@
  */
 package org.fedai.osx.core.constant;
 
-import io.grpc.Context;
-
 public class PtpHttpHeader {
 
 //    Version = 0;           // 协议版本               对应7层协议头x-ptp-version
@@ -52,38 +50,35 @@ public class PtpHttpHeader {
 //    public static  Context.Key<String>  CONTEXTKEY_TOPIC_KEY =Context.key("x-ptp-topic");
 
 
-
-    static public  final String   Version="x-ptp-version";
-    static public  final String   TechProviderCode  = "x-ptp-tech-provider-code";
-    static public  final String   TraceID = "x-ptp-trace-id";
-    static public  final String   Token = "x-ptp-token";
-    static public  final String   Uri= "x-ptp-uri";
-    static public  final String   FromNodeID = "x-ptp-source-node-id";
-    static public  final String   FromInstID = "x-ptp-source-inst-id";
-    static public  final String   TargetNodeID = "x-ptp-target-node-id";
-    static public  final String   TargetInstID = "x-ptp-target-inst-id";
-    static public  final String   SessionID = "x-ptp-session-id";
-    static public  final String   MessageTopic = "x-ptp-topic";
-
+    static public final String Version = "x-ptp-version";
+    static public final String TechProviderCode = "x-ptp-tech-provider-code";
+    static public final String TraceID = "x-ptp-trace-id";
+    static public final String Token = "x-ptp-token";
+    static public final String Uri = "x-ptp-uri";
+    static public final String FromNodeID = "x-ptp-source-node-id";
+    static public final String FromInstID = "x-ptp-source-inst-id";
+    static public final String TargetNodeID = "x-ptp-target-node-id";
+    static public final String TargetInstID = "x-ptp-target-inst-id";
+    static public final String SessionID = "x-ptp-session-id";
+    static public final String MessageTopic = "x-ptp-topic";
 
 
-    static public  final String   MessageCode = "x-ptp-message-code";
-    static public  final String   SourceComponentName = "x-ptp-source-component-name";
-    static public  final String   TargetComponentName = "x-ptp-target-component-name";
+    static public final String MessageCode = "x-ptp-message-code";
+    static public final String SourceComponentName = "x-ptp-source-component-name";
+    static public final String TargetComponentName = "x-ptp-target-component-name";
 
 //    static public final String   TargetMethod = "x-ptp-target-method";
 //    static public final String   SourceMethod = "x-ptp-source-method";
 
-    static public final String   MessageOffSet = "x-ptp-message-offset";
-    static public final String   InstanceId = "x-ptp-instance-id";
-    static public final String   Timestamp = "x-ptp-timestamp";
+    static public final String MessageOffSet = "x-ptp-message-offset";
+    static public final String InstanceId = "x-ptp-instance-id";
+    static public final String Timestamp = "x-ptp-timestamp";
 
-    static public final String  MessageFlag = "fate-message-flag";
-    static public final String   ReturnCode = "x-ptp-code";
-    static public final String   ReturnMessage = "x-ptp-message";
+    static public final String MessageFlag = "fate-message-flag";
+    static public final String ReturnCode = "x-ptp-code";
+    static public final String ReturnMessage = "x-ptp-message";
     static public final String JobId = "x-ptp-job-id";
     static public final String QueueType = "fate-queue-type";
-
 
 
 }

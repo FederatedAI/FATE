@@ -15,13 +15,7 @@
  */
 package org.fedai.osx.broker.queue;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.callback.CompleteCallback;
-import org.fedai.osx.broker.callback.DestoryCallback;
-import org.fedai.osx.broker.callback.ErrorCallback;
 import org.fedai.osx.broker.callback.MsgEventCallback;
 import org.fedai.osx.broker.constants.MessageFlag;
 import org.fedai.osx.broker.consumer.ConsumerManager;
@@ -38,25 +32,20 @@ import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.PutMessageException;
 import org.fedai.osx.core.exceptions.TransferQueueInvalidStatusException;
 import org.fedai.osx.core.queue.TranferQueueInfo;
-import org.fedai.osx.core.service.OutboundPackage;
-import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+
 @Data
-public class TransferQueue extends AbstractQueue{
+public class TransferQueue extends AbstractQueue {
     Logger logger = LoggerFactory.getLogger(TransferQueue.class);
     AtomicReferenceArray<String> receivedMsgIds = new AtomicReferenceArray<>(MetaInfo.PROPERTY_TRANSFER_CACHED_MSGID_SIZE);
-//    private Cache<String, OutboundPackage<Osx.Outbound>> receivedMsgCache;
+    //    private Cache<String, OutboundPackage<Osx.Outbound>> receivedMsgCache;
     IndexQueue indexQueue;
     boolean hasEventMsgDestoryCallback = false;
 
-    public TransferQueue(String transferId, TransferQueueManager transferQueueManager, ConsumerManager consumerManager,String path) {
+    public TransferQueue(String transferId, TransferQueueManager transferQueueManager, ConsumerManager consumerManager, String path) {
         this.transferId = transferId;
         this.transferQueueManager = transferQueueManager;
         this.createTimestamp = System.currentTimeMillis();
@@ -77,7 +66,7 @@ public class TransferQueue extends AbstractQueue{
         return false;
     }
 
-    private synchronized PutMessageResult putMessage(final MessageExtBrokerInner msg)  {
+    private synchronized PutMessageResult putMessage(final MessageExtBrokerInner msg) {
 
         if (transferStatus == TransferStatus.TRANSFERING) {
             String msgId = msg.getMsgId();
@@ -94,40 +83,42 @@ public class TransferQueue extends AbstractQueue{
                 if (this.msgCallbacks.size() > 0) {
                     try {
                         for (MsgEventCallback msgCallback : this.msgCallbacks) {
-                            msgCallback.callback(consumerManager,this, msg);
+                            msgCallback.callback(consumerManager, this, msg);
                         }
-                    }catch(Exception  e){
+                    } catch (Exception e) {
                         e.printStackTrace();
-                        logger.error("topic {} callback error",msg.getTopic(),e);
+                        logger.error("topic {} callback error", msg.getTopic(), e);
                         throw new PutMessageException("topic " + msg.getTopic() + " callback error");
                     }
                 }
             } else {
-                logger.info("topic {} put msg error {}",transferId,putMessageResult.getPutMessageStatus());
+                logger.info("topic {} put msg error {}", transferId, putMessageResult.getPutMessageStatus());
                 throw new PutMessageException("topic " + msg.getTopic() + " put message error");
             }
             return putMessageResult;
         } else {
-            logger.error("topic {} is not ready",transferId);
+            logger.error("topic {} is not ready", transferId);
             throw new TransferQueueInvalidStatusException("invalid queue status : " + transferStatus);
         }
     }
+
     @Override
-    public synchronized void putMessage(OsxContext context, Object data , MessageFlag  messageFlag,String msgCode)  {
+    public synchronized void putMessage(OsxContext context, Object data, MessageFlag messageFlag, String msgCode) {
         context.putData(Dict.MESSAGE_FLAG, messageFlag.name());
-        MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(context.getTopic(), (byte[])data, msgCode, messageFlag,
+        MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(context.getTopic(), (byte[]) data, msgCode, messageFlag,
                 context.getSrcNodeId(),
                 context.getDesNodeId());
         messageExtBrokerInner.getProperties().put(Dict.SESSION_ID, sessionId);
         messageExtBrokerInner.getProperties().put(Dict.SOURCE_COMPONENT, context.getSrcComponent() != null ? context.getSrcComponent() : "");
         messageExtBrokerInner.getProperties().put(Dict.DES_COMPONENT, context.getDesComponent() != null ? context.getDesComponent() : "");
-        PutMessageResult putMessageResult= this.putMessage(messageExtBrokerInner);
+        PutMessageResult putMessageResult = this.putMessage(messageExtBrokerInner);
         if (putMessageResult.getPutMessageStatus() != PutMessageStatus.PUT_OK) {
             throw new PutMessageException("put status " + putMessageResult.getPutMessageStatus());
         }
         long logicOffset = putMessageResult.getMsgLogicOffset();
         context.putData(Dict.CURRENT_INDEX, this.getIndexQueue().getLogicOffset().get());
     }
+
     @Override
     public TransferQueueConsumeResult consumeOneMessage(OsxContext context, long requestIndex) {
         TransferQueueConsumeResult transferQueueConsumeResult;
@@ -173,7 +164,6 @@ public class TransferQueue extends AbstractQueue{
     }
 
 
-
 //    public void cacheReceivedMsg(String msgId, OutboundPackage<Osx.Outbound> outboundPackage) {
 //
 //        if(StringUtils.isNotEmpty(msgId))
@@ -205,8 +195,6 @@ public class TransferQueue extends AbstractQueue{
         transferQueueInfo.setLogicOffset(indexQueue.getLogicOffset().get());
         return transferQueueInfo;
     }
-
-
 
 
 }

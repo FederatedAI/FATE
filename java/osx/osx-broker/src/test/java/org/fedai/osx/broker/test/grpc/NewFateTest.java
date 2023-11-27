@@ -26,18 +26,8 @@ public class NewFateTest {
     String srcRole = "";
     String transferId = "testTransferId";
     String sessionId = "testSessionId";
-    PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub  blockingStub;
+    PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub;
     PrivateTransferProtocolGrpc.PrivateTransferProtocolStub stub;
-    @Before
-    public void init() {
-       ManagedChannel managedChannel = createManagedChannel(ip, port);
-        //  stub =      PrivateTransferProtocolGrpc.newBlockingStub();
-       // ManagedChannel managedChannel2 = createManagedChannel(ip, port);
-        blockingStub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-        stub = PrivateTransferProtocolGrpc.newStub(managedChannel);
-
-
-    }
 
     public static ManagedChannel createManagedChannel(String ip, int port) {
         try {
@@ -53,7 +43,7 @@ public class NewFateTest {
                     .enableRetry()
                     .retryBufferSize(16 << 20)
                     .maxRetryAttempts(20);
-                channelBuilder.usePlaintext();
+            channelBuilder.usePlaintext();
 
             return channelBuilder.build();
         } catch (Exception e) {
@@ -64,8 +54,34 @@ public class NewFateTest {
         return null;
     }
 
+    public static void main(String[] args) {
+        System.err.println("===============");
+        NewFateTest newFateTest = new NewFateTest();
+        newFateTest.init();
+        newFateTest.testStream();
+
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Before
+    public void init() {
+        ManagedChannel managedChannel = createManagedChannel(ip, port);
+        //  stub =      PrivateTransferProtocolGrpc.newBlockingStub();
+        // ManagedChannel managedChannel2 = createManagedChannel(ip, port);
+        blockingStub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+        stub = PrivateTransferProtocolGrpc.newStub(managedChannel);
+
+
+    }
+
     @Test
-    public void testUnaryCall(byte[] data){
+    public void testUnaryCall(byte[] data) {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
         inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FATE");//
@@ -81,28 +97,29 @@ public class NewFateTest {
         inboundBuilder.putMetadata(Osx.Header.TraceID.name(), "28938999993");
         inboundBuilder.setPayload(ByteString.copyFrom(data));
         Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
-        System.err.println("response : "+outbound);
+        System.err.println("response : " + outbound);
     }
 
-
     @Test
-    public void testStream(){
+    public void testStream() {
 
-        io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.Inbound>  reqSb = stub.transport(new StreamObserver<Osx.Outbound>() {
+        io.grpc.stub.StreamObserver<org.ppc.ptp.Osx.Inbound> reqSb = stub.transport(new StreamObserver<Osx.Outbound>() {
             @Override
             public void onNext(Osx.Outbound outbound) {
                 System.err.println(outbound);
             }
+
             @Override
             public void onError(Throwable throwable) {
                 throwable.printStackTrace();
             }
+
             @Override
             public void onCompleted() {
                 System.err.println("completed");
             }
         });
-        for(int i=0;i<3;i++){
+        for (int i = 0; i < 3; i++) {
             Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
             inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
@@ -117,27 +134,11 @@ public class NewFateTest {
             inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
             // inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
 
-            inboundBuilder.setPayload(ByteString.copyFrom(("test "+i).getBytes(StandardCharsets.UTF_8)));
+            inboundBuilder.setPayload(ByteString.copyFrom(("test " + i).getBytes(StandardCharsets.UTF_8)));
             reqSb.onNext(inboundBuilder.build());
         }
 
         System.err.println("==========================");
-
-    }
-
-
-    public static void main(String[] args) {
-        System.err.println("===============");
-        NewFateTest  newFateTest = new  NewFateTest();
-        newFateTest.init();
-        newFateTest.testStream();
-
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
     }
 

@@ -17,7 +17,7 @@ package org.fedai.osx.broker.constants;
 
 public enum MessageFlag {
 
-    SENDMSG(0), ERROR(1), COMPELETED(2),BACKMSG(3);
+    SENDMSG(0), ERROR(1), COMPELETED(2), BACKMSG(3);
 
     private int flag;
 

@@ -47,6 +47,7 @@ public class FlowCounterManager {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     Map<String, Double> sourceQpsAllowMap = new HashMap<>();
     private ConcurrentHashMap<String, FlowCounter> passMap = new ConcurrentHashMap<>();
+
     public FlowCounterManager() {
         this("default");
     }

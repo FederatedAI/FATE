@@ -36,6 +36,7 @@ public class DefaultAppendMessageHandler implements AppendMessageHandler {
         this.msgStoreItemMemory = ByteBuffer.allocate(size + END_FILE_MIN_BLANK_LENGTH);
         this.maxMessageSize = size;
     }
+
     protected static int calMsgLength(int sysFlag, int srcPartyIdLength, int desPartyIdLength, int bodyLength, int topicLength, int propertiesLength) {
         final int msgLen = 4 //TOTALSIZE
                 + 4 //FLAG
@@ -62,9 +63,9 @@ public class DefaultAppendMessageHandler implements AppendMessageHandler {
         String msgId = Long.toString(wroteOffset);
         Long queueOffset = new Long(0);
         final byte[] propertiesData =
-                msgInner.getProperties()==null  ? null : MessageDecoder.messageProperties2String (msgInner.getProperties()).getBytes(StandardCharsets.UTF_8);
+                msgInner.getProperties() == null ? null : MessageDecoder.messageProperties2String(msgInner.getProperties()).getBytes(StandardCharsets.UTF_8);
 
-        final int propertiesLength = propertiesData==null? 0 : propertiesData.length;
+        final int propertiesLength = propertiesData == null ? 0 : propertiesData.length;
         if (propertiesLength > Short.MAX_VALUE) {
             log.warn("putMessage message properties length too long. length={}", propertiesData.length);
             return new AppendMessageResult(AppendMessageStatus.PROPERTIES_SIZE_EXCEEDED);
@@ -79,7 +80,7 @@ public class DefaultAppendMessageHandler implements AppendMessageHandler {
         final int msgLen = calMsgLength(msgInner.getSysFlag(), srcPartyIdLength, desPartyIdLength, bodyLength, topicLength, propertiesLength);
         // Exceeds the maximum message
         if (msgLen > this.maxMessageSize) {
-            log.error("msg length {} bigger than {}",msgLen,this.maxMessageSize);
+            log.error("msg length {} bigger than {}", msgLen, this.maxMessageSize);
             return new AppendMessageResult(AppendMessageStatus.MESSAGE_SIZE_EXCEEDED);
         }
         // Determines whether there is sufficient free space

@@ -17,8 +17,6 @@
 package org.fedai.osx.core.service;
 
 
-
-
 public interface InterceptorChain<req, resp> extends Interceptor<req, resp> {
 
     public void addInterceptor(Interceptor<req, resp> interceptor);

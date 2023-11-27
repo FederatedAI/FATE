@@ -30,6 +30,7 @@ import org.fedai.osx.core.utils.NetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -38,18 +39,12 @@ import java.util.regex.Pattern;
 public class MetaInfo {
 
     static Logger logger = LoggerFactory.getLogger(MetaInfo.class);
-
     @Config(confKey = "user.home")
     public static String PROPERTY_USER_HOME = System.getProperty("user.home");
-    @Config(confKey = "user.dir")
-    public static String PROPERTY_USER_DIR = System.getProperty("user.dir");
-
-    public static String CURRENT_VERSION = "100";
     @Config(confKey = "fate.tech.provider")
     public static String PROPERTY_FATE_TECH_PROVIDER = "FATE";
     @Config(confKey = "default.client.version")
     public static String PROPERTY_DEFAULT_CLIENT_VERSION = "2.X.X";
-    public static volatile MasterInfo masterInfo;
     @Config(confKey = "grpc.server.max.concurrent.call.per.connection", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION = 1000;
     @Config(confKey = "grpc.server.max.inbound.metadata.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -94,16 +89,16 @@ public class MetaInfo {
     public static Integer PROPERTY_TRANSFER_CACHED_MSGID_SIZE = 10;
     @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
+    @Config(confKey = "grpc.ssl.open.client.validate", pattern = Dict.BOOLEAN_PATTERN)
+    public  static Boolean  PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE=  false;
     @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE = 65536;
-
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_MAPPED_FILE_EXPIRE_TIME = 3600 * 1000 * 36;
     @Config(confKey = "mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer MAP_FILE_SIZE = 1 << 27;
     @Config(confKey = "mapped.file.dir")
-    public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped/.fate/transfer_file";
-
+    public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped"+ File.separator+".fate"+ File.separator+"transfer_file";
     @Config(confKey = "index.mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_INDEX_MAP_FILE_SIZE = 1 << 21;
     @Config(confKey = "server.cert.chain.file")
@@ -112,19 +107,16 @@ public class MetaInfo {
     public static String PROPERTY_SERVER_PRIVATE_KEY_FILE;
     @Config(confKey = "server.ca.file")
     public static String PROPERTY_SERVER_CA_FILE;
-
     @Config(confKey = "server.ssl.store.flag")
     public static Boolean PROPERTY_USE_STORE = true;
     @Config(confKey = "server.keystore.file")
     public static String PROPERTY_SERVER_KEYSTORE_FILE;
     @Config(confKey = "server.keystore.file.password")
     public static String PROPERTY_SERVER_KEYSTORE_FILE_PASSWORD;
-
     @Config(confKey = "server.trust.keystore.file")
     public static String PROPERTY_SERVER_TRUST_KEYSTORE_FILE;
     @Config(confKey = "server.trust.keystore.file.password")
     public static String PROPERTY_SERVER_TRUST_FILE_PASSWORD;
-
     @Config(confKey = "custom.local.host")
     public static String PROPERTY_CUSTOMER_LOCAL_HOST;
     @Config(confKey = "bind.host")
@@ -136,13 +128,17 @@ public class MetaInfo {
     @Config(confKey = "grpc.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_PORT = 9370;
     @Config(confKey = "grpc.tls.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_GRPC_TLS_PORT;
+    public static Integer PROPERTY_GRPC_TLS_PORT = 9371;
+    @Config(confKey = "grpc.tls.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_GRPC_TLS_SESSION_TIMEOUT = 3600 << 4;
+    @Config(confKey = "grpc.tls.session.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
+    public static Integer PROPERTY_GRPC_TLS_SESSION_SIZE = 65536;
     @Config(confKey = "use.remote.health.check", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_USE_REMOTE_HEALTH_CHECK = true;
     @Config(confKey = "http.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_PORT;
+    public static Integer PROPERTY_HTTP_PORT=8807;
     @Config(confKey = "https.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTPS_PORT;
+    public static Integer PROPERTY_HTTPS_PORT=8809;
     @Config(confKey = "open.http.server", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_OPEN_HTTP_SERVER = false;
     @Config(confKey = "open.https.server", pattern = Dict.BOOLEAN_PATTERN)
@@ -155,51 +151,38 @@ public class MetaInfo {
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_TYPE = "PKCS12";
     @Config(confKey = "http.ssl.trust.store.provider")
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_PROVIDER = "SUN";
+    @Config(confKey = "http.ssl.key.store.path")
+    public static String PROPERTY_HTTP_SSL_KEY_STORE_PATH = "";
     @Config(confKey = "http.ssl.key.store.alias")
     public static String PROPERTY_HTTP_SSL_KEY_STORE_ALIAS = "";
     @Config(confKey = "http.ssl.key.store.password")
     public static String PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD = "";
-    @Config(confKey = "http.ssl.trust.store.password")
-    public static String PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD = "";
     @Config(confKey = "http.ssl.trust.store.path")
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_PATH = "";
+    @Config(confKey = "http.ssl.trust.store.password")
+    public static String PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD = "";
     @Config(confKey = "http.ssl.hostname.verify")
     public static Boolean PROPERTY_HTTP_SSL_HOSTNAME_VERIFY = false;
-
     @Config(confKey = "http.context.path")
     public static String PROPERTY_HTTP_CONTEXT_PATH = "/v1";
     @Config(confKey = "http.servlet.path")
     public static String PROPERTY_HTTP_SERVLET_PATH = "/*";
-
     @Config(confKey = "http.receive.queue.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_RECEIVE_QUEUE_SIZE = 36;
     @Config(confKey = "http.accept.receive.buffer.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_ACCEPT_RECEIVE_BUFFER_SIZE = 4096;
-
-    @Config(confKey = "stream.limit.max.try.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 3;
-
-    @Config(confKey= "consume.msg.waiting.timeout")
-    public static Integer CONSUME_MSG_WAITING_TIMEOUT=60*60*1000;
-
+    @Config(confKey = "consume.msg.waiting.timeout")
+    public static Integer CONSUME_MSG_WAITING_TIMEOUT = 60 * 60 * 1000;
     @Config(confKey = "flow.control.sample.count", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_FLOW_CONTROL_SAMPLE_COUNT = 10;
     @Config(confKey = "flow.control.sample.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_FLOW_CONTROL_SAMPLE_INTERVAL = 1000;
-    @Config(confKey = "stream.limit.mode")
-    public static String PROPERTY_STREAM_LIMIT_MODE = StreamLimitMode.NOLIMIT.name();
-    @Config(confKey = "deploy.mode")
     public static String PROPERTY_DEPLOY_MODE = DeployMode.standalone.name();
-    @Config(confKey = "self.party")
     public static Set<String> PROPERTY_SELF_PARTY = Sets.newHashSet();//
-
     @Config(confKey = "flow.rule")
     public static String PROPERTY_FLOW_RULE_TABLE = "broker/flowRule.json";
-    @Config(confKey = "use.zookeeper", pattern = Dict.BOOLEAN_PATTERN)
-    public static Boolean PROPERTY_USE_ZOOKEEPER = true;
     @Config(confKey = "open.route.cycle.checker", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_OPEN_ROUTE_CYCLE_CHECKER = false;
-
     @Config(confKey = "zookeeper.acl.enable", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_ACL_ENABLE = false;
     @Config(confKey = "zookeeper.acl.username")
@@ -207,21 +190,18 @@ public class MetaInfo {
     @Config(confKey = "zookeeper.acl.password")
     public static String PROPERTY_ACL_PASSWORD;
     @Config(confKey = "queue.max.free.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_QUEUE_MAX_FREE_TIME = 60*60 * 1000 * 12;
+    public static Integer PROPERTY_QUEUE_MAX_FREE_TIME = 60 * 60 * 1000 * 12;
     @Config(confKey = "queue.check.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 60 * 1000;
-    public static String INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_GRPC_PORT;
+    public static Integer PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 5*60 * 1000;
+    public static String INSTANCE_ID = NetUtils.getLocalHost() + "_" + MetaInfo.PROPERTY_GRPC_PORT;
     @Config(confKey = "flow.print.uri", pattern = Dict.BOOLEAN_PATTERN)
-    public static Boolean  PROPERTY_PRINT_URI = false;
-
+    public static Boolean PROPERTY_PRINT_URI = false;
     @Config(confKey = "eggroll.cluster.manager.ip")
     public static String PROPERTY_EGGROLL_CLUSTER_MANANGER_IP;
     @Config(confKey = "eggroll.cluster.manager.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT;
-
-
-   // @Config(confKey = "http.client.method.config")
-    public static Map<String,Map<String,Integer>> PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP =new HashMap<>();
+    // @Config(confKey = "http.client.method.config")
+    public static Map<String, Map<String, Integer>> PROPERTY_HTTP_CLIENT_METHOD_CONFIG_MAP = new HashMap<>();
     /**
      * 从连接池中申请连接的超时时间
      */
@@ -232,7 +212,6 @@ public class MetaInfo {
      */
     @Config(confKey = "http.client.connection.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_CLIENT_CONFIG_CONN_TIME_OUT = 10000;
-
     @Config(confKey = "http.client.max.idle.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_CLIENT_MAX_IDLE_TIME = 5;
     /**
@@ -250,36 +229,30 @@ public class MetaInfo {
     public static Boolean PROPERTY_OPEN_TOKEN_VALIDATOR = false;
     @Config(confKey = "open.token.generator", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_OPEN_TOKEN_GENERATOR = false;
-
     public static String PROPERTY_TOKEN_GENERATOR_CONFIG_PATH;
     public static String PROPERTY_CONFIG_DIR;
-
     @Config(confKey = "protocol.params.print", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROTOCOL_PARAMS_PRINT = false;
-
     @Config(confKey = "mock.eggpair.ip")
-    public static String  PROPERTY_MOCK_EGGPAIR_IP ;
+    public static String PROPERTY_MOCK_EGGPAIR_IP;
     @Config(confKey = "mock.eggpair.port")
     public static Integer PROPERTY_MOCK_EGGPAIR_PORT;
-
     @Config(confKey = "mock.eggpair.partyid")
     public static String PROPERTY_MOCK_EGGPAIR_PARTYID;
     @Config(confKey = "max.transfer.queue.size")
-    public static Integer PROPERTY_MAX_TRANSFER_QUEUE_SIZE=Integer.MAX_VALUE;
+    public static Integer PROPERTY_MAX_TRANSFER_QUEUE_SIZE = Integer.MAX_VALUE;
     @Config(confKey = "max.queue.lock.live.time")
-    public static Integer PROPERTY_MAX_QUEUE_LOCK_LIVE=600;
-
-
-
-
-
+    public static Integer PROPERTY_MAX_QUEUE_LOCK_LIVE = 600;
     @Config(confKey = "open.mock.eggpair")
-    public static Boolean PROPERTY_OPEN_MOCK_EGGPAIR =false;
+    public static Boolean PROPERTY_OPEN_MOCK_EGGPAIR = false;
+    @Config(confKey = "router.check.interval")
+    public static Integer PROPERTY_ROUTER_CHECK_INTERVAL= 300000;
+    @Config(confKey = "channel.pool.info")
+    public static Integer PROPERTY_CHANNEL_POOL_INFO = 30000;
 
     public static boolean isCluster() {
         return PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name());
     }
-
 
     public static boolean checkPattern(String pattern, String value) {
         Pattern p = Pattern.compile(pattern);
@@ -300,7 +273,6 @@ public class MetaInfo {
                     Class clazz = field.getType();
                     String confKey = config.confKey();
                     Object value = environment.get(confKey);
-                   // System.err.println("key:"+confKey+ " value :"+value);
                     if (value != null) {
                         String pattern = config.pattern();
                         if (StringUtils.isNotEmpty(pattern) && !checkPattern(pattern, value.toString())) {
@@ -322,9 +294,9 @@ public class MetaInfo {
                             field.set(null, set);
                         } else if (clazz.isAssignableFrom(Map.class)) {
 
-                            Map<String,  Map<String,Integer>> conConfig = JsonUtil.object2Objcet(value, new TypeReference<Map<String, Map<String,Integer>>>() {
+                            Map<String, Map<String, Integer>> conConfig = JsonUtil.object2Objcet(value, new TypeReference<Map<String, Map<String, Integer>>>() {
                             });
-                            field.set(null,conConfig);
+                            field.set(null, conConfig);
                         }
                     }
                     if (StringUtils.isNotEmpty(confKey)) {
@@ -332,14 +304,10 @@ public class MetaInfo {
                     }
                 }
             } catch (Exception e) {
-             //   e.printStackTrace();
-                logger.error("parse config error",e);
-                //throw new ConfigErrorException("parse config error: "+e.getMessage());
+                logger.error("parse config error", e);
             }
         });
     }
-
-
     public static Map toMap() {
         Map result = Maps.newHashMap();
         Field[] fields = MetaInfo.class.getFields();
@@ -356,10 +324,4 @@ public class MetaInfo {
         }
         return result;
     }
-
-    public  static void main(String args){
-
-       System.err.println( (2 << 30) - 1);
-    }
-
 }

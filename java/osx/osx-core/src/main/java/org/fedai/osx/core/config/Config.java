@@ -12,8 +12,9 @@ import static java.lang.annotation.ElementType.FIELD;
 @Inherited
 public @interface Config {
 
-    String pattern() default  "";
-//    String defaultValue() default "";
+    String pattern() default "";
+
+    //    String defaultValue() default "";
     String confKey();
 
 
