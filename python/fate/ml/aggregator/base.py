@@ -149,6 +149,9 @@ class BaseAggregatorClient(Aggregator):
                 to_agg.append(self._convert_type(p, self.float_p))
             agg_list = to_agg
 
+        else:
+            return None
+
         return agg_list
 
     def _recover_model(self, model, agg_model):
