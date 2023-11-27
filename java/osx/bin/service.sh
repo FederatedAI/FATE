@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,7 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-set -e
+set -e 
 source ./bin/common.sh
 #export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 #export PATH=$PATH:$JAVA_HOME/bin
@@ -57,6 +58,6 @@ case "$1" in
         status $2
         ;;
     *)
-        echo "usage: $0 {start|stop|status|restart} "
+        echo "usage: $0 {start|stop|status|restart}"
         exit 1
 esac

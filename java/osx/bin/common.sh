@@ -91,7 +91,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
+    count=$(ps -C -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       if [ -e "./bin/broker.pid" ]; then
           rm ./bin/broker.pid
