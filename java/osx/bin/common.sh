@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -92,7 +91,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
+    count=$(ps -C -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       if [ -e "./bin/broker.pid" ]; then
           rm ./bin/broker.pid
@@ -187,10 +186,10 @@ stop() {
         echo "please retry"
       fi
     else
-      echo "kill error"
+      echo "kill error "
     fi
   else
-    echo "service not running"
+    echo "service not running "
   fi
 }
 
