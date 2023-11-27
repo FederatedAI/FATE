@@ -138,7 +138,6 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
 
 
     private RouterInfo buildRouterInfo(Map endpoint, String srcPartyId, String srcRole, String dstPartyId, String desRole) {
-
         Preconditions.checkArgument(endpoint != null);
         RouterInfo routerInfo = new RouterInfo();
         if (endpoint.get(IP) != null) {
@@ -149,7 +148,6 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         }
         routerInfo.setDesPartyId(dstPartyId);
         routerInfo.setSourcePartyId(srcPartyId);
-       // routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
         routerInfo.setDesRole(desRole);
         Protocol protocol = Protocol.grpc;
         if (endpoint.get(Dict.PROTOCOL) != null) {
@@ -245,6 +243,8 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
                     Map endpointJson = (Map) endpointElement;
                     element.putAll(endpointJson);
                     endpoints.add(element);
+
+
                 }
             }
 
@@ -446,7 +446,7 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         }
     }
 
-    public void loadRouterTable(String  conf){
+    private void loadRouterTable(String  conf){
         Map tempConf = JsonUtil.json2Object(conf, Map.class);
         if (tempConf != null) {
             loadSelfParty(tempConf);

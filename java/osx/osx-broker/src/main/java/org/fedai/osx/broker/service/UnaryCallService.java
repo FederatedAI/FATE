@@ -141,10 +141,6 @@ public class UnaryCallService extends AbstractServiceAdaptorNew<Proxy.Packet, Pr
             } catch (Exception e) {
                 logger.error("new channel call exception", e);
                 throw new RemoteRpcException("uncary call rpc error : "+e.getMessage());
-            } finally {
-                if (managedChannel != null) {
-                    managedChannel.shutdown();
-                }
             }
         }
         return result;

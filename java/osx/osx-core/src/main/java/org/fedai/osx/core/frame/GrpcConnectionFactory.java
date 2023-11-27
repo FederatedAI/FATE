@@ -16,6 +16,9 @@
 
 package org.fedai.osx.core.frame;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
@@ -40,21 +43,49 @@ import java.security.KeyStore;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
-import static org.fedai.osx.core.config.MetaInfo.PROPERTY_GRPC_TLS_SESSION_SIZE;
-import static org.fedai.osx.core.config.MetaInfo.PROPERTY_GRPC_TLS_SESSION_TIMEOUT;
+import static org.fedai.osx.core.config.MetaInfo.*;
+import static org.fedai.osx.core.config.MetaInfo.PROPERTY_MAX_TRANSFER_QUEUE_SIZE;
 
 public class GrpcConnectionFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcConnectionFactory.class);
     static ConcurrentHashMap<String, ManagedChannel> managedChannelPool = new ConcurrentHashMap<>();
-
-    private GrpcConnectionFactory() {
-    }
+    static LoadingCache<String, ReentrantLock> keyLockCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(PROPERTY_MAX_QUEUE_LOCK_LIVE, TimeUnit.SECONDS)
+            .concurrencyLevel(4)
+            .maximumSize(PROPERTY_MAX_TRANSFER_QUEUE_SIZE)
+            .build(new CacheLoader<String, ReentrantLock>() {
+                @Override
+                public ReentrantLock load(String s) throws Exception {
+                    return new ReentrantLock();
+                }
+            });
 
     private static AtomicLong   historyCount = new AtomicLong(0);
+
+    private static  boolean checkChannel(ManagedChannel channel){
+        boolean shutdown = channel.isShutdown();
+        boolean terminated = channel.isTerminated();
+        ConnectivityState state = channel.getState(true);
+        if (shutdown || terminated || state == ConnectivityState.SHUTDOWN||state==ConnectivityState.TRANSIENT_FAILURE){
+            if(state==ConnectivityState.TRANSIENT_FAILURE){
+                Thread  thread=    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            channel.shutdown();
+                        }
+                    });
+                thread.start();
+            }
+            return false;
+        }
+        return  true;
+    }
 
     static {
         // 创建守护线程
@@ -69,19 +100,22 @@ public class GrpcConnectionFactory {
                     while (iterator.hasNext()) {
                         Map.Entry<String, ManagedChannel> entry = iterator.next();
                         String key = entry.getKey();
-                        ManagedChannel channel = entry.getValue();
-                        boolean shutdown = channel.isShutdown();
-                        boolean terminated = channel.isTerminated();
-                        ConnectivityState state = channel.getState(true);
-                        if (shutdown || terminated || state == ConnectivityState.SHUTDOWN) {
-                            // 在迭代器中使用 remove() 方法删除元素
-                            iterator.remove();
-                            logger.info("remove channel: {} shutdown : {} terminated : {} status : {}", key,shutdown,terminated,state);
-                        } else {
-                            activeNum++;
+                        ReentrantLock  lock = keyLockCache.get(key);
+                        try {
+                            lock.lock();
+                            ManagedChannel channel = entry.getValue();
+                            if (!checkChannel(channel)) {
+                                iterator.remove();
+                            } else {
+                                activeNum++;
+                            }
+                        }finally {
+                            if(lock!=null){
+                                lock.unlock();
+                            }
                         }
                     }
-                    logger.info("grpc pool info：history {} conc：{}, active:{}", historyCount.get(),total, activeNum);
+                    logger.info("grpc pool info：history {} current：{}, active:{}", historyCount.get(),total, activeNum);
                 } catch (Exception e) {
                     logger.error("exception：", e);
                 }
@@ -92,17 +126,17 @@ public class GrpcConnectionFactory {
     }
 
 
-    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo) {
+    public static  ManagedChannel createManagedChannel(RouterInfo routerInfo) {
         if (routerInfo == null) {
             throw new NoRouterInfoException("no router info");
         }
-
+        ReentrantLock  lock = null;
+        try {
+            lock = keyLockCache.get(routerInfo.toKey());
+            lock.lock();
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
                 ManagedChannel targetChannel = managedChannelPool.get(routerInfo.toKey());
-                boolean shutdown = targetChannel.isShutdown();
-                boolean terminated = targetChannel.isTerminated();
-                ConnectivityState state = targetChannel.getState(true);
-                if (shutdown || terminated || state == ConnectivityState.SHUTDOWN) {
+                if (!checkChannel(targetChannel)) {
                     ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
                     if (managedChannel != null) {
                         managedChannelPool.put(routerInfo.toKey(), managedChannel);
@@ -116,6 +150,14 @@ public class GrpcConnectionFactory {
                 }
                 return managedChannel;
             }
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            if(lock!=null){
+                lock.unlock();
+            }
+        }
+        return  null;
     }
 
 
@@ -135,8 +177,6 @@ public class GrpcConnectionFactory {
 
 
     public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, GrpcChannelInfo channelInfo) {
-
-
         try {
             if (channelInfo == null) {
                 throw new SysException("grpc channel info is null");

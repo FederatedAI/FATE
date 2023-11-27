@@ -29,15 +29,10 @@ public class RouterInfo {
     public static class  BooleanFilter{
         @Override
         public boolean equals(Object obj) {
-//            System.err.println(obj.getClass());
             if(obj instanceof Boolean){
-
-
                 boolean result=   !(Boolean)obj;
-                System.err.println("ppppppp"+ result);
                 return result;
             }
-//            return false;
             return  true;
         }
     }
