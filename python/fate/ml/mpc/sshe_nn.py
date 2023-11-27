@@ -36,7 +36,8 @@ class SSHENN(MPCModule):
             out_features=out_features,
             rank_a=0,
             rank_b=1,
-            generator=generator,
+            wa_init_fn=lambda shape: torch.rand(shape, generator=generator),
+            wb_init_fn=lambda shape: torch.rand(shape, generator=generator),
         )
         optimizer = SSHENeuralNetworkOptimizerSGD(ctx, layer.parameters(), lr=lr)
         z = layer(h)
