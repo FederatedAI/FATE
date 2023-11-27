@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -190,7 +189,7 @@ stop() {
       echo "kill error"
     fi
   else
-    echo "service not running"
+    echo "service not running "
   fi
 }
 
