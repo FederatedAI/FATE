@@ -1,7 +1,11 @@
+import typing
+
+import torch
+
 from fate.arch.context import Context
-from fate.arch.utils.trace import auto_trace
 from fate.arch.protocol.mpc.common.encoding import IgnoreEncodings
 from fate.arch.protocol.mpc.mpc import FixedPointEncoder
+from fate.arch.utils.trace import auto_trace
 
 
 class SSHELinearRegressionLayer:
@@ -13,9 +17,10 @@ class SSHELinearRegressionLayer:
         out_features,
         rank_a,
         rank_b,
+        wa_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
+        wb_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
         precision_bits=None,
         sync_shape=True,
-        generator=None,
     ):
         self.ctx = ctx
         self.rank_a = rank_a
@@ -41,8 +46,8 @@ class SSHELinearRegressionLayer:
                 in_features_b is not None, "in_features_b must be specified when sync_shape is False", dst=rank_b
             )
 
-        self.wa = ctx.mpc.random_tensor(shape=(in_features_a, out_features), src=rank_a, generator=generator)
-        self.wb = ctx.mpc.random_tensor(shape=(in_features_b, out_features), src=rank_b, generator=generator)
+        self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
+        self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
         self.phe_cipher = ctx.cipher.phe.setup()
         self.precision_bits = precision_bits
 

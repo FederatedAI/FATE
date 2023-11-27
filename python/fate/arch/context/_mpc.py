@@ -203,12 +203,11 @@ class MPC:
 
         return SSHE
 
-    def random_tensor(self, shape, src=0, generator=None):
-        import torch
+    def init_tensor(self, shape, init_func, src):
         from fate.arch.protocol.mpc.primitives import ArithmeticSharedTensor
 
         if self.rank == src:
-            return ArithmeticSharedTensor(self._ctx, torch.rand(shape, generator=generator), src=src)
+            return ArithmeticSharedTensor(self._ctx, init_func(shape), src=src)
 
         else:
             return ArithmeticSharedTensor(self._ctx, None, size=shape, src=src)

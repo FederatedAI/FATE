@@ -1,3 +1,4 @@
+import typing
 from typing import Any, Iterator
 
 import torch
@@ -5,9 +6,8 @@ from torch.nn import Parameter
 
 from fate.arch.context import Context
 from fate.arch.protocol.mpc.common.encoding import IgnoreEncodings
-from fate.arch.utils.trace import auto_trace
-
 from fate.arch.protocol.mpc.mpc import FixedPointEncoder
+from fate.arch.utils.trace import auto_trace
 
 
 class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
@@ -19,18 +19,20 @@ class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
         out_features,
         rank_a,
         rank_b,
+        wa_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
+        wb_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
         precision_bits=None,
-        generator=None,
     ):
         self.aggregator = SSHENeuralNetworkAggregator(
             ctx,
-            in_features_a,
-            in_features_b,
-            out_features,
-            rank_a,
-            rank_b,
+            in_features_a=in_features_a,
+            in_features_b=in_features_b,
+            out_features=out_features,
+            rank_a=rank_a,
+            rank_b=rank_b,
             encoder=FixedPointEncoder(precision_bits),
-            generator=generator,
+            wa_init_fn=wa_init_fn,
+            wb_init_fn=wb_init_fn,
         )
         super().__init__()
 
@@ -75,13 +77,14 @@ class SSHENeuralNetworkAggregator:
         rank_a,
         rank_b,
         encoder,
+        wa_init_fn,
+        wb_init_fn,
         precision_bits=None,
-        generator=None,
     ):
         self.ctx = ctx
         self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_nn_aggregator_layer")
-        self.wa = ctx.mpc.random_tensor(shape=(in_features_a, out_features), src=rank_a, generator=generator)
-        self.wb = ctx.mpc.random_tensor(shape=(in_features_b, out_features), src=rank_b, generator=generator)
+        self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
+        self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
         self.phe_cipher = ctx.cipher.phe.setup()
         self.rank_a = rank_a
         self.rank_b = rank_b
