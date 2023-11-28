@@ -56,7 +56,7 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
     test_data = {"name": test_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     conf = get_config_of_default_runner(
         algo='fedavg',
@@ -85,8 +85,8 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
         predict_model_input=homo_nn_0.outputs['train_model_output']
     )
 
-    homo_nn_0.guest.component_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
+    homo_nn_0.guest.task_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
+    homo_nn_0.hosts[0].task_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
