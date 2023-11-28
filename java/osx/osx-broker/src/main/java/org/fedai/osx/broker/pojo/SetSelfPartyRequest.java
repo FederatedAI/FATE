@@ -5,8 +5,8 @@ import lombok.Data;
 import java.util.Set;
 
 @Data
-public class SetSelfPartyRequest  extends  TokenHolder{
+public class SetSelfPartyRequest {
 
-    Set<String> selfParty;
+    Set<String> selfPartys;
 
 }

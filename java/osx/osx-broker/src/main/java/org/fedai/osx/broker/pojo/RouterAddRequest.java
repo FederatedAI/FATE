@@ -8,7 +8,7 @@ import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.router.RouterInfo;
 
 @Data
-public class RouterAddRequest  extends  TokenHolder{
+public class RouterAddRequest {
 
     public static class  BooleanFilter{
         @Override

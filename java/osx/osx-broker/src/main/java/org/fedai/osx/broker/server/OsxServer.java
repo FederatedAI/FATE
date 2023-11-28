@@ -270,7 +270,7 @@ public class OsxServer {
                 NettyServerBuilder nettyServerBuilder = NettyServerBuilder.forAddress(address);
                 SslContextBuilder sslContextBuilder = null;
 
-                if (StringUtils.isNotBlank(PROPERTY_SERVER_KEYSTORE_FILE)) {
+                if (PROPERTY_OPEN_TLS_USE_KEYSTORE) {
                     // Load the truststore file
                     KeyStore trustStore = loadKeyStore(trustFilePath, trustJksPassword);
                     // Create a TrustManagerFactory and initialize it with the truststore

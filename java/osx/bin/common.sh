@@ -1,3 +1,19 @@
+#!/bin/bash
+
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 error_exit (){
     echo "ERROR: $1 !!"
     exit 1
@@ -76,7 +92,7 @@ getpid() {
     pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
-    count=$(ps -c -ef | grep $pid | grep -v "grep" | wc -l)
+    count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
       if [ -e "./bin/broker.pid" ]; then
           rm ./bin/broker.pid
@@ -150,7 +166,6 @@ status() {
   if [[ -n ${pid} ]]; then
     echo "status: $(ps -f -p ${pid})"
     exit 0
-
   else
     echo "service not running"
     exit 1
@@ -172,10 +187,10 @@ stop() {
         echo "please retry"
       fi
     else
-      echo "kill error "
+      echo "kill error"
     fi
   else
-    echo "service not running "
+    echo "service not running"
   fi
 }
 
