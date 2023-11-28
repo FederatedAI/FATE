@@ -1,48 +1,10 @@
 {
 	"route_table":{
-		"3488":{
-			"default":[
-				{
-
-					"port":8888,
-					"ip":"localhost"
-				}
-			]
-		},
-		"3477":{
+		"3479":{
 			"default":[
 				{
 					"port":8889,
 					"ip":"localhost"
-				}
-			]
-		},
-		"10000":{
-			"default":[
-				{
-					"protocol":"grpc",
-					"ip":"localhost",
-					"port":9366,
-					"url":"http://127.0.0.1:8122/v1/interconn/chan/invoke"
-				}
-			]
-		},
-		"9999":{
-			"default":[
-				{
-					"protocol":"grpc",
-					"port":7304,
-					"ip":"127.0.0.1"
-				}
-			]
-		},
-		"10001":{
-			"default":[
-				{
-					"protocol":"grpc",
-					"port":9375,
-					"url":"http://127.0.0.1:8087/osx/inbound",
-					"ip":"127.0.0.1"
 				}
 			]
 		}
