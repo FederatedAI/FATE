@@ -77,7 +77,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
     def compute_loss(self, data_instances, model_weights, n_iter_, batch_index, offset, loss_norm=None):
         '''
         Compute hetero poisson loss:
-            loss = sum(exp(mu_g)*exp(mu_h) - y(wx_g + wx_h) + log(exposure))
+            loss = sum(exp(wx_g)*exp(wx_h) - y(wx_g + wx_h) + log(exposure))
 
         Parameters:
         ___________
