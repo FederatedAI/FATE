@@ -25,6 +25,7 @@ import org.fedai.osx.broker.pojo.*;
 import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.service.ServiceRegisterInfo;
 import org.fedai.osx.broker.service.ServiceRegisterManager;
+import org.fedai.osx.broker.token.TokenValidatorRegister;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.*;
@@ -65,6 +66,8 @@ public class FateTechProvider implements TechProvider {
     ServiceRegisterManager serviceRegisterManager;
     @Inject
     RouterServiceRegister  routerServiceRegister;
+    @Inject
+    TokenValidatorRegister  tokenValidatorRegister;
 
 
     Base64.Encoder base64Encoder = Base64.getEncoder();
