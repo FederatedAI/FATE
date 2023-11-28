@@ -1,6 +1,4 @@
-
 package org.fedai.osx.core.utils;
-
 
 
 import org.apache.commons.lang3.StringUtils;

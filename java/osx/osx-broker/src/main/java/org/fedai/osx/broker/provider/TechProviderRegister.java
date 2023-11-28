@@ -26,7 +26,6 @@ import org.fedai.osx.core.exceptions.ParameterException;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.provider.TechProvider;
 import org.fedai.osx.core.service.ApplicationStartedRunner;
-import org.fedai.osx.core.utils.ClassUtils;
 import org.fedai.osx.core.utils.PropertiesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,63 +38,60 @@ import java.util.concurrent.ConcurrentMap;
  * 厂商选择
  */
 @Singleton
-public class TechProviderRegister implements Lifecycle , ApplicationStartedRunner {
+public class TechProviderRegister implements Lifecycle, ApplicationStartedRunner {
 
-    Logger logger  = LoggerFactory.getLogger(TechProviderRegister.class);
+    final String configFileName = "components/provider.properties";
+    Logger logger = LoggerFactory.getLogger(TechProviderRegister.class);
     @Inject
-    Injector injector ;
+    Injector injector;
     ConcurrentMap<String, TechProvider> registerMap = new ConcurrentHashMap<>();
-    final String  configFileName = "components/provider.properties";
-    final public TechProvider select(OsxContext fateContext  ) {
-//        logger.info("tech provider select {}",fateContext.getTechProviderCode());
-        if(StringUtils.isEmpty(fateContext.getTechProviderCode())){
-            throw  new ParameterException("techProviderCode is null");
-        }
-       //  this.registerMap.get(fateContext.getTechProviderCode());
 
-       return  this.select(fateContext.getTechProviderCode());
+    final public TechProvider select(OsxContext fateContext) {
+
+        if (StringUtils.isEmpty(fateContext.getTechProviderCode())) {
+              fateContext.setTechProviderCode(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+        }
+        return this.select(fateContext.getTechProviderCode());
     }
 
-    final public TechProvider select(String  techProviderCode  ) {
+    final public TechProvider select(String techProviderCode) {
 //        logger.info("tech provider select {}",techProviderCode);
-        if(StringUtils.isEmpty(techProviderCode)){
-            throw  new ParameterException("techProviderCode is null");
+        if (StringUtils.isEmpty(techProviderCode)) {
+            throw new ParameterException("techProviderCode is null");
         }
-        if(  this.registerMap.containsKey(techProviderCode)){
+        if (this.registerMap.containsKey(techProviderCode)) {
             return this.registerMap.get(techProviderCode);
-        }else{
+        } else {
             return this.registerMap.get(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         }
     }
 
-    public TechProvider  getTechProvider(OsxContext  context){
+    public TechProvider getTechProvider(OsxContext context) {
         TechProvider techProvider = this.select(context.getTechProviderCode());
         if (techProvider == null) {
             techProvider = this.select("default");
         }
-        return  techProvider;
+        return techProvider;
     }
 
 
-
-
-
     public void init() {
-        Properties properties = PropertiesUtil.getProperties(MetaInfo.PROPERTY_CONFIG_DIR+Dict.SLASH+Dict.SLASH+configFileName);
-        properties.forEach((k,v)->{
+        Properties properties = PropertiesUtil.getProperties(MetaInfo.PROPERTY_CONFIG_DIR + Dict.SLASH + Dict.SLASH + configFileName);
+        properties.forEach((k, v) -> {
             try {
                 this.registerMap.put(k.toString(), (TechProvider) injector.getInstance(Class.forName(v.toString())));
-            }catch(Exception e){
-                logger.error("provider {} class {} init error",k,v,e);
+            } catch (Exception e) {
+                logger.error("provider {} class {} init error", k, v, e);
             }
         });
-        logger.info("tech provider register : {}",this.registerMap);
+        logger.info("tech provider register : {}", this.registerMap);
     }
 
     @Override
     public void start() {
         init();
     }
+
     @Override
     public void destroy() {
         this.registerMap.clear();
@@ -103,7 +99,7 @@ public class TechProviderRegister implements Lifecycle , ApplicationStartedRunne
 
     @Override
     public void run(String[] args) throws Exception {
-         start();
+        start();
     }
 }
 

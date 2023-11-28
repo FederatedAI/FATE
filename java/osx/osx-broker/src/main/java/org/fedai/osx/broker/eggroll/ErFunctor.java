@@ -26,6 +26,7 @@ public class ErFunctor extends BaseProto<Meta.Functor> {
     String serdes;
     byte[] body;
     Map<String, String> options;
+
     public ErFunctor(String name, String serdes, byte[] body, Map<String, String> options) {
         this.name = name;
         this.serdes = serdes;

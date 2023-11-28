@@ -16,5 +16,5 @@
 package org.fedai.osx.core.constant;
 
 public enum NegotiationType {
-    TLS,PLAINTEXT
+    TLS, PLAINTEXT
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fedai.osx.broker.queue;
+
 import org.fedai.osx.core.utils.JsonUtil;
 
 public class TransferQueueApplyInfo {

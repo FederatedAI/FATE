@@ -16,7 +16,6 @@
 package org.fedai.osx.broker.queue;
 
 
-
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.frame.Lifecycle;
 

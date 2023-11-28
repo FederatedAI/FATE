@@ -29,8 +29,6 @@ import java.util.Map;
 public class MessageDecoder {
 
 
-    static Logger logger = LoggerFactory.getLogger(MessageDecoder.class);
-
     public final static Charset CHARSET_UTF8 = Charset.forName("UTF-8");
     public final static int MESSAGE_MAGIC_CODE_POSTION = 4;
     public final static int MESSAGE_FLAG_POSTION = 16;
@@ -42,7 +40,7 @@ public class MessageDecoder {
     public static final int PHY_POS_POSITION = 4 + 4 + 4 + 4 + 4 + 8;
     public static final int QUEUE_OFFSET_POSITION = 4 + 4 + 4 + 4 + 4;
     public static final int SYSFLAG_POSITION = 4 + 4 + 4 + 4 + 4 + 8 + 8;
-
+    static Logger logger = LoggerFactory.getLogger(MessageDecoder.class);
 
     public static String createMessageId(final ByteBuffer input, final ByteBuffer addr, final long offset) {
         input.flip();
@@ -56,7 +54,7 @@ public class MessageDecoder {
     }
 
     public static MessageExtBrokerInner buildMessageExtBrokerInner(String topic, byte[] body,
-                                                                   String  msgCode, MessageFlag flag, String srcPartyId, String desPartyId) {
+                                                                   String msgCode, MessageFlag flag, String srcPartyId, String desPartyId) {
         MessageExtBrokerInner messageExtBrokerInner = new MessageExtBrokerInner();
         messageExtBrokerInner.setBody(body);
         messageExtBrokerInner.setTopic(topic);
@@ -139,7 +137,6 @@ public class MessageDecoder {
 //        }
 //        return null;
 //    }
-
     public static MessageExt decode(ByteBuffer byteBuffer) {
         return decode(byteBuffer, true, true, false);
     }
@@ -161,7 +158,7 @@ public class MessageDecoder {
             ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody, final boolean isClient) {
         try {
 
-            MessageExt msgExt= new MessageExt();
+            MessageExt msgExt = new MessageExt();
             // 1 TOTALSIZE
             int storeSize = byteBuffer.getInt();
             msgExt.setStoreSize(storeSize);

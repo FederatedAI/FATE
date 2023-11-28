@@ -23,6 +23,10 @@ from fate.arch.histogram import DistributedHistogram
 logger = logging.getLogger(__name__)
 
 
+# tree decimal round to prevent float error
+TREE_DECIMAL_ROUND = 10
+
+
 class SplitInfo(object):
     def __init__(
         self,
@@ -71,281 +75,7 @@ class Splitter(object):
         pass
 
 
-class SklearnSplitter(Splitter):
-    def __init__(
-        self,
-        feature_binning_dict,
-        min_impurity_split=1e-2,
-        min_sample_split=2,
-        min_leaf_node=1,
-        min_child_weight=1,
-        l1=0,
-        l2=0.1,
-        valid_features=None,
-    ) -> None:
-        super().__init__()
-        self.min_impurity_split = min_impurity_split
-        self.min_sample_split = min_sample_split
-        self.min_leaf_node = min_leaf_node
-        self.min_child_weight = min_child_weight
-        self.feature_binning_dict = feature_binning_dict
-        self.hist_mask = self.generate_mask(feature_binning_dict)
-        self.l1, self.l2 = l1, l2
-
-    def generate_mask(self, feature_dict):
-        split_counts = [len(split_point) for split_point in feature_dict.values()]
-        max_bin = max(split_counts)
-        mask = np.zeros((len(feature_dict), max_bin)).astype(np.bool8)
-        for i, bucket_count in enumerate(split_counts):
-            mask[i, :bucket_count] = True  # valid split point
-
-        return ~mask
-
-    def node_gain(self, g, h):
-        if isinstance(h, np.ndarray):
-            h[h == 0] = np.nan
-        score = g * g / (h + self.l2)
-        return score
-
-    def node_weight(self, sum_grad, sum_hess):
-        weight = -(sum_grad / (sum_hess + self.l2))
-        return weight
-
-    def _compute_min_leaf_mask(self, l_cnt, r_cnt):
-        min_leaf_node_mask_l = l_cnt < self.min_leaf_node
-        min_leaf_node_mask_r = r_cnt < self.min_leaf_node
-        union_mask_0 = np.logical_or(min_leaf_node_mask_l, min_leaf_node_mask_r)
-        return union_mask_0
-
-    def _compute_gains(self, g, h, cnt, g_sum, h_sum, cnt_sum, hist_mask=None):
-        l_g, l_h, l_cnt = g, h, cnt
-
-        if cnt_sum < self.min_sample_split:
-            return None
-
-        r_g, r_h = g_sum - l_g, h_sum - l_h
-        r_cnt = cnt_sum - l_cnt
-
-        # filter split
-        # leaf count
-        union_mask_0 = self._compute_min_leaf_mask(l_cnt, r_cnt)
-        # min child weight
-        min_child_weight_mask_l = l_h < self.min_child_weight
-        min_child_weight_mask_r = r_h < self.min_child_weight
-        union_mask_1 = np.logical_or(min_child_weight_mask_l, min_child_weight_mask_r)
-        if hist_mask is not None:
-            mask = np.logical_or(union_mask_0, hist_mask)
-        else:
-            mask = union_mask_0
-        mask = np.logical_or(mask, union_mask_1)
-
-        rs = self.node_gain(l_g, l_h) + self.node_gain(r_g, r_h) - self.node_gain(g_sum, h_sum)
-
-        rs[np.isnan(rs)] = -np.inf
-        rs[rs < self.min_impurity_split] = -np.inf
-        rs[mask] = -np.inf
-
-        return rs
-
-    def _find_guest_best_splits(self, node_hist, sitename, ret_sum=False):
-        l_g, l_h, l_cnt = node_hist
-        cnt_sum = l_cnt[::, -1][0]
-        g_sum = l_g[::, -1][0]
-        h_sum = l_h[::, -1][0]
-
-        rs = self._compute_gains(l_g, l_h, l_cnt, g_sum, h_sum, cnt_sum, hist_mask=self.hist_mask)
-
-        # reduce
-        feat_best_split = rs.argmax(axis=1)
-        feat_best_gain = rs.max(axis=1)
-
-        logger.debug("best gain {}".format(feat_best_gain))
-        # best split
-        best_split_idx = feat_best_gain.argmax()
-        best_gain = feat_best_gain.max()
-
-        if best_gain == -np.inf:
-            # can not split
-            logger.info("this node cannot be further split")
-            if ret_sum:
-                return None, g_sum, h_sum, cnt_sum
-            else:
-                return None
-
-        feat_id = best_split_idx
-        bin_id = feat_best_split[best_split_idx]
-
-        split_info = SplitInfo(
-            best_fid=feat_id,
-            best_bid=bin_id,
-            gain=best_gain,
-            sum_grad=l_g[feat_id][bin_id],
-            sum_hess=l_h[feat_id][bin_id],
-            sample_count=l_cnt[feat_id][bin_id],
-            sitename=sitename,
-        )
-
-        if ret_sum:
-            return split_info, g_sum, h_sum, cnt_sum
-        else:
-            return split_info
-
-    def _split(self, ctx: Context, histogram: list, cur_layer_node):
-        splits = []
-        logger.info("got {} hist".format(len(histogram)))
-        for node_hist in histogram:
-            split_info = self._find_guest_best_splits(node_hist, self.hist_mask, sitename=ctx.guest.name)
-            splits.append(split_info)
-        logger.info("split info is {}".format(split_info))
-        assert len(splits) == len(cur_layer_node), "split info length {} != node length {}".format(
-            len(splits), len(cur_layer_node)
-        )
-        return splits
-
-    def split(self, ctx: Context, histogram: list, cur_layer_node):
-        return self._split(ctx, histogram, cur_layer_node)
-
-
-class FedSklearnSplitter(SklearnSplitter):
-    def __init__(
-        self,
-        feature_binning_dict,
-        min_impurity_split=1e-2,
-        min_sample_split=2,
-        min_leaf_node=1,
-        min_child_weight=1,
-        l1=0,
-        l2=0,
-        valid_features=None,
-        random_seed=42,
-    ) -> None:
-        super().__init__(
-            feature_binning_dict,
-            min_impurity_split,
-            min_sample_split,
-            min_leaf_node,
-            min_child_weight,
-            l1,
-            l2,
-            valid_features,
-        )
-        self.random_seed = random_seed
-        np.random.seed(self.random_seed)
-
-    def _get_host_splits(self, ctx):
-        host_splits = ctx.hosts.get("host_splits")
-        return host_splits
-
-    def _find_host_best_splits(self, split, g_sum, h_sum, cnt_sum, sitename):
-        g, h, cnt = split
-        rs = self._compute_gains(g, h, cnt, g_sum, h_sum, cnt_sum)
-        best_splits_id = rs.argmax()
-        best_gain = rs.max()
-        split_info = SplitInfo(
-            gain=best_gain,
-            split_id=best_splits_id,
-            sitename=sitename,
-            sum_grad=g[best_splits_id],
-            sum_hess=h[best_splits_id],
-            sample_count=cnt[best_splits_id],
-        )
-
-        return split_info
-
-    def _merge_splits(self, guest_splits, host_splits_list):
-        splits = []
-        for node_idx in range(len(guest_splits)):
-            best_gain = -np.inf
-            best_splitinfo = None
-            guest_splitinfo: SplitInfo = guest_splits[node_idx]
-            if guest_splitinfo is not None and guest_splitinfo.gain > best_gain:
-                best_gain = guest_splitinfo.gain
-                best_splitinfo = guest_splitinfo
-
-            for host_idx in range(len(host_splits_list)):
-                host_splits = host_splits_list[host_idx]
-                host_splitinfo: SplitInfo = host_splits[node_idx]
-                if host_splitinfo is not None and host_splitinfo.gain > best_gain:
-                    best_gain = host_splitinfo.gain
-                    best_splitinfo = host_splitinfo
-            splits.append(best_splitinfo)
-
-        return splits
-
-    def _guest_split(self, ctx: Context, histogram, cur_layer_node):
-        sitename = ctx.guest.name
-        guest_best_splits = []
-        gh_sum = []
-        logger.info("got {} hist".format(len(histogram)))
-        for node_hist in histogram:
-            split_info, g_sum, h_sum, cnt_sum = self._find_guest_best_splits(
-                node_hist, ret_sum=True, sitename=sitename
-            )
-            guest_best_splits.append(split_info)
-            gh_sum.append((g_sum, h_sum, cnt_sum))
-
-        assert len(guest_best_splits) == len(cur_layer_node), "split info length {} != node length {}".format(
-            len(guest_best_splits), len(cur_layer_node)
-        )
-
-        host_splits_list = self._get_host_splits(ctx)
-        all_host_splits = []
-        for host_idx in range(len(host_splits_list)):
-            host_sitename = ctx.hosts[host_idx].name
-            host_splits = host_splits_list[host_idx]
-            assert len(host_splits) == len(cur_layer_node)
-            best_split = []
-            for node_idx, node_splits in enumerate(host_splits):
-                g_sum, h_sum, cnt_sum = gh_sum[node_idx]
-                node_best = self._find_host_best_splits(node_splits, g_sum, h_sum, cnt_sum, host_sitename)
-                best_split.append(node_best)
-            all_host_splits.append(best_split)
-
-        logger.info("guest split info is {}".format(guest_best_splits))
-        logger.info("host split info is {}".format(all_host_splits))
-        final_best_split = self._merge_splits(guest_best_splits, all_host_splits)
-        logger.info("final split info is {}".format(final_best_split))
-        return host_splits[0]
-
-    def _host_prepare(self, histogram):
-        to_send_hist = []
-        pos_map = []
-        # prepare host split points
-        for node_hist in histogram:
-            g, h, cnt = node_hist
-            shape = g.shape
-            pos_map_ = {}
-            g[self.hist_mask] = np.nan
-            h[self.hist_mask] = np.nan
-            # cnt is int, cannot use np.nan as mask
-            cnt[self.hist_mask] = 0
-            g, h, cnt = g.flatten(), h.flatten(), cnt.flatten()
-            random_shuffle_idx = np.random.permutation(len(g))
-            # random_shuffle_idx = np.array([i for i in range(len(g))])
-            g = g[random_shuffle_idx]
-            h = h[random_shuffle_idx]
-            cnt = cnt[random_shuffle_idx]
-            to_send_hist.append([g, h, cnt])
-            for split_idx, real_idx in enumerate(random_shuffle_idx):
-                pos_map_[split_idx] = (real_idx // shape[1], real_idx % shape[1])
-            pos_map.append(pos_map_)
-        return to_send_hist, pos_map
-
-    def _host_split(self, ctx, histogram, cur_layer_node):
-        to_send_hist, pos_map = self._host_prepare(histogram)
-        ctx.guest.put("host_splits", to_send_hist)
-        return pos_map
-
-    def split(self, ctx: Context, histogram, cur_layer_node):
-        if ctx.is_on_guest:
-            return self._guest_split(ctx, histogram, cur_layer_node)
-        elif ctx.is_on_host:
-            return self._host_split(ctx, histogram, cur_layer_node)
-        else:
-            raise ValueError("illegal role {}".format(ctx.role))
-
-
-class FedSBTSplitter(object):
+class SBTSplitter(Splitter):
     def __init__(
         self,
         bin_train_data: DataFrame,
@@ -380,16 +110,40 @@ class FedSBTSplitter(object):
                 return fid, bid
 
         raise ValueError("idx is out of range")
+    
+    @staticmethod
+    def truncate(f, n=TREE_DECIMAL_ROUND):
+        return np.floor(f * 10 ** n) / 10 ** n
+
+    def _l1_reg(self, g):
+
+        if self.l1 == 0:
+            return  g
+        if isinstance(g, torch.Tensor):
+            g[g < -self.l1] += self.l1
+            g[g > self.l1] -= self.l1
+            g[(g <= self.l1) & (g >= -self.l1)] = 0
+        else:
+            if g < - self.l1:
+                return g + self.l1
+            elif g > self.l1:
+                return g - self.l1
+            else:
+                return 0
+        return g
 
     def node_gain(self, g, h):
+        g, h = self.truncate(g), self.truncate(h)
+        g = self._l1_reg(g)
         if isinstance(h, np.ndarray):
             h[h == 0] = np.nan
-        score = g * g / (h + self.l2)
+        score = (g * g ) / (h + self.l2)
         return score
 
     def node_weight(self, sum_grad, sum_hess):
+        sum_grad = self._l1_reg(sum_grad)
         weight = -(sum_grad / (sum_hess + self.l2))
-        return weight
+        return self.truncate(weight)
 
     def _extract_hist(self, histogram, pack_info=None):
         tensor_hist: dict = histogram.extract_data()
@@ -444,7 +198,6 @@ class FedSBTSplitter(object):
 
     def _compute_gains(self, g, h, cnt, g_sum, h_sum, cnt_sum, hist_mask=None):
         l_g, l_h, l_cnt = g, h, cnt
-
         r_g, r_h = g_sum - l_g, h_sum - l_h
         r_cnt = cnt_sum - l_cnt
 
@@ -461,10 +214,10 @@ class FedSBTSplitter(object):
             mask = union_mask_0
         mask = torch.logical_or(mask, union_mask_1)
         rs = self.node_gain(l_g, l_h) + self.node_gain(r_g, r_h) - self.node_gain(g_sum, h_sum)
+        rs = self.truncate(rs)
         rs[torch.isnan(rs)] = float("-inf")
         rs[rs < self.min_impurity_split] = float("-inf")
         rs[mask] = float("-inf")
-
         return rs
 
     def _find_best_splits(
@@ -536,6 +289,17 @@ class FedSBTSplitter(object):
         host_hist = hist.decrypt(schema[0], schema[1], decode_schema)
         return host_hist
 
+    def _local_split(self, ctx: Context, stat_rs, node_map, cur_layer_node):
+
+        histogram = stat_rs.decrypt({}, {}, None)
+        sitename = ctx.local.name
+        reverse_node_map = {v: k for k, v in node_map.items()}
+        local_best_splits = self._find_best_splits(
+            histogram, sitename, cur_layer_node, reverse_node_map, recover_bucket=True
+        )
+
+        return local_best_splits
+
     def _guest_split(self, ctx: Context, stat_rs, cur_layer_node, node_map, sk, coder, gh_pack, pack_info):
         if sk is None or coder is None:
             raise ValueError("sk or coder is None, not able to decode host split points")
@@ -595,23 +359,30 @@ class FedSBTSplitter(object):
         histogram_statistic_result,
         cur_layer_node,
         node_map,
+        local_split=False,
         sk=None,
         coder=None,
         gh_pack=None,
         pack_info=None,
     ):
-        if ctx.is_on_guest:
-            if sk is None or coder is None:
-                raise ValueError("sk or coder is None, not able to decode host split points")
-            assert gh_pack is not None and isinstance(
-                gh_pack, bool
-            ), "gh_pack should be bool, indicating if the gh is packed"
-            if not gh_pack:
-                logger.info("not using gh pack to split")
-            return self._guest_split(
-                ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder, gh_pack, pack_info
-            )
-        elif ctx.is_on_host:
-            return self._host_split(ctx, histogram_statistic_result, cur_layer_node)
+        if local_split:
+            # Use local features only
+            best_slits = self._local_split(ctx, histogram_statistic_result, node_map, cur_layer_node)
+            return best_slits
         else:
-            raise ValueError("illegal role {}".format(ctx.role))
+            # For hetero-secureboost
+            if ctx.is_on_guest:
+                if sk is None or coder is None:
+                    raise ValueError("sk or coder is None, not able to decode host split points")
+                assert gh_pack is not None and isinstance(
+                    gh_pack, bool
+                ), "gh_pack should be bool, indicating if the gh is packed"
+                if not gh_pack:
+                    logger.info("not using gh pack to split")
+                return self._guest_split(
+                    ctx, histogram_statistic_result, cur_layer_node, node_map, sk, coder, gh_pack, pack_info
+                )
+            elif ctx.is_on_host:
+                return self._host_split(ctx, histogram_statistic_result, cur_layer_node)
+            else:
+                raise ValueError("illegal role {}".format(ctx.role))

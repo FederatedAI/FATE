@@ -1,8 +1,5 @@
-from transformers.training_args import TrainingArguments
-from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, TrainingArguments
+from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
-from dataclasses import field
-from dataclasses import dataclass, field
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Callable, Union
 from fate.arch import Context

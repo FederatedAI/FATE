@@ -36,6 +36,17 @@ public class JsonUtil {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
+    }
+
+    public static boolean validateJson(String json){
+        try {
+            mapper.readTree(json);
+        } catch (Exception  e) {
+
+            return false;
+        }
+        return true;
     }
 
     public static String object2Json(Object o) {

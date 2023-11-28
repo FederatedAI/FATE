@@ -29,9 +29,11 @@ public class ErTask extends BaseProto<Meta.Task> {
     List<ErPartition> inputs = new ArrayList<>();
     List<ErPartition> outputs = new ArrayList<>();
     ErJob job;
-    public ErTask(){
+
+    public ErTask() {
 
     }
+
     public ErTask(String id, String name, List<ErPartition> inputs, List<ErPartition> outputs, ErJob erJob) {
         this.id = id;
         this.name = name;

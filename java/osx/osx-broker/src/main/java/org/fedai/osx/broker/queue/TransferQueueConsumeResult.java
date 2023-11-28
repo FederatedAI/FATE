@@ -3,6 +3,7 @@ package org.fedai.osx.broker.queue;
 import lombok.Data;
 import org.fedai.osx.broker.message.MessageExt;
 import org.fedai.osx.broker.message.SelectMappedBufferResult;
+
 @Data
 public class TransferQueueConsumeResult {
 

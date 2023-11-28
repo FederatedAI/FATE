@@ -42,7 +42,7 @@ def create_ctx(local):
 if __name__ == "__main__":
     party = sys.argv[1]
     max_depth = 3
-    num_tree = 20
+    num_tree = 10
     from sklearn.metrics import roc_auc_score as auc
 
     if party == "guest":
@@ -69,6 +69,7 @@ if __name__ == "__main__":
         from sklearn.metrics import mean_squared_error
 
         print(mean_squared_error(pred.predict_score, pred.label))
+        print((pred.predict_score - pred_.predict_score).sum())
 
     elif party == "host":
         ctx = create_ctx(host)

@@ -9,5 +9,5 @@ public class MessageEvent {
     String srcComponent;
     String desComponent;
     String topic;
-    String sessionId ;
+    String sessionId;
 }
