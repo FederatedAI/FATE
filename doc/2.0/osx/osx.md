@@ -278,7 +278,9 @@ eggroll.cluster.manager.port = 4670
 
 ### 证书相关：
 
-#### OSX相关配置：
+1） 方式一：使用keystore密码箱存储私钥、证书、信任证书方式（PS：生成证书命令详情文件：[osx-tls.md](./osx-tls.md)）
+
+OSX相关配置：
 
 - grpcs：
 
@@ -289,26 +291,27 @@ eggroll.cluster.manager.port = 4670
   open.grpc.tls.server= true
   # 是否使用keystore方式（默认为false）
   open.grpc.tls.use.keystore= true
-  #server端密码箱路径以及密码
+  # server端密码箱路径以及密码
   server.keystore.file=
   server.keystore.file.password=
-  #server端信任证书keystore路径及密码
+  # server端信任证书keystore路径及密码
   server.trust.keystore.file=
   server.trust.keystore.file.password=
   
   ```
 
-  相关client端路由表配置：
+  相关client端路由表配置，在对应的partyid下面添加如下内容：
 
   ```
   "default": [
           {
             "protocol": "grpc",
-            "keyStoreFile": "D:/webank/osx/test3/client/identity.jks",
-            "keyStorePassword": "123456",
-            "trustStoreFile": "D:/webank/osx/test3/client/truststore.jks",
-            "trustStorePassword": "123456",
+            "keyStoreFile": "私钥密码箱绝对路径",
+            "keyStorePassword": "私钥密码箱密码",
+            "trustStoreFile": 信任证书绝对路径",
+            "trustStorePassword": "信任证书密码",
             "useSSL": true,
+            "useKeyStore" : true,
             "port": 9885,
             "ip": "127.0.0.1"
           }
@@ -324,32 +327,42 @@ eggroll.cluster.manager.port = 4670
   ```
   # grpcs端口
   https.port=8092
-  # 打开grpcs server开关
+  # 打开https server开关
   open.https.server= true
+  # keystore 类型
+  http.ssl.trust.store.type=JKS
   # server端密码箱路径以及密码
-  server.keystore.file=
-  server.keystore.file.password=
+  http.ssl.key.store.path=
+  http.ssl.key.store.password=
   # server端信任证书keystore路径及密码
-  server.trust.keystore.file=
-  server.trust.keystore.file.password=
+  http.ssl.trust.store.path=
+  http.ssl.trust.store.password=
   
   ```
   
   相关client端路由表配置：
   
   ```
-  
+  "default": [
+          {
+            "protocol": "http",
+            "url": "https://127.0.0.1:8092/v1/interconn/chan/invoke",
+            "certChainFile": "E:/githubProject/osx3/osx-broker/src/test/resources/cert4test/client.crt",
+            "privateKeyFile": "E:/githubProject/osx3/osx-broker/src/test/resources/cert4test/client.pem",
+            "caFile": "E:/githubProject/osx3/osx-broker/src/test/resources/cert4test/ca.crt",
+            "useSSL": true,
+            "useKeyStore" : false,
+            "port": 8092,
+            "ip": "127.0.0.1"
+          }
+        ]
   ```
   
   
 
-2）方式二：单独文件存储私钥、证书、信任证书方式
+2）方式二：单独文件存储私钥、证书、信任证书方式（PS：生成证书命令详情文件：[osx-tls.md](./osx-tls.md)）
 
-​	生成命令：
-
-​	
-
-#### OSX相关配置：
+ OSX相关配置：
 
 - grpcs：
 
