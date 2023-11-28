@@ -140,7 +140,7 @@ public class ProduceService extends AbstractServiceAdaptorNew<ProduceRequest, Pr
         }
         if(produceRequest==null){
             logger.error("invalid produce request {}",object.getClass());
-            throw new InvalidRequestException("invalid request for produce msg");
+            throw new InvalidRequestException();
         }
         return produceRequest;
     }

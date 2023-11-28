@@ -249,11 +249,6 @@ public class MetaInfo {
     public static Integer PROPERTY_ROUTER_CHECK_INTERVAL= 300000;
     @Config(confKey = "channel.pool.info")
     public static Integer PROPERTY_CHANNEL_POOL_INFO = 30000;
-    @Config(confKey = "router.change.need.token")
-    public static Boolean PROPERTY_ROUTER_CHANGE_NEED_TOKEN= false;
-    @Config(confKey = "router.change.token.validator")
-    public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR= Dict.DEFAULT;
-
 
     public static boolean isCluster() {
         return PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name());

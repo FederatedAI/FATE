@@ -57,7 +57,7 @@ public abstract class AutoRefreshDataSource<S, T> extends AbstractDataSource<S, 
                     T newValue = loadConfig();
                     getProperty().updateValue(newValue);
                 } catch (Throwable e) {
-                    logger.error("load route_table.json exception", e);
+                    logger.info("loadConfig exception", e);
                 }
             }
         }, recommendRefreshMs, recommendRefreshMs, TimeUnit.MILLISECONDS);
