@@ -74,14 +74,27 @@ FATE1.X维护了多套通信架构，包括eggroll、spark+pulsar+nginx 、spark
 
 
 
+
+
+
+
+#### 传输模式：
+
+osx 支持两种传输模式：
+
+- 流式（支持grpc，兼容FATE1.x版本传输，使用eggroll作为计算引擎）
+- 队列（支持grpc、http1.x ，可以使用eggroll或者spark以及其他厂商计算引擎，按照《金融业隐私计算互联互通平台技术规范》实现的传输接口，推荐使用grpc协议，不同协议对应的路由表配置不一样，详情可见路由相关配置 ）
+
+不同的传输模式使用不同的传输接口 ， 不需要在 osx中配置中指定，而是由FATE的配置决定，有多个参与方的情况下，双方需要预先商定使用的传输模式，只有在双方都使用一种传输模式的情况下才能正常工作。
+
+
+
 ## 配置：
 
 以下为osx最简配置,配置文件位于 {部署目录}/conf/broker/broker.properties
 
 ```properties
 grpc.port= 9377   （服务监听的grpc端口）
-# eg: 9999,10000,10001 （本方partyId, 对应于互联互通协议中的nodeId）
-self.party=10000  
 # （若使用eggroll作为计算引擎，此处填入eggroll cluster-manager 的ip）
 eggroll.cluster.manager.ip = localhost
 # （若使用eggroll作为计算引擎，此处填入eggroll cluster-manager 的端口）
@@ -93,7 +106,7 @@ eggroll.cluster.manager.port = 4670
 | 名称                                           | 含义                                                         | 默认值               | 是否必须配置                        | 说明                                                         |
 | ---------------------------------------------- | ------------------------------------------------------------ | -------------------- | ----------------------------------- | ------------------------------------------------------------ |
 | grpc.port                                      | 服务监听grpc端口（非TLS）                                    | 9370                 | 否                                  | 该端口用做默认的集群内部通信端口 ，若是用于非生产环境，出于方便测试以及调试考虑，可以将此端口作为集群间通信端口。若是生产环境使用，出于安全考虑，不应该将此对外暴露，而是将使用TLS 的端口对外暴露 ，参考配置open.grpc.tls.server grpc.tls.port |
-| self.party                                     | 本方partyId                                                  | 无                   | 是                                  | **此配置非常重要，需要在部署集群前确定己方partyId，此处的配置会影响请求是否能正确路由** |
+|                                                |                                                              |                      |                                     |                                                              |
 | eggroll.cluster.manager.ip                     | 若使用eggroll作为计算引擎，此处填入eggroll cluster-manager 的ip | 无                   | 否                                  |                                                              |
 | eggroll.cluster.manager.port                   | 若使用eggroll作为计算引擎，此处填入eggroll cluster-manager 的端口 | 无                   | 否                                  |                                                              |
 | open.grpc.tls.server                           | 是否开启使用TLS的grpc端口                                    | false                | 否                                  | 开启之后，服务将会监听一个使用TLS的grpc端口                  |
@@ -122,17 +135,11 @@ eggroll.cluster.manager.port = 4670
 
 ## 路由：
 
-路由配置相关文件为{部署目录}/conf/broker/route_table.json ,与eggroll组件rollsite保持一致，下面介绍在不使用证书的情况下的操作步骤：
+路由配置相关文件为{部署目录}/conf/broker/route_table.json ，下面介绍在不使用证书的情况下的操作步骤：
 
-先检查{部署目录}/conf/broker/broker.properties 中配置 self.party,如下所示，则代表本方partyId为9999，（若是与遵循互联互通协议的其他厂商隐私计算产品对接，此处对应于互联互通协议的nodeId）
+，self_party=[“9999”]则代表本方partyId为9999，（若是与遵循互联互通协议的其他厂商隐私计算产品对接，此处对应于互联互通协议的nodeId）
 
-```
-self.party=9999
-```
-
-
-
-**若发现该配置不符合预期，则需要修改成预期的partyId，并重启应用。**
+****
 
 本方partyId ：9999  （若是与遵循互联互通协议的其他厂商隐私计算产品对接，此处对应于互联互通协议的nodeId）
 
@@ -159,14 +166,14 @@ self.party=9999
 
     }
   },
-  "permission":
-  {
-    "default_allow": true
-  }
+  // self_party 为必填字段
+	"self_party":[
+		"9999"   //本方partyId 
+	]
 }
 ```
 
-**路由表修改之后不需要重启应用，系统会自动读取。**
+**路由表修改之后不需要重启应用，系统会自动读取，需要保证该文件内容为可解析的json格式，否则会解析失败。**
 
 ## 
 
@@ -189,11 +196,83 @@ self.party=9999
 
 
 
-### 日志分析：
+### 日志分析
 
+默认日志目录位于安装目录下 logs/broker 文件夹下，如下图所示
 
+![alllog](../images/alllog.png)
 
+   flow.log  ： 记录请求日志 
 
+   broker.log ： 记录所有日志
+
+   broker-error:  记录异常日志
+
+   broker-debug: debug日志默认不开启
+
+正常启动后可以在broker.log中看到如下日志：
+
+![start](../images/start.png)
+
+在收到请求后可以在flow.log中看到访问日志：
+
+例如取其中几条日志分析
+
+- 日志1
+
+```
+2023-11-27 23:53:42,320|grpc|1701100422_1009|MSG_REDIRECT|session:202311271901517083180_lr_0_0|topic:202311271901517083180_lr_0_0-host-10000-guest-9999-<dtype>-<dtype>|des:9999|code:E0000000000|cost:1|192.168.0.5:9370|size:224|msg:success
+```
+
+这条日志为使用队列模式传输时，osx收到了消息，且该osx不是该消息目的地时的日志，收到消息后osx采取的动作为MSG_REDIRECT，代表着将该消息传递至其他合作方。
+
+它的格式为 时间戳|请求入口协议|流水号|处理动作|此次传输的sessionId|队列传输的topic|目的地partyId|返回码|耗时|目的地ip端口|传输数据大小|返回message
+
+- 日志2
+
+```
+**2023-11-27 23:53:36,574|grpc|1701100416_9289|MSG_DOWNLOAD|session:202311271901517083180_lr_0_0|topic:202311271901517083180_lr_0_0-arbiter-10000-host-10000-g|offset-in-queue:100|des:10000|code:E0000000000|cost:0|size:2972|
+```
+
+这条日志为使用队列模式传输时，osx收到了消息，且该osx是该消息目的地时的日志，收到消息后osx采取的动作为MSG_DOWNLOAD，代表着将该消息本地持久化
+
+它的格式为 时间戳|请求入口协议|流水号|处理动作|此次传输的sessionId|队列传输的topic|队列中消息数量|目的地partyId|返回码|耗时|数据大小|
+
+- 日志3
+
+```
+2023-11-27 23:53:36,576|grpc|1701100416_7277|DEFUALT_CONSUME|session:202311271901517083180_lr_0_0|topic:202311271901517083180_lr_0_0-guest-9999-arbiter-10000-loss|req-offset:100|offset-in-queue:100|code:0|cost:0|
+```
+
+这条日志为使用队列模式传输时，osx收到了消费请求，osx采取的动作为DEFUALT_CONSUME，代表着从本地队列取出消息
+
+它的格式为 时间戳|请求入口协议|流水号|处理动作|此次传输的sessionId|队列传输的topic|请求消费的序列号|队列中消息总数|返回码|耗时|
+
+- 日志4
+
+```
+2023-11-27 23:54:23,318|grpc|UNARY_CALL|session:_fateflow_10000|topic:202311271901517083180|src:|des:10000|code:E0000000000|cost:18|172.16.153.111:9360|size:320|
+```
+
+这条日志为osx收到fateflow的请求，osx采取的动作为UNARY_CALL，代表着为fateflow所使用的接口
+
+它的格式为 时间戳|请求入口协议|处理动作|此次传输的sessionId|topic|来源partid|目的partyId|返回码|目的地ip端口|数据大小|
+
+- 日志5
+
+```
+2023-11-27 23:44:44,128|grpc|11|PUSH_REMOTE|session:202311271453035771030_sbt_0_0|topic:putBatch-__rsk#202311271453035771030_sbt_0_0#updated_data__table_persistent_0__#default.iterations-49.iterations-4#host#10000#guest#9999-12|src:10000|des:9999|code:E0000000000|cost:0|192.168.0.5:9370|size:90536|
+```
+
+这条日志为osx 在使用流式传输模式时，收到了流式传输请求，且osx不是该请求目的地，osx采取的动作为PUSH_REMOTE，代表着为将其请求转发至他处，其中的192.168.0.5:9370为目的地
+
+- 日志6
+
+```
+2023-11-27 23:44:47,703|grpc|3|PUSH_EGGPAIR|session:202311271453035771030_sbt_0_0_host_10000|topic:putBatch-__rsk#202311271453035771030_sbt_0_0#new_sample_pos__table_persistent_0__#default.iterations-49.iterations-4#guest#9999#host#10000-1|code:E0000000000|cost:152|192.168.0.5:36110|size:98080|
+```
+
+这条日志为osx 在使用流式传输模式时，收到了流式传输请求，且osx为该请求目的地，osx采取的动作为PUSH_EGGPAIR，代表着为将其请求转发至eggroll 所启动的进程 eggpair，其中的192.168.0.5:36110为目的地
 
 
 
