@@ -59,7 +59,7 @@ public class ServiceRegisterManager implements ApplicationStartedRunner {
         if (services != null && services.size() > 0) {
             result = services.get((int) (now % services.size()));
             if (interInvoke && result.isAllowInterUse()) {
-                throw new InvalidRequestException("invalid request");
+                throw new InvalidRequestException();
             }
         }
         return result;

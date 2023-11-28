@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -60,5 +59,4 @@ case "$1" in
     *)
         echo "usage: $0 {start|stop|status|restart}"
         exit 1
-
 esac
