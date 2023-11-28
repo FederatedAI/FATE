@@ -284,19 +284,18 @@ OSX相关配置：
 
 - grpcs：
 
-  broker.property配置（使用keystore方式，即方式1）：
+  server端broker.property配置（使用keystore方式，即方式1）：
 
   ```
-  # 打开grpcs server开关
+  # 打开grpcs server开关，并指定grpcs端口
+  grpc.tls.port=9371
   open.grpc.tls.server= true
-  # 是否使用keystore方式（默认为false）
-  open.grpc.tls.use.keystore= true
   # server端密码箱路径以及密码
-  server.keystore.file=
-  server.keystore.file.password=
+  grpc.server.keystore.file=
+  grpc.server.keystore.file.password=
   # server端信任证书keystore路径及密码
-  server.trust.keystore.file=
-  server.trust.keystore.file.password=
+  grpc.server.trust.keystore.file=
+  grpc.server.trust.keystore.file.password=
   
   ```
 
@@ -318,42 +317,39 @@ OSX相关配置：
         ]
   ```
 
-  
-
 - https：
 
-  broker.property配置（使用keystore方式，即方式1）：
+  server端broker.property配置（使用keystore方式，即方式1）：
 
   ```
-  # grpcs端口
+  # https端口
   https.port=8092
   # 打开https server开关
   open.https.server= true
   # keystore 类型
   http.ssl.trust.store.type=JKS
-  # server端密码箱路径以及密码
-  http.ssl.key.store.path=
-  http.ssl.key.store.password=
-  # server端信任证书keystore路径及密码
-  http.ssl.trust.store.path=
-  http.ssl.trust.store.password=
+  # https server端密码箱路径以及密码
+  https.server.keystore.file=
+  https.server.keystore.file.password=
+  # https server端信任证书keystore路径及密码
+  https.server.trust.keystore.file=
+  https.server.trust.keystore.file.password=
   
   ```
   
-  相关client端路由表配置：
+  相关client端路由表配置，在对应的partyid下面添加如下内容：
   
   ```
   "default": [
           {
             "protocol": "http",
-            "url": "https://127.0.0.1:8092/v1/interconn/chan/invoke",
-            "certChainFile": "E:/githubProject/osx3/osx-broker/src/test/resources/cert4test/client.crt",
-            "privateKeyFile": "E:/githubProject/osx3/osx-broker/src/test/resources/cert4test/client.pem",
-            "caFile": "E:/githubProject/osx3/osx-broker/src/test/resources/cert4test/ca.crt",
+            "url": "https://ip:8092/v1/interconn/chan/invoke",
+            "keyStoreFile": "私钥密码箱绝对路径",
+            "keyStorePassword": "私钥密码箱密码",
+            "trustStoreFile": 信任证书绝对路径",
+            "trustStorePassword": "信任证书密码",
             "useSSL": true,
-            "useKeyStore" : false,
-            "port": 8092,
-            "ip": "127.0.0.1"
+            "useKeyStore" : true,
           }
         ]
   ```
@@ -366,41 +362,73 @@ OSX相关配置：
 
 - grpcs：
 
-  broker.property配置（使用非keystore方式，即方式2）：
+  server端broker.property配置（使用非keystore方式，即方式2）：
 
   ```
-  # 打开grpcs server开关
+  # 打开grpcs server开关，并指定grpcs端口
+  grpc.tls.port=9371
   open.grpc.tls.server= true
-  # 是否使用keystore方式
-  open.grpc.tls.use.keystore= false
-  
-  
-  
+  # server端公钥
+  grpc.server.cert.chain.file=
+  # sever端私钥
+  grpc.server.private.key.file=
+  # 信任证书
+  grpc.server.ca.file=
   
   ```
 
-  相关client端路由表配置：
+  相关client端路由表配置，在对应的partyid下面添加如下内容：
 
   ```
-  
+  "default": [
+          {
+            "protocol": "grpc",
+            "certChainFile": "公钥",
+            "privateKeyFile": "私钥",
+            "caFile": "信任证书",
+            "useSSL": true,
+            "useKeyStore" : false,
+            "port": 9371,
+            "ip": "127.0.0.1"
+          }
+        ]
   ```
 
   
 
 - https：
 
-  broker.property配置（使用非keystore方式，即方式2）：
+  server端broker.property配置（使用非keystore方式，即方式2）：
 
+  ```
+  # https端口
+  https.port=8092
+  # 打开https server开关
+  open.https.server= true
+  # server端公钥
+  https.server.cert.chain.file=
+  # sever端私钥
+  https.server.private.key.file=
+  # 信任证书
+  https.server.ca.file=
   ```
   
-  ```
-
-  相关client端路由表配置：
-
-  ```
+  相关client端路由表配置，在对应的partyid下面添加如下内容：
   
   ```
-
+  "default": [
+          {
+            "protocol": "http",
+            "url": "https://ip:8092/v1/interconn/chan/invoke",
+            "certChainFile": "公钥",
+            "privateKeyFile": "私钥",
+            "caFile": "信任证书",
+            "useSSL": true,
+            "useKeyStore" : false,
+          }
+        ]
+  ```
+  
   
 
 

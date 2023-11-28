@@ -82,7 +82,7 @@ public class MetaInfo {
     @Config(confKey = "grpc.client.max.connection.idle", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_CLIENT_MAX_CONNECTION_IDLE_SEC = 86400;
     @Config(confKey = "grpc.client.per.rpc.buffer.limit", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT =  (2 << 30) - 1;
+    public static Integer PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT = (2 << 30) - 1;
     @Config(confKey = "grpc.client.retry.buffer.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE = 86400;
     @Config(confKey = "transfer.cached.msgid.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -90,7 +90,7 @@ public class MetaInfo {
     @Config(confKey = "grpc.ssl.session.timeout", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_SSL_SESSION_TIME_OUT = 3600 << 4;
     @Config(confKey = "grpc.ssl.open.client.validate", pattern = Dict.BOOLEAN_PATTERN)
-    public  static Boolean  PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE=  false;
+    public static Boolean PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE = false;
     @Config(confKey = "grpc.ssl.session.cache.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE = 65536;
     @Config(confKey = "mapped.file.expire.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -98,10 +98,9 @@ public class MetaInfo {
     @Config(confKey = "mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer MAP_FILE_SIZE = 1 << 27;
     @Config(confKey = "mapped.file.dir")
-    public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped"+ File.separator+".fate"+ File.separator+"transfer_file";
+    public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped" + File.separator + ".fate" + File.separator + "transfer_file";
     @Config(confKey = "index.mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_INDEX_MAP_FILE_SIZE = 1 << 21;
-
     @Config(confKey = "https.server.cert.chain.file")
     public static String PROPERTY_HTTPS_SERVER_CERT_CHAIN_FILE;
     @Config(confKey = "https.server.private.key.file")
@@ -109,14 +108,13 @@ public class MetaInfo {
     @Config(confKey = "https.server.ca.file")
     public static String PROPERTY_HTTPS_SERVER_CA_FILE;
     @Config(confKey = "https.server.keystore.file")
-    public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE= "";
+    public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE = "";
     @Config(confKey = "https.server.keystore.file.password")
-    public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD= "";
+    public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD = "";
     @Config(confKey = "https.server.trust.keystore.file")
-    public static String PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE= "";
+    public static String PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE = "";
     @Config(confKey = "https.server.trust.keystore.file.password")
-    public static String PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD= "";
-
+    public static String PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD = "";
     @Config(confKey = "grpc.server.cert.chain.file")
     public static String PROPERTY_GRPC_SERVER_CERT_CHAIN_FILE;
     @Config(confKey = "grpc.server.private.key.file")
@@ -150,9 +148,9 @@ public class MetaInfo {
     @Config(confKey = "use.remote.health.check", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_USE_REMOTE_HEALTH_CHECK = true;
     @Config(confKey = "http.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTP_PORT=8807;
+    public static Integer PROPERTY_HTTP_PORT = 8807;
     @Config(confKey = "https.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_HTTPS_PORT=8809;
+    public static Integer PROPERTY_HTTPS_PORT = 8809;
     @Config(confKey = "open.http.server", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_OPEN_HTTP_SERVER = true;
     @Config(confKey = "open.https.server", pattern = Dict.BOOLEAN_PATTERN)
@@ -198,7 +196,7 @@ public class MetaInfo {
     @Config(confKey = "queue.max.free.time", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_QUEUE_MAX_FREE_TIME = 60 * 60 * 1000 * 12;
     @Config(confKey = "queue.check.interval", pattern = Dict.POSITIVE_INTEGER_PATTERN)
-    public static Integer PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 5*60 * 1000;
+    public static Integer PROPERTY_TRANSFER_QUEUE_CHECK_INTERVAL = 5 * 60 * 1000;
     public static String INSTANCE_ID = NetUtils.getLocalHost() + "_" + MetaInfo.PROPERTY_GRPC_PORT;
     @Config(confKey = "flow.print.uri", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_PRINT_URI = false;
@@ -252,13 +250,13 @@ public class MetaInfo {
     @Config(confKey = "open.mock.eggpair")
     public static Boolean PROPERTY_OPEN_MOCK_EGGPAIR = false;
     @Config(confKey = "router.check.interval")
-    public static Integer PROPERTY_ROUTER_CHECK_INTERVAL= 300000;
+    public static Integer PROPERTY_ROUTER_CHECK_INTERVAL = 300000;
     @Config(confKey = "channel.pool.info")
     public static Integer PROPERTY_CHANNEL_POOL_INFO = 30000;
     @Config(confKey = "router.change.need.token")
-    public static Boolean PROPERTY_ROUTER_CHANGE_NEED_TOKEN= false;
+    public static Boolean PROPERTY_ROUTER_CHANGE_NEED_TOKEN = false;
     @Config(confKey = "router.change.token.validator")
-    public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR= Dict.DEFAULT;
+    public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR = Dict.DEFAULT;
 
 
     public static boolean isCluster() {
@@ -319,6 +317,7 @@ public class MetaInfo {
             }
         });
     }
+
     public static Map toMap() {
         Map result = Maps.newHashMap();
         Field[] fields = MetaInfo.class.getFields();
