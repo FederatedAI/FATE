@@ -11,6 +11,7 @@ import org.fedai.osx.broker.token.TokenValidator;
 import org.fedai.osx.broker.token.TokenValidatorRegister;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.ActionType;
+import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
@@ -48,7 +49,9 @@ public class RouterTableSetService extends AbstractServiceAdaptorNew<RouterTable
         RouterService routerService = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         Preconditions.checkArgument(data!=null&& StringUtils.isNotEmpty(data.getData()));
         routerService.setRouterTable(data.getData());
-        return new  RouterTableSetResponse();
+        RouterTableSetResponse response = new  RouterTableSetResponse();
+        response.setCode(StatusCode.PTP_SUCCESS);
+        return response;
     }
 
     @Override
@@ -61,7 +64,11 @@ public class RouterTableSetService extends AbstractServiceAdaptorNew<RouterTable
     @Override
     public RouterTableSetRequest decode(Object object) {
         if(object instanceof  String){
-            return JsonUtil.json2Object(object.toString(),RouterTableSetRequest.class);
+            RouterTableSetRequest result =  JsonUtil.json2Object(object.toString(),RouterTableSetRequest.class);
+            if(result==null){
+                throw new ParameterException("invalid param for router operation");
+            }
+            return  result;
         }
         throw new ParameterException("invalid param");
     }

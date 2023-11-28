@@ -67,8 +67,26 @@ public class RouterSetTest {
         }
     }
 
+//    curl --location 'http://localhost:8807/v1/inner/router/add' --header 'Content-Type: application/json' --data '{
+//            "desPartyId": "1234",
+//            "ip": "localhost",
+//            "port": "9999"
+//
+//}'
+//
+//    curl --location 'http://localhost:8807/v1/inner/router/get' --header 'Content-Type: application/json'  --data '{
+//}'
+//
+//    curl --location 'http://localhost:8807/v1/inner/router/self' --header 'Content-Type: application/json' --data '{
+//            "selfParty": ["xxxxx"]
+//}'
+
+
+
+
+
     @Test
-    public void testSetRouter() {
+    public void testAddRouter() {
         RouterAddRequest routerInfo = new RouterAddRequest();
         routerInfo.setDesPartyId("3479");
         routerInfo.setIp("localhost");

@@ -489,7 +489,9 @@ public class FateTechProvider implements TechProvider {
         try {
             context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
             byte[] payload = TransferUtil.read(httpServletRequest.getInputStream());
-            String content = new String(payload);
+            String content="";
+            if(payload!=null)
+                 content = new String(payload);
             ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", context.getUri(), false);
             Preconditions.checkArgument(serviceRegisterInfo!=null,"uri : " +context.getUri()+" can not found service ");
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();
