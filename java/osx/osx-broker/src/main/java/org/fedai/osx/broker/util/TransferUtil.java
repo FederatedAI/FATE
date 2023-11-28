@@ -407,7 +407,7 @@ public class TransferUtil {
                 inbound = inboundBuilder.build();
             }
             if(inbound==null){
-                throw new InvalidRequestException("invalid request");
+                throw new InvalidRequestException();
             }
 
             context.setDataSize(inbound.getSerializedSize());
