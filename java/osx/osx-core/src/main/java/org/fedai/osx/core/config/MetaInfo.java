@@ -140,7 +140,7 @@ public class MetaInfo {
     @Config(confKey = "https.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTPS_PORT=8809;
     @Config(confKey = "open.http.server", pattern = Dict.BOOLEAN_PATTERN)
-    public static Boolean PROPERTY_OPEN_HTTP_SERVER = false;
+    public static Boolean PROPERTY_OPEN_HTTP_SERVER = true;
     @Config(confKey = "open.https.server", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_HTTP_USE_TLS = false;
     @Config(confKey = "http.server.acceptor.num", pattern = Dict.POSITIVE_INTEGER_PATTERN)

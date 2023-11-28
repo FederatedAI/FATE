@@ -46,11 +46,10 @@ public class SelfPartySetService extends AbstractServiceAdaptorNew<SetSelfPartyR
             }
         }
         Preconditions.checkArgument(data!=null&&data.getSelfParty()!=null,"self_party is null");
-
         RouterService routerService =routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         routerService.setSelfPartyIds(data.getSelfParty());
         SetSelfPartyResponse  response =  new SetSelfPartyResponse();
-        response.setCode(StatusCode.SUCCESS);
+        response.setCode(StatusCode.PTP_SUCCESS);
         return response;
     }
 
@@ -65,7 +64,11 @@ public class SelfPartySetService extends AbstractServiceAdaptorNew<SetSelfPartyR
     @Override
     public SetSelfPartyRequest decode(Object object) {
         if(object instanceof  String){
-           return  JsonUtil.json2Object(object.toString(),SetSelfPartyRequest.class);
+            SetSelfPartyRequest  result =  JsonUtil.json2Object(object.toString(),SetSelfPartyRequest.class);
+            if(result==null||result.getSelfParty()==null||result.getSelfParty().size()==0){
+                throw new ParameterException("invalid param for router operation");
+            }
+            return  result;
         }
         throw new ParameterException("invalid param for set self party");
     }

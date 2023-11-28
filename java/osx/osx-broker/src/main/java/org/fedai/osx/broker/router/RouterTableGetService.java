@@ -9,6 +9,7 @@ import org.fedai.osx.broker.token.TokenValidator;
 import org.fedai.osx.broker.token.TokenValidatorRegister;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.ActionType;
+import org.fedai.osx.core.constant.StatusCode;
 import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
@@ -25,14 +26,11 @@ import static org.fedai.osx.core.config.MetaInfo.PROPERTY_ROUTER_CHANGE_TOKEN_VA
 @Register(uris ={UriConstants.HTTP_GET_ROUTER  ,},allowInterUse = false)
 public class RouterTableGetService extends AbstractServiceAdaptorNew<RouterTableGetRequest, RouterTableGetResponse>
     {
-
         Logger logger  = LoggerFactory.getLogger(RouterTableGetService.class);
-
         @Inject
         RouterServiceRegister routerServiceRegister;
         @Inject
         TokenValidatorRegister  tokenValidatorRegister;
-
 
         @Override
         protected RouterTableGetResponse doService(OsxContext context, RouterTableGetRequest data) {
@@ -48,6 +46,7 @@ public class RouterTableGetService extends AbstractServiceAdaptorNew<RouterTable
         RouterService routerService = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         RouterTableGetResponse response =     new  RouterTableGetResponse();
         response.setContent(routerService.getRouterTable());
+        response.setCode(StatusCode.PTP_SUCCESS);
         return response;
         }
 
@@ -61,7 +60,11 @@ public class RouterTableGetService extends AbstractServiceAdaptorNew<RouterTable
         @Override
         public RouterTableGetRequest decode(Object object) {
         if(object instanceof  String){
-            return JsonUtil.json2Object(object.toString(),RouterTableGetRequest.class);
+            RouterTableGetRequest result =  JsonUtil.json2Object(object.toString(),RouterTableGetRequest.class);
+            if(result==null){
+                throw new ParameterException("invalid param for router operation");
+            }
+            return  result;
         }
         throw new ParameterException("invalid param");
     }

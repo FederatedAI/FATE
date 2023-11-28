@@ -7,9 +7,17 @@
 					"ip":"localhost"
 				}
 			]
+		},
+		"1234":{
+			"default":[
+				{
+					"port":9999,
+					"ip":"localhost"
+				}
+			]
 		}
 	},
 	"self_party":[
-		"9999"
+		"xxxxx"
 	]
 }
