@@ -17,6 +17,7 @@ def _is_tracing_enabled():
 def setup_tracing(service_name, endpoint: str = None):
     if not _is_tracing_enabled():
         return
+
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.trace import TracerProvider

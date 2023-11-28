@@ -25,7 +25,7 @@ def mul(input, other):
 
 def _create_meta_tensor(x):
     if isinstance(x, (torch.Tensor, DTensor)):
-        return torch.rand(*x.shape, device=torch.device("meta"), dtype=x.dtype)
+        return torch.zeros(*x.shape, device=torch.device("meta"), dtype=x.dtype)
     else:
         return torch.tensor(x, device=torch.device("meta"))
 

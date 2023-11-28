@@ -71,7 +71,7 @@ from .module import (
     Unsqueeze,
     Where,
 )
-from .onnx_converter import from_onnx, from_pytorch, from_tensorflow, TF_AND_TF2ONNX
+# from .onnx_converter import from_onnx, from_pytorch, from_tensorflow, TF_AND_TF2ONNX
 
 # expose contents of package
 __all__ = [  # noqa: F405
@@ -107,9 +107,9 @@ __all__ = [  # noqa: F405
     "Exp",
     "Expand",
     "Flatten",
-    "from_pytorch",
-    "from_onnx",
-    "from_tensorflow",
+    # "from_pytorch",
+    # "from_onnx",
+    # "from_tensorflow",
     "Gather",
     "Gemm",
     "GlobalAveragePool",
@@ -142,7 +142,7 @@ __all__ = [  # noqa: F405
     "Squeeze",
     "Sub",
     "Sum",
-    "TF_AND_TF2ONNX",
+    # "TF_AND_TF2ONNX",
     "Transpose",
     "Unsqueeze",
     "Where",

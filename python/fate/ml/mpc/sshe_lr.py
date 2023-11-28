@@ -1,5 +1,6 @@
 import logging
 
+import torch
 
 from fate.arch import Context
 from ..abc.module import Module
@@ -21,7 +22,7 @@ class SSHELogisticRegression(Module):
         rank_a, rank_b = ctx.hosts[0].rank, ctx.guest.rank
         y = ctx.mpc.cond_call(lambda: input_data.label.as_tensor(), lambda: None, dst=rank_b)
         h = input_data.as_tensor()
-        # generator = torch.Generator().manual_seed(0)
+
         layer = SSHELogisticRegressionLayer(
             ctx,
             in_features_a=ctx.mpc.option_call(lambda: h.shape[1], dst=rank_a),
@@ -29,15 +30,19 @@ class SSHELogisticRegression(Module):
             out_features=1,
             rank_a=rank_a,
             rank_b=rank_b,
-            # generator=generator,
+            wa_init_fn=lambda shape: torch.rand(shape),
+            wb_init_fn=lambda shape: torch.rand(shape),
         )
+
         loss_fn = SSHELogisticRegressionLossLayer(ctx, rank_a=rank_a, rank_b=rank_b)
         optimizer = SSHEOptimizerSGD(ctx, layer.parameters(), lr=self.lr)
 
-        for i in range(20):
+        for i in range(1):
             z = layer(h)
             loss = loss_fn(z, y)
             if i % 3 == 0:
                 logger.info(f"loss: {loss.get()}")
             loss.backward()
             optimizer.step()
+            wa = layer.wa.get_plain_text()
+            wb = layer.wb.get_plain_text()
