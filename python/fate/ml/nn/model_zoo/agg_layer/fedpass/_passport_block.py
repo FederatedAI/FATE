@@ -16,7 +16,6 @@ def _get_activation(activation):
         raise ValueError(f"Unsupported activation: {activation}")
 
 
-
 class PassportBlock(nn.Module):
 
     def __init__(self, passport_distribute: Literal['gaussian', 'uniform'], passport_mode: Literal['single', 'multi']):

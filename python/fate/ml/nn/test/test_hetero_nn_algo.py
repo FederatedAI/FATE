@@ -95,7 +95,6 @@ if __name__ == "__main__":
             training_args=args
         )
         trainer.train()
-        print('cwj done')
         # pred = trainer.predict(dataset)
         # # compute auc
         # from sklearn.metrics import roc_auc_score

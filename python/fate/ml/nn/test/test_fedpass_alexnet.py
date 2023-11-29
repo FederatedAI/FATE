@@ -172,29 +172,24 @@ if __name__ == '__main__':
     set_seed(42)
 
 
-    # 1. 加载数据
     train_data = torchvision.datasets.CIFAR10(root='./cifar10',
                                             train=True,
                                             download=True,
                                             transform=torchvision.transforms.ToTensor())
 
-    # 2. 为每个数字保存其索引
     digit_indices = [[] for _ in range(10)]
     for idx, (_, label) in enumerate(train_data):
         digit_indices[label].append(idx)
 
-    # 3. 从每个数字的索引中随机选择300个样本作为训练集
     selected_train_indices = []
     for indices in digit_indices:
         selected_train_indices.extend(torch.randperm(len(indices))[:500].tolist())
 
-    # 4. 从剩下的索引中随机选择100个样本作为验证集
     selected_val_indices = []
     for indices in digit_indices:
         remaining_indices = [idx for idx in indices if idx not in selected_train_indices]
         selected_val_indices.extend(torch.randperm(len(remaining_indices))[:100].tolist())
 
-    # 5. 使用Subset获取训练集和验证集
     subset_train_data = torch.utils.data.Subset(train_data, selected_train_indices)
     subset_val_data = torch.utils.data.Subset(train_data, selected_val_indices)
 
