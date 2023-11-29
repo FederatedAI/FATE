@@ -42,7 +42,7 @@ def main(config="../../config.yaml", namespace=""):
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     conf = get_config_of_default_runner(
         algo='fedavg',
@@ -65,8 +65,8 @@ def main(config="../../config.yaml", namespace=""):
         runner_conf=conf
     )
 
-    homo_nn_0.guest.component_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
+    homo_nn_0.guest.task_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
+    homo_nn_0.hosts[0].task_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     homo_nn_1 = HomoNN(
         'nn_1',

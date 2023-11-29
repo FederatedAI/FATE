@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
 public class FileUtils {
+
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
     public static boolean writeFile(String context, File target) {

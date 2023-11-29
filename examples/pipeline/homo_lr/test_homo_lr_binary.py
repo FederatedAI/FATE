@@ -12,7 +12,7 @@ def main(config="../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     homo_lr_0 = HomoLR(
         "homo_lr_0",
@@ -20,8 +20,8 @@ def main(config="../config.yaml", namespace=""):
         batch_size=16
     )
 
-    homo_lr_0.guest.component_setting(train_data=DataWarehouseChannel(name="breast_homo_guest", namespace="experiment"))
-    homo_lr_0.hosts[0].component_setting(train_data=DataWarehouseChannel(name="breast_homo_host", namespace="experiment"))
+    homo_lr_0.guest.task_setting(train_data=DataWarehouseChannel(name="breast_homo_guest", namespace="experiment"))
+    homo_lr_0.hosts[0].task_setting(train_data=DataWarehouseChannel(name="breast_homo_host", namespace="experiment"))
     evaluation_0 = Evaluation(
         'eval_0',
         metrics=['auc'],

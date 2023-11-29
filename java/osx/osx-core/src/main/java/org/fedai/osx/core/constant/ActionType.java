@@ -16,12 +16,9 @@
 package org.fedai.osx.core.constant;
 
 public enum ActionType {
-
-//    QUERY_TOPIC("query-topic"),
     CANCEL_TOPIC,
     PUSH_REMOTE,
-    PUSH_EGGROLL,
-//    LOCAL_ACK("local-ack"),
+    PUSH_EGGPAIR,
     CUSTOMER_CONSUME,
     DEFUALT_CONSUME,
     REDIRECT_CONSUME,
@@ -33,15 +30,10 @@ public enum ActionType {
     UNARY_CALL,
     UNARY_CALL_NEW,
     CLUSTER_TOKEN_APPLY,
-    TOPIC_APPLY;
-
-//    private   String alias;
-//    private  ActionType(String alias){
-//        this.alias = alias;
-//    }
-//    public  String getAlias(){
-//        return  alias;
-//    }
-
+    TOPIC_APPLY,
+    SET_ROUTER,
+    GET_ROUTER,
+    ADD_ROUTER,
+    SET_SELF_PARTY
 
 }

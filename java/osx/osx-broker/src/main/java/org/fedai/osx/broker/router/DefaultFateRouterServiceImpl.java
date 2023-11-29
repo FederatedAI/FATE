@@ -17,11 +17,9 @@ package org.fedai.osx.broker.router;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Singleton;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.webank.ai.eggroll.api.networking.proxy.Proxy;
-import com.webank.eggroll.core.transfer.Transfer;
 import org.apache.commons.lang3.StringUtils;
 import org.fedai.osx.broker.util.TelnetUtil;
 import org.fedai.osx.core.config.MetaInfo;
@@ -29,10 +27,7 @@ import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.datasource.FileRefreshableDataSource;
-import org.fedai.osx.core.exceptions.CycleRouteInfoException;
-import org.fedai.osx.core.exceptions.ErrorMessageUtil;
-import org.fedai.osx.core.exceptions.ExceptionInfo;
-import org.fedai.osx.core.exceptions.InvalidRouteInfoException;
+import org.fedai.osx.core.exceptions.*;
 import org.fedai.osx.core.flow.PropertyListener;
 import org.fedai.osx.core.frame.Lifecycle;
 import org.fedai.osx.core.frame.ServiceThread;
@@ -47,14 +42,15 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.fedai.osx.core.config.MetaInfo.PROPERTY_ROUTER_CHECK_INTERVAL;
+
 @Singleton
-public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycle , ApplicationStartedRunner {
+public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, ApplicationStartedRunner {
 
     private static final String IP = "ip";
     private static final String PORT = "port";
@@ -66,45 +62,76 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     private static final String privateKeyFile = "privateKeyFile";
     private static final String caFile = "caFile";
     private static final String DEFAULT = "default";
+    private static final String SELF_PARTY="self_party";
+    private static final String ROUTE_TABLE = "route_table";
     private static final String VERSION = "version";
-
-    //Pattern urlIpPort = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)\\:(\\d+)");
-
+    Logger logger = LoggerFactory.getLogger(DefaultFateRouterServiceImpl.class);
     Pattern urlIpPortPattern = Pattern.compile("((http|ftp|https)://)((([a-zA-Z0-9._-]+)|([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}))(([a-zA-Z]{2,6})|(:[0-9]{1,4})?))");
 
-    Logger logger = LoggerFactory.getLogger(DefaultFateRouterServiceImpl.class);
     Map<String, List<RouterInfo>> routerInfoMap = new ConcurrentHashMap<String, List<RouterInfo>>();
     Map<String, Map<String, List<Map>>> endPointMap = new ConcurrentHashMap<>();
+    Map totalConfig;
+
     FileRefreshableDataSource fileRefreshableDataSource;
 
-    @Override
-    public RouterInfo route(Proxy.Packet packet) {
-        Preconditions.checkArgument(packet != null);
-        RouterInfo routerInfo = null;
-        Proxy.Metadata metadata = packet.getHeader();
-        Transfer.RollSiteHeader rollSiteHeader = null;
-        String dstPartyId = null;
-        try {
-            rollSiteHeader = Transfer.RollSiteHeader.parseFrom(metadata.getExt());
-            if (rollSiteHeader != null) {
-                dstPartyId = rollSiteHeader.getDstPartyId();
-            }
-        } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
-        }
-        if (StringUtils.isEmpty(dstPartyId)) {
-            dstPartyId = metadata.getDst().getPartyId();
-        }
-        String desRole = metadata.getDst().getRole();
-        String srcRole = metadata.getSrc().getRole();
-        String srcPartyId = metadata.getSrc().getPartyId();
-        routerInfo = this.route(srcPartyId, srcRole, dstPartyId, desRole);
-        //logger.info("query router info {} to {} {} return {}", srcPartyId, dstPartyId, desRole, routerInfo);
-        return routerInfo;
+    private  Map parseRouterInfoToMap(RouterInfo  routerInfo){
+        Map  content =  JsonUtil.object2Objcet(routerInfo,Map.class);
+        return  content;
     }
 
-    private RouterInfo buildRouterInfo(Map endpoint, String srcPartyId, String srcRole, String dstPartyId, String desRole) {
 
+    @Override
+    public synchronized String addRouterInfo(RouterInfo routerInfo) {
+       validateRouterInfo(routerInfo);
+       String desPartyId =  routerInfo.getDesPartyId();
+       String roleId =  routerInfo.getDesRole();
+       Preconditions.checkArgument(StringUtils.isNotEmpty(desPartyId),"des party id is null");
+       if(this.endPointMap.containsKey(desPartyId)){
+           Map roleMap = this.endPointMap.get(desPartyId);
+           if(StringUtils.isNotEmpty(roleId)){
+               roleMap.put(roleId,Lists.newArrayList(JsonUtil.object2Objcet(routerInfo,Map.class)));
+           }else{
+               roleMap.put(DEFAULT,Lists.newArrayList(JsonUtil.object2Objcet(routerInfo,Map.class)));
+           }
+       }else{
+            Map newElem = new HashMap<String,List<Map>>();
+            if(StringUtils.isEmpty(roleId)){
+                newElem.put(DEFAULT, Lists.newArrayList(parseRouterInfoToMap(routerInfo)));
+            }else{
+                newElem.put(roleId,Lists.newArrayList(parseRouterInfoToMap(routerInfo)));
+            }
+           this.endPointMap.putIfAbsent(desPartyId,newElem);
+       }
+       totalConfig.put(ROUTE_TABLE,this.endPointMap);
+       String content = JsonUtil.object2Json(totalConfig);
+       this.saveRouterTable(content);
+       return  content;
+    }
+
+    @Override
+    public void setRouterTable(String content) {
+
+        if(JsonUtil.validateJson(content)){
+            Map tempConf = JsonUtil.json2Object(content, Map.class);
+            validateAllRouterTable(tempConf);
+            this.saveRouterTable(content);
+        }else {
+            throw new ParameterException("invalid json");
+        }
+    }
+
+    @Override
+    public String getRouterTable() {
+        return JsonUtil.formatJson(JsonUtil.object2Json(totalConfig));
+    }
+
+    public void setSelfPartyIds(Set<String> selfPartyIds){
+        totalConfig.put(SELF_PARTY,selfPartyIds);
+        this.saveRouterTable(JsonUtil.object2Json(totalConfig));
+    }
+
+
+    private RouterInfo buildRouterInfo(Map endpoint, String srcPartyId, String srcRole, String dstPartyId, String desRole) {
         Preconditions.checkArgument(endpoint != null);
         RouterInfo routerInfo = new RouterInfo();
         if (endpoint.get(IP) != null) {
@@ -115,8 +142,6 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         }
         routerInfo.setDesPartyId(dstPartyId);
         routerInfo.setSourcePartyId(srcPartyId);
-        routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
-        routerInfo.setNegotiationType(endpoint.get(negotiationType) != null ? endpoint.get(negotiationType).toString() : "");
         routerInfo.setDesRole(desRole);
         Protocol protocol = Protocol.grpc;
         if (endpoint.get(Dict.PROTOCOL) != null) {
@@ -151,10 +176,9 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     }
 
     public RouterInfo route(String srcPartyId, String srcRole, String dstPartyId, String desRole) {
-//        logger.info("try to find routerInfo =={}=={}=={}=={}",srcPartyId,srcRole,dstPartyId,desRole);
         RouterInfo routerInfo = null;
-        Map<String, List<Map>> partyIdMap = this.endPointMap.containsKey(dstPartyId)?this.endPointMap.get(dstPartyId):this.endPointMap.get(DEFAULT);
-
+        Preconditions.checkArgument(StringUtils.isNotEmpty(dstPartyId), "des party id is null");
+        Map<String, List<Map>> partyIdMap = this.endPointMap.containsKey(dstPartyId) ? this.endPointMap.get(dstPartyId) : this.endPointMap.get(DEFAULT);
         if (partyIdMap != null) {
             if (StringUtils.isNotEmpty(desRole) && partyIdMap.get(desRole) != null) {
                 List<Map> ips = partyIdMap.getOrDefault(desRole, null);
@@ -178,20 +202,9 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         return routerInfo;
     }
 
-    @Override
-    public RouterInfo routePtp(String srcInstId, String srcNodeId, String dstInstId, String dstNodeId) {
-        String  desPartyId = dstNodeId;
-        String  srcPartyId = srcNodeId;
-        return  this.route(srcPartyId,DEFAULT,desPartyId,DEFAULT);
-
-    }
-
 
     Map<String, Map<String, List<Map>>> initRouteTable(Map confJson) {
-        // BasicMeta.Endpoint.Builder endpointBuilder = BasicMeta.Endpoint.newBuilder();
         Map<String, Map<String, List<Map>>> newRouteTable = new ConcurrentHashMap<>();
-        // loop through coordinator
-
         confJson.forEach((k, v) -> {
             String coordinatorKey = k.toString();
             Map coordinatorValue = (Map) v;
@@ -201,7 +214,6 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
                 serviceTable = new ConcurrentHashMap<>(4);
                 newRouteTable.put(coordinatorKey, serviceTable);
             }
-            // loop through role in coordinator
             for (Object roleEntryObject : coordinatorValue.entrySet()) {
                 Map.Entry roleEntry = (Map.Entry) roleEntryObject;
                 String roleKey = roleEntry.getKey().toString();
@@ -209,13 +221,11 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
                     continue;
                 }
                 List roleValue = (List) roleEntry.getValue();
-
                 List<Map> endpoints = serviceTable.get(roleKey);
                 if (endpoints == null) {
                     endpoints = new ArrayList<>();
                     serviceTable.put(roleKey, endpoints);
                 }
-                // loop through endpoints
                 for (Object endpointElement : roleValue) {
                     Map element = Maps.newHashMap();
                     Map endpointJson = (Map) endpointElement;
@@ -238,10 +248,9 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         String currentPath = getRouterTablePath();
         logger.info("load router file {}", currentPath);
         File confFile = new File(currentPath);
-        FileRefreshableDataSource fileRefreshableDataSource = null;
+        fileRefreshableDataSource = null;
         try {
             fileRefreshableDataSource = new FileRefreshableDataSource(confFile, (source) -> {
-                //   logger.info("read route_table {}", source);
                 return source;
             });
             fileRefreshableDataSource.getProperty().addListener(new RouterTableListener());
@@ -296,7 +305,7 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
                                                     if (isCycle) {
                                                         logger.warn("route info {}->{}->{}->{} is a cycle , please check route_table.json", desPartyId, role, ip, port);
                                                     }
-                                                    endPoint.put(Dict.IS_CYCLE, isCycle);
+                                                    //endPoint.put(Dict.IS_CYCLE, isCycle);
                                                     //}
                                                     checkConnected(desPartyId, role, ip, port);
 
@@ -309,7 +318,7 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
                             }
                     );
 
-                    this.waitForRunning(60000);
+                    this.waitForRunning(PROPERTY_ROUTER_CHECK_INTERVAL);
                 }
             }
 
@@ -337,7 +346,7 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
 
                 boolean result = TelnetUtil.tryTelnet(ip, port);
                 if (!result) {
-                    //    logger.warn("route info {}->{}->{}->{} unable to connect  , please check route_table.json", partyId, role, ip, port);
+                        logger.warn("route info {}->{}->{}->{} unable to connect  , please check route_table.json", partyId, role, ip, port);
 
                 }
             }
@@ -348,9 +357,8 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
 
         boolean cycle = false;
 
-        if(MetaInfo.PROPERTY_OPEN_ROUTE_CYCLE_CHECKER) {
-            String localIp = MetaInfo.INSTANCE_ID.split(":")[0];
-
+        if (MetaInfo.PROPERTY_OPEN_ROUTE_CYCLE_CHECKER) {
+            String localIp = MetaInfo.INSTANCE_ID.split("_")[0];
             if (localIp.equals(ip) || Dict.LOCALHOST.equals(ip) || Dict.LOCALHOST2.equals(ip)) {
                 if (MetaInfo.PROPERTY_GRPC_PORT == (port)) {
                     cycle = true;
@@ -367,7 +375,6 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
                 }
             }
         }
-
         return cycle;
     }
 
@@ -375,37 +382,6 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
     public void run(String[] args) throws Exception {
         this.start();
     }
-
-
-    private class RouterTableListener implements PropertyListener<String> {
-
-        @Override
-        public void configUpdate(String value) {
-            logger.info("found router_table.json has been changed, update content {}",value);
-            Map confJson = JsonUtil.json2Object(value, Map.class);
-            // JsonObject confJson = JsonParser.parseString(value).getAsJsonObject();
-            Map content = (Map) confJson.get("route_table");
-            endPointMap = initRouteTable(content);
-        }
-
-        @Override
-        public void configLoad(String value) {
-            Map confJson = JsonUtil.json2Object(value, Map.class);
-            if(confJson!=null){
-
-               // throw new ConfigErrorException("content of route_table.json is invalid");
-
-                Map content = (Map) confJson.get("route_table");
-                endPointMap = initRouteTable(content);
-                logger.info("load router config {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
-
-            }else{
-                logger.error("content of route_table.json is invalid , content is {}",value);
-
-            }
-                   }
-    }
-
 
     public String getIpInfoFromUrl(String url) {
         Matcher m = urlIpPortPattern.matcher(url);
@@ -416,48 +392,8 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
         return result;
     }
 
-    public void saveRouterTable(OsxContext context, String  content){
-        String routerTablePath = getRouterTablePath();
-        File routerTableFile = new File(routerTablePath);
-        if (!routerTableFile.exists()) {
-            if (!routerTableFile.getParentFile().exists()) {
-                if (!routerTableFile.getParentFile().mkdirs()) {
-                    logger.warn("mkdir failed : {}", routerTableFile.getParent());
-                   // return false;
-                }
-            }
-            try {
-                if (!routerTableFile.createNewFile()) {
-                    logger.warn("create router_table.json failed  : {}", routerTableFile.getAbsoluteFile());
-                   // return false;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    public synchronized boolean saveRouterTable( String  content) {
         try {
-             FileUtils.writeStr2ReplaceFileSync(JsonUtil.formatJson(content), routerTablePath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public boolean saveRouterTable(OsxContext context, InboundPackage<Proxy.Packet> data) {
-        try {
-            String inboundRouteJson = (String) context.getData("route");
-            if (StringUtils.isNotBlank(inboundRouteJson)) {
-                Map<String, Object> routeMap = JsonUtil.object2Objcet(inboundRouteJson, new TypeReference<Map<String, Object>>() {
-                });
-                Map<String, Object> route_table = (Map<String, Object>) routeMap.get("route_table");
-                route_table.forEach((partyId, value) -> {
-                    List<RouterInfo> routeList = (List<RouterInfo>) value;
-                    for (RouterInfo routerInfo : routeList) {
-                        routerInfo.setProtocol(StringUtils.isBlank(routerInfo.getProtocol().toString()) ? Protocol.grpc : routerInfo.getProtocol());
-                    }
-                });
-                inboundRouteJson = JsonUtil.object2Json(routeMap);
-            }
             String routerTablePath = getRouterTablePath();
             File routerTableFile = new File(routerTablePath);
             if (!routerTableFile.exists()) {
@@ -472,27 +408,101 @@ public class DefaultFateRouterServiceImpl implements FateRouterService, Lifecycl
                     return false;
                 }
             }
-            return FileUtils.writeStr2ReplaceFileSync(JsonUtil.formatJson(inboundRouteJson), routerTablePath);
+            return FileUtils.writeStr2ReplaceFileSync(JsonUtil.formatJson(content), routerTablePath);
         } catch (Exception e) {
             logger.error("save router table failed ", e);
-            ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
-            context.setReturnCode(exceptionInfo.getCode());
-            context.setReturnMsg("save router table failed");
             return false;
         }
     }
+    private void loadSelfParty(Map totalConfig){
+        List selfParties = (List)totalConfig.get(SELF_PARTY);
+        logger.info("load self party {}",selfParties);
+        if(selfParties!=null){
+            Set<String> partySet = new HashSet<>();
+            selfParties.forEach(party->{
+                partySet.add(party.toString());
+            });
+            MetaInfo.PROPERTY_SELF_PARTY = partySet;
+        }else{
+            logger.error("self_party is not found in route_table.json");
+        }
+    }
 
-    public static void main(String[] args) {
-//        System.out.println(MetaInfo.PROPERTY_USER_DIR);
-//        System.out.println(MetaInfo.PROPERTY_USER_HOME);
-//        System.out.println(Thread.currentThread().getContextClassLoader().getResource("").getPath());
-//        System.out.println(Thread.currentThread().getContextClassLoader().getResource("route_table.json"));
-//        System.out.println(Thread.currentThread().getContextClassLoader().getResource("flowRule.json"));
-        DefaultFateRouterServiceImpl defaultFateRouterService = new DefaultFateRouterServiceImpl();
-        defaultFateRouterService.getIpInfoFromUrl("http://127.0.0.1:9000/xxxx");
+
+    private void validateRouterInfo(RouterInfo  routerInfo){
+        Preconditions.checkArgument(routerInfo!=null);
+        String desPartyId =  routerInfo.getDesPartyId();
+        Preconditions.checkArgument(StringUtils.isNotEmpty(desPartyId),"des party id is null");
+        if(routerInfo.getProtocol()!=null||Protocol.grpc.equals(routerInfo.getProtocol())){
+            Preconditions.checkArgument(StringUtils.isNotEmpty(routerInfo.getHost()), "route_table.json "+desPartyId+" host/ip is null");
+            Preconditions.checkArgument(routerInfo.getPort()!=null, "route_table.json "+desPartyId+" port is null");
+        }
+    }
+
+
+    private  void  validateAllRouterTable( Map tempConf){
+        if(tempConf==null){
+            throw new SysException("please check route_table.json, it is not a valid json or file is not found");
+        }
+        Object  selfPartyObject = tempConf.get(SELF_PARTY);
+        if(selfPartyObject==null){
+            logger.error("{} is not found in route_table.json",SELF_PARTY);
+            throw new SysException("self_party is not found in route_table.json");
+        }
+        if(!(selfPartyObject instanceof List)){
+            throw new SysException("self_party in route_table.json is invalid, it should be an array");
+        }
+        Map content = (Map) tempConf.get(ROUTE_TABLE);
+        Map<String, Map<String, List<Map>>> temp = initRouteTable(content);
+
+        temp.forEach((k,v)->{
+            if(StringUtils.isEmpty(k)){
+                throw new SysException("");
+            }
+            if(!(v instanceof Map)){
+                throw new SysException("");
+            }
+            v.forEach((role,routerMaps)->{
+                for (Map routerMap : routerMaps) {
+                    RouterInfo routerInfo = buildRouterInfo(routerMap, "", "", k, role);
+                    validateRouterInfo(routerInfo);
+                }
+            });
+        });
+
 
 
     }
 
+    private void loadRouterTable(String  conf){
+        Map tempConf = JsonUtil.json2Object(conf, Map.class);
+
+        validateAllRouterTable(tempConf);
+        if (tempConf != null) {
+            loadSelfParty(tempConf);
+            Map content = (Map) tempConf.get(ROUTE_TABLE);
+            endPointMap = initRouteTable(content);
+            logger.info("load router table {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));
+        } else {
+            logger.error("content of route_table.json is invalid , content is {}", conf);
+        }
+
+        totalConfig= tempConf;
+    }
+
+
+    private class RouterTableListener implements PropertyListener<String> {
+
+        @Override
+        public void configUpdate(String value) {
+            logger.warn("found router_table.json has been changed, reload " );
+            loadRouterTable(value);
+        }
+
+        @Override
+        public void configLoad(String value) {
+            loadRouterTable(value);
+        }
+    }
 
 }

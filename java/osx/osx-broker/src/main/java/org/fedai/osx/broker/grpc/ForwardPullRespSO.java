@@ -18,7 +18,6 @@ package org.fedai.osx.broker.grpc;
 import com.google.common.base.Preconditions;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-
 import org.fedai.osx.core.context.OsxContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

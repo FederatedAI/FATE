@@ -1,7 +1,6 @@
 package org.fedai.osx.core.service;
 
 import com.google.common.collect.Lists;
-
 import org.fedai.osx.core.context.OsxContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +11,10 @@ public class DefaultInterceptorChainNew<req, resp> implements InterceptorChainNe
 
     Logger logger = LoggerFactory.getLogger(DefaultInterceptorChain.class);
 
-    List<InterceptorNew< req, resp>> chain = Lists.newArrayList();
+    List<InterceptorNew<req, resp>> chain = Lists.newArrayList();
 
     @Override
-    public void addInterceptor(InterceptorNew< req, resp> interceptor) {
+    public void addInterceptor(InterceptorNew<req, resp> interceptor) {
         chain.add(interceptor);
     }
 
@@ -34,4 +33,4 @@ public class DefaultInterceptorChainNew<req, resp> implements InterceptorChainNe
             }
         }
     }
-    }
+}

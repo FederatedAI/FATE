@@ -17,11 +17,13 @@ package org.fedai.osx.broker.queue;
 
 import lombok.Data;
 import org.fedai.osx.core.utils.JsonUtil;
+
 @Data
 public class CreateQueueResult {
     AbstractQueue queue;
     String redirectIp;
     int port;
+
     public String toString() {
         return JsonUtil.object2Json(this);
     }

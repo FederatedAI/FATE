@@ -20,29 +20,24 @@ import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.stub.StreamObserver;
 import org.fedai.osx.broker.callback.CompleteCallback;
 import org.fedai.osx.broker.callback.ErrorCallback;
-import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.context.OsxContext;
-import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
-
     Logger logger = LoggerFactory.getLogger(ForwardPushRespSO.class);
     StreamObserver backPushRespSO;
-
     CompleteCallback completeCallback;
     ErrorCallback errorCallback;
     OsxContext context;
 
-
     public ForwardPushRespSO(OsxContext context, StreamObserver backPushRespSO, CompleteCallback completeCallback, ErrorCallback errorCallback) {
         this.backPushRespSO = backPushRespSO;
-
         this.context = context;
         this.completeCallback = completeCallback;
         this.errorCallback = errorCallback;
     }
+
 
     public StreamObserver getBackPushRespSO() {
         return backPushRespSO;
@@ -54,8 +49,8 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
 
     @Override
     public void onNext(Proxy.Metadata value) {
-   //     if(backPushRespClass.equals(Proxy.Metadata.class)) {
-            backPushRespSO.onNext(value);
+        //     if(backPushRespClass.equals(Proxy.Metadata.class)) {
+        backPushRespSO.onNext(value);
 //        }else{
 //            Osx.Outbound  outbound = TransferUtil.buildOutboundFromProxyMetadata(value);
 //            backPushRespSO.onNext(outbound);
@@ -64,7 +59,7 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
 
     @Override
     public void onError(Throwable t) {
-        logger.error("onError {}", t);
+        logger.error("stream stream {} to {} return error",context.getTopic(), context.getRouterInfo(), t);
         if (errorCallback != null) {
             errorCallback.callback(t);
         }
@@ -78,10 +73,5 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
             completeCallback.callback();
         }
         backPushRespSO.onCompleted();
-    }
-
-
-    public  static  void main(String[] args){
-        System.err.println(Transfer.TransferBatch.class.getCanonicalName());
     }
 }

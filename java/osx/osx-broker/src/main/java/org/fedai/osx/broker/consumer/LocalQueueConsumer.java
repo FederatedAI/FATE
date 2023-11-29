@@ -27,19 +27,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
+
 @Data
 public class LocalQueueConsumer implements Consumer<TransferQueueConsumeResult> {
 
-    Logger logger = LoggerFactory.getLogger(LocalQueueConsumer.class);
     protected long consumerId;
+    Logger logger = LoggerFactory.getLogger(LocalQueueConsumer.class);
     String topic;
     String sessionId;
     AtomicLong consumeOffset = new AtomicLong(1);
     volatile TransferStatus transferStatus = TransferStatus.INIT;
     long createTimestamp = System.currentTimeMillis();
-    TransferQueueManager  transferQueueManager;
+    TransferQueueManager transferQueueManager;
 
-    public LocalQueueConsumer(TransferQueueManager  transferQueueManager ,long consumerId,String sessionId, String topic) {
+    public LocalQueueConsumer(TransferQueueManager transferQueueManager, long consumerId, String sessionId, String topic) {
         this.consumerId = consumerId;
         this.topic = topic;
         this.sessionId = sessionId;
@@ -47,10 +48,10 @@ public class LocalQueueConsumer implements Consumer<TransferQueueConsumeResult> 
     }
 
     public boolean checkMsgIsArrive(long consumeOffset) {
-        AbstractQueue transferQueue = transferQueueManager.getQueue(sessionId,topic);
+        AbstractQueue transferQueue = transferQueueManager.getQueue(sessionId, topic);
         if (transferQueue != null) {
-            long indexFileOffset = ((TransferQueue)transferQueue).getIndexQueue().getLogicOffset().get();
-           // logger.info("topic {} need consume {} ,  {} inqueue",transferId,consumeOffset, indexFileOffset);
+            long indexFileOffset = ((TransferQueue) transferQueue).getIndexQueue().getLogicOffset().get();
+            // logger.info("topic {} need consume {} ,  {} inqueue",transferId,consumeOffset, indexFileOffset);
             return consumeOffset <= indexFileOffset;
         }
         return false;
@@ -80,7 +81,7 @@ public class LocalQueueConsumer implements Consumer<TransferQueueConsumeResult> 
     public synchronized TransferQueueConsumeResult consume(OsxContext context, long beginOffset) {
         TransferQueueConsumeResult result;
         long offset = beginOffset;
-        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(sessionId,topic);
+        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(sessionId, topic);
         if (transferQueue != null) {
             SelectMappedBufferResult selectMappedBufferResult = null;
             if (offset <= 0) {
@@ -88,11 +89,11 @@ public class LocalQueueConsumer implements Consumer<TransferQueueConsumeResult> 
             }
             result = transferQueue.consumeOneMessage(context, offset);
             //兼容互联互通 ，改成自动ack
-            if(StatusCode.SUCCESS.equals(result.getCode())) {
+            if (StatusCode.SUCCESS.equals(result.getCode())) {
                 this.ack(offset);
             }
         } else {
-            logger.error("session id {} topic {} is not found", sessionId,topic);
+            logger.error("session id {} topic {} is not found", sessionId, topic);
             result = new TransferQueueConsumeResult(StatusCode.TRANSFER_QUEUE_NOT_FIND, null, beginOffset, 0);
         }
         return result;

@@ -5,16 +5,15 @@ import lombok.Data;
 @Data
 public class ConsumeRequest {
 
-    public ConsumeRequest(){
+    boolean needBlock;
+    String topic;
+    int timeout;
+    public ConsumeRequest() {
 
     }
-    public ConsumeRequest(String topic,int timeout,boolean needBlock){
+    public ConsumeRequest(String topic, int timeout, boolean needBlock) {
         this.needBlock = needBlock;
         this.topic = topic;
         this.timeout = timeout;
     }
-
-    boolean  needBlock;
-    String  topic;
-    int  timeout;
 }

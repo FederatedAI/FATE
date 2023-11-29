@@ -20,6 +20,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import java.util.concurrent.TimeUnit;
+
 public class PutBatchSinkUtil {
     public static LoadingCache<String, ErSession> sessionCache =
 
