@@ -37,12 +37,12 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
                                                                     namespace="experiment"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                         namespace="experiment"))
 
     training_args = TrainingArguments(
@@ -83,8 +83,8 @@ def main(config="../../config.yaml", namespace=""):
         train_data=psi_0.outputs['output_data']
     )
 
-    hetero_nn_0.guest.component_setting(runner_conf=guest_conf)
-    hetero_nn_0.hosts[0].component_setting(runner_conf=host_conf)
+    hetero_nn_0.guest.task_setting(runner_conf=guest_conf)
+    hetero_nn_0.hosts[0].task_setting(runner_conf=host_conf)
 
     hetero_nn_1 = HeteroNN(
         'hetero_nn_1',
