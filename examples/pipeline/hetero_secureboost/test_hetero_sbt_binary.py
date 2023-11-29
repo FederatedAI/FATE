@@ -36,6 +36,8 @@ def main(config="../config.yaml", namespace=""):
     pipeline.compile()
     pipeline.fit()
 
+    pipeline.get_task_info('sbt_0').get_output_model()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

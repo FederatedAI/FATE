@@ -1,6 +1,6 @@
 import inspect
 from torch import optim
-from fate.components.components.nn.utils.extract_torch_modules import extract_init_param, Required
+from fate.components.components.nn.hook_code.extract_torch_modules import extract_init_param, Required
 from torch.optim.optimizer import required
 
 

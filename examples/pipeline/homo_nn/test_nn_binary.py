@@ -15,9 +15,6 @@
 #
 
 import argparse
-from fate_test.utils import parse_summary_result
-from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline.components.fate.evaluation import Evaluation
 from fate_client.pipeline import FateFlowPipeline
@@ -57,7 +54,7 @@ def main(config="../../config.yaml", namespace=""):
         ), 
         loss=nn.BCELoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514, logging_strategy='steps'),
         fed_args=FedAVGArguments(),
         task_type='binary'
         )
@@ -71,21 +68,29 @@ def main(config="../../config.yaml", namespace=""):
     homo_nn_0.guest.task_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
     homo_nn_0.hosts[0].task_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
+    homo_nn_1 = HomoNN(
+        'nn_1',
+        predict_model_input=homo_nn_0.outputs['train_model_output']
+    )
+
+    homo_nn_1.guest.component_setting(test_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
+    homo_nn_1.hosts[0].component_setting(test_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
+
     evaluation_0 = Evaluation(
         'eval_0',
         runtime_roles=['guest'],
         metrics=['auc'],
-        input_data=[homo_nn_0.outputs['train_data_output']]
+        input_data=[homo_nn_1.outputs['predict_data_output']]
     )
 
 
     pipeline.add_task(homo_nn_0)
+    pipeline.add_task(homo_nn_1)
     pipeline.add_task(evaluation_0)
     pipeline.compile()
     pipeline.fit()
 
-    result_summary = parse_summary_result(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
-    print(f"result_summary: {result_summary}")
+    print(pipeline.get_task_info("eval_0").get_output_metric())
 
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
 import torch.nn as nn
-from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.ml.abc.module import HomoModule
 from fate.ml.utils.model_io import ModelIO
 from fate.arch import Context
 import logging
 import torch as t
-from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, TrainingArguments, FedAVGArguments
+from fate.ml.nn.homo import FedAVGCLient, TrainingArguments, FedAVGArguments
 from transformers import default_data_collator
 import functools
 import tempfile
