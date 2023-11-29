@@ -25,6 +25,7 @@ import org.fedai.osx.broker.pojo.*;
 import org.fedai.osx.broker.router.RouterServiceRegister;
 import org.fedai.osx.broker.service.ServiceRegisterInfo;
 import org.fedai.osx.broker.service.ServiceRegisterManager;
+import org.fedai.osx.broker.token.TokenValidatorRegister;
 import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.*;
@@ -65,6 +66,8 @@ public class FateTechProvider implements TechProvider {
     ServiceRegisterManager serviceRegisterManager;
     @Inject
     RouterServiceRegister  routerServiceRegister;
+    @Inject
+    TokenValidatorRegister  tokenValidatorRegister;
 
 
     Base64.Encoder base64Encoder = Base64.getEncoder();
@@ -486,7 +489,9 @@ public class FateTechProvider implements TechProvider {
         try {
             context.putData(Dict.HTTP_SERVLET_RESPONSE, httpServletResponse);
             byte[] payload = TransferUtil.read(httpServletRequest.getInputStream());
-            String content = new String(payload);
+            String content="";
+            if(payload!=null)
+                 content = new String(payload);
             ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", context.getUri(), false);
             Preconditions.checkArgument(serviceRegisterInfo!=null,"uri : " +context.getUri()+" can not found service ");
             Object serviceAdaptorObject = serviceRegisterInfo.getServiceAdaptor();

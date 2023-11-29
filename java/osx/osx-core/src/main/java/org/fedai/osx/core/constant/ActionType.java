@@ -31,5 +31,9 @@ public enum ActionType {
     UNARY_CALL_NEW,
     CLUSTER_TOKEN_APPLY,
     TOPIC_APPLY,
-    SET_ROUTER;
+    SET_ROUTER,
+    GET_ROUTER,
+    ADD_ROUTER,
+    SET_SELF_PARTY
+
 }
