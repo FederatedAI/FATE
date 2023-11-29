@@ -384,6 +384,9 @@ public class FateTechProvider implements TechProvider {
                 RouterInfo routerInfo = routerServiceRegister.select(MetaInfo.PROPERTY_FATE_TECH_PROVIDER).route(srcNodeId, Dict.DEFAULT, desNodeId, Dict.DEFAULT);
                 context.setActionType(MSG_REDIRECT.name());
                 Object  sendObject = null;
+                if(routerInfo==null){
+                    throw  new NoRouterInfoException("can not found router info");
+                }
                 if(Protocol.http.equals(routerInfo.getProtocol())){
                     sendObject = buildProduceRequestFromGrpc(inbound);
                 }else {
