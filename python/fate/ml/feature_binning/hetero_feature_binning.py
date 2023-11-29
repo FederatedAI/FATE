@@ -51,13 +51,14 @@ class HeteroBinningModuleGuest(HeteroModule):
         else:
             raise ValueError(f"{self.method} binning method not supported, please check")
         self.local_only = local_only
+        self.column_anonymous_map = None
 
     def set_transform_method(self, transform_method):
         self._bin_obj.transform_method = transform_method
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         logger.info("Enter HeteroBinning fit.")
-
+        self.column_anonymous_map = dict(zip(train_data.schema.columns, train_data.schema.anonymous_columns))
         train_data_binarized_label = train_data.label.get_dummies()
         label_count = train_data_binarized_label.shape[1]
         if label_count > 2:
@@ -101,6 +102,7 @@ class HeteroBinningModuleGuest(HeteroModule):
             self._bin_obj.set_host_metrics(ctx.hosts[i], summary_metrics)
 
     def transform(self, ctx: Context, test_data):
+        self.column_anonymous_map = dict(zip(test_data.schema.columns, test_data.schema.anonymous_columns))
         transformed_data = self._bin_obj.transform(ctx, test_data)
         return transformed_data
 
@@ -116,6 +118,7 @@ class HeteroBinningModuleGuest(HeteroModule):
                 "category_col": self.category_col,
                 "model_type": "binning",
                 "n_bins": self.n_bins,
+                "column_anonymous_map": self.column_anonymous_map
             },
         }
         return model
@@ -158,12 +161,15 @@ class HeteroBinningModuleHost(HeteroModule):
         self.local_only = local_only
         self.bin_col = bin_col
         self.category_col = category_col
+        self.anonymous_col_bin = None
+        self.column_anonymous_map = None
 
     def set_transform_method(self, new_transform_method):
         self._bin_obj.transform_method = new_transform_method
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         logger.info("Enter HeteroBinning fit.")
+        self.column_anonymous_map = dict(zip(train_data.schema.columns, train_data.schema.anonymous_columns))
         self._bin_obj.fit(ctx, train_data)
 
     def compute_metrics(self, ctx: Context, binned_data):
@@ -219,6 +225,7 @@ class HeteroBinningModuleHost(HeteroModule):
         ctx.guest.put("feature_bin_sizes", feature_bin_sizes)
 
     def transform(self, ctx: Context, test_data):
+        self.column_anonymous_map = dict(zip(test_data.schema.columns, test_data.schema.anonymous_columns))
         return self._bin_obj.transform(ctx, test_data)
 
     def get_model(self):
@@ -231,6 +238,7 @@ class HeteroBinningModuleHost(HeteroModule):
                 "category_col": self.category_col,
                 "n_bins": self.n_bins,
                 "model_type": "binning",
+                "column_anonymous_map": self.column_anonymous_map
             },
         }
         return model

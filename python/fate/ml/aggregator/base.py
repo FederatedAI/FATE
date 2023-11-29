@@ -149,6 +149,9 @@ class BaseAggregatorClient(Aggregator):
                 to_agg.append(self._convert_type(p, self.float_p))
             agg_list = to_agg
 
+        else:
+            return None
+
         return agg_list
 
     def _recover_model(self, model, agg_model):
@@ -240,4 +243,4 @@ class BaseAggregatorServer(Aggregator):
         self.model_aggregator.secure_aggregate(ctx, ranks=ranks)
 
     def loss_aggregation(self, ctx, ranks=None):
-        self.loss_aggregator.secure_aggregate(ctx, ranks=ranks)
+        return float(self.loss_aggregator.secure_aggregate(ctx, ranks=ranks)[0])

@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 @Slf4j
-public class AbstractQueue  {
+public class AbstractQueue {
     protected final AtomicInteger wrotePosition = new AtomicInteger(0);
     volatile TransferStatus transferStatus = TransferStatus.INIT;
     String transferId;
@@ -37,11 +37,11 @@ public class AbstractQueue  {
     List<DestoryCallback> destoryCallbacks = new ArrayList<>();
     List<MsgEventCallback> msgCallbacks = new ArrayList<>();
 
-    public synchronized void putMessage(OsxContext context, Object data , MessageFlag messageFlag, String msgCode)  {
+    public synchronized void putMessage(OsxContext context, Object data, MessageFlag messageFlag, String msgCode) {
 
     }
 
-    public synchronized TransferQueueConsumeResult consumeOneMessage(OsxContext context, long requestIndex){
+    public synchronized TransferQueueConsumeResult consumeOneMessage(OsxContext context, long requestIndex) {
         return null;
     }
 

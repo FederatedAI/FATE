@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 package org.fedai.osx.broker.message;
+
 public class MessageExtBrokerInner extends MessageExt {
     private static final long serialVersionUID = 7256001576878700634L;
     private String propertiesString;
-
-
 
 
     public String getPropertiesString() {

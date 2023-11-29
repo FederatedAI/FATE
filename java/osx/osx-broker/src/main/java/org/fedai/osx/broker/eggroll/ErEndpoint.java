@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fedai.osx.broker.eggroll;
+
 import com.webank.eggroll.core.meta.Meta;
 
 public class ErEndpoint extends BaseProto<Meta.Endpoint> {

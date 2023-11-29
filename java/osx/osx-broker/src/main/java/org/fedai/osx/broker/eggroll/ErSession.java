@@ -63,7 +63,7 @@ public class ErSession {
             erSessionMeta = clusterManagerClient.getSession(erSessionMetaArgs);
         }
         processors = erSessionMeta.getProcessors();
-        if(StringUtils.isNotEmpty(erSessionMeta.getStatus())) {
+        if (StringUtils.isNotEmpty(erSessionMeta.getStatus())) {
             status = SessionStatus.valueOf(erSessionMeta.getStatus());
         }
         processors.forEach((processor -> {

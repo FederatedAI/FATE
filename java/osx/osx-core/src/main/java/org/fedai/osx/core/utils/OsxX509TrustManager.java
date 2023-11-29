@@ -12,13 +12,30 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class OsxX509TrustManager implements X509TrustManager {
-    private static final Logger logger = LoggerFactory.getLogger(OsxX509TrustManager.class);
     public static final String tabs = "%2F", equalSign = "%3D";
-
+    private static final Logger logger = LoggerFactory.getLogger(OsxX509TrustManager.class);
     private final X509TrustManager x509TrustManager;
 
     public OsxX509TrustManager(X509TrustManager x509TrustManager) {
         this.x509TrustManager = x509TrustManager;
+    }
+
+    public static OsxX509TrustManager getInstance() {
+        return new OsxX509TrustManager(null);
+    }
+
+    public static OsxX509TrustManager getInstance(KeyStore keyStore) throws NoSuchProviderException, NoSuchAlgorithmException, KeyStoreException {
+        X509TrustManager x509TrustManager = null;
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
+        tmf.init(keyStore);
+        TrustManager[] tms = tmf.getTrustManagers();
+        for (TrustManager tm : tms) {
+            if (tm instanceof X509TrustManager) {
+                x509TrustManager = (X509TrustManager) tm;
+                break;
+            }
+        }
+        return new OsxX509TrustManager(x509TrustManager);
     }
 
     @Override
@@ -49,24 +66,6 @@ public class OsxX509TrustManager implements X509TrustManager {
     public X509Certificate[] getAcceptedIssuers() {
         if (this.x509TrustManager == null) return null;
         return this.x509TrustManager.getAcceptedIssuers();
-    }
-
-    public static OsxX509TrustManager getInstance() {
-        return new OsxX509TrustManager(null);
-    }
-
-    public static OsxX509TrustManager getInstance(KeyStore keyStore) throws NoSuchProviderException, NoSuchAlgorithmException, KeyStoreException {
-        X509TrustManager x509TrustManager = null;
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
-        tmf.init(keyStore);
-        TrustManager[] tms = tmf.getTrustManagers();
-        for (TrustManager tm : tms) {
-            if (tm instanceof X509TrustManager) {
-                x509TrustManager = (X509TrustManager) tm;
-                break;
-            }
-        }
-        return new OsxX509TrustManager(x509TrustManager);
     }
 
     // Verify that the certificate if expired, and is issued for the root certificate
@@ -235,13 +234,13 @@ public class OsxX509TrustManager implements X509TrustManager {
 
     public static class HostnameVerifier2 implements HostnameVerifier {
 
+        public static HostnameVerifier2 getInstance() {
+            return new HostnameVerifier2();
+        }
+
         @Override
         public boolean verify(String s, SSLSession sslSession) {
             return true;
-        }
-
-        public static HostnameVerifier2 getInstance() {
-            return new HostnameVerifier2();
         }
     }
 }

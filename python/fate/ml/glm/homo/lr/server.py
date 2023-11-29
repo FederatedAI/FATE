@@ -1,9 +1,8 @@
 from fate.ml.abc.module import HomoModule
-from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
 import logging
-from fate.ml.nn.algo.homo.fedavg import FedAVGServer
+from fate.ml.nn.homo import FedAVGServer
 
 
 logger = logging.getLogger(__name__)

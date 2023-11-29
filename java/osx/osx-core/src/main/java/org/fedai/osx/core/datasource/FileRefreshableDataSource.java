@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fedai.osx.core.datasource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+
 public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, T> {
 
     private static final int MAX_SIZE = 1024 * 1024 * 4;

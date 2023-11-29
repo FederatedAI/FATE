@@ -778,6 +778,7 @@ class Federation(object):
         results: List[bytes] = []
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, party, self._party)
+
             results.append(self._meta.wait_status_set(_tagged_key))
 
         rtn = []
@@ -1219,6 +1220,7 @@ class _FederationMetaManager:
     def wait_status_set(self, key: bytes) -> bytes:
         value = self.get_status(key)
         while value is None:
+
             time.sleep(0.1)
             value = self.get_status(key)
         return key

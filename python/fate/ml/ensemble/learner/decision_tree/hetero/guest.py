@@ -19,8 +19,9 @@ from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import (
     _merge_sample_pos,
 )
 from fate.ml.ensemble.learner.decision_tree.tree_core.hist import SBTHistogramBuilder
-from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import FedSBTSplitter
+from fate.ml.ensemble.learner.decision_tree.tree_core.splitter import SBTSplitter
 from fate.ml.ensemble.learner.decision_tree.tree_core.loss import get_task_info
+from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import ALL_FEAT, GUEST_FEAT_ONLY
 from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
@@ -29,7 +30,6 @@ import functools
 import logging
 import pandas as pd
 import torch as t
-import numpy as np
 import math
 
 
@@ -56,6 +56,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         gh_pack=True,
         split_info_pack=True,
         hist_sub=True,
+        tree_mode=ALL_FEAT
     ):
         super().__init__(
             max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features
@@ -64,6 +65,15 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._tree_node_num = 0
         self.hist_builder = None
         self.splitter = None
+
+        # feature control
+        self._tree_mode = tree_mode
+        assert self._tree_mode in [ALL_FEAT, GUEST_FEAT_ONLY], "tree mode {} not supported".format(self._tree_mode)
+        # is local tree
+        if self._tree_mode == GUEST_FEAT_ONLY:
+            self._is_local_tree = True
+        elif self._tree_mode == ALL_FEAT:
+            self._is_local_tree = False
 
         # regularization
         self.l1 = l1
@@ -101,6 +111,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if objective is None:
                 raise ValueError("objective must be specified when gh_pack is True")
         self._pack_info = {}
+
+        # param checking
+        assert l1 >= 0 and l2 >= 0, "l1 and l2 should be non-negative, got l1: {}, l2: {}".format(l1, l2)
 
     def set_encrypt_kit(self, kit):
         self._encrypt_kit = kit
@@ -140,14 +153,20 @@ class HeteroDecisionTreeGuest(DecisionTree):
         return bin_len, max_max_value
 
     def _update_sample_pos(
-        self, ctx: Context, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict
+        self, ctx: Context, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict,
+            local_update=False
     ):
         sitename = ctx.local.name
         data_with_pos = DataFrame.hstack([data, sample_pos])
         map_func = functools.partial(
             _update_sample_pos_on_local_nodes, cur_layer_node=cur_layer_nodes, node_map=node_map, sitename=sitename
         )
-        updated_sample_pos = data_with_pos.apply_row(map_func, columns=["g_on_local", "g_node_idx"])
+
+        if local_update:
+            updated_sample_pos = data_with_pos.apply_row(map_func, columns=["g_on_local", "node_idx"])
+            return updated_sample_pos["node_idx"]
+        else:
+            updated_sample_pos = data_with_pos.apply_row(map_func, columns=["g_on_local", "g_node_idx"])
 
         # synchronize sample pos
         host_update_sample_pos = ctx.hosts.get("updated_data")
@@ -225,7 +244,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         return en_grad_hess
 
     def _send_gh(self, ctx: Context, grad_and_hess: DataFrame):
-        # encrypt g & h
         en_grad_hess = self._g_h_process(grad_and_hess)
         ctx.hosts.put("en_gh", en_grad_hess)
         ctx.hosts.put("en_kit", [self._pk, self._evaluator])
@@ -274,36 +292,38 @@ class HeteroDecisionTreeGuest(DecisionTree):
         ctx.hosts.put("sync_nodes", [mask_cur_layer, mask_next_layer])
 
     def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, binning_dict: dict):
-        logger.info
+
         # Initialization
         train_df = bin_train_data
         sample_pos = self._init_sample_pos(train_df)
         self._sample_on_leaves = sample_pos.empty_frame()
         root_node = self._initialize_root_node(ctx, train_df, grad_and_hess)
 
-        # initialize homographic encryption
-        if self._encrypt_kit is None:
-            self._init_encrypt_kit(ctx)
-        # Send Encrypted Grad and Hess
-        self._send_gh(ctx, grad_and_hess)
+        # federated tree
+        if not self._is_local_tree:
+            # initialize homographic encryption
+            if self._encrypt_kit is None:
+                self._init_encrypt_kit(ctx)
+            # Send Encrypted Grad and Hess
+            self._send_gh(ctx, grad_and_hess)
 
-        # send pack info
-        send_pack_info = (
-            {
-                "total_pack_num": self._pack_info["total_pack_num"],
-                "split_point_shift_bit": self._pack_info["split_point_shift_bit"],
-                "split_info_pack": self._split_info_pack,
-            }
-            if self._gh_pack
-            else {}
-        )
-        ctx.hosts.put("pack_info", send_pack_info)
+            # send pack info
+            send_pack_info = (
+                {
+                    "total_pack_num": self._pack_info["total_pack_num"],
+                    "split_point_shift_bit": self._pack_info["split_point_shift_bit"],
+                    "split_info_pack": self._split_info_pack,
+                }
+                if self._gh_pack
+                else {}
+            )
+            ctx.hosts.put("pack_info", send_pack_info)
 
         # init histogram builder
         self.hist_builder = SBTHistogramBuilder(bin_train_data, binning_dict, None, None, hist_sub=self._hist_sub)
 
         # init splitter
-        self.splitter = FedSBTSplitter(
+        self.splitter = SBTSplitter(
             bin_train_data,
             binning_dict,
             l2=self.l2,
@@ -315,11 +335,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
         )
 
         # Prepare for training
-        node_map = {}
         cur_layer_node = [root_node]
         grad_and_hess["cnt"] = 1
 
         for cur_depth, sub_ctx in ctx.on_iterations.ctxs_range(self.max_depth):
+
             if len(cur_layer_node) == 0:
                 logger.info("no nodes to split, stop training")
                 break
@@ -327,7 +347,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             assert len(sample_pos) == len(train_df), "sample pos len not match train data len, {} vs {}".format(
                 len(sample_pos), len(train_df)
             )
-
             # debug checking code
             # self._check_assign_result(sample_pos, cur_layer_node)
             # initialize node map
@@ -337,24 +356,28 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 sub_ctx, cur_layer_node, train_df, grad_and_hess, sample_pos, node_map
             )
             # compute best splits
+            use_local_feat_only = True if self._tree_mode == GUEST_FEAT_ONLY else False
             split_info = self.splitter.split(
                 sub_ctx,
                 statistic_result,
                 cur_layer_node,
                 node_map,
-                self._sk,
-                self._coder,
-                self._gh_pack,
-                self._pack_info,
+                local_split=use_local_feat_only,
+                sk=self._sk,
+                coder=self._coder,
+                gh_pack=self._gh_pack,
+                pack_info=self._pack_info
             )
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info, train_df)
             # update feature importance
             self._update_feature_importance(sub_ctx, split_info, train_df)
             # sync nodes
-            self._sync_nodes(sub_ctx, cur_layer_node, next_layer_nodes)
+            if not self._is_local_tree:
+                self._sync_nodes(sub_ctx, cur_layer_node, next_layer_nodes)
             # update sample positions
-            sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map)
+            sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map,
+                                                 local_update=self._is_local_tree)
             # if sample reaches leaf nodes, drop them
             sample_on_leaves = self._get_samples_on_leaves(sample_pos)
             train_df, sample_pos, grad_and_hess = self._drop_samples_on_leaves(sample_pos, train_df, grad_and_hess)
@@ -384,6 +407,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self._sample_weights = self._convert_sample_pos_to_weight(self._sample_on_leaves, self._nodes)
         # convert bid to split value
         self._nodes = self._convert_bin_idx_to_split_val(ctx, self._nodes, binning_dict, bin_train_data.schema)
+
+        # if is local tree, send mask nodes to host
+        if self._is_local_tree:
+            self._sync_nodes(ctx, self._nodes, [])
 
     def get_hyper_param(self):
         param = {

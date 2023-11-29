@@ -19,8 +19,7 @@ package org.fedai.osx.broker.router;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import org.fedai.osx.core.router.RouterInfo;
 
-public interface FateRouterService  extends RouterService{
+public interface FateRouterService extends RouterService {
 
-    RouterInfo route(Proxy.Packet packet);
 
 }
