@@ -79,7 +79,7 @@ public class InnerServlet extends HttpServlet {
                 case HTTP_INVOKE:
                     techProvider.processHttpInvoke(osxContext, req, resp);
                     break;
-
+                case   HTTP_SET_SELF:
                 case  HTTP_SET_ROUTER:
                 case  HTTP_GET_ROUTER:
                 case  HTTP_ADD_ROUTER:

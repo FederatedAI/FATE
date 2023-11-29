@@ -199,7 +199,7 @@ public class TransferQueueManager {
             AbstractQueue queue = this.getQueue(sessionId, topic);
             if (queue != null) {
                 createQueueResult.setQueue(queue);
-                String[] elements = MetaInfo.INSTANCE_ID.split(":");
+                String[] elements = MetaInfo.INSTANCE_ID.split("_");
                 createQueueResult.setPort(Integer.parseInt(elements[1]));
                 createQueueResult.setRedirectIp(elements[0]);
                 return createQueueResult;
