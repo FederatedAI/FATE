@@ -276,10 +276,3 @@ class ConvPassportBlock(PassportBlock):
         x = scale * x + bias
         self._out_scale, self._out_bias = scale, bias
         return self._activation(x) if self._activation is not None else x
-
-
-if __name__ == '__main__':
-
-    linear = LinearPassportBlock(256, 10, num_passport=64, passport_mode='multi', passport_distribute='uniform', low=-10)
-    fake_data = t.randn(10, 256)
-    print(linear(fake_data))

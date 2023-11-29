@@ -187,7 +187,7 @@ if __name__ == '__main__':
 
     set_seed(42)
 
-    train_data = torchvision.datasets.MNIST(root='/home/cwj/mnist',
+    train_data = torchvision.datasets.MNIST(root='./mnist',
                                             train=True,
                                             download=True,
                                             transform=torchvision.transforms.ToTensor())

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     if party == "guest":
 
         ctx = create_ctx(guest, get_current_datetime_str())
-        df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_guest.csv')
+        df = pd.read_csv('./../../../../../examples/data/breast_hetero_guest.csv')
         X_g = t.Tensor(df.drop(columns=['id', 'y']).values)[0: sample_num]
         y = t.Tensor(df['y'].values)[0: sample_num].reshape((-1, 1))
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     elif party == "host":
 
         ctx = create_ctx(host, get_current_datetime_str())
-        df = pd.read_csv('/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_hetero_host.csv')
+        df = pd.read_csv('./../../../../../examples/data/breast_hetero_host.csv')
         X_h = t.Tensor(df.drop(columns=['id']).values)[0: sample_num]
 
         dataset = TensorDataset(X_h)

@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
 
     # 1. 加载数据
-    train_data = torchvision.datasets.CIFAR10(root='/home/cwj/cifar10',
+    train_data = torchvision.datasets.CIFAR10(root='./cifar10',
                                             train=True,
                                             download=True,
                                             transform=torchvision.transforms.ToTensor())

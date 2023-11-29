@@ -37,7 +37,7 @@ if __name__ == "__main__":
     model = t.nn.Sequential(t.nn.Linear(30, 1), t.nn.Sigmoid())
 
     ds = TableDataset(return_dict=False, to_tensor=True)
-    ds.load("/home/cwj/FATE/FATE-2.0/FATE/examples/data/breast_homo_guest.csv")
+    ds.load('./../../../../../examples/data/breast_homo_guest.py')
 
     if sys.argv[1] == "guest":
         ctx = create_ctx(guest)
