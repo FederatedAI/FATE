@@ -291,10 +291,10 @@ OSX相关配置：
   grpc.tls.port=9371
   open.grpc.tls.server= true
   # server端密码箱路径以及密码
-  grpc.server.keystore.file=
-  grpc.server.keystore.file.password=
+  grpc.server.keystore.file= server/identity.jks 
+  grpc.server.keystore.file.password= 
   # server端信任证书keystore路径及密码
-  grpc.server.trust.keystore.file=
+  grpc.server.trust.keystore.file= server/truststore.jks
   grpc.server.trust.keystore.file.password=
   
   ```
@@ -329,10 +329,10 @@ OSX相关配置：
   # keystore 类型
   http.ssl.trust.store.type=JKS
   # https server端密码箱路径以及密码
-  https.server.keystore.file=
+  https.server.keystore.file= client/identity.jks 
   https.server.keystore.file.password=
   # https server端信任证书keystore路径及密码
-  https.server.trust.keystore.file=
+  https.server.trust.keystore.file= client/truststore.jks
   https.server.trust.keystore.file.password=
   
   ```
