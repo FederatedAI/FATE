@@ -323,7 +323,7 @@ public class HttpsClientPool {
         TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
         // Load client certificate
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        kmf.init(keyStore, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+        kmf.init(keyStore, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray());
         sslContext.init(kmf.getKeyManagers(), tm, new SecureRandom());
         // Initialize the factory
         return sslContext.getSocketFactory();
