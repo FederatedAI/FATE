@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.fedai.osx.core.context.Protocol;
 
 
@@ -73,24 +74,51 @@ public class RouterInfo {
     private String trustStorePassword;
 
 
+    public String md5TlsInfo(){
+        if (useSSL){
+            StringBuilder  sb = new StringBuilder();
+            if(useKeyStore) {
+                sb.append(keyStoreFilePath).append(keyStoreFilePath).append(trustStoreFilePath).append(trustStorePassword);
 
+            }else{
+                sb.append(certChainFile).append(privateKeyFile).append(caFile);
+            }
+            return new String( DigestUtils.md5(sb.toString()));
+
+        }else{
+            return "";
+        }
+    }
 
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();
         if (Protocol.grpc.equals(protocol)||protocol==null) {
             sb.append(host).append("_").append(port);
-            if (useSSL)
-                sb.append("_").append("tls");
+            if (useSSL){
+                sb.append("_").append("tls").append(md5TlsInfo());
+            }
         } else {
             sb.append(url);
+            if (useSSL){
+                sb.append("_").append("tls").append(md5TlsInfo());
+            }
         }
         return sb.toString();
     }
 
     @Override
     public String toString() {
-        return toKey();
+        StringBuffer sb = new StringBuffer();
+        if (Protocol.grpc.equals(protocol)||protocol==null) {
+            sb.append(host).append("_").append(port);
+            if (useSSL){
+                sb.append("_").append("tls");
+            }
+        } else {
+            sb.append(url);
+        }
+        return sb.toString();
     }
     @JsonIgnore
     public String getResource() {
