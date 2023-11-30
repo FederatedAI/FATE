@@ -74,9 +74,11 @@ FATE1.X维护了多套通信架构，包括eggroll、spark+pulsar+nginx 、spark
 
 
 
+#### 互联互通协议解析：
 
+传输组件之间接口详解参见[bfia-x.proto](./bfia-x.proto)
 
-
+算法与传输组件之间接口详解参见  [bfia-y.proto](./bfia-y.proto)
 
 #### 传输模式：
 
