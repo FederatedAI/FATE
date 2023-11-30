@@ -130,9 +130,9 @@ two-way TSL：
 
 #### 完成以上步骤您将生成如下证书：
 
-​			server文件夹包含： identity.jks 、server.cer、truststore.jks。
+​			server文件夹包含： identity.jks 、server.cer、truststore.jks； 其中 identity.jks为私钥密码箱，truststore.jks 信任证书密码箱，server.cer为服务器证书（如果使用密码箱，无需配置此文件）。
 
-​			client文件夹包含： identity.jks 、client.cer、truststore.jks。
+​			client文件夹包含： identity.jks 、client.cer、truststore.jks；其中 identity.jks为私钥密码箱，truststore.jks 信任证书密码箱，client.cer为客户端证书（如果使用密码箱，无需配置此文件）。
 
 ## 2）方式二：单独文件存储私钥、证书、信任证书方式
 

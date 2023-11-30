@@ -294,10 +294,10 @@ OSX相关配置：
   open.grpc.tls.server= true
   # server端密码箱路径以及密码
   grpc.server.keystore.file= server/identity.jks 
-  grpc.server.keystore.file.password= 
+  grpc.server.keystore.file.password= XXXXXX
   # server端信任证书keystore路径及密码
   grpc.server.trust.keystore.file= server/truststore.jks
-  grpc.server.trust.keystore.file.password=
+  grpc.server.trust.keystore.file.password= XXXXXX
   
   ```
 
@@ -331,11 +331,11 @@ OSX相关配置：
   # keystore 类型
   http.ssl.trust.store.type=JKS
   # https server端密码箱路径以及密码
-  https.server.keystore.file= client/identity.jks 
-  https.server.keystore.file.password=
+  https.server.keystore.file= server/identity.jks 
+  https.server.keystore.file.password= XXXXXX
   # https server端信任证书keystore路径及密码
-  https.server.trust.keystore.file= client/truststore.jks
-  https.server.trust.keystore.file.password=
+  https.server.trust.keystore.file= server/truststore.jks
+  https.server.trust.keystore.file.password= XXXXXX
   
   ```
 
@@ -371,11 +371,11 @@ OSX相关配置：
   grpc.tls.port=9371
   open.grpc.tls.server= true
   # server端公钥
-  grpc.server.cert.chain.file=
+  grpc.server.cert.chain.file= server.crt
   # sever端私钥
-  grpc.server.private.key.file=
+  grpc.server.private.key.file= server.pem
   # 信任证书
-  grpc.server.ca.file=
+  grpc.server.ca.file= ca.crt
   
   ```
 
@@ -385,9 +385,9 @@ OSX相关配置：
   "default": [
           {
             "protocol": "grpc",
-            "certChainFile": "公钥",
-            "privateKeyFile": "私钥",
-            "caFile": "信任证书",
+            "certChainFile": "公钥路径",
+            "privateKeyFile": "私钥路径",
+            "caFile": "信任证书路径",
             "useSSL": true,
             "useKeyStore" : false,
             "port": 9371,
@@ -408,11 +408,11 @@ OSX相关配置：
   # 打开https server开关
   open.https.server= true
   # server端公钥
-  https.server.cert.chain.file=
+  https.server.cert.chain.file= server.crt
   # sever端私钥
-  https.server.private.key.file=
+  https.server.private.key.file= server.pem
   # 信任证书
-  https.server.ca.file=
+  https.server.ca.file= ca.crt
   ```
 
   相关client端路由表配置，在对应的partyid下面添加如下内容：
@@ -422,9 +422,9 @@ OSX相关配置：
           {
             "protocol": "http",
             "url": "https://ip:8092/v1/interconn/chan/invoke",
-            "certChainFile": "公钥",
-            "privateKeyFile": "私钥",
-            "caFile": "信任证书",
+            "certChainFile": "公钥路径",
+            "privateKeyFile": "私钥路径",
+            "caFile": "信任证书路径",
             "useSSL": true,
             "useKeyStore" : false,
           }
