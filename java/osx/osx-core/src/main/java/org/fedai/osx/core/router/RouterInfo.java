@@ -37,7 +37,8 @@ public class RouterInfo {
             return  true;
         }
     }
-
+    @JsonIgnore
+    boolean isCycle = false;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Protocol protocol;
     @JsonIgnore
