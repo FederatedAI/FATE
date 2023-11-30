@@ -154,6 +154,7 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         routerInfo.setProtocol(protocol);
         routerInfo.setUrl(endpoint.get(Dict.URL) != null ? endpoint.get(Dict.URL).toString() : "");
         routerInfo.setUseSSL(endpoint.get(Dict.USE_SSL) != null && Boolean.parseBoolean(endpoint.get(Dict.USE_SSL).toString()));
+        routerInfo.setUseKeyStore(endpoint.get(Dict.USE_KEYSTORE) != null && Boolean.parseBoolean(endpoint.get(Dict.USE_KEYSTORE).toString()));
         routerInfo.setCaFile(endpoint.get(Dict.CA_FILE) != null ? endpoint.get(Dict.CA_FILE).toString() : "");
         routerInfo.setCertChainFile(endpoint.get(Dict.CERT_CHAIN_FILE) != null ? endpoint.get(Dict.CERT_CHAIN_FILE).toString() : "");
         routerInfo.setPrivateKeyFile(endpoint.get(Dict.PRIVATE_KEY_FILE) != null ? endpoint.get(Dict.PRIVATE_KEY_FILE).toString() : "");
