@@ -163,8 +163,10 @@ public class MetaInfo {
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_TYPE = "PKCS12";
     @Config(confKey = "http.ssl.trust.store.provider")
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_PROVIDER = "SUN";
-    @Config(confKey = "http.ssl.key.store.alias")
-    public static String PROPERTY_HTTP_SSL_KEY_STORE_ALIAS = "";
+    @Config(confKey = "http.ssl.client.key.store.alias")
+    public static String PROPERTY_HTTP_SSL_CLIENT_KEY_STORE_ALIAS = "";
+    @Config(confKey = "http.ssl.server.key.store.alias")
+    public static String PROPERTY_HTTP_SSL_SERVER_KEY_STORE_ALIAS = "";
     @Config(confKey = "http.ssl.hostname.verify")
     public static Boolean PROPERTY_HTTP_SSL_HOSTNAME_VERIFY = false;
     @Config(confKey = "http.context.path")

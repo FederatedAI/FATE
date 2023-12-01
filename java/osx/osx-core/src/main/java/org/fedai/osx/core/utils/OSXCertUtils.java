@@ -110,7 +110,14 @@ public class OSXCertUtils {
     public static KeyStore getKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(null);
-        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
+        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_CLIENT_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
+        return keyStore;
+    }
+
+    public static KeyStore getKeyStore2(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(null);
+        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_SERVER_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
         return keyStore;
     }
 
@@ -120,7 +127,7 @@ public class OSXCertUtils {
         return keyStore;
     }
 
-    public static String createKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+  /*  public static String createKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
         PrivateKey privateKey = importPrivateKey(clientKeyPath);
 //        Certificate[] certificates = {importCert(clientCertPath), importCert(caPath)};
         Certificate[] certificates = {importCert(clientCertPath), importCert(caPath)};
@@ -129,7 +136,7 @@ public class OSXCertUtils {
         FileUtils.createNewFile(pfxFile);
         OSXCertUtils.x509ToPkCS12(certificates, privateKey, pfxPath, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_ALIAS);
         return pfxPath;
-    }
+    }*/
 
     public static Certificate importCert(String certFile) throws Exception {
         try (FileInputStream certStream = new FileInputStream(certFile)) {

@@ -156,7 +156,7 @@ public class OsxServer {
                 sslServer.setTrustStoreProvider(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PROVIDER);
             } else {
                 SSLContext sslContext = SSLContext.getInstance("TLS");
-                KeyStore keyStore = OSXCertUtils.getKeyStore(MetaInfo.PROPERTY_HTTPS_SERVER_CA_FILE, MetaInfo.PROPERTY_HTTPS_SERVER_CERT_CHAIN_FILE, MetaInfo.PROPERTY_HTTPS_SERVER_PRIVATE_KEY_FILE);
+                KeyStore keyStore = OSXCertUtils.getKeyStore2(MetaInfo.PROPERTY_HTTPS_SERVER_CA_FILE, MetaInfo.PROPERTY_HTTPS_SERVER_CERT_CHAIN_FILE, MetaInfo.PROPERTY_HTTPS_SERVER_PRIVATE_KEY_FILE);
                 TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
                 // Load client certificate
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
