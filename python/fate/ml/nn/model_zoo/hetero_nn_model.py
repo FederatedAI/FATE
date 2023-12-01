@@ -3,6 +3,7 @@ import torch as t
 from fate.arch import Context
 from fate.ml.nn.model_zoo.agg_layer.agg_layer import AggLayerGuest, AggLayerHost
 from fate.ml.nn.model_zoo.agg_layer.fedpass.agg_layer import FedPassAggLayerGuest, FedPassAggLayerHost, get_model
+from fate.ml.nn.model_zoo.agg_layer.sshe.agg_layer import SSHEAggLayerHost, SSHEAggLayerGuest
 from typing import Any, Dict, List, Union, Callable, Literal
 from dataclasses import dataclass, fields
 from enum import Enum
@@ -70,9 +71,18 @@ class FedPassArgument(StdAggLayerArgument):
 
 
 @dataclass
-class HESSArgument(object):
-    pass
+class SSHEArgument(Args):
 
+    guest_in_features: int = 8
+    host_in_features: int = 8
+    out_features: int = 8
+    layer_lr: float = 0.01
+    precision_bits: int = None
+
+    def to_dict(self):
+        d = super().to_dict()
+        d['agg_type'] = 'hess'
+        return d
 
 def parse_agglayer_conf(agglayer_arg_conf):
 
@@ -134,17 +144,13 @@ class HeteroNNModelBase(t.nn.Module):
         self._agg_layer = None
         self._ctx = None
 
-    def _auto_setup(self):
-        self._agg_layer = AggLayerGuest()
-        self._agg_layer.set_context(self._ctx)
-
 
 class HeteroNNModelGuest(HeteroNNModelBase):
 
     def __init__(self,
                  top_model: t.nn.Module,
                  bottom_model: t.nn.Module = None,
-                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
                  top_arg: TopModelStrategyArguments = None,
                  ctx: Context = None
                  ):
@@ -184,7 +190,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         self._bottom_fw = None
         self._agg_fw_rg = None
 
-    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
               top_arg: TopModelStrategyArguments = None, bottom_arg=None):
 
         self._ctx = ctx
@@ -196,6 +202,10 @@ class HeteroNNModelGuest(HeteroNNModelBase):
                 self._agg_layer = AggLayerGuest(**agglayer_arg.to_dict())
             elif isinstance(agglayer_arg, FedPassArgument):
                 self._agg_layer = FedPassAggLayerGuest(**agglayer_arg.to_dict())
+            elif isinstance(agglayer_arg, SSHEArgument):
+                self._agg_layer = SSHEAggLayerGuest(**agglayer_arg.to_dict())
+                if self._bottom_model is None:
+                    raise RuntimeError('A bottom model is needed when running a SSHE model')
 
         if self._top_add_model is None:
             if top_arg:
@@ -243,8 +253,12 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
         if self._guest_direct_backward:
             # send error to hosts & guest side direct backward
-            self._agg_layer.backward(loss)
-            loss.backward()
+            if isinstance(self._agg_layer, SSHEAggLayerGuest):
+                loss.backward()  # sshe has independent optimizer
+                self._agg_layer.step()
+            else:
+                self._agg_layer.backward(loss)
+                loss.backward()
         else:
             # backward are split into parts
             loss.backward()  # update top
@@ -268,12 +282,16 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
         return top_out
 
+    def _auto_setup(self):
+        self._agg_layer = AggLayerGuest()
+        self._agg_layer.set_context(self._ctx)
+
 
 class HeteroNNModelHost(HeteroNNModelBase):
 
     def __init__(self,
                  bottom_model: t.nn.Module,
-                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
+                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
                  ctx: Context = None
                  ):
 
@@ -286,6 +304,7 @@ class HeteroNNModelHost(HeteroNNModelBase):
         # ctx
         self._ctx = None
         self._agg_layer = None
+        self._fake_loss = None
         self.setup(ctx=ctx, agglayer_arg=agglayer_arg)
 
     def __repr__(self):
@@ -297,8 +316,8 @@ class HeteroNNModelHost(HeteroNNModelBase):
     def _clear_state(self):
         self._bottom_fw = None
 
-    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, HESSArgument] = None,
-                bottom_arg=None):
+    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
+              bottom_arg=None):
 
         self._ctx = ctx
 
@@ -309,6 +328,8 @@ class HeteroNNModelHost(HeteroNNModelBase):
                 self._agg_layer = AggLayerHost()  # no parameters are needed
             elif type(agglayer_arg) == FedPassArgument:
                 self._agg_layer = FedPassAggLayerHost(**agglayer_arg.to_dict())
+            elif isinstance(agglayer_arg, SSHEArgument):
+                self._agg_layer = SSHEAggLayerGuest(**agglayer_arg.to_dict())
 
         self._agg_layer.set_context(ctx)
 
@@ -321,17 +342,30 @@ class HeteroNNModelHost(HeteroNNModelBase):
         # bottom layer
         self._bottom_fw = b_out
         # hetero layer
-        self._agg_layer.forward(b_out)
+        if isinstance(self._agg_layer, SSHEAggLayerGuest):
+            self._fake_loss = self._agg_layer.forward(b_out)
+        else:
+            self._agg_layer.forward(b_out)
 
     def backward(self):
 
-        error = self._agg_layer.backward()
-        loss = backward_loss(self._bottom_fw, error)
-        loss.backward()
-        self._clear_state()
+        if isinstance(self._agg_layer, SSHEAggLayerGuest):
+            self._fake_loss.backward()
+            self._fake_loss = None
+            self._agg_layer.step()  # sshe has independent optimizer
+            self._clear_state()
+        else:
+            error = self._agg_layer.backward()
+            loss = backward_loss(self._bottom_fw, error)
+            loss.backward()
+            self._clear_state()
 
     def predict(self, x):
 
         with torch.no_grad():
             b_out = self._bottom_model(x)
             self._agg_layer.predict(b_out)
+
+    def _auto_setup(self):
+        self._agg_layer = AggLayerHost()
+        self._agg_layer.set_context(self._ctx)
