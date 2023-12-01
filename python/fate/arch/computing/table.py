@@ -9,6 +9,7 @@ from fate.arch.unify.serdes import get_serdes_by_type
 from fate.arch.utils.trace import auto_trace
 from ..unify import URI
 import functools
+from ._profile import computing_profile as _compute_info
 
 logger = logging.getLogger(__name__)
 
@@ -26,26 +27,27 @@ def _add_padding(message, count):
     return "\n".join(padded_lines)
 
 
-def _compute_info(func):
-    return func
-
-    # @functools.wraps(func)
-    # def wrapper(*args, **kwargs):
-    #     global _level
-    #     logger.debug(_add_padding(f"computing enter {func.__name__}", _level * 2))
-    #     try:
-    #         _level += 1
-    #         stacks = _add_padding("".join(traceback.format_stack(limit=5)[:-1]), _level * 2)
-    #         logger.debug(f'{_add_padding("stack:", _level * 2)}\n{stacks}')
-    #         return func(*args, **kwargs)
-    #     finally:
-    #         _level -= 1
-    #         logger.debug(f"{' ' * _level}computing exit {func.__name__}")
-    #
-    # return wrapper
+# def _compute_info(func):
+#     return func
+#
+#     # @functools.wraps(func)
+#     # def wrapper(*args, **kwargs):
+#     #     global _level
+#     #     logger.debug(_add_padding(f"computing enter {func.__name__}", _level * 2))
+#     #     try:
+#     #         _level += 1
+#     #         stacks = _add_padding("".join(traceback.format_stack(limit=5)[:-1]), _level * 2)
+#     #         logger.debug(f'{_add_padding("stack:", _level * 2)}\n{stacks}')
+#     #         return func(*args, **kwargs)
+#     #     finally:
+#     #         _level -= 1
+#     #         logger.debug(f"{' ' * _level}computing exit {func.__name__}")
+#     #
+#     # return wrapper
 
 
 class KVTableContext:
+    @_compute_info
     def parallelize(
         self, data, include_key=True, partition=None, key_serdes_type=0, value_serdes_type=0, partitioner_type=0
     ) -> "KVTable":
@@ -130,7 +132,7 @@ class KVTable(Generic[K, V]):
         raise NotImplementedError(f"{self.__class__.__name__}._drop_num")
 
     @abc.abstractmethod
-    def _map_reduce_partitions_with_index(
+    def _impl_map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
         reduce_partition_op: Optional[Callable[[Any, Any], Any]],
@@ -225,6 +227,26 @@ class KVTable(Generic[K, V]):
         output_partitioner_type=None,
         output_num_partitions=None,
     ):
+        return self._map_reduce_partitions_with_index(
+            map_partition_op=map_partition_op,
+            reduce_partition_op=reduce_partition_op,
+            shuffle=shuffle,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner_type=output_partitioner_type,
+            output_num_partitions=output_num_partitions,
+        )
+
+    def _map_reduce_partitions_with_index(
+        self,
+        map_partition_op: Callable[[int, Iterable], Iterable],
+        reduce_partition_op: Callable[[Any, Any], Any] = None,
+        shuffle=True,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
+        output_num_partitions=None,
+    ):
         if not shuffle and reduce_partition_op is not None:
             raise ValueError("when shuffle is False, it is not allowed to specify reduce_partition_op")
         if output_key_serdes_type is None:
@@ -241,7 +263,7 @@ class KVTable(Generic[K, V]):
         output_key_serdes = get_serdes_by_type(output_key_serdes_type)
         output_value_serdes = get_serdes_by_type(output_value_serdes_type)
         output_partitioner = get_partitioner_by_type(output_partitioner_type)
-        return self._map_reduce_partitions_with_index(
+        return self._impl_map_reduce_partitions_with_index(
             map_partition_op=_lifted_mpwi_map_to_serdes(
                 map_partition_op, self.key_serdes, self.value_serdes, output_key_serdes, output_value_serdes
             ),
@@ -271,7 +293,7 @@ class KVTable(Generic[K, V]):
         output_value_serdes_type=None,
         output_partitioner_type=None,
     ):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             map_partition_op=map_partition_op,
             shuffle=True,
             output_key_serdes_type=output_key_serdes_type,
@@ -290,7 +312,7 @@ class KVTable(Generic[K, V]):
         output_value_serdes_type=None,
         output_partitioner_type=None,
     ):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             map_partition_op=_lifted_map_reduce_partitions_to_mpwi(map_partition_op),
             reduce_partition_op=reduce_partition_op,
             shuffle=shuffle,
@@ -302,7 +324,7 @@ class KVTable(Generic[K, V]):
     @auto_trace
     @_compute_info
     def applyPartitions(self, func, output_value_serdes_type=None):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             map_partition_op=_lifted_apply_partitions_to_mpwi(func),
             shuffle=False,
             output_key_serdes_type=self.key_serdes_type,
@@ -316,7 +338,7 @@ class KVTable(Generic[K, V]):
     ):
         if use_previous_behavior:
             raise NotImplementedError("use_previous_behavior is not supported")
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             map_partition_op=_lifted_map_partitions_to_mpwi(func),
             shuffle=not preserves_partitioning,
             output_key_serdes_type=self.key_serdes_type,
@@ -332,7 +354,7 @@ class KVTable(Generic[K, V]):
         output_value_serdes_type=None,
         output_partitioner_type=None,
     ):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             _lifted_map_to_mpwi(map_op),
             shuffle=True,
             output_key_serdes_type=output_key_serdes_type,
@@ -343,7 +365,7 @@ class KVTable(Generic[K, V]):
     @auto_trace
     @_compute_info
     def mapValues(self, map_value_op: Callable[[Any], Any], output_value_serdes_type=None):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             _lifted_map_values_to_mpwi(map_value_op),
             shuffle=False,
             output_key_serdes_type=self.key_serdes_type,
@@ -363,7 +385,7 @@ class KVTable(Generic[K, V]):
         output_key_serdes_type=None,
         output_value_serdes_type=None,
     ):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             _lifted_flat_map_to_mpwi(flat_map_op),
             shuffle=True,
             output_key_serdes_type=output_key_serdes_type,
@@ -373,7 +395,7 @@ class KVTable(Generic[K, V]):
     @auto_trace
     @_compute_info
     def filter(self, filter_op: Callable[[Any], bool]):
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             lambda i, x: ((k, v) for k, v in x if filter_op(v)),
             shuffle=False,
             output_key_serdes_type=self.key_serdes_type,
@@ -381,7 +403,7 @@ class KVTable(Generic[K, V]):
         )
 
     def _sample(self, fraction, seed=None) -> "KVTable":
-        return self.map_reduce_partitions_with_index(
+        return self._map_reduce_partitions_with_index(
             _lifted_sample_to_mpwi(fraction, seed),
             shuffle=False,
             output_key_serdes_type=self.key_serdes_type,
@@ -522,7 +544,7 @@ class KVTable(Generic[K, V]):
                 output_key_serdes,
                 self.value_serdes,
             )
-        return self._map_reduce_partitions_with_index(
+        return self._impl_map_reduce_partitions_with_index(
             map_partition_op=mapper,
             reduce_partition_op=None,
             shuffle=True,

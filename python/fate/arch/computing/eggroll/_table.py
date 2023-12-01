@@ -42,7 +42,7 @@ class Table(KVTable):
     def engine(self):
         return self._engine
 
-    def _map_reduce_partitions_with_index(
+    def _impl_map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
         reduce_partition_op: Callable[[Any, Any], Any],

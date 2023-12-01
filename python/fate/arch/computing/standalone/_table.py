@@ -52,7 +52,7 @@ class Table(KVTable):
             self._table.delete(k, partitioner=partitioner)
         return Table(table=self._table)
 
-    def _map_reduce_partitions_with_index(
+    def _impl_map_reduce_partitions_with_index(
         self,
         map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
         reduce_partition_op: Callable[[Any, Any], Any],
