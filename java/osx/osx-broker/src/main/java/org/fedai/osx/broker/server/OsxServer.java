@@ -143,7 +143,7 @@ public class OsxServer {
             ServerConnector connector;
             SslContextFactory.Server sslServer = new SslContextFactory.Server();
 //            //如果PROPERTY_HTTP_SSL_TRUST_STORE_PATH 为空， 则去读取证书套件，然后生成一个TRUST_STORE
-            if (StringUtils.isNotBlank(MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE)) {
+            if (StringUtils.isNotBlank(MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE) && StringUtils.isBlank(MetaInfo.PROPERTY_HTTPS_SERVER_PRIVATE_KEY_FILE)) {
                 sslServer.setTrustStoreType(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE.toUpperCase());
                 sslServer.setTrustStorePath(MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE);
                 sslServer.setTrustStore(OSXCertUtils.getTrustStore(MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE));
