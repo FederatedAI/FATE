@@ -239,7 +239,6 @@ class DefaultRunner(NNRunner):
                 output_dir: str = None,
                 saved_model_path: str = None) -> DataFrame:
 
-        logger.info('cwj pred called')
         test_set = self._prepare_data(test_data, 'test_data')
         if self.trainer is not None:
             trainer = self.trainer
@@ -272,9 +271,7 @@ class DefaultRunner(NNRunner):
                 dataframe_format='fate_std',
                 task_type=self.task_type,
                 classes=classes)
-            logger.info('cwj pred end guest')
             return rs_df
 
         elif self.is_host():
             trainer.predict(test_set)
-            logger.info('cwj pred end host')
