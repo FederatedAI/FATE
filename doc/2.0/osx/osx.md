@@ -351,7 +351,7 @@ OSX相关配置：
             "trustStoreFile": "信任证书绝对路径",
             "trustStorePassword": "信任证书密码",
             "useSSL": true,
-            "useKeyStore" : true,
+            "useKeyStore" : true
           }
         ]
   ```
@@ -426,7 +426,7 @@ OSX相关配置：
             "privateKeyFile": "私钥路径",
             "caFile": "信任证书路径",
             "useSSL": true,
-            "useKeyStore" : false,
+            "useKeyStore" : false
           }
         ]
   ```
