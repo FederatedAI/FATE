@@ -44,10 +44,12 @@ def train(
         early_stop: cpn.parameter(
             type=params.string_choice(["weight_diff", "diff", "abs"]),
             default="diff",
-            desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
+            desc="early stopping criterion, choose from {weight_diff, diff, abs}",
         ),
-        encrypted_reveal: cpn.parameter(type=bool, default=True,
-                                        desc="whether reveal encrypted result every epoch, if False, only reveal at the end of training"),
+        learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
+        reveal_every_epoch: cpn.parameter(type=bool, default=False,
+                                          desc="whether reveal encrypted result every epoch, "
+                                               "if False, only reveal at the end of training"),
         init_param: cpn.parameter(
             type=params.init_param(),
             default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
@@ -56,10 +58,12 @@ def train(
         threshold: cpn.parameter(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
+        reveal_loss_freq: cpn.parameter(type=params.conint(ge=1), default=1,
+                                        desc="rounds to reveal training loss, "
+                                             "only effective if `early_stop` is 'loss'"),
         train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
-        warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True),
-):
+        warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True)):
     logger.info(f"enter sshe lr train")
     # temp code start
     init_param = init_param.dict()
@@ -73,10 +77,12 @@ def train(
         output_model,
         epochs,
         batch_size,
+        learning_rate,
         tol,
         early_stop,
         init_param,
-        encrypted_reveal,
+        reveal_every_epoch,
+        reveal_loss_freq,
         threshold,
         warm_start_model
     )
@@ -104,6 +110,12 @@ def cross_validation(
             type=params.conint(ge=10),
             default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
         ),
+        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+        early_stop: cpn.parameter(
+            type=params.string_choice(["weight_diff", "diff", "abs"]),
+            default="diff",
+            desc="early stopping criterion, choose from {weight_diff, diff, abs}",
+        ),
         learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
         init_param: cpn.parameter(
             type=params.init_param(),
@@ -113,8 +125,12 @@ def cross_validation(
         threshold: cpn.parameter(
             type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
         ),
-        encrypted_reveal: cpn.parameter(type=bool, default=True,
-                                        desc="whether reveal encrypted result every epoch, if False, only reveal at the end of training"),
+        reveal_every_epoch: cpn.parameter(type=bool, default=False,
+                                          desc="whether reveal encrypted result every epoch, "
+                                               "if False, only reveal at the end of training"),
+        reveal_loss_freq: cpn.parameter(type=params.conint(ge=1), default=1,
+                                        desc="rounds to reveal training loss, "
+                                             "only effective if `early_stop` is 'loss'"),
         cv_param: cpn.parameter(type=params.cv_param(),
                                 default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
                                 desc="cross validation param"),
@@ -129,46 +145,29 @@ def cross_validation(
     i = 0
     for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
         logger.info(f"enter fold {i}")
-        if role.is_guest:
-            module = SSHELogisticRegression(
-                epochs=epochs,
-                batch_size=batch_size,
-                learning_rate=learning_rate,
-                tol=tol,
-                early_stop=early_stop,
-                init_param=init_param,
-                threshold=threshold,
-                encrypted_reveal=encrypted_reveal,
-            )
-            module.fit(fold_ctx, train_data, validate_data)
-            if output_cv_data:
+        module = SSHELogisticRegression(
+            epochs=epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            tol=tol,
+            early_stop=early_stop,
+            init_param=init_param,
+            threshold=threshold,
+            reveal_every_epoch=reveal_every_epoch,
+            reveal_loss_freq=reveal_loss_freq
+        )
+        module.fit(fold_ctx, train_data, validate_data)
+        if output_cv_data:
+            if role.is_guest:
                 sub_ctx = fold_ctx.sub_ctx("predict_train")
                 predict_df = module.predict(sub_ctx, train_data)
-                """train_predict_result = transform_to_predict_result(
-                    train_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
-                    data_type="train"
-                )"""
                 train_predict_result = tools.add_dataset_type(predict_df, consts.TRAIN_SET)
                 sub_ctx = fold_ctx.sub_ctx("predict_validate")
                 predict_df = module.predict(sub_ctx, validate_data)
-                """validate_predict_result = transform_to_predict_result(
-                    validate_data, predict_score, module.labels, threshold=module.threshold, is_ovr=module.ovr,
-                    data_type="predict"
-                )"""
                 validate_predict_result = tools.add_dataset_type(predict_df, consts.VALIDATE_SET)
                 predict_result = DataFrame.vstack([train_predict_result, validate_predict_result])
                 next(cv_output_datas).write(df=predict_result)
-
-            # evaluation = evaluate(predicted)
-        elif role.is_host:
-            module = SSHELogisticRegression(
-                epochs=epochs,
-                batch_size=batch_size,
-                init_param=init_param,
-                encrypted_reveal=encrypted_reveal,
-            )
-            module.fit(fold_ctx, train_data, validate_data)
-            if output_cv_data:
+            elif role.is_host:
                 sub_ctx = fold_ctx.sub_ctx("predict_train")
                 module.predict(sub_ctx, train_data)
                 sub_ctx = fold_ctx.sub_ctx("predict_validate")
@@ -185,11 +184,12 @@ def train_model(
         output_model,
         epochs,
         batch_size,
+        learning_rate,
         tol,
         early_stop,
-        learning_rate,
         init_param,
-        encrypted_reveal,
+        reveal_every_epoch,
+        reveal_loss_freq,
         threshold,
         input_model
 ):
@@ -209,7 +209,8 @@ def train_model(
             learning_rate=learning_rate,
             init_param=init_param,
             threshold=threshold,
-            encrypted_reveal=encrypted_reveal
+            reveal_every_epoch=reveal_every_epoch,
+            reveal_loss_freq=reveal_loss_freq
         )
     # optimizer = optimizer_factory(optimizer_param)
     logger.info(f"sshe lr guest start train")
