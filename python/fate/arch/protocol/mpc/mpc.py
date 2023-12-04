@@ -171,13 +171,13 @@ class MPCTensor(CrypTensor):
         self.share = self.share.cpu()
         return self
 
-    def get_plain_text(self, dst=None):
+    def get_plain_text(self, dst=None, group=None):
         """Decrypts the tensor."""
-        return self._tensor.get_plain_text(dst=dst)
+        return self._tensor.get_plain_text(dst=dst, group=group)
 
-    def reveal(self, dst=None):
+    def reveal(self, dst=None, group=None):
         """Decrypts the tensor without any downscaling."""
-        return self._tensor.reveal(dst=dst)
+        return self._tensor.reveal(dst=dst, group=group)
 
     def __repr__(self):
         """Returns a representation of the tensor useful for debugging."""

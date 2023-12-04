@@ -5,6 +5,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
+
 # dependencies:
 import torch
 
@@ -19,7 +21,6 @@ from fate.arch.protocol.mpc.cuda import CUDALongTensor
 from fate.arch.protocol.mpc.encoder import FixedPointEncoder
 from fate.arch.protocol.mpc.functions import regular
 from . import beaver, replicated  # noqa: F401
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -277,20 +278,20 @@ class ArithmeticSharedTensor(object):
         else:
             return comm.get().reduce(shares, dst, batched=True)
 
-    def reveal(self, dst=None):
+    def reveal(self, dst=None, group=None):
         """Decrypts the tensor without any downscaling."""
         tensor = self.share.clone()
         if dst is None:
-            return comm.get().all_reduce(tensor)
+            return comm.get().all_reduce(tensor, group=group)
         else:
-            return comm.get().reduce(tensor, dst)
+            return comm.get().reduce(tensor, dst, group=group)
 
-    def get_plain_text(self, dst=None):
+    def get_plain_text(self, dst=None, group=None):
         """Decrypts the tensor."""
         # Edge case where share becomes 0 sized (e.g. result of split)
         if self.nelement() < 1:
             return torch.empty(self.share.size())
-        return self.encoder.decode(self.reveal(dst=dst))
+        return self.encoder.decode(self.reveal(dst=dst, group=group))
 
     def encode_(self, new_encoder):
         """Rescales the input to a new encoding in-place"""
