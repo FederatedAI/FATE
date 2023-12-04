@@ -44,10 +44,13 @@ class PassportBlock(nn.Module):
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                               missing_keys, unexpected_keys, error_msgs):
 
-        if 'skey' in state_dict:
-            self.register_buffer('skey', t.randn(*state_dict['skey'].size()))
-        if 'bkey' in state_dict:
-            self.register_buffer('bkey', t.randn(*state_dict['bkey'].size()))
+        skey = '_agg_layer._model.skey'
+        bkey = '_agg_layer._model.bkey'
+
+        if skey in state_dict:
+            self.register_buffer('skey', t.randn(*state_dict[skey].size()))
+        if bkey in state_dict:
+            self.register_buffer('bkey', t.randn(*state_dict[bkey].size()))
 
         if '_out_scale' in state_dict:
             self.scale = nn.Parameter(t.randn(*state_dict['_out_scale'].size()))

@@ -48,7 +48,7 @@ def main(config="../../config.yaml", namespace=""):
             num_train_epochs=5,
             per_device_train_batch_size=16,
             logging_strategy='epoch',
-            no_cuda=True,
+            no_cuda=True
         )
 
     guest_conf = get_config_of_default_runner(
@@ -70,7 +70,7 @@ def main(config="../../config.yaml", namespace=""):
 
     hetero_nn_0 = HeteroNN(
         'hetero_nn_0',
-        train_data=psi_0.outputs['output_data']
+        train_data=psi_0.outputs['output_data'], validate_data=psi_0.outputs['output_data']
     )
 
     hetero_nn_0.guest.task_setting(runner_conf=guest_conf)
@@ -86,7 +86,7 @@ def main(config="../../config.yaml", namespace=""):
         'eval_0',
         runtime_roles=['guest'],
         metrics=['auc'],
-        input_data=[hetero_nn_1.outputs['predict_data_output'], hetero_nn_0.outputs['train_data_output']]
+        input_data=[hetero_nn_0.outputs['train_data_output']]
     )
 
     pipeline.add_task(psi_0)

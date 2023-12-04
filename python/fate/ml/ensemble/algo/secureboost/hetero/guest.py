@@ -85,6 +85,7 @@ def _accumulate_scores(acc_scores: DataFrame, new_scores: DataFrame, learning_ra
         acc_scores = acc_scores + extend_scores * learning_rate
     return acc_scores
 
+
 class HeteroSecureBoostGuest(HeteroBoostingTree):
     def __init__(
         self,
@@ -404,7 +405,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         self._init_score = float(model["init_score"]) if model["init_score"] is not None else None
         # initialize
         self._tree_dim = self.num_class if self.objective == MULTI_CE else 1
-        self._loss_func = _get_loss_func(self.objective)
+        self._loss_func = _get_loss_func(self.objective, class_num=self.num_class)
         # for warmstart
         self._model_loaded = True
         # load loss
