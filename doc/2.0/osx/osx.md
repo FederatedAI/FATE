@@ -309,7 +309,7 @@ OSX相关配置：
             "protocol": "grpc",
             "keyStoreFile": "私钥密码箱绝对路径",
             "keyStorePassword": "私钥密码箱密码",
-            "trustStoreFile": 信任证书绝对路径",
+            "trustStoreFile": "信任证书绝对路径",
             "trustStorePassword": "信任证书密码",
             "useSSL": true,
             "useKeyStore" : true,
@@ -348,10 +348,10 @@ OSX相关配置：
             "url": "https://ip:8092/v1/interconn/chan/invoke",
             "keyStoreFile": "私钥密码箱绝对路径",
             "keyStorePassword": "私钥密码箱密码",
-            "trustStoreFile": 信任证书绝对路径",
+            "trustStoreFile": "信任证书绝对路径",
             "trustStorePassword": "信任证书密码",
             "useSSL": true,
-            "useKeyStore" : true,
+            "useKeyStore" : true
           }
         ]
   ```
@@ -426,7 +426,7 @@ OSX相关配置：
             "privateKeyFile": "私钥路径",
             "caFile": "信任证书路径",
             "useSSL": true,
-            "useKeyStore" : false,
+            "useKeyStore" : false
           }
         ]
   ```
