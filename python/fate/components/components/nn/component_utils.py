@@ -136,13 +136,17 @@ def train_procedure(
 
     logger.info('Predicting Train & Validate Data')
     train_pred = runner.predict(train_data_, saved_model_path)
+    validate_pred = None
+    if validate_data_ is not None:
+        validate_pred = runner.predict(validate_data_)
+
+    logger.info('predicting done')
     if train_pred is not None:
         assert isinstance(
             train_pred, DataFrame), "train predict result should be a DataFrame"
         add_dataset_type(train_pred, consts.TRAIN_SET)
 
-        if validate_data_ is not None:
-            validate_pred = runner.predict(validate_data_)
+        if validate_pred is not None:
             assert isinstance(
                 validate_pred, DataFrame), "validate predict result should be a DataFrame"
             add_dataset_type(validate_pred, consts.VALIDATE_SET)

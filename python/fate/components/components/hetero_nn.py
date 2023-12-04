@@ -54,7 +54,7 @@ def train(
         train_model_output,
         train_model_input
     )
-
+    logger.info('cwj done')
 
 @hetero_nn.predict()
 def predict(
