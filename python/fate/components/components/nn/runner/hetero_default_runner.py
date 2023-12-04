@@ -271,7 +271,6 @@ class DefaultRunner(NNRunner):
                 dataframe_format='fate_std',
                 task_type=self.task_type,
                 classes=classes)
-
             return rs_df
 
         elif self.is_host():

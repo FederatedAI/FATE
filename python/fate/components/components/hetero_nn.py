@@ -55,7 +55,6 @@ def train(
         train_model_input
     )
 
-
 @hetero_nn.predict()
 def predict(
         ctx: Context,
