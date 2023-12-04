@@ -434,7 +434,7 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         Preconditions.checkArgument(routerInfo!=null);
         String desPartyId =  routerInfo.getDesPartyId();
         Preconditions.checkArgument(StringUtils.isNotEmpty(desPartyId),"des party id is null");
-        if(routerInfo.getProtocol()!=null||Protocol.grpc.equals(routerInfo.getProtocol())){
+        if(routerInfo.getProtocol()==null || Protocol.grpc.equals(routerInfo.getProtocol())){
             Preconditions.checkArgument(StringUtils.isNotEmpty(routerInfo.getHost()), "route_table.json "+desPartyId+" host/ip is null");
             Preconditions.checkArgument(routerInfo.getPort()!=null, "route_table.json "+desPartyId+" port is null");
         }
