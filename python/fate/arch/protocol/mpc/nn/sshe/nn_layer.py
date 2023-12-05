@@ -182,7 +182,7 @@ def _set_grad(x, grad):
 class SSHENeuralNetworkOptimizerSGD:
     def __init__(self, ctx: Context, params, lr=0.05):
         self.ctx = ctx
-        self.params = params
+        self.params = list(params)
         self.lr = lr
 
     @auto_trace(annotation="<param> -= <lr> * <param.grad>")
