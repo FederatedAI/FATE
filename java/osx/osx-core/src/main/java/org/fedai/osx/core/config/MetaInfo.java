@@ -259,6 +259,8 @@ public class MetaInfo {
     public static Boolean PROPERTY_ROUTER_CHANGE_NEED_TOKEN= false;
     @Config(confKey = "router.change.token.validator")
     public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR= Dict.DEFAULT;
+    @Config(confKey = "batch.sink.push.executor.timeout")
+    public static Integer BATCH_SINK_PUSH_EXECUTOR_TIMEOUT = 60*1000;
 
 
     public static boolean isCluster() {
