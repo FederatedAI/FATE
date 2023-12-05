@@ -63,19 +63,27 @@ def init_eggroll_context():
     from fate.arch.computing.eggroll import CSession
 
     from fate.arch.federation.osx import OSXFederation
+    from fate.arch.federation.eggroll import EggrollFederation
     from fate.arch.context import Context
 
     args = HfArgumentParser(LauncherEggrollContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[0]
     parties = get_parties(args.parties)
     party = parties[args.rank]
     computing_session = CSession(session_id=args.csession_id)
-    federation_session = OSXFederation.from_conf(
-        federation_session_id=args.federation_session_id,
-        computing_session=computing_session,
+    federation_session = EggrollFederation(
+        rp_ctx=computing_session.get_rpc(),
+        rs_session_id=args.federation_session_id,
         party=party,
         parties=parties,
-        host=args.host,
-        port=args.port,
+        proxy_endpoint=f"{args.host}:{args.port}",
     )
+    # federation_session = OSXFederation.from_conf(
+    #     federation_session_id=args.federation_session_id,
+    #     computing_session=computing_session,
+    #     party=party,
+    #     parties=parties,
+    #     host=args.host,
+    #     port=args.port,
+    # )
     context = Context(computing=computing_session, federation=federation_session)
     return context

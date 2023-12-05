@@ -208,8 +208,8 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
         ErJob job = new ErJob(
                 jobId,
                 RollPair.PUT_BATCH,
-                Lists.newArrayList(rp.getStore()),
-                Lists.newArrayList(rp.getStore()),
+                Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
+                Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
                 Lists.newArrayList(),
                 jobOptions);
 
@@ -220,18 +220,17 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
                 job);
 
         Future<ErTask> commandFuture = RollPairContext.executor.submit(() -> {
-            CommandClient commandClient = new CommandClient(egg.getCommandEndpoint());
-            Command.CommandResponse commandResponse = commandClient.call(RollPair.EGG_RUN_TASK_COMMAND, task);
-            long begin = System.currentTimeMillis();
             try {
+                CommandClient commandClient = new CommandClient(egg.getCommandEndpoint());
+                Command.CommandResponse commandResponse = commandClient.call(RollPair.EGG_RUN_TASK_COMMAND, task);
                 Meta.Task taskMeta = Meta.Task.parseFrom(commandResponse.getResultsList().get(0));
                 ErTask erTask = ErTask.parseFromPb(taskMeta);
                 long now = System.currentTimeMillis();
                 return erTask;
-            } catch (InvalidProtocolBufferException igore) {
-
+            } catch (Exception e) {
+                logger.error("submit putBatch task error", e);
+                throw e;
             }
-            return null;
         });
         RouterInfo routerInfo = new RouterInfo();
         routerInfo.setProtocol(Protocol.grpc);

@@ -21,7 +21,7 @@ from typing import Callable, Iterable, Any
 from ...unify import URI
 from .._type import ComputingEngine
 from ..table import KVTable
-from eggroll.roll_pair.roll_pair import RollPair
+from eggroll.computing import RollPair
 
 LOGGER = logging.getLogger(__name__)
 

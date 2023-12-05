@@ -21,10 +21,9 @@ import signal
 import typing
 from typing import List
 
-from eggroll.roll_pair.roll_pair import RollPair
-from eggroll.roll_site.roll_site import RollSiteContext
+from eggroll.computing import RollPair
+from eggroll.federation import RollSiteContext
 from fate.arch.federation.federation import Federation, PartyMeta
-
 from ...computing.eggroll import Table
 
 logger = logging.getLogger(__name__)
@@ -40,15 +39,14 @@ class EggrollFederation(Federation):
         proxy_endpoint,
     ):
         super().__init__(rs_session_id, party, parties)
+        proxy_endpoint_host, proxy_endpoint_port = proxy_endpoint.split(":")
         self._rp_ctx = rp_ctx
         self._rsc = RollSiteContext(
             rs_session_id,
             rp_ctx=rp_ctx,
-            options={
-                "self_role": party[0],
-                "self_party_id": party[1],
-                "proxy_endpoint": proxy_endpoint,
-            },
+            party=party,
+            proxy_endpoint_host=proxy_endpoint_host.strip(),
+            proxy_endpoint_port=int(proxy_endpoint_port.strip()),
         )
 
     def _pull_table(
@@ -91,12 +89,16 @@ class EggrollFederation(Federation):
     def _push_table(self, table: Table, name: str, tag: str, parties: List[PartyMeta]):
         rs = self._rsc.load(name=name, tag=tag)
         futures = rs.push_rp(table._rp, parties=parties)
-        # concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        for future in done:
+            future.result()
 
     def _push_bytes(self, v: bytes, name: str, tag: str, parties: List[PartyMeta]):
         rs = self._rsc.load(name=name, tag=tag)
         futures = rs.push_bytes(v, parties=parties)
-        # concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        for future in done:
+            future.result()
 
     def destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)

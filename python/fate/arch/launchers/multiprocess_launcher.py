@@ -138,6 +138,7 @@ class MultiProcessLauncher:
         parties = args.get_parties()
         party = parties[args.rank]
         csession_id = f"{args.federation_session_id}_{party[0]}_{party[1]}"
+        argv.extend(["--csession_id", csession_id])
 
         # set up logging
         set_up_logging(args.rank, args.log_level)
@@ -188,7 +189,7 @@ class MultiProcessLauncher:
 
     def terminate(self):
         self.safe_to_exit.set()
-        time.sleep(5)  # wait for 1 second to let all processes has a chance to exit
+        time.sleep(10)  # wait for 1 second to let all processes has a chance to exit
         for process in self.processes:
             if process.is_alive():
                 process.terminate()
