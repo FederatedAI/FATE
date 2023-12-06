@@ -196,7 +196,8 @@ inspect_pid() {
        fi
     done
   fi
-}; then
+}
+ then
       #此函数检查进程，判断进程是否存在
       echo "please wait"
       inspect_pid 5 ${pid}
