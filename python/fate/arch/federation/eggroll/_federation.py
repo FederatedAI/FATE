@@ -28,22 +28,25 @@ from ...computing.eggroll import Table
 
 logger = logging.getLogger(__name__)
 
+if typing.TYPE_CHECKING:
+    from fate.arch.computing.eggroll import CSession
+
 
 class EggrollFederation(Federation):
     def __init__(
         self,
-        rp_ctx,
-        rs_session_id,
+        computing_session: "CSession",
+        federation_session_id,
         party: PartyMeta,
         parties: List[PartyMeta],
         proxy_endpoint,
     ):
-        super().__init__(rs_session_id, party, parties)
+        super().__init__(federation_session_id, party, parties)
         proxy_endpoint_host, proxy_endpoint_port = proxy_endpoint.split(":")
-        self._rp_ctx = rp_ctx
+        self._rp_ctx = computing_session.get_rpc()
         self._rsc = RollSiteContext(
-            rs_session_id,
-            rp_ctx=rp_ctx,
+            federation_session_id,
+            rp_ctx=self._rp_ctx,
             party=party,
             proxy_endpoint_host=proxy_endpoint_host.strip(),
             proxy_endpoint_port=int(proxy_endpoint_port.strip()),
@@ -89,16 +92,16 @@ class EggrollFederation(Federation):
     def _push_table(self, table: Table, name: str, tag: str, parties: List[PartyMeta]):
         rs = self._rsc.load(name=name, tag=tag)
         futures = rs.push_rp(table._rp, parties=parties)
-        done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
-        for future in done:
-            future.result()
+        # done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        # for future in done:
+        #     future.result()
 
     def _push_bytes(self, v: bytes, name: str, tag: str, parties: List[PartyMeta]):
         rs = self._rsc.load(name=name, tag=tag)
         futures = rs.push_bytes(v, parties=parties)
-        done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
-        for future in done:
-            future.result()
+        # done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        # for future in done:
+        #     future.result()
 
     def destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)

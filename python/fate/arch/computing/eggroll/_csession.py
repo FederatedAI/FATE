@@ -31,10 +31,18 @@ logger = logging.getLogger(__name__)
 
 
 class CSession(KVTableContext):
-    def __init__(self, session_id, options: dict = None):
+    def __init__(
+        self, session_id, options: dict = None, config=None, config_options=None, config_properties_file=None
+    ):
         if options is None:
             options = {}
-        self._eggroll_session = session_init(session_id=session_id, options=options)
+        self._eggroll_session = session_init(
+            session_id=session_id,
+            options=options,
+            config=config,
+            config_options=config_options,
+            config_properties_file=config_properties_file,
+        )
         self._rpc = runtime_init(session=self._eggroll_session)
         self._session_id = self._eggroll_session.get_session_id()
 
