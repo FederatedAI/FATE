@@ -380,6 +380,11 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
     }
 
     @Override
+    public int getRunnerSequenceId() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
     public void run(String[] args) throws Exception {
         this.start();
     }

@@ -41,6 +41,7 @@ import org.fedai.osx.broker.http.InnerServlet;
 import org.fedai.osx.broker.http.InterServlet;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.frame.ContextPrepareInterceptor;
+import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.utils.OSXCertUtils;
 import org.fedai.osx.core.utils.OsxX509TrustManager;
 
@@ -66,7 +67,7 @@ import static org.fedai.osx.core.config.MetaInfo.*;
  */
 @Singleton
 @Slf4j
-public class OsxServer {
+public class OsxServer implements ApplicationStartedRunner {
     io.grpc.Server server;
     io.grpc.Server tlsServer;
     org.eclipse.jetty.server.Server httpServer;
@@ -183,7 +184,7 @@ public class OsxServer {
         return null;
     }
 
-    ServletContextHandler buildServlet(HttpServlet   servlet) {
+    ServletContextHandler buildServlet(HttpServlet servlet) {
         ServletContextHandler context = new ServletContextHandler();
         context.setContextPath(MetaInfo.PROPERTY_HTTP_CONTEXT_PATH);
         ServletHolder servletHolder = new ServletHolder(servlet);
@@ -287,7 +288,7 @@ public class OsxServer {
                             .trustManager(trustManagerFactory)
                             .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                             .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
-                    if(PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE){
+                    if (PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE) {
                         sslContextBuilder.clientAuth(ClientAuth.REQUIRE);
                     }
 
@@ -296,12 +297,11 @@ public class OsxServer {
 
                             .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                             .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
-                    if(PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE){
-                        Preconditions.checkArgument(StringUtils.isNotEmpty(serverCaFilePath),"config server.ca.file is null");
+                    if (PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE) {
+                        Preconditions.checkArgument(StringUtils.isNotEmpty(serverCaFilePath), "config server.ca.file is null");
                         sslContextBuilder.clientAuth(ClientAuth.REQUIRE).trustManager(new File(serverCaFilePath));
                     }
                 }
-
 
 
                 log.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
@@ -371,4 +371,17 @@ public class OsxServer {
         return nettyServerBuilder.build();
     }
 
+    @Override
+    public int getRunnerSequenceId() {
+        return Integer.MAX_VALUE - 1;
+    }
+
+    @Override
+    public void run(String[] args) {
+        boolean startOk = this.start();
+        if (!startOk) {
+            log.error("osx server start failed");
+            System.exit(-1);
+        }
+    }
 }
