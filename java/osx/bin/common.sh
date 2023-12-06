@@ -197,38 +197,3 @@ inspect_pid() {
     done
   fi
 }
- then
-      #此函数检查进程，判断进程是否存在
-      echo "please wait"
-      inspect_pid 5 ${pid}
-      if [[ "$exist" = 0 ]]; then
-        echo "killed"
-      else
-        echo "please retry"
-      fi
-    else
-      echo "kill error"
-    fi
-  else
-    echo "service not running "
-  fi
-}
-
-inspect_pid() {
-  total=0
-  exist=0
-  if [[ -n $2 ]]; then
-    while [[ $total -le $1 ]]
-    do
-      count=$(ps -ef | grep $2 | grep -v "grep" | wc -l)
-      total=$(($total+1))
-      if [[ ${count} -ne 0 ]]; then
-        sleep 1
-        exist=1
-       else
-        exist=0
-        return
-       fi
-    done
-  fi
-}
