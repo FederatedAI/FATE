@@ -1,5 +1,3 @@
-from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, FedArguments, TrainingArguments, FedAVGServer
-import torch as t
 import pandas as pd
 import sys
 from fate.arch.dataframe import PandasReader

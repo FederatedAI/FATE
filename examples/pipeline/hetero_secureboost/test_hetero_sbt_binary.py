@@ -21,7 +21,7 @@ def main(config="../config.yaml", namespace=""):
     psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
                                                                         namespace="experiment"))
 
-    hetero_sbt_0 = HeteroSecureBoost('sbt_0', num_trees=3, max_bin=32, max_depth=3, 
+    hetero_sbt_0 = HeteroSecureBoost('sbt_0', num_trees=2, max_bin=32, max_depth=3, goss=True, top_rate=0.2,
                                     he_param={'kind': 'paillier', 'key_length': 1024}, train_data=psi_0.outputs['output_data'],)
     evaluation_0 = Evaluation(
         'eval_0',
@@ -35,6 +35,8 @@ def main(config="../config.yaml", namespace=""):
     pipeline.add_task(evaluation_0)
     pipeline.compile()
     pipeline.fit()
+
+    pipeline.get_task_info('sbt_0').get_output_model()
 
 
 if __name__ == "__main__":

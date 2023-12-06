@@ -140,7 +140,7 @@ public class MetaInfo {
     @Config(confKey = "https.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_HTTPS_PORT=8809;
     @Config(confKey = "open.http.server", pattern = Dict.BOOLEAN_PATTERN)
-    public static Boolean PROPERTY_OPEN_HTTP_SERVER = false;
+    public static Boolean PROPERTY_OPEN_HTTP_SERVER = true;
     @Config(confKey = "open.https.server", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_HTTP_USE_TLS = false;
     @Config(confKey = "http.server.acceptor.num", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -249,6 +249,11 @@ public class MetaInfo {
     public static Integer PROPERTY_ROUTER_CHECK_INTERVAL= 300000;
     @Config(confKey = "channel.pool.info")
     public static Integer PROPERTY_CHANNEL_POOL_INFO = 30000;
+    @Config(confKey = "router.change.need.token")
+    public static Boolean PROPERTY_ROUTER_CHANGE_NEED_TOKEN= false;
+    @Config(confKey = "router.change.token.validator")
+    public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR= Dict.DEFAULT;
+
 
     public static boolean isCluster() {
         return PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name());

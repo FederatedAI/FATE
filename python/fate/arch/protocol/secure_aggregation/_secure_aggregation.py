@@ -115,3 +115,5 @@ class SecureAggregatorServer(_SecureAggregatorMeta):
 
         for rank in ranks:
             ctx.parties[rank].put(self._get_name(self._recv_name), aggregated)
+
+        return aggregated

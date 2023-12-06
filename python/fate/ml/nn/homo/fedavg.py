@@ -1,4 +1,4 @@
-from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer
+from fate.ml.nn.trainer.trainer_base import HomoTrainerClient, HomoTrainerServer
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Callable, Union
@@ -25,7 +25,7 @@ class FedAVGArguments(FedArguments):
     pass
 
 
-class FedAVGCLient(FedTrainerClient):
+class FedAVGClient(HomoTrainerClient):
     def __init__(
         self,
         ctx: Context,
@@ -96,7 +96,7 @@ class FedAVGCLient(FedTrainerClient):
         aggregator.model_aggregation(ctx, model)
 
 
-class FedAVGServer(FedTrainerServer):
+class FedAVGServer(HomoTrainerServer):
     def __init__(self, ctx: Context, local_mode: bool = False) -> None:
         super().__init__(ctx, local_mode)
 
@@ -113,10 +113,11 @@ class FedAVGServer(FedTrainerServer):
         aggregator = aggregator_server(ctx, aggregator_name=aggregator_name)
         return aggregator
 
-    def on_federation(self, ctx: Context, aggregator: Union[SecureAggregatorServer, PlainTextAggregatorServer]):
+    def on_federation(self, ctx: Context, aggregator: Union[SecureAggregatorServer, PlainTextAggregatorServer],
+                      agg_iter_idx: int):
         aggregator.model_aggregation(ctx)
 
 
 class FedAVG(object):
-    client = FedAVGCLient
+    client = FedAVGClient
     server = FedAVGServer

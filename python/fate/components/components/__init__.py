@@ -73,6 +73,12 @@ class LazyBuildInComponentsLoader:
         return homo_nn
 
     @_lazy_cpn
+    def hetero_nn(self):
+        from .hetero_nn import hetero_nn
+
+        return hetero_nn
+
+    @_lazy_cpn
     def homo_lr(self):
         from .homo_lr import homo_lr
         
