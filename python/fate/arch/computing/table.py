@@ -334,15 +334,19 @@ class KVTable(Generic[K, V]):
     @auto_trace
     @_compute_info
     def mapPartitions(
-        self, func, use_previous_behavior=False, preserves_partitioning=False, output_value_serdes_type=None
+        self, func, use_previous_behavior=False, preserves_partitioning=False, 
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None
     ):
         if use_previous_behavior:
             raise NotImplementedError("use_previous_behavior is not supported")
         return self._map_reduce_partitions_with_index(
             map_partition_op=_lifted_map_partitions_to_mpwi(func),
             shuffle=not preserves_partitioning,
-            output_key_serdes_type=self.key_serdes_type,
+            output_key_serdes_type=self.key_serdes_type if output_key_serdes_type is None else output_key_serdes_type,
             output_value_serdes_type=output_value_serdes_type,
+            output_partitioner_type=output_partitioner_type
         )
 
     @auto_trace
@@ -481,8 +485,8 @@ class KVTable(Generic[K, V]):
     ):
         if output_value_serdes_type is None:
             output_value_serdes_type = self.value_serdes_type
-        assert self.key_serdes_type == other.key_serdes_type, "key_serdes_type must be the same"
-        assert self.partitioner_type == other.partitioner_type, "partitioner_type must be the same"
+        assert self.key_serdes_type == other.key_serdes_type, f"key_serdes_type must be the same, self={self.key_serdes_type}, other={other.key_serdes_type}"
+        assert self.partitioner_type == other.partitioner_type, f"partitioner_type must be the same"
         output_value_serdes = get_serdes_by_type(output_value_serdes_type)
 
         # makes partition alignment:
