@@ -58,7 +58,7 @@ def _flat_block_with_possible_duplicate_keys(block_table, duplicate_allow=False)
 
         return v1 + v2
 
-    return block_table.mapReducePartitions(_mapper, _reducer)
+    return block_table.mapReducePartitions(_mapper, _reducer, output_key_serdes_type=0, output_partitioner_type=0)
 
 
 def _flat_block_key(intersect_id):

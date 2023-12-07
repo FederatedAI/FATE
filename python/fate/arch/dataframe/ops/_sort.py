@@ -16,6 +16,7 @@
 from ._indexer import get_partition_order_mappings_by_block_table
 from ..manager.block_manager import Block
 from .._dataframe import DataFrame
+from ..conf.default_config import INTEGER_PARTITIONER_TYPE, INTEGER_KEY_SERDES_TYPE
 
 
 FLOATING_ZERO = 1e-8
@@ -118,7 +119,9 @@ def _nlargest_exactly(df: DataFrame, n, columns, keep) -> DataFrame:
     block_table = df._ctx.computing.parallelize(
         blocks_with_id,
         include_key=True,
-        partition=df.block_table.partitions
+        partition=df.block_table.num_partitions,
+        key_serdes_type=INTEGER_KEY_SERDES_TYPE,
+        partitioner_type=INTEGER_PARTITIONER_TYPE
     )
 
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, block_row_size=block_row_size)

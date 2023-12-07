@@ -18,6 +18,7 @@ import uuid
 
 from ..manager import Block, DataManager
 from .._dataframe import DataFrame
+from ..conf.default_config import INTEGER_KEY_SERDES_TYPE, INTEGER_PARTITIONER_TYPE
 
 
 def transform_to_table(block_table, block_index, partition_order_mappings):
@@ -27,7 +28,10 @@ def transform_to_table(block_table, block_index, partition_order_mappings):
                 yield _id, (block_id, _idx)
 
     return block_table.mapPartitions(_convert_to_order_index,
-                                     use_previous_behavior=False)
+                                     use_previous_behavior=False,
+                                     output_key_serdes_type=0,
+                                     output_partitioner_type=0
+                                     )
 
 
 def get_partition_order_mappings_by_block_table(block_table, block_row_size):
@@ -112,7 +116,12 @@ def regenerated_sample_id(block_table, regenerated_sample_id_table, data_manager
     from ._dimension_scaling import _flatten_partition
 
     _flatten_func = functools.partial(_flatten_partition, block_num=data_manager.block_num)
-    raw_table = block_table.mapPartitions(_flatten_func, use_previous_behavior=False)
+    raw_table = block_table.mapPartitions(
+        _flatten_func,
+        use_previous_behavior=False,
+        output_key_serdes_type=0,
+        output_partitioner_type=0
+    )
     regenerated_table = raw_table.join(regenerated_sample_id_table, lambda lhs, rhs: (lhs, rhs))
 
     def _flat_id(key, value):
@@ -191,7 +200,12 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
                     yield flat_blocks[sample_id_index][row_id], [flat_blocks[i][row_id] for i in range(block_num)]
 
     if key_type in ["block_id", "sample_id"]:
-        return df.block_table.mapPartitions(_flatten, use_previous_behavior=False)
+        return df.block_table.mapPartitions(
+            _flatten,
+            use_previous_behavior=False,
+            output_key_serdes_type=0,
+            output_partitioner_type=0
+        )
     else:
         raise ValueError(f"Not Implement key_type={key_type} of flatten_data.")
 
@@ -230,7 +244,12 @@ def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, 
             ret_blocks = [data_manager.blocks[i].convert_block(block) for i, block in enumerate(ret_blocks)]
             yield bid, ret_blocks
 
-    block_table = flatten_table.mapPartitions(_convert_to_blocks, use_previous_behavior=False)
+    block_table = flatten_table.mapPartitions(
+        _convert_to_blocks,
+        use_previous_behavior=False,
+        output_key_serdes_type=INTEGER_KEY_SERDES_TYPE,
+        output_partitioner_type=INTEGER_PARTITIONER_TYPE
+    )
 
     return DataFrame(
         ctx=ctx,
@@ -288,7 +307,12 @@ def loc(df: DataFrame, indexer, target="sample_id", preserve_order=False):
 
             return ret_blocks
 
-        agg_data = flatten_table_with_dst_indexer.mapReducePartitions(_aggregate, lambda v1, v2: v1 + v2)
+        agg_data = flatten_table_with_dst_indexer.mapReducePartitions(
+            _aggregate,
+            lambda v1, v2: v1 + v2,
+            output_key_serdes_type=INTEGER_KEY_SERDES_TYPE,
+            output_partitioner_type=INTEGER_PARTITIONER_TYPE
+        )
         block_table = agg_data.mapValues(_to_blocks)
 
         partition_order_mappings = get_partition_order_mappings_by_block_table(
@@ -342,7 +366,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                 j += 1
 
             agg_ret = [flat_ret[k][1:] for k in range(i, j)]
-            yield  flat_ret[i][0], agg_ret
+            yield flat_ret[i][0], agg_ret
 
             i = j
 
@@ -367,7 +391,12 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
         for dst_block_id, value_list in ret_dict.items():
             yield dst_block_id, sorted(value_list)
 
-    agg_indexer = indexer.mapReducePartitions(_aggregate, lambda l1, l2: l1 + l2)
+    agg_indexer = indexer.mapReducePartitions(
+        _aggregate,
+        lambda l1, l2: l1 + l2,
+        output_key_serdes_type=INTEGER_KEY_SERDES_TYPE,
+        output_partitioner_type=INTEGER_PARTITIONER_TYPE
+    )
     block_table = df.block_table.join(agg_indexer, lambda v1, v2: (v1, v2))
     block_table = block_table.mapReducePartitions(_convert_to_row, _merge_list)
 

@@ -25,6 +25,7 @@ from ._indexer import get_partition_order_by_raw_table, get_partition_order_mapp
 from ._promote_types import promote_partial_block_types
 from ._set_item import set_item
 from fate.arch.tensor import DTensor
+from ..conf.default_config import INTEGER_PARTITIONER_TYPE, INTEGER_KEY_SERDES_TYPE
 
 
 def hstack(data_frames: List["DataFrame"]) -> "DataFrame":
@@ -181,10 +182,20 @@ def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
         _flatten_partition,
         block_num=data_manager.block_num
     )
-    l_flatten_table = df.block_table.mapPartitions(l_flatten_func, use_previous_behavior=False)
+    l_flatten_table = df.block_table.mapPartitions(
+        l_flatten_func,
+        use_previous_behavior=False,
+        output_key_serdes_type=0,
+        output_partitioner_type=0
+    )
 
     r_flatten_func = functools.partial(_flatten_partition_without_value)
-    r_flatten_table = index.block_table.mapPartitions(r_flatten_func, use_previous_behavior=False)
+    r_flatten_table = index.block_table.mapPartitions(
+        r_flatten_func,
+        use_previous_behavior=False,
+        output_key_serdes_type=0,
+        output_partitioner_type=0
+    )
 
     drop_flatten = l_flatten_table.subtractByKey(r_flatten_table)
     partition_order_mappings = get_partition_order_by_raw_table(
@@ -196,7 +207,10 @@ def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
                                                partition_mappings=partition_order_mappings)
 
     block_table = drop_flatten.mapPartitions(_convert_to_block_func,
-                                             use_previous_behavior=False)
+                                             use_previous_behavior=False,
+                                             output_key_serdes_type=INTEGER_KEY_SERDES_TYPE,
+                                             output_partitioner_type=INTEGER_PARTITIONER_TYPE
+                                             )
 
     return DataFrame(
         df._ctx,
@@ -293,7 +307,7 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
                                             partition_order_mappings=block_order_mappings,
                                             data_manager=data_manager)
     block_table = block_table.mapPartitions(_balance_block_func,
-                                           use_previous_behavior=False)
+                                            use_previous_behavior=False)
     block_table, data_manager = compress_blocks(block_table, data_manager)
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, data_manager.block_row_size)
 

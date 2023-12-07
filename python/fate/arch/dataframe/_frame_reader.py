@@ -17,7 +17,7 @@ import pandas as pd
 from typing import Union
 
 
-from .conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
+from .conf.default_config import DATAFRAME_BLOCK_ROW_SIZE, INTEGER_KEY_SERDES_TYPE, INTEGER_PARTITIONER_TYPE
 from .entity import types
 from ._dataframe import DataFrame
 from .manager import DataManager
@@ -107,7 +107,10 @@ class TableReader(object):
             retrieval_index_dict=retrieval_index_dict,
             partition_order_mappings=partition_order_mappings,
         )
-        block_table = table.mapPartitions(to_block_func, use_previous_behavior=False)
+        block_table = table.mapPartitions(to_block_func,
+                                          use_previous_behavior=False,
+                                          output_partitioner_type=INTEGER_PARTITIONER_TYPE,
+                                          output_key_serdes_type=INTEGER_KEY_SERDES_TYPE)
 
         return DataFrame(
             ctx=ctx,
@@ -270,7 +273,10 @@ class PandasReader(object):
             partition_order_mappings=partition_order_mappings,
         )
 
-        block_table = table.mapPartitions(to_block_func, use_previous_behavior=False)
+        block_table = table.mapPartitions(to_block_func,
+                                          use_previous_behavior=False,
+                                          output_partitioner_type=INTEGER_PARTITIONER_TYPE,
+                                          output_key_serdes_type=INTEGER_KEY_SERDES_TYPE)
 
         return DataFrame(
             ctx=ctx,

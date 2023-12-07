@@ -20,6 +20,8 @@ from sklearn.utils import resample
 
 from ._id_generator import generate_sample_id, generate_sample_id_prefix
 from .._dataframe import DataFrame
+from ..conf.default_config import INTEGER_KEY_SERDES_TYPE, INTEGER_PARTITIONER_TYPE
+
 
 REGENERATED_TAG = "regenerated_index"
 SAMPLE_INDEX_TAG = "sample_index"
@@ -192,7 +194,10 @@ def _convert_raw_table_to_df(
     partition_order_mapping = get_partition_order_by_raw_table(table, data_manager.block_row_size)
     to_block_func = functools.partial(to_blocks, dm=data_manager, partition_mappings=partition_order_mapping)
     block_table = table.mapPartitions(to_block_func,
-                                      use_previous_behavior=False)
+                                      use_previous_behavior=False,
+                                      output_key_serdes_type=INTEGER_KEY_SERDES_TYPE,
+                                      output_partitioner_type=INTEGER_PARTITIONER_TYPE
+                                      )
 
     return DataFrame(
         ctx,
