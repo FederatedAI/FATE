@@ -21,13 +21,14 @@ import sys
 import typing
 from pickle import dumps as p_dumps
 from pickle import loads as p_loads
+from typing import List
 
-from fate.arch.abc import CTableABC, FederationEngine, PartyMeta
+from fate.arch.abc import CTableABC, PartyMeta
 
 from ..federation import FederationDataType
 from ..federation._datastream import Datastream
-from ._gc import GarbageCollector
 from ._parties import Party
+from .federation import Federation
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ def _get_splits(obj, max_message_size):
         return kv, num_slice
 
 
-class FederationBase(FederationEngine):
+class FederationBase(Federation):
     def __init__(
         self,
         session_id,
@@ -58,7 +59,6 @@ class FederationBase(FederationEngine):
         max_message_size,
         conf=None,
     ):
-        self._session_id = session_id
         self._mq = mq
         self._topic_map = {}
         self._channels_map = {}
@@ -66,14 +66,83 @@ class FederationBase(FederationEngine):
         self._message_cache = {}
         self._max_message_size = max_message_size
         self._conf = conf
-        self.get_gc: GarbageCollector = GarbageCollector()
-        self.remote_gc: GarbageCollector = GarbageCollector()
-        self.local_party = party
-        self.parties = parties
         self.computing_session = computing_session
+
+        super().__init__(session_id, party, parties)
 
         # temp
         self._party = Party(party[0], party[1])
+
+    def _pull_bytes(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
+        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
+        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "get"]) for party in parties]
+
+        if _name_dtype_keys[0] not in self._name_dtype_map:
+            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
+            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
+            rtn_dtype = []
+            for i, info in enumerate(channel_infos):
+                obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
+                rtn_dtype.append(obj)
+
+            for k in _name_dtype_keys:
+                if k not in self._name_dtype_map:
+                    self._name_dtype_map[k] = rtn_dtype[0]
+
+        rtn = []
+        party_topic_infos = self._get_party_topic_infos(_parties, name)
+        channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
+        for i, info in enumerate(channel_infos):
+            obj = self._receive_obj(info, name, tag)
+            rtn.append(obj)
+
+        return rtn
+
+    def _pull_table(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
+        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
+        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "get"]) for party in parties]
+
+        if _name_dtype_keys[0] not in self._name_dtype_map:
+            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
+            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
+            rtn_dtype = []
+            for i, info in enumerate(channel_infos):
+                obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
+                rtn_dtype.append(obj)
+
+            for k in _name_dtype_keys:
+                if k not in self._name_dtype_map:
+                    self._name_dtype_map[k] = rtn_dtype[0]
+
+        rtn_dtype = self._name_dtype_map[_name_dtype_keys[0]]
+
+        rtn = []
+        dtype = rtn_dtype.get("dtype", None)
+        partitions = rtn_dtype.get("partitions", None)
+
+        if dtype == FederationDataType.TABLE:
+            party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
+            for i in range(len(party_topic_infos)):
+                party = _parties[i]
+                role = party.role
+                party_id = party.party_id
+                topic_infos = party_topic_infos[i]
+                receive_func = self._get_partition_receive_func(
+                    name=name,
+                    tag=tag,
+                    src_party_id=self.local_party[1],
+                    src_role=self.local_party[0],
+                    dst_party_id=party_id,
+                    dst_role=role,
+                    topic_infos=topic_infos,
+                    mq=self._mq,
+                    conf=self._conf,
+                )
+
+                table = self.computing_session.parallelize(range(partitions), include_key=False, partition=partitions)
+                table = table.mapPartitionsWithIndex(receive_func)
+                rtn.append(table)
+        return rtn
 
     def pull(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
         # wrap as party
@@ -145,8 +214,80 @@ class FederationBase(FederationEngine):
         LOGGER.debug(f"[{log_str}]finish to get")
         return rtn
 
-    def push(self, v, name: str, tag: str, parties: typing.List[PartyMeta]):
+    def _push_bytes(
+        self,
+        v: bytes,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
+        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "remote"]) for party in parties]
 
+        if _name_dtype_keys[0] not in self._name_dtype_map:
+            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
+            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
+
+            v, num_slice = _get_splits(v, self._max_message_size)
+            if num_slice > 1:
+                v = self.computing_session.parallelize(data=v, partition=1, include_key=True)
+                body = {
+                    "dtype": FederationDataType.SPLIT_OBJECT,
+                    "partitions": v.partitions,
+                }
+            else:
+                body = {"dtype": FederationDataType.OBJECT}
+
+            self._send_obj(
+                name=name,
+                tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
+                data=p_dumps(body),
+                channel_infos=channel_infos,
+            )
+
+            for k in _name_dtype_keys:
+                if k not in self._name_dtype_map:
+                    self._name_dtype_map[k] = body
+
+        party_topic_infos = self._get_party_topic_infos(_parties, name)
+        channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
+        self._send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
+
+    def _push_table(self, table, name: str, tag: str, parties: typing.List[PartyMeta]):
+        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
+        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "remote"]) for party in parties]
+
+        if _name_dtype_keys[0] not in self._name_dtype_map:
+            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
+            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
+            body = {"dtype": FederationDataType.TABLE, "partitions": table.num_partitions}
+            self._send_obj(
+                name=name,
+                tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
+                data=p_dumps(body),
+                channel_infos=channel_infos,
+            )
+            for k in _name_dtype_keys:
+                if k not in self._name_dtype_map:
+                    self._name_dtype_map[k] = body
+
+        partitions = table.num_partitions
+        party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
+        send_func = self._get_partition_send_func(
+            name=name,
+            tag=tag,
+            partitions=partitions,
+            party_topic_infos=party_topic_infos,
+            src_party_id=self.local_party[1],
+            src_role=self.local_party[0],
+            mq=self._mq,
+            max_message_size=self._max_message_size,
+            conf=self._conf,
+        )
+        # noinspection PyProtectedMember
+        table.mapPartitionsWithIndex(send_func)
+
+    def push(self, v, name: str, tag: str, parties: typing.List[PartyMeta]):
         _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
         log_str = f"[federation.remote](name={name}, tag={tag}, parties={parties})"
 
@@ -189,7 +330,7 @@ class FederationBase(FederationEngine):
 
             party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
             # add gc
-            self.remote_gc.register_clean_action(name, tag, v, "__del__", {})
+            self._remote_gc.register_clean_action(name, tag, v, "__del__", {})
 
             send_func = self._get_partition_send_func(
                 name=name,
@@ -544,6 +685,7 @@ class FederationBase(FederationEngine):
         mq,
         conf: dict,
     ):
+
         topic_pair = topic_infos[index][1]
         channel_info = self._get_channel(
             topic_pair=topic_pair,

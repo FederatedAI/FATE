@@ -32,6 +32,7 @@ message ServerNode {
   Endpoint endpoint = 4;
   string nodeType = 5;
   string status = 6;
+  repeated Resource resources = 7;
 }
 
 message ServerCluster {
@@ -67,6 +68,15 @@ message Functor {
   bytes body = 3;
   map<string, string> options = 4;
 }
+message Partitioner {
+  int32 type = 1;
+  bytes body = 2;
+}
+
+message Serdes {
+  int32 type = 1;
+  bytes body = 2;
+}
 
 message Pair {
   bytes key = 1;
@@ -79,13 +89,14 @@ message PairBatch {
 
 message StoreLocator {
   int64 id = 1;
-  string storeType = 2;
+  string store_type = 2;
   string namespace = 3;
   string name = 4;
   string path = 5;
-  int32 totalPartitions = 6;
-  string partitioner = 7;
-  string serdes = 8;
+  int32 total_partitions = 6;
+  int32 key_serdes_type = 7;
+  int32 value_serdes_type = 8;
+  int32 partitioner_type = 9;
 }
 
 message Store {
@@ -95,7 +106,7 @@ message Store {
 }
 
 message StoreList {
-    repeated Store stores = 1;
+  repeated Store stores = 1;
 }
 
 message Partition {
@@ -110,12 +121,18 @@ message CallInfo {
   string callSeq = 1;
 }
 
-// todo: add job / task status
+message JobIO {
+  Store store = 1;
+  Serdes key_serdes = 2;
+  Serdes value_serdes = 3;
+  Partitioner partitioner = 4;
+}
+// todo: add  / task status
 message Job {
   string id = 1;
   string name = 2;
-  repeated Store inputs = 3;
-  repeated Store outputs = 4;
+  repeated JobIO inputs = 3;
+  repeated JobIO outputs = 4;
   repeated Functor functors = 5;
   map<string, string> options = 6;
 }
@@ -135,4 +152,29 @@ message SessionMeta {
   string tag = 4;
   repeated Processor processors = 5;
   map<string, string> options = 6;
+}
+
+message ResourceAllocation {
+  int64 serverNodeId = 1;
+  string status = 2;
+  string sessionId = 3;
+  string operateType = 4;
+  repeated Resource resources = 5;
+
+}
+
+message Resource {
+  string type = 1;
+  int64 total = 2;
+  int64 used = 3;
+  int64 allocated = 4;
+}
+
+message NodeHeartbeat {
+  uint64 id = 1;
+  ServerNode node = 2;
+  string code = 3;
+  string msg = 4;
+  repeated int32 gpuProcessors=5;
+  repeated int32 cpuProcessors=6;
 }

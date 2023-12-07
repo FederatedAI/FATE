@@ -20,8 +20,9 @@ from ._type import ComputingEngine
 
 def is_table(v):
     from fate.arch.abc import CTableABC
+    from fate.arch.computing.table import KVTable
 
-    return isinstance(v, CTableABC)
+    return isinstance(v, CTableABC) or isinstance(v, KVTable)
 
 
 __all__ = ["is_table", "ComputingEngine", "profile_start", "profile_ends"]

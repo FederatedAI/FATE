@@ -16,6 +16,7 @@ from typing import Optional, Union
 
 from fate.arch import Context
 from fate.arch.dataframe import DataFrame
+import typing
 
 
 class Model:
@@ -25,11 +26,15 @@ class Model:
 class Module:
     mode: str
 
+    @typing.overload
+    def fit(self, ctx: Context, input_data):
+        ...
+
     def fit(
         self,
         ctx: Context,
-        train_data: DataFrame,
-        validate_data: Optional[DataFrame] = None,
+        *args,
+        **kwargs,
     ) -> None:
         ...
 

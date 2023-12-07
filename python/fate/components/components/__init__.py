@@ -133,6 +133,12 @@ class LazyBuildInComponentsLoader:
         return hetero_feature_selection
 
     @_lazy_cpn
+    def feature_correlation(self):
+        from .feature_correlation import feature_correlation
+
+        return feature_correlation
+
+    @_lazy_cpn
     def union(self):
         from .union import union
 

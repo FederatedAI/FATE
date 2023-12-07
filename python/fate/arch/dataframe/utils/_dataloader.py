@@ -130,7 +130,7 @@ class FullBatchDataLoader(object):
                     batch_indexer = indexer[self._batch_size * i: self._batch_size * (i + 1)]
                     batch_indexer = self._ctx.computing.parallelize(batch_indexer,
                                                                     include_key=True,
-                                                                    partition=self._dataset.block_table.partitions)
+                                                                    partition=self._dataset.block_table.num_partitions)
 
                     sub_frame = self._dataset.loc(batch_indexer, preserve_order=False)
 

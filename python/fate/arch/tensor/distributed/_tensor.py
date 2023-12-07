@@ -20,6 +20,8 @@ from typing import List, Optional, Tuple, TypeVar, cast
 import torch
 from fate.arch.abc import CTableABC
 from fate.arch.context import Context
+from fate.arch.tensor.phe import PHETensor
+from fate.arch.utils.trace import auto_trace
 
 _HANDLED_FUNCTIONS = {}
 
@@ -29,7 +31,7 @@ def implements(torch_function):
 
     @functools.wraps(torch_function)
     def decorator(func):
-        _HANDLED_FUNCTIONS[torch_function] = func
+        _HANDLED_FUNCTIONS[torch_function] = auto_trace(func)
         return func
 
     return decorator
@@ -40,13 +42,30 @@ class DTensor:
     def __torch_function__(cls, func, types, args=(), kwargs=None):
         if kwargs is None:
             kwargs = {}
-        if func not in _HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, DTensor)) for t in types):
+        if func not in _HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, DTensor, PHETensor)) for t in types):
             return NotImplemented
         return _HANDLED_FUNCTIONS[func](*args, **kwargs)
 
+    def to(self, device):
+        if self.shardings.device == device:
+            return self
+        else:
+            raise NotImplementedError(f"device {device} not supported")
+
+    def size(self):
+        return self.shardings.shapes
+
+    def dim(self):
+        return self.shardings.dim()
+
     @property
+    @auto_trace
     def T(self):
         return torch.transpose(self, 0, 1)
+
+    @property
+    def is_cuda(self):
+        return self.shardings.device.type == "cuda"
 
     def elem_type(self) -> Optional[str]:
         return self.shardings._type
@@ -54,66 +73,93 @@ class DTensor:
     def __init__(self, shardings: "Shardings") -> None:
         self.shardings = shardings
 
+    @auto_trace
     def __add__(self, other):
         try:
             return torch.add(self, other)
         except Exception as e:
             raise RuntimeError(f"Failed to add {self} and {other}") from e
 
+    @auto_trace
     def __radd__(self, other):
         return torch.add(other, self)
 
+    @auto_trace
     def __sub__(self, other):
         return torch.sub(self, other)
 
+    @auto_trace
     def __rsub__(self, other):
         return torch.rsub(self, other)
 
+    @auto_trace
     def __mul__(self, other):
         return torch.mul(self, other)
 
+    @auto_trace
     def __rmul__(self, other):
         return torch.mul(other, self)
 
+    @auto_trace
     def __truediv__(self, other):
         return torch.div(self, other)
 
+    @auto_trace
     def __rtruediv__(self, other):
         return torch.div(other, self)
 
+    @auto_trace
     def __matmul__(self, other):
         return torch.matmul(self, other)
 
+    @auto_trace
     def __rmatmul__(self, other):
         return torch.matmul(other, self)
 
+    def matmul(self, other):
+        return torch.matmul(self, other)
+
+    @auto_trace
     def encrypt(self, encryptor):
         return torch.encrypt_f(self, encryptor)
 
+    @auto_trace
     def encrypt_encoded(self, encryptor):
         return torch.encrypt_encoded_f(self, encryptor)
 
+    @auto_trace
     def decrypt_encoded(self, decryptor):
         return torch.decrypt_encoded_f(self, decryptor)
 
+    @auto_trace
     def encode(self, encoder):
         return torch.encode_f(self, encoder)
 
+    @auto_trace
     def decode(self, decoder):
         return torch.decode_f(self, decoder)
 
+    @auto_trace
     def decrypt(self, decryptor):
         return torch.decrypt_f(self, decryptor)
 
+    @auto_trace
     def exp(self):
         return torch.exp(self)
 
+    @auto_trace
     def log(self):
         return torch.log(self)
 
+    @auto_trace
+    def sum(self, dim=None, **kwargs):
+        return torch.sum(self, dim=dim, **kwargs)
+
+    @auto_trace
     def square(self):
         return torch.square(self)
 
+    @auto_trace
     def sigmoid(self):
         return torch.sigmoid(self)
 
@@ -135,6 +181,9 @@ class DTensor:
     def __str__(self) -> str:
         return f"<DTensor(shardings={self.shardings})>"
 
+    def __repr__(self):
+        return self.__str__()
+
     @classmethod
     def from_sharding_table(
         cls,
@@ -147,6 +196,7 @@ class DTensor:
         return DTensor(Shardings(data, shapes, axis, dtype, device))
 
     @classmethod
+    @auto_trace
     def from_sharding_list(cls, ctx: Context, data: List[torch.Tensor], num_partitions=16, axis=0):
         dtype = data[0].dtype
         device = data[0].device
@@ -165,6 +215,71 @@ class DTensor:
         return cls.from_sharding_table(
             ctx.computing.parallelize(data, partition=num_partitions, include_key=False), shapes, axis, dtype, device
         )
+
+    @auto_trace
+    def clone(self):
+        return DTensor(self.shardings.map_shard(lambda t: t))
+
+    @auto_trace
+    def add(self, other) -> "DTensor":
+        return torch.add(self, other)
+
+    @auto_trace
+    def mul(self, other) -> "DTensor":
+        return torch.mul(self, other)
+
+    @auto_trace
+    def div(self, other, *, rounding_mode=None) -> "DTensor":
+        return torch.div(self, other, rounding_mode=rounding_mode)
+
+    @auto_trace
+    def sub(self, other):
+        return torch.sub(self, other)
+
+    @auto_trace
+    def neg(self):
+        return torch.neg(self)
+
+    @auto_trace
+    def nelement(self):
+        return self.shardings.shape.numel()
+
+    @auto_trace
+    def long(self):
+        return DTensor(self.shardings.map_shard(lambda t: t.long(), dtype=torch.long))
+
+    def set_(self, other):
+        if isinstance(other, DTensor):
+            self.shardings = other.shardings
+        elif isinstance(other, Shardings):
+            self.shardings = other
+        else:
+            raise NotImplementedError(f"type `{other}`")
+        return self
+
+    def copy_(self, other):
+        self.shardings = other.shardings
+        return self
+
+    def add_(self, other):
+        self.shardings = self.add(other).shardings
+        return self
+
+    def div_(self, other, *, rounding_mode=None):
+        self.shardings = self.div(other, rounding_mode=rounding_mode).shardings
+        return self
+
+    def neg_(self):
+        self.shardings = self.neg().shardings
+        return self
+
+    @property
+    def data(self):
+        return self.shardings
+
+    @auto_trace
+    def __getitem__(self, item):
+        return DTensor(self.shardings.map_shard(lambda t: t[item]))
 
 
 T1 = TypeVar("T1")
@@ -211,6 +326,9 @@ class Shardings:
     @property
     def shapes(self):
         return self._shapes
+
+    def dim(self):
+        return len(self._shapes.shapes[0])
 
     @property
     def dtype(self):

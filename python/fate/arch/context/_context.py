@@ -12,20 +12,25 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import logging
+import typing
 from typing import Iterable, Literal, Optional, Tuple, TypeVar, overload
 
-from fate.arch.abc import CSessionABC, FederationEngine
-
-from ..unify import device
 from ._cipher import CipherKit
 from ._federation import Parties, Party
 from ._metrics import InMemoryMetricsHandler, MetricsWrap
 from ._namespace import NS, default_ns
+from ..unify import device
+from fate.arch.utils.trace import auto_trace
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+if typing.TYPE_CHECKING:
+    from ..federation.federation import Federation
+    from ..computing.table import KVTableContext
 
 
 class Context:
@@ -38,8 +43,8 @@ class Context:
     def __init__(
         self,
         device: device = device.CPU,
-        computing: Optional["CSessionABC"] = None,
-        federation: Optional["FederationEngine"] = None,
+        computing: Optional["KVTableContext"] = None,
+        federation: Optional["Federation"] = None,
         metrics_handler: Optional = None,
         namespace: Optional[NS] = None,
         cipher: Optional[CipherKit] = None,
@@ -55,9 +60,21 @@ class Context:
             self._namespace = default_ns
         if self._cipher is None:
             self._cipher: CipherKit = CipherKit(device)
+        self._cipher.set_ctx(self)
 
         self._role_to_parties = None
         self._is_destroyed = False
+
+        self._mpc = None
+
+    @property
+    def mpc(self):
+        from ._mpc import MPC
+
+        if self._mpc is None:
+            self._mpc = MPC(self)
+
+        return self._mpc
 
     @property
     def device(self):
@@ -72,7 +89,7 @@ class Context:
         return self._cipher
 
     def set_cipher(self, cipher_mapping):
-        self._cipher = CipherKit(self._device, {"phe": {self._device: cipher_mapping["phe"]}})
+        self._cipher = CipherKit(self, self._device, {"phe": {self._device: cipher_mapping["phe"]}})
 
     def set_metric_handler(self, metrics_handler):
         self._metrics_handler = metrics_handler
@@ -98,7 +115,7 @@ class Context:
         return self._get_computing()
 
     @property
-    def federation(self) -> "FederationEngine":
+    def federation(self) -> "Federation":
         return self._get_federation()
 
     def sub_ctx(self, name: str) -> "Context":
@@ -128,7 +145,6 @@ class Context:
         ...
 
     def ctxs_range(self, *args, **kwargs) -> Iterable[Tuple[int, "Context"]]:
-
         """
         create contexes with namespaces indexed from 0 to end(excluded)
         """
@@ -167,7 +183,7 @@ class Context:
         for i, it in enumerate(iterable):
             yield self.with_namespace(self._namespace.indexed_ns(index=i)), it
 
-    def set_federation(self, federation: "FederationEngine"):
+    def set_federation(self, federation: "Federation"):
         self._federation = federation
 
     @property
@@ -181,6 +197,10 @@ class Context:
     @property
     def arbiter(self) -> Party:
         return self._get_parties("arbiter")[0]
+
+    @property
+    def rank(self):
+        return self.local.rank
 
     @property
     def local(self):
@@ -205,6 +225,10 @@ class Context:
     @property
     def parties(self) -> Parties:
         return self._get_parties()
+
+    @property
+    def world_size(self):
+        return self._get_federation().world_size
 
     def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter"]] = None) -> Parties:
         # update role to parties mapping
@@ -240,17 +264,18 @@ class Context:
             raise RuntimeError(f"computing not set")
         return self._computing
 
+    @auto_trace
     def destroy(self):
         if not self._is_destroyed:
             try:
                 self.federation.destroy()
                 logger.debug("federation engine destroy done")
-            except:
-                logger.exception("federation engine destroy failed", stack_info=True)
+            except Exception as e:
+                logger.exception("federation engine destroy failed: {e}")
 
             try:
                 self.computing.destroy()
                 logger.debug("computing engine destroy done")
-            except:
-                logger.exception("computing engine destroy failed", stack_info=True)
+            except Exception as e:
+                logger.exception(f"computing engine destroy failed: {e}")
             self._is_destroyed = True

@@ -19,10 +19,8 @@ from logging import getLogger
 
 from fate.arch.abc import PartyMeta
 from fate.arch.federation.osx import osx_pb2
-
-from .._federation import FederationBase
-from .._nretry import nretry
 from ._mq_channel import MQChannel
+from .._federation import FederationBase
 
 LOGGER = getLogger(__name__)
 # default message max size in bytes = 1MB
@@ -67,7 +65,7 @@ class OSXFederation(FederationBase):
         mq = MQ(host, port)
 
         return OSXFederation(
-            session_id=federation_session_id,
+            federation_session_id=federation_session_id,
             computing_session=computing_session,
             party=party,
             parties=parties,
@@ -76,10 +74,16 @@ class OSXFederation(FederationBase):
         )
 
     def __init__(
-        self, session_id, computing_session, party: PartyMeta, parties: typing.List[PartyMeta], max_message_size, mq
+        self,
+        federation_session_id,
+        computing_session,
+        party: PartyMeta,
+        parties: typing.List[PartyMeta],
+        max_message_size,
+        mq,
     ):
         super().__init__(
-            session_id=session_id,
+            session_id=federation_session_id,
             computing_session=computing_session,
             party=party,
             parties=parties,
@@ -182,7 +186,7 @@ class OSXFederation(FederationBase):
             response = channel_info.consume()
             # LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}, response={response}")
             if response.code == "E0000000601":
-                 raise LookupError(f"{response}")
+                raise LookupError(f"{response}")
             message = osx_pb2.Message()
             message.ParseFromString(response.payload)
             # offset = response.metadata["MessageOffSet"]

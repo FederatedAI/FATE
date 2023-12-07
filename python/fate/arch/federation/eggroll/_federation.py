@@ -21,53 +21,43 @@ import signal
 import typing
 from typing import List
 
-from eggroll.roll_pair.roll_pair import RollPair
-from eggroll.roll_site.roll_site import RollSiteContext
-from fate.arch.abc import FederationEngine, PartyMeta
-
+from eggroll.computing import RollPair
+from eggroll.federation import RollSiteContext
+from fate.arch.federation.federation import Federation, PartyMeta
 from ...computing.eggroll import Table
-from .._gc import GarbageCollector
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
+if typing.TYPE_CHECKING:
+    from fate.arch.computing.eggroll import CSession
 
 
-class EggrollFederation(FederationEngine):
+class EggrollFederation(Federation):
     def __init__(
         self,
-        rp_ctx,
-        rs_session_id,
+        computing_session: "CSession",
+        federation_session_id,
         party: PartyMeta,
         parties: List[PartyMeta],
         proxy_endpoint,
     ):
-        LOGGER.debug(
-            f"[federation.eggroll]init federation: "
-            f"rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id}, "
-            f"party={party}, proxy_endpoint={proxy_endpoint}"
+        super().__init__(federation_session_id, party, parties)
+        proxy_endpoint_host, proxy_endpoint_port = proxy_endpoint.split(":")
+        self._rp_ctx = computing_session.get_rpc()
+        self._rsc = RollSiteContext(
+            federation_session_id,
+            rp_ctx=self._rp_ctx,
+            party=party,
+            proxy_endpoint_host=proxy_endpoint_host.strip(),
+            proxy_endpoint_port=int(proxy_endpoint_port.strip()),
         )
 
-        options = {
-            "self_role": party[0],
-            "self_party_id": party[1],
-            "proxy_endpoint": proxy_endpoint,
-        }
-        self._session_id = rs_session_id
-        self._rp_ctx = rp_ctx
-        self._get_history = set()
-        self._remote_history = set()
-
-        self.get_gc: GarbageCollector = GarbageCollector()
-        self.remote_gc: GarbageCollector = GarbageCollector()
-        self.local_party = party
-        self.parties = parties
-        self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
-        LOGGER.debug(f"[federation.eggroll]init federation context done")
-
-    @property
-    def session_id(self) -> str:
-        return self._session_id
-
-    def pull(self, name: str, tag: str, parties: List[PartyMeta]):
+    def _pull_table(
+        self,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ) -> List["Table"]:
         rs = self._rsc.load(name=name, tag=tag)
         future_map = dict(
             zip(
@@ -79,49 +69,39 @@ class EggrollFederation(FederationEngine):
         for future in concurrent.futures.as_completed(future_map):
             party = future_map[future]
             v = future.result()
-            log_str = f"federation.eggroll.get.{name}.{tag}"
-            if v is None:
-                raise ValueError(f"[{log_str}]get `None` from {party}")
-            if (name, tag, party) in self._get_history:
-                raise ValueError(f"[{log_str}]get from {party} with duplicate tag")
-            self._get_history.add((name, tag, party))
-            # got a roll pair
-            if isinstance(v, RollPair):
-                LOGGER.debug(
-                    f"[{log_str}] got "
-                    f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})"
-                )
-                self.get_gc.register_clean_action(name, tag, v, "destroy", {})
-                rtn[party] = Table(v)
-            # others
-            else:
-                LOGGER.debug(f"[{log_str}] got object with type: {type(v)}")
-                rtn[party] = v
+            assert isinstance(v, RollPair), f"pull table got {type(v)}"
+            rtn[party] = Table(v)
+        return [rtn[party] for party in parties]
+
+    def _pull_bytes(self, name: str, tag: str, parties: List[PartyMeta]):
+        rs = self._rsc.load(name=name, tag=tag)
+        future_map = dict(
+            zip(
+                rs.pull(parties=parties),
+                parties,
+            )
+        )
+        rtn = {}
+        for future in concurrent.futures.as_completed(future_map):
+            party = future_map[future]
+            v = future.result()
+            rtn[party] = v
 
         return [rtn[party] for party in parties]
 
-    def push(self, v, name: str, tag: str, parties: List[PartyMeta]):
-        if isinstance(v, Table):
-            # noinspection PyProtectedMember
-            v = v._rp
-        log_str = f"federation.eggroll.remote.{name}.{tag}{parties})"
-        if v is None:
-            raise ValueError(f"[{log_str}]remote `None` to {parties}")
-        for party in parties:
-            if (name, tag, party) in self._remote_history:
-                raise ValueError(f"[{log_str}]remote to {parties} with duplicate tag")
-            self._remote_history.add((name, tag, party))
+    def _push_table(self, table: Table, name: str, tag: str, parties: List[PartyMeta]):
+        rs = self._rsc.load(name=name, tag=tag)
+        futures = rs.push_rp(table._rp, parties=parties)
+        # done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        # for future in done:
+        #     future.result()
 
-        if isinstance(v, RollPair):
-            LOGGER.debug(
-                f"[{log_str}]remote "
-                f"RollPair(namespace={v.get_namespace()}, name={v.get_name()}, partitions={v.get_partitions()})"
-            )
-            self.remote_gc.register_clean_action(name, tag, v, "destroy", {})
-            _push_with_exception_handle(self._rsc, v, name, tag, parties)
-        else:
-            LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
-            _push_with_exception_handle(self._rsc, v, name, tag, parties)
+    def _push_bytes(self, v: bytes, name: str, tag: str, parties: List[PartyMeta]):
+        rs = self._rsc.load(name=name, tag=tag)
+        futures = rs.push_bytes(v, parties=parties)
+        # done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+        # for future in done:
+        #     future.result()
 
     def destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)
@@ -131,10 +111,10 @@ def _push_with_exception_handle(rsc, v, name: str, tag: str, parties: List[Party
     def _remote_exception_re_raise(f, p: PartyMeta):
         try:
             f.result()
-            LOGGER.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
+            logger.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
         except Exception as e:
             pid = os.getpid()
-            LOGGER.exception(
+            logger.exception(
                 f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} fail,"
                 f" terminating process(pid={pid})"
             )
@@ -166,7 +146,7 @@ _remote_futures = set()
 
 
 def _clear_callback(future):
-    LOGGER.debug("future `{future}` done, remove")
+    logger.debug("future `{future}` done, remove")
     _remote_futures.remove(future)
 
 
@@ -177,4 +157,4 @@ def add_remote_futures(fs: typing.List[concurrent.futures.Future]):
 
 
 def wait_all_remote_done(timeout=None):
-    concurrent.futures.wait(_remote_futures, timeout=timeout, return_when=concurrent.futures.ALL_COMPLETED)
+    concurrent.futures.wait(_remote_futures, timeout=timeout, return_when=concurrent.futures.FIRST_EXCEPTION)

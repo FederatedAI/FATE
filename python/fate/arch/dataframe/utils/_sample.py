@@ -87,7 +87,7 @@ def _sample_guest(
                                                        indexer,
                                                        choices,
                                                        regenerated_ids,
-                                                       df.block_table.partitions)
+                                                       df.block_table.num_partitions)
 
             if sync:
                 ctx.hosts.put(REGENERATED_TAG, True)
@@ -122,7 +122,7 @@ def _sample_guest(
                 label_indexer = list(label_df.get_indexer(target="sample_id").collect())
                 regenerated_ids = generate_sample_id(label_n, regenerated_sample_id_prefix)
                 label_choice_with_regenerated_ids = _agg_choices(ctx, label_indexer, choices,
-                                                                 regenerated_ids, df.block_table.partitions)
+                                                                 regenerated_ids, df.block_table.num_partitions)
                 if choice_with_regenerated_ids is None:
                     choice_with_regenerated_ids = label_choice_with_regenerated_ids
                 else:
