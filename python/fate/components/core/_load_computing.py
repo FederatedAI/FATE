@@ -31,7 +31,14 @@ def load_computing(computing, logger_config=None):
     if isinstance(computing, EggrollComputingSpec):
         from fate.arch.computing.eggroll import CSession
 
-        return CSession(computing.metadata.computing_id, options=computing.metadata.options)
+        return CSession(
+            computing.metadata.computing_id,
+            host=computing.metadata.host,
+            port=computing.metadata.port,
+            config_options=computing.metadata.config_options,
+            config_properties_file=computing.metadata.config_properties_file,
+            options=computing.metadata.options,
+        )
     if isinstance(computing, SparkComputingSpec):
         from fate.arch.computing.spark import CSession
 
