@@ -14,6 +14,7 @@
 #  limitations under the License.
 import io
 import pickle
+import logging
 import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
@@ -23,6 +24,7 @@ from ._namespace import NS
 from ..computing import is_table
 from ..federation._gc import IterationGC
 
+logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
@@ -307,6 +309,11 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
             return table
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
+
+    # def load(self):
+    #     out = super().load()
+    #     logger.error(f"unpickled: {out.__class__.__module__}.{out.__class__.__name__}")
+    #     return out
 
     @classmethod
     def pull(

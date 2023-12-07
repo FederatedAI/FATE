@@ -45,3 +45,8 @@ nn:
     protocol: "layer_estimation"
     skip_loss_forward: True
     cache_pred_size: True
+
+safety:
+  serdes:
+    # supported types: unrestricted, restricted, restricted_catch_miss
+    restricted_type: "unrestricted"
