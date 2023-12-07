@@ -1,3 +1,18 @@
+#
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import logging
 
 import torch
@@ -9,11 +24,11 @@ from fate.arch.protocol.mpc.nn.sshe.lr_layer import (
     SSHELogisticRegressionLossLayer,
     SSHEOptimizerSGD,
 )
+from fate.ml.abc.module import Module, HeteroModule
 from fate.ml.utils import predict_tools
 from fate.ml.utils._convergence import converge_func_factory
 from fate.ml.utils._model_param import get_initialize_func
 from fate.ml.utils._model_param import serialize_param, deserialize_param
-from ..abc.module import Module, HeteroModule
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +51,14 @@ class SSHELogisticRegression(Module):
         self.ovr = False
         self.labels = None
 
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
+        self.estimator.batch_size = batch_size
+
+    def set_epochs(self, epochs):
+        self.epochs = epochs
+        self.estimator.epochs = epochs
+
     def fit(self, ctx: Context, train_data: DataFrame, validate_data=None):
         if ctx.is_on_guest:
             train_data_binarized_label = train_data.label.get_dummies()
@@ -45,6 +68,7 @@ class SSHELogisticRegression(Module):
             if self.labels is None:
                 self.labels = sorted(labels)
         else:
+            self.init_param["fit_intercept"] = False
             label_count = ctx.guest.get("label_count")
         if label_count > 2 or self.ovr:
             logger.info(f"OVR data provided, will train OVR models.")
@@ -121,6 +145,7 @@ class SSHELogisticRegression(Module):
                 "batch_size": self.batch_size,
                 "learning_rate": self.learning_rate,
                 "init_param": self.init_param,
+                "early_stop": self.early_stop,
                 # "optimizer_param": self.optimizer_param,
                 "labels": self.labels,
                 "ovr": self.ovr,
@@ -158,7 +183,7 @@ class SSHELogisticRegression(Module):
                     reveal_every_epoch=model["meta"]["reveal_every_epoch"],
                     reveal_loss_freq=model["meta"]["reveal_loss_freq"],
                     tol=model["meta"]["tol"],
-                    early_stop=model["meta"]["early_stop"]
+                    early_stop=model["meta"]["early_stop"],
                 )
                 estimator.restore(d)
                 lr.estimator[int(label)] = estimator
@@ -170,7 +195,7 @@ class SSHELogisticRegression(Module):
                 reveal_every_epoch=model["meta"]["reveal_every_epoch"],
                 reveal_loss_freq=model["meta"]["reveal_loss_freq"],
                 tol=model["meta"]["tol"],
-                early_stop=model["meta"]["early_stop"]
+                early_stop=model["meta"]["early_stop"],
             )
             estimator.restore(all_estimator)
             lr.estimator = estimator
@@ -178,25 +203,34 @@ class SSHELogisticRegression(Module):
         return lr
 
     def predict(self, ctx, test_data) -> DataFrame:
-        pred_df = test_data.create_frame(with_label=True, with_weight=False)
-        if self.ovr:
-            pred_score = test_data.create_frame(with_label=False, with_weight=False)
-            for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
-                estimator = self.estimator[i]
-                pred = estimator.predict(class_ctx, test_data)
-                pred_score[str(self.labels[i])] = pred
-            pred_df[predict_tools.PREDICT_SCORE] = pred_score.apply_row(lambda v: [list(v)])
-            predict_result = predict_tools.compute_predict_details(
-                pred_df, task_type=predict_tools.MULTI, classes=self.labels
-            )
+        if ctx.is_on_guest:
+            pred_df = test_data.create_frame(with_label=True, with_weight=False)
+            if self.ovr:
+                pred_score = test_data.create_frame(with_label=False, with_weight=False)
+                for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
+                    estimator = self.estimator[i]
+                    pred = estimator.predict(class_ctx, test_data)
+                    pred_score[str(self.labels[i])] = pred
+                pred_df[predict_tools.PREDICT_SCORE] = pred_score.apply_row(lambda v: [list(v)])
+                predict_result = predict_tools.compute_predict_details(
+                    pred_df, task_type=predict_tools.MULTI, classes=self.labels
+                )
+            else:
+                predict_score = self.estimator.predict(ctx, test_data)
+                pred_df[predict_tools.PREDICT_SCORE] = predict_score
+                predict_result = predict_tools.compute_predict_details(
+                    pred_df, task_type=predict_tools.BINARY, classes=self.labels, threshold=self.threshold
+                )
+            return predict_result
         else:
-            predict_score = self.estimator.predict(ctx, test_data)
-            pred_df[predict_tools.PREDICT_SCORE] = predict_score
-            predict_result = predict_tools.compute_predict_details(
-                pred_df, task_type=predict_tools.BINARY, classes=self.labels, threshold=self.threshold
-            )
+            if self.ovr:
+                for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
+                    estimator = self.estimator[i]
+                    estimator.predict(class_ctx, test_data)
+            else:
+                self.estimator.predict(ctx, test_data)
 
-        return predict_result
+
 
 
 class SSHELREstimator(HeteroModule):
@@ -223,7 +257,12 @@ class SSHELREstimator(HeteroModule):
 
     def fit_single_model(self, ctx: Context, train_data: DataFrame, valid_data: DataFrame) -> None:
         rank_a, rank_b = ctx.hosts[0].rank, ctx.guest.rank
-        initialize_func = get_initialize_func(**self.init_param)
+        if ctx.is_on_host:
+            self.init_param["fit_intercept"] = False
+        if self.w is None:
+            initialize_func = get_initialize_func(**self.init_param)
+        else:
+            initialize_func = lambda x: self.w
         if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1.0
         layer = SSHELogisticRegressionLayer(
@@ -240,28 +279,43 @@ class SSHELREstimator(HeteroModule):
         optimizer = SSHEOptimizerSGD(ctx, layer.parameters(), lr=self.lr)
         wa = layer.wa
         wb = layer.wb
-        batch_loader = dataframe.DataLoader(
-            train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=False)
+        if ctx.is_on_guest:
+            batch_loader = dataframe.DataLoader(
+                train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=False)
+        else:
+            batch_loader = dataframe.DataLoader(
+                train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
+        if self.early_stop == "weight_diff":
+            if ctx.is_on_guest:
+                self.converge_func.set_pre_weight(wb.get_plain_text(dst=rank_b))
+            else:
+                self.converge_func.set_pre_weight(wa.get_plain_text(dst=rank_a))
         for i, epoch_ctx in ctx.on_iterations.ctxs_range(self.epochs):
-            epoch_loss = 0
+            epoch_loss = None
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, batch_data in epoch_ctx.on_batches.ctxs_zip(batch_loader):
                 h = batch_data.x
-                y = ctx.mpc.cond_call(lambda: batch_data.label, lambda: None, dst=rank_b)
+                y = batch_ctx.mpc.cond_call(lambda: batch_data.label, lambda: None, dst=rank_b)
                 z = layer(h)
                 loss = loss_fn(z, y)
                 if i % self.reveal_loss_freq == 0:
-                    epoch_loss += loss.get()
+                    if epoch_loss is None:
+                        epoch_loss = loss.get()
+                    else:
+                        epoch_loss += loss.get()
                 loss.backward()
                 optimizer.step()
+            if epoch_loss is not None:
+                epoch_ctx.metrics.log_loss("lr_loss", epoch_loss.tolist())
             if self.reveal_every_epoch:
                 wa_p = wa.get_plain_text(dst=rank_a)
                 wb_p = wb.get_plain_text(dst=rank_b)
             if ctx.is_on_guest:
                 if self.early_stop == "weight_diff":
                     if self.reveal_every_epoch:
-                        wa_p_delta = self.converge_func.compute_weight_diff(wa_p)
-                        w_diff = ctx.guest.put("wa_p_delta", wa_p_delta)
+                        wb_p_delta = self.converge_func.compute_weight_diff(wb_p - self.converge_func.pre_weight)
+                        w_diff = wb_p_delta + epoch_ctx.hosts.get("wa_p_delta")[0]
+                        self.converge_func.set_pre_weight(wb_p)
                         if w_diff < self.tol:
                             self.is_converged = True
                     else:
@@ -269,17 +323,14 @@ class SSHELREstimator(HeteroModule):
                                          f"reveal_every_epoch is False")
                 else:
                     if i % self.reveal_loss_freq == 0:
-                        if epoch_loss is not None:
-                            print(f"epoch {i} loss: {epoch_loss.tolist()}")
-                            epoch_ctx.metrics.log_loss("lr_loss", epoch_loss.tolist())
-                        if self.early_stop != "weight_diff":
-                            self.is_converged = self.converge_func.is_converge(epoch_loss)
+                        self.is_converged = self.converge_func.is_converge(epoch_loss)
                 epoch_ctx.hosts.put("converge_flag", self.is_converged)
             else:
                 if self.early_stop == "weight_diff":
                     if self.reveal_every_epoch:
-                        wb_p_delta = self.converge_func.compute_weight_diff(wb_p)
-                        ctx.guest.put("wb_p_delta", wb_p_delta)
+                        wa_p_delta = self.converge_func.compute_weight_diff(wa_p - self.converge_func.pre_weight)
+                        epoch_ctx.guest.put("wa_p_delta", wa_p_delta)
+                        self.converge_func.set_pre_weight(wa_p)
                 self.is_converged = epoch_ctx.guest.get("converge_flag")
             if self.is_converged:
                 self.end_epoch = i
@@ -318,7 +369,8 @@ class SSHELREstimator(HeteroModule):
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
             "fit_intercept": self.init_param.get("fit_intercept"),
-            "header": self.header
+            "header": self.header,
+            "lr": self.lr
         }
 
     def restore(self, model):
@@ -327,4 +379,5 @@ class SSHELREstimator(HeteroModule):
         self.is_converged = model["is_converged"]
         self.header = model["header"]
         self.init_param["fit_intercept"] = model["fit_intercept"]
+        self.lr = model["lr"]
         # self.optimizer.load_state_dict(model["optimizer"])

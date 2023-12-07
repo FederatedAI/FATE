@@ -19,17 +19,17 @@ from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.components.components.utils import consts, tools
 from fate.components.core import GUEST, HOST, Role, cpn, params
-from fate.ml.glm.hetero.sshe import SSHELogisticRegression
+from fate.ml.glm.hetero.sshe import SSHELinearRegression
 
 logger = logging.getLogger(__name__)
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
-def sshe_lr(ctx, role):
+def sshe_linr(ctx, role):
     ...
 
 
-@sshe_lr.train()
+@sshe_linr.train()
 def train(
         ctx: Context,
         role: Role,
@@ -64,7 +64,8 @@ def train(
         train_output_data: cpn.dataframe_output(roles=[GUEST]),
         output_model: cpn.json_model_output(roles=[GUEST, HOST]),
         warm_start_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True)):
-    logger.info(f"enter sshe lr train")
+    logger.info(f"enter sshe linr train")
+    # temp code start
     init_param = init_param.dict()
     ctx.mpc.init()
 
@@ -88,7 +89,7 @@ def train(
     )
 
 
-@sshe_lr.predict()
+@sshe_linr.predict()
 def predict(
         ctx,
         role: Role,
@@ -101,7 +102,7 @@ def predict(
     predict_from_model(ctx, role, input_model, test_data, test_output_data)
 
 
-@sshe_lr.cross_validation()
+@sshe_linr.cross_validation()
 def cross_validation(
         ctx: Context,
         role: Role,
@@ -147,7 +148,7 @@ def cross_validation(
     i = 0
     for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
         logger.info(f"enter fold {i}")
-        module = SSHELogisticRegression(
+        module = SSHELinearRegression(
             epochs=epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
@@ -198,12 +199,12 @@ def train_model(
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
-        module = SSHELogisticRegression.from_model(model)
+        module = SSHELinearRegression.from_model(model)
         module.set_epochs(epochs)
         module.set_batch_size(batch_size)
 
     else:
-        module = SSHELogisticRegression(
+        module = SSHELinearRegression(
             epochs=epochs,
             batch_size=batch_size,
             tol=tol,
@@ -215,7 +216,7 @@ def train_model(
             reveal_loss_freq=reveal_loss_freq
         )
     # optimizer = optimizer_factory(optimizer_param)
-    logger.info(f"sshe lr guest start train")
+    logger.info(f"sshe linr guest start train")
     sub_ctx = ctx.sub_ctx("train")
     train_data = train_data.read()
 
@@ -244,10 +245,10 @@ def train_model(
 
 
 def predict_from_model(ctx, role, input_model, test_data, test_output_data):
-    logger.info(f"sshe lr guest start predict")
+    logger.info(f"sshe linr guest start predict")
     sub_ctx = ctx.sub_ctx("predict")
     model = input_model.read()
-    module = SSHELogisticRegression.from_model(model)
+    module = SSHELinearRegression.from_model(model)
     # if module.threshold != 0.5:
     #    module.threshold = threshold
     test_data = test_data.read()
