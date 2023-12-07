@@ -66,3 +66,8 @@ class Config(object):
             raise ValueError(f"{key} not in {options} or {self.config}")
         else:
             return default
+
+    @property
+    def safety(self):
+        return self.config.safety
+

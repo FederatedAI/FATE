@@ -23,6 +23,7 @@ from ._metrics import InMemoryMetricsHandler, MetricsWrap
 from ._namespace import NS, default_ns
 from ..unify import device
 from fate.arch.utils.trace import auto_trace
+from fate.arch.config import cfg
 
 logger = logging.getLogger(__name__)
 
