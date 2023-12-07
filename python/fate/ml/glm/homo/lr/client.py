@@ -1,12 +1,11 @@
 import torch.nn as nn
-from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.ml.abc.module import HomoModule
 from fate.ml.utils.model_io import ModelIO
 from fate.arch import Context
 import logging
 import torch as t
-from fate.ml.nn.algo.homo.fedavg import FedAVGCLient, TrainingArguments, FedAVGArguments
+from fate.ml.nn.homo.fedavg import FedAVGClient, TrainingArguments, FedAVGArguments
 from transformers import default_data_collator
 import functools
 import tempfile
@@ -409,7 +408,7 @@ class HomoLRClient(HomoModule):
             num_train_epochs=self.max_iter,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size)
-        self.trainer = FedAVGCLient(
+        self.trainer = FedAVGClient(
             ctx,
             model=self.model,
             loss_fn=loss_fn,
@@ -437,7 +436,7 @@ class HomoLRClient(HomoModule):
             train_arg = TrainingArguments(
                 num_train_epochs=self.max_iter,
                 per_device_eval_batch_size=batch_size)
-            trainer = FedAVGCLient(
+            trainer = FedAVGClient(
                 ctx,
                 train_set=self.predict_set,
                 model=self.model,

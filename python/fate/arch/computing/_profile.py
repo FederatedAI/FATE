@@ -20,7 +20,6 @@ import time
 import typing
 from functools import wraps
 
-import beautifultable
 
 profile_logger = logging.getLogger(__name__)
 _PROFILE_LOG_ENABLED = False
@@ -94,6 +93,8 @@ class _ComputingTimer(object):
 
     @classmethod
     def computing_statistics_table(cls, timer_aggregator: _TimerItem = None):
+        import beautifultable
+
         stack_table = beautifultable.BeautifulTable(110, precision=4, detect_numerics=False)
         stack_table.columns.header = [
             "function",
@@ -154,6 +155,8 @@ class _FederationTimer(object):
 
     @classmethod
     def federation_statistics_table(cls, timer_aggregator: _TimerItem = None):
+        import beautifultable
+
         total = _TimerItem()
         get_table = beautifultable.BeautifulTable(110)
         get_table.columns.header = ["name", "n", "sum(s)", "mean(s)", "max(s)"]
@@ -316,7 +319,7 @@ def _pretty_table_str(v):
     from ..computing import is_table
 
     if is_table(v):
-        return f"Table(partition={v.partitions})"
+        return f"Table(partition={v.num_partitions})"
     else:
         return f"{type(v).__name__}"
 

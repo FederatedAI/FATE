@@ -16,7 +16,6 @@
 package org.fedai.osx.core.flow;
 
 
-
 public class BucketLeapArray extends LeapArray<MetricBucket> {
 
     public BucketLeapArray(int sampleCount, int intervalInMs) {

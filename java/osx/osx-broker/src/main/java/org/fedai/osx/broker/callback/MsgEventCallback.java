@@ -6,5 +6,5 @@ import org.fedai.osx.broker.queue.TransferQueue;
 
 @FunctionalInterface
 public interface MsgEventCallback {
-    void callback(ConsumerManager  consumerManager,TransferQueue transferQueue , MessageExt message) throws Exception;
+    void callback(ConsumerManager consumerManager, TransferQueue transferQueue, MessageExt message) throws Exception;
 }

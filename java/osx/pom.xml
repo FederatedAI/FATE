@@ -11,20 +11,17 @@
     <modules>
         <module>osx-core</module>
         <module>osx-broker</module>
-<!--        <module>osx-api</module>-->
-
     </modules>
 
     <properties>
-        <osx.version>1.0.0-beta</osx.version>
+        <osx.version>1.0.0</osx.version>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <guava.version>31.1-jre</guava.version>
-        <grpc.version>1.51.1</grpc.version>
+        <grpc.version>1.59.0</grpc.version>
         <lombok.version>1.18.24</lombok.version>
         <protobuf.version>3.21.12</protobuf.version>
-
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <os-maven-plugin.version>1.6.1</os-maven-plugin.version>
         <slf4j.version>1.7.36</slf4j.version>
@@ -54,7 +51,6 @@
         <commons-net.version>3.8.0</commons-net.version>
         <guice.version>6.0.0</guice.version>
         <reflections.version>0.10.2</reflections.version>
-
     </properties>
 
     <dependencyManagement>

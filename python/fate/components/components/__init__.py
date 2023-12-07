@@ -73,16 +73,22 @@ class LazyBuildInComponentsLoader:
         return homo_nn
 
     @_lazy_cpn
+    def hetero_nn(self):
+        from .hetero_nn import hetero_nn
+
+        return hetero_nn
+
+    @_lazy_cpn
     def homo_lr(self):
         from .homo_lr import homo_lr
         
         return homo_lr
     
     @_lazy_cpn
-    def hetero_sbt(self):
-        from .hetero_sbt import hetero_sbt
+    def hetero_secureboost(self):
+        from .hetero_secureboost import hetero_secureboost
 
-        return hetero_sbt
+        return hetero_secureboost
 
     @_lazy_cpn
     def dataframe_transformer(self):
@@ -125,6 +131,12 @@ class LazyBuildInComponentsLoader:
         from .hetero_feature_selection import hetero_feature_selection
 
         return hetero_feature_selection
+
+    @_lazy_cpn
+    def feature_correlation(self):
+        from .feature_correlation import feature_correlation
+
+        return feature_correlation
 
     @_lazy_cpn
     def union(self):

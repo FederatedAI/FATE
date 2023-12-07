@@ -18,6 +18,9 @@ import typing
 
 from ..unify import device
 
+if typing.TYPE_CHECKING:
+    from ._context import Context
+    from ..tensor.phe import PHETensorCipher, PHETensorCipherPublic
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +33,11 @@ class CipherKit:
             self._cipher_mapping = cipher_mapping
         self._allow_custom_random_seed = False
         self._custom_random_seed = 42
+
+        self.ctx = None
+
+    def set_ctx(self, ctx: "Context"):
+        self.ctx = ctx
 
     def set_phe(self, device: device, options: typing.Optional[dict]):
         if "phe" not in self._cipher_mapping:
@@ -50,10 +58,12 @@ class CipherKit:
 
     @property
     def phe(self):
+        if self.ctx is None:
+            raise ValueError("context not set")
         self._set_default_phe()
         if self._device not in self._cipher_mapping["phe"]:
             raise ValueError(f"no impl exists for device {self._device}")
-        return PHECipherBuilder(**self._cipher_mapping["phe"][self._device])
+        return PHECipherBuilder(self.ctx, **self._cipher_mapping["phe"][self._device])
 
     @property
     def allow_custom_random_seed(self):
@@ -70,9 +80,21 @@ class CipherKit:
 
 
 class PHECipherBuilder:
-    def __init__(self, kind, key_length) -> None:
+    def __init__(self, ctx: "Context", kind, key_length) -> None:
+        self.ctx = ctx
         self.kind = kind
         self.key_length = key_length
+
+    def broadcast(self, src: int = 0, options: typing.Optional[dict] = None, tag: str = "phe_cipher"):
+        if src == self.ctx.rank:
+            cipher = self.setup(options)
+            cipher_public = cipher.to_public()
+            for p in self.ctx.parties:
+                if p.rank != src:
+                    p.put(tag, cipher_public)
+            return cipher
+        else:
+            return self.ctx.parties[src].get(name=tag)
 
     def setup(self, options: typing.Optional[dict] = None):
         if options is None:
@@ -110,16 +132,15 @@ class PHECipherBuilder:
             raise ValueError(f"Unknown PHE keygen kind: {self.kind}")
 
 
-class PHECipher:
+class PHECipherPublic:
     def __init__(
         self,
         kind,
         key_size,
         pk,
-        sk,
         evaluator,
         coder,
-        tensor_cipher,
+        tensor_cipher: "PHETensorCipherPublic",
         can_support_negative_number,
         can_support_squeeze,
         can_support_pack,
@@ -127,10 +148,9 @@ class PHECipher:
         self._kind = kind
         self._key_size = key_size
         self._pk = pk
-        self._sk = sk
         self._coder = coder
         self._evaluator = evaluator
-        self._tensor_cipher = tensor_cipher
+        self._tensor_cipher: "PHETensorCipherPublic" = tensor_cipher
         self._can_support_negative_number = can_support_negative_number
         self._can_support_squeeze = can_support_squeeze
         self._can_support_pack = can_support_pack
@@ -161,9 +181,6 @@ class PHECipher:
     def get_tensor_coder(self):
         return self._tensor_cipher.coder
 
-    def get_tensor_decryptor(self):
-        return self._tensor_cipher.sk
-
     @property
     def pk(self):
         return self._pk
@@ -173,9 +190,54 @@ class PHECipher:
         return self._coder
 
     @property
+    def evaluator(self):
+        return self._evaluator
+
+
+class PHECipher(PHECipherPublic):
+    def __init__(
+        self,
+        kind,
+        key_size,
+        pk,
+        sk,
+        evaluator,
+        coder,
+        tensor_cipher: "PHETensorCipher",
+        can_support_negative_number,
+        can_support_squeeze,
+        can_support_pack,
+    ) -> None:
+        super().__init__(
+            kind,
+            key_size,
+            pk,
+            evaluator,
+            coder,
+            tensor_cipher,
+            can_support_negative_number,
+            can_support_squeeze,
+            can_support_pack,
+        )
+        self._sk = sk
+        self._tensor_cipher = tensor_cipher
+
+    def get_tensor_decryptor(self):
+        return self._tensor_cipher.sk
+
+    @property
     def sk(self):
         return self._sk
 
-    @property
-    def evaluator(self):
-        return self._evaluator
+    def to_public(self):
+        return PHECipherPublic(
+            self.kind,
+            self.key_size,
+            self.pk,
+            self.evaluator,
+            self.coder,
+            self._tensor_cipher.to_public(),
+            self.can_support_negative_number,
+            self.can_support_squeeze,
+            self.can_support_pack,
+        )

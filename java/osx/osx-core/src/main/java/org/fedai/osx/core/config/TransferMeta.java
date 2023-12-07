@@ -13,5 +13,4 @@ public class TransferMeta {
     String topic;
 
 
-
 }

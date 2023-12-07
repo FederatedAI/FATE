@@ -20,7 +20,7 @@ import java.util.Map;
 public class RollPair {
     public static final String PUT_BATCH = "putBatch";
     public static final String ROLL_PAIR_URI_PREFIX = "v1/roll-pair";
-    public static final String EGG_PAIR_URI_PREFIX = "v1/egg-pair";
+    public static final String EGG_PAIR_URI_PREFIX = "v1/eggs-pair";
 
     public static final String RUN_JOB = "runJob";
     public static final String RUN_TASK = "runTask";

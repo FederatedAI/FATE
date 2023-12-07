@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class ReleaseResponse {
-    String code ="";                   // 状态码
-    String message ="";
+    String code = "";                   // 状态码
+    String message = "";
 }

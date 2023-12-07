@@ -35,5 +35,5 @@ data:
     role: host_0
 tasks:
   normal-lr:
-    script: test_lr_sid.py
+    script: test_lr.py
     conf: "./breast_config.yaml"

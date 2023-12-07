@@ -15,7 +15,9 @@ import static java.lang.annotation.ElementType.TYPE;
 @Inherited
 @Singleton
 public @interface Register {
-    ServiceType type() default  ServiceType.inner;
+    ServiceType type() default ServiceType.inner;
+
     String[] uris();
-    boolean allowInterUse()  default   true;
+
+    boolean allowInterUse() default true;
 }

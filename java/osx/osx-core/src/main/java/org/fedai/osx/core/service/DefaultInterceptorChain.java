@@ -17,7 +17,6 @@
 package org.fedai.osx.core.service;
 
 import com.google.common.collect.Lists;
-
 import org.fedai.osx.core.context.OsxContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,14 +27,14 @@ import java.util.List;
  * @Description TODO
  * @Author
  **/
-public class DefaultInterceptorChain< req, resp> implements InterceptorChain< req, resp> {
+public class DefaultInterceptorChain<req, resp> implements InterceptorChain<req, resp> {
 
     Logger logger = LoggerFactory.getLogger(DefaultInterceptorChain.class);
 
-    List<Interceptor< req, resp>> chain = Lists.newArrayList();
+    List<Interceptor<req, resp>> chain = Lists.newArrayList();
 
     @Override
-    public void addInterceptor(Interceptor< req, resp> interceptor) {
+    public void addInterceptor(Interceptor<req, resp> interceptor) {
         chain.add(interceptor);
     }
 
@@ -48,9 +47,9 @@ public class DefaultInterceptorChain< req, resp> implements InterceptorChain< re
      */
     @Override
     public void doProcess(OsxContext context, InboundPackage<req> inboundPackage, OutboundPackage<resp> outboundPackage) throws Exception {
-        for (Interceptor< req, resp> interceptor : chain) {
+        for (Interceptor<req, resp> interceptor : chain) {
             if (interceptor != null) {
-                interceptor.doProcess(context, inboundPackage,outboundPackage);
+                interceptor.doProcess(context, inboundPackage, outboundPackage);
             }
         }
     }

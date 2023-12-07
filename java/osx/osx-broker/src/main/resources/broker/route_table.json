@@ -1,40 +1,23 @@
 {
-  "route_table":
-  {
-    "9999":
-    {
-      "fateflow":[
-        {
-          "port": 9360,
-          "ip": "127.0.0.1"
-        }
-      ],
-      "default": [
-        {
-        "port": 9370,
-          "ip": "localhost"
-      }
-      ]
-    },
-    "10000":{
-      "default":[{
-        "ip": "10.42.0.1",
-        "port": 9371
-      }]
-    },
-    "10001":{
-      "default":[{
-        "protocol":"grpc",
-        "url": "http://127.0.0.1:8087/osx/inbound",
-        "ip": "127.0.0.1",
-        "port": 9375
-      }]
-    }
-
-
-  },
-  "permission":
-  {
-    "default_allow": true
-  }
+	"route_table":{
+		"3479":{
+			"default":[
+				{
+					"port":8889,
+					"ip":"localhost"
+				}
+			]
+		},
+		"1234":{
+			"default":[
+				{
+					"port":9999,
+					"ip":"localhost"
+				}
+			]
+		}
+	},
+	"self_party":[
+		"10000"
+	]
 }

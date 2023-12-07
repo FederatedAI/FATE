@@ -18,16 +18,16 @@ import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
 
-from fate.arch.abc import FederationEngine, PartyMeta
-
+from fate.arch.abc import PartyMeta
+from ._namespace import NS
 from ..computing import is_table
 from ..federation._gc import IterationGC
-from ._namespace import NS
 
 T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
     from fate.arch.context import Context
+    from fate.arch.federation.federation import Federation
 
 
 class GC:
@@ -69,6 +69,9 @@ class Party:
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(party={self.party}, rank={self.rank}, namespace={self.namespace})"
+
     @property
     def party(self) -> PartyMeta:
         return self._party
@@ -107,7 +110,7 @@ class Parties:
     def __init__(
         self,
         ctx: "Context",
-        federation: FederationEngine,
+        federation: "Federation",
         parties: List[Tuple[int, PartyMeta]],
         namespace: NS,
     ) -> None:
@@ -115,6 +118,9 @@ class Parties:
         self.federation = federation
         self.parties = parties
         self.namespace = namespace
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(parties={self.parties}, namespace={self.namespace})"
 
     @property
     def ranks(self):
@@ -148,7 +154,7 @@ class Parties:
 
 
 def _push(
-    federation: FederationEngine,
+    federation: "Federation",
     name: str,
     namespace: NS,
     parties: List[PartyMeta],
@@ -195,26 +201,26 @@ class Serde:
         return struct.unpack("!d", value)[0]
 
 
-def _push_int(federation: FederationEngine, name: str, namespace: NS, parties: List[PartyMeta], value: int):
+def _push_int(federation: "Federation", name: str, namespace: NS, parties: List[PartyMeta], value: int):
     tag = namespace.federation_tag
     federation.push(v=Serde.encode_int(value), name=name, tag=tag, parties=parties)
 
 
 def _pull(
     ctx: "Context",
-    federation: FederationEngine,
+    federation: "Federation",
     name: str,
     namespace: NS,
     parties: List[PartyMeta],
 ):
     tag = namespace.federation_tag
-    raw_values = federation.pull(
+    buffer_list = federation.pull_bytes(
         name=name,
         tag=tag,
         parties=parties,
     )
     values = []
-    for party, buffers in zip(parties, raw_values):
+    for party, buffers in zip(parties, buffer_list):
         values.append(_TableRemotePersistentUnpickler.pull(buffers, ctx, federation, name, tag, party))
     return values
 
@@ -232,7 +238,7 @@ class _ContextPersistentId:
 class _TableRemotePersistentPickler(pickle.Pickler):
     def __init__(
         self,
-        federation: FederationEngine,
+        federation: "Federation",
         name: str,
         tag: str,
         parties: List[PartyMeta],
@@ -256,7 +262,7 @@ class _TableRemotePersistentPickler(pickle.Pickler):
 
         if is_table(obj):
             key = self._get_next_table_key()
-            self._federation.push(v=obj, name=key, tag=self._tag, parties=self._parties)
+            self._federation.push_table(table=obj, name=key, tag=self._tag, parties=self._parties)
             self._table_index += 1
             return _TablePersistentId(key)
         if isinstance(obj, Context):
@@ -267,7 +273,7 @@ class _TableRemotePersistentPickler(pickle.Pickler):
     def push(
         cls,
         value,
-        federation: FederationEngine,
+        federation: "Federation",
         name: str,
         tag: str,
         parties: List[PartyMeta],
@@ -275,14 +281,14 @@ class _TableRemotePersistentPickler(pickle.Pickler):
         with io.BytesIO() as f:
             pickler = _TableRemotePersistentPickler(federation, name, tag, parties, f)
             pickler.dump(value)
-            federation.push(v=f.getvalue(), name=name, tag=tag, parties=parties)
+            federation.push_bytes(v=f.getvalue(), name=name, tag=tag, parties=parties)
 
 
 class _TableRemotePersistentUnpickler(pickle.Unpickler):
     def __init__(
         self,
         ctx: "Context",
-        federation: FederationEngine,
+        federation: "Federation",
         name: str,
         tag: str,
         party: PartyMeta,
@@ -297,7 +303,7 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
 
     def persistent_load(self, pid: Any) -> Any:
         if isinstance(pid, _TablePersistentId):
-            table = self._federation.pull(pid.key, self._tag, [self._party])[0]
+            table = self._federation.pull_table(pid.key, self._tag, [self._party])[0]
             return table
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
@@ -307,7 +313,7 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
         cls,
         buffers,
         ctx: "Context",
-        federation: FederationEngine,
+        federation: "Federation",
         name: str,
         tag: str,
         party: PartyMeta,

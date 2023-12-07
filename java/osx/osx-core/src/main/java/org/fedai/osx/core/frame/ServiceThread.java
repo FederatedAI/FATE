@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ServiceThread implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(ServiceThread.class);
-
     private static final long JOIN_TIME = 90 * 1000;
     protected final CountDownLatch waitPoint = new CountDownLatch(1);
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -39,7 +38,7 @@ public abstract class ServiceThread implements Runnable {
     public abstract String getServiceName();
 
     public void start() {
-        log.info("Try to start service thread:{} started:{} lastThread:{}", getServiceName(), started.get(), thread);
+        log.info("Try to start service thread:{}", getServiceName());
         if (!started.compareAndSet(false, true)) {
             return;
         }

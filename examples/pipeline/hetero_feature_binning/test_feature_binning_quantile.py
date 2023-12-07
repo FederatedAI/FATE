@@ -27,17 +27,17 @@ def main(config="../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
     psi_0 = PSI("psi_0")
-    psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                  namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                     namespace=f"experiment{namespace}"))
+    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                             namespace=f"experiment{namespace}"))
+    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                namespace=f"experiment{namespace}"))
 
     binning_0 = HeteroFeatureBinning("binning_0",
                                      method="quantile",
@@ -45,14 +45,14 @@ def main(config="../config.yaml", namespace=""):
                                      transform_method="bin_idx",
                                      train_data=psi_0.outputs["output_data"]
                                      )
-    binning_0.hosts[0].component_setting(bin_idx=[1])
-    binning_0.guest.component_setting(bin_col=["x0"])
+    binning_0.hosts[0].task_setting(bin_idx=[1])
+    binning_0.guest.task_setting(bin_col=["x0"])
     binning_1 = HeteroFeatureBinning("binning_1",
                                      transform_method="bin_idx",
                                      method="quantile",
                                      train_data=binning_0.outputs["train_output_data"])
-    binning_1.hosts[0].component_setting(category_idx=[1])
-    binning_1.guest.component_setting(category_col=["x0"])
+    binning_1.hosts[0].task_setting(category_idx=[1])
+    binning_1.guest.task_setting(category_col=["x0"])
 
     pipeline.add_task(psi_0)
     pipeline.add_task(binning_0)
@@ -67,10 +67,10 @@ def main(config="../config.yaml", namespace=""):
     predict_pipeline = FateFlowPipeline()
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.component_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                                    namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].component_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                                       namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
+                                                                               namespace=f"experiment{namespace}"))
+    deployed_pipeline.psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
+                                                                                  namespace=f"experiment{namespace}"))
 
     predict_pipeline.add_task(deployed_pipeline)
     predict_pipeline.compile()

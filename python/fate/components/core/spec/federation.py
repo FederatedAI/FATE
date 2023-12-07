@@ -125,6 +125,7 @@ class OSXFederationSpec(pydantic.BaseModel):
         class OSXConfig(pydantic.BaseModel):
             host: str
             port: int
+            mode: str = "message_queue"
             max_message_size: Optional[int] = None
 
         federation_id: str

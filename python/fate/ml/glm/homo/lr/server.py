@@ -1,9 +1,8 @@
 from fate.ml.abc.module import HomoModule
-from fate.arch import Context
 from fate.arch.dataframe import DataFrame
 from fate.arch import Context
 import logging
-from fate.ml.nn.algo.homo.fedavg import FedAVGServer
+from fate.ml.nn.homo.fedavg import FedAVGServer
 
 
 logger = logging.getLogger(__name__)
@@ -26,4 +25,4 @@ class HomoLRServer(HomoModule):
             ctx: Context,
             predict_data: DataFrame = None) -> DataFrame:
 
-        logger.info('kkip prediction stage')
+        logger.info('skip prediction stage')

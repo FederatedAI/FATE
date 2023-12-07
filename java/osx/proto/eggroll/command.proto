@@ -29,8 +29,11 @@ message CommandResponse {
   string id = 1;
   CommandRequest request = 2;
   repeated bytes results = 3;
+  string code = 4;
+  string msg = 5;
 }
 
 service CommandService {
   rpc call (CommandRequest) returns (CommandResponse);
+  rpc callStream (stream CommandRequest) returns (stream CommandResponse);
 }

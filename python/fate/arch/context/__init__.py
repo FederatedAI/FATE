@@ -12,7 +12,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._cipher import CipherKit
+from ._cipher import CipherKit, PHECipher, PHECipherPublic
 from ._context import Context
+from ._namespace import NS
+from ._federation import Parties
 
-__all__ = ["Context", "CipherKit"]
+__all__ = ["Context", "CipherKit", "PHECipher", "PHECipherPublic", "NS", "Parties"]

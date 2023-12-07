@@ -1,22 +1,14 @@
 package org.fedai.osx.broker.test.http;
 
 import com.google.common.collect.Maps;
-import com.google.protobuf.ByteString;
-import com.webank.ai.eggroll.api.networking.proxy.Proxy;
-import com.webank.eggroll.core.transfer.Transfer;
 import okhttp3.*;
-import org.fedai.osx.broker.http.HttpClientPool;
 import org.fedai.osx.broker.test.grpc.QueueTest;
-import org.fedai.osx.broker.util.TransferUtil;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.constant.UriConstants;
-import org.fedai.osx.core.context.OsxContext;
-import org.fedai.osx.core.ptp.TargetMethod;
 import org.fedai.osx.core.utils.JsonUtil;
 import org.junit.Before;
 import org.junit.Test;
-import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,15 +16,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class HttpTest {
 
     Logger logger = LoggerFactory.getLogger(QueueTest.class);
-//    String ip = "localhost";
+    //    String ip = "localhost";
 //    //int port = 8250;//nginx
 //    int port = 9889;//nginx
-    String url="http://127.0.0.1:8089/v1/interconn/chan/push";
-//    String url="http://localhost:7304/osx/inbound";
+    String url = "http://localhost:8807";
     String desPartyId = "9999";
     String desRole = "";
     String srcPartyId = "9999";
@@ -40,6 +32,10 @@ public class HttpTest {
     String transferId = "testTransferId";
     String sessionId = "testSessionId111";
 
+    public static void main(String[] args) {
+        HttpTest httpTest = new HttpTest();
+        httpTest.testPopMsg();
+    }
 
     @Before
     public void init() {
@@ -59,79 +55,81 @@ public class HttpTest {
         //HttpClientPool.initPool();
     }
 
-
     @Test
-    public void   testConsumeMsg(){
+    public void testPopMsg() {
         Map header = Maps.newHashMap();
-        header.put(PtpHttpHeader.Version,"");
+        header.put(PtpHttpHeader.Version, "");
         header.put(PtpHttpHeader.TechProviderCode, MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-        header.put(PtpHttpHeader.Token,"");
-//        header.put(PtpHttpHeader.SourceNodeID,srcPartyId);
-        header.put(PtpHttpHeader.TargetNodeID,desPartyId);
-//        header.put(PtpHttpHeader.SourceInstID,"");
-        header.put(PtpHttpHeader.TargetInstID,"");
-        header.put(PtpHttpHeader.SessionID,sessionId);
-//        header.put(PtpHttpHeader.TargetMethod, TargetMethod.CONSUME_MSG.name());
-        header.put(PtpHttpHeader.TargetComponentName,"");
-        header.put(PtpHttpHeader.SourceComponentName,"");
-        header.put(PtpHttpHeader.MessageTopic,transferId);
-//        Osx.Message.Builder  messageBuilder = Osx.Message.newBuilder();
-//        messageBuilder.setBody(ByteString.copyFrom("xiaoxiao1".getBytes(StandardCharsets.UTF_8)));
-//        byte[]  content = messageBuilder.build().toByteArray();
-       // System.err.println(HttpClientPool.sendPtpPost(url,null,header));
+        header.put(PtpHttpHeader.Token, "");
+        header.put(PtpHttpHeader.TargetNodeID, desPartyId);
+        header.put(PtpHttpHeader.TargetInstID, "");
+        header.put(PtpHttpHeader.SessionID, sessionId);
+        MediaType jsonMime = MediaType.parse("application/json");
+        OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).
+                readTimeout(10, TimeUnit.MINUTES).writeTimeout(10, TimeUnit.MINUTES).build();
 
-
-    }
-
-
-    @Test
-    public  void  testPopMsg(){
-
-//        curl --location 'http://127.0.0.1:7304/v1/interconn/chan/push' --header 'Content-Type: application/json' --header 'x-ptp-target-node-id: 123' --header 'x-ptp-session-id: 1' --data '{
-//        "topic": "0",
-//                "metadata": {
-//            "a": "b"
-//        },
-//        "payload": "MTkyLjE2OC4xMDAuNjM6MTczMDQ="
-//    }'
-
-        Map header = Maps.newHashMap();
-        header.put(PtpHttpHeader.Version,"");
-        header.put(PtpHttpHeader.TechProviderCode, MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-        header.put(PtpHttpHeader.Token,"");
-        header.put(PtpHttpHeader.TargetNodeID,desPartyId);
-        header.put(PtpHttpHeader.TargetInstID,"");
-        header.put(PtpHttpHeader.SessionID,sessionId);
-        header.put( PtpHttpHeader.Uri, UriConstants.PUSH);
-        MediaType jsonMime=MediaType.parse("application/json");
-
-        OkHttpClient  okHttpClient = new OkHttpClient();
-        Request.Builder builder = new  Request.Builder();
-
-        header.forEach((k,v)->{
-            builder.addHeader(k.toString(),v.toString());
+        Request.Builder builder = new Request.Builder();
+        header.forEach((k, v) -> {
+            builder.addHeader(k.toString(), v.toString());
         });
-
-        Base64.Encoder  encoder = Base64.getEncoder();
-
-        Map sendBodyData= Maps.newHashMap();
-        sendBodyData.put("topic","testTopic10000");
-        sendBodyData.put("payload",new String(encoder.encode("my name is world".getBytes(StandardCharsets.UTF_8))));
-        RequestBody requestBody = RequestBody.create(JsonUtil.object2Json(sendBodyData),jsonMime);
-        Request request =   builder.url(url).post(requestBody)
+        Base64.Encoder encoder = Base64.getEncoder();
+        Map sendBodyData = Maps.newHashMap();
+        sendBodyData.put("topic", "testTopic10000");
+//        sendBodyData.put("payload",new String(encoder.encode("my name is world".getBytes(StandardCharsets.UTF_8))));
+        RequestBody requestBody = RequestBody.create(JsonUtil.object2Json(sendBodyData), jsonMime);
+        Request request = builder.url(url + UriConstants.HTTP_POP).post(requestBody)
                 .build();
         try {
-            Response response =     okHttpClient.newCall(request).execute();
-            System.err.println(response);
-            System.err.println("body" +response.body());
+            Response response = okHttpClient.newCall(request).execute();
+
+            Map result = JsonUtil.json2Object(response.body().string(), Map.class);
+            System.err.println(result);
+            Base64.Decoder decoder = Base64.getDecoder();
+            if (result.get("payload") != null) {
+                System.err.println("payload : " + result.get("payload").toString());
+                System.err.println("ori msg : " + new String(decoder.decode(result.get("payload").toString())));
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    @Test
+    public void testPeekMsg() {
+
+        Map header = Maps.newHashMap();
+        header.put(PtpHttpHeader.Version, "");
+        header.put(PtpHttpHeader.TechProviderCode, MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+        header.put(PtpHttpHeader.Token, "");
+        header.put(PtpHttpHeader.TargetNodeID, desPartyId);
+        header.put(PtpHttpHeader.TargetInstID, "");
+        header.put(PtpHttpHeader.SessionID, sessionId);
+        header.put(PtpHttpHeader.Uri, UriConstants.PUSH);
+        MediaType jsonMime = MediaType.parse("application/json");
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request.Builder builder = new Request.Builder();
+        header.forEach((k, v) -> {
+            builder.addHeader(k.toString(), v.toString());
+        });
+        Base64.Encoder encoder = Base64.getEncoder();
+        Map sendBodyData = Maps.newHashMap();
+        sendBodyData.put("topic", "testTopic10000");
+//        sendBodyData.put("payload",new String(encoder.encode("my name is world".getBytes(StandardCharsets.UTF_8))));
+        RequestBody requestBody = RequestBody.create(JsonUtil.object2Json(sendBodyData), jsonMime);
+        Request request = builder.url(url + UriConstants.HTTP_PEEK).post(requestBody)
+                .build();
+        try {
+            Response response = okHttpClient.newCall(request).execute();
+            System.err.println(response);
+            System.err.println("body " + new String(response.body().bytes()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Test
-    public  void  testProduceMsg(){
+    public void testPush() {
 
 //        curl --location 'http://127.0.0.1:7304/v1/interconn/chan/push' --header 'Content-Type: application/json' --header 'x-ptp-target-node-id: 123' --header 'x-ptp-session-id: 1' --data '{
 //        "topic": "0",
@@ -142,34 +140,32 @@ public class HttpTest {
 //    }'
 
         Map header = Maps.newHashMap();
-        header.put(PtpHttpHeader.Version,"");
+        header.put(PtpHttpHeader.Version, "");
         header.put(PtpHttpHeader.TechProviderCode, MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-        header.put(PtpHttpHeader.Token,"");
-        header.put(PtpHttpHeader.TargetNodeID,desPartyId);
-        header.put(PtpHttpHeader.TargetInstID,"");
-        header.put(PtpHttpHeader.SessionID,sessionId);
-        header.put( PtpHttpHeader.Uri, UriConstants.PUSH);
-        MediaType jsonMime=MediaType.parse("application/json");
-
-        OkHttpClient  okHttpClient = new OkHttpClient();
-        Request.Builder builder = new  Request.Builder();
-
-        header.forEach((k,v)->{
-            builder.addHeader(k.toString(),v.toString());
+        header.put(PtpHttpHeader.Token, "");
+        header.put(PtpHttpHeader.TargetNodeID, srcPartyId);
+        header.put(PtpHttpHeader.TargetInstID, "");
+        header.put(PtpHttpHeader.SessionID, sessionId);
+        header.put(PtpHttpHeader.Uri, UriConstants.PUSH);
+        MediaType jsonMime = MediaType.parse("application/json");
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request.Builder builder = new Request.Builder();
+        header.forEach((k, v) -> {
+            builder.addHeader(k.toString(), v.toString());
         });
+        Base64.Encoder encoder = Base64.getEncoder();
+        Map sendBodyData = Maps.newHashMap();
+        sendBodyData.put("topic", "testTopic10000");
+        sendBodyData.put("payload", new String(encoder.encode("my name is world".getBytes(StandardCharsets.UTF_8))));
+        System.err.println("send : " + sendBodyData);
 
-        Base64.Encoder  encoder = Base64.getEncoder();
-
-        Map sendBodyData= Maps.newHashMap();
-        sendBodyData.put("topic","testTopic10000");
-        sendBodyData.put("payload",new String(encoder.encode("my name is world".getBytes(StandardCharsets.UTF_8))));
-        RequestBody requestBody = RequestBody.create(JsonUtil.object2Json(sendBodyData),jsonMime);
-        Request request =   builder.url(url).post(requestBody)
+        RequestBody requestBody = RequestBody.create(JsonUtil.object2Json(sendBodyData), jsonMime);
+        Request request = builder.url(url + UriConstants.HTTP_PUSH).post(requestBody)
                 .build();
         try {
-            Response response =     okHttpClient.newCall(request).execute();
+            Response response = okHttpClient.newCall(request).execute();
             System.err.println(response);
-            System.err.println("body" +response.body());
+            System.err.println("body" + new String(response.body().bytes()));
         } catch (IOException e) {
             e.printStackTrace();
         }

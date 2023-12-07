@@ -3,7 +3,7 @@ package org.fedai.osx.broker.security;
 
 import org.fedai.osx.core.context.OsxContext;
 
-public class MockTokenGenerator implements TokenGenerator{
+public class MockTokenGenerator implements TokenGenerator {
 
 
     @Override

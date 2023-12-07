@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import typing
 from typing import Literal
 
 import pydantic
@@ -29,6 +30,10 @@ class StandaloneComputingSpec(pydantic.BaseModel):
 class EggrollComputingSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
         computing_id: str
+        host: typing.Optional[str] = None
+        port: typing.Optional[int] = None
+        config_options: typing.Optional[dict] = None
+        config_properties_file: typing.Optional[str] = None
         options: dict = {}
 
     type: Literal["eggroll"]

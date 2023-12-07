@@ -157,6 +157,11 @@
             <artifactId>httpclient</artifactId>
 
         </dependency>
+        <dependency>
+            <groupId>io.github.hakky54</groupId>
+            <artifactId>sslcontext-kickstart-for-netty</artifactId>
+            <version>8.1.6</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

@@ -1,8 +1,3 @@
-########################################################
-# Copyright 2019-2020 program was created VMware, Inc. #
-# SPDX-License-Identifier: Apache-2.0                  #
-########################################################
-
 #!/usr/bin/env bash
 set -e
 
@@ -23,7 +18,7 @@ fi
 
 #version=$(grep "<fate.version>" ${source_code_dir}/pom.xml  | sed "s/[<|>]/ /g" | awk '{print $2}')
 version=2.0.0
-source ${WORKINGDIR}/.env
+#source ${WORKINGDIR}/.env
 
 echo "Docker build"
 echo "Info:"
@@ -63,16 +58,16 @@ pushImage() {
 
 while [ "$1" != "" ]; do
     case $1 in
-         modules)
-                 buildModule
-                 ;;
+#         modules)
+#                 buildModule
+#                 ;;
          build)
                  buildModule
                  ;;
-         all)
-                 package
-                 buildModule
-                 ;;
+#         all)
+#                 package
+#                 buildModule
+#                 ;;
          push)
                 pushImage
                 ;;

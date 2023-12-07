@@ -8,19 +8,11 @@ if typing.TYPE_CHECKING:
     from ._tensor import PHETensor, PHETensorEncoded
 
 
-class PHETensorCipher:
-    def __init__(self, pk: "PHETensorEncryptor", coder: "PHETensorCoder", sk: "PHETensorDecryptor", evaluator) -> None:
+class PHETensorCipherPublic:
+    def __init__(self, pk: "PHETensorEncryptor", coder: "PHETensorCoder", evaluator) -> None:
         self._pk = pk
         self._coder = coder
-        self._sk = sk
         self._evaluator = evaluator
-
-    @classmethod
-    def from_raw_cipher(cls, pk: "PK", coder: "Coder", sk: "SK", evaluator):
-        coder = PHETensorCoder(coder)
-        encryptor = PHETensorEncryptor(pk, coder, evaluator)
-        decryptor = PHETensorDecryptor(sk, coder)
-        return cls(encryptor, coder, decryptor, evaluator)
 
     @property
     def pk(self):
@@ -30,9 +22,25 @@ class PHETensorCipher:
     def coder(self):
         return self._coder
 
+
+class PHETensorCipher(PHETensorCipherPublic):
+    def __init__(self, pk: "PHETensorEncryptor", coder: "PHETensorCoder", sk: "PHETensorDecryptor", evaluator) -> None:
+        super().__init__(pk, coder, evaluator)
+        self._sk = sk
+
+    @classmethod
+    def from_raw_cipher(cls, pk: "PK", coder: "Coder", sk: "SK", evaluator):
+        coder = PHETensorCoder(coder)
+        encryptor = PHETensorEncryptor(pk, coder, evaluator)
+        decryptor = PHETensorDecryptor(sk, coder)
+        return cls(encryptor, coder, decryptor, evaluator)
+
     @property
     def sk(self):
         return self._sk
+
+    def to_public(self):
+        return PHETensorCipherPublic(self.pk, self.coder, self._evaluator)
 
 
 class PHETensorCoder:
@@ -112,6 +120,7 @@ class PHETensorEncryptor:
 
     def lift(self, data, shape, dtype, device):
         from ._tensor import PHETensor
+
         return PHETensor(self._pk, self._evaluator, self._coder, shape, data, dtype, device)
 
 

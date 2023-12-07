@@ -36,7 +36,7 @@ class HistogramBuilder:
             ShuffledHistogram, the shuffled histogram
         """
         if self._k is None:
-            self._k = data.partitions**2
+            self._k = data.num_partitions**2
         mapper = get_partition_hist_build_mapper(
             self._num_node,
             self._feature_bin_sizes,

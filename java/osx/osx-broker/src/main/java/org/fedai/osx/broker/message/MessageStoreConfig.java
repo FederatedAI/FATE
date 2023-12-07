@@ -20,22 +20,21 @@ import java.io.File;
 
 
 public class MessageStoreConfig {
-    //The root directory in which the log data is kept
+
 
     private String storePathRootDir = System.getProperty("user.home") + File.separator + "store";
 
-    //The directory in which the commitlog is kept
 
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
             + File.separator + "commitlog";
 
-    // CommitLog file size,default is 1G
+
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
-    // ConsumeQueue file size,default is 30W
+
     private int mappedFileSizeConsumeQueue = 300000 * 1;
-    // enable consume queue ext
+
     private boolean enableConsumeQueueExt = false;
-    // ConsumeQueue extend file size, 48M
+
     private int mappedFileSizeConsumeQueueExt = 48 * 1024 * 1024;
     // Bit count of filter bit map.
     // this will be set by pipe of calculate filter bit map.

@@ -122,7 +122,7 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
         r_field_names = r_df.data_manager.get_field_name_list()
         r_fields_loc = r_df.data_manager.get_fields_loc()
         r_field_types = [data_manager.get_block(_bid).block_type for _bid, _ in r_fields_loc]
-        r_type_change = False if l_field_types != r_field_types else True
+        r_type_change = False if l_field_types == r_field_types else True
         r_block_table = r_df.block_table
         if l_field_names != r_field_names or r_type_change:
             shuffle_r_fields_loc, full_migrate_set = [() for _ in range(len(r_field_names))], set()
@@ -230,7 +230,7 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
 
     sample_indexer = df._ctx.computing.parallelize(sample_indexer,
                                                    include_key=True,
-                                                   partition=df.block_table.partitions)
+                                                   partition=df.block_table.num_partitions)
 
     sample_frame = df.loc(sample_indexer)
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fedai.osx.core.exceptions;
+
 import org.fedai.osx.core.constant.StatusCode;
 
 public class NoRouterInfoException extends BaseException {

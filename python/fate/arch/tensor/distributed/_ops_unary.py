@@ -21,3 +21,8 @@ def square(input: DTensor):
 @implements(torch.sigmoid)
 def sigmoid(input: DTensor):
     return DTensor(input.shardings.map_shard(torch.sigmoid))
+
+
+@implements(torch.neg)
+def neg(input: DTensor):
+    return DTensor(input.shardings.map_shard(torch.neg))

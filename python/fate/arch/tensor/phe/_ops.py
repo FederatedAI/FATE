@@ -51,7 +51,6 @@ def add(input: PHETensor, other):
         return input.with_template(data, dtype=output_dtype)
 
     elif isinstance(other, torch.Tensor):
-        # TODO: support broadcast
         if shape == other.shape:
             output_dtype = torch.promote_types(dtype, other.dtype)
             data = evaluator.add_plain(input.data, other, pk, coder, output_dtype)
@@ -61,7 +60,11 @@ def add(input: PHETensor, other):
             data = evaluator.add_plain_scalar(input.data, other.detach().item(), pk, coder, output_dtype)
             return input.with_template(data, dtype=output_dtype)
         else:
-            raise NotImplementedError(f"broadcast not supported")
+            # TODO: support broadcast
+            broadcast_shape = torch.broadcast_shapes(shape, other.shape)
+            raise RuntimeError(
+                f"broadcast shape {shape} and {other.shape} to {broadcast_shape} is fine, but not yet implemented"
+            )
 
     elif isinstance(other, (float, int)):
         output_dtype = torch.promote_types(dtype, torch.get_default_dtype())
@@ -190,9 +193,7 @@ def rmatmul_f(input, other):
         raise ValueError(f"can't rmatmul `PHETensor` with `torch.Tensor` with dim `{input.ndim}`")
 
     if isinstance(other, PHETensor):
-        raise NotImplementedError(
-            f"rmatmul {input} with {other} not supported, phe is not multiplicative homomorphic"
-        )
+        raise NotImplementedError(f"rmatmul {input} with {other} not supported, phe is not multiplicative homomorphic")
 
     if not isinstance(other, torch.Tensor):
         return NotImplemented

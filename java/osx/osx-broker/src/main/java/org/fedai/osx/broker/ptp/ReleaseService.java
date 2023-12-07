@@ -19,8 +19,6 @@ package org.fedai.osx.broker.ptp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.fedai.osx.broker.consumer.ConsumerManager;
-import org.fedai.osx.broker.pojo.ConsumeRequest;
-import org.fedai.osx.broker.pojo.ConsumerResponse;
 import org.fedai.osx.broker.pojo.ReleaseRequest;
 import org.fedai.osx.broker.pojo.ReleaseResponse;
 import org.fedai.osx.broker.queue.TransferQueueManager;
@@ -32,41 +30,44 @@ import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.exceptions.ExceptionInfo;
 import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
-import org.fedai.osx.core.service.InboundPackage;
 import org.ppc.ptp.Osx;
 
 import java.util.List;
+
 @Singleton
-@Register(uris= {UriConstants.RELEASE},allowInterUse = false)
+@Register(uris = {UriConstants.RELEASE}, allowInterUse = false)
 public class ReleaseService extends AbstractServiceAdaptorNew<ReleaseRequest, ReleaseResponse> {
+    @Inject
+    TransferQueueManager transferQueueManager;
+    @Inject
+    ConsumerManager consumerManager;
     public ReleaseService() {
     }
-    @Inject
-    TransferQueueManager   transferQueueManager;
-    @Inject
-    ConsumerManager  consumerManager;
 
     @Override
     protected ReleaseResponse doService(OsxContext context, ReleaseRequest data) {
 
-        ReleaseResponse  releaseResponse = new  ReleaseResponse();
+        ReleaseResponse releaseResponse = new ReleaseResponse();
         context.setActionType(ActionType.CANCEL_TOPIC.name());
         String sessionId = context.getSessionId();
         String topic = data.getTopic();
+
         context.setTopic(topic);
-        List<String> cleanedTransferId = transferQueueManager.cleanByParam(sessionId, topic);
-        if (cleanedTransferId != null) {
-            for (String transferIdClean : cleanedTransferId) {
-                    consumerManager.onComplete(transferIdClean);
+
+        List<String> indexKeys = transferQueueManager.cleanByParam(sessionId, topic);
+        if (indexKeys != null) {
+            for (String indexKey : indexKeys) {
+                consumerManager.onComplete(indexKey);
             }
         }
         releaseResponse.setCode(StatusCode.PTP_SUCCESS);
         releaseResponse.setMessage(Dict.SUCCESS);
         return releaseResponse;
     }
+
     @Override
     protected ReleaseResponse transformExceptionInfo(OsxContext context, ExceptionInfo exceptionInfo) {
-        ReleaseResponse  releaseResponse =  new  ReleaseResponse();
+        ReleaseResponse releaseResponse = new ReleaseResponse();
         releaseResponse.setCode(exceptionInfo.getCode());
         releaseResponse.setMessage(exceptionInfo.getMessage());
         return releaseResponse;

@@ -2,6 +2,8 @@ import functools
 
 import torch
 
+from fate.arch.utils.trace import auto_trace
+
 _HANDLED_FUNCTIONS = {}
 _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS = {}
 
@@ -152,7 +154,7 @@ def implements(torch_function):
 
     @functools.wraps(torch_function)
     def decorator(func):
-        _HANDLED_FUNCTIONS[torch_function] = func
+        _HANDLED_FUNCTIONS[torch_function] = auto_trace(func)
         return func
 
     return decorator
@@ -163,7 +165,7 @@ def implements_encoded(torch_function):
 
     @functools.wraps(torch_function)
     def decorator(func):
-        _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS[torch_function] = func
+        _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS[torch_function] = auto_trace(func)
         return func
 
     return decorator

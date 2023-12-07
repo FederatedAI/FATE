@@ -19,8 +19,8 @@ import lombok.Data;
 
 @Data
 public class TokenRequest {
-    String  resource;
-    int   acquireCount;
+    String resource;
+    int acquireCount;
     boolean prioritized;
 
 }

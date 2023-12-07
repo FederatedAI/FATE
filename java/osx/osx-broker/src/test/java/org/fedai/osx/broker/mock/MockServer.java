@@ -136,34 +136,36 @@ public class MockServer {
     }
 
 
-
-    private static class MockEggpair extends TransferServiceGrpc.TransferServiceImplBase{
+    private static class MockEggpair extends TransferServiceGrpc.TransferServiceImplBase {
 
         public io.grpc.stub.StreamObserver<com.webank.eggroll.core.transfer.Transfer.TransferBatch> send(
                 io.grpc.stub.StreamObserver<com.webank.eggroll.core.transfer.Transfer.TransferBatch> responseObserver) {
-             return   new StreamObserver<Transfer.TransferBatch>(){
-                   @Override
-                   public void onNext(Transfer.TransferBatch transferBatch) {
-                        System.err.println("======== on next "+ transferBatch);
-                   }
+            return new StreamObserver<Transfer.TransferBatch>() {
+                @Override
+                public void onNext(Transfer.TransferBatch transferBatch) {
+                    System.err.println("======== on next " + transferBatch);
+                }
 
-                   @Override
-                   public void onError(Throwable throwable) {
-                       System.err.println("======== on error "+ throwable);
-                   }
+                @Override
+                public void onError(Throwable throwable) {
+                    System.err.println("======== on error " + throwable);
+                }
 
-                   @Override
-                   public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                       System.err.println("======== on completed ");
-                       responseObserver.onCompleted();
-                   }
-               };
+                    System.err.println("======== on completed ");
+                    responseObserver.onCompleted();
+                }
+            };
 
 
-        };
+        }
+
+        ;
 
     }
+
     private static class MockService extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
         public void unaryCall(com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet request,
