@@ -24,8 +24,8 @@ public class DebugUtil {
             if (MetaInfo.PROTOCOL_PARAMS_PRINT) {
                 logger.info("【{}】====> {}", Protocol.grpc.name(), JsonUtil.object2Json(request.getMetadataMap()));
             }
-        }catch (Exception e){
-            logger.error("DebugUtil.printGrpcParams error : ",e);
+        } catch (Exception e) {
+            logger.error("DebugUtil.printGrpcParams error : ", e);
         }
     }
 
@@ -51,7 +51,7 @@ public class DebugUtil {
                 logger.info(info.toString());
             }
         } catch (Exception e) {
-            logger.error("DebugUtil.printGrpcParams error : ",e);
+            logger.error("DebugUtil.printGrpcParams error : ", e);
         }
     }
 }

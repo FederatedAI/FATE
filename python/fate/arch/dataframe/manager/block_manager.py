@@ -101,9 +101,9 @@ class BlockType(str, Enum):
             return BlockType.int64
         elif isinstance(data_type, (int, np.int32)) or data_type == torch.int32:
             return BlockType.int32
-        elif isinstance(data_type, np.float64) or data_type == torch.float64:
+        elif isinstance(data_type, (float, np.float64)) or data_type == torch.float64:
             return BlockType.float64
-        elif isinstance(data_type, (float, np.float32)) or data_type == torch.float32:
+        elif isinstance(data_type, np.float32) or data_type == torch.float32:
             return BlockType.float32
         else:
             return BlockType.np_object
@@ -800,3 +800,4 @@ class BlockManager(object):
         block_manager.reset_blocks(derived_blocks)
 
         return block_manager, blocks_loc
+    

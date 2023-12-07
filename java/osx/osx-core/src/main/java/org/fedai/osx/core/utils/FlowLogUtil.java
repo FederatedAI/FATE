@@ -11,7 +11,7 @@ public class FlowLogUtil {
     public static void printFlowLog(OsxContext context) {
         try {
             logger.info(context.toString());
-        }catch (Throwable ignore){
+        } catch (Throwable ignore) {
         }
 
     }

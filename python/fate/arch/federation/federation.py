@@ -18,7 +18,12 @@ import typing
 from typing import List
 
 from fate.arch.abc import PartyMeta
-from fate.arch.utils.trace import federation_auto_trace
+from fate.arch.utils.trace import (
+    federation_push_table_trace,
+    federation_pull_table_trace,
+    federation_push_bytes_trace,
+    federation_pull_bytes_trace,
+)
 from ._gc import GarbageCollector
 
 if typing.TYPE_CHECKING:
@@ -90,7 +95,7 @@ class Federation:
     ):
         raise NotImplementedError(f"push bytes is not supported in {self.__class__.__name__}")
 
-    @federation_auto_trace
+    @federation_push_table_trace
     def push_table(
         self,
         table: "KVTable",
@@ -111,7 +116,7 @@ class Federation:
             parties=parties,
         )
 
-    @federation_auto_trace
+    @federation_push_bytes_trace
     def push_bytes(
         self,
         v: bytes,
@@ -131,7 +136,7 @@ class Federation:
             parties=parties,
         )
 
-    @federation_auto_trace
+    @federation_pull_table_trace
     def pull_table(
         self,
         name: str,
@@ -152,7 +157,7 @@ class Federation:
             self._get_gc.register_clean_action(name, tag, table, "destroy", {})
         return tables
 
-    @federation_auto_trace
+    @federation_pull_bytes_trace
     def pull_bytes(
         self,
         name: str,

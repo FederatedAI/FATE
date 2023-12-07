@@ -1,30 +1,10 @@
 package org.fedai.osx.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Key;
-import com.google.inject.Provides;
-import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matcher;
 import com.google.inject.matcher.Matchers;
-import com.google.inject.spi.ProvisionListener;
 
-import com.google.inject.spi.TypeEncounter;
-import com.google.inject.spi.TypeListener;
-import org.fedai.osx.broker.interceptor.RouterInterceptor;
-import org.fedai.osx.broker.interceptor.TokenValidatorInterceptor;
-import org.fedai.osx.broker.ptp.*;
-import org.fedai.osx.broker.queue.TransferQueueManager;
-import org.fedai.osx.broker.service.TokenApplyService;
-import org.fedai.osx.broker.zk.CuratorZookeeperClient;
-import org.fedai.osx.broker.zk.ZkConfig;
-import org.fedai.osx.core.config.MetaInfo;
-import org.fedai.osx.core.flow.FlowCounterManager;
-import org.fedai.osx.core.ptp.TargetMethod;
-
-import java.lang.reflect.Method;
-import java.util.Arrays;
-
-public class BrokerModule  extends AbstractModule {
+public class BrokerModule extends AbstractModule {
 
 //    @Provides
 //    public  CuratorZookeeperClient createCuratorZookeeperClient() {
@@ -62,10 +42,6 @@ public class BrokerModule  extends AbstractModule {
 //    }
 
 
-
-
-
-
 //    @Provides
 //    PtpUnaryCallService  getPtpUnaryCallService(PcpHandleInterceptor requestHandleInterceptor,
 //                                                TokenValidatorInterceptor tokenValidatorInterceptor,
@@ -77,7 +53,6 @@ public class BrokerModule  extends AbstractModule {
 //                .addPreProcessor(routerInterceptor);
 //        return ptpUnaryCallService;
 //    }
-
 
 
 //    private void registerServiceAdaptor(PcpHandleInterceptor  ) {
@@ -104,7 +79,7 @@ public class BrokerModule  extends AbstractModule {
 
 
     protected void configure() {
-        System.err.println("======================");
+
         Matcher<Class> subpacket = Matchers.inSubpackage("org.fedai");
 //        ProvisionListener listener = new ProvisionListener() {
 //            @Override
@@ -149,7 +124,7 @@ public class BrokerModule  extends AbstractModule {
 //
 //     this.bindListener(Matchers.any(),typeListener);
 //     this.bindListener(Matchers.any(),listener);
-        System.err.println("======================");
+
     }
 
 }

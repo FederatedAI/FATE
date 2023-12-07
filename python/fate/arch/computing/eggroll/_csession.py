@@ -17,14 +17,13 @@
 import logging
 
 from fate.arch.computing.table import KVTableContext
-
-from ...unify import URI, uuid
-from .._profile import computing_profile
 from ._table import Table
+from .._profile import computing_profile
+from ...unify import URI, uuid
 
 try:
-    from eggroll.core.session import session_init
-    from eggroll.roll_pair.roll_pair import runtime_init
+    from eggroll.session import session_init
+    from eggroll.computing import runtime_init
 except ImportError:
     raise EnvironmentError("eggroll not found in pythonpath")
 
@@ -32,16 +31,20 @@ logger = logging.getLogger(__name__)
 
 
 class CSession(KVTableContext):
-    def __init__(self, session_id, options: dict = None):
+    def __init__(
+        self, session_id, options: dict = None, config=None, config_options=None, config_properties_file=None
+    ):
         if options is None:
             options = {}
-        if "eggroll.session.deploy.mode" not in options:
-            options["eggroll.session.deploy.mode"] = "cluster"
-        if "eggroll.rollpair.inmemory_output" not in options:
-            options["eggroll.rollpair.inmemory_output"] = True
-        self._rp_session = session_init(session_id=session_id, options=options)
-        self._rpc = runtime_init(session=self._rp_session)
-        self._session_id = self._rp_session.get_session_id()
+        self._eggroll_session = session_init(
+            session_id=session_id,
+            options=options,
+            config=config,
+            config_options=config_options,
+            config_properties_file=config_properties_file,
+        )
+        self._rpc = runtime_init(session=self._eggroll_session)
+        self._session_id = self._eggroll_session.get_session_id()
 
     def get_rpc(self):
         return self._rpc
@@ -104,10 +107,10 @@ class CSession(KVTableContext):
         self._rpc.cleanup(name=name, namespace=namespace)
 
     def stop(self):
-        return self._rp_session.stop()
+        return self._eggroll_session.stop()
 
     def kill(self):
-        return self._rp_session.kill()
+        return self._eggroll_session.kill()
 
     def destroy(self):
         try:

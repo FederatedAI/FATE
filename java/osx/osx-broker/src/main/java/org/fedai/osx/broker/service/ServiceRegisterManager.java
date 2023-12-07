@@ -28,8 +28,6 @@ import org.fedai.osx.core.service.AbstractServiceAdaptorNew;
 import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.reflections.Reflections;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,70 +36,59 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ServiceRegisterManager implements ApplicationStartedRunner {
 
-    ConcurrentHashMap<String , List<ServiceRegisterInfo>>   serviceRegisterMap = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, List<ServiceRegisterInfo>> serviceRegisterMap = new ConcurrentHashMap<>();
 
     @Inject
     Injector injector;
 
-    public   void  register(ServiceRegisterInfo  serviceRegisterInfo){
+    public void register(ServiceRegisterInfo serviceRegisterInfo) {
         String key = serviceRegisterInfo.buildRegisterKey();
-        if(serviceRegisterMap.get(key)==null){
+        if (serviceRegisterMap.get(key) == null) {
             serviceRegisterMap.putIfAbsent(serviceRegisterInfo.buildRegisterKey(), Lists.newArrayList());
         }
         serviceRegisterMap.get(key).add(serviceRegisterInfo);
-        log.info("register service {}",key);
+        log.info("register service {}", key);
     }
 
-//    public  void unRegister(ServiceRegisterInfo  serviceRegisterInfo ){
-//        serviceRegisterMap
-//    }
 
-
-    public  ServiceRegisterInfo  getServiceWithLoadBalance(OsxContext  osxContext,String node, String uri,boolean  interInvoke){
+    public ServiceRegisterInfo getServiceWithLoadBalance(OsxContext osxContext, String node, String uri, boolean interInvoke) {
         long now = System.currentTimeMillis();
-        ServiceRegisterInfo  result = null;
-        String  key = ServiceRegisterInfo.buildKey(node,uri);
-//        log.info("=======query key {}",key);
-        List<ServiceRegisterInfo>  services =  serviceRegisterMap.get(key );
-        if(services!=null&&services.size()>0){
-            result =   services.get((int)(now% services.size()));
-            if(interInvoke&&result.isAllowInterUse()){
-                throw  new InvalidRequestException();
+        ServiceRegisterInfo result = null;
+        String key = ServiceRegisterInfo.buildKey(node, uri);
+        List<ServiceRegisterInfo> services = serviceRegisterMap.get(key);
+        if (services != null && services.size() > 0) {
+            result = services.get((int) (now % services.size()));
+            if (interInvoke && result.isAllowInterUse()) {
+                throw new InvalidRequestException("invalid request");
             }
-
         }
-        return  result;
+        return result;
     }
-
 
 
     @Override
     public void run(String[] args) throws Exception {
-        Reflections  reflections = new Reflections("org.fedai.osx.broker");
+        Reflections reflections = new Reflections("org.fedai.osx.broker");
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Register.class);
-        classes.forEach(clazz->{
-                MetaInfo.PROPERTY_SELF_PARTY.forEach(partyId->{
+        classes.forEach(clazz -> {
+//            MetaInfo.PROPERTY_SELF_PARTY.forEach(partyId -> {
 
-                    Register  register = clazz.getAnnotation(Register.class);
-                    String [] uris = register.uris();
-                    for(String uri:uris) {
-                        ServiceRegisterInfo serviceRegisterInfo = new ServiceRegisterInfo();
-                        serviceRegisterInfo.setUri(uri);
-                        serviceRegisterInfo.setNodeId(partyId);
-//                        serviceRegisterInfo.setProtocol(register.protocol());
-                        serviceRegisterInfo.setServiceType(ServiceType.inner);
-                        AbstractServiceAdaptorNew serviceAdaptor = (AbstractServiceAdaptorNew) injector.getInstance(clazz);
-                        serviceRegisterInfo.setServiceAdaptor(serviceAdaptor);
-                        this.register(serviceRegisterInfo);
-                    }
-                });
+                Register register = clazz.getAnnotation(Register.class);
+                String[] uris = register.uris();
+                for (String uri : uris) {
+                    ServiceRegisterInfo serviceRegisterInfo = new ServiceRegisterInfo();
+                    serviceRegisterInfo.setUri(uri);
+                    //serviceRegisterInfo.setNodeId(partyId);
+                    serviceRegisterInfo.setServiceType(ServiceType.inner);
+                    AbstractServiceAdaptorNew serviceAdaptor = (AbstractServiceAdaptorNew) injector.getInstance(clazz);
+                    serviceRegisterInfo.setServiceAdaptor(serviceAdaptor);
+                    this.register(serviceRegisterInfo);
+                }
+            });
 
-        });
+//        });
 
     }
-
-
-
 
 
 }

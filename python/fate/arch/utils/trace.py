@@ -1,8 +1,17 @@
 import functools
+import logging
 import os
+import time
+import typing
+from typing import List
 
 from opentelemetry import trace, context
 
+if typing.TYPE_CHECKING:
+    from fate.arch.federation.federation import PartyMeta
+    from fate.arch.computing.table import KVTable
+
+logger = logging.getLogger(__name__)
 _ENABLE_TRACING = None
 _ENABLE_TRACING_DEFAULT = True
 
@@ -17,6 +26,7 @@ def _is_tracing_enabled():
 def setup_tracing(service_name, endpoint: str = None):
     if not _is_tracing_enabled():
         return
+
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.trace import TracerProvider
@@ -50,11 +60,16 @@ def auto_trace(func=None, *, annotation=None):
 
 
 def _trace_func(func, args, kwargs, span_name=None):
-    if not _is_tracing_enabled():
-        return func(*args, **kwargs)
-
     module_name = func.__module__
     qualname = func.__qualname__
+
+    if not _is_tracing_enabled():
+        start = time.time()
+        out = func(*args, **kwargs)
+        elapsed = time.time() - start
+        logger.debug(f"{module_name}:{qualname} tasks: {elapsed}")
+        return out
+
     if span_name is None:
         span_name = qualname
     tracer = get_tracer(module_name)
@@ -82,9 +97,81 @@ def extract_carrier(carrier):
     return TraceContextTextMapPropagator().extract(carrier)
 
 
+def federation_push_table_trace(func):
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        table: "KVTable",
+        name: str,
+        tag: str,
+        parties: List["PartyMeta"],
+    ):
+        logger.debug(f"function {func.__qualname__} is calling on name={name}, tag={tag}, parties={parties}")
+        out = func(self, table, name, tag, parties)
+        logger.debug(f"function {func.__qualname__} is called on name={name}, tag={tag}, parties={parties}")
+        return out
+
+    return wrapper
+
+
+def federation_push_bytes_trace(func):
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        v: bytes,
+        name: str,
+        tag: str,
+        parties: List["PartyMeta"],
+    ):
+        logger.debug(f"function {func.__qualname__} is calling on name={name}, tag={tag}, parties={parties}")
+        out = func(self, v, name, tag, parties)
+        logger.debug(f"function {func.__qualname__} is called on name={name}, tag={tag}, parties={parties}")
+        return out
+
+    return wrapper
+
+
+def federation_pull_table_trace(func):
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        name: str,
+        tag: str,
+        parties: List["PartyMeta"],
+    ):
+        logger.debug(f"function {func.__qualname__} is calling on name={name}, tag={tag}, parties={parties}")
+        out = func(self, name, tag, parties)
+        logger.debug(f"function {func.__qualname__} is called on name={name}, tag={tag}, parties={parties}")
+        return out
+
+    return wrapper
+
+
+def federation_pull_bytes_trace(func):
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        name: str,
+        tag: str,
+        parties: List["PartyMeta"],
+    ):
+        logger.debug(f"function {func.__qualname__} is calling on name={name}, tag={tag}, parties={parties}")
+        out = func(self, name, tag, parties)
+        logger.debug(f"function {func.__qualname__} is called on name={name}, tag={tag}, parties={parties}")
+        return out
+
+    return wrapper
+
+
 def federation_auto_trace(func):
     if not _is_tracing_enabled():
-        return func
+
+        def wrapper(*args, **kwargs):
+            out = func(*args, **kwargs)
+            logger.error(f"function {func.__qualname__} is called on {args} {kwargs}")
+            return out
+
+        return wrapper
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

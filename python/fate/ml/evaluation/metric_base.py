@@ -1,5 +1,6 @@
 from typing import Dict
 from transformers import EvalPrediction
+from transformers.trainer_utils import PredictionOutput
 import pandas as pd
 import torch
 import numpy as np
@@ -46,7 +47,7 @@ class EvalResult(object):
             return self.result.to_json(orient='split')
         else:
             return json.dumps(self.to_dict())
-        
+
     def get_raw_data(self):
         return self.result
 
@@ -99,6 +100,11 @@ class MetricEnsemble(object):
             label = eval_rs.label_ids
             input_ = eval_rs.inputs
 
+        elif isinstance(eval_rs, PredictionOutput):
+            predict = eval_rs.predictions
+            label = eval_rs.label_ids
+            input_ = None
+
         elif isinstance(eval_rs, tuple) and len(eval_rs) == 2:
             # conventional format
             predict, label = eval_rs
@@ -109,10 +115,10 @@ class MetricEnsemble(object):
 
         return predict, label, input_
 
-    def __call__(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
+    def __call__(self, eval_rs=None, predict=None, label=None, **kwargs):
 
         metric_result = []
-        
+
         if eval_rs is not None:
             predict, label, input_ = self._parse_input(eval_rs)
 
@@ -128,7 +134,7 @@ class MetricEnsemble(object):
             metric_result.append(rs)
         return metric_result
 
-    def fit(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
+    def fit(self, eval_rs=None, predict=None, label=None, **kwargs):
         return self.__call__(eval_rs, predict, label, **kwargs)
 
 

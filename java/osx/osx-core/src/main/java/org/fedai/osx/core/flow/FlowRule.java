@@ -16,7 +16,6 @@
 package org.fedai.osx.core.flow;
 
 
-
 import com.google.common.collect.Lists;
 import org.fedai.osx.core.utils.JsonUtil;
 
@@ -64,6 +63,7 @@ public class FlowRule extends AbstractRule {
         super();
         //  setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
     }
+
     public FlowRule(String resourceName) {
         super();
         setResource(resourceName);

@@ -30,7 +30,8 @@ def _java_string_like_partitioner(key, total_partitions):
 
 
 def get_default_partitioner():
-    return _java_string_like_partitioner
+    return mmh3_partitioner
+    # return _java_string_like_partitioner
 
 
 def get_partitioner_by_type(partitioner_type: int):

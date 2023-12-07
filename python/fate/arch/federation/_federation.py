@@ -685,6 +685,7 @@ class FederationBase(Federation):
         mq,
         conf: dict,
     ):
+
         topic_pair = topic_infos[index][1]
         channel_info = self._get_channel(
             topic_pair=topic_pair,

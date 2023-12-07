@@ -24,6 +24,7 @@ public class ClusterTransferQueueInfo {
     String ip;
     int port;
     long createTimestamp;
+
     public ClusterTransferQueueInfo() {
 
     }

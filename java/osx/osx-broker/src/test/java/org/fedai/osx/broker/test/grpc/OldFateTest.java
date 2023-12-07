@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class OldFateTest {
 
     static int port = 9370;//9371
-   static String ip = "localhost";
+    static String ip = "localhost";
 
 
     static Logger logger = LoggerFactory.getLogger(OldFateTest.class);
@@ -76,7 +76,7 @@ public class OldFateTest {
         DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(managedChannel);
         Proxy.Packet.Builder builder = Proxy.Packet.newBuilder();
         Transfer.RollSiteHeader.Builder headerBuilder = Transfer.RollSiteHeader.newBuilder();
-        headerBuilder.setDstPartyId("10001");
+        headerBuilder.setDstPartyId("10000");
         builder.setHeader(Proxy.Metadata.newBuilder().setExt(headerBuilder.build().toByteString()));
         Proxy.Data.Builder dataBuilder = Proxy.Data.newBuilder();
         dataBuilder.setKey("name");
@@ -149,8 +149,8 @@ public class OldFateTest {
 //            }
 //            for (int t = 0; t < 1; t++) {
 
-        String  srcPartyId =  "9999";
-        String  desPartyId =  "10000";
+            String srcPartyId = "9999";
+            String desPartyId = "10000";
 
 //                new Thread(() -> {
             StreamObserver<Proxy.Packet> requestOb = stub.push(responseOb);
@@ -158,7 +158,7 @@ public class OldFateTest {
 
 //                Proxy.Metadata metadata = packet.getHeader();
 //                ByteString encodedRollSiteHeader = metadata.getExt();
-                Transfer.RollSiteHeader.Builder  rollSiteHeader = Transfer.RollSiteHeader.newBuilder();
+                Transfer.RollSiteHeader.Builder rollSiteHeader = Transfer.RollSiteHeader.newBuilder();
                 rollSiteHeader.setDstRole("desRole");
                 rollSiteHeader.setDstPartyId(desPartyId);
                 rollSiteHeader.setSrcPartyId(srcPartyId);
@@ -168,7 +168,7 @@ public class OldFateTest {
                 packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSeq(System.currentTimeMillis())
                         .setSrc(Proxy.Topic.newBuilder().setPartyId(srcPartyId))
                         .setDst(Proxy.Topic.newBuilder().setPartyId(desPartyId).setName("kaidengTestTopic").build())
-                                .setExt(rollSiteHeader.build().toByteString())
+                        .setExt(rollSiteHeader.build().toByteString())
 
                         .build());
 
@@ -187,7 +187,7 @@ public class OldFateTest {
 
 
                 Proxy.Packet packet = packetBuilder.build();
-                System.err.println("=======packet========"+packet);
+                System.err.println("=======packet========" + packet);
                 requestOb.onNext(packet);
                 System.err.println("test send !!!!!!!!!!!!!!!!!!!!!!");
             }
@@ -203,7 +203,7 @@ public class OldFateTest {
 
     public static void main(String[] args) {
         System.err.println("===============");
-       // testPush();
+        // testPush();
         testUnaryCall();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         try {

@@ -7,8 +7,8 @@
 import os
 from contextlib import contextmanager
 
-from ruamel import yaml
 from omegaconf import OmegaConf
+from ruamel import yaml
 
 
 class Config(object):
@@ -57,7 +57,12 @@ class Config(object):
         finally:
             self.config = old_config
 
-
-if __name__ == "__main__":
-    config = Config()
-    print(config.mpc.provider)
+    def get_option(self, options, key, default=...):
+        if key in options:
+            return options[key]
+        elif self.config.get(key, None) is not None:
+            return self.config[key]
+        elif default is ...:
+            raise ValueError(f"{key} not in {options} or {self.config}")
+        else:
+            return default

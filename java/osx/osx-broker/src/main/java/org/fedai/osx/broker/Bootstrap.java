@@ -40,11 +40,12 @@ import java.util.Properties;
 public class Bootstrap {
     static Logger logger = LoggerFactory.getLogger(Bootstrap.class);
     static CommandLine commandLine;
-    static Object lockObject= new Object();
+    static Object lockObject = new Object();
     static Injector injector;
+
     public static void main(String[] args) {
         try {
-             injector = Guice.createInjector(new BrokerModule() );
+            injector = Guice.createInjector(new BrokerModule());
             Options options = ServerUtil.buildCommandlineOptions(new Options());
             commandLine = ServerUtil.parseCmdLine("osx", args, buildCommandlineOptions(options),
                     new PosixParser());
@@ -61,18 +62,18 @@ public class Bootstrap {
             packages.add(Bootstrap.class.getPackage().getName());
             ApplicationStartedRunnerUtils.run(injector, packages, args);
 
-            boolean  startOk = injector.getInstance(OsxServer.class).start();
-            if(!startOk){
+            boolean startOk = injector.getInstance(OsxServer.class).start();
+            if (!startOk) {
                 System.exit(-1);
             }
             Thread shutDownThread = new Thread(bootstrap::stop);
             Runtime.getRuntime().addShutdownHook(shutDownThread);
-            synchronized (lockObject){
+            synchronized (lockObject) {
                 lockObject.wait();
             }
 
         } catch (Exception ex) {
-            logger.error("broker start failed ",ex);
+            logger.error("broker start failed ", ex);
             ex.printStackTrace();
             System.exit(1);
         }
@@ -88,7 +89,7 @@ public class Bootstrap {
     public static void parseConfig(String configDir) {
         try {
             MetaInfo.PROPERTY_CONFIG_DIR = configDir;
-            String configFilePath =  configDir+ "/broker/broker.properties";
+            String configFilePath = configDir + "/broker/broker.properties";
             Properties environment = PropertiesUtil.getProperties(configFilePath);
             MetaInfo.init(environment);
         } catch (Exception e) {
@@ -98,16 +99,15 @@ public class Bootstrap {
     }
 
     public void start(String[] args) {
-//        ServiceContainer.init();
         JvmInfoCounter.start();
     }
 
     public void stop() {
         logger.info("try to shutdown server ...");
         if (injector != null) {
-            TransferQueueManager  transferQueueManager = injector.getInstance(TransferQueueManager.class);
-            if(transferQueueManager!=null)
-                    transferQueueManager.destroyAll();
+            TransferQueueManager transferQueueManager = injector.getInstance(TransferQueueManager.class);
+            if (transferQueueManager != null)
+                transferQueueManager.destroyAll();
         }
     }
 

@@ -131,12 +131,14 @@ class MultiProcessLauncher:
         from fate.arch.utils.logger import set_up_logging
         from fate.arch.launchers.context_helper import init_context
         from fate.arch.utils.trace import setup_tracing
+        from fate.arch.computing._profile import profile_start, profile_ends
 
         if args.rank >= len(args.parties):
             raise ValueError(f"rank {args.rank} is out of range {len(args.parties)}")
         parties = args.get_parties()
         party = parties[args.rank]
         csession_id = f"{args.federation_session_id}_{party[0]}_{party[1]}"
+        argv.extend(["--csession_id", csession_id])
 
         # set up logging
         set_up_logging(args.rank, args.log_level)
@@ -150,7 +152,9 @@ class MultiProcessLauncher:
             ctx = init_context()
 
             try:
+                profile_start()
                 f(ctx)
+                profile_ends()
                 output_or_exception_q.put((args.rank, None, None))
                 safe_to_exit.wait()
 
@@ -185,7 +189,7 @@ class MultiProcessLauncher:
 
     def terminate(self):
         self.safe_to_exit.set()
-        time.sleep(1)  # wait for 1 second to let all processes has a chance to exit
+        time.sleep(10)  # wait for 1 second to let all processes has a chance to exit
         for process in self.processes:
             if process.is_alive():
                 process.terminate()

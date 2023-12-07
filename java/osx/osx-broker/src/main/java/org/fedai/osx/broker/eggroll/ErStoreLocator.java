@@ -26,35 +26,41 @@ public class ErStoreLocator extends BaseProto<Meta.StoreLocator> {
     String name;
     String path;
     int totalPartitions;
-    String partitioner;
-    String serdes;
+
+    int KeySerdesType;
+    int ValueSerdesType;
+    int PartitionerType;
 
     public ErStoreLocator(String namespace, String name,
                           String path,
                           String storeType,
-                          int totalPartitions, String partitioner,
-                          String serdes
+                          int totalPartitions,
+                          int KeySerdesType,
+                          int ValueSerdesType,
+                          int PartitionerType
     ) {
+        this.storeType = storeType;
         this.namespace = namespace;
         this.name = name;
         this.path = path;
-        this.storeType = storeType;
-        this.partitioner = partitioner;
         this.totalPartitions = totalPartitions;
-        this.serdes = serdes;
-
+        this.KeySerdesType = KeySerdesType;
+        this.ValueSerdesType = ValueSerdesType;
+        this.PartitionerType = PartitionerType;
     }
 
     public static ErStoreLocator parseFromPb(Meta.StoreLocator storeLocator) {
 
 
-        ErStoreLocator erStoreLocator = new ErStoreLocator(storeLocator.getNamespace(),
+        ErStoreLocator erStoreLocator = new ErStoreLocator(
+                storeLocator.getNamespace(),
                 storeLocator.getName(),
                 storeLocator.getPath(),
                 storeLocator.getStoreType(),
                 storeLocator.getTotalPartitions(),
-                storeLocator.getPartitioner(),
-                storeLocator.getSerdes()
+                storeLocator.getKeySerdesType(),
+                storeLocator.getValueSerdesType(),
+                storeLocator.getPartitionerType()
         );
         return erStoreLocator;
 
@@ -100,20 +106,28 @@ public class ErStoreLocator extends BaseProto<Meta.StoreLocator> {
         this.totalPartitions = totalPartitions;
     }
 
-    public String getPartitioner() {
-        return partitioner;
+    public int getKeySerdesType() {
+        return KeySerdesType;
     }
 
-    public void setPartitioner(String partitioner) {
-        this.partitioner = partitioner;
+    public void setKeySerdesType(int keySerdesType) {
+        KeySerdesType = keySerdesType;
     }
 
-    public String getSerdes() {
-        return serdes;
+    public int getValueSerdesType() {
+        return ValueSerdesType;
     }
 
-    public void setSerdes(String serdes) {
-        this.serdes = serdes;
+    public void setValueSerdesType(int valueSerdesType) {
+        ValueSerdesType = valueSerdesType;
+    }
+
+    public int getPartitionerType() {
+        return PartitionerType;
+    }
+
+    public void setPartitionerType(int partitionerType) {
+        PartitionerType = partitionerType;
     }
 
     String toPath(String delim) {
@@ -131,13 +145,13 @@ public class ErStoreLocator extends BaseProto<Meta.StoreLocator> {
 
         return builder.setName(name)
                 .setNamespace(namespace)
-                .setPartitioner(partitioner)
-                .setStoreType(storeType).
-                setPath(path).
-                setTotalPartitions(totalPartitions).
-                setSerdes(serdes).build();
-
-
+                .setStoreType(storeType)
+                .setPath(path)
+                .setTotalPartitions(totalPartitions)
+                .setKeySerdesType(KeySerdesType)
+                .setValueSerdesType(ValueSerdesType)
+                .setPartitionerType(PartitionerType).
+                build();
     }
 
     public String toString() {

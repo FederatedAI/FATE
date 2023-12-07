@@ -8,19 +8,19 @@ import org.ppc.ptp.Osx;
 
 @Data
 public class ConsumerResponse {
-    String  code;
-    String  msg="";
-    byte[]  payload;
+    String code;
+    String msg = "";
+    byte[] payload;
     @JsonIgnore
-    boolean  needRedirect= false;
+    boolean needRedirect = false;
     @JsonIgnore
     RouterInfo redirectRouterInfo;
 
     public Osx.TransportOutbound toTransportOutbound() {
-            Osx.TransportOutbound.Builder builder = Osx.TransportOutbound.newBuilder();
-            builder.setCode(code).setMessage(msg);
-            if(payload!=null)
-                builder.setPayload(ByteString.copyFrom(payload)).build();
-            return  builder.build();
+        Osx.TransportOutbound.Builder builder = Osx.TransportOutbound.newBuilder();
+        builder.setCode(code).setMessage(msg);
+        if (payload != null)
+            builder.setPayload(ByteString.copyFrom(payload)).build();
+        return builder.build();
     }
 }

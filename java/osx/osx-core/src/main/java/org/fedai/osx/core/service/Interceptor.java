@@ -19,7 +19,7 @@ package org.fedai.osx.core.service;
 
 import org.fedai.osx.core.context.OsxContext;
 
-public interface Interceptor <req, resp> {
+public interface Interceptor<req, resp> {
 
     default public void doProcess(OsxContext context, InboundPackage<req> inboundPackage, OutboundPackage<resp> outboundPackage) throws Exception {
 

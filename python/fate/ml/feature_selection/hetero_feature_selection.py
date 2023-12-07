@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 import copy
-import json
 import logging
 import math
 import random
@@ -121,13 +120,13 @@ class HeteroSelectionModuleGuest(HeteroModule):
         selection_obj_list = []
         for selection_obj in self._selection_obj:
             selection_obj_list.append(selection_obj.to_model())
-        data = {"selection_obj_list": json.dumps(selection_obj_list), "inner_method": self._inner_method}
+        data = {"selection_obj_list": selection_obj_list, "inner_method": self._inner_method}
         meta = {"method": self.method, "select_col": self.select_col, "keep_one": self.keep_one}
         return {"data": data, "meta": meta}
 
     def restore(self, model):
         selection_obj_list = []
-        selection_obj_model_list = json.loads(model["selection_obj_list"])
+        selection_obj_model_list = model["selection_obj_list"]
         for i, selection_model in enumerate(selection_obj_model_list):
             if selection_model["method"] in ["manual"]:
                 selection_obj = ManualSelection(method=self._inner_method[i])
@@ -242,13 +241,13 @@ class HeteroSelectionModuleHost(HeteroModule):
         for selection_obj in self._selection_obj:
             selection_obj_list.append(selection_obj.to_model())
 
-        data = {"selection_obj_list": json.dumps(selection_obj_list), "inner_method": self._inner_method}
+        data = {"selection_obj_list": selection_obj_list, "inner_method": self._inner_method}
         meta = {"method": self.method, "select_col": self.select_col, "keep_one": self.keep_one}
         return {"data": data, "meta": meta}
 
     def restore(self, model):
         selection_obj_list = []
-        selection_obj_model_list = json.loads(model["selection_obj_list"])
+        selection_obj_model_list = model["selection_obj_list"]
         for i, selection_model in enumerate(selection_obj_model_list):
             if selection_model["method"] in ["manual"]:
                 selection_obj = ManualSelection(method=self._inner_method[i])

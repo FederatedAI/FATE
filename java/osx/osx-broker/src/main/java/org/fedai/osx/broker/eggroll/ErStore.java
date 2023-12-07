@@ -44,24 +44,6 @@ public class ErStore extends BaseProto<Meta.Store> {
         return erStore;
     }
 
-    public static void main(String[] args) {
-
-//        String namespace ,String name,String  storeType,
-//        int totalPartitions ,String partitioner,
-//                String serdes
-
-        ErStoreLocator erStoreLocator = new ErStoreLocator("mynamespace",
-                "myname", "mypath", "mystoreType", 1, "xxxx", "myserdes");
-
-        List<ErPartition> partitions = Lists.newArrayList();
-        ErPartition erPartition = new ErPartition(11, null, null, 33);
-        partitions.add(erPartition);
-
-        ErStore erStore = new ErStore(erStoreLocator, partitions, Maps.newHashMap());
-
-
-    }
-
     public String toString() {
         return JsonUtil.object2Json(this);
     }

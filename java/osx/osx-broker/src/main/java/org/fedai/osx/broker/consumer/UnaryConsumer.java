@@ -15,10 +15,8 @@
  */
 package org.fedai.osx.broker.consumer;
 
-import com.google.gson.Gson;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
-
 import org.fedai.osx.broker.pojo.ConsumerResponse;
 import org.fedai.osx.broker.queue.TransferQueue;
 import org.fedai.osx.broker.queue.TransferQueueConsumeResult;
@@ -37,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -46,22 +43,22 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class UnaryConsumer extends LocalQueueConsumer {
 
+    static Base64.Encoder base64Encoder = Base64.getEncoder();
     Logger logger = LoggerFactory.getLogger(UnaryConsumer.class);
     ConcurrentLinkedQueue<LongPullingHold> longPullingQueue;
-    TransferQueueManager  transferQueueManager;
+    TransferQueueManager transferQueueManager;
     ConsumerManager consumerManager;
-    static Base64.Encoder base64Encoder = Base64.getEncoder();
 
-    public UnaryConsumer(TransferQueueManager  transferQueueManager,ConsumerManager consumerManager,long consumerId,String sessionId, String topic) {
-        super(transferQueueManager,consumerId,sessionId, topic);
+    public UnaryConsumer(TransferQueueManager transferQueueManager, ConsumerManager consumerManager, long consumerId, String sessionId, String topic) {
+        super(transferQueueManager, consumerId, sessionId, topic);
         this.transferQueueManager = transferQueueManager;
         this.consumerManager = consumerManager;
 
-        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(sessionId,topic);
+        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(sessionId, topic);
         if (transferQueue != null) {
             transferQueue.registerDestoryCallback(() -> {
-                String indexKey = TransferQueueManager.assembleTopic(sessionId,topic);
-               consumerManager.onComplete(indexKey);
+                String indexKey = TransferQueueManager.assembleTopic(sessionId, topic);
+                consumerManager.onComplete(indexKey);
             });
         }
         longPullingQueue = new ConcurrentLinkedQueue<>();
@@ -85,26 +82,26 @@ public class UnaryConsumer extends LocalQueueConsumer {
          * 这里需要改为ack  后才加1  ，要不然这里会丢消息
          */
         int answerCount = 0;
-        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(sessionId,topic);
+        TransferQueue transferQueue = (TransferQueue) transferQueueManager.getQueue(sessionId, topic);
         List<LongPullingHold> reputList = null;
         while (this.longPullingQueue.size() > 0) {
             LongPullingHold longPullingHold = this.longPullingQueue.poll();
             try {
-                io.grpc.Context  grpcContext = longPullingHold.getGrpcContext();
-                if(grpcContext!=null){
-                    if(grpcContext.isCancelled()){
-                        logger.error("session {} topic {} consumer grpc context is cancelled",sessionId,topic);
+                io.grpc.Context grpcContext = longPullingHold.getGrpcContext();
+                if (grpcContext != null) {
+                    if (grpcContext.isCancelled()) {
+                        logger.error("session {} topic {} consumer grpc context is cancelled", sessionId, topic);
                         continue;
                     }
                 }
-                long current= System.currentTimeMillis();
+                long current = System.currentTimeMillis();
                 long needOffset = longPullingHold.getNeedOffset();
-                if(transferQueue==null){
+                if (transferQueue == null) {
                     // TODO: 2023/7/24  这里需要通知阻塞的客户端,最好是由队列清理时主动通知客户端
                     longPullingHold.throwException(new TransferQueueNotExistException());
                     continue;
                 }
-                if( longPullingHold.getExpireTimestamp()>0&&current>longPullingHold.getExpireTimestamp()){
+                if (longPullingHold.getExpireTimestamp() > 0 && current > longPullingHold.getExpireTimestamp()) {
                     handleExpire(longPullingHold);
                     continue;
                 }
@@ -131,7 +128,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
                     if (consumeResult.getMessage() != null && consumeResult.getMessage().getBody() != null)
                         context.setDataSize(consumeResult.getMessage().getBody().length);
                     answerCount++;
-                    longPullingHold.answer(consumeResult,StatusCode.PTP_SUCCESS, Dict.SUCCESS);
+                    longPullingHold.answer(consumeResult, StatusCode.PTP_SUCCESS, Dict.SUCCESS);
                     context.setTopic(transferQueue.getTransferId());
                     context.setReturnCode(StatusCode.SUCCESS);
                     context.setRequestMsgIndex(consumeResult.getRequestIndex());
@@ -146,7 +143,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
                     reputList.add(longPullingHold);
                 }
             } catch (Exception e) {
-                logger.error("session {} topic {} answer long pulling error ",sessionId,topic,e);
+                logger.error("session {} topic {} answer long pulling error ", sessionId, topic, e);
                 longPullingHold.throwException(e);
             }
         }
@@ -156,37 +153,38 @@ public class UnaryConsumer extends LocalQueueConsumer {
         return answerCount;
     }
 
-    private  void handleExpire(LongPullingHold longPullingHold){
-        longPullingHold.answer(null,StatusCode.PTP_TIME_OUT,"CONSUME_MSG_TIMEOUT");
+    private void handleExpire(LongPullingHold longPullingHold) {
+        longPullingHold.answer(null, StatusCode.PTP_TIME_OUT, "CONSUME_MSG_TIMEOUT");
     }
 
     @Data
     public static class LongPullingHold {
         Logger logger = LoggerFactory.getLogger(LongPullingHold.class);
         OsxContext context;
-        io.grpc.Context   grpcContext;
+        io.grpc.Context grpcContext;
         StreamObserver streamObserver;
-        AsyncContext  asyncContext;
+        AsyncContext asyncContext;
         long expireTimestamp;
         long needOffset;
-        public  void  answer(TransferQueueConsumeResult  consumeResult,String  statusCode,String message){
-            if(streamObserver!=null) {
+
+        public void answer(TransferQueueConsumeResult consumeResult, String statusCode, String message) {
+            if (streamObserver != null) {
                 Osx.TransportOutbound consumeResponse = TransferUtil.buildTransportOutbound(statusCode, message, consumeResult);
                 streamObserver.onNext(consumeResponse);
                 streamObserver.onCompleted();
-            }else if(asyncContext!=null){
-                byte[]  content = null;
-                if(consumeResult!=null&&consumeResult.getMessage()!=null){
+            } else if (asyncContext != null) {
+                byte[] content = null;
+                if (consumeResult != null && consumeResult.getMessage() != null) {
                     content = consumeResult.getMessage().getBody();
                 }
-                ConsumerResponse  consumerResponse = new ConsumerResponse();
+                ConsumerResponse consumerResponse = new ConsumerResponse();
                 consumerResponse.setCode(statusCode);
                 consumerResponse.setMsg(message);
-                if(content!=null)
+                if (content != null)
                     consumerResponse.setPayload(content);
                 String returnContent = JsonUtil.object2Json(consumerResponse);
 
-                TransferUtil.writeHttpRespose(asyncContext.getResponse(),statusCode,message, returnContent.getBytes(StandardCharsets.UTF_8));
+                TransferUtil.writeHttpRespose(asyncContext.getResponse(), statusCode, message, returnContent.getBytes(StandardCharsets.UTF_8));
                 asyncContext.complete();
 
 
@@ -194,7 +192,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
         }
 
 
-        public  void  throwException(Throwable  throwable){
+        public void throwException(Throwable throwable) {
             try {
                 if (streamObserver != null) {
                     streamObserver.onError(ErrorMessageUtil.toGrpcRuntimeException(throwable));
@@ -204,8 +202,8 @@ public class UnaryConsumer extends LocalQueueConsumer {
                     // TODO: 2023/7/24  http 处理未添加
                     //  TransferUtil.writeHttpRespose(httpServletResponse,consumeResponse.getCode(),consumeResponse.getMessage(),consumeResponse.getPayload()!=null?consumeResponse.getPayload().toByteArray():null);
                 }
-            }catch(Exception e){
-                logger.error("send error back to consumer , occury error",e);
+            } catch (Exception e) {
+                logger.error("send error back to consumer , occury error", e);
             }
         }
 

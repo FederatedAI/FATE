@@ -18,13 +18,11 @@ package org.fedai.osx.broker.http;
 
 import com.google.common.collect.Maps;
 import com.google.inject.Singleton;
-import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -35,7 +33,6 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
@@ -44,10 +41,7 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.Dict;
-import org.fedai.osx.core.constant.PtpHttpHeader;
 import org.fedai.osx.core.service.ApplicationStartedRunner;
-import org.fedai.osx.core.utils.JsonUtil;
-import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +51,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 @Singleton
 public class HttpClientPool implements ApplicationStartedRunner {
     private static final Logger logger = LoggerFactory.getLogger(HttpClientPool.class);
@@ -91,23 +86,6 @@ public class HttpClientPool implements ApplicationStartedRunner {
         httpRequestBase.setConfig(requestConfig);
     }
 
-    public  void initPool() {
-        try {
-            SSLContextBuilder builder = new SSLContextBuilder();
-            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create().register(
-                    Dict.HTTP, PlainConnectionSocketFactory.getSocketFactory()).register(
-                    Dict.HTTPS, sslsf).build();
-            poolConnManager = new PoolingHttpClientConnectionManager(
-                    socketFactoryRegistry);
-            poolConnManager.setMaxTotal(MetaInfo.PROPERTY_HTTP_CLIENT_INIT_POOL_MAX_TOTAL);
-            poolConnManager.setDefaultMaxPerRoute(MetaInfo.PROPERTY_HTTP_CLIENT_INIT_POOL_DEF_MAX_PER_ROUTE);
-            httpClient = createConnection();
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
-            logger.error("init http client pool failed:", ex);
-        }
-    }
     public static CloseableHttpClient getConnection() {
         return httpClient;
     }
@@ -126,15 +104,52 @@ public class HttpClientPool implements ApplicationStartedRunner {
                 .build();
         return httpClient;
     }
+
     public static HttpDataWrapper sendPost(String url, byte[] body, Map<String, String> headers) {
 
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
-        if(body!=null) {
+        if (body != null) {
             ByteArrayEntity byteArrayEntity = new ByteArrayEntity(body);
             httpPost.setEntity(byteArrayEntity);
         }
         return getHttpResponse(httpPost);
+    }
+
+    private static HttpDataWrapper getHttpResponse(HttpRequestBase request) {
+
+        HttpDataWrapper httpDataWrapper = new HttpDataWrapper();
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(request, HttpClientContext.create());
+            HttpEntity entity = response.getEntity();
+            byte[] payload = EntityUtils.toByteArray(entity);
+            Header[] headers = response.getAllHeaders();
+            Map<String, String> headMap = Maps.newHashMap();
+            if (headers != null) {
+                for (int i = 0; i < headers.length; i++) {
+                    Header temp = headers[i];
+                    headMap.put(temp.getName(), temp.getValue());
+                }
+            }
+            httpDataWrapper.setHeaders(headMap);
+            if (payload != null)
+                httpDataWrapper.setPayload(payload);
+            EntityUtils.consume(entity);
+            return httpDataWrapper;
+        } catch (IOException ex) {
+            logger.error("get http response failed:", ex);
+            ex.printStackTrace();
+            return null;
+        } finally {
+            try {
+                if (response != null) {
+                    response.close();
+                }
+            } catch (IOException ex) {
+                logger.error("get http response failed:", ex);
+            }
+        }
     }
 //    public static String sendPost(String url, byte[] body, Map<String, String> headers) {
 //        HttpPost httpPost = new HttpPost(url);
@@ -179,39 +194,21 @@ public class HttpClientPool implements ApplicationStartedRunner {
 //        }
 //    }
 
-    private static HttpDataWrapper getHttpResponse(HttpRequestBase request) {
-
-        HttpDataWrapper  httpDataWrapper = new  HttpDataWrapper();
-        CloseableHttpResponse response = null;
+    public void initPool() {
         try {
-            response = httpClient.execute(request, HttpClientContext.create());
-            HttpEntity entity = response.getEntity();
-            byte[] payload = EntityUtils.toByteArray(entity);
-            Header[]  headers = response.getAllHeaders();
-            Map<String,String> headMap = Maps.newHashMap();
-            if(headers!=null){
-                for(int i=0;i<headers.length;i++){
-                    Header  temp = headers[i];
-                    headMap.put(temp.getName(),temp.getValue());
-                }
-            }
-            httpDataWrapper.setHeaders(headMap);
-            if(payload!=null)
-                httpDataWrapper.setPayload(payload);
-            EntityUtils.consume(entity);
-            return  httpDataWrapper;
-        } catch (IOException ex) {
-            logger.error("get http response failed:", ex);
-            ex.printStackTrace();
-            return null;
-        } finally {
-            try {
-                if (response != null) {
-                    response.close();
-                }
-            } catch (IOException ex) {
-                logger.error("get http response failed:", ex);
-            }
+            SSLContextBuilder builder = new SSLContextBuilder();
+            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create().register(
+                    Dict.HTTP, PlainConnectionSocketFactory.getSocketFactory()).register(
+                    Dict.HTTPS, sslsf).build();
+            poolConnManager = new PoolingHttpClientConnectionManager(
+                    socketFactoryRegistry);
+            poolConnManager.setMaxTotal(MetaInfo.PROPERTY_HTTP_CLIENT_INIT_POOL_MAX_TOTAL);
+            poolConnManager.setDefaultMaxPerRoute(MetaInfo.PROPERTY_HTTP_CLIENT_INIT_POOL_DEF_MAX_PER_ROUTE);
+            httpClient = createConnection();
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
+            logger.error("init http client pool failed:", ex);
         }
     }
 
