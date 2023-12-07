@@ -23,13 +23,13 @@ import datetime
 import logging
 import multiprocessing
 import signal
+import sys
 import time
 import uuid
 from argparse import Namespace
 from dataclasses import dataclass, field
 from multiprocessing import Queue, Event
 from typing import List
-import sys
 
 import rich
 import rich.console
@@ -80,7 +80,6 @@ class MultiProcessLauncher:
             safe_to_exit = self.safe_to_exit
             width = self.console.width
             argv = sys.argv.copy()
-            argv.extend(["--federation_session_id", self.federation_session_id])
             argv.extend(["--rank", str(rank)])
             process = multiprocessing.Process(
                 target=self.__class__._run_process,
@@ -90,6 +89,7 @@ class MultiProcessLauncher:
                     output_or_exception_q,
                     safe_to_exit,
                     width,
+                    self.federation_session_id,
                     argv,
                     f,
                 ),
@@ -123,6 +123,7 @@ class MultiProcessLauncher:
         output_or_exception_q: Queue,
         safe_to_exit: Event,
         width,
+        federation_session_id,
         argv,
         f,
     ):
@@ -137,8 +138,7 @@ class MultiProcessLauncher:
             raise ValueError(f"rank {args.rank} is out of range {len(args.parties)}")
         parties = args.get_parties()
         party = parties[args.rank]
-        csession_id = f"{args.federation_session_id}_{party[0]}_{party[1]}"
-        argv.extend(["--csession_id", csession_id])
+        csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
 
         # set up logging
         set_up_logging(args.rank, args.log_level)
@@ -149,7 +149,7 @@ class MultiProcessLauncher:
         tracer = trace.get_tracer(__name__)
 
         with tracer.start_as_current_span(name=csession_id, context=trace.extract_carrier(carrier)) as span:
-            ctx = init_context()
+            ctx = init_context(computing_session_id=csession_id, federation_session_id=federation_session_id)
 
             try:
                 profile_start()
@@ -238,7 +238,6 @@ class LauncherArguments:
 
 @dataclass
 class LauncherProcessArguments:
-    federation_session_id: str = field()
     log_level: str = field()
     rank: int = field()
     parties: List[str] = field(metadata={"required": True})
