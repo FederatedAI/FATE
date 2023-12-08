@@ -6,6 +6,7 @@ from ._load_federation import load_federation
 from ._load_metric_handler import load_metric_handler
 from .component_desc import Component, ComponentExecutionIO
 from .essential import ARBITER, GUEST, HOST, LOCAL, Label, Role, Stage
+from ._cpn_task_mode import is_root_worker, is_deepspeed_mode, TaskMode
 
 __all__ = [
     "Component",
@@ -24,4 +25,7 @@ __all__ = [
     "HOST",
     "LOCAL",
     "Label",
+    "is_root_worker",
+    "is_deepspeed_mode",
+    "TaskMode",
 ]
