@@ -1,6 +1,7 @@
 from ._artifact_type import (
     ArtifactType,
     DataDirectoryArtifactType,
+    DataUnresolvedArtifactType,
     DataframeArtifactType,
     JsonMetricArtifactType,
     JsonModelArtifactType,

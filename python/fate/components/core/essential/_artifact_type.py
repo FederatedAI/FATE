@@ -25,6 +25,12 @@ class DataDirectoryArtifactType(ArtifactType):
     uri_types = ["file"]
 
 
+class DataUnresolvedArtifactType(ArtifactType):
+    type_name = "data_unresolved"
+    path_type = "unresolved"
+    uri_types = ["unresolved"]
+
+
 class ModelDirectoryArtifactType(ArtifactType):
     type_name = "model_directory"
     path_type = "directory"
