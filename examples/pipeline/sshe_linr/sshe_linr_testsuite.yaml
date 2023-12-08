@@ -1,0 +1,42 @@
+data:
+  - file: examples/data/motor_hetero_guest.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      label_type: float64
+      label_name: motor_speed
+      match_id_name: idx
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: motor_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: examples/data/motor_hetero_host.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: idx
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: motor_hetero_host
+    namespace: experiment
+    role: host_0
+tasks:
+  normal-linr:
+    script: test_linr.py
+  linr-cv:
+    script: test_linr_cv.py
+  linr-warm-start:
+    script: test_linr_warm_start.py

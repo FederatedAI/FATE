@@ -16,6 +16,28 @@
 import torch
 
 
+def get_initialize_func(**kwargs):
+    method = kwargs["method"]
+    random_state = kwargs.get("random_state", None)
+
+    if method == 'zeros':
+        return lambda shape: torch.zeros(shape)
+    elif method == 'ones':
+        return lambda shape: torch.ones(shape)
+    elif method == 'random':
+        if random_state is not None:
+            generator = torch.Generator().manual_seed(random_state)
+            return lambda shape: torch.randn(shape, generator=generator)
+        return lambda shape: torch.randn(shape)
+    elif method == 'random_uniform':
+        if random_state is not None:
+            generator = torch.Generator().manual_seed(random_state)
+            return lambda shape: torch.rand(shape, generator=generator)
+        return lambda shape: torch.rand(shape)
+    else:
+        raise NotImplementedError(f"Unknown initialization method: {method}")
+
+
 def initialize_param(coef_len, **kwargs):
     param_len = coef_len
     method = kwargs["method"]
