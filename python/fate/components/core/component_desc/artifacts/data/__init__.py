@@ -62,8 +62,10 @@ def data_directory_outputs(
 ) -> Type[Iterator[DataDirectoryWriter]]:
     return _create_artifact_annotation(False, True, DataDirectoryArtifactDescribe, "data")(roles, desc, optional)
 
+
 def data_unresolved_output(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[DataUnresolvedWriter]:
     return _create_artifact_annotation(False, False, DataUnresolvedArtifactDescribe, "data")(roles, desc, optional)
+
 
 def data_unresolved_outputs(
     roles: Optional[List[Role]] = None, desc="", optional=False

@@ -29,6 +29,8 @@ from .model import (
     model_directory_inputs,
     model_directory_output,
     model_directory_outputs,
+    model_unresolved_output,
+    model_unresolved_outputs,
 )
 
 __all__ = [
@@ -56,4 +58,6 @@ __all__ = [
     "data_unresolved_outputs",
     "json_metric_output",
     "json_metric_outputs",
+    "model_unresolved_output",
+    "model_unresolved_outputs",
 ]

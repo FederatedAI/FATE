@@ -6,6 +6,7 @@ from ._artifact_type import (
     JsonMetricArtifactType,
     JsonModelArtifactType,
     ModelDirectoryArtifactType,
+    ModelUnresolvedArtifactType,
     TableArtifactType,
 )
 from ._label import Label

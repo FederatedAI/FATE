@@ -40,6 +40,8 @@ from .artifacts import (
     model_directory_outputs,
     table_input,
     table_inputs,
+    model_unresolved_output,
+    model_unresolved_outputs,
 )
 
 __all__ = [
@@ -69,4 +71,6 @@ __all__ = [
     "model_directory_input",
     "json_metric_output",
     "json_metric_outputs",
+    "model_unresolved_output",
+    "model_unresolved_outputs",
 ]

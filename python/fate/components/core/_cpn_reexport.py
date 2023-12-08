@@ -38,6 +38,8 @@ from .component_desc import (
     parameter,
     table_input,
     table_inputs,
+    model_unresolved_output,
+    model_unresolved_outputs,
 )
 from .essential import Role
 
@@ -75,4 +77,6 @@ __all__ = [
     "model_directory_outputs",
     "model_directory_output",
     "model_directory_input",
+    "model_unresolved_output",
+    "model_unresolved_outputs",
 ]

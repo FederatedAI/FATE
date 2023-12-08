@@ -36,14 +36,18 @@ def load_federation(federation, computing):
     if isinstance(federation, (OSXFederationSpec, RollSiteFederationSpec)):
         if isinstance(federation, OSXFederationSpec):
             mode = FederationMode.from_str(federation.metadata.osx_config.mode)
+            host = federation.metadata.osx_config.host
+            port = federation.metadata.osx_config.port
             options = dict(max_message_size=federation.metadata.osx_config.max_message_size)
         else:
             mode = FederationMode.STREAM
+            host = federation.metadata.rollsite_config.host
+            port = federation.metadata.rollsite_config.port
             options = {}
         return builder.build_osx(
             computing_session=computing,
-            host=federation.metadata.osx_config.host,
-            port=federation.metadata.osx_config.port,
+            host=host,
+            port=port,
             mode=mode,
             options=options,
         )

@@ -47,3 +47,9 @@ class JsonMetricArtifactType(ArtifactType):
     type_name = "json_metric"
     path_type = "file"
     uri_types = ["file"]
+
+
+class ModelUnresolvedArtifactType(ArtifactType):
+    type_name = "model_unresolved"
+    path_type = "unresolved"
+    uri_types = ["unresolved"]

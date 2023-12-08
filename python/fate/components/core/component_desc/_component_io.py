@@ -134,7 +134,6 @@ class ComponentExecutionIO:
             (self.output_model, component.artifacts.model_outputs),
             (self.output_metric, component.artifacts.metric_outputs),
         ]:
-
             if allowed_artifacts := artifacts.get(arg):
                 if allowed_artifacts.is_active_for(stage, role):
                     apply_spec: ArtifactOutputApplySpec = config.output_artifacts.get(arg)

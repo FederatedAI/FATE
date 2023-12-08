@@ -32,7 +32,6 @@ class MLModelPartiesSpec(pydantic.BaseModel):
 
 
 class MLModelFederatedSpec(pydantic.BaseModel):
-
     task_id: str
     parties: MLModelPartiesSpec
     component: MLModelComponentSpec
@@ -46,7 +45,6 @@ class MLModelModelSpec(pydantic.BaseModel):
 
 
 class MLModelPartySpec(pydantic.BaseModel):
-
     party_task_id: str
     role: str
     partyid: str
@@ -54,6 +52,5 @@ class MLModelPartySpec(pydantic.BaseModel):
 
 
 class MLModelSpec(pydantic.BaseModel):
-
     federated: MLModelFederatedSpec
     party: MLModelPartySpec
