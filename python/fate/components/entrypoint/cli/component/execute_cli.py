@@ -88,7 +88,7 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
     import traceback
 
     from fate.arch import CipherKit, Context
-    from fate.arch.computing import profile_ends, profile_start
+    from fate.arch.computing.api import profile_ends, profile_start
     from fate.components.core import (
         ComponentExecutionIO,
         Role,

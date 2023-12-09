@@ -23,14 +23,13 @@ from typing import List
 
 from eggroll.computing import RollPair
 from eggroll.federation import RollSiteContext
-from fate.arch.federation.api import Federation
-from fate.arch.abc import PartyMeta
-from fate.arch.computing.eggroll import Table
+from fate.arch.computing.backends.eggroll import Table
+from fate.arch.federation.api import Federation, PartyMeta
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from fate.arch.computing.eggroll import CSession
+    from fate.arch.computing.backends.eggroll import CSession
 
 
 class EggrollFederation(Federation):

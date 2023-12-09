@@ -14,6 +14,10 @@
 #  limitations under the License.
 #
 
+from typing import Literal, Tuple
+
+PartyMeta = Tuple[Literal["guest", "host", "arbiter", "local"], str]
+
 
 class FederationDataType(object):
     OBJECT = "obj"

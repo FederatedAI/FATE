@@ -14,10 +14,9 @@
 #  limitations under the License.
 from ._infra_def import Backend, device
 from ._io import URI
-from ._uuid import generate_computing_uuid, uuid
+from ._uuid import uuid
 
 __all__ = [
-    "generate_computing_uuid",
     "Backend",
     "device",
     "uuid",

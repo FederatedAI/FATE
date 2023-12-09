@@ -23,8 +23,8 @@ from pickle import dumps as p_dumps
 from pickle import loads as p_loads
 from typing import List
 
-from fate.arch.abc import CTableABC, PartyMeta
-from fate.arch.federation.api import Federation, FederationDataType
+from fate.arch.computing.api import is_table
+from fate.arch.federation.api import Federation, FederationDataType, PartyMeta
 from ._datastream import Datastream
 from ._parties import Party
 
@@ -68,7 +68,7 @@ class MessageQueueBasedFederation(Federation):
 
         super().__init__(session_id, party, parties)
 
-        # temp
+        # TODO: remove this
         self._party = Party(party[0], party[1])
 
     def _pull_bytes(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
@@ -155,7 +155,6 @@ class MessageQueueBasedFederation(Federation):
                 )
                 rtn.append(table)
         return rtn
-
 
     def _push_bytes(
         self,
@@ -246,7 +245,7 @@ class MessageQueueBasedFederation(Federation):
             party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
             channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
 
-            if not isinstance(v, CTableABC):
+            if not is_table(v):
                 v, num_slice = _get_splits(v, self._max_message_size)
                 if num_slice > 1:
                     v = self.computing_session.parallelize(data=v, partition=1, include_key=True)
@@ -272,7 +271,7 @@ class MessageQueueBasedFederation(Federation):
                 if k not in self._name_dtype_map:
                     self._name_dtype_map[k] = body
 
-        if isinstance(v, CTableABC):
+        if is_table(v):
             total_size = v.count()
             partitions = v.partitions
             LOGGER.debug(f"[{log_str}]start to remote table, total_size={total_size}, partitions={partitions}")

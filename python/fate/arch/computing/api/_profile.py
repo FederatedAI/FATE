@@ -316,7 +316,7 @@ def profile_ends():
 
 
 def _pretty_table_str(v):
-    from ..computing import is_table
+    from ._table import is_table
 
     if is_table(v):
         return f"Table(partition={v.num_partitions})"

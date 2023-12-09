@@ -16,10 +16,9 @@
 
 import logging
 
-from fate.arch.computing.table import KVTableContext
+from fate.arch.computing.api import KVTableContext
+from fate.arch.unify import URI, uuid
 from ._table import Table
-from .._profile import computing_profile
-from ...unify import URI, uuid
 
 try:
     from eggroll.session import session_init
@@ -62,7 +61,6 @@ class CSession(KVTableContext):
     def session_id(self):
         return self._session_id
 
-    @computing_profile
     def _load(self, uri: URI, schema: dict, options: dict) -> Table:
         from ._type import EggRollStoreType
 

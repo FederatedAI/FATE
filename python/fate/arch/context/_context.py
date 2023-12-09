@@ -31,7 +31,7 @@ T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
     from fate.arch.federation.api import Federation
-    from fate.arch.computing.table import KVTableContext
+    from fate.arch.computing.api import KVTableContext
 
 
 class Context:

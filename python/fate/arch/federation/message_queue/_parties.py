@@ -39,4 +39,4 @@ class Party:
         return self.party_id == other.party_id and self.role == other.role
 
     def as_tuple(self):
-        return (self.role, self.party_id)
+        return self.role, self.party_id

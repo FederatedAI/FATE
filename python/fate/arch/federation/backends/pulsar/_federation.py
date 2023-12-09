@@ -17,7 +17,7 @@
 import logging
 from typing import List, Optional
 
-from fate.arch.abc import PartyMeta
+from fate.arch.federation.api import PartyMeta
 from fate.arch.federation.message_queue import MessageQueueBasedFederation
 from ._mq_channel import (
     DEFAULT_CLUSTER,

@@ -18,10 +18,9 @@
 import logging
 from typing import Callable, Iterable, Any
 
-from ...unify import URI
-from .._type import ComputingEngine
-from ..table import KVTable
 from eggroll.computing import RollPair
+from fate.arch.computing.api import ComputingEngine, KVTable
+from fate.arch.unify import URI
 
 LOGGER = logging.getLogger(__name__)
 

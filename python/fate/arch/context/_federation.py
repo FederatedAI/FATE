@@ -19,9 +19,9 @@ import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
 
-from fate.arch.abc import PartyMeta
+from fate.arch.federation.api import PartyMeta
+from fate.arch.computing.api import is_table
 from ._namespace import NS
-from ..computing import is_table
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")

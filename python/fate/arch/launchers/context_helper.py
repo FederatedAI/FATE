@@ -26,7 +26,7 @@ class LauncherClusterContextArgs:
 
 @dataclass
 class LauncherContextArguments:
-    context_type: str = field(default="standalone")
+    context_type: str = field(default="local")
 
 
 def init_context(computing_session_id: str, federation_session_id: str):
@@ -41,7 +41,7 @@ def init_context(computing_session_id: str, federation_session_id: str):
 
 def init_local_context(computing_session_id: str, federation_session_id: str):
     from fate.arch.utils.paths import get_base_dir
-    from fate.arch.computing.standalone import CSession
+    from fate.arch.computing.backends.standalone import CSession
     from fate.arch.federation import FederationBuilder
     from fate.arch.context import Context
 
@@ -67,7 +67,7 @@ def init_local_context(computing_session_id: str, federation_session_id: str):
 
 def init_cluster_context(computing_session_id: str, federation_session_id: str):
     from fate.arch.federation import FederationBuilder, FederationMode
-    from fate.arch.computing.eggroll import CSession
+    from fate.arch.computing.backends.eggroll import CSession
 
     from fate.arch.context import Context
 

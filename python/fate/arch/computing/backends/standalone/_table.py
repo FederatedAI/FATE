@@ -16,13 +16,12 @@
 import logging
 from typing import Callable, Iterable, Any, Tuple
 
-from ...unify import URI
-from .._profile import computing_profile
-from .._type import ComputingEngine
-from ..table import KVTable, V, K
-from ..._standalone import Table as StandaloneTable
+from fate.arch.computing.api import ComputingEngine, KVTable, K, V
+from fate.arch.unify import URI
+from ...._standalone import Table as StandaloneTable
 
 LOGGER = logging.getLogger(__name__)
+
 
 
 class Table(KVTable):
@@ -121,7 +120,6 @@ class Table(KVTable):
     def _reduce(self, func, **kwargs):
         return self._table.reduce(func)
 
-    @computing_profile
     def _save(self, uri: URI, schema, options: dict):
         if uri.scheme != "standalone":
             raise ValueError(f"uri scheme `{uri.scheme}` not supported with standalone backend")

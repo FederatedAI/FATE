@@ -1,2 +1,2 @@
 from ._federation import Federation
-from ._type import FederationDataType
+from ._type import FederationDataType, PartyMeta

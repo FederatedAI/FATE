@@ -13,16 +13,4 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-
-from ._profile import enable_profile_remote, profile_ends, profile_start
-from ._type import ComputingEngine
-
-
-def is_table(v):
-    from fate.arch.abc import CTableABC
-    from fate.arch.computing.table import KVTable
-
-    return isinstance(v, CTableABC) or isinstance(v, KVTable)
-
-
-__all__ = ["is_table", "ComputingEngine", "profile_start", "profile_ends"]
+from ._builder import ComputingBuilder

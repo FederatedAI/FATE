@@ -17,9 +17,8 @@ import logging
 import typing
 from typing import Iterable
 
-from fate.arch.abc import CSessionABC
-
-from ...unify import URI
+from fate.arch.computing.api import KVTableContext
+from fate.arch.unify import URI
 from ._table import from_hdfs, from_hive, from_localfs, from_rdd
 
 if typing.TYPE_CHECKING:
@@ -27,7 +26,7 @@ if typing.TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-class CSession(CSessionABC):
+class CSession(KVTableContext):
     """
     manage RDDTable
     """
@@ -35,7 +34,7 @@ class CSession(CSessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
 
-    def load(self, uri: URI, schema, options: dict = None) -> "Table":
+    def _load(self, uri: URI, schema, options: dict = None) -> "Table":
         if not options:
             options = {}
         partitions = options.get("partitions", None)
@@ -80,12 +79,21 @@ class CSession(CSessionABC):
 
         raise NotImplementedError(f"uri type {uri} not supported with spark backend")
 
-    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
+    def _parallelize(
+            self,
+            data: Iterable,
+            total_partitions,
+            key_serdes,
+            key_serdes_type,
+            value_serdes,
+            value_serdes_type,
+            partitioner,
+            partitioner_type,
+    ):
         # noinspection PyPackageRequirements
         from pyspark import SparkContext
 
-        _iter = data if include_key else enumerate(data)
-        rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
+        rdd = SparkContext.getOrCreate().parallelize(data, total_partitions)
         return from_rdd(rdd)
 
     @property

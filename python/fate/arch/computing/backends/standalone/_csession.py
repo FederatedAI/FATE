@@ -16,12 +16,10 @@
 import logging
 from typing import Optional
 
-from ..table import KVTableContext
-
-from ..._standalone import Session
-from ...unify import URI, generate_computing_uuid, uuid
+from fate.arch.computing.api import KVTableContext, generate_computing_uuid
+from fate.arch.unify import URI, uuid
 from ._table import Table
-import os.path
+from ...._standalone import Session
 
 logger = logging.getLogger(__name__)
 

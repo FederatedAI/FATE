@@ -16,7 +16,7 @@
 import typing
 from enum import Enum
 
-from fate.arch.abc import PartyMeta
+from fate.arch.federation.api import PartyMeta
 from fate.arch.config import cfg
 
 
@@ -111,7 +111,7 @@ class FederationBuilder:
                 max_message_size=options.get("max_message_size"),
             )
         else:
-            from fate.arch.computing.eggroll import CSession
+            from fate.arch.computing.backends.eggroll import CSession
             from fate.arch.federation.backends.eggroll import EggrollFederation
 
             if not isinstance(computing_session, CSession):

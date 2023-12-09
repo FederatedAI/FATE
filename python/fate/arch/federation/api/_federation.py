@@ -17,7 +17,6 @@ import logging
 import typing
 from typing import List
 
-from fate.arch.abc import PartyMeta
 from fate.arch.utils.trace import (
     federation_push_table_trace,
     federation_pull_table_trace,
@@ -25,9 +24,10 @@ from fate.arch.utils.trace import (
     federation_pull_bytes_trace,
 )
 from ._gc import GarbageCollector
+from ._type import PartyMeta
 
 if typing.TYPE_CHECKING:
-    from fate.arch.computing.table import KVTable
+    from fate.arch.computing.api import KVTable
 
 logger = logging.getLogger(__name__)
 

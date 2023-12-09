@@ -8,8 +8,8 @@ from typing import List
 from opentelemetry import trace, context
 
 if typing.TYPE_CHECKING:
-    from fate.arch.abc import PartyMeta
-    from fate.arch.computing.table import KVTable
+    from fate.arch.federation.api import PartyMeta
+    from fate.arch.computing.api import KVTable
 
 logger = logging.getLogger(__name__)
 _ENABLE_TRACING = None

@@ -15,9 +15,9 @@
 import logging
 from typing import List
 
-from fate.arch.abc import PartyMeta
-from fate.arch.computing.standalone import Table, CSession
+from fate.arch.computing.backends.standalone import Table, CSession
 from fate.arch.federation.api import Federation
+from fate.arch.federation.api import PartyMeta
 from .... import _standalone as standalone
 
 LOGGER = logging.getLogger(__name__)

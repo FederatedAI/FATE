@@ -21,13 +21,12 @@ import uuid
 from itertools import chain
 
 import pyspark
-from fate.arch.abc import CTableABC
 from pyspark.rddsampler import RDDSamplerBase
 from scipy.stats import hypergeom
 
-from .._profile import computing_profile
-from .._type import ComputingEngine
+from fate.arch.computing.api import KVTable, ComputingEngine
 from ._materialize import materialize, unmaterialize
+from .._profile import computing_profile
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,12 +52,18 @@ def hive_to_row(k, v):
     return Row(key=k, value=pickle.dumps(v).hex())
 
 
-class Table(CTableABC):
-    def __init__(self, rdd):
-        self._rdd: pyspark.RDD = rdd
+class Table(KVTable):
+    def __init__(self, rdd: pyspark.RDD, key_serdes_type, value_serdes_type, partitioner_type):
+        self._rdd = rdd
         self._engine = ComputingEngine.SPARK
 
-        self._count = None
+        super().__init__(
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+            num_partitions=rdd.getNumPartitions(),
+        )
+
 
     @property
     def engine(self):

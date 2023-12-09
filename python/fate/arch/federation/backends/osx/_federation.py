@@ -17,7 +17,7 @@ import json
 import typing
 from logging import getLogger
 
-from fate.arch.abc import PartyMeta
+from fate.arch.federation.api import PartyMeta
 from fate.arch.federation.backends.osx import osx_pb2
 from fate.arch.federation.message_queue import MessageQueueBasedFederation
 from ._mq_channel import MQChannel

@@ -18,7 +18,7 @@ import json
 from logging import getLogger
 from typing import List, Optional
 
-from fate.arch.abc import PartyMeta
+from fate.arch.federation.api import PartyMeta
 from fate.arch.federation.message_queue import MessageQueueBasedFederation, Party
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
@@ -138,7 +138,7 @@ class RabbitmqFederation(MessageQueueBasedFederation):
             LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
 
-    def _get_vhost(self, party):
+    def _get_vhost(self, party: PartyMeta):
         low, high = (self._party, party) if self._party < party else (party, self._party)
         vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
         return vhost
