@@ -1,10 +1,12 @@
 from ._artifact_type import (
     ArtifactType,
     DataDirectoryArtifactType,
+    DataUnresolvedArtifactType,
     DataframeArtifactType,
     JsonMetricArtifactType,
     JsonModelArtifactType,
     ModelDirectoryArtifactType,
+    ModelUnresolvedArtifactType,
     TableArtifactType,
 )
 from ._label import Label

@@ -22,6 +22,8 @@ from .artifacts import (
     data_directory_inputs,
     data_directory_output,
     data_directory_outputs,
+    data_unresolved_output,
+    data_unresolved_outputs,
     dataframe_input,
     dataframe_inputs,
     dataframe_output,
@@ -38,6 +40,8 @@ from .artifacts import (
     model_directory_outputs,
     table_input,
     table_inputs,
+    model_unresolved_output,
+    model_unresolved_outputs,
 )
 
 __all__ = [
@@ -55,6 +59,8 @@ __all__ = [
     "data_directory_output",
     "data_directory_outputs",
     "data_directory_inputs",
+    "data_unresolved_output",
+    "data_unresolved_outputs",
     "json_model_output",
     "json_model_outputs",
     "json_model_input",
@@ -65,4 +71,6 @@ __all__ = [
     "model_directory_input",
     "json_metric_output",
     "json_metric_outputs",
+    "model_unresolved_output",
+    "model_unresolved_outputs",
 ]

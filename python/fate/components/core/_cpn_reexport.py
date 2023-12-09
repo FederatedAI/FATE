@@ -25,6 +25,8 @@ from .component_desc import (
     dataframe_inputs,
     dataframe_output,
     dataframe_outputs,
+    data_unresolved_output,
+    data_unresolved_outputs,
     json_model_input,
     json_model_inputs,
     json_model_output,
@@ -36,6 +38,8 @@ from .component_desc import (
     parameter,
     table_input,
     table_inputs,
+    model_unresolved_output,
+    model_unresolved_outputs,
 )
 from .essential import Role
 
@@ -63,6 +67,8 @@ __all__ = [
     "data_directory_output",
     "data_directory_outputs",
     "data_directory_inputs",
+    "data_unresolved_output",
+    "data_unresolved_outputs",
     "json_model_output",
     "json_model_outputs",
     "json_model_input",
@@ -71,4 +77,6 @@ __all__ = [
     "model_directory_outputs",
     "model_directory_output",
     "model_directory_input",
+    "model_unresolved_output",
+    "model_unresolved_outputs",
 ]

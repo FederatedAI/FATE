@@ -1,6 +1,5 @@
 from typing import Iterator, List, Optional, Type
 
-from .._base_type import Role, _create_artifact_annotation
 from ._dataframe import DataframeArtifactDescribe, DataframeReader, DataframeWriter
 from ._directory import (
     DataDirectoryArtifactDescribe,
@@ -8,6 +7,8 @@ from ._directory import (
     DataDirectoryWriter,
 )
 from ._table import TableArtifactDescribe, TableReader, TableWriter
+from ._unresolved import DataUnresolvedArtifactDescribe, DataUnresolvedReader, DataUnresolvedWriter
+from .._base_type import Role, _create_artifact_annotation
 
 
 def dataframe_input(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[DataframeReader]:
@@ -60,3 +61,13 @@ def data_directory_outputs(
     roles: Optional[List[Role]] = None, desc="", optional=False
 ) -> Type[Iterator[DataDirectoryWriter]]:
     return _create_artifact_annotation(False, True, DataDirectoryArtifactDescribe, "data")(roles, desc, optional)
+
+
+def data_unresolved_output(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[DataUnresolvedWriter]:
+    return _create_artifact_annotation(False, False, DataUnresolvedArtifactDescribe, "data")(roles, desc, optional)
+
+
+def data_unresolved_outputs(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[Iterator[DataUnresolvedWriter]]:
+    return _create_artifact_annotation(False, True, DataUnresolvedArtifactDescribe, "data")(roles, desc, optional)

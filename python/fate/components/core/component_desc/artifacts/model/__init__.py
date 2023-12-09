@@ -1,12 +1,13 @@
 from typing import Iterator, List, Optional, Type
 
-from .._base_type import Role, _create_artifact_annotation
 from ._directory import (
     ModelDirectoryArtifactDescribe,
     ModelDirectoryReader,
     ModelDirectoryWriter,
 )
 from ._json import JsonModelArtifactDescribe, JsonModelReader, JsonModelWriter
+from ._unresolved import ModelUnresolvedArtifactDescribe, ModelUnresolvedReader, ModelUnresolvedWriter
+from .._base_type import Role, _create_artifact_annotation
 
 
 def json_model_input(roles: Optional[List[Role]] = None, desc="", optional=False) -> Type[JsonModelReader]:
@@ -43,3 +44,15 @@ def model_directory_outputs(
     roles: Optional[List[Role]] = None, desc="", optional=False
 ) -> Type[Iterator[ModelDirectoryWriter]]:
     return _create_artifact_annotation(False, True, ModelDirectoryArtifactDescribe, "model")(roles, desc, optional)
+
+
+def model_unresolved_output(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[ModelUnresolvedWriter]:
+    return _create_artifact_annotation(False, False, ModelUnresolvedArtifactDescribe, "model")(roles, desc, optional)
+
+
+def model_unresolved_outputs(
+    roles: Optional[List[Role]] = None, desc="", optional=False
+) -> Type[Iterator[ModelUnresolvedWriter]]:
+    return _create_artifact_annotation(False, True, ModelUnresolvedArtifactDescribe, "model")(roles, desc, optional)
