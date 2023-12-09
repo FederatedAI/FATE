@@ -18,8 +18,7 @@ import logging
 from typing import List, Optional
 
 from fate.arch.abc import PartyMeta
-
-from .._federation import FederationBase
+from fate.arch.federation.message_queue import MessageQueueBasedFederation
 from ._mq_channel import (
     DEFAULT_CLUSTER,
     DEFAULT_SUBSCRIPTION_NAME,
@@ -54,7 +53,7 @@ class _TopicPair(object):
         self.receive = receive
 
 
-class PulsarFederation(FederationBase):
+class PulsarFederation(MessageQueueBasedFederation):
     @staticmethod
     def from_conf(
         federation_session_id: str,

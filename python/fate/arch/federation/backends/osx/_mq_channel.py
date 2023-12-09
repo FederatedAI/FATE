@@ -20,10 +20,9 @@ from enum import Enum
 from typing import Dict, List, Any
 import time
 import grpc
-from fate.arch.federation.osx import osx_pb2
-from fate.arch.federation.osx.osx_pb2_grpc import PrivateTransferTransportStub
+from fate.arch.federation.backends.osx import osx_pb2
+from fate.arch.federation.backends.osx.osx_pb2_grpc import PrivateTransferTransportStub
 import numpy as np
-# from .._nretry import nretry
 
 LOGGER = getLogger(__name__)
 

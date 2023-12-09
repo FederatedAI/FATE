@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import io
-import pickle
 import logging
+import pickle
 import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
@@ -22,30 +22,13 @@ from typing import Any, List, Tuple, TypeVar, Union
 from fate.arch.abc import PartyMeta
 from ._namespace import NS
 from ..computing import is_table
-from ..federation._gc import IterationGC
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
     from fate.arch.context import Context
-    from fate.arch.federation.federation import Federation
-
-
-class GC:
-    def __init__(self) -> None:
-        self._push_gc_dict = {}
-        self._pull_gc_dict = {}
-
-    def get_or_set_push_gc(self, key):
-        if key not in self._push_gc_dict:
-            self._push_gc_dict[key] = IterationGC()
-        return self._push_gc_dict[key]
-
-    def get_or_set_pull_gc(self, key):
-        if key not in self._pull_gc_dict:
-            self._pull_gc_dict[key] = IterationGC()
-        return self._pull_gc_dict[key]
+    from fate.arch.federation.api import Federation
 
 
 class _KeyedParty:

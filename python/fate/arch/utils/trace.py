@@ -8,7 +8,7 @@ from typing import List
 from opentelemetry import trace, context
 
 if typing.TYPE_CHECKING:
-    from fate.arch.federation.federation import PartyMeta
+    from fate.arch.abc import PartyMeta
     from fate.arch.computing.table import KVTable
 
 logger = logging.getLogger(__name__)

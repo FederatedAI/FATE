@@ -84,7 +84,7 @@ class FederationBuilder:
             raise ValueError(f"{t} not in {FederationType}")
 
     def build_standalone(self, computing_session):
-        from fate.arch.federation.standalone import StandaloneFederation
+        from fate.arch.federation.backends.standalone import StandaloneFederation
 
         return StandaloneFederation(
             standalone_session=computing_session,
@@ -99,7 +99,7 @@ class FederationBuilder:
         if options is None:
             options = {}
         if mode == FederationMode.MESSAGE_QUEUE:
-            from fate.arch.federation.osx import OSXFederation
+            from fate.arch.federation.backends.osx import OSXFederation
 
             return OSXFederation.from_conf(
                 federation_session_id=self._federation_id,
@@ -112,7 +112,7 @@ class FederationBuilder:
             )
         else:
             from fate.arch.computing.eggroll import CSession
-            from fate.arch.federation.eggroll import EggrollFederation
+            from fate.arch.federation.backends.eggroll import EggrollFederation
 
             if not isinstance(computing_session, CSession):
                 raise RuntimeError(
@@ -128,7 +128,7 @@ class FederationBuilder:
             )
 
     def build_rabbitmq(self, computing_session, host: str, port: int, options: dict):
-        from fate.arch.federation.rabbitmq import RabbitmqFederation
+        from fate.arch.federation.backends.rabbitmq import RabbitmqFederation
 
         return RabbitmqFederation.from_conf(
             federation_session_id=self._federation_id,
@@ -148,7 +148,7 @@ class FederationBuilder:
         )
 
     def build_pulsar(self, computing_session, host: str, port: int, options: dict):
-        from fate.arch.federation.pulsar import PulsarFederation
+        from fate.arch.federation.backends.pulsar import PulsarFederation
 
         return PulsarFederation.from_conf(
             federation_session_id=self._federation_id,

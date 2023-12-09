@@ -24,11 +24,9 @@ from pickle import loads as p_loads
 from typing import List
 
 from fate.arch.abc import CTableABC, PartyMeta
-
-from ..federation import FederationDataType
-from ..federation._datastream import Datastream
+from fate.arch.federation.api import Federation, FederationDataType
+from ._datastream import Datastream
 from ._parties import Party
-from .federation import Federation
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +46,7 @@ def _get_splits(obj, max_message_size):
         return kv, num_slice
 
 
-class FederationBase(Federation):
+class MessageQueueBasedFederation(Federation):
     def __init__(
         self,
         session_id,
@@ -119,6 +117,9 @@ class FederationBase(Federation):
         rtn = []
         dtype = rtn_dtype.get("dtype", None)
         partitions = rtn_dtype.get("partitions", None)
+        partitioner_type = rtn_dtype.get("partitioner_type", None)
+        key_serdes_type = rtn_dtype.get("key_serdes_type", None)
+        value_serdes_type = rtn_dtype.get("value_serdes_type", None)
 
         if dtype == FederationDataType.TABLE:
             party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
@@ -138,81 +139,23 @@ class FederationBase(Federation):
                     mq=self._mq,
                     conf=self._conf,
                 )
-
-                table = self.computing_session.parallelize(range(partitions), include_key=False, partition=partitions)
-                table = table.mapPartitionsWithIndex(receive_func)
+                table = self.computing_session.parallelize(
+                    range(partitions),
+                    include_key=False,
+                    partition=partitions,
+                    partitioner_type=partitioner_type,
+                    key_serdes_type=key_serdes_type,
+                    value_serdes_type=value_serdes_type,
+                )
+                table = table.mapPartitionsWithIndex(
+                    receive_func,
+                    output_key_serdes_type=key_serdes_type,
+                    output_value_serdes_type=value_serdes_type,
+                    output_partitioner_type=partitioner_type,
+                )
                 rtn.append(table)
         return rtn
 
-    def pull(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
-        # wrap as party
-        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
-        log_str = f"[federation.get](name={name}, tag={tag}, parties={parties})"
-        LOGGER.debug(f"[{log_str}]start to get")
-
-        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name, tag, "get"]) for party in _parties]
-
-        if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            rtn_dtype = []
-            for i, info in enumerate(channel_infos):
-                obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
-                rtn_dtype.append(obj)
-                LOGGER.debug(f"[federation.get] _name_dtype_keys: {_name_dtype_keys}, dtype: {obj}")
-
-            for k in _name_dtype_keys:
-                if k not in self._name_dtype_map:
-                    self._name_dtype_map[k] = rtn_dtype[0]
-
-        rtn_dtype = self._name_dtype_map[_name_dtype_keys[0]]
-
-        rtn = []
-        dtype = rtn_dtype.get("dtype", None)
-        partitions = rtn_dtype.get("partitions", None)
-
-        if dtype == FederationDataType.TABLE or dtype == FederationDataType.SPLIT_OBJECT:
-            party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
-            for i in range(len(party_topic_infos)):
-                party = _parties[i]
-                role = party.role
-                party_id = party.party_id
-                topic_infos = party_topic_infos[i]
-                receive_func = self._get_partition_receive_func(
-                    name=name,
-                    tag=tag,
-                    src_party_id=self.local_party[1],
-                    src_role=self.local_party[0],
-                    dst_party_id=party_id,
-                    dst_role=role,
-                    topic_infos=topic_infos,
-                    mq=self._mq,
-                    conf=self._conf,
-                )
-
-                table = self.computing_session.parallelize(range(partitions), partitions, include_key=False)
-                table = table.mapPartitionsWithIndex(receive_func)
-
-                # add gc
-                self.get_gc.register_clean_action(name, tag, table, "__del__", {})
-
-                LOGGER.debug(f"[{log_str}]received table({i + 1}/{len(parties)}), party: {parties[i]} ")
-                if dtype == FederationDataType.TABLE:
-                    rtn.append(table)
-                else:
-                    obj_bytes = b"".join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
-                    obj = p_loads(obj_bytes)
-                    rtn.append(obj)
-        else:
-            party_topic_infos = self._get_party_topic_infos(_parties, name)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            for i, info in enumerate(channel_infos):
-                obj = self._receive_obj(info, name, tag)
-                LOGGER.debug(f"[{log_str}]received obj({i + 1}/{len(parties)}), party: {parties[i]} ")
-                rtn.append(obj)
-
-        LOGGER.debug(f"[{log_str}]finish to get")
-        return rtn
 
     def _push_bytes(
         self,
@@ -260,7 +203,13 @@ class FederationBase(Federation):
         if _name_dtype_keys[0] not in self._name_dtype_map:
             party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
             channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            body = {"dtype": FederationDataType.TABLE, "partitions": table.num_partitions}
+            body = {
+                "dtype": FederationDataType.TABLE,
+                "partitions": table.num_partitions,
+                "partitioner_type": table.partitioner_type,
+                "key_serdes_type": table.key_serdes_type,
+                "value_serdes_type": table.value_serdes_type,
+            }
             self._send_obj(
                 name=name,
                 tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
@@ -685,7 +634,6 @@ class FederationBase(Federation):
         mq,
         conf: dict,
     ):
-
         topic_pair = topic_infos[index][1]
         channel_info = self._get_channel(
             topic_pair=topic_pair,

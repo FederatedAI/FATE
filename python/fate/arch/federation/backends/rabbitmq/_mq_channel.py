@@ -19,7 +19,7 @@ import logging
 
 import pika
 
-from .._nretry import nretry
+from fate.arch.federation.message_queue import nretry
 
 LOGGER = logging.getLogger(__name__)
 

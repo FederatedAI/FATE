@@ -23,8 +23,9 @@ from typing import List
 
 from eggroll.computing import RollPair
 from eggroll.federation import RollSiteContext
-from fate.arch.federation.federation import Federation, PartyMeta
-from ...computing.eggroll import Table
+from fate.arch.federation.api import Federation
+from fate.arch.abc import PartyMeta
+from fate.arch.computing.eggroll import Table
 
 logger = logging.getLogger(__name__)
 

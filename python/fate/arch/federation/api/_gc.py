@@ -19,7 +19,7 @@ import typing
 from collections import deque
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class GarbageCollector:
@@ -48,10 +48,10 @@ class GarbageCollector:
     @classmethod
     def _safe_gc_call(cls, obj, method: str, kwargs: dict):
         try:
-            LOGGER.debug(f"[CLEAN]deleting {obj}, {method}, {kwargs}")
+            logger.debug(f"[CLEAN]deleting {obj}, {method}, {kwargs}")
             getattr(obj, method)(**kwargs)
         except Exception as e:
-            LOGGER.debug(f"[CLEAN]this could be ignore {e}")
+            logger.debug(f"[CLEAN]this could be ignore {e}")
 
 
 class IterationGC:
@@ -89,7 +89,7 @@ class IterationGC:
     def _safe_gc_call(actions: typing.List[typing.Tuple[typing.Any, str, dict]]):
         for obj, method, args_dict in actions:
             try:
-                LOGGER.debug(f"[CLEAN]deleting {obj}, {method}, {args_dict}")
+                logger.debug(f"[CLEAN]deleting {obj}, {method}, {args_dict}")
                 getattr(obj, method)(**args_dict)
             except Exception as e:
-                LOGGER.debug(f"[CLEAN]this could be ignore {e}")
+                logger.debug(f"[CLEAN]this could be ignore {e}")

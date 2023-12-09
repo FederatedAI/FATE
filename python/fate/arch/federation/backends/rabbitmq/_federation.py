@@ -19,9 +19,7 @@ from logging import getLogger
 from typing import List, Optional
 
 from fate.arch.abc import PartyMeta
-
-from .._federation import FederationBase
-from .._parties import Party
+from fate.arch.federation.message_queue import MessageQueueBasedFederation, Party
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
 
@@ -58,7 +56,7 @@ class _TopicPair(object):
         self.receive = receive
 
 
-class RabbitmqFederation(FederationBase):
+class RabbitmqFederation(MessageQueueBasedFederation):
     @staticmethod
     def from_conf(
         federation_session_id: str,

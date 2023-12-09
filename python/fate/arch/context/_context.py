@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
-    from ..federation.federation import Federation
-    from ..computing.table import KVTableContext
+    from fate.arch.federation.api import Federation
+    from fate.arch.computing.table import KVTableContext
 
 
 class Context:

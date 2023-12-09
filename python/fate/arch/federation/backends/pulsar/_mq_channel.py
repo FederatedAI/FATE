@@ -19,7 +19,7 @@ import logging
 
 import pulsar
 
-from .._nretry import nretry
+from fate.arch.federation.message_queue import nretry
 
 LOGGER = logging.getLogger(__name__)
 CHANNEL_TYPE_PRODUCER = "producer"
