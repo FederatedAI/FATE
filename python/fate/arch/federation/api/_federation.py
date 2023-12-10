@@ -17,7 +17,7 @@ import logging
 import typing
 from typing import List
 
-from fate.arch.utils.trace import (
+from fate.arch.trace import (
     federation_push_table_trace,
     federation_pull_table_trace,
     federation_push_bytes_trace,

@@ -5,7 +5,7 @@ import torch
 from fate.arch.context import Context
 from fate.arch.protocol.mpc.common.encoding import IgnoreEncodings
 from fate.arch.protocol.mpc.mpc import FixedPointEncoder
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 
 class SSHELinearRegressionLayer:

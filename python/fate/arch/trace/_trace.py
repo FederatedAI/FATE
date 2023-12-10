@@ -253,4 +253,9 @@ __all__ = [
     "get_tracer",
     "federation_auto_trace",
     "StatusCode",
+    "instrument_thread_pool_executor",
+    "federation_pull_bytes_trace",
+    "federation_pull_table_trace",
+    "federation_push_bytes_trace",
+    "federation_push_table_trace",
 ]

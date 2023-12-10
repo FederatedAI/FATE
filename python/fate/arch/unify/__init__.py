@@ -12,12 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._infra_def import Backend, device
+from ._infra_def import device
 from ._io import URI
 from ._uuid import uuid
 
 __all__ = [
-    "Backend",
     "device",
     "uuid",
     "URI",

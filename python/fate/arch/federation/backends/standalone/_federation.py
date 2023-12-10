@@ -16,9 +16,9 @@ import logging
 from typing import List
 
 from fate.arch.computing.backends.standalone import Table, CSession
+from fate.arch.computing.backends.standalone import standalone_raw
 from fate.arch.federation.api import Federation
 from fate.arch.federation.api import PartyMeta
-from .... import _standalone as standalone
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class StandaloneFederation(Federation):
         parties: List[PartyMeta],
     ):
         super().__init__(federation_session_id, party, parties)
-        self._federation = standalone.Federation.create(
+        self._federation = standalone_raw.Federation.create(
             standalone_session.get_standalone_session(), session_id=federation_session_id, party=party
         )
 
@@ -62,7 +62,7 @@ class StandaloneFederation(Federation):
     ) -> List[Table]:
         rtn = self._federation.pull_table(name=name, tag=tag, parties=parties)
 
-        return [Table(r) if isinstance(r, standalone.Table) else r for r in rtn]
+        return [Table(r) if isinstance(r, standalone_raw.Table) else r for r in rtn]
 
     def _pull_bytes(
         self,
@@ -72,7 +72,7 @@ class StandaloneFederation(Federation):
     ) -> List[bytes]:
         rtn = self._federation.pull_bytes(name=name, tag=tag, parties=parties)
 
-        return [Table(r) if isinstance(r, standalone.Table) else r for r in rtn]
+        return [Table(r) if isinstance(r, standalone_raw.Table) else r for r in rtn]
 
     def destroy(self):
         self._federation.destroy()

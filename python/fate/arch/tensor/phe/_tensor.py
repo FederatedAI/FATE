@@ -2,7 +2,7 @@ import functools
 
 import torch
 
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 _HANDLED_FUNCTIONS = {}
 _PHE_TENSOR_ENCODED_HANDLED_FUNCTIONS = {}

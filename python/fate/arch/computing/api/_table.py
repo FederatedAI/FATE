@@ -5,8 +5,8 @@ from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar, Optional
 
 from fate.arch.computing.partitioners import get_partitioner_by_type
 from fate.arch.computing.serdes import get_serdes_by_type
+from fate.arch.trace import auto_trace
 from fate.arch.unify import URI
-from fate.arch.utils.trace import auto_trace
 from ._profile import computing_profile as _compute_info
 
 logger = logging.getLogger(__name__)

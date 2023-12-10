@@ -17,13 +17,12 @@ import logging
 import typing
 from typing import Iterable, Literal, Optional, Tuple, TypeVar, overload
 
+from fate.arch.trace import auto_trace
 from ._cipher import CipherKit
 from ._federation import Parties, Party
 from ._metrics import InMemoryMetricsHandler, MetricsWrap
 from ._namespace import NS, default_ns
 from ..unify import device
-from fate.arch.utils.trace import auto_trace
-from fate.arch.config import cfg
 
 logger = logging.getLogger(__name__)
 

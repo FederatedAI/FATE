@@ -41,9 +41,3 @@ class device(Enum):
             return torch.device("cuda", self.index)
         else:
             raise ValueError(f"device type {self.type} not supported")
-
-
-class Backend(Enum):
-    STANDALONE = "STANDALONE"
-    EGGROLL = "EGGROLL"
-    SPARK = "SPARK"

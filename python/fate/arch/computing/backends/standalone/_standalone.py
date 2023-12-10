@@ -36,7 +36,7 @@ from typing import List, Tuple, Literal
 import cloudpickle as f_pickle
 import lmdb
 
-from fate.arch.utils import trace
+from fate.arch import trace
 
 PartyMeta = Tuple[Literal["guest", "host", "arbiter", "local"], str]
 

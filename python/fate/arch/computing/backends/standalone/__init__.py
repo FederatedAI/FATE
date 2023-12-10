@@ -14,7 +14,8 @@
 #  limitations under the License.
 #
 
+from . import _standalone as standalone_raw
 from ._csession import CSession
 from ._table import Table
 
-__all__ = ["Table", "CSession"]
+__all__ = ["Table", "CSession", "standalone_raw"]

@@ -18,7 +18,7 @@ from typing import Callable, Iterable, Any, Tuple
 
 from fate.arch.computing.api import ComputingEngine, KVTable, K, V
 from fate.arch.unify import URI
-from ...._standalone import Table as StandaloneTable
+from ._standalone import Table as StandaloneTable
 
 LOGGER = logging.getLogger(__name__)
 

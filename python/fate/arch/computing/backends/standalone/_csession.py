@@ -18,8 +18,8 @@ from typing import Optional
 
 from fate.arch.computing.api import KVTableContext, generate_computing_uuid
 from fate.arch.unify import URI, uuid
+from ._standalone import Session
 from ._table import Table
-from ...._standalone import Session
 
 logger = logging.getLogger(__name__)
 

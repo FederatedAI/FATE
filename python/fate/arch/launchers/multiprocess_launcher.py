@@ -36,7 +36,7 @@ import rich.console
 import rich.panel
 import rich.traceback
 
-from fate.arch.utils import trace
+from fate.arch import trace
 from .argparser import HfArgumentParser
 
 logger = logging.getLogger(__name__)
@@ -129,9 +129,9 @@ class MultiProcessLauncher:
     ):
         sys.argv = argv
         args = HfArgumentParser(LauncherProcessArguments).parse_args_into_dataclasses(return_remaining_strings=True)[0]
-        from fate.arch.utils.logger import set_up_logging
+        from fate.arch.launchers.logger import set_up_logging
         from fate.arch.launchers.context_helper import init_context
-        from fate.arch.utils.trace import setup_tracing
+        from fate.arch.trace import setup_tracing
         from fate.arch.computing.api import profile_start, profile_ends
 
         if args.rank >= len(args.parties):
@@ -202,7 +202,7 @@ class MultiProcessLauncher:
             self.console.print(rich.panel.Panel(tb, title=f"rank {rank} exception", expand=False, border_style="red"))
 
     def block_run(self, f):
-        from fate.arch.utils.trace import setup_tracing
+        from fate.arch.trace import setup_tracing
 
         setup_tracing("multi_process_launcher")
         with trace.get_tracer(__name__).start_as_current_span(self.federation_session_id):
@@ -267,7 +267,7 @@ def launch(f, **kwargs):
     args_desc.extend(kwargs.get("extra_args_desc", []))
     args, _ = HfArgumentParser(args_desc).parse_known_args(namespace=namespace)
 
-    from fate.arch.utils.logger import set_up_logging
+    from fate.arch.launchers.logger import set_up_logging
 
     set_up_logging(-1, args.log_level)
 

@@ -21,7 +21,7 @@ import torch
 from fate.arch.computing.api import KVTable
 from fate.arch.context import Context
 from fate.arch.tensor.phe import PHETensor
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 _HANDLED_FUNCTIONS = {}
 
