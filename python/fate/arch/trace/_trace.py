@@ -13,18 +13,22 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 _ENABLE_TRACING = None
-_ENABLE_TRACING_DEFAULT = True
+_ENABLE_TRACING_DEFAULT = False
 
 
 def _is_tracing_enabled():
     global _ENABLE_TRACING
     if _ENABLE_TRACING is None:
-        _ENABLE_TRACING = os.environ.get("FATE_ENABLE_TRACING", str(_ENABLE_TRACING_DEFAULT)).lower() == "false"
+        if (env_setting := os.environ.get("FATE_ENABLE_TRACING")) is not None:
+            _ENABLE_TRACING = bool(env_setting)
+        else:
+            _ENABLE_TRACING = _ENABLE_TRACING_DEFAULT
     return _ENABLE_TRACING
 
 
 def setup_tracing(service_name, endpoint: str = None):
     if not _is_tracing_enabled():
+        logger.info("disabled tracing")
         return
 
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
