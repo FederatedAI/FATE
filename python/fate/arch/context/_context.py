@@ -111,7 +111,7 @@ class Context:
         )
 
     @property
-    def computing(self):
+    def computing(self) -> "KVTableContext":
         return self._get_computing()
 
     @property
@@ -259,7 +259,7 @@ class Context:
             raise RuntimeError(f"federation not set")
         return self._federation
 
-    def _get_computing(self):
+    def _get_computing(self) -> "KVTableContext":
         if self._computing is None:
             raise RuntimeError(f"computing not set")
         return self._computing

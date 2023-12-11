@@ -339,7 +339,10 @@ def _call_stack_strings():
     return call_stack_strings
 
 
-def computing_profile(func):
+T = typing.TypeVar("T", bound=typing.Callable)
+
+
+def computing_profile(func: T) -> T:
     @wraps(func)
     def _fn(*args, **kwargs):
         function_call_stack = _call_stack_strings()
