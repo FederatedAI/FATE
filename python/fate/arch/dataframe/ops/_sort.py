@@ -118,7 +118,7 @@ def _nlargest_exactly(df: DataFrame, n, columns, keep) -> DataFrame:
     block_table = df._ctx.computing.parallelize(
         blocks_with_id,
         include_key=True,
-        partition=df.block_table.partitions
+        partition=df.block_table.num_partitions
     )
 
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, block_row_size=block_row_size)
