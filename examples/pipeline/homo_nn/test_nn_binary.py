@@ -34,7 +34,7 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    epochs = 10
+    epochs = 5
     batch_size = 64
     in_feat = 30
     out_feat = 16
@@ -54,7 +54,7 @@ def main(config="../../config.yaml", namespace=""):
         ), 
         loss=nn.BCELoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514, logging_strategy='steps'),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size),
         fed_args=FedAVGArguments(),
         task_type='binary'
         )
@@ -73,8 +73,8 @@ def main(config="../../config.yaml", namespace=""):
         predict_model_input=homo_nn_0.outputs['train_model_output']
     )
 
-    homo_nn_1.guest.component_setting(test_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_1.hosts[0].component_setting(test_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
+    homo_nn_1.guest.task_setting(test_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
+    homo_nn_1.hosts[0].task_setting(test_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
