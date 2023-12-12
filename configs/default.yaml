@@ -50,3 +50,21 @@ safety:
   serdes:
     # supported types: unrestricted, restricted, restricted_catch_miss
     restricted_type: "unrestricted"
+
+  phe:
+    paillier:
+      allow: True
+      minimum_key_size: 1024
+
+    ou:
+      allow: True
+      minimum_key_size: 1024
+
+    mock:
+      allow: False
+
+  psi:
+    ecdh:
+      allow: True
+      curve_type:
+        - curve25519
