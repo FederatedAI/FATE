@@ -565,13 +565,7 @@ class MessageQueueBasedFederation(Federation):
         # channel_info = self._query_receive_topic(channel_info)
 
         for id, properties, body in self._get_consume_message(channel_info):
-            LOGGER.debug(f"[federation._receive_obj] properties: {properties}")
-            if properties["message_id"] != name or properties["correlation_id"] != tag:
-                # todo: fix this
-                LOGGER.warning(
-                    f"[federation._receive_obj] require {name}.{tag}, got {properties['message_id']}.{properties['correlation_id']}"
-                )
-
+            LOGGER.debug(f"properties: {properties}")
             cache_key = self._get_message_cache_key(
                 properties["message_id"], properties["correlation_id"], party_id, role
             )
