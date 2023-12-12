@@ -4,7 +4,7 @@ from typing import List, MutableMapping, Tuple, Optional
 
 import torch
 
-from fate.arch.abc import CTableABC
+from fate.arch.computing.api import KVTable
 from ._histogram_local import Histogram
 from ._histogram_splits import HistogramSplits
 from .indexer import HistogramIndexer, Shuffler
@@ -28,7 +28,7 @@ def _decrypt_func(sk_map, coder_map, squeezed, unpacker_map):
 class DistributedHistogram:
     def __init__(
         self,
-        splits: CTableABC[int, HistogramSplits],
+        splits: KVTable[int, HistogramSplits],
         k,
         node_size,
         node_data_size,

@@ -16,8 +16,8 @@ name = "fed55"
 
 def create_ctx(local):
     from fate.arch import Context
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.federation.standalone import StandaloneFederation
+    from fate.arch.computing.backends.standalone import CSession
+    from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
 
     logger = logging.getLogger()

@@ -18,31 +18,26 @@ def load_computing(computing, logger_config=None):
         SparkComputingSpec,
         StandaloneComputingSpec,
     )
+    from fate.arch.computing import ComputingBuilder
+
+    builder = ComputingBuilder(computing.metadata.computing_id)
 
     if isinstance(computing, StandaloneComputingSpec):
-        from fate.arch.computing.standalone import CSession
-
-        return CSession(
-            session_id=computing.metadata.computing_id,
+        return builder.build_standalone(
             data_dir=computing.metadata.options.get("data_dir", None),
             logger_config=logger_config,
             options=computing.metadata.options,
         )
     if isinstance(computing, EggrollComputingSpec):
-        from fate.arch.computing.eggroll import CSession
-
-        return CSession(
-            computing.metadata.computing_id,
+        return builder.build_eggroll(
             host=computing.metadata.host,
             port=computing.metadata.port,
+            options=computing.metadata.options,
             config_options=computing.metadata.config_options,
             config_properties_file=computing.metadata.config_properties_file,
-            options=computing.metadata.options,
         )
     if isinstance(computing, SparkComputingSpec):
-        from fate.arch.computing.spark import CSession
-
-        return CSession(computing.metadata.computing_id)
+        return builder.build_spark()
 
     # TODO: load from plugin
     raise ValueError(f"conf.computing={computing} not support")

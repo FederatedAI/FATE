@@ -23,7 +23,7 @@ import pandas as pd
 
 from fate.arch.tensor import DTensor
 from .manager import DataManager, Schema
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 if typing.TYPE_CHECKING:
     from fate.arch.histogram import DistributedHistogram, HistogramBuilder

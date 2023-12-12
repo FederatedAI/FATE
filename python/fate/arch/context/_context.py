@@ -17,21 +17,20 @@ import logging
 import typing
 from typing import Iterable, Literal, Optional, Tuple, TypeVar, overload
 
+from fate.arch.trace import auto_trace
 from ._cipher import CipherKit
 from ._federation import Parties, Party
 from ._metrics import InMemoryMetricsHandler, MetricsWrap
 from ._namespace import NS, default_ns
 from ..unify import device
-from fate.arch.utils.trace import auto_trace
-from fate.arch.config import cfg
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
-    from ..federation.federation import Federation
-    from ..computing.table import KVTableContext
+    from fate.arch.federation.api import Federation
+    from fate.arch.computing.api import KVTableContext
 
 
 class Context:
@@ -112,7 +111,7 @@ class Context:
         )
 
     @property
-    def computing(self):
+    def computing(self) -> "KVTableContext":
         return self._get_computing()
 
     @property
@@ -260,7 +259,7 @@ class Context:
             raise RuntimeError(f"federation not set")
         return self._federation
 
-    def _get_computing(self):
+    def _get_computing(self) -> "KVTableContext":
         if self._computing is None:
             raise RuntimeError(f"computing not set")
         return self._computing

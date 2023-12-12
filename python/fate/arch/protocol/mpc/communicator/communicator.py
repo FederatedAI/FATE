@@ -9,7 +9,7 @@ from torch.distributed import ReduceOp
 from torch.distributed import ReduceOp
 
 from fate.arch.context import Context, NS, Parties
-from fate.arch.utils import trace
+from fate.arch import trace
 from typing import List
 
 logger = logging.getLogger(__name__)

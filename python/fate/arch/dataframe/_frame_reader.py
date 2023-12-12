@@ -21,7 +21,7 @@ from .conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
 from .entity import types
 from ._dataframe import DataFrame
 from .manager import DataManager
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 
 class TableReader(object):

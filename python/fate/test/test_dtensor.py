@@ -1,8 +1,8 @@
 import pytest
 import torch
 from fate.arch import Context
-from fate.arch.computing.standalone import CSession
-from fate.arch.federation.standalone import StandaloneFederation
+from fate.arch.computing.backends.standalone import CSession
+from fate.arch.federation.backends.standalone import StandaloneFederation
 from fate.arch.tensor import DTensor
 from pytest import fixture
 

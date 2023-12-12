@@ -15,6 +15,6 @@
 #
 
 from .context import CipherKit, Context
-from .unify import URI, Backend, device
+from .unify import URI, device
 
-__all__ = ["Backend", "device", "Context", "URI", "CipherKit"]
+__all__ = ["device", "Context", "URI", "CipherKit"]

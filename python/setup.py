@@ -22,6 +22,8 @@ install_requires = [
     "requests",
     "grpcio",
     "protobuf",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
 ]
 
 # Extra requirements
