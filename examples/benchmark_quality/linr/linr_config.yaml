@@ -20,3 +20,4 @@ optimizer:
   alpha: 0.01
 batch_size: 100
 early_stop: "diff"
+learning_rate: 0.13
