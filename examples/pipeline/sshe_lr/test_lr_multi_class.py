@@ -44,8 +44,8 @@ def main(config="../config.yaml", namespace=""):
                   learning_rate=0.15,
                   epochs=10,
                   batch_size=None,
-                  reveal_every_epoch=True,
-                  early_stop="weight_diff",
+                  reveal_every_epoch=False,
+                  early_stop="diff",
                   reveal_loss_freq=1,
                   init_param={"fit_intercept": True, "method": "random_uniform"},
                   train_data=psi_0.outputs["output_data"])

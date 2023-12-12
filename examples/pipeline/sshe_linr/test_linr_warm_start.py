@@ -64,7 +64,7 @@ def main(config="../config.yaml", namespace=""):
                       init_param={"fit_intercept": True, "method": "zeros"},
                       train_data=psi_0.outputs["output_data"],
                       learning_rate=0.05,
-                      reveal_every_epoch=True,
+                      reveal_every_epoch=False,
                       early_stop="diff",
                       reveal_loss_freq=1,
                       )

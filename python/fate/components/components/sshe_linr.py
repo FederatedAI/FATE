@@ -44,12 +44,13 @@ def train(
         early_stop: cpn.parameter(
             type=params.string_choice(["weight_diff", "diff", "abs"]),
             default="diff",
-            desc="early stopping criterion, choose from {weight_diff, diff, abs}",
+            desc="early stopping criterion, choose from {weight_diff, diff, abs}, if use weight_diff,"
+                 "weight will be revealed every epoch",
         ),
         learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
         reveal_every_epoch: cpn.parameter(type=bool, default=False,
                                           desc="whether reveal encrypted result every epoch, "
-                                               "if False, only reveal at the end of training"),
+                                               "only accept False for now"),
         init_param: cpn.parameter(
             type=params.init_param(),
             default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
@@ -116,7 +117,8 @@ def cross_validation(
         early_stop: cpn.parameter(
             type=params.string_choice(["weight_diff", "diff", "abs"]),
             default="diff",
-            desc="early stopping criterion, choose from {weight_diff, diff, abs}",
+            desc="early stopping criterion, choose from {weight_diff, diff, abs}, if use weight_diff,"
+                 "weight will be revealed every epoch",
         ),
         learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
         init_param: cpn.parameter(
@@ -129,7 +131,7 @@ def cross_validation(
         ),
         reveal_every_epoch: cpn.parameter(type=bool, default=False,
                                           desc="whether reveal encrypted result every epoch, "
-                                               "if False, only reveal at the end of training"),
+                                               "only accept False for now"),
         reveal_loss_freq: cpn.parameter(type=params.conint(ge=1), default=1,
                                         desc="rounds to reveal training loss, "
                                              "only effective if `early_stop` is 'loss'"),
