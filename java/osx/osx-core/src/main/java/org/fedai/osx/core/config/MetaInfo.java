@@ -113,8 +113,10 @@ public class MetaInfo {
     public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD = "";
     @Config(confKey = "https.server.trust.keystore.file")
     public static String PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE = "";
-    @Config(confKey = "https.server.trust.keystore.file.password")
+    @Config(confKey = "https.client.trust.keystore.file.password")
     public static String PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD = "";
+    @Config(confKey = "https.server.hostname.verifier.skip")
+    public static boolean PROPERTY_HTTPS_HOSTNAME_VERIFIER_SKIP = true;
     @Config(confKey = "grpc.server.cert.chain.file")
     public static String PROPERTY_GRPC_SERVER_CERT_CHAIN_FILE;
     @Config(confKey = "grpc.server.private.key.file")

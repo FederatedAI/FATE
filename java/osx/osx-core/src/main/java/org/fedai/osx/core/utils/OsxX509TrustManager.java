@@ -1,5 +1,6 @@
 package org.fedai.osx.core.utils;
 
+import org.fedai.osx.core.config.MetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,7 +241,7 @@ public class OsxX509TrustManager implements X509TrustManager {
 
         @Override
         public boolean verify(String s, SSLSession sslSession) {
-            return true;
+            return MetaInfo.PROPERTY_HTTPS_HOSTNAME_VERIFIER_SKIP;
         }
     }
 }
