@@ -445,6 +445,7 @@ class Session(object):
     def __init__(self, session_id, data_dir: str, max_workers=None, logger_config=None):
         self.session_id = session_id
         self._data_dir = data_dir
+        self._max_workers = max_workers
         self._pool = Executor(
             max_workers=max_workers,
             initializer=_watch_thread_react_to_parent_die,
@@ -454,6 +455,14 @@ class Session(object):
             ),
         )
         self._enable_process_logger = True
+
+    @property
+    def data_dir(self):
+        return self._data_dir
+
+    @property
+    def max_workers(self):
+        return self._max_workers
 
     def __getstate__(self):
         # session won't be pickled

@@ -110,6 +110,14 @@ class CSession(KVTableContext):
         )
         return Table(rp)
 
+    def _info(self):
+        if hasattr(self._rpc, "info"):
+            return self._rpc.info()
+        else:
+            return {
+                "session_id": self.session_id,
+            }
+
     def cleanup(self, name, namespace):
         self._rpc.cleanup(name=name, namespace=namespace)
 

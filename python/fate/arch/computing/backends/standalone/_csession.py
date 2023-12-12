@@ -106,6 +106,13 @@ class CSession(KVTableContext):
         )
         return Table(table)
 
+    def _info(self):
+        return {
+            "session_id": self.session_id,
+            "data_dir": self._session.data_dir,
+            "max_workers": self._session.max_workers,
+        }
+
     def cleanup(self, name, namespace):
         return self._session.cleanup(name=name, namespace=namespace)
 

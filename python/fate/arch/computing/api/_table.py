@@ -82,6 +82,12 @@ class KVTableContext:
     ):
         raise NotImplementedError(f"{self.__class__.__name__}._parallelize")
 
+    def info(self):
+        return self._info()
+
+    def _info(self):
+        return {}
+
     def load(self, uri: URI, schema: dict, options: dict = None):
         return self._load(
             uri=uri,
