@@ -17,33 +17,33 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import SSHELR, PSI
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 from fate_test.utils import parse_summary_result
 
 
-def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""):
+def main(config="../../config.yaml", param="./breast_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
     if isinstance(param, str):
         param = test_utils.JobConfig.load_from_file(param)
 
     assert isinstance(param, dict)
+
     guest_data_table = param.get("data_guest")
     host_data_table = param.get("data_host")
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
@@ -56,48 +56,56 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
 
     config_param = {
         "epochs": param["epochs"],
-        "learning_rate_scheduler": param["learning_rate_scheduler"],
-        "optimizer": param["optimizer"],
+        # "learning_rate_scheduler": param["learning_rate_scheduler"],
+        # "optimizer": param["optimizer"],
+        "learning_rate": param["learning_rate"],
         "batch_size": param["batch_size"],
         "early_stop": param["early_stop"],
         "init_param": param["init_param"],
         "tol": 1e-5,
+        "reveal_loss_freq": 3,
     }
     lr_param.update(config_param)
-    lr_0 = CoordinatedLR("lr_0",
-                         train_data=psi_0.outputs["output_data"],
-                         **config_param)
-    lr_1 = CoordinatedLR("lr_1",
-                         test_data=psi_0.outputs["output_data"],
-                         input_model=lr_0.outputs["output_model"])
+    lr_0 = SSHELR("lr_0",
+                  train_data=psi_0.outputs["output_data"],
+                  **lr_param)
+    lr_1 = SSHELR("lr_1",
+                  test_data=psi_0.outputs["output_data"],
+                  input_model=lr_0.outputs["output_model"])
 
-    evaluation_0 = Evaluation('evaluation_0',
-                              runtime_roles=['guest'],
-                              input_data=lr_0.outputs["train_output_data"],
-                              predict_column_name='predict_result',
-                              metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
+    evaluation_0 = Evaluation("evaluation_0",
+                              runtime_roles=["guest"],
+                              metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
+                              input_data=lr_0.outputs["train_output_data"])
+
     pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(lr_1)
     pipeline.add_task(evaluation_0)
+
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
-
     pipeline.compile()
     pipeline.fit()
 
-    # lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
-    # lr_1_data = pipeline.get_task_info("lr_1").get_output_data()["test_output_data"]
+    """lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
+    lr_1_data = pipeline.get_task_info("lr_1").get_output_data()["test_output_data"]
+    lr_0_score = extract_data(lr_0_data, "predict_result")
+    lr_0_label = extract_data(lr_0_data, "y")
+    lr_1_score = extract_data(lr_1_data, "predict_result")
+    lr_1_label = extract_data(lr_1_data, "y")
+    lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
+    lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)"""
 
     result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
-    # lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
-    #lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    print(f"result_summary: {result_summary}")
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
+
     return data_summary, result_summary
 
 
@@ -106,10 +114,6 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", type=str,
                         help="config file", default="../../config.yaml")
     parser.add_argument("-p", "--param", type=str,
-                        help="config file for params", default="./vehicle_config.yaml")
-
+                        help="config file for params", default="./breast_config.yaml")
     args = parser.parse_args()
-    if args.config is not None:
-        main(args.config, args.param)
-    else:
-        main()
+    main(args.config, args.param)

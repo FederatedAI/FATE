@@ -17,8 +17,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
 from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import SSHELR, PSI
 from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
@@ -32,7 +32,6 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
     if isinstance(param, str):
         param = test_utils.JobConfig.load_from_file(param)
@@ -43,7 +42,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
     psi_0 = PSI("psi_0")
     psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
@@ -56,20 +55,22 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
 
     config_param = {
         "epochs": param["epochs"],
-        "learning_rate_scheduler": param["learning_rate_scheduler"],
-        "optimizer": param["optimizer"],
+        # "learning_rate_scheduler": param["learning_rate_scheduler"],
+        # "optimizer": param["optimizer"],
+        "learning_rate": param["learning_rate"],
         "batch_size": param["batch_size"],
         "early_stop": param["early_stop"],
         "init_param": param["init_param"],
+        "reveal_loss_freq": 3,
         "tol": 1e-5,
     }
     lr_param.update(config_param)
-    lr_0 = CoordinatedLR("lr_0",
-                         train_data=psi_0.outputs["output_data"],
-                         **config_param)
-    lr_1 = CoordinatedLR("lr_1",
-                         test_data=psi_0.outputs["output_data"],
-                         input_model=lr_0.outputs["output_model"])
+    lr_0 = SSHELR("lr_0",
+                  train_data=psi_0.outputs["output_data"],
+                  **config_param)
+    lr_1 = SSHELR("lr_1",
+                  test_data=psi_0.outputs["output_data"],
+                  input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation('evaluation_0',
                               runtime_roles=['guest'],
@@ -93,7 +94,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
 
     result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
     # lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
-    #lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    # lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

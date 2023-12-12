@@ -45,6 +45,8 @@ class SSHELinearRegression(Module):
         self.learning_rate = learning_rate
         self.init_param = init_param
         self.threshold = threshold
+        if reveal_every_epoch:
+            raise ValueError(f"reveal_every_epoch is currenly not supported in SSHELogisticRegression")
         self.reveal_every_epoch = reveal_every_epoch
         self.reveal_loss_freq = reveal_loss_freq
 
@@ -183,17 +185,24 @@ class SSHELREstimator(HeteroModule):
         else:
             batch_loader = dataframe.DataLoader(
                 train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
+        # if self.reveal_every_epoch:
         if self.early_stop == "weight_diff":
+            wa_p = wa.get_plain_text(dst=rank_a)
+            wb_p = wb.get_plain_text(dst=rank_b)
             if ctx.is_on_guest:
-                self.converge_func.set_pre_weight(wb.get_plain_text(dst=rank_b))
+                self.converge_func.set_pre_weight(wb_p)
             else:
-                self.converge_func.set_pre_weight(wa.get_plain_text(dst=rank_a))
+                self.converge_func.set_pre_weight(wa_p)
         for i, epoch_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             epoch_loss = None
             logger.info(f"self.optimizer set epoch {i}")
             for batch_ctx, batch_data in epoch_ctx.on_batches.ctxs_zip(batch_loader):
                 h = batch_data.x
                 y = batch_ctx.mpc.cond_call(lambda: batch_data.label, lambda: None, dst=rank_b)
+                """if self.reveal_every_epoch:
+                    z = batch_ctx.mpc.cond_call(lambda: torch.matmul(h, wa_p.detach()),
+                                                lambda: torch.matmul(h, wb_p.detach()), dst=rank_a)
+                else:"""
                 z = layer(h)
                 loss = loss_fn(z, y)
                 if i % self.reveal_loss_freq == 0:
@@ -205,12 +214,12 @@ class SSHELREstimator(HeteroModule):
                 optimizer.step()
             if epoch_loss is not None:
                 epoch_ctx.metrics.log_loss("linr_loss", epoch_loss.tolist())
-            if self.reveal_every_epoch:
-                wa_p = wa.get_plain_text(dst=rank_a)
-                wb_p = wb.get_plain_text(dst=rank_b)
+            # if self.reveal_every_epoch:
+            #    wa_p = wa.get_plain_text(dst=rank_a)
+            #    wb_p = wb.get_plain_text(dst=rank_b)
             if ctx.is_on_guest:
                 if self.early_stop == "weight_diff":
-                    if self.reveal_every_epoch:
+                    """if self.reveal_every_epoch:
                         wb_p_delta = self.converge_func.compute_weight_diff(wb_p - self.converge_func.pre_weight)
                         w_diff = wb_p_delta + epoch_ctx.hosts.get("wa_p_delta")[0]
                         self.converge_func.set_pre_weight(wb_p)
@@ -218,20 +227,32 @@ class SSHELREstimator(HeteroModule):
                             self.is_converged = True
                     else:
                         raise ValueError(f"early stop {self.early_stop} is not supported when "
-                                         f"reveal_every_epoch is False")
+                                         f"reveal_every_epoch is False")"""
+                    wa_p = wa.get_plain_text(dst=rank_a)
+                    wb_p = wb.get_plain_text(dst=rank_b)
+                    wb_p_delta = self.converge_func.compute_weight_diff(wb_p - self.converge_func.pre_weight)
+                    w_diff = wb_p_delta + epoch_ctx.hosts.get("wa_p_delta")[0]
+                    self.converge_func.set_pre_weight(wb_p)
+                    if w_diff < self.tol:
+                        self.is_converged = True
                 else:
                     if i % self.reveal_loss_freq == 0:
                         self.is_converged = self.converge_func.is_converge(epoch_loss)
                 epoch_ctx.hosts.put("converge_flag", self.is_converged)
             else:
                 if self.early_stop == "weight_diff":
-                    if self.reveal_every_epoch:
+                    """if self.reveal_every_epoch:
                         wa_p_delta = self.converge_func.compute_weight_diff(wa_p - self.converge_func.pre_weight)
                         epoch_ctx.guest.put("wa_p_delta", wa_p_delta)
                         self.converge_func.set_pre_weight(wa_p)
                     else:
                         raise ValueError(f"early stop {self.early_stop} is not supported when "
-                                         f"reveal_every_epoch is False")
+                                         f"reveal_every_epoch is False")"""
+                    wa_p = wa.get_plain_text(dst=rank_a)
+                    wb_p = wb.get_plain_text(dst=rank_b)
+                    wa_p_delta = self.converge_func.compute_weight_diff(wa_p - self.converge_func.pre_weight)
+                    epoch_ctx.guest.put("wa_p_delta", wa_p_delta)
+                    self.converge_func.set_pre_weight(wa_p)
                 self.is_converged = epoch_ctx.guest.get("converge_flag")
             if self.is_converged:
                 self.end_epoch = i

@@ -56,6 +56,7 @@ def main(config="../config.yaml", namespace=""):
                   batch_size=300,
                   init_param={"fit_intercept": True, "method": "zeros"},
                   train_data=psi_0.outputs["output_data"],
+                  reveal_every_epoch=False
                   )
 
     evaluation_0 = Evaluation("evaluation_0",

@@ -47,7 +47,7 @@ def main(config="../config.yaml", namespace=""):
     lr_0 = SSHELR("lr_0",
                   epochs=10,
                   batch_size=300,
-                  reveal_every_epoch=True,
+                  reveal_every_epoch=False,
                   early_stop="diff",
                   reveal_loss_freq=1,
                   init_param={"fit_intercept": True, "method": "random_uniform"},

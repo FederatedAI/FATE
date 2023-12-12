@@ -54,7 +54,7 @@ def main(config="../config.yaml", namespace=""):
                   epochs=2,
                   batch_size=None,
                   learning_rate=0.05,
-                  reveal_every_epoch=True,
+                  reveal_every_epoch=False,
                   early_stop="diff",
                   reveal_loss_freq=1,
                   )
@@ -64,7 +64,7 @@ def main(config="../config.yaml", namespace=""):
                   learning_rate=0.05,
                   init_param={"fit_intercept": True, "method": "zeros"},
                   train_data=psi_0.outputs["output_data"],
-                  reveal_every_epoch=True,
+                  reveal_every_epoch=False,
                   early_stop="diff",
                   reveal_loss_freq=1,
                   )
