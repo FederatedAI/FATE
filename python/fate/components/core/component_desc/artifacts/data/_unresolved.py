@@ -14,6 +14,7 @@ from .._base_type import (
 
 class DataUnresolvedWriter(_ArtifactTypeWriter[DataUnresolvedArtifactType]):
     def write_metadata(self, metadata: dict, name=None, namespace=None):
+        self.artifact.consumed()
         self.artifact.metadata.metadata.update(metadata)
         if name is not None:
             self.artifact.metadata.name = name
