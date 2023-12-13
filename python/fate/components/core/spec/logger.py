@@ -62,4 +62,8 @@ class LoggerConfig(pydantic.BaseModel):
                 root=dict(handlers=["console"], level="DEBUG"),
                 disable_existing_loggers=False,
             )
+
+        for _name, _conf in self.config.get("handlers", {}).items():
+            if _conf.get("filename"):
+                os.makedirs(os.path.dirname(_conf.get("filename")), exist_ok=True)
         logging.config.dictConfig(self.config)
