@@ -45,6 +45,16 @@ class Federation:
         self._get_gc: GarbageCollector = GarbageCollector()
         self._remote_gc: GarbageCollector = GarbageCollector()
 
+    def get_default_max_message_size(self):
+        from fate.arch.config import cfg
+
+        return cfg.federation.split_large_object.max_message_size
+
+    def get_default_partition_num(self):
+        from fate.arch.config import cfg
+
+        return cfg.federation.split_large_object.partition_num
+
     @property
     def session_id(self) -> str:
         return self._session_id

@@ -106,12 +106,20 @@ class CSession(KVTableContext):
         )
         return Table(table)
 
-    def _info(self):
-        return {
-            "session_id": self.session_id,
-            "data_dir": self._session.data_dir,
-            "max_workers": self._session.max_workers,
-        }
+    def _info(self, level=0):
+
+        if level == 0:
+            return f"Standalone<session_id={self.session_id}, max_workers={self._session.max_workers}, data_dir={self._session.data_dir}>"
+
+        elif level == 1:
+            import inspect
+
+            return {
+                "session_id": self.session_id,
+                "data_dir": self._session.data_dir,
+                "max_workers": self._session.max_workers,
+                "code_path": inspect.getfile(self._session.__class__),
+            }
 
     def cleanup(self, name, namespace):
         return self._session.cleanup(name=name, namespace=namespace)

@@ -34,18 +34,6 @@ class Config(object):
     def mpc(self):
         return self.config.mpc
 
-    @property
-    def debug(self):
-        return self.config.debug
-
-    @property
-    def encoder(self):
-        return self.config.encoder
-
-    @property
-    def functions(self):
-        return self.config.functions
-
     @contextmanager
     def temp_override(self, override_dict):
         old_config = self.config
@@ -66,6 +54,10 @@ class Config(object):
             raise ValueError(f"{key} not in {options} or {self.config}")
         else:
             return default
+
+    @property
+    def federation(self):
+        return self.config.federation
 
     @property
     def safety(self):
