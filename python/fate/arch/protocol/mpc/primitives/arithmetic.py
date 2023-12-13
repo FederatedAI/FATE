@@ -455,7 +455,7 @@ class ArithmeticSharedTensor(object):
             y = y.long()
 
         if isinstance(y, int) or is_int_tensor(y):
-            validate = cfg.debug.validation_mode
+            validate = cfg.safety.mpc.debug.validation_mode
 
             if validate:
                 tolerance = 1.0

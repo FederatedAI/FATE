@@ -24,7 +24,7 @@ def argmax(self, dim=None, keepdim=False, one_hot=True):
     """Returns the indices of the maximum value of all elements in the
     `input` tensor.
     """
-    method = cfg.functions.max_method
+    method = cfg.safety.mpc.functions.max_method
 
     if self.dim() == 0:
         result = (
@@ -50,7 +50,7 @@ def argmin(self, dim=None, keepdim=False, one_hot=True):
 
 def max(self, dim=None, keepdim=False, one_hot=True):
     """Returns the maximum value of all elements in the input tensor."""
-    method = cfg.functions.max_method
+    method = cfg.safety.mpc.functions.max_method
     if dim is None:
         if method in ["log_reduction", "double_log_reduction"]:
             # max_result can be obtained directly

@@ -22,7 +22,7 @@ def register_validation(getattr_function):
         # Get dispatched function call
         function = getattr_function(self, name)
 
-        if not cfg.debug.validation_mode:
+        if not cfg.safety.mpc.debug.validation_mode:
             return function
 
         # Run validation
