@@ -58,7 +58,6 @@ class MessageQueueBasedFederation(Federation):
         # TODO: remove this
         self._party = Party(party[0], party[1])
 
-    @property
     def get_default_partition_num(self):
         if self._max_message_size is None:
             return super().get_default_partition_num()
