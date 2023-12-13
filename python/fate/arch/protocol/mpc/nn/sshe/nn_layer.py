@@ -80,12 +80,13 @@ class SSHENeuralNetworkAggregator:
         wa_init_fn,
         wb_init_fn,
         precision_bits=None,
+        cipher_options=None,
     ):
         self.ctx = ctx
         self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_nn_aggregator_layer")
         self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
         self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
-        self.phe_cipher = ctx.cipher.phe.setup()
+        self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
         self.rank_a = rank_a
         self.rank_b = rank_b
         self.precision_bits = precision_bits

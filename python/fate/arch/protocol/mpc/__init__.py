@@ -48,7 +48,7 @@ __SUPPORTED_PROVIDERS = {
 
 
 def get_default_provider():
-    return __SUPPORTED_PROVIDERS[cfg.mpc.provider]
+    return __SUPPORTED_PROVIDERS[cfg.safety.mpc.provider]
 
 
 def cryptensor(ctx, *args, cryptensor_type=None, **kwargs):
@@ -387,7 +387,7 @@ def fill_cache():
 
 
 def ttp_required():
-    return cfg.mpc.provider == "TTP"
+    return cfg.safety.mpc.provider == "TTP"
 
 
 def _setup_prng(ctx: "Context", generators):

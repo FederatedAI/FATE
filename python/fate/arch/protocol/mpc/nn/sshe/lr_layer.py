@@ -21,6 +21,7 @@ class SSHELogisticRegressionLayer:
         wb_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
         precision_bits=None,
         sync_shape=True,
+        cipher_options=None,
     ):
         self.ctx = ctx
         self.rank_a = rank_a
@@ -49,7 +50,7 @@ class SSHELogisticRegressionLayer:
 
         self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
         self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
-        self.phe_cipher = ctx.cipher.phe.setup()
+        self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
         self.precision_bits = precision_bits
 
     @auto_trace(annotation="[z|rank_b] = 0.25 * ([xa|rank_a] * <wa> + [xb|rank_b] * <wb>) + 0.5")
@@ -147,12 +148,12 @@ class SSHELogisticRegressionLayerBackwardFunction:
 
 
 class SSHELogisticRegressionLossLayer:
-    def __init__(self, ctx: Context, rank_a, rank_b):
+    def __init__(self, ctx: Context, rank_a, rank_b, cipher_options=None):
         self.ctx = ctx
         self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_loss_layer")
         self.rank_a = rank_a
         self.rank_b = rank_b
-        self.phe_cipher = ctx.cipher.phe.setup()
+        self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
 
     @auto_trace(annotation="<dz> = <z> - y")
     def forward(self, z, y):
