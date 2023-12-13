@@ -21,7 +21,7 @@ class LauncherClusterContextArgs:
     csession_id: str = field(default=None)
     federation_address: str = field(default="127.0.0.1:9377")
     cluster_address: str = field(default="127.0.0.1:4670")
-    federation_mode: str = field(default="message_queue")
+    federation_mode: str = field(default="stream")
 
 
 @dataclass
