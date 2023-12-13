@@ -275,6 +275,8 @@ public class Dict {
     public final static String URL = "url";
 
     public final static String USE_SSL = "useSSL";
+    public final static String USE_KEYSTORE = "useKeyStore";
+
     public final static String CA_FILE = "caFile";
     public final static String CERT_CHAIN_FILE = "certChainFile";
     public final static String PRIVATE_KEY_FILE = "privateKeyFile";

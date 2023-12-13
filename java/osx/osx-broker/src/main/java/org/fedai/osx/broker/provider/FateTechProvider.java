@@ -311,12 +311,10 @@ public class FateTechProvider implements TechProvider {
 
     private ExceptionInfo handleExceptionInfo(OsxContext context, Throwable e) {
         ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
-        //this.writeHttpRespose(response, exceptionInfo.getCode(),exceptionInfo.getMessage(),null);
         context.setReturnCode(exceptionInfo.getCode());
         context.setReturnMsg(exceptionInfo.getMessage());
         return exceptionInfo;
     }
-
 
     @Override
     public void processGrpcPeek(OsxContext context, Osx.PeekInbound inbound, StreamObserver<Osx.TransportOutbound> responseObserver) {
@@ -372,9 +370,6 @@ public class FateTechProvider implements TechProvider {
             if (MetaInfo.PROPERTY_SELF_PARTY.contains(desNodeId)) {
                 ServiceRegisterInfo serviceRegisterInfo = this.serviceRegisterManager.getServiceWithLoadBalance(context, "", UriConstants.PUSH, false);
                 AbstractServiceAdaptorNew serviceAdaptor = serviceRegisterInfo.getServiceAdaptor();
-//                ProduceRequest produceRequest = new ProduceRequest();
-//                produceRequest.setPayload(inbound.getPayload().toByteArray());
-//                produceRequest.setTopic(inbound.getTopic());
                 ProduceRequest produceRequest  = buildProduceRequestFromGrpc(inbound);
                 ProduceResponse produceResponse = (ProduceResponse) serviceAdaptor.service(context, produceRequest);
                 if (produceResponse != null) {

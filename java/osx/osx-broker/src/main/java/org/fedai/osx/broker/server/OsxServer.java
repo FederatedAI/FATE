@@ -41,6 +41,7 @@ import org.fedai.osx.broker.http.InnerServlet;
 import org.fedai.osx.broker.http.InterServlet;
 import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.frame.ContextPrepareInterceptor;
+import org.fedai.osx.core.service.ApplicationStartedRunner;
 import org.fedai.osx.core.utils.OSXCertUtils;
 import org.fedai.osx.core.utils.OsxX509TrustManager;
 
@@ -66,7 +67,7 @@ import static org.fedai.osx.core.config.MetaInfo.*;
  */
 @Singleton
 @Slf4j
-public class OsxServer {
+public class OsxServer implements ApplicationStartedRunner {
     io.grpc.Server server;
     io.grpc.Server tlsServer;
     org.eclipse.jetty.server.Server httpServer;
@@ -143,24 +144,24 @@ public class OsxServer {
             ServerConnector connector;
             SslContextFactory.Server sslServer = new SslContextFactory.Server();
 //            //如果PROPERTY_HTTP_SSL_TRUST_STORE_PATH 为空， 则去读取证书套件，然后生成一个TRUST_STORE
-            if (StringUtils.isNotBlank(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH)) {
+            if (StringUtils.isNotBlank(MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE) && StringUtils.isBlank(MetaInfo.PROPERTY_HTTPS_SERVER_PRIVATE_KEY_FILE)) {
                 sslServer.setTrustStoreType(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE.toUpperCase());
-                sslServer.setTrustStorePath(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH);
-                sslServer.setTrustStore(OSXCertUtils.getTrustStore(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PATH, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE));
-                if (StringUtils.isAllBlank(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD)) {
+                sslServer.setTrustStorePath(MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE);
+                sslServer.setTrustStore(OSXCertUtils.getTrustStore(MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_TYPE));
+                if (StringUtils.isAllBlank(MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD, MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD)) {
                     throw new IllegalArgumentException("http.ssl.key.store.password/http.ssl.trust.store.password is not set,please check config file");
                 }
-                sslServer.setTrustStorePassword(StringUtils.firstNonBlank(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD));
-                sslServer.setKeyStorePath(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PATH);
-                sslServer.setKeyStorePassword(StringUtils.firstNonBlank(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD, MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD));
+                sslServer.setTrustStorePassword(StringUtils.firstNonBlank(MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD));
+                sslServer.setKeyStorePath(MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE);
+                sslServer.setKeyStorePassword(StringUtils.firstNonBlank(MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD, MetaInfo.PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD));
                 sslServer.setTrustStoreProvider(MetaInfo.PROPERTY_HTTP_SSL_TRUST_STORE_PROVIDER);
             } else {
                 SSLContext sslContext = SSLContext.getInstance("TLS");
-                KeyStore keyStore = OSXCertUtils.getKeyStore(MetaInfo.PROPERTY_SERVER_CA_FILE, MetaInfo.PROPERTY_SERVER_CERT_CHAIN_FILE, MetaInfo.PROPERTY_SERVER_PRIVATE_KEY_FILE);
+                KeyStore keyStore = OSXCertUtils.getKeyStore2(MetaInfo.PROPERTY_HTTPS_SERVER_CA_FILE, MetaInfo.PROPERTY_HTTPS_SERVER_CERT_CHAIN_FILE, MetaInfo.PROPERTY_HTTPS_SERVER_PRIVATE_KEY_FILE);
                 TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
                 // Load client certificate
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-                kmf.init(keyStore, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+                kmf.init(keyStore, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray());
                 sslContext.init(kmf.getKeyManagers(), tm, new SecureRandom());
                 sslServer.setSslContext(sslContext);
             }
@@ -183,7 +184,7 @@ public class OsxServer {
         return null;
     }
 
-    ServletContextHandler buildServlet(HttpServlet   servlet) {
+    ServletContextHandler buildServlet(HttpServlet servlet) {
         ServletContextHandler context = new ServletContextHandler();
         context.setContextPath(MetaInfo.PROPERTY_HTTP_CONTEXT_PATH);
         ServletHolder servletHolder = new ServletHolder(servlet);
@@ -252,17 +253,17 @@ public class OsxServer {
     }
 
     private io.grpc.Server buildTlsServer() {
-        String serverCertChainFile = MetaInfo.PROPERTY_SERVER_CERT_CHAIN_FILE;
-        String privateKeyFilePath = MetaInfo.PROPERTY_SERVER_PRIVATE_KEY_FILE;
-        String serverCaFilePath = MetaInfo.PROPERTY_SERVER_CA_FILE;
+        String serverCertChainFile = MetaInfo.PROPERTY_GRPC_SERVER_CERT_CHAIN_FILE;
+        String privateKeyFilePath = MetaInfo.PROPERTY_GRPC_SERVER_PRIVATE_KEY_FILE;
+        String serverCaFilePath = MetaInfo.PROPERTY_GRPC_SERVER_CA_FILE;
 
         // Define the JKS file and its password
-        String keyJksFilePath = MetaInfo.PROPERTY_SERVER_KEYSTORE_FILE;
-        String keyJksPassword = MetaInfo.PROPERTY_SERVER_KEYSTORE_FILE_PASSWORD;
+        String keyJksFilePath = MetaInfo.PROPERTY_GRPC_SERVER_KEYSTORE_FILE;
+        String keyJksPassword = MetaInfo.PROPERTY_GRPC_SERVER_KEYSTORE_FILE_PASSWORD;
 
         // Define the JKS file and its password
-        String trustFilePath = MetaInfo.PROPERTY_SERVER_TRUST_KEYSTORE_FILE;
-        String trustJksPassword = MetaInfo.PROPERTY_SERVER_TRUST_FILE_PASSWORD;
+        String trustFilePath = MetaInfo.PROPERTY_GRPC_SERVER_TRUST_KEYSTORE_FILE;
+        String trustJksPassword = MetaInfo.PROPERTY_GRPC_SERVER_TRUST_FILE_PASSWORD;
 
         if (PROPERTY_OPEN_GRPC_TLS_SERVER) {
             try {
@@ -270,7 +271,7 @@ public class OsxServer {
                 NettyServerBuilder nettyServerBuilder = NettyServerBuilder.forAddress(address);
                 SslContextBuilder sslContextBuilder = null;
 
-                if (StringUtils.isNotBlank(PROPERTY_SERVER_KEYSTORE_FILE)) {
+                if (StringUtils.isNotBlank(PROPERTY_GRPC_SERVER_KEYSTORE_FILE)) {
                     // Load the truststore file
                     KeyStore trustStore = loadKeyStore(trustFilePath, trustJksPassword);
                     // Create a TrustManagerFactory and initialize it with the truststore
@@ -287,7 +288,7 @@ public class OsxServer {
                             .trustManager(trustManagerFactory)
                             .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                             .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
-                    if(PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE){
+                    if (PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE) {
                         sslContextBuilder.clientAuth(ClientAuth.REQUIRE);
                     }
 
@@ -296,12 +297,11 @@ public class OsxServer {
 
                             .sessionTimeout(MetaInfo.PROPERTY_GRPC_SSL_SESSION_TIME_OUT)
                             .sessionCacheSize(MetaInfo.PROPERTY_HTTP_SSL_SESSION_CACHE_SIZE);
-                    if(PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE){
-                        Preconditions.checkArgument(StringUtils.isNotEmpty(serverCaFilePath),"config server.ca.file is null");
+                    if (PROPERTY_GRPC_SSL_OPEN_CLIENT_VALIDATE) {
+                        Preconditions.checkArgument(StringUtils.isNotEmpty(serverCaFilePath), "config server.ca.file is null");
                         sslContextBuilder.clientAuth(ClientAuth.REQUIRE).trustManager(new File(serverCaFilePath));
                     }
                 }
-
 
 
                 log.info("running in secure mode. server crt path: {}, server key path: {}, ca crt path: {}.",
@@ -371,4 +371,17 @@ public class OsxServer {
         return nettyServerBuilder.build();
     }
 
+    @Override
+    public int getRunnerSequenceId() {
+        return Integer.MAX_VALUE - 1;
+    }
+
+    @Override
+    public void run(String[] args) {
+        boolean startOk = this.start();
+        if (!startOk) {
+            log.error("osx server start failed");
+            System.exit(-1);
+        }
+    }
 }
