@@ -15,8 +15,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import PSI, FeatureCorrelation
-from fate_client.pipeline.interface import DataWarehouseChannel
+from fate_client.pipeline.components.fate import PSI, FeatureCorrelation, Reader
 from fate_client.pipeline.utils import test_utils
 
 
@@ -33,17 +32,22 @@ def main(config="../config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_0 = Reader("reader_0")
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     feature_corr_0 = FeatureCorrelation("feature_corr_0",
                                         input_data=psi_0.outputs["output_data"])
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(feature_corr_0)
+    pipeline.add_tasks([reader_0, psi_0, feature_corr_0])
 
     pipeline.compile()
     print(pipeline.get_dag())

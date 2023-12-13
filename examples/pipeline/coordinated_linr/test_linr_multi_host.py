@@ -16,9 +16,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLinR, PSI
+from fate_client.pipeline.components.fate import CoordinatedLinR, PSI, Reader
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
@@ -32,13 +31,10 @@ def main(config="../config.yaml", namespace=""):
 
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="motor_hetero_guest",
-                                                             namespace=f"{namespace}experiment"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="motor_hetero_host",
-                                                                namespace=f"{namespace}experiment"))
-    psi_0.hosts[1].task_setting(input_data=DataWarehouseChannel(name="motor_hetero_host",
-                                                                namespace=f"{namespace}experiment"))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_guest")
+    reader_0.hosts[[0, 1]].task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_host")
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     linr_0 = CoordinatedLinR("linr_0",
                              epochs=5,
                              batch_size=None,
@@ -51,13 +47,11 @@ def main(config="../config.yaml", namespace=""):
                                                                                                  "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=dict(guest=guest),
                               default_eval_setting="regression",
                               input_data=linr_0.outputs["train_output_data"])
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(linr_0)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, linr_0, evaluation_0])
 
     pipeline.compile()
     # print(pipeline.get_dag())
@@ -67,15 +61,14 @@ def main(config="../config.yaml", namespace=""):
 
     predict_pipeline = FateFlowPipeline()
 
-    deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.task_setting(
-        input_data=DataWarehouseChannel(name="motor_hetero_guest",
-                                        namespace=f"{namespace}experiment"))
-    deployed_pipeline.psi_0.hosts[[0, 1]].task_setting(
-        input_data=DataWarehouseChannel(name="motor_hetero_host",
-                                        namespace=f"{namespace}experiment"))
+    reader_1 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_1.guest.task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_guest")
+    reader_1.hosts[[0, 1]].task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_host")
 
-    predict_pipeline.add_task(deployed_pipeline)
+    deployed_pipeline = pipeline.get_deployed_pipeline()
+    deployed_pipeline.psi_0.input_data = reader_1.outputs["output_data"]
+
+    predict_pipeline.add_tasks([reader_1, deployed_pipeline])
     predict_pipeline.compile()
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())

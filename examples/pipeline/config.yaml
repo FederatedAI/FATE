@@ -1,10 +1,10 @@
 parties: # parties default id
   guest:
-    - 9999
+    - '9999'
   host:
-    - 9998
-    - 9999
+    - '9998'
+    - '9999'
   arbiter:
-    - 9998
+    - '9998'
 
 data_base_dir: "" # path to project base where data is located

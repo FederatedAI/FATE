@@ -21,6 +21,6 @@ def reader(
     role: Role,
     name: cpn.parameter(type=str, default=None, optional=False),
     namespace: cpn.parameter(type=str, default=None, optional=False),
-    data_output: cpn.data_unresolved_output(),
+    output_data: cpn.data_unresolved_output(),
 ):
-    data_output.write_metadata({}, name=name, namespace=namespace)
+    output_data.write_metadata({}, name=name, namespace=namespace)
