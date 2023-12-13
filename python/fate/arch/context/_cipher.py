@@ -106,7 +106,7 @@ class PHECipherBuilder:
             key_size = self.key_length
         else:
             kind = options.get("kind", self.kind)
-            key_size = options.get("key_length", 1024)
+            key_size = options.get("key_length", self.key_length)
 
         if kind == "paillier":
             if not cfg.safety.phe.paillier.allow:
