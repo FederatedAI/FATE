@@ -196,7 +196,7 @@ class MPCTensor(CrypTensor):
 
     def __repr__(self):
         """Returns a representation of the tensor useful for debugging."""
-        debug_mode = cfg.debug.debug_mode
+        debug_mode = cfg.safety.mpc.debug.debug_mode
 
         share = self.share
         plain_text = self._tensor.get_plain_text() if debug_mode else "HIDDEN"

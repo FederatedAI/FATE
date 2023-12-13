@@ -45,7 +45,7 @@ def exp(self):
     Set the number of iterations for the limit approximation with
     config.exp_iterations.
     """  # noqa: W605
-    iters = cfg.functions.exp_iterations
+    itecs = cfg.safety.mpc.functions.exp_iterations
 
     result = 1 + self.div(2**iters)
     for _ in range(iters):
@@ -89,9 +89,9 @@ def log(self, input_in_01=False):
 
     # Initialization to a decent estimate (found by qualitative inspection):
     #                ln(x) = x/120 - 20exp(-2x - 1.0) + 3.0
-    iterations = cfg.functions.log_iterations
-    exp_iterations = cfg.functions.log_exp_iterations
-    order = cfg.functions.log_order
+    iterations = cfg.safety.mpc.functions.log_iterations
+    exp_iterations = cfg.safety.mpc.functions.log_exp_iterations
+    order = cfg.safety.mpc.functions.log_order
 
     term1 = self.div(120)
     term2 = exp(self.mul(2).add(1.0).neg()).mul(20)
@@ -144,9 +144,9 @@ def reciprocal(self, input_in_01=False):
         return rec
 
     # Get config options
-    method = cfg.functions.reciprocal_method
-    all_pos = cfg.functions.reciprocal_all_pos
-    initial = cfg.functions.reciprocal_initial
+    method = cfg.safety.mpc.functions.reciprocal_method
+    all_pos = cfg.safety.mpc.functions.reciprocal_all_pos
+    initial = cfg.safety.mpc.functions.reciprocal_initial
 
     if not all_pos:
         sgn = self.sign()
@@ -155,7 +155,7 @@ def reciprocal(self, input_in_01=False):
             return sgn * reciprocal(pos)
 
     if method == "NR":
-        nr_iters = cfg.functions.reciprocal_nr_iters
+        nr_iters = cfg.safety.mpc.functions.reciprocal_nr_iters
         if initial is None:
             # Initialization to a decent estimate (found by qualitative inspection):
             #                1/x = 3exp(1 - 2x) + 0.003
@@ -169,7 +169,7 @@ def reciprocal(self, input_in_01=False):
                 result = 2 * result - result * result * self
         return result
     elif method == "log":
-        log_iters = cfg.functions.reciprocal_log_iters
+        log_iters = cfg.safety.mpc.functions.reciprocal_log_iters
         with cfg.temp_override({"functions.log_iters": log_iters}):
             return exp(-log(self))
     else:
@@ -189,8 +189,8 @@ def inv_sqrt(self):
     .. _Newton-Raphson:
         https://en.wikipedia.org/wiki/Fast_inverse_square_root#Newton's_method
     """
-    initial = cfg.functions.sqrt_nr_initial
-    iters = cfg.functions.sqrt_nr_iters
+    initial = cfg.safety.mpc.functions.sqrt_nr_initial
+    iters = cfg.safety.mpc.functions.sqrt_nr_iters
 
     # Initialize using decent approximation
     if initial is None:
@@ -226,7 +226,7 @@ def _eix(self):
     r"""Computes e^(i * self) where i is the imaginary unit.
     Returns (Re{e^(i * self)}, Im{e^(i * self)} = cos(self), sin(self)
     """
-    iterations = cfg.functions.trig_iterations
+    iterations = cfg.safety.mpc.functions.trig_iterations
 
     re = 1
     im = self.div(2**iterations)
@@ -293,7 +293,7 @@ def sigmoid(self):
         the reciprocal
 
     """  # noqa: W605
-    method = cfg.functions.sigmoid_tanh_method
+    method = cfg.safety.mpc.functions.sigmoid_tanh_method
 
     if method == "chebyshev":
         tanh_approx = tanh(self.div(2))
@@ -344,12 +344,12 @@ def tanh(self):
         terms (int): highest degree of Chebyshev polynomials.
                         Must be even and at least 6.
     """
-    method = cfg.functions.sigmoid_tanh_method
+    method = cfg.safety.mpc.functions.sigmoid_tanh_method
 
     if method == "reciprocal":
         return self.mul(2).sigmoid().mul(2).sub(1)
     elif method == "chebyshev":
-        terms = cfg.functions.sigmoid_tanh_terms
+        terms = cfg.safety.mpc.functions.sigmoid_tanh_terms
         coeffs = chebyshev_series(torch.tanh, 1, terms)[1::2]
         tanh_polys = _chebyshev_polynomials(self, terms)
         tanh_polys_flipped = tanh_polys.unsqueeze(dim=-1).transpose(0, -1).squeeze(dim=0)
@@ -395,7 +395,7 @@ def erf(tensor):
     r"""
     Approximates the error function of the input tensor using a Taylor approximation.
     """
-    iters = cfg.functions.erf_iterations
+    iters = cfg.safety.mpc.functions.erf_iterations
 
     output = tensor.clone()
     for n in range(1, iters + 1):
