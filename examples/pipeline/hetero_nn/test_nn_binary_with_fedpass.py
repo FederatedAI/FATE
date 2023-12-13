@@ -15,14 +15,13 @@
 #
 
 import argparse
-from fate_test.utils import parse_summary_result
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.hetero_nn import HeteroNN, get_config_of_default_runner
 from fate_client.pipeline.components.fate.psi import PSI
+from fate_client.pipeline.components.fate.reader import Reader
 from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.components.fate.nn.algo_params import FedPassArgument
@@ -39,11 +38,16 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                    namespace="experiment"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                        namespace="experiment"))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     training_args = TrainingArguments(
             num_train_epochs=1,
@@ -82,8 +86,8 @@ def main(config="../../config.yaml", namespace=""):
         train_data=psi_0.outputs['output_data']
     )
 
-    hetero_nn_0.guest.task_setting(runner_conf=guest_conf)
-    hetero_nn_0.hosts[0].task_setting(runner_conf=host_conf)
+    hetero_nn_0.guest.task_parameters(runner_conf=guest_conf)
+    hetero_nn_0.hosts[0].task_parameters(runner_conf=host_conf)
 
     hetero_nn_1 = HeteroNN(
         'hetero_nn_1',
@@ -93,15 +97,12 @@ def main(config="../../config.yaml", namespace=""):
 
     evaluation_0 = Evaluation(
         'eval_0',
-        runtime_roles=['guest'],
+        runtime_parties=dict(guest=guest),
         metrics=['auc'],
         input_data=[hetero_nn_1.outputs['predict_data_output'], hetero_nn_0.outputs['train_data_output']]
     )
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(hetero_nn_0)
-    pipeline.add_task(hetero_nn_1)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, hetero_nn_0, hetero_nn_1, evaluation_0])
     pipeline.compile()
     pipeline.fit()
 

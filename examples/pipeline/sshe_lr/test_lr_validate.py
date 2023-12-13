@@ -16,9 +16,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import Evaluation, Reader
 from fate_client.pipeline.components.fate import SSHELR, PSI, DataSplit
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
@@ -35,11 +34,16 @@ def main(config="../config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_0 = Reader("reader_0")
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     data_split_0 = DataSplit("data_split_0",
                              train_size=0.8,
                              validate_size=0.2,
@@ -56,14 +60,11 @@ def main(config="../config.yaml", namespace=""):
                   )
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=dict(guest=guest),
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(data_split_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, data_split_0, lr_0, evaluation_0])
 
     pipeline.compile()
     # print(pipeline.get_dag())

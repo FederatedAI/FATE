@@ -16,8 +16,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import DataSplit, PSI, Union
-from fate_client.pipeline.interface import DataWarehouseChannel
+from fate_client.pipeline.components.fate import DataSplit, PSI, Union, Reader
 from fate_client.pipeline.utils import test_utils
 
 
@@ -34,17 +33,26 @@ def main(config="../config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
-
-    psi_1 = PSI("psi_1")
-    psi_1.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_1.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_0 = Reader("reader_0")
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+    reader_1 = Reader("reader_1")
+    reader_1.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_1.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
+    psi_1 = PSI("psi_1", input_data=reader_0.outputs["output_data"])
 
     data_split_0 = DataSplit("data_split_0",
                              train_size=0.6,
@@ -59,11 +67,7 @@ def main(config="../config.yaml", namespace=""):
 
     union_0 = Union("union_0", input_data_list=[data_split_0.outputs["train_output_data"],
                                                 data_split_0.outputs["test_output_data"]])
-    pipeline.add_task(psi_0)
-    pipeline.add_task(psi_1)
-    pipeline.add_task(data_split_0)
-    pipeline.add_task(data_split_1)
-    pipeline.add_task(union_0)
+    pipeline.add_tasks([reader_0, reader_1, psi_0, psi_1, data_split_0, data_split_1, union_0])
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()

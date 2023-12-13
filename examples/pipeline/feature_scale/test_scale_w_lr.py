@@ -15,8 +15,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI, FeatureScale, Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI, FeatureScale, Evaluation, Reader
 from fate_client.pipeline.utils import test_utils
 
 
@@ -34,17 +33,28 @@ def main(config="../config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
 
-    psi_1 = PSI("psi_1")
-    psi_1.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_1.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_1 = Reader("reader_1", runtime_parties=dict(guest=guest, host=host))
+    reader_1.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_1.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
+    psi_1 = PSI("psi_1", input_data=reader_0.outputs["output_data"])
 
     feature_scale_0 = FeatureScale("feature_scale_0",
                                    method="standard",
@@ -60,15 +70,11 @@ def main(config="../config.yaml", namespace=""):
                                                                                            "total_iters": 100}})
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=dict(guest=guest),
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(psi_1)
-    pipeline.add_task(feature_scale_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, reader_1, psi_0, psi_1, feature_scale_0, lr_0, evaluation_0])
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
@@ -79,13 +85,21 @@ def main(config="../config.yaml", namespace=""):
 
     predict_pipeline = FateFlowPipeline()
 
-    deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                                               namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                                  namespace=f"experiment{namespace}"))
+    reader_2 = Reader("reader_2", runtime_parties=dict(guest=guest, host=host))
+    reader_2.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_2.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
 
-    predict_pipeline.add_task(deployed_pipeline)
+    deployed_pipeline = pipeline.get_deployed_pipeline()
+    deployed_pipeline.psi_0.input_data = reader_2.outputs["output_data"]
+
+    predict_pipeline.add_tasks([reader_2, deployed_pipeline])
+
     predict_pipeline.compile()
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())

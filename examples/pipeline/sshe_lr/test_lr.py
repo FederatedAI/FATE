@@ -16,9 +16,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import Evaluation, Reader
 from fate_client.pipeline.components.fate import SSHELR, PSI
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
@@ -35,11 +34,16 @@ def main(config="../config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_0 = Reader("reader_0")
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     lr_0 = SSHELR("lr_0",
                   learning_rate=0.05,
                   epochs=10,
@@ -51,13 +55,11 @@ def main(config="../config.yaml", namespace=""):
                   reveal_loss_freq=1, )
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=dict(guest=guest),
                               default_eval_setting="binary",
                               input_data=lr_0.outputs["train_output_data"])
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, lr_0, evaluation_0])
 
     pipeline.compile()
     pipeline.fit()
@@ -66,15 +68,20 @@ def main(config="../config.yaml", namespace=""):
 
     predict_pipeline = FateFlowPipeline()
 
-    deployed_pipeline = pipeline.get_deployed_pipeline()
-    deployed_pipeline.psi_0.guest.task_setting(
-        input_data=DataWarehouseChannel(name="breast_hetero_guest",
-                                        namespace=f"experiment{namespace}"))
-    deployed_pipeline.psi_0.hosts[0].task_setting(
-        input_data=DataWarehouseChannel(name="breast_hetero_host",
-                                        namespace=f"experiment{namespace}"))
+    reader_1 = Reader("reader_1")
+    reader_1.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_guest"
+    )
+    reader_1.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_hetero_host"
+    )
 
-    predict_pipeline.add_task(deployed_pipeline)
+    deployed_pipeline = pipeline.get_deployed_pipeline()
+    deployed_pipeline.psi_0.input_data = reader_1.outputs["output_data"]
+
+    predict_pipeline.add_tasks([reader_1, deployed_pipeline])
     predict_pipeline.compile()
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())
