@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> {
+public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> {
 
     static public ConcurrentHashMap<Integer, QueuePushReqStreamObserver> queueIdMap = new ConcurrentHashMap<>();
     static AtomicInteger seq = new AtomicInteger(0);
@@ -112,8 +112,8 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
         if (!isDst) {
             routerInfo = routerService.route(context.getSrcNodeId(), context.getSrcComponent(), context.getDesNodeId(), context.getDesComponent());
             if (routerInfo == null) {
-                logger.error("no router info is found for party id {}",context.getDesNodeId());
-                throw new NoRouterInfoException("no router is found for party id"+context.getDesNodeId());
+                logger.error("no router info is found for party id {}", context.getDesNodeId());
+                throw new NoRouterInfoException("no router is found for party id" + context.getDesNodeId());
             }
         }
         if (isDst) {
@@ -128,7 +128,7 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
             context.setSrcNodeId(routerInfo.getSourcePartyId());
             context.setDesNodeId(routerInfo.getDesPartyId());
             if (routerInfo.getProtocol().equals(Protocol.http)) {
-                logger.error("invalid router info {}, grpc stream is not support http1.x",routerInfo);
+                logger.error("invalid router info {}, grpc stream is not support http1.x", routerInfo);
                 throw new SysException("invalid router info for grpc stream");
             } else {
                 ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo());
@@ -156,7 +156,7 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
         CompletableFuture<ErTask> commandFuture = new CompletableFuture<>();
         commandFuture.complete(new ErTask());
-        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch,routerInfo));
+        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch, routerInfo));
     }
 
     private void initEggroll(OsxContext context, Proxy.Packet firstRequest) {
@@ -220,17 +220,10 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
                 job);
 
         Future<ErTask> commandFuture = RollPairContext.executor.submit(() -> {
-            try {
-                CommandClient commandClient = new CommandClient(egg.getCommandEndpoint());
-                Command.CommandResponse commandResponse = commandClient.call(RollPair.EGG_RUN_TASK_COMMAND, task);
-                Meta.Task taskMeta = Meta.Task.parseFrom(commandResponse.getResultsList().get(0));
-                ErTask erTask = ErTask.parseFromPb(taskMeta);
-                long now = System.currentTimeMillis();
-                return erTask;
-            } catch (Exception e) {
-                logger.error("submit putBatch task error", e);
-                throw e;
-            }
+            CommandClient commandClient = new CommandClient(egg.getCommandEndpoint());
+            Command.CommandResponse commandResponse = commandClient.call(RollPair.EGG_RUN_TASK_COMMAND, task);
+            Meta.Task taskMeta = Meta.Task.parseFrom(commandResponse.getResultsList().get(0));
+            return ErTask.parseFromPb(taskMeta);
         });
         RouterInfo routerInfo = new RouterInfo();
         routerInfo.setProtocol(Protocol.grpc);
@@ -241,14 +234,14 @@ public class  QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet>
         context.setDesNodeId(routerInfo.getDesPartyId());
         ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
-        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch,routerInfo));
+        putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch, routerInfo));
     }
 
 
     @Override
     public void onNext(Proxy.Packet value) {
         try {
-            if(value.getHeader()!=null){
+            if (value.getHeader() != null) {
                 context.setTraceId(Long.toString(value.getHeader().getSeq()));
             }
 //            long seq = value.getHeader().getSeq();

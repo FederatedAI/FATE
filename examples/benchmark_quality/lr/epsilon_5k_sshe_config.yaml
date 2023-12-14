@@ -2,11 +2,11 @@ data_guest: "epsilon_5k_hetero_guest"
 data_host: "epsilon_5k_hetero_host"
 idx: "id"
 label_name: "y"
-epochs: 20
-batch_size: 3000
+epochs: 5
+batch_size: 80
 init_param:
   fit_intercept: True
-  method: "random"
+  method: "zeros"
   random_state: 42
 early_stop: "diff"
-learning_rate: 0.34
+learning_rate: 0.15

@@ -130,11 +130,89 @@ two-way TSL：
 
 #### 完成以上步骤您将生成如下证书：
 
-​			server文件夹包含： identity.jks 、server.cer、truststore.jks。
+​			server文件夹包含： identity.jks 、server.cer、truststore.jks； 其中 identity.jks为私钥密码箱，truststore.jks 信任证书密码箱，server.cer为服务器证书（如果使用密码箱，无需配置此文件）。
 
-​			client文件夹包含： identity.jks 、client.cer、truststore.jks。
+​			client文件夹包含： identity.jks 、client.cer、truststore.jks；其中 identity.jks为私钥密码箱，truststore.jks 信任证书密码箱，client.cer为客户端证书（如果使用密码箱，无需配置此文件）。
 
 ## 2）方式二：单独文件存储私钥、证书、信任证书方式
 
-#### 生成ca.key、ca.crt、client.crt、client.csr、client.key、client.pem、server.crt、server.csr、server.key、server.pem 命令如下：
+```
+ca.key 
+生成CA自己的私钥 root ca.key
+# openssl genrsa -out ca.key 2048
+
+ca.crt
+根据CA自己的私钥生成自签发的数字证书，该证书里包含CA自己的公钥。
+# openssl req -x509 -new -nodes -key ca.key -subj "/CN=osx" -days 5000 -out ca.crt
+
+server.key
+服务端的私钥和数字证书（由自CA签发）
+生成服务端私钥
+# openssl genrsa -out server.key 2048
+将其转换成 pkcs8 格式，供java程序使用
+#openssl pkcs8 -topk8 -inform PEM -outform PEM -in server.key -out server_pkcs8.key -nocrypt
+
+server.csr 
+生成Certificate Sign Request，CSR，证书签名请求。
+# openssl req -new -key server.key -subj "/CN=osx" -out server.csr
+
+server.crt
+自CA用自己的CA私钥对服务端提交的csr进行签名处理，得到服务端的数字证书server.crt
+您的服务器还使用 IP 地址，请根据需要添加：
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000 \
+    -extfile <(printf "subjectAltName=DNS:grpcpro1.com,IP:your_server_ip")
+
+要对客户端数字证书进行校验，首先客户端需要先有自己的证书。我们以上面的例子为基础，生成客户端的私钥与证书。
+client.key
+# openssl genrsa -out client.key 2048
+将其转换成 pkcs8 格式，供java程序使用
+# openssl pkcs8 -topk8 -inform PEM -outform PEM -in client.key -out client_pkcs8.key -nocrypt
+
+client.csr
+# openssl req -new -key client.key -subj "/CN=osx" -out client.csr
+
+client.crt
+# openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 5000
+
+
+```
+
+产物：
+CA:
+私钥文件 ca.key
+数字证书 ca.crt
+
+Server:
+私钥文件 server.key、server_pkcs8.key（实际配置此格式私钥）
+数字证书 server.crt
+
+client:
+私钥文件 client.key、client_pkcs8.key（实际配置此格式私钥）
+数字证书 client.crt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -62,10 +62,6 @@ public class Bootstrap {
             packages.add(Bootstrap.class.getPackage().getName());
             ApplicationStartedRunnerUtils.run(injector, packages, args);
 
-            boolean startOk = injector.getInstance(OsxServer.class).start();
-            if (!startOk) {
-                System.exit(-1);
-            }
             Thread shutDownThread = new Thread(bootstrap::stop);
             Runtime.getRuntime().addShutdownHook(shutDownThread);
             synchronized (lockObject) {

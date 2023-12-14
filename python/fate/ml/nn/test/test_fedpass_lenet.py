@@ -6,8 +6,6 @@ import torchvision
 from torch import nn
 from datetime import datetime
 from fate.ml.nn.model_zoo.agg_layer.fedpass._passport_block import ConvPassportBlock
-from fate.ml.nn.model_zoo.agg_layer.fedpass.agg_layer import FedPassAggLayerHost, FedPassAggLayerGuest
-from tqdm import tqdm
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments, FedPassArgument
 

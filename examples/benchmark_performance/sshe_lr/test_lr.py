@@ -17,8 +17,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI, Reader
 from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import SSHELR, PSI, Reader
 from fate_client.pipeline.utils import test_utils
 
 
@@ -57,20 +57,19 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     config_param = {
         "epochs": param["epochs"],
-        "learning_rate_scheduler": param["learning_rate_scheduler"],
-        "optimizer": param["optimizer"],
+        "learning_rate": param["learning_rate"],
         "batch_size": param["batch_size"],
         "early_stop": param["early_stop"],
         "init_param": param["init_param"],
         "tol": 1e-5
     }
     lr_param.update(config_param)
-    lr_0 = CoordinatedLR("lr_0",
-                         train_data=psi_0.outputs["output_data"],
-                         **lr_param)
-    lr_1 = CoordinatedLR("lr_1",
-                         test_data=psi_0.outputs["output_data"],
-                         input_model=lr_0.outputs["output_model"])
+    lr_0 = SSHELR("lr_0",
+                  train_data=psi_0.outputs["output_data"],
+                  **lr_param)
+    lr_1 = SSHELR("lr_1",
+                  test_data=psi_0.outputs["output_data"],
+                  input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),

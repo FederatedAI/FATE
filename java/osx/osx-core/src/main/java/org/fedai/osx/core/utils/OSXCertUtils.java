@@ -38,8 +38,8 @@ public class OSXCertUtils {
         try (OutputStream os = new FileOutputStream(filePath)) {
             KeyStore keyStore = KeyStore.getInstance(type);
             keyStore.load(null);
-            keyStore.setKeyEntry(alias, privateKey, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray(), chain);
-            keyStore.store(os, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+            keyStore.setKeyEntry(alias, privateKey, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray(), chain);
+            keyStore.store(os, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray());
         }
     }
 
@@ -67,7 +67,7 @@ public class OSXCertUtils {
         TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
         // Load client certificate
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        kmf.init(keyStore, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+        kmf.init(keyStore, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray());
         sslContext.init(kmf.getKeyManagers(), tm, new SecureRandom());
         return sslContext;
     }
@@ -92,7 +92,7 @@ public class OSXCertUtils {
             TrustManager[] tm = {OsxX509TrustManager.getInstance(keyStore)};
             // Load client certificate
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(keyStore, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+            kmf.init(keyStore, MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray());
             sslContext.init(kmf.getKeyManagers(), tm, new SecureRandom());
             return sslContext;
         }
@@ -110,17 +110,24 @@ public class OSXCertUtils {
     public static KeyStore getKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(null);
-        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
+        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_CLIENT_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
+        return keyStore;
+    }
+
+    public static KeyStore getKeyStore2(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(null);
+        keyStore.setKeyEntry(MetaInfo.PROPERTY_HTTP_SSL_SERVER_KEY_STORE_ALIAS, importPrivateKey(clientKeyPath), MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray(), new Certificate[]{importCert(clientCertPath), importCert(caPath)});
         return keyStore;
     }
 
     public static KeyStore getTrustStore(String keyStorePath, String trustStoreType) throws Exception {
         KeyStore keyStore = KeyStore.getInstance(trustStoreType.toUpperCase());
-        keyStore.load(new FileInputStream(new File(keyStorePath)), MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray());
+        keyStore.load(new FileInputStream(new File(keyStorePath)), MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray());
         return keyStore;
     }
 
-    public static String createKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
+  /*  public static String createKeyStore(String caPath, String clientCertPath, String clientKeyPath) throws Exception {
         PrivateKey privateKey = importPrivateKey(clientKeyPath);
 //        Certificate[] certificates = {importCert(clientCertPath), importCert(caPath)};
         Certificate[] certificates = {importCert(clientCertPath), importCert(caPath)};
@@ -129,7 +136,7 @@ public class OSXCertUtils {
         FileUtils.createNewFile(pfxFile);
         OSXCertUtils.x509ToPkCS12(certificates, privateKey, pfxPath, MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_ALIAS);
         return pfxPath;
-    }
+    }*/
 
     public static Certificate importCert(String certFile) throws Exception {
         try (FileInputStream certStream = new FileInputStream(certFile)) {
@@ -175,7 +182,7 @@ public class OSXCertUtils {
 
     //determine whether the string is null and get the default string character array
     private static char[] toCharArray(int index, String... str) {
-        return str.length <= index || str[index] == null ? MetaInfo.PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD.toCharArray() : str[index].toCharArray();
+        return str.length <= index || str[index] == null ? MetaInfo.PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD.toCharArray() : str[index].toCharArray();
     }
 
     public static String getTempStorePath() {
