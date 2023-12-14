@@ -18,12 +18,14 @@ package org.fedai.osx.broker.eggroll;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
 import io.grpc.stub.StreamObserver;
+import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.router.RouterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferBatch> {
 
@@ -49,7 +51,7 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
     @Override
     public void onNext(Transfer.TransferBatch resp) {
         try {
-            commandFuture.get();
+            commandFuture.get(MetaInfo.BATCH_SINK_PUSH_EXECUTOR_TIMEOUT, TimeUnit.MILLISECONDS);
             eggSiteServicerPushRespSO.onNext(reqHeader.toBuilder().setAck(resp.getHeader().getId()).build());
             eggSiteServicerPushRespSO.onCompleted();
         } catch (Exception e) {

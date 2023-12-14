@@ -88,6 +88,7 @@ public class RouterTableAddService extends AbstractServiceAdaptorNew<RouterAddRe
             if(result==null){
                 throw new ParameterException("invalid param for router operation");
             }
+            return   result;
         }
         throw new ParameterException("invalid param for router operation");
     }
