@@ -157,7 +157,7 @@ class SSHENeuralNetworkAggregator:
         ga = _rescaler(ga, self.encoder)
 
         # update wb
-        gb = self.ctx.mpc.option_call(lambda: self.encoder.encode(hb.T @ dz), dst=self.rank_b)
+        gb = self.ctx.mpc.option_call(lambda: hb.T @ dz, dst=self.rank_b)
 
         # set grad for wa and wb
         _set_grad(self.wa, ga)
@@ -180,7 +180,7 @@ def _set_grad(x, grad):
 
 
 class SSHENeuralNetworkOptimizerSGD:
-    def __init__(self, ctx: Context, params, lr=0.05):
+    def __init__(self, ctx: Context, params, lr):
         self.ctx = ctx
         self.params = list(params)
         self.lr = lr
