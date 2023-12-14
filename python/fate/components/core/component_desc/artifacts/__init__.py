@@ -16,6 +16,8 @@ from .data import (
     dataframe_outputs,
     table_input,
     table_inputs,
+    data_unresolved_output,
+    data_unresolved_outputs,
 )
 from .metric import json_metric_output, json_metric_outputs
 from .model import (
@@ -27,6 +29,8 @@ from .model import (
     model_directory_inputs,
     model_directory_output,
     model_directory_outputs,
+    model_unresolved_output,
+    model_unresolved_outputs,
 )
 
 __all__ = [
@@ -50,6 +54,10 @@ __all__ = [
     "data_directory_inputs",
     "data_directory_output",
     "data_directory_outputs",
+    "data_unresolved_output",
+    "data_unresolved_outputs",
     "json_metric_output",
     "json_metric_outputs",
+    "model_unresolved_output",
+    "model_unresolved_outputs",
 ]

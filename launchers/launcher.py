@@ -1,5 +1,6 @@
-import click
 import importlib
+
+import click
 
 
 @click.command()
@@ -10,8 +11,8 @@ import importlib
 @click.option("--data_dir", type=str, help="data dir")
 @click.option("--proc", type=str, help="proc, e.g. fate.ml.mpc.svm:SVM", required=True)
 def cli(csession_id, federation_session_id, rank, parties, data_dir, proc):
-    from fate.arch.utils.logger import set_up_logging
-    from fate.arch.utils.context_helper import init_standalone_context
+    from fate.arch.launchers.logger import set_up_logging
+    from fate.arch.launchers.context_helper import init_local_context
 
     # set up logging
     set_up_logging(rank)
@@ -23,7 +24,7 @@ def cli(csession_id, federation_session_id, rank, parties, data_dir, proc):
     party = parties[rank]
     if not csession_id:
         csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
-    ctx = init_standalone_context(csession_id, federation_session_id, party, parties, data_dir)
+    ctx = init_local_context(csession_id, federation_session_id, party, parties, data_dir)
 
     # init crypten
     from fate.ml.mpc import MPCModule

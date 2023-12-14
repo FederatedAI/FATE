@@ -23,20 +23,20 @@ import datetime
 import logging
 import multiprocessing
 import signal
+import sys
 import time
 import uuid
 from argparse import Namespace
 from dataclasses import dataclass, field
 from multiprocessing import Queue, Event
 from typing import List
-import sys
 
 import rich
 import rich.console
 import rich.panel
 import rich.traceback
 
-from fate.arch.utils import trace
+from fate.arch import trace
 from .argparser import HfArgumentParser
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,6 @@ class MultiProcessLauncher:
             safe_to_exit = self.safe_to_exit
             width = self.console.width
             argv = sys.argv.copy()
-            argv.extend(["--federation_session_id", self.federation_session_id])
             argv.extend(["--rank", str(rank)])
             process = multiprocessing.Process(
                 target=self.__class__._run_process,
@@ -90,6 +89,7 @@ class MultiProcessLauncher:
                     output_or_exception_q,
                     safe_to_exit,
                     width,
+                    self.federation_session_id,
                     argv,
                     f,
                 ),
@@ -123,20 +123,22 @@ class MultiProcessLauncher:
         output_or_exception_q: Queue,
         safe_to_exit: Event,
         width,
+        federation_session_id,
         argv,
         f,
     ):
         sys.argv = argv
         args = HfArgumentParser(LauncherProcessArguments).parse_args_into_dataclasses(return_remaining_strings=True)[0]
-        from fate.arch.utils.logger import set_up_logging
+        from fate.arch.launchers.logger import set_up_logging
         from fate.arch.launchers.context_helper import init_context
-        from fate.arch.utils.trace import setup_tracing
+        from fate.arch.trace import setup_tracing
+        from fate.arch.computing.api import profile_start, profile_ends
 
         if args.rank >= len(args.parties):
             raise ValueError(f"rank {args.rank} is out of range {len(args.parties)}")
         parties = args.get_parties()
         party = parties[args.rank]
-        csession_id = f"{args.federation_session_id}_{party[0]}_{party[1]}"
+        csession_id = f"{federation_session_id}_{party[0]}_{party[1]}"
 
         # set up logging
         set_up_logging(args.rank, args.log_level)
@@ -147,10 +149,12 @@ class MultiProcessLauncher:
         tracer = trace.get_tracer(__name__)
 
         with tracer.start_as_current_span(name=csession_id, context=trace.extract_carrier(carrier)) as span:
-            ctx = init_context()
+            ctx = init_context(computing_session_id=csession_id, federation_session_id=federation_session_id)
 
             try:
+                profile_start()
                 f(ctx)
+                profile_ends()
                 output_or_exception_q.put((args.rank, None, None))
                 safe_to_exit.wait()
 
@@ -185,7 +189,7 @@ class MultiProcessLauncher:
 
     def terminate(self):
         self.safe_to_exit.set()
-        time.sleep(1)  # wait for 1 second to let all processes has a chance to exit
+        time.sleep(10)  # wait for 1 second to let all processes has a chance to exit
         for process in self.processes:
             if process.is_alive():
                 process.terminate()
@@ -198,7 +202,7 @@ class MultiProcessLauncher:
             self.console.print(rich.panel.Panel(tb, title=f"rank {rank} exception", expand=False, border_style="red"))
 
     def block_run(self, f):
-        from fate.arch.utils.trace import setup_tracing
+        from fate.arch.trace import setup_tracing
 
         setup_tracing("multi_process_launcher")
         with trace.get_tracer(__name__).start_as_current_span(self.federation_session_id):
@@ -234,7 +238,6 @@ class LauncherArguments:
 
 @dataclass
 class LauncherProcessArguments:
-    federation_session_id: str = field()
     log_level: str = field()
     rank: int = field()
     parties: List[str] = field(metadata={"required": True})
@@ -264,7 +267,7 @@ def launch(f, **kwargs):
     args_desc.extend(kwargs.get("extra_args_desc", []))
     args, _ = HfArgumentParser(args_desc).parse_known_args(namespace=namespace)
 
-    from fate.arch.utils.logger import set_up_logging
+    from fate.arch.launchers.logger import set_up_logging
 
     set_up_logging(-1, args.log_level)
 

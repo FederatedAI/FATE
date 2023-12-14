@@ -13,15 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate.components.core import LOCAL, Role, cpn
+from fate.components.core import LOCAL, Role, cpn, GUEST, HOST
 
 
-@cpn.component(roles=[LOCAL])
+@cpn.component(roles=[LOCAL, GUEST, HOST])
 def dataframe_transformer(
     ctx,
     role: Role,
-    table: cpn.table_input(roles=[LOCAL]),
-    dataframe_output: cpn.dataframe_output(roles=[LOCAL]),
+    table: cpn.table_input(roles=[LOCAL, GUEST, HOST]),
+    dataframe_output: cpn.dataframe_output(roles=[LOCAL, GUEST, HOST]),
     namespace: cpn.parameter(type=str, default=None, optional=True),
     name: cpn.parameter(type=str, default=None, optional=True),
     site_name: cpn.parameter(type=str, default=None, optional=True),

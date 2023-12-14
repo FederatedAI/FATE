@@ -88,7 +88,7 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
     import traceback
 
     from fate.arch import CipherKit, Context
-    from fate.arch.computing import profile_ends, profile_start
+    from fate.arch.computing.api import profile_ends, profile_start
     from fate.components.core import (
         ComponentExecutionIO,
         Role,
@@ -98,6 +98,7 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         load_device,
         load_federation,
         load_metric_handler,
+        is_root_worker,
     )
 
     logger = logging.getLogger(__name__)
@@ -106,7 +107,11 @@ def execute_component_from_config(config: "TaskConfigSpec", output_path):
         party_task_id = config.party_task_id
         device = load_device(config.conf.device)
         computing = load_computing(config.conf.computing, config.conf.logger.config)
-        federation = load_federation(config.conf.federation, computing)
+        if is_root_worker():
+            federation = load_federation(config.conf.federation, computing)
+        else:
+            federation = None
+            logger.info("skip federation initialization for non-root worker")
         cipher = CipherKit(device=device)
         ctx = Context(
             device=device,

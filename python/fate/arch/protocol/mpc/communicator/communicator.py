@@ -9,7 +9,7 @@ from torch.distributed import ReduceOp
 from torch.distributed import ReduceOp
 
 from fate.arch.context import Context, NS, Parties
-from fate.arch.utils import trace
+from fate.arch import trace
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -369,6 +369,7 @@ class Communicator:
         return Parties(
             self.ctx,
             self.ctx.federation,
+            self.ctx.computing,
             [(i, p) for i, p in enumerate(parties)],
             namespace,
         )
@@ -464,7 +465,7 @@ def _logging(func):
                 return args[0]
 
         # only log communication if needed:
-        if cfg.communicator.verbose:
+        if cfg.safety.mpc.communicator.verbose:
             rank = self.get_rank()
             _log = self._log_communication
 

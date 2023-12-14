@@ -20,3 +20,4 @@ optimizer:
     lr: 0.12
 batch_size: 10000
 early_stop: "diff"
+learning_rate: 0.15

@@ -7,7 +7,7 @@ from fate.arch.tensor import DTensor
 from fate.arch.protocol.mpc.common.rng import generate_random_ring_element
 from fate.arch.protocol.mpc.primitives.arithmetic import ArithmeticSharedTensor
 from fate.arch.protocol.mpc.primitives.beaver import IgnoreEncodings
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 
 if typing.TYPE_CHECKING:

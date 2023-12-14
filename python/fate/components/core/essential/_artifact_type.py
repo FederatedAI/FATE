@@ -25,6 +25,12 @@ class DataDirectoryArtifactType(ArtifactType):
     uri_types = ["file"]
 
 
+class DataUnresolvedArtifactType(ArtifactType):
+    type_name = "data_unresolved"
+    path_type = "unresolved"
+    uri_types = ["unresolved"]
+
+
 class ModelDirectoryArtifactType(ArtifactType):
     type_name = "model_directory"
     path_type = "directory"
@@ -41,3 +47,9 @@ class JsonMetricArtifactType(ArtifactType):
     type_name = "json_metric"
     path_type = "file"
     uri_types = ["file"]
+
+
+class ModelUnresolvedArtifactType(ArtifactType):
+    type_name = "model_unresolved"
+    path_type = "unresolved"
+    uri_types = ["unresolved"]

@@ -5,6 +5,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+#
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import torch
 
 from . import communicator as comm
@@ -171,17 +186,17 @@ class MPCTensor(CrypTensor):
         self.share = self.share.cpu()
         return self
 
-    def get_plain_text(self, dst=None):
+    def get_plain_text(self, dst=None, group=None):
         """Decrypts the tensor."""
-        return self._tensor.get_plain_text(dst=dst)
+        return self._tensor.get_plain_text(dst=dst, group=group)
 
-    def reveal(self, dst=None):
+    def reveal(self, dst=None, group=None):
         """Decrypts the tensor without any downscaling."""
-        return self._tensor.reveal(dst=dst)
+        return self._tensor.reveal(dst=dst, group=group)
 
     def __repr__(self):
         """Returns a representation of the tensor useful for debugging."""
-        debug_mode = cfg.debug.debug_mode
+        debug_mode = cfg.safety.mpc.debug.debug_mode
 
         share = self.share
         plain_text = self._tensor.get_plain_text() if debug_mode else "HIDDEN"

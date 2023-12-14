@@ -5,6 +5,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+#
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+import logging
+
 # dependencies:
 import torch
 
@@ -19,7 +36,6 @@ from fate.arch.protocol.mpc.cuda import CUDALongTensor
 from fate.arch.protocol.mpc.encoder import FixedPointEncoder
 from fate.arch.protocol.mpc.functions import regular
 from . import beaver, replicated  # noqa: F401
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -277,20 +293,20 @@ class ArithmeticSharedTensor(object):
         else:
             return comm.get().reduce(shares, dst, batched=True)
 
-    def reveal(self, dst=None):
+    def reveal(self, dst=None, group=None):
         """Decrypts the tensor without any downscaling."""
         tensor = self.share.clone()
         if dst is None:
-            return comm.get().all_reduce(tensor)
+            return comm.get().all_reduce(tensor, group=group)
         else:
-            return comm.get().reduce(tensor, dst)
+            return comm.get().reduce(tensor, dst, group=group)
 
-    def get_plain_text(self, dst=None):
+    def get_plain_text(self, dst=None, group=None):
         """Decrypts the tensor."""
         # Edge case where share becomes 0 sized (e.g. result of split)
         if self.nelement() < 1:
             return torch.empty(self.share.size())
-        return self.encoder.decode(self.reveal(dst=dst))
+        return self.encoder.decode(self.reveal(dst=dst, group=group))
 
     def encode_(self, new_encoder):
         """Rescales the input to a new encoding in-place"""
@@ -367,7 +383,7 @@ class ArithmeticSharedTensor(object):
                     result.encode_as_(y)
                 result.share = getattr(result.share, op)(y.share)
             else:  # ['mul', 'matmul', 'convNd', 'conv_transposeNd']
-                protocol = globals()[cfg.mpc.protocol]
+                protocol = globals()[cfg.safety.mpc.protocol]
                 tmp = getattr(protocol, op)(self._ctx, result, y, *args, **kwargs)
                 result.share = tmp.share
         else:
@@ -439,7 +455,7 @@ class ArithmeticSharedTensor(object):
             y = y.long()
 
         if isinstance(y, int) or is_int_tensor(y):
-            validate = cfg.debug.validation_mode
+            validate = cfg.safety.mpc.debug.validation_mode
 
             if validate:
                 tolerance = 1.0
@@ -447,7 +463,7 @@ class ArithmeticSharedTensor(object):
 
             # Truncate protocol for dividing by public integers:
             if comm.get().get_world_size() > 2:
-                protocol = globals()[cfg.mpc.protocol]
+                protocol = globals()[cfg.safety.mpc.protocol]
                 protocol.truncate(self, y)
             else:
                 self.share = self.share.div_(y, rounding_mode="trunc")
@@ -580,7 +596,7 @@ class ArithmeticSharedTensor(object):
         return self.clone().neg_()
 
     def square_(self):
-        protocol = globals()[cfg.mpc.protocol]
+        protocol = globals()[cfg.safety.mpc.protocol]
         self.share = protocol.square(self._ctx, self).div_(self.encoder.scale).share
         return self
 

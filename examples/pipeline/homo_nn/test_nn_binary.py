@@ -17,8 +17,8 @@
 import argparse
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline.components.fate.evaluation import Evaluation
+from fate_client.pipeline.components.fate.reader import Reader
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.homo_nn import HomoNN, get_config_of_default_runner
@@ -34,15 +34,23 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    epochs = 10
+    epochs = 5
     batch_size = 64
     in_feat = 30
     out_feat = 16
     lr = 0.01
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_homo_guest"
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=f"experiment{namespace}",
+        name="breast_homo_host"
+    )
 
     conf = get_config_of_default_runner(
         algo='fedavg',
@@ -54,7 +62,7 @@ def main(config="../../config.yaml", namespace=""):
         ), 
         loss=nn.BCELoss(),
         optimizer=optim.Adam(lr=lr),
-        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size, seed=114514, logging_strategy='steps'),
+        training_args=TrainingArguments(num_train_epochs=epochs, per_device_train_batch_size=batch_size),
         fed_args=FedAVGArguments(),
         task_type='binary'
         )
@@ -62,31 +70,24 @@ def main(config="../../config.yaml", namespace=""):
 
     homo_nn_0 = HomoNN(
         'nn_0',
-        runner_conf=conf
+        runner_conf=conf,
+        train_data=reader_0.outputs["output_data"]
     )
-
-    homo_nn_0.guest.task_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_0.hosts[0].task_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     homo_nn_1 = HomoNN(
         'nn_1',
-        predict_model_input=homo_nn_0.outputs['train_model_output']
+        predict_model_input=homo_nn_0.outputs['train_model_output'],
+        test_data=reader_0.outputs["output_data"]
     )
-
-    homo_nn_1.guest.component_setting(test_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_1.hosts[0].component_setting(test_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
-        runtime_roles=['guest'],
+        runtime_parties=dict(guest=guest, host=host),
         metrics=['auc'],
         input_data=[homo_nn_1.outputs['predict_data_output']]
     )
 
-
-    pipeline.add_task(homo_nn_0)
-    pipeline.add_task(homo_nn_1)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, homo_nn_0, homo_nn_1, evaluation_0])
     pipeline.compile()
     pipeline.fit()
 

@@ -101,30 +101,44 @@ public class MetaInfo {
     public static String PROPERTY_TRANSFER_FILE_PATH_PRE = "mapped"+ File.separator+".fate"+ File.separator+"transfer_file";
     @Config(confKey = "index.mapped.file.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_INDEX_MAP_FILE_SIZE = 1 << 21;
-    @Config(confKey = "server.cert.chain.file")
-    public static String PROPERTY_SERVER_CERT_CHAIN_FILE;
-    @Config(confKey = "server.private.key.file")
-    public static String PROPERTY_SERVER_PRIVATE_KEY_FILE;
-    @Config(confKey = "server.ca.file")
-    public static String PROPERTY_SERVER_CA_FILE;
-    @Config(confKey = "server.ssl.store.flag")
-    public static Boolean PROPERTY_USE_STORE = true;
-    @Config(confKey = "server.keystore.file")
-    public static String PROPERTY_SERVER_KEYSTORE_FILE;
-    @Config(confKey = "server.keystore.file.password")
-    public static String PROPERTY_SERVER_KEYSTORE_FILE_PASSWORD;
-    @Config(confKey = "server.trust.keystore.file")
-    public static String PROPERTY_SERVER_TRUST_KEYSTORE_FILE;
-    @Config(confKey = "server.trust.keystore.file.password")
-    public static String PROPERTY_SERVER_TRUST_FILE_PASSWORD;
+    @Config(confKey = "https.server.cert.chain.file")
+    public static String PROPERTY_HTTPS_SERVER_CERT_CHAIN_FILE;
+    @Config(confKey = "https.server.private.key.file")
+    public static String PROPERTY_HTTPS_SERVER_PRIVATE_KEY_FILE;
+    @Config(confKey = "https.server.ca.file")
+    public static String PROPERTY_HTTPS_SERVER_CA_FILE;
+    @Config(confKey = "https.server.keystore.file")
+    public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE = "";
+    @Config(confKey = "https.server.keystore.file.password")
+    public static String PROPERTY_HTTPS_SERVER_KEYSTORE_FILE_PASSWORD = "";
+    @Config(confKey = "https.server.trust.keystore.file")
+    public static String PROPERTY_HTTPS_SERVER_TRUST_KEYSTORE_FILE = "";
+    @Config(confKey = "https.client.trust.keystore.file.password")
+    public static String PROPERTY_HTTPS_SERVER_TRUST_FILE_PASSWORD = "";
+    @Config(confKey = "https.server.hostname.verifier.skip")
+    public static boolean PROPERTY_HTTPS_HOSTNAME_VERIFIER_SKIP = true;
+    @Config(confKey = "grpc.server.cert.chain.file")
+    public static String PROPERTY_GRPC_SERVER_CERT_CHAIN_FILE;
+    @Config(confKey = "grpc.server.private.key.file")
+    public static String PROPERTY_GRPC_SERVER_PRIVATE_KEY_FILE;
+    @Config(confKey = "grpc.server.ca.file")
+    public static String PROPERTY_GRPC_SERVER_CA_FILE;
+    @Config(confKey = "grpc.server.keystore.file")
+    public static String PROPERTY_GRPC_SERVER_KEYSTORE_FILE;
+    @Config(confKey = "grpc.server.keystore.file.password")
+    public static String PROPERTY_GRPC_SERVER_KEYSTORE_FILE_PASSWORD;
+    @Config(confKey = "grpc.server.trust.keystore.file")
+    public static String PROPERTY_GRPC_SERVER_TRUST_KEYSTORE_FILE;
+    @Config(confKey = "grpc.server.trust.keystore.file.password")
+    public static String PROPERTY_GRPC_SERVER_TRUST_FILE_PASSWORD;
+
     @Config(confKey = "custom.local.host")
     public static String PROPERTY_CUSTOMER_LOCAL_HOST;
     @Config(confKey = "bind.host")
     public static String PROPERTY_BIND_HOST = "0.0.0.0";
     @Config(confKey = "open.grpc.tls.server", pattern = Dict.BOOLEAN_PATTERN)
     public static Boolean PROPERTY_OPEN_GRPC_TLS_SERVER = false;
-    @Config(confKey = "open.grpc.tls.use.keystore", pattern = Dict.BOOLEAN_PATTERN)
-    public static Boolean PROPERTY_OPEN_TLS_USE_KEYSTORE = false;
+
     @Config(confKey = "grpc.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_PORT = 9370;
     @Config(confKey = "grpc.tls.port", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -151,16 +165,10 @@ public class MetaInfo {
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_TYPE = "PKCS12";
     @Config(confKey = "http.ssl.trust.store.provider")
     public static String PROPERTY_HTTP_SSL_TRUST_STORE_PROVIDER = "SUN";
-    @Config(confKey = "http.ssl.key.store.path")
-    public static String PROPERTY_HTTP_SSL_KEY_STORE_PATH = "";
-    @Config(confKey = "http.ssl.key.store.alias")
-    public static String PROPERTY_HTTP_SSL_KEY_STORE_ALIAS = "";
-    @Config(confKey = "http.ssl.key.store.password")
-    public static String PROPERTY_HTTP_SSL_KEY_STORE_PASSWORD = "";
-    @Config(confKey = "http.ssl.trust.store.path")
-    public static String PROPERTY_HTTP_SSL_TRUST_STORE_PATH = "";
-    @Config(confKey = "http.ssl.trust.store.password")
-    public static String PROPERTY_HTTP_SSL_TRUST_STORE_PASSWORD = "";
+    @Config(confKey = "http.ssl.client.key.store.alias")
+    public static String PROPERTY_HTTP_SSL_CLIENT_KEY_STORE_ALIAS = "";
+    @Config(confKey = "http.ssl.server.key.store.alias")
+    public static String PROPERTY_HTTP_SSL_SERVER_KEY_STORE_ALIAS = "";
     @Config(confKey = "http.ssl.hostname.verify")
     public static Boolean PROPERTY_HTTP_SSL_HOSTNAME_VERIFY = false;
     @Config(confKey = "http.context.path")
@@ -253,6 +261,8 @@ public class MetaInfo {
     public static Boolean PROPERTY_ROUTER_CHANGE_NEED_TOKEN= false;
     @Config(confKey = "router.change.token.validator")
     public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR= Dict.DEFAULT;
+    @Config(confKey = "batch.sink.push.executor.timeout")
+    public static Integer BATCH_SINK_PUSH_EXECUTOR_TIMEOUT = 60*1000;
 
 
     public static boolean isCluster() {

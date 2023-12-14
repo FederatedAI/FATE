@@ -1,12 +1,12 @@
 import os
-from typing import List
 from dataclasses import dataclass, field
+from typing import List
+
 from .argparser import HfArgumentParser, get_parties
 
 
 @dataclass
-class LauncherStandaloneContextArgs:
-    federation_session_id: str = field()
+class LauncherLocalContextArgs:
     parties: List[str] = field()
     rank: int = field()
     csession_id: str = field(default=None)
@@ -14,68 +14,86 @@ class LauncherStandaloneContextArgs:
 
 
 @dataclass
-class LauncherEggrollContextArgs:
-    federation_session_id: str = field()
+class LauncherClusterContextArgs:
     parties: List[str] = field()
     rank: int = field()
+    config_properties: str = field()
     csession_id: str = field(default=None)
-    host: str = field(default="127.0.0.1")
-    port: int = field(default=9377)
+    federation_address: str = field(default="127.0.0.1:9377")
+    cluster_address: str = field(default="127.0.0.1:4670")
+    federation_mode: str = field(default="stream")
 
 
 @dataclass
 class LauncherContextArguments:
-    context_type: str = field(default="standalone")
+    context_type: str = field(default="local")
 
 
-def init_context():
+def init_context(computing_session_id: str, federation_session_id: str):
     args = HfArgumentParser(LauncherContextArguments).parse_known_args()[0]
-    if args.context_type == "standalone":
-        return init_standalone_context()
-    elif args.context_type == "eggroll":
-        return init_eggroll_context()
+    if args.context_type == "local":
+        return init_local_context(computing_session_id, federation_session_id)
+    elif args.context_type == "cluster":
+        return init_cluster_context(computing_session_id, federation_session_id)
     else:
         raise ValueError(f"unknown context type: {args.context_type}")
 
 
-def init_standalone_context():
-    from fate.arch.utils.paths import get_base_dir
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.federation.standalone import StandaloneFederation
+def init_local_context(computing_session_id: str, federation_session_id: str):
+    from .paths import get_base_dir
+    from fate.arch.computing.backends.standalone import CSession
+    from fate.arch.federation import FederationBuilder
     from fate.arch.context import Context
 
-    args = HfArgumentParser(LauncherStandaloneContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[
+    args = HfArgumentParser(LauncherLocalContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[
         0
     ]
 
     data_dir = args.data_dir
     if not data_dir:
         data_dir = os.path.join(get_base_dir(), "data")
-    computing_session = CSession(session_id=args.csession_id, data_dir=data_dir)
+    computing_session = CSession(session_id=computing_session_id, data_dir=data_dir)
+
     parties = get_parties(args.parties)
     party = parties[args.rank]
-    federation_session = StandaloneFederation(computing_session, args.federation_session_id, party, parties)
+    federation_session = FederationBuilder(
+        federation_id=federation_session_id, party=party, parties=parties
+    ).build_standalone(
+        computing_session,
+    )
     context = Context(computing=computing_session, federation=federation_session)
     return context
 
 
-def init_eggroll_context():
-    from fate.arch.computing.eggroll import CSession
+def init_cluster_context(computing_session_id: str, federation_session_id: str):
+    from fate.arch.federation import FederationBuilder, FederationMode
+    from fate.arch.computing.backends.eggroll import CSession
 
-    from fate.arch.federation.osx import OSXFederation
     from fate.arch.context import Context
 
-    args = HfArgumentParser(LauncherEggrollContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[0]
+    args = HfArgumentParser(LauncherClusterContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[
+        0
+    ]
+
+    cluster_host, cluster_port = args.cluster_address.split(":")
+    computing_session = CSession(
+        session_id=computing_session_id,
+        host=cluster_host.strip(),
+        port=int(cluster_port.strip()),
+    )
+
     parties = get_parties(args.parties)
     party = parties[args.rank]
-    computing_session = CSession(session_id=args.csession_id)
-    federation_session = OSXFederation.from_conf(
-        federation_session_id=args.federation_session_id,
+    federation_mode = FederationMode.from_str(args.federation_mode)
+    federation_host, federation_port = args.federation_address.split(":")
+    federation_session = FederationBuilder(
+        federation_id=federation_session_id, party=party, parties=parties
+    ).build_osx(
         computing_session=computing_session,
-        party=party,
-        parties=parties,
-        host=args.host,
-        port=args.port,
+        host=federation_host.strip(),
+        port=int(federation_port.strip()),
+        mode=federation_mode,
     )
+
     context = Context(computing=computing_session, federation=federation_session)
     return context

@@ -1,9 +1,5 @@
 grpcio==1.46.3
 grpcio-tools==1.46.3
-numba==0.56.4
 protobuf==3.19.6
-pyarrow==6.0.1
-mmh3==3.0.0
-cachetools>=3.0.0
 cloudpickle==2.1.0
 psutil>=5.7.0

@@ -75,8 +75,16 @@ class _WeightDiffConverge(_ConvergeFunction):
         super().__init__(eps=eps)
         self.pre_weight = None
 
-    def is_converge(self, delta_weight, weight=None):
+    def set_pre_weight(self, weight):
+        self.pre_weight = weight
+
+    @staticmethod
+    def compute_weight_diff(delta_weight):
         weight_diff = torch.linalg.norm(delta_weight, 2)
+        return weight_diff
+
+    def is_converge(self, delta_weight, weight=None):
+        weight_diff = self.compute_weight_diff(delta_weight)
         if weight is None:
             # avoid tensor[bool]
             if weight_diff < self.eps:

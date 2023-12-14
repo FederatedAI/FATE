@@ -157,6 +157,18 @@ class LazyBuildInComponentsLoader:
         return data_split
 
     @_lazy_cpn
+    def sshe_lr(self):
+        from .sshe_lr import sshe_lr
+
+        return sshe_lr
+
+    @_lazy_cpn
+    def sshe_linr(self):
+        from .sshe_linr import sshe_linr
+
+        return sshe_linr
+
+    @_lazy_cpn
     def toy_example(self):
         from .toy_example import toy_example
 

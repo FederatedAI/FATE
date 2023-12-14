@@ -12,21 +12,21 @@ name = "fed"
 
 def create_ctx(local):
     from fate.arch import Context
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.federation.standalone import StandaloneFederation
+    from fate.arch.computing.backends.standalone import CSession
+    from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
 
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
 
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
-    computing = CSession()
+    computing = CSession(data_dir='./session_dir')
     return Context(
         computing=computing, federation=StandaloneFederation(computing, name, local, [guest, host, arbiter])
     )
@@ -37,7 +37,10 @@ if __name__ == "__main__":
     model = t.nn.Sequential(t.nn.Linear(30, 1), t.nn.Sigmoid())
 
     ds = TableDataset(return_dict=False, to_tensor=True)
-    ds.load('./../../../../../examples/data/breast_homo_guest.py')
+    ds.load('./../../../../../examples/data/breast_homo_guest.csv')
+
+    ds_val = TableDataset(return_dict=False, to_tensor=True)
+    ds_val.load('./../../../../../examples/data/breast_homo_test.csv')
 
     if sys.argv[1] == "guest":
         ctx = create_ctx(guest)
@@ -52,7 +55,8 @@ if __name__ == "__main__":
             training_args=args,
             loss_fn=t.nn.BCELoss(),
             optimizer=t.optim.SGD(model.parameters(), lr=0.01),
-            train_set=ds
+            train_set=ds,
+            val_set=ds_val
         )
         trainer.train()
 
@@ -68,6 +72,7 @@ if __name__ == "__main__":
             loss_fn=t.nn.BCELoss(),
             optimizer=t.optim.SGD(model.parameters(), lr=0.01),
             train_set=ds,
+            val_set=ds_val
         )
         trainer.train()
 

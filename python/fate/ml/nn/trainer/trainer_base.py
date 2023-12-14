@@ -637,12 +637,13 @@ class WrappedFedCallback(CallbackWrapper):
             self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator(self.ctx, self.fed_arg)
 
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+
         if self.wrapped_trainer.local_mode:
             return
         # aggregate loss
         if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
             if self.wrapped_trainer.aggregation_checker.can_aggregate_loss:
-                if 'train_loss' in state.log_history[-1]:  # final log is ignored
+                if 'loss' not in state.log_history[-1]:  # only process train loss
                     return
                 loss = state.log_history[-1]["loss"]
                 agg_round = self.wrapped_trainer.aggregation_checker.loss_aggregation_count

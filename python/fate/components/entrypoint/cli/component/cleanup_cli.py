@@ -16,6 +16,7 @@ def cleanup(process_tag, config, env_name):
         load_config_from_env,
         load_config_from_file,
     )
+    from fate.components.core import is_root_worker
 
     configs = {}
     configs = load_config_from_env(configs, env_name)
@@ -23,15 +24,16 @@ def cleanup(process_tag, config, env_name):
     config = TaskCleanupConfigSpec.parse_obj(configs)
 
     try:
-        print("start cleanup")
-        computing = load_computing(config.computing)
-        federation = load_federation(config.federation, computing)
-        ctx = Context(
-            computing=computing,
-            federation=federation,
-        )
-        ctx.destroy()
-        print("cleanup done")
+        if is_root_worker():
+            print("start cleanup")
+            computing = load_computing(config.computing)
+            federation = load_federation(config.federation, computing)
+            ctx = Context(
+                computing=computing,
+                federation=federation,
+            )
+            ctx.destroy()
+            print("cleanup done")
     except Exception as e:
         traceback.print_exc()
         raise e

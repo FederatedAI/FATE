@@ -1,5 +1,5 @@
 import numpy as np
-from fate.arch.computing import is_table
+from fate.arch.computing.api import is_table
 
 
 def binary_operate(lhs, rhs, op, block_indexes, rhs_block_id=None):

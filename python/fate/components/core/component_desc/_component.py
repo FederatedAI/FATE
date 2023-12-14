@@ -232,7 +232,6 @@ class Component:
     def predict(
         self, roles: List = None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
-
         if roles is None:
             roles = []
 
@@ -241,7 +240,6 @@ class Component:
     def train(
         self, roles: List = None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
-
         if roles is None:
             roles = []
 
@@ -250,7 +248,6 @@ class Component:
     def cross_validation(
         self, roles: List = None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
-
         if roles is None:
             roles = []
 
@@ -326,7 +323,6 @@ def component(
 
 def _component(name, roles, provider, version, description, is_subcomponent):
     def decorator(f):
-
         cpn_name = name or f.__name__.lower()
         if isinstance(f, Component):
             raise TypeError("Attempted to convert a callback into a component_desc twice.")

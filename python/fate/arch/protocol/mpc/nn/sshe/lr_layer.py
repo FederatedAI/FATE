@@ -5,7 +5,7 @@ import torch
 from fate.arch.context import Context
 from fate.arch.protocol.mpc.common.encoding import IgnoreEncodings
 from fate.arch.protocol.mpc.mpc import FixedPointEncoder
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 
 class SSHELogisticRegressionLayer:
@@ -21,11 +21,13 @@ class SSHELogisticRegressionLayer:
         wb_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
         precision_bits=None,
         sync_shape=True,
+        cipher_options=None,
     ):
         self.ctx = ctx
         self.rank_a = rank_a
         self.rank_b = rank_b
-        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_aggregator_layer")
+        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b],
+                                                    f"{ctx.namespace.federation_tag}.sshe_aggregator_layer")
 
         if sync_shape:
             ctx.mpc.option_assert(in_features_a is not None, "in_features_a must be specified", dst=rank_a)
@@ -36,8 +38,8 @@ class SSHELogisticRegressionLayer:
             ctx.mpc.option_assert(
                 in_features_a is None, "in_features_a must be None when sync_shape is True", dst=rank_b
             )
-            in_features_a = ctx.mpc.communicator.broadcast_obj(obj=in_features_a, src=rank_a)
-            in_features_b = ctx.mpc.communicator.broadcast_obj(obj=in_features_b, src=rank_b)
+            in_features_a = ctx.mpc.communicator.broadcast_obj(obj=in_features_a, src=rank_a, group=self.group)
+            in_features_b = ctx.mpc.communicator.broadcast_obj(obj=in_features_b, src=rank_b, group=self.group)
         else:
             ctx.mpc.option_assert(
                 in_features_a is not None, "in_features_a must be specified when sync_shape is False", dst=rank_a
@@ -48,7 +50,7 @@ class SSHELogisticRegressionLayer:
 
         self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
         self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
-        self.phe_cipher = ctx.cipher.phe.setup()
+        self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
         self.precision_bits = precision_bits
 
     @auto_trace(annotation="[z|rank_b] = 0.25 * ([xa|rank_a] * <wa> + [xb|rank_b] * <wb>) + 0.5")
@@ -146,12 +148,12 @@ class SSHELogisticRegressionLayerBackwardFunction:
 
 
 class SSHELogisticRegressionLossLayer:
-    def __init__(self, ctx: Context, rank_a, rank_b):
+    def __init__(self, ctx: Context, rank_a, rank_b, cipher_options=None):
         self.ctx = ctx
-        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_loss_layer")
+        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_loss_layer")
         self.rank_a = rank_a
         self.rank_b = rank_b
-        self.phe_cipher = ctx.cipher.phe.setup()
+        self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
 
     @auto_trace(annotation="<dz> = <z> - y")
     def forward(self, z, y):
@@ -197,7 +199,7 @@ class SSHESSHELogisticRegressionLossLayerLazyLoss:
                 cipher_a=self.ctx.mpc.option(self.phe_cipher, self.rank_a),
             )
             .mean()
-            .get_plain_text()
+            .get_plain_text(group=self.group)
         )
         return 2 * dz_mean_square - 0.5 + torch.log(torch.tensor(2.0))
 
