@@ -63,4 +63,4 @@ safety:
       debug_mode: False
       validation_mode: False
     encoder:
-      precision_bits: 16
+      precision_bits: 24
