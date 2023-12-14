@@ -24,7 +24,6 @@ from ._mq_channel import MQChannel
 
 LOGGER = getLogger(__name__)
 # default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 
 class MQ(object):
@@ -60,8 +59,6 @@ class OSXFederation(MessageQueueBasedFederation):
         port: int,
         max_message_size: typing.Optional[int] = None,
     ):
-        if max_message_size is None:
-            max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         mq = MQ(host, port)
 
         return OSXFederation(

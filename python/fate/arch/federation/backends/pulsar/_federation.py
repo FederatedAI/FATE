@@ -28,8 +28,6 @@ from ._mq_channel import (
 from ._pulsar_manager import PulsarManager
 
 LOGGER = logging.getLogger(__name__)
-# default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 
 class MQ(object):
@@ -80,8 +78,6 @@ class PulsarFederation(MessageQueueBasedFederation):
             cluster = DEFAULT_CLUSTER
         if tenant is None:
             tenant = DEFAULT_TENANT
-        if max_message_size is None:
-            max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         if "max_message_size" in pulsar_run:
             max_message_size = pulsar_run["max_message_size"]
         if "topic_ttl" in pulsar_run:

@@ -23,13 +23,12 @@ from pickle import dumps as p_dumps
 from pickle import loads as p_loads
 from typing import List
 
-from fate.arch.federation.api import Federation, FederationDataType, PartyMeta
+from fate.arch.federation.api import Federation, PartyMeta, TableMeta
 from ._datastream import Datastream
 from ._parties import Party
 
 LOGGER = logging.getLogger(__name__)
 
-NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
 
 
@@ -43,6 +42,7 @@ class MessageQueueBasedFederation(Federation):
         mq,
         max_message_size,
         conf=None,
+        default_partition_num=None,
     ):
         self._mq = mq
         self._topic_map = {}
@@ -50,6 +50,9 @@ class MessageQueueBasedFederation(Federation):
         self._name_dtype_map = {}
         self._message_cache = {}
         self._max_message_size = max_message_size
+        if self._max_message_size is None:
+            self._max_message_size = self.get_default_max_message_size()
+        self._default_partition_num = default_partition_num
         self._conf = conf
         self.computing_session = computing_session
 
@@ -58,97 +61,52 @@ class MessageQueueBasedFederation(Federation):
         # TODO: remove this
         self._party = Party(party[0], party[1])
 
-    def get_default_partition_num(self):
+    def destroy(self, parties):
+        raise NotImplementedError()
+
+    def _get_channel(
+        self,
+        topic_pair,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        mq=None,
+        conf: dict = None,
+    ):
+        raise NotImplementedError()
+
+    def _maybe_create_topic_and_replication(self, party, topic_suffix):
+        # gen names
+        raise NotImplementedError()
+
+    def _get_consume_message(self, channel_info):
+        raise NotImplementedError()
+
+    def _consume_ack(self, channel_info, id):
+        return
+
+    def get_default_max_message_size(self):
         if self._max_message_size is None:
-            return super().get_default_partition_num()
+            return super().get_default_max_message_size()
         else:
             return self._max_message_size
 
+    def get_default_partition_num(self):
+        if self._default_partition_num is None:
+            return super().get_default_partition_num()
+        else:
+            return self._default_partition_num
+
     def _pull_bytes(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
         _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
-        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "get"]) for party in parties]
-
-        if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            rtn_dtype = []
-            for i, info in enumerate(channel_infos):
-                obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
-                rtn_dtype.append(obj)
-
-            for k in _name_dtype_keys:
-                if k not in self._name_dtype_map:
-                    self._name_dtype_map[k] = rtn_dtype[0]
-
         rtn = []
-        party_topic_infos = self._get_party_topic_infos(_parties, name)
+        party_topic_infos = self._get_party_topic_infos_by_name(_parties, name)
         channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
         for i, info in enumerate(channel_infos):
             obj = self._receive_obj(info, name, tag)
             rtn.append(obj)
 
-        return rtn
-
-    def _pull_table(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
-        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
-        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "get"]) for party in parties]
-
-        if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            rtn_dtype = []
-            for i, info in enumerate(channel_infos):
-                obj = self._receive_obj(info, name, tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]))
-                rtn_dtype.append(obj)
-
-            for k in _name_dtype_keys:
-                if k not in self._name_dtype_map:
-                    self._name_dtype_map[k] = rtn_dtype[0]
-
-        rtn_dtype = self._name_dtype_map[_name_dtype_keys[0]]
-
-        rtn = []
-        dtype = rtn_dtype.get("dtype", None)
-        partitions = rtn_dtype.get("partitions", None)
-        partitioner_type = rtn_dtype.get("partitioner_type", None)
-        key_serdes_type = rtn_dtype.get("key_serdes_type", None)
-        value_serdes_type = rtn_dtype.get("value_serdes_type", None)
-
-        if dtype == FederationDataType.TABLE:
-            party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
-            for i in range(len(party_topic_infos)):
-                party = _parties[i]
-                role = party.role
-                party_id = party.party_id
-                topic_infos = party_topic_infos[i]
-                receive_func = self._get_partition_receive_func(
-                    name=name,
-                    tag=tag,
-                    src_party_id=self.local_party[1],
-                    src_role=self.local_party[0],
-                    dst_party_id=party_id,
-                    dst_role=role,
-                    topic_infos=topic_infos,
-                    mq=self._mq,
-                    conf=self._conf,
-                )
-                table = self.computing_session.parallelize(
-                    range(partitions),
-                    include_key=False,
-                    partition=partitions,
-                    partitioner_type=partitioner_type,
-                    key_serdes_type=key_serdes_type,
-                    value_serdes_type=value_serdes_type,
-                )
-                table = table.mapPartitionsWithIndex(
-                    receive_func,
-                    output_key_serdes_type=key_serdes_type,
-                    output_value_serdes_type=value_serdes_type,
-                    output_partitioner_type=partitioner_type,
-                )
-                rtn.append(table)
-        else:
-            raise ValueError(f"unknown dtype: {dtype}")
         return rtn
 
     def _push_bytes(
@@ -159,57 +117,57 @@ class MessageQueueBasedFederation(Federation):
         parties: List[PartyMeta],
     ):
         _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
-        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "remote"]) for party in parties]
-
-        if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            body = {"dtype": FederationDataType.OBJECT}
-            self._send_obj(
-                name=name,
-                tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
-                data=p_dumps(body),
-                channel_infos=channel_infos,
-            )
-
-            for k in _name_dtype_keys:
-                if k not in self._name_dtype_map:
-                    self._name_dtype_map[k] = body
-
-        party_topic_infos = self._get_party_topic_infos(_parties, name)
+        party_topic_infos = self._get_party_topic_infos_by_name(_parties, name)
         channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-        self._send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
+        self._send_obj(name=name, tag=tag, data=v, channel_infos=channel_infos)
+
+    def _pull_table(
+        self, name: str, tag: str, parties: typing.List[PartyMeta], table_metas: List[TableMeta]
+    ) -> typing.List:
+        rtn = []
+        for table_meta, party in zip(table_metas, parties):
+            party = Party(role=party[0], party_id=party[1])
+            party_topic_infos = self._get_party_topic_infos_by_name_and_partitions(
+                [party], name, partitions=table_meta.num_partitions
+            )[0]
+            topic_infos = party_topic_infos
+            receive_func = self._get_partition_receive_func(
+                name=name,
+                tag=tag,
+                src_party_id=self.local_party[1],
+                src_role=self.local_party[0],
+                dst_party_id=party.party_id,
+                dst_role=party.role,
+                topic_infos=topic_infos,
+                mq=self._mq,
+                conf=self._conf,
+            )
+            table = self.computing_session.parallelize(
+                range(table_meta.num_partitions),
+                include_key=False,
+                partition=table_meta.num_partitions,
+                partitioner_type=table_meta.partitioner_type,
+                key_serdes_type=table_meta.key_serdes_type,
+                value_serdes_type=table_meta.value_serdes_type,
+            )
+            table = table.mapPartitionsWithIndex(
+                receive_func,
+                output_key_serdes_type=table_meta.key_serdes_type,
+                output_value_serdes_type=table_meta.value_serdes_type,
+                output_partitioner_type=table_meta.partitioner_type,
+            )
+            rtn.append(table)
+        return rtn
 
     def _push_table(self, table, name: str, tag: str, parties: typing.List[PartyMeta]):
         _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
-        _name_dtype_keys = [_SPLIT_.join([party[0], party[1], name, tag, "remote"]) for party in parties]
-
-        if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            body = {
-                "dtype": FederationDataType.TABLE,
-                "partitions": table.num_partitions,
-                "partitioner_type": table.partitioner_type,
-                "key_serdes_type": table.key_serdes_type,
-                "value_serdes_type": table.value_serdes_type,
-            }
-            self._send_obj(
-                name=name,
-                tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
-                data=p_dumps(body),
-                channel_infos=channel_infos,
-            )
-            for k in _name_dtype_keys:
-                if k not in self._name_dtype_map:
-                    self._name_dtype_map[k] = body
-
-        partitions = table.num_partitions
-        party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
+        party_topic_infos = self._get_party_topic_infos_by_name_and_partitions(
+            _parties, name, partitions=table.num_partitions
+        )
         send_func = self._get_partition_send_func(
             name=name,
             tag=tag,
-            partitions=partitions,
+            partitions=table.num_partitions,
             party_topic_infos=party_topic_infos,
             src_party_id=self.local_party[1],
             src_role=self.local_party[0],
@@ -227,83 +185,45 @@ class MessageQueueBasedFederation(Federation):
     def __getstate__(self):
         pass
 
-    def destroy(self, parties):
-        raise NotImplementedError()
+    def _get_party_topic_infos_by_name(self, parties: typing.List[Party], name: str):
+        topic_infos = [[self._get_or_create_topic(party, "-".join([name]))] for party in parties]
+        return topic_infos
 
-    def _get_party_topic_infos(
-        self, parties: typing.List[Party], name=None, partitions=None, dtype=None
+    def _get_party_topic_infos_by_name_and_partitions(
+        self, parties: typing.List[Party], name=None, partitions=None
     ) -> typing.List:
-        topic_infos = [self._get_or_create_topic(party, name, partitions, dtype) for party in parties]
+        topic_infos = [
+            [self._get_or_create_topic(party, "-".join([name, str(i)])) for i in range(partitions)]
+            for party in parties
+        ]
         return topic_infos
 
-    def _maybe_create_topic_and_replication(self, party, topic_suffix):
-        # gen names
-        raise NotImplementedError()
+    def _get_or_create_topic(self, party, topic_suffix) -> typing.Tuple[Party, str, typing.Any]:
+        if (party, topic_suffix) not in self._topic_map:
+            topic_pair = self._maybe_create_topic_and_replication(party, topic_suffix)
+            self._topic_map[(party, topic_suffix)] = topic_pair
 
-    def _get_or_create_topic(self, party: Party, name=None, partitions=None, dtype=None) -> typing.Tuple:
-        topic_key_list = []
-        topic_infos = []
-
-        if dtype is not None:
-            topic_key = _SPLIT_.join([party.role, party.party_id, dtype, dtype])
-            topic_key_list.append(topic_key)
-        else:
-            if partitions is not None:
-                for i in range(partitions):
-                    topic_key = _SPLIT_.join([party.role, party.party_id, name, str(i)])
-                    topic_key_list.append(topic_key)
-            elif name is not None:
-                topic_key = _SPLIT_.join([party.role, party.party_id, name])
-                topic_key_list.append(topic_key)
-            else:
-                topic_key = _SPLIT_.join([party.role, party.party_id])
-                topic_key_list.append(topic_key)
-
-        for topic_key in topic_key_list:
-            if topic_key not in self._topic_map:
-                topic_key_splits = topic_key.split(_SPLIT_)
-                topic_suffix = "-".join(topic_key_splits[2:])
-                topic_pair = self._maybe_create_topic_and_replication(party, topic_suffix)
-                self._topic_map[topic_key] = topic_pair
-
-            topic_pair = self._topic_map[topic_key]
-            topic_infos.append((topic_key, topic_pair))
-
-        return topic_infos
-
-    def _get_channel(
-        self,
-        topic_pair,
-        src_party_id,
-        src_role,
-        dst_party_id,
-        dst_role,
-        mq=None,
-        conf: dict = None,
-    ):
-        raise NotImplementedError()
+        topic_pair = self._topic_map[(party, topic_suffix)]
+        return party, topic_suffix, topic_pair
 
     def _get_channels(self, party_topic_infos):
         channel_infos = []
         for e in party_topic_infos:
-            for topic_key, topic_pair in e:
-                topic_key_splits = topic_key.split(_SPLIT_)
-                role = topic_key_splits[0]
-                party_id = topic_key_splits[1]
-                info = self._channels_map.get(topic_key)
+            for party, topic_suffix, topic_pair in e:
+                info = self._channels_map.get((party, topic_suffix))
 
                 if info is None:
                     info = self._get_channel(
                         topic_pair=topic_pair,
                         src_party_id=self.local_party[1],
                         src_role=self.local_party[0],
-                        dst_party_id=party_id,
-                        dst_role=role,
+                        dst_party_id=party.party_id,
+                        dst_role=party.role,
                         mq=self._mq,
                         conf=self._conf,
                     )
 
-                    self._channels_map[topic_key] = info
+                    self._channels_map[(party, topic_suffix)] = info
                 channel_infos.append(info)
         return channel_infos
 
@@ -319,16 +239,13 @@ class MessageQueueBasedFederation(Federation):
         channel_infos = []
         for e in party_topic_infos:
             # select specified topic_info for a party
-            topic_key, topic_pair = e[index]
-            topic_key_splits = topic_key.split(_SPLIT_)
-            role = topic_key_splits[0]
-            party_id = topic_key_splits[1]
+            party, topic_suffix, topic_pair = e[index]
             info = self._get_channel(
                 topic_pair=topic_pair,
                 src_party_id=src_party_id,
                 src_role=src_role,
-                dst_party_id=party_id,
-                dst_role=role,
+                dst_party_id=party.party_id,
+                dst_role=party.role,
                 mq=mq,
                 conf=conf,
             )
@@ -461,15 +378,6 @@ class MessageQueueBasedFederation(Federation):
         cache_key = _SPLIT_.join([name, tag, str(party_id), role])
         return cache_key
 
-    def _get_consume_message(self, channel_info):
-        raise NotImplementedError()
-
-    def _consume_ack(self, channel_info, id):
-        return
-
-    def _query_receive_topic(self, channel_info):
-        return channel_info
-
     def _receive_obj(self, channel_info, name, tag):
         party_id = channel_info._dst_party_id
         role = channel_info._dst_role
@@ -477,9 +385,9 @@ class MessageQueueBasedFederation(Federation):
         wish_cache_key = self._get_message_cache_key(name, tag, party_id, role)
 
         if wish_cache_key in self._message_cache:
-            recv_obj = self._message_cache[wish_cache_key]
+            recv_bytes = self._message_cache[wish_cache_key]
             del self._message_cache[wish_cache_key]
-            return recv_obj
+            return recv_bytes
 
         # channel_info = self._query_receive_topic(channel_info)
 
@@ -490,14 +398,14 @@ class MessageQueueBasedFederation(Federation):
             )
             # object
             if properties["content_type"] == "text/plain":
-                recv_obj = p_loads(body)
+                recv_bytes = body
                 self._consume_ack(channel_info, id)
                 LOGGER.debug(f"[federation._receive_obj] cache_key: {cache_key}, wish_cache_key: {wish_cache_key}")
                 if cache_key == wish_cache_key:
                     channel_info.cancel()
-                    return recv_obj
+                    return recv_bytes
                 else:
-                    self._message_cache[cache_key] = recv_obj
+                    self._message_cache[cache_key] = recv_bytes
             else:
                 raise ValueError(
                     f"[federation._receive_obj] properties.content_type is {properties['content_type']}, but must be text/plain"
@@ -546,7 +454,7 @@ class MessageQueueBasedFederation(Federation):
         mq,
         conf: dict,
     ):
-        topic_pair = topic_infos[index][1]
+        _, _, topic_pair = topic_infos[index]
         channel_info = self._get_channel(
             topic_pair=topic_pair,
             src_party_id=src_party_id,
@@ -561,8 +469,6 @@ class MessageQueueBasedFederation(Federation):
         count = 0
         partition_size = -1
         all_data = []
-
-        channel_info = self._query_receive_topic(channel_info)
 
         while True:
             try:

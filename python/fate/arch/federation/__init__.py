@@ -13,6 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from ._builder import FederationBuilder, FederationMode
-from .api import Federation, FederationDataType
+from .api import Federation, FederationDataType, TableMeta
 
 __all__ = ["Federation", "FederationDataType", "FederationBuilder", "FederationMode"]
