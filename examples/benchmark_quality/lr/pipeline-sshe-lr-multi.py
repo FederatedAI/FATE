@@ -75,11 +75,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
                               input_data=lr_0.outputs["train_output_data"],
                               predict_column_name='predict_result',
                               metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
-    pipeline.add_task(reader_0)
-    pipeline.add_task(psi_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(lr_1)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_task([reader_0, psi_0, lr_0, lr_1, evaluation_0])
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:

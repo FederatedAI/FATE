@@ -74,11 +74,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
                                        "mse",
                                        "rmse"],
                               input_data=linr_0.outputs["train_output_data"])
-    pipeline.add_task(reader_0)
-    pipeline.add_task(psi_0)
-    pipeline.add_task(linr_0)
-    # pipeline.add_task(linr_1)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_task([reader_0, psi_0, linr_0, evaluation_0])
 
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
