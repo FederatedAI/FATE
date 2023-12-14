@@ -17,9 +17,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI, Reader
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 from fate_test.utils import parse_summary_result
 
@@ -45,11 +44,10 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                             namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                namespace=host_train_data["namespace"]))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(namespace=guest_train_data['namespace'], name=guest_train_data['name'])
+    reader_0.hosts[0].task_parameters(namespace=host_train_data['namespace'], name=host_train_data['name'])
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     lr_param = {
     }
@@ -72,14 +70,10 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
                          input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=dict(guest=guest),
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
                               input_data=lr_0.outputs["train_output_data"])
-
-    pipeline.add_task(psi_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(lr_1)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, lr_0, lr_1, evaluation_0])
 
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
