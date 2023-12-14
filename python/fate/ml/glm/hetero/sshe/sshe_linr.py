@@ -157,6 +157,7 @@ class SSHELREstimator(HeteroModule):
             self.converge_func = converge_func_factory(self.early_stop, self.tol)
 
     def fit_single_model(self, ctx: Context, train_data: DataFrame, valid_data: DataFrame) -> None:
+        self.header = train_data.schema.columns.to_list()
         rank_a, rank_b = ctx.hosts[0].rank, ctx.guest.rank
 
         if self.w is None:
