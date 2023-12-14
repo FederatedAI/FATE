@@ -52,7 +52,7 @@ class SSHELogisticRegression(Module):
         self.estimator = None
         self.ovr = False
         self.labels = None
-        self.label_count = False
+        self.label_count = None
 
     def set_batch_size(self, batch_size):
         self.batch_size = batch_size
