@@ -30,7 +30,7 @@ def create_ctx(local, context_name):
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     # init fate context
-    computing = CSession()
+    computing = CSession(data_dir='./session_dir')
     return Context(
         computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host])
     )
@@ -40,7 +40,6 @@ if __name__ == "__main__":
 
     party = sys.argv[1]
     import torch as t
-
 
     def set_seed(seed):
         t.manual_seed(seed)
@@ -63,6 +62,13 @@ if __name__ == "__main__":
     # # make random fake data
     sample_num = 569
 
+    args = TrainingArguments(
+        num_train_epochs=5,
+        per_device_train_batch_size=32,
+        disable_tqdm=False,
+        no_cuda=False
+    )
+
     if party == "guest":
 
         from fate.ml.evaluation.metric_base import MetricEnsemble
@@ -81,11 +87,6 @@ if __name__ == "__main__":
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
-        args = TrainingArguments(
-            num_train_epochs=5,
-            per_device_train_batch_size=16,
-            no_cuda=True
-        )
         trainer = HeteroNNTrainerGuest(
             ctx=ctx,
             model=model,
@@ -95,10 +96,10 @@ if __name__ == "__main__":
             training_args=args
         )
         trainer.train()
-        # pred = trainer.predict(dataset)
-        # # compute auc
-        # from sklearn.metrics import roc_auc_score
-        # print(roc_auc_score(pred.label_ids, pred.predictions))
+        pred = trainer.predict(dataset)
+        # compute auc
+        from sklearn.metrics import roc_auc_score
+        print(roc_auc_score(pred.label_ids, pred.predictions))
 
     elif party == "host":
 
@@ -112,12 +113,6 @@ if __name__ == "__main__":
             bottom_model=host_bottom
         )
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
-
-        args = TrainingArguments(
-            num_train_epochs=5,
-            per_device_train_batch_size=16,
-            no_cuda=True
-        )
 
         trainer = HeteroNNTrainerHost(
             ctx=ctx,

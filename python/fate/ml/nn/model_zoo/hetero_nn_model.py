@@ -133,10 +133,14 @@ class HeteroNNModelBase(t.nn.Module):
         self._top_model = None
         self._agg_layer = None
         self._ctx = None
+        self.device = None
 
     def _auto_setup(self):
         self._agg_layer = AggLayerGuest()
         self._agg_layer.set_context(self._ctx)
+
+    def get_device(self, module):
+        return next(module.parameters()).device
 
 
 class HeteroNNModelGuest(HeteroNNModelBase):
@@ -220,6 +224,10 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         if self._agg_layer is None:
             self._auto_setup()
 
+        if self.device is None:
+            self.device = self.get_device(self._top_model)
+            self._agg_layer.set_device(self.device)
+
         if self._bottom_model is None:
             b_out = None
         else:
@@ -256,18 +264,6 @@ class HeteroNNModelGuest(HeteroNNModelBase):
                 bottom_loss.backward()
             self._bottom_fw = False
 
-    def predict(self, x = None):
-
-        with torch.no_grad():
-            if self._bottom_model is None:
-                b_out = None
-            else:
-                b_out = self._bottom_model(x)
-            agg_out = self._agg_layer.predict(b_out)
-            top_out = self._top_model(agg_out)
-
-        return top_out
-
 
 class HeteroNNModelHost(HeteroNNModelBase):
 
@@ -301,7 +297,6 @@ class HeteroNNModelHost(HeteroNNModelBase):
                 bottom_arg=None):
 
         self._ctx = ctx
-
         if self._agg_layer is None:
             if agglayer_arg is None:
                 self._agg_layer = AggLayerHost()
@@ -309,13 +304,16 @@ class HeteroNNModelHost(HeteroNNModelBase):
                 self._agg_layer = AggLayerHost()  # no parameters are needed
             elif type(agglayer_arg) == FedPassArgument:
                 self._agg_layer = FedPassAggLayerHost(**agglayer_arg.to_dict())
-
         self._agg_layer.set_context(ctx)
 
     def forward(self, x):
 
         if self._agg_layer is None:
             self._auto_setup()
+
+        if self.device is None:
+            self.device = self.get_device(self._bottom_model)
+            self._agg_layer.set_device(self.device)
 
         b_out = self._bottom_model(x)
         # bottom layer
@@ -326,12 +324,7 @@ class HeteroNNModelHost(HeteroNNModelBase):
     def backward(self):
 
         error = self._agg_layer.backward()
+        error = error.to(self.device)
         loss = backward_loss(self._bottom_fw, error)
         loss.backward()
         self._clear_state()
-
-    def predict(self, x):
-
-        with torch.no_grad():
-            b_out = self._bottom_model(x)
-            self._agg_layer.predict(b_out)

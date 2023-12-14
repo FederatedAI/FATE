@@ -37,7 +37,7 @@ def create_ctx(local, context_name):
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     # init fate context
-    computing = CSession()
+    computing = CSession(data_dir='./session_dir')
     return Context(
         computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host])
     )
@@ -191,22 +191,30 @@ if __name__ == '__main__':
                                             train=True,
                                             download=True,
                                             transform=torchvision.transforms.ToTensor())
+    
+    test_data = torchvision.datasets.MNIST(root='./mnist',
+                                             train=False,
+                                             download=True,
+                                             transform=torchvision.transforms.ToTensor())
 
-    digit_indices = [[] for _ in range(10)]
-    for idx, (_, label) in enumerate(train_data):
-        digit_indices[label].append(idx)
+    # digit_indices = [[] for _ in range(10)]
+    # for idx, (_, label) in enumerate(train_data):
+    #     digit_indices[label].append(idx)
 
-    selected_train_indices = []
-    for indices in digit_indices:
-        selected_train_indices.extend(torch.randperm(len(indices))[:300].tolist())
+    # selected_train_indices = []
+    # for indices in digit_indices:
+    #     selected_train_indices.extend(torch.randperm(len(indices))[:10000].tolist())
 
-    selected_val_indices = []
-    for indices in digit_indices:
-        remaining_indices = [idx for idx in indices if idx not in selected_train_indices]
-        selected_val_indices.extend(torch.randperm(len(remaining_indices))[:100].tolist())
+    # selected_val_indices = []
+    # for indices in digit_indices:
+    #     remaining_indices = [idx for idx in indices if idx not in selected_train_indices]
+    #     selected_val_indices.extend(torch.randperm(len(remaining_indices))[:1000].tolist())
 
-    subset_train_data = torch.utils.data.Subset(train_data, selected_train_indices)
-    subset_val_data = torch.utils.data.Subset(train_data, selected_val_indices)
+    # subset_train_data = torch.utils.data.Subset(train_data, selected_train_indices)
+    # subset_val_data = torch.utils.data.Subset(train_data, selected_val_indices)
+
+    subset_train_data = train_data
+    subset_val_data = test_data
 
     epochs = 10
 
@@ -222,9 +230,11 @@ if __name__ == '__main__':
         def __getitem__(self, item):
             return [self.ds[item][1]]
 
-    arg = TrainingArguments(num_train_epochs=20, per_device_train_batch_size=16, disable_tqdm=False,
+    arg = TrainingArguments(num_train_epochs=10, per_device_train_batch_size=512, disable_tqdm=False,
+                            per_gpu_eval_batch_size=512,
                             eval_steps=1,
-                            evaluation_strategy='epoch'
+                            evaluation_strategy='epoch',
+                            no_cuda=False
                             )
 
     if party == 'guest':
@@ -266,6 +276,8 @@ if __name__ == '__main__':
         ctx = create_ctx(host, get_current_datetime_str())
 
         bottom_model = LeNetBottom()
+        passport_mode = 'multi'
+        print('passport mode is {}'.format(passport_mode))
         model = HeteroNNModelHost(
             bottom_model=bottom_model,
             agglayer_arg=FedPassArgument(
@@ -274,7 +286,7 @@ if __name__ == '__main__':
                 out_channels_or_features=16,
                 kernel_size=(5, 5),
                 stride=(1, 1),
-                passport_mode='multi',
+                passport_mode=passport_mode,
                 activation='relu',
                 num_passport=64
             )
