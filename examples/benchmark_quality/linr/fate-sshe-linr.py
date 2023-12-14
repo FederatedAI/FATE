@@ -69,7 +69,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
                              input_model=linr_0.outputs["output_model"])"""
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=["guest"],
                               metrics=["r2_score",
                                        "mse",
                                        "rmse"],

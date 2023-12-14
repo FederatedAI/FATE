@@ -71,7 +71,7 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
                   input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation('evaluation_0',
-                              runtime_roles=['guest'],
+                              runtime_parties=['guest'],
                               input_data=lr_0.outputs["train_output_data"],
                               predict_column_name='predict_result',
                               metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])

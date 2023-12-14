@@ -74,7 +74,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
                          input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=["guest"],
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
                               input_data=lr_0.outputs["train_output_data"])
     pipeline.add_task(reader_0)
