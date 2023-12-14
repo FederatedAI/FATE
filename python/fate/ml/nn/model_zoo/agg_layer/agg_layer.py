@@ -25,6 +25,7 @@ class _AggLayerBase(t.nn.Module):
         self._has_ctx = False
         self._model = None
         self.training = True
+        self.device = None
 
     def forward(self, x):
         raise NotImplementedError()
@@ -38,8 +39,13 @@ class _AggLayerBase(t.nn.Module):
     def set_context(self, ctx: Context):
         self._ctx = ctx
         self._has_ctx = True
+
     def has_context(self):
         return self._has_ctx
+    
+    def set_device(self, device):
+        self.device = device
+    
     @property
     def ctx(self):
         if self._ctx is None or self._has_ctx == False:
@@ -62,6 +68,7 @@ class _AggLayerBase(t.nn.Module):
 
 
 class AggLayerGuest(_AggLayerBase):
+
     def __init__(self, merge_type: Literal['sum', 'concat'] = 'sum', concat_dim = 1):
         super(AggLayerGuest, self).__init__()
         self._host_input_caches = None
@@ -77,6 +84,11 @@ class AggLayerGuest(_AggLayerBase):
 
         if x_g is None and x_h is None:
             raise ValueError("guest input and host inputs cannot be both None")
+        
+        if x_g is not None:
+            x_g = x_g.to(self.device)
+        if x_h is not None:
+            x_h = [h.to(self.device) for h in x_h]
 
         can_cat = True
         if x_g is None:
@@ -184,7 +196,7 @@ class AggLayerHost(_AggLayerBase):
         if self.training:
             assert isinstance(x, t.Tensor), 'x should be a tensor'
             if self._model is not None:
-                self._input_cache = t.from_numpy(x.detach().numpy()).requires_grad_(True)
+                self._input_cache = t.from_numpy(x.cpu().detach().numpy()).to(self.device).requires_grad_(True)
                 out_ = self._model(self._input_cache)
                 self._out_cache = out_
             else:
@@ -197,6 +209,7 @@ class AggLayerHost(_AggLayerBase):
 
         error = self._get_error_from_guest()
         if self._input_cache is not None and self._model is not None:
+            error = error.to(self.device)
             loss = backward_loss(self._out_cache, error)
             loss.backward()
             error = self._input_cache.grad
