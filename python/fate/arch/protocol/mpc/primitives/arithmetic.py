@@ -383,7 +383,7 @@ class ArithmeticSharedTensor(object):
                     result.encode_as_(y)
                 result.share = getattr(result.share, op)(y.share)
             else:  # ['mul', 'matmul', 'convNd', 'conv_transposeNd']
-                protocol = globals()[cfg.mpc.protocol]
+                protocol = globals()[cfg.safety.mpc.protocol]
                 tmp = getattr(protocol, op)(self._ctx, result, y, *args, **kwargs)
                 result.share = tmp.share
         else:
@@ -455,7 +455,7 @@ class ArithmeticSharedTensor(object):
             y = y.long()
 
         if isinstance(y, int) or is_int_tensor(y):
-            validate = cfg.debug.validation_mode
+            validate = cfg.safety.mpc.debug.validation_mode
 
             if validate:
                 tolerance = 1.0
@@ -463,7 +463,7 @@ class ArithmeticSharedTensor(object):
 
             # Truncate protocol for dividing by public integers:
             if comm.get().get_world_size() > 2:
-                protocol = globals()[cfg.mpc.protocol]
+                protocol = globals()[cfg.safety.mpc.protocol]
                 protocol.truncate(self, y)
             else:
                 self.share = self.share.div_(y, rounding_mode="trunc")
@@ -596,7 +596,7 @@ class ArithmeticSharedTensor(object):
         return self.clone().neg_()
 
     def square_(self):
-        protocol = globals()[cfg.mpc.protocol]
+        protocol = globals()[cfg.safety.mpc.protocol]
         self.share = protocol.square(self._ctx, self).div_(self.encoder.scale).share
         return self
 

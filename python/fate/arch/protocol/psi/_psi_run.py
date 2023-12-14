@@ -13,11 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate.arch.config import cfg
 from .ecdh._run import psi_ecdh
 
 
 def psi_run(ctx, df, protocol="ecdh_psi", curve_type="curve25519"):
     if protocol == "ecdh_psi":
+        if not cfg.safety.psi.ecdh.allow:
+            raise ValueError("ecdh psi is not allowed in config")
+        if curve_type not in cfg.safety.psi.ecdh.curve_type:
+            raise ValueError(f"curve_type={curve_type} is not allowed in config")
         return psi_ecdh(ctx, df, curve_type=curve_type)
     else:
         raise ValueError(f"PSI protocol={protocol} does not implemented yet.")

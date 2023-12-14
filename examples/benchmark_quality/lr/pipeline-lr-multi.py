@@ -17,11 +17,10 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI, Reader
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
-from fate_test.utils import extract_data, parse_summary_result
+from fate_test.utils import parse_summary_result
 
 
 def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""):
@@ -44,11 +43,10 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                             namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                namespace=host_train_data["namespace"]))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(namespace=guest_train_data['namespace'], name=guest_train_data['name'])
+    reader_0.hosts[0].task_parameters(namespace=host_train_data['namespace'], name=host_train_data['name'])
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     lr_param = {
     }
@@ -71,14 +69,11 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
                          input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation('evaluation_0',
-                              runtime_roles=['guest'],
+                              runtime_parties=dict(guest=guest),
                               input_data=lr_0.outputs["train_output_data"],
                               predict_column_name='predict_result',
                               metrics=['multi_recall', 'multi_accuracy', 'multi_precision'])
-    pipeline.add_task(psi_0)
-    pipeline.add_task(lr_0)
-    pipeline.add_task(lr_1)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, lr_0, lr_1, evaluation_0])
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
@@ -87,12 +82,12 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
     pipeline.compile()
     pipeline.fit()
 
-    lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
-    lr_1_data = pipeline.get_task_info("lr_1").get_output_data()["test_output_data"]
+    # lr_0_data = pipeline.get_task_info("lr_0").get_output_data()["train_output_data"]
+    # lr_1_data = pipeline.get_task_info("lr_1").get_output_data()["test_output_data"]
 
     result_summary = parse_summary_result(pipeline.get_task_info("evaluation_0").get_output_metric()[0]["data"])
-    lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
-    lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
+    # lr_0_score_label = extract_data(lr_0_data, "predict_result", keep_id=True)
+    #lr_1_score_label = extract_data(lr_1_data, "predict_result", keep_id=True)
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

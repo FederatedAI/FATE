@@ -16,6 +16,7 @@
 import logging
 import typing
 
+from fate.arch.config import cfg
 from ..unify import device
 
 if typing.TYPE_CHECKING:
@@ -49,11 +50,14 @@ class CipherKit:
             self._cipher_mapping["phe"] = {}
         if self._device not in self._cipher_mapping["phe"]:
             if self._device == device.CPU:
-                self._cipher_mapping["phe"][device.CPU] = {"kind": "paillier", "key_length": 1024}
+                self._cipher_mapping["phe"][device.CPU] = {
+                    "kind": "paillier",
+                    "key_length": cfg.safety.phe.paillier.minimum_key_size,
+                }
             else:
                 logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
                 self._cipher_mapping["phe"][device.CPU] = self._cipher_mapping["phe"].get(
-                    device.CPU, {"kind": "paillier", "key_length": 1024}
+                    device.CPU, {"kind": "paillier", "key_length": cfg.safety.phe.paillier.minimum_key_size}
                 )
 
     @property
@@ -102,17 +106,28 @@ class PHECipherBuilder:
             key_size = self.key_length
         else:
             kind = options.get("kind", self.kind)
-            key_size = options.get("key_length", 1024)
+            key_size = options.get("key_length", self.key_length)
 
         if kind == "paillier":
+            if not cfg.safety.phe.paillier.allow:
+                raise ValueError("paillier is not allowed in config")
+            if key_size < cfg.safety.phe.paillier.minimum_key_size:
+                raise ValueError(
+                    f"key size {key_size} is too small, minimum is {cfg.safety.phe.paillier.minimum_key_size}"
+                )
             from fate.arch.protocol.phe.paillier import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 
             sk, pk, coder = keygen(key_size)
             tensor_cipher = PHETensorCipher.from_raw_cipher(pk, coder, sk, evaluator)
+
             return PHECipher(kind, key_size, pk, sk, evaluator, coder, tensor_cipher, True, True, True)
 
         if kind == "ou":
+            if not cfg.safety.phe.ou.allow:
+                raise ValueError("ou is not allowed in config")
+            if key_size < cfg.safety.phe.ou.minimum_key_size:
+                raise ValueError(f"key size {key_size} is too small, minimum is {cfg.safety.phe.ou.minimum_key_size}")
             from fate.arch.protocol.phe.ou import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 
@@ -121,6 +136,8 @@ class PHECipherBuilder:
             return PHECipher(kind, key_size, pk, sk, evaluator, coder, tensor_cipher, False, False, True)
 
         elif kind == "mock":
+            if not cfg.safety.phe.mock.allow:
+                raise ValueError("mock is not allowed in config")
             from fate.arch.protocol.phe.mock import evaluator, keygen
             from fate.arch.tensor.phe import PHETensorCipher
 

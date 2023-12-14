@@ -40,3 +40,5 @@ tasks:
     script: test_linr_cv.py
   linr-warm-start:
     script: test_linr_warm_start.py
+  linr-validate:
+    script: test_linr_validate.py

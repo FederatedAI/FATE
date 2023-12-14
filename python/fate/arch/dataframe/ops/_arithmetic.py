@@ -14,7 +14,7 @@
 #  limitations under the License.
 import numpy as np
 import pandas as pd
-from fate.arch.computing import is_table
+from fate.arch.computing.api import is_table
 from .._dataframe import DataFrame
 from ._promote_types import promote_types
 from .utils.series_align import series_to_ndarray

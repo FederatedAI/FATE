@@ -53,7 +53,7 @@ def __beaver_protocol(ctx, op, x, y, *args, **kwargs):
 
     from .arithmetic import ArithmeticSharedTensor
 
-    if cfg.mpc.active_security:
+    if cfg.safety.mpc.active_security:
         """
         Reference: "Multiparty Computation from Somewhat Homomorphic Encryption"
         Link: https://eprint.iacr.org/2011/535.pdf

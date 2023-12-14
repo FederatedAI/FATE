@@ -22,3 +22,4 @@ batch_size: 18
 early_stop: "diff"
 task_cores: null
 timeout: 3600
+learning_rate: 0.3

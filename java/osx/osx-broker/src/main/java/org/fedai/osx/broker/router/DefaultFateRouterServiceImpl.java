@@ -154,6 +154,7 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         routerInfo.setProtocol(protocol);
         routerInfo.setUrl(endpoint.get(Dict.URL) != null ? endpoint.get(Dict.URL).toString() : "");
         routerInfo.setUseSSL(endpoint.get(Dict.USE_SSL) != null && Boolean.parseBoolean(endpoint.get(Dict.USE_SSL).toString()));
+        routerInfo.setUseKeyStore(endpoint.get(Dict.USE_KEYSTORE) != null && Boolean.parseBoolean(endpoint.get(Dict.USE_KEYSTORE).toString()));
         routerInfo.setCaFile(endpoint.get(Dict.CA_FILE) != null ? endpoint.get(Dict.CA_FILE).toString() : "");
         routerInfo.setCertChainFile(endpoint.get(Dict.CERT_CHAIN_FILE) != null ? endpoint.get(Dict.CERT_CHAIN_FILE).toString() : "");
         routerInfo.setPrivateKeyFile(endpoint.get(Dict.PRIVATE_KEY_FILE) != null ? endpoint.get(Dict.PRIVATE_KEY_FILE).toString() : "");
@@ -379,6 +380,11 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
     }
 
     @Override
+    public int getRunnerSequenceId() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
     public void run(String[] args) throws Exception {
         this.start();
     }
@@ -433,7 +439,7 @@ public class DefaultFateRouterServiceImpl implements RouterService, Lifecycle, A
         Preconditions.checkArgument(routerInfo!=null);
         String desPartyId =  routerInfo.getDesPartyId();
         Preconditions.checkArgument(StringUtils.isNotEmpty(desPartyId),"des party id is null");
-        if(routerInfo.getProtocol()!=null||Protocol.grpc.equals(routerInfo.getProtocol())){
+        if(routerInfo.getProtocol()==null || Protocol.grpc.equals(routerInfo.getProtocol())){
             Preconditions.checkArgument(StringUtils.isNotEmpty(routerInfo.getHost()), "route_table.json "+desPartyId+" host/ip is null");
             Preconditions.checkArgument(routerInfo.getPort()!=null, "route_table.json "+desPartyId+" port is null");
         }

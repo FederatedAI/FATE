@@ -6,8 +6,6 @@ import torchvision
 from torch import nn
 from datetime import datetime
 from fate.ml.nn.model_zoo.agg_layer.fedpass._passport_block import ConvPassportBlock
-from fate.ml.nn.model_zoo.agg_layer.fedpass.agg_layer import FedPassAggLayerHost, FedPassAggLayerGuest
-from tqdm import tqdm
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from fate.ml.nn.hetero.hetero_nn import HeteroNNTrainerGuest, HeteroNNTrainerHost, TrainingArguments, FedPassArgument
 
@@ -24,8 +22,8 @@ name = get_current_datetime_str()
 
 def create_ctx(local, context_name):
     from fate.arch import Context
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.federation.standalone import StandaloneFederation
+    from fate.arch.computing.backends.standalone import CSession
+    from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
 
     # prepare log

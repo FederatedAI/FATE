@@ -176,6 +176,9 @@ hetero_lr-binary-0-breast:
   FATE-hetero-lr:
     script: "./pipeline-lr-binary.py"
     conf: "./breast_config.yaml"
+  FATE-hetero-sshe-lr:
+    script: "./pipeline-sshe-lr-binary.py"
+    conf: "./breast_config.yaml"
   compare_setting:
     relative_tol: 0.01
 hetero_lr-binary-1-default-credit:
@@ -184,6 +187,9 @@ hetero_lr-binary-1-default-credit:
     conf: "./default_credit_lr_sklearn_config.yaml"
   FATE-hetero-lr:
     script: "./pipeline-lr-binary.py"
+    conf: "./default_credit_config.yaml"
+  FATE-hetero-sshe-lr:
+    script: "./pipeline-sshe-lr-binary.py"
     conf: "./default_credit_config.yaml"
   compare_setting:
     relative_tol: 0.01
@@ -194,6 +200,9 @@ hetero_lr-binary-2-epsilon-5k:
   FATE-hetero-lr:
     script: "./pipeline-lr-binary.py"
     conf: "./epsilon_5k_config.yaml"
+  FATE-hetero-sshe-lr:
+    script: "./pipeline-sshe-lr-binary.py"
+    conf: "./epsilon_5k_sshe_config.yaml"
   compare_setting:
     relative_tol: 0.01
 hetero_lr-binary-3-give-credit:
@@ -203,6 +212,9 @@ hetero_lr-binary-3-give-credit:
   FATE-hetero-lr:
     script: "./pipeline-lr-binary.py"
     conf: "./give_credit_config.yaml"
+  FATE-hetero-sshe-lr:
+    script: "./pipeline-sshe-lr-binary.py"
+    conf: "./give_credit_config.yaml"
   compare_setting:
     relative_tol: 0.01
 multi-vehicle:
@@ -211,6 +223,9 @@ multi-vehicle:
     conf: "./vehicle_lr_sklearn_config.yaml"
   FATE-hetero-lr:
     script: "./pipeline-lr-multi.py"
+    conf: "./vehicle_config.yaml"
+  FATE-hetero-sshe-lr:
+    script: "./pipeline-sshe-lr-multi.py"
     conf: "./vehicle_config.yaml"
   compare_setting:
     relative_tol: 0.01

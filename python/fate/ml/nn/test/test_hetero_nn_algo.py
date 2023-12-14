@@ -17,8 +17,8 @@ name = get_current_datetime_str()
 
 def create_ctx(local, context_name):
     from fate.arch import Context
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.federation.standalone import StandaloneFederation
+    from fate.arch.computing.backends.standalone import CSession
+    from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
 
     # prepare log
@@ -30,7 +30,7 @@ def create_ctx(local, context_name):
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     # init fate context
-    computing = CSession(data_dir='./session_dir')
+    computing = CSession(data_dir='./cession_dir')
     return Context(
         computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host])
     )
@@ -40,6 +40,7 @@ if __name__ == "__main__":
 
     party = sys.argv[1]
     import torch as t
+
 
     def set_seed(seed):
         t.manual_seed(seed)
@@ -62,13 +63,6 @@ if __name__ == "__main__":
     # # make random fake data
     sample_num = 569
 
-    args = TrainingArguments(
-        num_train_epochs=5,
-        per_device_train_batch_size=32,
-        disable_tqdm=False,
-        no_cuda=False
-    )
-
     if party == "guest":
 
         from fate.ml.evaluation.metric_base import MetricEnsemble
@@ -87,19 +81,28 @@ if __name__ == "__main__":
         model.double()
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
+        args = TrainingArguments(
+            num_train_epochs=5,
+            per_device_train_batch_size=16,
+            no_cuda=True,
+            evaluation_strategy='epoch',
+            eval_steps=1
+        )
         trainer = HeteroNNTrainerGuest(
             ctx=ctx,
             model=model,
             optimizer=optimizer,
             train_set=dataset,
+            val_set=dataset,
             loss_fn=loss_fn,
-            training_args=args
+            training_args=args,
+            compute_metrics=MetricEnsemble().add_metric(MultiAccuracy())
         )
         trainer.train()
-        pred = trainer.predict(dataset)
-        # compute auc
-        from sklearn.metrics import roc_auc_score
-        print(roc_auc_score(pred.label_ids, pred.predictions))
+        # pred = trainer.predict(dataset)
+        # # compute auc
+        # from sklearn.metrics import roc_auc_score
+        # print(roc_auc_score(pred.label_ids, pred.predictions))
 
     elif party == "host":
 
@@ -114,11 +117,20 @@ if __name__ == "__main__":
         )
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
+        args = TrainingArguments(
+            num_train_epochs=5,
+            per_device_train_batch_size=16,
+            no_cuda=True,
+            evaluation_strategy='epoch',
+            eval_steps=1
+        )
+
         trainer = HeteroNNTrainerHost(
             ctx=ctx,
             model=model,
             optimizer=optimizer,
             train_set=dataset,
+            val_set=dataset,
             training_args=args
         )
         trainer.train()

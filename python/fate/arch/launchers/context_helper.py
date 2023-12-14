@@ -21,12 +21,12 @@ class LauncherClusterContextArgs:
     csession_id: str = field(default=None)
     federation_address: str = field(default="127.0.0.1:9377")
     cluster_address: str = field(default="127.0.0.1:4670")
-    federation_mode: str = field(default="message_queue")
+    federation_mode: str = field(default="stream")
 
 
 @dataclass
 class LauncherContextArguments:
-    context_type: str = field(default="standalone")
+    context_type: str = field(default="local")
 
 
 def init_context(computing_session_id: str, federation_session_id: str):
@@ -40,8 +40,8 @@ def init_context(computing_session_id: str, federation_session_id: str):
 
 
 def init_local_context(computing_session_id: str, federation_session_id: str):
-    from fate.arch.utils.paths import get_base_dir
-    from fate.arch.computing.standalone import CSession
+    from .paths import get_base_dir
+    from fate.arch.computing.backends.standalone import CSession
     from fate.arch.federation import FederationBuilder
     from fate.arch.context import Context
 
@@ -67,7 +67,7 @@ def init_local_context(computing_session_id: str, federation_session_id: str):
 
 def init_cluster_context(computing_session_id: str, federation_session_id: str):
     from fate.arch.federation import FederationBuilder, FederationMode
-    from fate.arch.computing.eggroll import CSession
+    from fate.arch.computing.backends.eggroll import CSession
 
     from fate.arch.context import Context
 

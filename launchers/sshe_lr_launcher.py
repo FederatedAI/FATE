@@ -1,4 +1,5 @@
 import logging
+import pprint
 import typing
 from dataclasses import dataclass, field
 
@@ -46,7 +47,7 @@ def run_sshe_lr(ctx: "Context"):
         }
         input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, args.host_data)
     inst.fit(ctx, train_data=input_data)
-    print(inst.get_model())
+    logger.info(f"model: {pprint.pformat(inst.get_model())}")
 
 
 if __name__ == "__main__":

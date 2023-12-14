@@ -16,9 +16,8 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate import Evaluation, Reader
 from fate_client.pipeline.components.fate import SSHELinR, PSI
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 
 
@@ -34,18 +33,17 @@ def main(config="../config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name="motor_hetero_guest",
-                                                             namespace=f"experiment{namespace}"))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name="motor_hetero_host",
-                                                                namespace=f"experiment{namespace}"))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_guest")
+    reader_0.hosts[0].task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_host")
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     linr_0 = SSHELinR("linr_0",
                       epochs=4,
                       batch_size=None,
                       init_param={"fit_intercept": True, "method": "zeros"},
                       train_data=psi_0.outputs["output_data"],
                       learning_rate=0.05,
-                      reveal_every_epoch=True,
+                      reveal_every_epoch=False,
                       early_stop="diff",
                       reveal_loss_freq=1,
                       )
@@ -64,21 +62,17 @@ def main(config="../config.yaml", namespace=""):
                       init_param={"fit_intercept": True, "method": "zeros"},
                       train_data=psi_0.outputs["output_data"],
                       learning_rate=0.05,
-                      reveal_every_epoch=True,
+                      reveal_every_epoch=False,
                       early_stop="diff",
                       reveal_loss_freq=1,
                       )
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_roles=["guest"],
+                              runtime_parties=dict(guest=guest),
                               default_eval_setting="regression",
                               input_data=[linr_1.outputs["train_output_data"], linr_2.outputs["train_output_data"]])
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(linr_0)
-    pipeline.add_task(linr_1)
-    pipeline.add_task(linr_2)
-    pipeline.add_task(evaluation_0)
+    pipeline.add_tasks([reader_0, psi_0, linr_0, linr_1, linr_2, evaluation_0])
 
     pipeline.compile()
     # print(pipeline.get_dag())

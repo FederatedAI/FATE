@@ -12,18 +12,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import datetime
 import re
 from typing import Dict, List, Optional, Union
 
 import pydantic
 
 from .model import (
-    MLModelComponentSpec,
-    MLModelFederatedSpec,
-    MLModelModelSpec,
-    MLModelPartiesSpec,
-    MLModelPartySpec,
     MLModelSpec,
 )
 
@@ -48,6 +42,12 @@ class ArtifactSource(pydantic.BaseModel):
     component: str
     output_artifact_key: str
     output_index: Optional[int] = None
+
+    def unique_key(self):
+        key = f"{self.task_id}_{self.task_name}_{self.output_artifact_key}"
+        if self.output_index is not None:
+            key = f"{key}_index_{self.output_index}"
+        return key
 
 
 class Metadata(pydantic.BaseModel):

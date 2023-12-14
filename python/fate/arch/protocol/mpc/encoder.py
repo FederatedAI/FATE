@@ -35,7 +35,7 @@ class FixedPointEncoder:
 
     def __init__(self, precision_bits=None):
         if precision_bits is None:
-            precision_bits = cfg.encoder.precision_bits
+            precision_bits = cfg.safety.mpc.encoder.precision_bits
         self._precision_bits = precision_bits
         self._scale = int(2**precision_bits)
 

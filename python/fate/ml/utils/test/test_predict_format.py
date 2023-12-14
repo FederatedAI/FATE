@@ -1,7 +1,7 @@
 from fate.arch import Context
-from fate.arch.computing.standalone import CSession
+from fate.arch.computing.backends.standalone import CSession
 from fate.arch.context import Context
-from fate.arch.federation.standalone import StandaloneFederation
+from fate.arch.federation.backends.standalone import StandaloneFederation
 import pandas as pd
 from fate.ml.utils.predict_tools import compute_predict_details, PREDICT_SCORE, LABEL, BINARY, REGRESSION, MULTI
 from fate.arch.dataframe import PandasReader

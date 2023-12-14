@@ -7,7 +7,7 @@ from torch.nn import Parameter
 from fate.arch.context import Context
 from fate.arch.protocol.mpc.common.encoding import IgnoreEncodings
 from fate.arch.protocol.mpc.mpc import FixedPointEncoder
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 
 class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
@@ -80,12 +80,13 @@ class SSHENeuralNetworkAggregator:
         wa_init_fn,
         wb_init_fn,
         precision_bits=None,
+        cipher_options=None,
     ):
         self.ctx = ctx
         self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_nn_aggregator_layer")
         self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
         self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
-        self.phe_cipher = ctx.cipher.phe.setup()
+        self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
         self.rank_a = rank_a
         self.rank_b = rank_b
         self.precision_bits = precision_bits
@@ -157,7 +158,7 @@ class SSHENeuralNetworkAggregator:
         ga = _rescaler(ga, self.encoder)
 
         # update wb
-        gb = self.ctx.mpc.option_call(lambda: self.encoder.encode(hb.T @ dz), dst=self.rank_b)
+        gb = self.ctx.mpc.option_call(lambda: hb.T @ dz, dst=self.rank_b)
 
         # set grad for wa and wb
         _set_grad(self.wa, ga)
@@ -180,9 +181,9 @@ def _set_grad(x, grad):
 
 
 class SSHENeuralNetworkOptimizerSGD:
-    def __init__(self, ctx: Context, params, lr=0.05):
+    def __init__(self, ctx: Context, params, lr):
         self.ctx = ctx
-        self.params = params
+        self.params = list(params)
         self.lr = lr
 
     @auto_trace(annotation="<param> -= <lr> * <param.grad>")

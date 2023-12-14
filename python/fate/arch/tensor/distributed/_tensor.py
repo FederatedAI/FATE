@@ -18,10 +18,10 @@ import typing
 from typing import List, Optional, Tuple, TypeVar, cast
 
 import torch
-from fate.arch.abc import CTableABC
+from fate.arch.computing.api import KVTable
 from fate.arch.context import Context
 from fate.arch.tensor.phe import PHETensor
-from fate.arch.utils.trace import auto_trace
+from fate.arch.trace import auto_trace
 
 _HANDLED_FUNCTIONS = {}
 
@@ -187,7 +187,7 @@ class DTensor:
     @classmethod
     def from_sharding_table(
         cls,
-        data: CTableABC,
+        data: KVTable,
         shapes: Optional[List[torch.Size]],
         axis=0,
         dtype: Optional[torch.dtype] = None,
@@ -289,7 +289,7 @@ T2 = TypeVar("T2")
 class Shardings:
     def __init__(
         self,
-        data: CTableABC[int, torch.Tensor],
+        data: KVTable[int, torch.Tensor],
         shapes: Optional[List[torch.Size]] = None,
         axis: int = 0,
         dtype: Optional[torch.dtype] = None,
