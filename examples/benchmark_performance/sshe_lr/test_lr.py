@@ -76,7 +76,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
                               runtime_roles=["guest"],
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
                               input_data=lr_0.outputs["train_output_data"])
-
+    pipeline.add_task(reader_0)
     pipeline.add_task(psi_0)
     pipeline.add_task(lr_0)
     pipeline.add_task(lr_1)
