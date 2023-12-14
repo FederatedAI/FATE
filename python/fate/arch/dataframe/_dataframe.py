@@ -46,6 +46,9 @@ class DataFrame(object):
         self._count = None
         self._columns = None
 
+    def describe_partitions(self):
+        return dict(self.block_table.applyPartitions(lambda kvs: sum(len(kv[1][0]) for kv in kvs)).collect())
+
     @property
     def sample_id(self):
         if self._sample_id is None:
