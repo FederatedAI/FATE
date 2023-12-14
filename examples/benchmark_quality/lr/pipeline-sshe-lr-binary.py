@@ -16,10 +16,9 @@
 
 import argparse
 
+from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline.components.fate import SSHELR, PSI, Reader
-
-from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.utils import test_utils
 from fate_test.utils import parse_summary_result
 
@@ -73,10 +72,10 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
                   input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation("evaluation_0",
-                              runtime_parties=["guest"],
+                              runtime_parties=dict(guest=guest),
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
                               input_data=lr_0.outputs["train_output_data"])
-    pipeline.add_task([reader_0, psi_0, lr_0, lr_1, evaluation_0])
+    pipeline.add_tasks([reader_0, psi_0, lr_0, lr_1, evaluation_0])
 
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
