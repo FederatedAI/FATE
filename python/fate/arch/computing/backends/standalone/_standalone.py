@@ -446,6 +446,8 @@ class Session(object):
         self.session_id = session_id
         self._data_dir = data_dir
         self._max_workers = max_workers
+        if self._max_workers is None:
+            self._max_workers = os.cpu_count()
         self._pool = Executor(
             max_workers=max_workers,
             initializer=_watch_thread_react_to_parent_die,

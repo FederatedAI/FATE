@@ -19,8 +19,8 @@ import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
 
-from fate.arch.federation.api import PartyMeta
 from fate.arch.computing.api import is_table
+from fate.arch.federation.api import PartyMeta
 from ._namespace import NS
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ T = TypeVar("T")
 if typing.TYPE_CHECKING:
     from fate.arch.context import Context
     from fate.arch.federation.api import Federation
+    from fate.arch.computing.api import KVTableContext
 
 
 class _KeyedParty:
@@ -44,10 +45,20 @@ class _KeyedParty:
 
 
 class Party:
-    def __init__(self, ctx: "Context", federation, party: PartyMeta, rank: int, namespace: NS, key=None) -> None:
+    def __init__(
+        self,
+        ctx: "Context",
+        federation: "Federation",
+        computing: "KVTableContext",
+        party: PartyMeta,
+        rank: int,
+        namespace: NS,
+        key=None,
+    ) -> None:
         self._ctx = ctx
         self._party = party
         self.federation = federation
+        self.computing = computing
         self.rank = rank
         self.namespace = namespace
 
@@ -82,7 +93,16 @@ class Party:
             kvs = kwargs.items()
 
         for k, v in kvs:
-            return _push(self.federation, k, self.namespace, [self.party], v)
+            return _push(
+                federation=self.federation,
+                computing=self.computing,
+                name=k,
+                namespace=self.namespace,
+                parties=[self.party],
+                value=v,
+                max_message_size=self.federation.get_default_max_message_size(),
+                num_partitions_of_slice_table=self.federation.get_default_partition_num(),
+            )
 
     def get(self, name: str):
         return _pull(self._ctx, self.federation, name, self.namespace, [self.party])[0]
@@ -96,11 +116,13 @@ class Parties:
         self,
         ctx: "Context",
         federation: "Federation",
+        computing: "KVTableContext",
         parties: List[Tuple[int, PartyMeta]],
         namespace: NS,
     ) -> None:
         self._ctx = ctx
         self.federation = federation
+        self.computing = computing
         self.parties = parties
         self.namespace = namespace
 
@@ -113,10 +135,15 @@ class Parties:
 
     def __getitem__(self, key: int) -> Party:
         rank, party = self.parties[key]
-        return Party(self._ctx, self.federation, party, rank, self.namespace)
+        return Party(self._ctx, self.federation, self.computing, party, rank, self.namespace)
 
     def __iter__(self):
-        return iter([Party(self._ctx, self.federation, party, rank, self.namespace) for rank, party in self.parties])
+        return iter(
+            [
+                Party(self._ctx, self.federation, self.computing, party, rank, self.namespace)
+                for rank, party in self.parties
+            ]
+        )
 
     def __len__(self) -> int:
         return len(self.parties)
@@ -132,7 +159,16 @@ class Parties:
         else:
             kvs = kwargs.items()
         for k, v in kvs:
-            return _push(self.federation, k, self.namespace, [p[1] for p in self.parties], v)
+            return _push(
+                federation=self.federation,
+                computing=self.computing,
+                name=k,
+                namespace=self.namespace,
+                parties=[p[1] for p in self.parties],
+                value=v,
+                max_message_size=self.federation.get_default_max_message_size(),
+                num_partitions_of_slice_table=self.federation.get_default_partition_num(),
+            )
 
     def get(self, name: str):
         return _pull(self._ctx, self.federation, name, self.namespace, [p[1] for p in self.parties])
@@ -140,13 +176,18 @@ class Parties:
 
 def _push(
     federation: "Federation",
+    computing: "KVTableContext",
     name: str,
     namespace: NS,
     parties: List[PartyMeta],
     value,
+    max_message_size,
+    num_partitions_of_slice_table,
 ):
     tag = namespace.federation_tag
-    _TableRemotePersistentPickler.push(value, federation, name, tag, parties)
+    _TableRemotePersistentPickler.push(
+        value, federation, computing, name, tag, parties, max_message_size, num_partitions_of_slice_table
+    )
 
 
 class Serde:
@@ -186,11 +227,6 @@ class Serde:
         return struct.unpack("!d", value)[0]
 
 
-def _push_int(federation: "Federation", name: str, namespace: NS, parties: List[PartyMeta], value: int):
-    tag = namespace.federation_tag
-    federation.push(v=Serde.encode_int(value), name=name, tag=tag, parties=parties)
-
-
 def _pull(
     ctx: "Context",
     federation: "Federation",
@@ -220,6 +256,35 @@ class _ContextPersistentId:
         self.key = key
 
 
+class _FederationBytesCoder:
+    @staticmethod
+    def encode_base(v: bytes) -> bytes:
+        return struct.pack("!B", 0) + v
+
+    @staticmethod
+    def encode_split(total_size: int, num_slice: int, slice_size: int) -> bytes:
+        return struct.pack("!B", 1) + struct.pack("!III", total_size, num_slice, slice_size)
+
+    @classmethod
+    def decode_mode(cls, v: bytes) -> int:
+        return struct.unpack("!B", v[:1])[0]
+
+    @classmethod
+    def decode_base(cls, v: bytes) -> bytes:
+        return v[1:]
+
+    @classmethod
+    def decode_split(cls, v: bytes) -> Tuple[int, int, int]:
+        total_size, num_slice, slice_size = struct.unpack("!III", v[1:])
+        return total_size, num_slice, slice_size
+
+
+class _SplitTableUtil:
+    @staticmethod
+    def get_split_table_key(name):
+        return f"{name}__table_persistent_split__"
+
+
 class _TableRemotePersistentPickler(pickle.Pickler):
     def __init__(
         self,
@@ -247,26 +312,53 @@ class _TableRemotePersistentPickler(pickle.Pickler):
 
         if is_table(obj):
             key = self._get_next_table_key()
-            self._federation.push_table(table=obj, name=key, tag=self._tag, parties=self._parties)
-            self._table_index += 1
-            return _TablePersistentId(key)
+            return _TablePersistentId(self._push_table(obj, key))
         if isinstance(obj, Context):
             key = f"{self._name}__context__"
             return _ContextPersistentId(key)
+
+    def _push_table(self, table, key):
+        self._federation.push_table(table=table, name=key, tag=self._tag, parties=self._parties)
+        self._table_index += 1
+        return key
 
     @classmethod
     def push(
         cls,
         value,
         federation: "Federation",
+        computing: "KVTableContext",
         name: str,
         tag: str,
         parties: List[PartyMeta],
+        max_message_size: int,
+        num_partitions_of_slice_table: int,
     ):
         with io.BytesIO() as f:
             pickler = _TableRemotePersistentPickler(federation, name, tag, parties, f)
             pickler.dump(value)
-            federation.push_bytes(v=f.getvalue(), name=name, tag=tag, parties=parties)
+            if f.tell() > max_message_size:
+                total_size = f.tell()
+                num_slice = (total_size - 1) // max_message_size + 1
+                # create a table to store the slice
+                f.seek(0)
+                slice_table = computing.parallelize(
+                    ((i, f.read(max_message_size)) for i in range(num_slice)), partition=num_partitions_of_slice_table
+                )
+                # push the slice table with a special key
+                pickler._push_table(slice_table, _SplitTableUtil.get_split_table_key(name))
+                # push the slice table info
+                federation.push_bytes(
+                    v=_FederationBytesCoder.encode_split(total_size, num_slice, max_message_size),
+                    name=name,
+                    tag=tag,
+                    parties=parties,
+                )
+
+            else:
+                federation.push_bytes(
+                    v=_FederationBytesCoder.encode_base(f.getvalue()), name=name, tag=tag, parties=parties
+                )
 
 
 class _TableRemotePersistentUnpickler(pickle.Unpickler):
@@ -293,11 +385,6 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
 
-    # def load(self):
-    #     out = super().load()
-    #     logger.error(f"unpickled: {out.__class__.__module__}.{out.__class__.__name__}")
-    #     return out
-
     @classmethod
     def pull(
         cls,
@@ -308,6 +395,24 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
         tag: str,
         party: PartyMeta,
     ):
-        with io.BytesIO(buffers) as f:
-            unpickler = _TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
-            return unpickler.load()
+        mode = _FederationBytesCoder.decode_mode(buffers)
+        if mode == 0:
+            with io.BytesIO(_FederationBytesCoder.decode_base(buffers)) as f:
+                unpickler = _TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
+                return unpickler.load()
+        elif mode == 1:
+            # get num_slice and slice_size
+            total_size, num_slice, slice_size = _FederationBytesCoder.decode_split(buffers)
+
+            # pull the slice table with a special key
+            slice_table = federation.pull_table(_SplitTableUtil.get_split_table_key(name), tag, [party])[0]
+            # merge the bytes
+            with io.BytesIO() as f:
+                for i, b in slice_table.collect():
+                    f.seek(i * slice_size)
+                    f.write(b)
+                f.seek(0)
+                unpickler = _TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
+                return unpickler.load()
+        else:
+            raise ValueError(f"invalid mode: {mode}")
