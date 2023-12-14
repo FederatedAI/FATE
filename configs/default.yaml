@@ -64,3 +64,9 @@ safety:
       validation_mode: False
     encoder:
       precision_bits: 24
+
+federation:
+  split_large_object:
+    enable: True
+    max_message_size: 1048576
+    partition_num: 4

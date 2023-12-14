@@ -23,7 +23,6 @@ from pickle import dumps as p_dumps
 from pickle import loads as p_loads
 from typing import List
 
-from fate.arch.computing.api import is_table
 from fate.arch.federation.api import Federation, FederationDataType, PartyMeta
 from ._datastream import Datastream
 from ._parties import Party
@@ -32,18 +31,6 @@ LOGGER = logging.getLogger(__name__)
 
 NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
-
-
-def _get_splits(obj, max_message_size):
-    obj_bytes = p_dumps(obj, protocol=4)
-    byte_size = len(obj_bytes)
-    num_slice = (byte_size - 1) // max_message_size + 1
-    if num_slice <= 1:
-        return obj, num_slice
-    else:
-        _max_size = max_message_size
-        kv = [(i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)]) for i in range(num_slice)]
-        return kv, num_slice
 
 
 class MessageQueueBasedFederation(Federation):
@@ -70,6 +57,12 @@ class MessageQueueBasedFederation(Federation):
 
         # TODO: remove this
         self._party = Party(party[0], party[1])
+
+    def get_default_partition_num(self):
+        if self._max_message_size is None:
+            return super().get_default_partition_num()
+        else:
+            return self._max_message_size
 
     def _pull_bytes(self, name: str, tag: str, parties: typing.List[PartyMeta]) -> typing.List:
         _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
@@ -154,6 +147,8 @@ class MessageQueueBasedFederation(Federation):
                     output_partitioner_type=partitioner_type,
                 )
                 rtn.append(table)
+        else:
+            raise ValueError(f"unknown dtype: {dtype}")
         return rtn
 
     def _push_bytes(
@@ -169,17 +164,7 @@ class MessageQueueBasedFederation(Federation):
         if _name_dtype_keys[0] not in self._name_dtype_map:
             party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
             channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-
-            v, num_slice = _get_splits(v, self._max_message_size)
-            if num_slice > 1:
-                v = self.computing_session.parallelize(data=v, partition=1, include_key=True)
-                body = {
-                    "dtype": FederationDataType.SPLIT_OBJECT,
-                    "partitions": v.partitions,
-                }
-            else:
-                body = {"dtype": FederationDataType.OBJECT}
-
+            body = {"dtype": FederationDataType.OBJECT}
             self._send_obj(
                 name=name,
                 tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
@@ -234,72 +219,6 @@ class MessageQueueBasedFederation(Federation):
         )
         # noinspection PyProtectedMember
         table.mapPartitionsWithIndex(send_func)
-
-    def push(self, v, name: str, tag: str, parties: typing.List[PartyMeta]):
-        _parties = [Party(role=p[0], party_id=p[1]) for p in parties]
-        log_str = f"[federation.remote](name={name}, tag={tag}, parties={parties})"
-
-        _name_dtype_keys = [_SPLIT_.join([party.role, party.party_id, name, tag, "remote"]) for party in _parties]
-
-        if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(_parties, dtype=NAME_DTYPE_TAG)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-
-            if not is_table(v):
-                v, num_slice = _get_splits(v, self._max_message_size)
-                if num_slice > 1:
-                    v = self.computing_session.parallelize(data=v, partition=1, include_key=True)
-                    body = {
-                        "dtype": FederationDataType.SPLIT_OBJECT,
-                        "partitions": v.partitions,
-                    }
-                else:
-                    body = {"dtype": FederationDataType.OBJECT}
-
-            else:
-                body = {"dtype": FederationDataType.TABLE, "partitions": v.partitions}
-
-            LOGGER.debug(f"[federation.remote] _name_dtype_keys: {_name_dtype_keys}, dtype: {body}")
-            self._send_obj(
-                name=name,
-                tag=_SPLIT_.join([tag, NAME_DTYPE_TAG]),
-                data=p_dumps(body),
-                channel_infos=channel_infos,
-            )
-
-            for k in _name_dtype_keys:
-                if k not in self._name_dtype_map:
-                    self._name_dtype_map[k] = body
-
-        if is_table(v):
-            total_size = v.count()
-            partitions = v.partitions
-            LOGGER.debug(f"[{log_str}]start to remote table, total_size={total_size}, partitions={partitions}")
-
-            party_topic_infos = self._get_party_topic_infos(_parties, name, partitions=partitions)
-            # add gc
-            self._remote_gc.register_clean_action(name, tag, v, "__del__", {})
-
-            send_func = self._get_partition_send_func(
-                name=name,
-                tag=tag,
-                partitions=partitions,
-                party_topic_infos=party_topic_infos,
-                src_party_id=self.local_party[1],
-                src_role=self.local_party[0],
-                mq=self._mq,
-                max_message_size=self._max_message_size,
-                conf=self._conf,
-            )
-            # noinspection PyProtectedMember
-            v.mapPartitionsWithIndex(send_func)
-        else:
-            LOGGER.debug(f"[{log_str}]start to remote obj")
-            party_topic_infos = self._get_party_topic_infos(_parties, name)
-            channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
-            self._send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
-
-        LOGGER.debug(f"[{log_str}]finish to remote")
 
     @property
     def session_id(self) -> str:

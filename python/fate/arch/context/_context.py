@@ -250,6 +250,7 @@ class Context:
         return Parties(
             self,
             self._get_federation(),
+            self._get_computing(),
             parties,
             self._namespace,
         )
