@@ -52,6 +52,7 @@ class SSHELogisticRegression(Module):
         self.estimator = None
         self.ovr = False
         self.labels = None
+        self.label_count = False
 
     def set_batch_size(self, batch_size):
         self.batch_size = batch_size
@@ -72,6 +73,7 @@ class SSHELogisticRegression(Module):
         else:
             self.init_param["fit_intercept"] = False
             label_count = ctx.guest.get("label_count")
+        self.label_count = label_count
         if label_count > 2 or self.ovr:
             logger.info(f"OVR data provided, will train OVR models.")
             self.ovr = True
@@ -150,6 +152,7 @@ class SSHELogisticRegression(Module):
                 "early_stop": self.early_stop,
                 # "optimizer_param": self.optimizer_param,
                 "labels": self.labels,
+                "label_count": self.label_count,
                 "ovr": self.ovr,
                 "threshold": self.threshold,
                 "reveal_every_epoch": self.reveal_every_epoch,
@@ -173,6 +176,7 @@ class SSHELogisticRegression(Module):
         )
         lr.ovr = model["meta"]["ovr"]
         lr.labels = model["meta"]["labels"]
+        lr.label_count = model["meta"]["label_count"]
 
         all_estimator = model["data"]["estimator"]
         lr.estimator = {}
@@ -226,7 +230,7 @@ class SSHELogisticRegression(Module):
             return predict_result
         else:
             if self.ovr:
-                for i, class_ctx in ctx.sub_ctx("class").ctxs_range(len(self.labels)):
+                for i, class_ctx in ctx.sub_ctx("class").ctxs_range(self.label_count):
                     estimator = self.estimator[i]
                     estimator.predict(class_ctx, test_data)
             else:

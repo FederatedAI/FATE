@@ -16,10 +16,10 @@
 
 import argparse
 
-from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
+from fate_client.pipeline.components.fate import CoordinatedLR, PSI, Reader
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
+
+from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.utils import test_utils
 
 
@@ -48,11 +48,10 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                             namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                namespace=host_train_data["namespace"]))
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(namespace=guest_train_data['namespace'], name=guest_train_data['name'])
+    reader_0.hosts[0].task_parameters(namespace=host_train_data['namespace'], name=host_train_data['name'])
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     lr_param = {
     }
