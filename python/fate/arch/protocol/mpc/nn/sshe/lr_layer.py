@@ -183,7 +183,7 @@ class SSHESSHELogisticRegressionLossLayerLazyLoss:
         self.z = z
 
     @auto_trace(annotation="loss = 2 * (dz^2).mean() - 0.5 + log(2)")
-    def get(self):
+    def get(self, dst=None):
         """
         Computes and returns the loss
 
@@ -199,8 +199,10 @@ class SSHESSHELogisticRegressionLossLayerLazyLoss:
                 cipher_a=self.ctx.mpc.option(self.phe_cipher, self.rank_a),
             )
             .mean()
-            .get_plain_text(group=self.group)
+            .get_plain_text(group=self.group, dst=dst)
         )
+        if dst is not None and dst != self.ctx.rank:
+            return None
         return 2 * dz_mean_square - 0.5 + torch.log(torch.tensor(2.0))
 
     def backward(self):
