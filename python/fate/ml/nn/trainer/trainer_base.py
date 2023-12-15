@@ -1099,6 +1099,7 @@ class HomoTrainerClient(Trainer, HomoTrainerMixin):
         else:
             # (features, labels), this format is used in FATE-1.x
             # now the model is in eval status
+            inputs = self._prepare_inputs(inputs)
             if isinstance(inputs, tuple) or isinstance(inputs, list) and len(inputs) == 2:
                 with torch.no_grad():
                     feats, labels = inputs

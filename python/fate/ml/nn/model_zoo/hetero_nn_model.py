@@ -143,6 +143,14 @@ class HeteroNNModelBase(t.nn.Module):
         self._top_model = None
         self._agg_layer = None
         self._ctx = None
+        self.device = None
+
+    def _auto_setup(self):
+        self._agg_layer = AggLayerGuest()
+        self._agg_layer.set_context(self._ctx)
+
+    def get_device(self, module):
+        return next(module.parameters()).device
 
 
 class HeteroNNModelGuest(HeteroNNModelBase):
@@ -229,6 +237,10 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
         if self._agg_layer is None:
             self._auto_setup()
+
+        if self.device is None:
+            self.device = self.get_device(self._top_model)
+            self._agg_layer.set_device(self.device)
 
         if self._bottom_model is None:
             b_out = None
@@ -338,6 +350,10 @@ class HeteroNNModelHost(HeteroNNModelBase):
         if self._agg_layer is None:
             self._auto_setup()
 
+        if self.device is None:
+            self.device = self.get_device(self._bottom_model)
+            self._agg_layer.set_device(self.device)
+
         b_out = self._bottom_model(x)
         # bottom layer
         self._bottom_fw = b_out
@@ -356,6 +372,7 @@ class HeteroNNModelHost(HeteroNNModelBase):
             self._clear_state()
         else:
             error = self._agg_layer.backward()
+            error = error.to(self.device)
             loss = backward_loss(self._bottom_fw, error)
             loss.backward()
             self._clear_state()
