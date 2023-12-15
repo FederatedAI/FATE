@@ -25,9 +25,6 @@ from ._rabbit_manager import RabbitManager
 
 LOGGER = getLogger(__name__)
 
-# default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 1048576
-
 
 class MQ(object):
     def __init__(self, host, port, union_name, policy_id, route_table):
@@ -77,8 +74,6 @@ class RabbitmqFederation(MessageQueueBasedFederation):
         LOGGER.debug(
             f"federation_session_id={federation_session_id}, party={party}, parties={parties},  route_table={route_table}, rabbitmq_run={rabbitmq_run}",
         )
-        if max_message_size is None:
-            max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         union_name = federation_session_id
         policy_id = federation_session_id
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}", rabbitmq_run)

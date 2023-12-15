@@ -19,8 +19,7 @@ import struct
 import typing
 from typing import Any, List, Tuple, TypeVar, Union
 
-from fate.arch.computing.api import is_table
-from fate.arch.federation.api import PartyMeta
+from fate.arch.federation.api import PartyMeta, TableMeta
 from ._namespace import NS
 
 logger = logging.getLogger(__name__)
@@ -186,7 +185,14 @@ def _push(
 ):
     tag = namespace.federation_tag
     _TableRemotePersistentPickler.push(
-        value, federation, computing, name, tag, parties, max_message_size, num_partitions_of_slice_table
+        value,
+        federation,
+        computing,
+        name,
+        tag,
+        parties,
+        max_message_size=max_message_size,
+        num_partitions_of_slice_table=num_partitions_of_slice_table,
     )
 
 
@@ -247,8 +253,9 @@ def _pull(
 
 
 class _TablePersistentId:
-    def __init__(self, key) -> None:
+    def __init__(self, key, table_meta: "TableMeta") -> None:
         self.key = key
+        self.table_meta = table_meta
 
 
 class _ContextPersistentId:
@@ -262,8 +269,17 @@ class _FederationBytesCoder:
         return struct.pack("!B", 0) + v
 
     @staticmethod
-    def encode_split(total_size: int, num_slice: int, slice_size: int) -> bytes:
-        return struct.pack("!B", 1) + struct.pack("!III", total_size, num_slice, slice_size)
+    def encode_split(slice_table_meta: "TableMeta", total_size: int, num_slice: int, slice_size: int) -> bytes:
+        return struct.pack("!B", 1) + struct.pack(
+            "!IIIIIII",
+            total_size,
+            num_slice,
+            slice_size,
+            slice_table_meta.num_partitions,
+            slice_table_meta.key_serdes_type,
+            slice_table_meta.value_serdes_type,
+            slice_table_meta.partitioner_type,
+        )
 
     @classmethod
     def decode_mode(cls, v: bytes) -> int:
@@ -274,9 +290,23 @@ class _FederationBytesCoder:
         return v[1:]
 
     @classmethod
-    def decode_split(cls, v: bytes) -> Tuple[int, int, int]:
-        total_size, num_slice, slice_size = struct.unpack("!III", v[1:])
-        return total_size, num_slice, slice_size
+    def decode_split(cls, v: bytes) -> Tuple["TableMeta", int, int, int]:
+        (
+            total_size,
+            num_slice,
+            slice_size,
+            num_partitions,
+            key_serdes_type,
+            value_serdes_type,
+            partitioner_type,
+        ) = struct.unpack("!IIIIIII", v[1:29])
+        table_meta = TableMeta(
+            num_partitions=num_partitions,
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+        )
+        return table_meta, total_size, num_slice, slice_size
 
 
 class _SplitTableUtil:
@@ -309,10 +339,20 @@ class _TableRemotePersistentPickler(pickle.Pickler):
 
     def persistent_id(self, obj: Any) -> Any:
         from fate.arch.context import Context
+        from fate.arch.computing.api import KVTable
 
-        if is_table(obj):
+        if isinstance(obj, KVTable):
             key = self._get_next_table_key()
-            return _TablePersistentId(self._push_table(obj, key))
+            self._push_table(obj, key)
+            return _TablePersistentId(
+                key=key,
+                table_meta=TableMeta(
+                    num_partitions=obj.num_partitions,
+                    key_serdes_type=obj.key_serdes_type,
+                    value_serdes_type=obj.value_serdes_type,
+                    partitioner_type=obj.partitioner_type,
+                ),
+            )
         if isinstance(obj, Context):
             key = f"{self._name}__context__"
             return _ContextPersistentId(key)
@@ -342,14 +382,25 @@ class _TableRemotePersistentPickler(pickle.Pickler):
                 num_slice = (total_size - 1) // max_message_size + 1
                 # create a table to store the slice
                 f.seek(0)
+                data = [(i, f.read(max_message_size)) for i in range(num_slice)]
                 slice_table = computing.parallelize(
-                    ((i, f.read(max_message_size)) for i in range(num_slice)), partition=num_partitions_of_slice_table
+                    data,
+                    partition=num_partitions_of_slice_table,
+                    key_serdes_type=0,
+                    value_serdes_type=0,
+                    partitioner_type=0,
+                )
+                split_table_meta = TableMeta(
+                    num_partitions=num_partitions_of_slice_table,
+                    key_serdes_type=0,
+                    value_serdes_type=0,
+                    partitioner_type=0,
                 )
                 # push the slice table with a special key
-                pickler._push_table(slice_table, _SplitTableUtil.get_split_table_key(name))
+                federation.push_table(slice_table, _SplitTableUtil.get_split_table_key(name), tag=tag, parties=parties)
                 # push the slice table info
                 federation.push_bytes(
-                    v=_FederationBytesCoder.encode_split(total_size, num_slice, max_message_size),
+                    v=_FederationBytesCoder.encode_split(split_table_meta, total_size, num_slice, max_message_size),
                     name=name,
                     tag=tag,
                     parties=parties,
@@ -380,7 +431,7 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
 
     def persistent_load(self, pid: Any) -> Any:
         if isinstance(pid, _TablePersistentId):
-            table = self._federation.pull_table(pid.key, self._tag, [self._party])[0]
+            table = self._federation.pull_table(pid.key, self._tag, [self._party], table_metas=[pid.table_meta])[0]
             return table
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
@@ -402,10 +453,12 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
                 return unpickler.load()
         elif mode == 1:
             # get num_slice and slice_size
-            total_size, num_slice, slice_size = _FederationBytesCoder.decode_split(buffers)
+            table_meta, total_size, num_slice, slice_size = _FederationBytesCoder.decode_split(buffers)
 
             # pull the slice table with a special key
-            slice_table = federation.pull_table(_SplitTableUtil.get_split_table_key(name), tag, [party])[0]
+            slice_table = federation.pull_table(
+                name=_SplitTableUtil.get_split_table_key(name), tag=tag, parties=[party], table_metas=[table_meta]
+            )[0]
             # merge the bytes
             with io.BytesIO() as f:
                 for i, b in slice_table.collect():

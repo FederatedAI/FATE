@@ -17,8 +17,7 @@ from typing import List
 
 from fate.arch.computing.backends.standalone import Table, CSession
 from fate.arch.computing.backends.standalone import standalone_raw
-from fate.arch.federation.api import Federation
-from fate.arch.federation.api import PartyMeta
+from fate.arch.federation.api import Federation, TableMeta, PartyMeta
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,12 +53,7 @@ class StandaloneFederation(Federation):
     ):
         return self._federation.push_bytes(v=v, name=name, tag=tag, parties=parties)
 
-    def _pull_table(
-        self,
-        name: str,
-        tag: str,
-        parties: List[PartyMeta],
-    ) -> List[Table]:
+    def _pull_table(self, name: str, tag: str, parties: List[PartyMeta], table_metas: List[TableMeta]) -> List[Table]:
         rtn = self._federation.pull_table(name=name, tag=tag, parties=parties)
 
         return [Table(r) if isinstance(r, standalone_raw.Table) else r for r in rtn]

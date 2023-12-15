@@ -13,8 +13,6 @@ transformers==4.30.2
 accelerate==0.20.2
 beautifultable
 requests<2.26.0
-grpcio==1.46.3
-protobuf==3.19.6
 scikit-learn
 omegaconf
 rich
@@ -22,3 +20,5 @@ opentelemetry-api
 opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-grpc
 mmh3==3.0.0
+protobuf==4.24.4
+grpcio==1.59.3

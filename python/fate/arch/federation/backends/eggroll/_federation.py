@@ -24,7 +24,7 @@ from typing import List
 from eggroll.computing import RollPair
 from eggroll.federation import RollSiteContext
 from fate.arch.computing.backends.eggroll import Table
-from fate.arch.federation.api import Federation, PartyMeta
+from fate.arch.federation.api import Federation, PartyMeta, TableMeta
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,7 @@ class EggrollFederation(Federation):
         )
 
     def _pull_table(
-        self,
-        name: str,
-        tag: str,
-        parties: List[PartyMeta],
+        self, name: str, tag: str, parties: List[PartyMeta], table_metas: List[TableMeta]
     ) -> List["Table"]:
         rs = self._rsc.load(name=name, tag=tag)
         future_map = dict(

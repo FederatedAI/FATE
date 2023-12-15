@@ -25,6 +25,7 @@ from fate.arch.trace import (
 )
 from ._gc import GarbageCollector
 from ._type import PartyMeta
+from ._table_meta import TableMeta
 
 if typing.TYPE_CHECKING:
     from fate.arch.computing.api import KVTable
@@ -76,6 +77,7 @@ class Federation:
         name: str,
         tag: str,
         parties: List[PartyMeta],
+        table_metas: List[TableMeta],
     ) -> List["KVTable"]:
         raise NotImplementedError(f"pull table is not supported in {self.__class__.__name__}")
 
@@ -152,6 +154,7 @@ class Federation:
         name: str,
         tag: str,
         parties: List[PartyMeta],
+        table_metas: List[TableMeta] = None,
     ) -> List["KVTable"]:
         for party in parties:
             if (name, tag, party) in self._pull_history:
@@ -162,6 +165,7 @@ class Federation:
             name=name,
             tag=tag,
             parties=parties,
+            table_metas=table_metas,
         )
         for table in tables:
             self._get_gc.register_clean_action(name, tag, table, "destroy", {})

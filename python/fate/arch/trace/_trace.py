@@ -142,9 +142,10 @@ def federation_pull_table_trace(func):
         name: str,
         tag: str,
         parties: List["PartyMeta"],
+        table_metas: List[dict] = None,
     ):
         logger.debug(f"function {func.__qualname__} is calling on name={name}, tag={tag}, parties={parties}")
-        out = func(self, name, tag, parties)
+        out = func(self, name, tag, parties, table_metas)
         logger.debug(f"function {func.__qualname__} is called on name={name}, tag={tag}, parties={parties}")
         return out
 
