@@ -61,6 +61,8 @@ class SSHELinearRegression(Module):
         self.estimator.epochs = epochs
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data=None):
+        if len(ctx.hosts) > 1:
+            raise ValueError(f"SSHE LinR only support single-host case. Please check configuration.")
         if ctx.is_on_host:
             self.init_param["fit_intercept"] = False
         if self.estimator is None:
@@ -208,12 +210,12 @@ class SSHELREstimator(HeteroModule):
                 loss = loss_fn(z, y)
                 if i % self.reveal_loss_freq == 0:
                     if epoch_loss is None:
-                        epoch_loss = loss.get()
+                        epoch_loss = loss.get(dst=rank_b)
                     else:
-                        epoch_loss += loss.get()
+                        epoch_loss += loss.get(dst=rank_b)
                 loss.backward()
                 optimizer.step()
-            if epoch_loss is not None:
+            if epoch_loss is not None and ctx.is_on_guest:
                 epoch_ctx.metrics.log_loss("linr_loss", epoch_loss.tolist())
             # if self.reveal_every_epoch:
             #    wa_p = wa.get_plain_text(dst=rank_a)
