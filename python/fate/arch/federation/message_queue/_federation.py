@@ -19,10 +19,9 @@ import json
 import logging
 import sys
 import typing
-from pickle import dumps as p_dumps
-from pickle import loads as p_loads
 from typing import List
 
+from fate.arch.computing.api import KVTableContext
 from fate.arch.federation.api import Federation, PartyMeta, TableMeta
 from ._datastream import Datastream
 from ._parties import Party
@@ -36,7 +35,7 @@ class MessageQueueBasedFederation(Federation):
     def __init__(
         self,
         session_id,
-        computing_session,
+        computing_session: KVTableContext,
         party: PartyMeta,
         parties: typing.List[PartyMeta],
         mq,
@@ -47,7 +46,6 @@ class MessageQueueBasedFederation(Federation):
         self._mq = mq
         self._topic_map = {}
         self._channels_map = {}
-        self._name_dtype_map = {}
         self._message_cache = {}
         self._max_message_size = max_message_size
         if self._max_message_size is None:
@@ -146,11 +144,8 @@ class MessageQueueBasedFederation(Federation):
                 range(table_meta.num_partitions),
                 include_key=False,
                 partition=table_meta.num_partitions,
-                partitioner_type=table_meta.partitioner_type,
-                key_serdes_type=table_meta.key_serdes_type,
-                value_serdes_type=table_meta.value_serdes_type,
             )
-            table = table.mapPartitionsWithIndex(
+            table = table.mapPartitionsWithIndexNoSerdes(
                 receive_func,
                 output_key_serdes_type=table_meta.key_serdes_type,
                 output_value_serdes_type=table_meta.value_serdes_type,
@@ -176,7 +171,9 @@ class MessageQueueBasedFederation(Federation):
             conf=self._conf,
         )
         # noinspection PyProtectedMember
-        table.mapPartitionsWithIndex(send_func)
+        table.mapPartitionsWithIndexNoSerdes(
+            send_func, output_key_serdes_type=0, output_value_serdes_type=0, output_partitioner_type=0
+        )
 
     @property
     def session_id(self) -> str:
@@ -279,7 +276,7 @@ class MessageQueueBasedFederation(Federation):
                 "correlation_id": tag,
                 "headers": headers,
             }
-            print(f"[federation._send_kv]info: {info}, properties: {properties}.")
+            LOGGER.debug(f"[federation._send_kv]info: {info}, properties: {properties}.")
             info.produce(body=data, properties=properties)
 
     def _get_partition_send_func(
@@ -341,10 +338,10 @@ class MessageQueueBasedFederation(Federation):
 
         for k, v in kvs:
             count += 1
-            el = {"k": p_dumps(k).hex(), "v": p_dumps(v).hex()}
+            el = {"k": k.hex(), "v": v.hex()}
             # roughly caculate the size of package to avoid serialization ;)
             if datastream.get_size() + sys.getsizeof(el["k"]) + sys.getsizeof(el["v"]) >= max_message_size:
-                print(f"[federation._partition_send]The size of message is: {datastream.get_size()}")
+                LOGGER.debug(f"[federation._partition_send]The size of message is: {datastream.get_size()}")
                 message_key_idx += 1
                 message_key = base_message_key + "_" + str(message_key_idx)
                 self._send_kv(
@@ -372,17 +369,13 @@ class MessageQueueBasedFederation(Federation):
             message_key=message_key,
         )
 
-        return [(index, 1)]
-
-    def _get_message_cache_key(self, name, tag, party_id, role):
-        cache_key = _SPLIT_.join([name, tag, str(party_id), role])
-        return cache_key
+        return []
 
     def _receive_obj(self, channel_info, name, tag):
         party_id = channel_info._dst_party_id
         role = channel_info._dst_role
 
-        wish_cache_key = self._get_message_cache_key(name, tag, party_id, role)
+        wish_cache_key = _get_message_cache_key(name, tag, party_id, role)
 
         if wish_cache_key in self._message_cache:
             recv_bytes = self._message_cache[wish_cache_key]
@@ -391,15 +384,15 @@ class MessageQueueBasedFederation(Federation):
 
         # channel_info = self._query_receive_topic(channel_info)
 
-        for id, properties, body in self._get_consume_message(channel_info):
+        for _id, properties, body in self._get_consume_message(channel_info):
             LOGGER.debug(f"properties: {properties}")
-            cache_key = self._get_message_cache_key(
+            cache_key = _get_message_cache_key(
                 properties["message_id"], properties["correlation_id"], party_id, role
             )
             # object
             if properties["content_type"] == "text/plain":
                 recv_bytes = body
-                self._consume_ack(channel_info, id)
+                self._consume_ack(channel_info, _id)
                 LOGGER.debug(f"[federation._receive_obj] cache_key: {cache_key}, wish_cache_key: {wish_cache_key}")
                 if cache_key == wish_cache_key:
                     channel_info.cancel()
@@ -423,10 +416,9 @@ class MessageQueueBasedFederation(Federation):
         mq,
         conf: dict,
     ):
-        def _fn(index, kvs):
+        def _fn(index, _):
             return self._partition_receive(
                 index=index,
-                kvs=kvs,
                 name=name,
                 tag=tag,
                 src_party_id=src_party_id,
@@ -443,7 +435,6 @@ class MessageQueueBasedFederation(Federation):
     def _partition_receive(
         self,
         index,
-        kvs,
         name,
         tag,
         src_party_id,
@@ -473,11 +464,11 @@ class MessageQueueBasedFederation(Federation):
         while True:
             try:
                 for id, properties, body in self._get_consume_message(channel_info):
-                    print(f"[federation._partition_receive] properties: {properties}.")
+                    LOGGER.debug(f"[federation._partition_receive] properties: {properties}.")
                     if properties["message_id"] != name or properties["correlation_id"] != tag:
                         # todo: fix this
                         self._consume_ack(channel_info, id)
-                        print(
+                        LOGGER.debug(
                             f"[federation._partition_receive]: require {name}.{tag}, got {properties['message_id']}.{properties['correlation_id']}"
                         )
                         continue
@@ -486,7 +477,7 @@ class MessageQueueBasedFederation(Federation):
                         header = json.loads(properties["headers"])
                         message_key = header["message_key"]
                         if message_key in message_key_cache:
-                            print(f"[federation._partition_receive] message_key : {message_key} is duplicated")
+                            LOGGER.debug(f"[federation._partition_receive] message_key : {message_key} is duplicated")
                             self._consume_ack(channel_info, id)
                             continue
 
@@ -498,13 +489,13 @@ class MessageQueueBasedFederation(Federation):
                         data = json.loads(body.decode())
                         data_iter = (
                             (
-                                p_loads(bytes.fromhex(el["k"])),
-                                p_loads(bytes.fromhex(el["v"])),
+                                bytes.fromhex(el["k"]),
+                                bytes.fromhex(el["v"]),
                             )
                             for el in data
                         )
                         count += len(data)
-                        print(f"[federation._partition_receive] count: {count}")
+                        LOGGER.debug(f"[federation._partition_receive] count: {count}")
                         all_data.extend(data_iter)
                         self._consume_ack(channel_info, id)
 
@@ -524,3 +515,8 @@ class MessageQueueBasedFederation(Federation):
                     return all_data
                 else:
                     raise e
+
+
+def _get_message_cache_key(name: str, tag:str, party_id, role:str):
+    cache_key = _SPLIT_.join([name, tag, str(party_id), role])
+    return cache_key

@@ -290,6 +290,43 @@ class KVTable(Generic[K, V]):
 
     @auto_trace
     @_compute_info
+    def mapPartitionsWithIndexNoSerdes(
+        self,
+        map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
+            shuffle=False,
+            output_key_serdes_type=None,
+            output_value_serdes_type=None,
+            output_partitioner_type=None,
+
+    ):
+        """
+        caller should guarantee that the output of map_partition_op is a generator of (bytes, bytes)
+        if shuffle is False, caller should guarantee that the output of map_partition_op is in the same partition
+        according to the given output_partitioner_type and output_key_serdes_type and output_value_serdes_type
+
+        this method is used to avoid unnecessary serdes/deserdes in message queue federation
+        """
+        return self._impl_map_reduce_partitions_with_index(
+            map_partition_op=map_partition_op,
+            reduce_partition_op=None,
+            shuffle=shuffle,
+            input_key_serdes=get_serdes_by_type(self.key_serdes_type),
+            input_key_serdes_type=self.key_serdes_type,
+            input_value_serdes=get_serdes_by_type(self.value_serdes_type),
+            input_value_serdes_type=self.value_serdes_type,
+            input_partitioner=get_partitioner_by_type(self.partitioner_type),
+            input_partitioner_type=self.partitioner_type,
+            output_key_serdes=get_serdes_by_type(output_key_serdes_type),
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes=get_serdes_by_type(output_value_serdes_type),
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner=get_partitioner_by_type(output_partitioner_type),
+            output_partitioner_type=output_partitioner_type,
+            output_num_partitions=self.num_partitions,
+        )
+
+    @auto_trace
+    @_compute_info
     def mapPartitionsWithIndex(
         self,
         map_partition_op: Callable[[int, Iterable], Iterable],
