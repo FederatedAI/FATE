@@ -22,8 +22,11 @@ install_requires = [
     "requests",
     "grpcio",
     "protobuf",
+    "rich",
+    "omegaconf",
     "opentelemetry-api",
     "opentelemetry-sdk",
+    "mmh3==3.0.0",
 ]
 
 # Extra requirements
@@ -32,17 +35,12 @@ extras_require = {
     "pulsar": [
         "pulsar-client==2.10.2; sys_platform != 'darwin'",
         "pulsar-client==2.10.1; sys_platform == 'darwin'",
-        "urllib3==1.26.5"
+        "urllib3==1.26.5",
     ],
     "spark": ["pyspark"],
     "eggroll": [
-        "grpcio==1.46.3",
-        "grpcio-tools==1.46.3",
-        "numba==0.56.4",
-        "protobuf==3.19.6",
-        "mmh3==3.0.0",
+        "grpcio-tools",
         "cachetools>=3.0.0",
-        "cloudpickle==2.1.0",
         "psutil>=5.7.0",
     ],
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],

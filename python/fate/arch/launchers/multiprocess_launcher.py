@@ -165,7 +165,10 @@ class MultiProcessLauncher:
                 exc_traceback = rich.traceback.Traceback.from_exception(
                     type(e), e, traceback=e.__traceback__, width=width, show_locals=True
                 )
-                output_or_exception_q.put((args.rank, e, exc_traceback))
+                try:
+                    output_or_exception_q.put((args.rank, e, exc_traceback))
+                except Exception as e:
+                    logger.exception(f"failed to put exception to queue: {e}")
             finally:
                 try:
                     ctx.destroy()
