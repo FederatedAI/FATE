@@ -302,7 +302,7 @@ class SSHELREstimator(HeteroModule):
                 self.converge_func.set_pre_weight(wa_p)
         for i, epoch_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             epoch_loss = None
-            logger.info(f"self.optimizer set epoch {i}")
+            logger.info(f"enter {i}th epoch")
             for batch_ctx, batch_data in epoch_ctx.on_batches.ctxs_zip(batch_loader):
                 h = batch_data.x
                 y = batch_ctx.mpc.cond_call(lambda: batch_data.label, lambda: None, dst=rank_b)
