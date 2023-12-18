@@ -50,13 +50,13 @@ class _TopicPair(object):
 class OSXFederation(MessageQueueBasedFederation):
     @staticmethod
     def from_conf(
-            federation_session_id: str,
-            computing_session,
-            party: PartyMeta,
-            parties: typing.List[PartyMeta],
-            host: str,
-            port: int,
-            max_message_size: typing.Optional[int] = None,
+        federation_session_id: str,
+        computing_session,
+        party: PartyMeta,
+        parties: typing.List[PartyMeta],
+        host: str,
+        port: int,
+        max_message_size: typing.Optional[int] = None,
     ):
         mq = MQ(host, port)
 
@@ -70,13 +70,13 @@ class OSXFederation(MessageQueueBasedFederation):
         )
 
     def __init__(
-            self,
-            federation_session_id,
-            computing_session,
-            party: PartyMeta,
-            parties: typing.List[PartyMeta],
-            max_message_size,
-            mq,
+        self,
+        federation_session_id,
+        computing_session,
+        party: PartyMeta,
+        parties: typing.List[PartyMeta],
+        max_message_size,
+        mq,
     ):
         super().__init__(
             session_id=federation_session_id,
@@ -121,16 +121,7 @@ class OSXFederation(MessageQueueBasedFederation):
         )
         return topic_pair
 
-    def _get_channel(
-            self,
-            topic_pair,
-            src_party_id,
-            src_role,
-            dst_party_id,
-            dst_role,
-            mq=None,
-            conf: dict = None
-    ):
+    def _get_channel(self, topic_pair, src_party_id, src_role, dst_party_id, dst_role, mq=None, conf: dict = None):
         LOGGER.debug(
             f"_get_channel, topic_pari={topic_pair}, src_party_id={src_party_id}, src_role={src_role}, dst_party_id={dst_party_id}, dst_role={dst_role}"
         )
