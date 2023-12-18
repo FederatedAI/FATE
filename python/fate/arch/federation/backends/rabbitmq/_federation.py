@@ -221,7 +221,7 @@ class RabbitmqFederation(MessageQueueBasedFederation):
         src_role,
         dst_party_id,
         dst_role,
-        mq,
+        mq=None,
         conf: dict = None,
     ):
         LOGGER.debug(

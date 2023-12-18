@@ -59,7 +59,7 @@ class MessageQueueBasedFederation(Federation):
         # TODO: remove this
         self._party = Party(party[0], party[1])
 
-    def destroy(self, parties):
+    def destroy(self):
         raise NotImplementedError()
 
     def _get_channel(
