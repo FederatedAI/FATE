@@ -17,7 +17,7 @@ import logging
 import typing
 
 from fate.arch.config import cfg
-from ..unify import device
+from ..unify import device as device_type
 
 if typing.TYPE_CHECKING:
     from ._context import Context
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class CipherKit:
-    def __init__(self, device: device, cipher_mapping: typing.Optional[dict] = None) -> None:
+    def __init__(self, device: device_type, cipher_mapping: typing.Optional[dict] = None) -> None:
         self._device = device
         if cipher_mapping is None:
             self._cipher_mapping = {}
@@ -40,7 +40,7 @@ class CipherKit:
     def set_ctx(self, ctx: "Context"):
         self.ctx = ctx
 
-    def set_phe(self, device: device, options: typing.Optional[dict]):
+    def set_phe(self, device: device_type, options: typing.Optional[dict]):
         if "phe" not in self._cipher_mapping:
             self._cipher_mapping["phe"] = {}
         self._cipher_mapping["phe"][device] = options
@@ -49,15 +49,15 @@ class CipherKit:
         if "phe" not in self._cipher_mapping:
             self._cipher_mapping["phe"] = {}
         if self._device not in self._cipher_mapping["phe"]:
-            if self._device == device.CPU:
-                self._cipher_mapping["phe"][device.CPU] = {
+            if self._device == device_type.CPU:
+                self._cipher_mapping["phe"][device_type.CPU] = {
                     "kind": "paillier",
                     "key_length": cfg.safety.phe.paillier.minimum_key_size,
                 }
             else:
                 logger.warning(f"no impl exists for device {self._device}, fallback to CPU")
-                self._cipher_mapping["phe"][device.CPU] = self._cipher_mapping["phe"].get(
-                    device.CPU, {"kind": "paillier", "key_length": cfg.safety.phe.paillier.minimum_key_size}
+                self._cipher_mapping["phe"][device_type.CPU] = self._cipher_mapping["phe"].get(
+                    device_type.CPU, {"kind": "paillier", "key_length": cfg.safety.phe.paillier.minimum_key_size}
                 )
 
     @property

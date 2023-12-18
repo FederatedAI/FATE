@@ -109,5 +109,5 @@ class CSession(KVTableContext):
     def kill(self):
         pass
 
-    def destroy(self):
+    def _destroy(self):
         pass

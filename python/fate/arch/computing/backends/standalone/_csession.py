@@ -130,7 +130,7 @@ class CSession(KVTableContext):
     def kill(self):
         return self._session.kill()
 
-    def destroy(self):
+    def _destroy(self):
         try:
             logger.debug(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")

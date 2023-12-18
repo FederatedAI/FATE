@@ -59,9 +59,6 @@ class MessageQueueBasedFederation(Federation):
         # TODO: remove this
         self._party = Party(party[0], party[1])
 
-    def destroy(self, parties):
-        raise NotImplementedError()
-
     def _get_channel(
         self,
         topic_pair,
@@ -386,9 +383,7 @@ class MessageQueueBasedFederation(Federation):
 
         for _id, properties, body in self._get_consume_message(channel_info):
             LOGGER.debug(f"properties: {properties}")
-            cache_key = _get_message_cache_key(
-                properties["message_id"], properties["correlation_id"], party_id, role
-            )
+            cache_key = _get_message_cache_key(properties["message_id"], properties["correlation_id"], party_id, role)
             # object
             if properties["content_type"] == "text/plain":
                 recv_bytes = body
@@ -517,6 +512,6 @@ class MessageQueueBasedFederation(Federation):
                     raise e
 
 
-def _get_message_cache_key(name: str, tag:str, party_id, role:str):
+def _get_message_cache_key(name: str, tag: str, party_id, role: str):
     cache_key = _SPLIT_.join([name, tag, str(party_id), role])
     return cache_key
