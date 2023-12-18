@@ -237,10 +237,12 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
         if self._agg_layer is None:
             self._auto_setup()
-
         if self.device is None:
             self.device = self.get_device(self._top_model)
             self._agg_layer.set_device(self.device)
+            if 'gpu' in self.device or 'cuda' in self.device:
+                if isinstance(self._agg_layer, SSHEAggLayerHost):
+                    raise ValueError('SSHEAggLayerGuest is not supported on GPU')
 
         if self._bottom_model is None:
             b_out = None
@@ -353,6 +355,9 @@ class HeteroNNModelHost(HeteroNNModelBase):
         if self.device is None:
             self.device = self.get_device(self._bottom_model)
             self._agg_layer.set_device(self.device)
+            if 'gpu' in self.device or 'cuda' in self.device:
+                if isinstance(self._agg_layer, SSHEAggLayerHost):
+                    raise ValueError('SSHEAggLayerGuest is not supported on GPU')
 
         b_out = self._bottom_model(x)
         # bottom layer
