@@ -19,6 +19,7 @@ import struct
 import typing
 from typing import Any, List, Tuple, TypeVar
 
+from fate.arch.config import cfg
 from ._table_meta import TableMeta
 from ._type import PartyMeta
 
@@ -192,6 +193,21 @@ class TableRemotePersistentPickler(pickle.Pickler):
 
 
 class TableRemotePersistentUnpickler(pickle.Unpickler):
+    __ALLOW_CLASSES = {
+        "buildins": {"slice"},
+        "torch._utils": {"_rebuild_tensor_v2"},
+        "torch.storage": {"_load_from_bytes"},
+        "torch": {"device", "Size", "int64", "int32", "float64", "float32", "Tensor", "Storage", "dtype"},
+        "collections": {"OrderedDict"},
+        "pandas.core.series": {"Series"},
+        "pandas.core.internals.managers": {"SingleBlockManager"},
+        "pandas.core.indexes.base": {"_new_Index", "Index"},
+        "numpy.core.multiarray": {"_reconstruct"},
+        "numpy": {"ndarray", "dtype"},
+    }
+    __BUILDIN_MODULES = {"fate.", "fate_utils."}
+    __ALLOW_MODULES = {}
+
     def __init__(
         self,
         ctx: "Context",
@@ -214,6 +230,30 @@ class TableRemotePersistentUnpickler(pickle.Unpickler):
             return table
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
+
+    def find_class(self, module, name):
+        if cfg.safety.serdes.federation.restricted_type == "unrestricted":
+            return super().find_class(module, name)
+        for m in self.__BUILDIN_MODULES:
+            if module.startswith(m):
+                return super().find_class(module, name)
+        if module in self.__ALLOW_MODULES:
+            return super().find_class(module, name)
+        elif module in self.__ALLOW_CLASSES and name in self.__ALLOW_CLASSES[module]:
+            return super().find_class(module, name)
+        else:
+            if cfg.safety.serdes.federation.restricted_type == "restricted_catch_miss":
+                self.__ALLOW_CLASSES.setdefault(module, set()).add(name)
+                path_to_write = f"{cfg.safety.serdes.federation.restricted_catch_miss_path}_{self._federation.local_party[0]}_{self._federation.local_party[1]}"
+                with open(path_to_write, "a") as f:
+                    f.write(f"{module}.{name}\n")
+                return super().find_class(module, name)
+            elif cfg.safety.serdes.federation.restricted_type == "restricted":
+                raise ValueError(
+                    f"Deserialization is restricted for class `{module}`.`{name}`, allowlist: {self.__ALLOW_CLASSES}"
+                )
+            else:
+                raise ValueError(f"invalid restricted_type: {cfg.safety.serdes.federation.restricted_type}")
 
     @classmethod
     def pull(

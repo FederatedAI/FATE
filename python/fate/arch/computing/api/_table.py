@@ -79,7 +79,7 @@ class KVTableContext:
 
     @_compute_info
     def parallelize(
-            self, data, include_key=True, partition=None, key_serdes_type=0, value_serdes_type=0, partitioner_type=0
+        self, data, include_key=True, partition=None, key_serdes_type=0, value_serdes_type=0, partitioner_type=0
     ) -> "KVTable":
         key_serdes = get_serdes_by_type(key_serdes_type)
         value_serdes = get_serdes_by_type(value_serdes_type)
@@ -299,11 +299,10 @@ class KVTable(Generic[K, V]):
     def mapPartitionsWithIndexNoSerdes(
         self,
         map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
-            shuffle=False,
-            output_key_serdes_type=None,
-            output_value_serdes_type=None,
-            output_partitioner_type=None,
-
+        shuffle=False,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         """
         caller should guarantee that the output of map_partition_op is a generator of (bytes, bytes)

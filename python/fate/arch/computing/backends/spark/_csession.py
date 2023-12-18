@@ -80,15 +80,15 @@ class CSession(KVTableContext):
         raise NotImplementedError(f"uri type {uri} not supported with spark backend")
 
     def _parallelize(
-            self,
-            data: Iterable,
-            total_partitions,
-            key_serdes,
-            key_serdes_type,
-            value_serdes,
-            value_serdes_type,
-            partitioner,
-            partitioner_type,
+        self,
+        data: Iterable,
+        total_partitions,
+        key_serdes,
+        key_serdes_type,
+        value_serdes,
+        value_serdes_type,
+        partitioner,
+        partitioner_type,
     ):
         # noinspection PyPackageRequirements
         from pyspark import SparkContext

@@ -107,7 +107,6 @@ class CSession(KVTableContext):
         return Table(table)
 
     def _info(self, level=0):
-
         if level == 0:
             return f"Standalone<session_id={self.session_id}, max_workers={self._session.max_workers}, data_dir={self._session.data_dir}>"
 
