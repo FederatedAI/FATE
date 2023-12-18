@@ -107,6 +107,12 @@ class Federation:
     ):
         raise NotImplementedError(f"push bytes is not supported in {self.__class__.__name__}")
 
+    def _destroy(self):
+        raise NotImplementedError(f"destroy is not supported in {self.__class__.__name__}")
+
+    def destroy(self):
+        self._destroy()
+
     @federation_push_table_trace
     def push_table(
         self,

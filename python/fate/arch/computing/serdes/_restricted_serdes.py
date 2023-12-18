@@ -1,8 +1,8 @@
 import importlib
 import io
-import pickle
 
 from ruamel import yaml
+from ._serdes_base import p_dumps, Unpickler
 
 
 def get_restricted_serdes():
@@ -12,14 +12,14 @@ def get_restricted_serdes():
 class WhitelistRestrictedSerdes:
     @classmethod
     def serialize(cls, obj) -> bytes:
-        return pickle.dumps(obj)
+        return p_dumps(obj)
 
     @classmethod
     def deserialize(cls, bytes) -> object:
         return RestrictedUnpickler(io.BytesIO(bytes)).load()
 
 
-class RestrictedUnpickler(pickle.Unpickler):
+class RestrictedUnpickler(Unpickler):
     def _load(self, module, name):
         try:
             return super().find_class(module, name)
@@ -33,7 +33,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             for m in Whitelist.get_whitelist_glob():
                 if module.startswith(m):
                     return self._load(module, name)
-        raise pickle.UnpicklingError(f"forbidden unpickle class {module} {name}")
+        raise ValueError(f"forbidden unpickle class {module} {name}")
 
 
 class Whitelist:

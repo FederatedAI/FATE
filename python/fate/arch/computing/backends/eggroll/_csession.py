@@ -127,7 +127,7 @@ class CSession(KVTableContext):
     def kill(self):
         return self._eggroll_session.kill()
 
-    def destroy(self):
+    def _destroy(self):
         try:
             logger.info(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")
