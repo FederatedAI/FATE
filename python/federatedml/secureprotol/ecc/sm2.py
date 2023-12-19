@@ -61,5 +61,6 @@ class SM2:
 
     def get_private_key(self):
         return self.private_key
+'''
 
 

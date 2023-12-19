@@ -72,7 +72,8 @@ def predict_pipeline():
     predict_pipeline.predict()
 
 if __name__=='__main__':
-    train_pipeline()
+    # train_pipeline()
+    predict_pipeline()
 
 
 
