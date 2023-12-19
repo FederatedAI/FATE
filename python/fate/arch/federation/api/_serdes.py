@@ -43,6 +43,11 @@ class _ContextPersistentId:
         self.key = key
 
 
+class _TorchTensorPersistentId:
+    def __init__(self, bytes) -> None:
+        self.bytes = bytes
+
+
 class _FederationBytesCoder:
     @staticmethod
     def encode_base(v: bytes) -> bytes:
@@ -120,6 +125,7 @@ class TableRemotePersistentPickler(pickle.Pickler):
     def persistent_id(self, obj: Any) -> Any:
         from fate.arch.context import Context
         from fate.arch.computing.api import KVTable
+        import torch
 
         if isinstance(obj, KVTable):
             key = self._get_next_table_key()
@@ -136,6 +142,12 @@ class TableRemotePersistentPickler(pickle.Pickler):
         if isinstance(obj, Context):
             key = f"{self._name}__context__"
             return _ContextPersistentId(key)
+
+        if isinstance(obj, torch.Tensor):
+            import safetensors.torch
+
+            tensor_bytes = safetensors.torch.save({"t": obj})
+            return _TorchTensorPersistentId(tensor_bytes)
 
     def _push_table(self, table, key):
         self._federation.push_table(table=table, name=key, tag=self._tag, parties=self._parties)
@@ -196,7 +208,7 @@ class TableRemotePersistentUnpickler(pickle.Unpickler):
     __ALLOW_CLASSES = {
         "builtins": {"slice"},
         "torch._utils": {"_rebuild_tensor_v2"},
-        "torch.storage": {"_load_from_bytes"},
+        # "torch.storage": {"_load_from_bytes"},
         "torch": {"device", "Size", "int64", "int32", "float64", "float32", "Tensor", "Storage", "dtype"},
         "collections": {"OrderedDict"},
         "pandas.core.series": {"Series"},
@@ -230,6 +242,10 @@ class TableRemotePersistentUnpickler(pickle.Unpickler):
             return table
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
+        if isinstance(pid, _TorchTensorPersistentId):
+            import safetensors.torch
+
+            return safetensors.torch.load(pid.bytes)["t"]
 
     def find_class(self, module, name):
         if cfg.safety.serdes.federation.restricted_type == "unrestricted":
