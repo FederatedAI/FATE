@@ -133,6 +133,9 @@ class AggregatorClientWrapper(object):
             return loss
 
     def _sync_loss(self, loss, loss_type):
+        if self._world_size <= 1:
+            return
+
         if loss_type == "single":
             if isinstance(loss, (int, float)):
                 loss = [loss]

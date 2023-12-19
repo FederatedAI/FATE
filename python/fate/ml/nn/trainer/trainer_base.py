@@ -523,9 +523,10 @@ class FedParameterAlignCallback(TrainerCallback):
             self.ctx.arbiter.put(self._suffix + "_" + str(self._send_count), parameters)
             self.can_aggregate_loss = self.ctx.arbiter.get('agg_loss_' + str(self._send_count))
 
-            can_agg_loss_t = torch.tensor([self.can_aggregate_loss], dtype=torch.bool).cuda(args.device)
-            can_agg_loss_array = [can_agg_loss_t for _ in range(args.world_size)]
-            dist.scatter(can_agg_loss_t, can_agg_loss_array, async_op=False)
+            if args.world_size > 1:
+                can_agg_loss_t = torch.tensor([self.can_aggregate_loss], dtype=torch.bool).cuda(args.device)
+                can_agg_loss_array = [can_agg_loss_t for _ in range(args.world_size)]
+                dist.scatter(can_agg_loss_t, can_agg_loss_array, async_op=False)
         else:
             can_agg_loss_t = torch.tensor([self.can_aggregate_loss], dtype=torch.bool).cuda(args.device)
             dist.scatter(can_agg_loss_t, src=0, async_op=False)
