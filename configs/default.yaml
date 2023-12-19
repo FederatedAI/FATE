@@ -1,3 +1,6 @@
+components:
+  blacklist: []
+
 safety:
   serdes:
     # supported types: unrestricted, restricted

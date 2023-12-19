@@ -79,6 +79,12 @@ def execute(
     logger.debug(f"task config: {task_config}")
 
     os.makedirs(os.path.dirname(execution_final_meta_path), exist_ok=True)
+
+    from fate.arch.config import cfg
+
+    if task_config.component in cfg.components.blacklist:
+        raise RuntimeError(f"component `{task_config.component}` is in blacklist, do not use it")
+
     execute_component_from_config(task_config, execution_final_meta_path)
 
 
