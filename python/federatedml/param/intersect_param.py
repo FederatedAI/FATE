@@ -237,7 +237,7 @@ class ECDHParam(BaseParam):
                                                         consts.SM3],
                                                        f"{descr}hash_method")
 
-        self.curve = self.check_and_change_lower(self.curve, [consts.CURVE25519], f"{descr}curve")
+        self.curve = self.check_and_change_lower(self.curve, [consts.CURVE25519,consts.SM2], f"{descr}curve")
 
         LOGGER.debug("Finish ECDHParam parameter check!")
         return True

@@ -344,7 +344,7 @@ MAX_HASH_FUNC_COUNT = 32
 
 # curve names
 CURVE25519 = 'curve25519'
-
+SM2='sm2'
 # positive unlabeled
 PROBABILITY = "probability"
 QUANTITY = "quantity"

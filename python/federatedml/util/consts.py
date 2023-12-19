@@ -349,6 +349,7 @@ EINI_TREE_COMPLEXITY = 1000000000
 pytorch_backend = 'pytorch'
 keras_backend = 'keras'
 CURVE25519 = 'curve25519'
+SM2='sm2'
 # HOMO NN Framework
 FEDAVG_TRAINER = 'fedavg_trainer'
 
