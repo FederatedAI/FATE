@@ -13,5 +13,13 @@ aggregator_map = {
     AggregatorType.SECURE_AGGREGATE.value: (SecureAggregatorClient, SecureAggregatorServer)
 }
 
+from fate.ml.aggregator.aggregator_wrapper import AggregatorClientWrapper, AggregatorServerWrapper
 
-__all__ = ['PlainTextAggregatorClient', 'PlainTextAggregatorServer', 'SecureAggregatorClient', 'SecureAggregatorServer']
+__all__ = [
+    'PlainTextAggregatorClient',
+    'PlainTextAggregatorServer',
+    'SecureAggregatorClient',
+    'SecureAggregatorServer',
+    "AggregatorServerWrapper",
+    "AggregatorClientWrapper"
+]

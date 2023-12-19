@@ -118,6 +118,7 @@ class DefaultRunner(NNRunner):
 
         # setup var
         self.trainer = None
+        self.training_args = None
         
     def _prepare_data(self, data, data_name):
 
@@ -186,12 +187,15 @@ class DefaultRunner(NNRunner):
                 logger.info(
                     f"checkpoint detected, resume_path set to {resume_path}")
         # load optimizer
-        optimizer_loader = Loader.from_dict(self.optimizer_conf)
-        optimizer_ = optimizer_loader.load_item()
-        optimizer_params = optimizer_loader.kwargs
-        optimizer = optimizer_(model.parameters(), **optimizer_params)
+        if self.optimizer_conf:
+            optimizer_loader = Loader.from_dict(self.optimizer_conf)
+            optimizer_ = optimizer_loader.load_item()
+            optimizer_params = optimizer_loader.kwargs
+            optimizer = optimizer_(model.parameters(), **optimizer_params)
+        else:
+            optimizer = None
         # load loss
-        loss = loader_load_from_conf(self.loss_conf)
+        loss = loader_load_from_conf(self.loss_conf) if self.loss_conf else None
         # load collator func
         data_collator = loader_load_from_conf(self.data_collator_conf)
         # load tokenizer if import conf provided
@@ -199,6 +203,7 @@ class DefaultRunner(NNRunner):
         # args
         dir_warning(self.training_args_conf)
         training_args = TrainingArguments(**self.training_args_conf)
+        self.training_args = training_args
         # reset to default, saving to arbitrary path is not allowed in
         # DefaultRunner
         training_args.output_dir = output_dir
@@ -262,7 +267,10 @@ class DefaultRunner(NNRunner):
             self.trainer = trainer
             trainer.train()
             if output_dir is not None:
-                trainer.save_model(output_dir)
+                if self.training_args.deepspeed and self.training_args.local_rank != 0:
+                    pass
+                else:
+                    trainer.save_model(output_dir)
         elif self.is_server():
             trainer = self.server_setup()
             trainer.train()
@@ -290,6 +298,10 @@ class DefaultRunner(NNRunner):
             sample_id_name = run_dataset_func(
                 test_set, 'get_sample_id_name')
             pred_rs = trainer.predict(test_set)
+
+            if self.training_args and self.training_args.deepspeed and self.training_args.local_rank != 0:
+                return
+
             rs_df = self.get_nn_output_dataframe(
                 self.get_context(),
                 pred_rs.predictions,
