@@ -194,7 +194,7 @@ class TableRemotePersistentPickler(pickle.Pickler):
 
 class TableRemotePersistentUnpickler(pickle.Unpickler):
     __ALLOW_CLASSES = {
-        "buildins": {"slice"},
+        "builtins": {"slice"},
         "torch._utils": {"_rebuild_tensor_v2"},
         "torch.storage": {"_load_from_bytes"},
         "torch": {"device", "Size", "int64", "int32", "float64", "float32", "Tensor", "Storage", "dtype"},
