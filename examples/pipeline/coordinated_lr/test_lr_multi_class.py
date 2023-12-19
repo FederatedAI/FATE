@@ -15,10 +15,9 @@
 
 import argparse
 
+from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import CoordinatedLR, PSI, Reader
 from fate_client.pipeline.components.fate import Evaluation
-
-from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.utils import test_utils
 
 
@@ -76,11 +75,11 @@ def main(config="../config.yaml", namespace=""):
     reader_1 = Reader("reader_1", runtime_parties=dict(guest=guest, host=host))
     reader_1.guest.task_parameters(
         namespace=f"experiment{namespace}",
-        name="breast_hetero_guest"
+        name="vehicle_scale_hetero_guest"
     )
     reader_1.hosts[0].task_parameters(
         namespace=f"experiment{namespace}",
-        name="breast_hetero_host"
+        name="vehicle_scale_hetero_host"
     )
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
