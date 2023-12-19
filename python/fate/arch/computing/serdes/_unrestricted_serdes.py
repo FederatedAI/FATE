@@ -1,5 +1,6 @@
 import os
-import pickle
+
+from ._serdes_base import p_dumps, p_loads
 
 
 def get_unrestricted_serdes():
@@ -12,8 +13,8 @@ def get_unrestricted_serdes():
 class UnrestrictedSerdes:
     @staticmethod
     def serialize(obj) -> bytes:
-        return pickle.dumps(obj)
+        return p_dumps(obj)
 
     @staticmethod
     def deserialize(bytes) -> object:
-        return pickle.loads(bytes)
+        return p_loads(bytes)

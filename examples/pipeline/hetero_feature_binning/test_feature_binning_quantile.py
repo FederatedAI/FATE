@@ -81,6 +81,7 @@ def main(config="../config.yaml", namespace=""):
     deployed_pipeline = pipeline.get_deployed_pipeline()
     deployed_pipeline.psi_0.input_data = reader_1.outputs["output_data"]
 
+    predict_pipeline.add_tasks([reader_1, deployed_pipeline])
     predict_pipeline.compile()
     # print("\n\n\n")
     # print(predict_pipeline.compile().get_dag())

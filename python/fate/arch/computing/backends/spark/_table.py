@@ -64,7 +64,6 @@ class Table(KVTable):
             num_partitions=rdd.getNumPartitions(),
         )
 
-
     @property
     def engine(self):
         return self._engine

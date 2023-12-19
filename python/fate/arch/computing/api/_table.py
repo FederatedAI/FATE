@@ -45,6 +45,38 @@ def _add_padding(message, count):
 
 
 class KVTableContext:
+    def _info(self):
+        return {}
+
+    def _load(self, uri: URI, schema: dict, options: dict):
+        raise NotImplementedError(f"{self.__class__.__name__}._load")
+
+    def _parallelize(
+        self,
+        data,
+        total_partitions,
+        key_serdes,
+        key_serdes_type,
+        value_serdes,
+        value_serdes_type,
+        partitioner,
+        partitioner_type,
+    ):
+        raise NotImplementedError(f"{self.__class__.__name__}._parallelize")
+
+    def _destroy(self):
+        raise NotImplementedError(f"{self.__class__.__name__}.destroy")
+
+    def info(self):
+        return self._info()
+
+    def load(self, uri: URI, schema: dict, options: dict = None):
+        return self._load(
+            uri=uri,
+            schema=schema,
+            options=options,
+        )
+
     @_compute_info
     def parallelize(
         self, data, include_key=True, partition=None, key_serdes_type=0, value_serdes_type=0, partitioner_type=0
@@ -69,34 +101,8 @@ class KVTableContext:
             partitioner_type=partitioner_type,
         )
 
-    def _parallelize(
-        self,
-        data,
-        total_partitions,
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        raise NotImplementedError(f"{self.__class__.__name__}._parallelize")
-
-    def info(self):
-        return self._info()
-
-    def _info(self):
-        return {}
-
-    def load(self, uri: URI, schema: dict, options: dict = None):
-        return self._load(
-            uri=uri,
-            schema=schema,
-            options=options,
-        )
-
-    def _load(self, uri: URI, schema: dict, options: dict):
-        raise NotImplementedError(f"{self.__class__.__name__}._load")
+    def destroy(self):
+        self._destroy()
 
 
 class KVTable(Generic[K, V]):
@@ -293,11 +299,10 @@ class KVTable(Generic[K, V]):
     def mapPartitionsWithIndexNoSerdes(
         self,
         map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
-            shuffle=False,
-            output_key_serdes_type=None,
-            output_value_serdes_type=None,
-            output_partitioner_type=None,
-
+        shuffle=False,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         """
         caller should guarantee that the output of map_partition_op is a generator of (bytes, bytes)

@@ -1231,7 +1231,6 @@ class _FederationMetaManager:
     def wait_status_set(self, key: bytes) -> bytes:
         value = self.get_status(key)
         while value is None:
-
             time.sleep(0.1)
             value = self.get_status(key)
         return key
