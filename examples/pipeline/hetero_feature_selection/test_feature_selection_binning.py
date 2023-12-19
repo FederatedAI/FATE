@@ -55,7 +55,7 @@ def main(config=".../config.yaml", namespace=""):
                                          input_models=[binning_0.outputs["output_model"]],
                                          iv_param={"metrics": "iv", "filter_type": "threshold", "threshold": 0.1})
 
-    pipeline.add_tasks([reader_0, psi_0, binning_0])
+    pipeline.add_tasks([reader_0, psi_0, binning_0, selection_0])
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()

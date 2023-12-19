@@ -17,6 +17,7 @@
 import os
 import re
 import torch
+import torch.distributed as dist
 import math
 import sys
 from torch import nn
@@ -122,6 +123,7 @@ class _TrainingArguments(_hf_TrainingArguments):
     # by default, we use constant learning rate, the same as FATE-1.X
     lr_scheduler_type: str = field(default="constant")
     log_level: str = field(default="info")
+    deepspeed: Optional[str] = field(default=None)
 
     def __post_init__(self):
         self.push_to_hub = False
@@ -515,11 +517,22 @@ class FedParameterAlignCallback(TrainerCallback):
         }
 
         logger.info("parameters is {}".format(parameters))
-
-        self.ctx.arbiter.put(self._suffix + "_" + str(self._send_count), parameters)
-        self.can_aggregate_loss = self.ctx.arbiter.get('agg_loss_' + str(self._send_count))
-        self._send_count += 1
         self._parameters = parameters
+
+        if args.world_size <= 1 or args.local_rank == 0:
+            self.ctx.arbiter.put(self._suffix + "_" + str(self._send_count), parameters)
+            self.can_aggregate_loss = self.ctx.arbiter.get('agg_loss_' + str(self._send_count))
+
+            if args.world_size > 1:
+                can_agg_loss_t = torch.tensor([self.can_aggregate_loss], dtype=torch.bool).cuda(args.device)
+                can_agg_loss_array = [can_agg_loss_t for _ in range(args.world_size)]
+                dist.scatter(can_agg_loss_t, can_agg_loss_array, async_op=False)
+        else:
+            can_agg_loss_t = torch.tensor([self.can_aggregate_loss], dtype=torch.bool).cuda(args.device)
+            dist.scatter(can_agg_loss_t, src=0, async_op=False)
+            self.can_aggregate_loss = can_agg_loss_t.item()
+
+        self._send_count += 1
         self.trainer_class.aggregation_checker = AggregationChecker(
             self.fed_args,
             max_aggregation,
@@ -637,7 +650,6 @@ class WrappedFedCallback(CallbackWrapper):
             self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator(self.ctx, self.fed_arg)
 
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-
         if self.wrapped_trainer.local_mode:
             return
         # aggregate loss

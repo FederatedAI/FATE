@@ -63,3 +63,7 @@ class Config(object):
     def safety(self):
         return self.config.safety
 
+    @property
+    def components(self):
+        return self.config.components
+
