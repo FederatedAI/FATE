@@ -19,7 +19,7 @@
 
 
 from fate_crypto.psi import Curve25519
-from federatedml.secureprotol.ecc.sm2 import SM2
+# from federatedml.secureprotol.ecc.sm2 import SM2
 
 class EllipticCurve(object):
     """
@@ -35,10 +35,10 @@ class EllipticCurve(object):
             if curve_key is None:
                 return Curve25519()
             return Curve25519(curve_key)
-        if curve_name == 'sm2':
-            if curve_key is None:
-                return SM2()
-            return SM2(curve_key)
+        # if curve_name == 'sm2':
+        #     if curve_key is None:
+        #         return SM2()
+        #     return SM2(curve_key)
 
     def get_curve_key(self):
         return self.curve.get_private_key()
