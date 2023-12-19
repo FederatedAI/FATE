@@ -71,8 +71,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.tree_param = param.tree_param
         self.use_missing = param.use_missing
         self.zero_as_missing = param.zero_as_missing
-        self.complete_secure = param.complete_secure
-        self.enable_goss = param.run_goss
+        self.complete_secure = param.complete_secure#？False
+        self.enable_goss = param.run_goss#高斯采样？False
         self.top_rate = param.top_rate
         self.other_rate = param.other_rate
         self.cipher_compressing = param.cipher_compress
@@ -93,7 +93,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.multi_mode = param.multi_mode
 
     def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
-
+        """
+        这个方法的作用是处理样本权重（sample weights）。样本权重是机器学习中一个常用的概念，它表示每个样本对模型更新的影响程度。
+        @param grad_and_hess:
+        @param data_with_sample_weight:
+        @return:
+        """
         # add sample weights to gradient and hessian
         if data_with_sample_weight is not None:
             if with_weight(data_with_sample_weight):
