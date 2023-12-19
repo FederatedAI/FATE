@@ -7,6 +7,7 @@ from fate.arch import Context
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 import logging
 from fate.components.core.component_desc.artifacts.data._dataframe import DataframeReader, DataframeWriter
+from fate.components.core.component_desc.artifacts.data._directory import DataDirectoryReader
 from fate.components.core.component_desc.artifacts.model._directory import ModelDirectoryReader, ModelDirectoryWriter
 
 
@@ -41,19 +42,33 @@ def prepare_context_and_role(runner, ctx, role, sub_ctx_name):
     runner.set_role(role)
 
 
+def _parse_data(data):
+
+    if isinstance(data, DataframeReader):
+        data = data.read()
+    elif isinstance(data, DataDirectoryReader):
+        data = str(data.get_directory())
+    else:
+        raise ValueError(
+            f"Unknown type of data {type(data)}")
+    return data
+
+
 def get_input_data(stage, cpn_input_data):
 
     if stage == 'train':
         train_data, validate_data = cpn_input_data
-        train_data = train_data.read()
+        train_data = _parse_data(train_data)
         if validate_data is not None:
-            validate_data = validate_data.read()
+            validate_data = _parse_data(validate_data)
+        else:
+            validate_data = None
 
         return train_data, validate_data
 
     elif stage == 'predict':
         test_data = cpn_input_data
-        test_data = test_data.read()
+        test_data = _parse_data(test_data)
         return test_data
     else:
         raise ValueError(f"Unknown stage {stage}")

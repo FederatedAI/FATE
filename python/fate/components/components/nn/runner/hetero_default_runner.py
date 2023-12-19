@@ -75,9 +75,8 @@ class DefaultRunner(NNRunner):
                 dataset.load(data)
             else:
                 raise ValueError(
-                    f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner. \
-                                Please implement this method in your dataset class. You can refer to the base class 'Dataset' in 'fate.ml.nn.dataset.base' \
-                                for the necessary interfaces to implement.")
+                    f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner.Please implement this method in your dataset class. You can refer to the base class 'Dataset' in 'fate.ml.nn.dataset.base' \
+for the necessary interfaces to implement.")
         if dataset is not None and not issubclass(
                 type(dataset), Dataset):
             raise TypeError(

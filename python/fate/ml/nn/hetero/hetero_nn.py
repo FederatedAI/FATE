@@ -15,7 +15,6 @@ from fate.ml.nn.model_zoo.hetero_nn_model import StdAggLayerArgument, FedPassArg
 from fate.ml.nn.model_zoo.hetero_nn_model import TopModelStrategyArguments
 
 
-
 class HeteroNNTrainerGuest(HeteroTrainerBase):
 
     def __init__(

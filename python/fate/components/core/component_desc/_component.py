@@ -348,7 +348,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
                     optional=annotation.optional,
                 )
             else:
-                raise ComponentDeclareError(f"bad component_desc definition, argument {k} is not annotated")
+                raise ComponentDeclareError(f"bad component_desc definition, argument {v}{k} is not annotated")
 
         if is_subcomponent:
             artifacts.update_roles_and_stages(stages=[Stage.from_str(cpn_name)], roles=roles)
