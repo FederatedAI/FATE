@@ -73,18 +73,7 @@ class Table(KVTable):
         output_value_serdes,
         output_value_serdes_type,
     ):
-        return from_rdd(
-            self._rdd.join(other._rdd).mapPartitionsWithIndex(
-                lambda idx, it: binary_map_partitions_with_index_op(
-                    idx,
-                    map(lambda x: (x[0], x[1][0]), it),
-                    map(lambda x: (x[0], x[1][1]), it),
-                )
-            ),
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=output_value_serdes_type,
-            partitioner_type=partitioner_type,
-        )
+        raise NotImplementedError("binary sorted map partitions with index not supported in spark backend")
 
     def join(
         self,
