@@ -85,6 +85,27 @@ class Table(KVTable):
             partitioner_type=partitioner_type,
         )
 
+    def join(
+        self,
+        other: "Table",
+        merge_op: Callable[[V, V], V] = lambda x, y: x,
+        output_value_serdes_type=None,
+    ):
+        return from_rdd(
+            self._rdd.join(other._rdd).mapValues(lambda x: merge_op(x[0], x[1])),
+            key_serdes_type=self.key_serdes_type,
+            value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+            partitioner_type=self.partitioner_type,
+        )
+
+    def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+        return from_rdd(
+            self._rdd.union(other._rdd).reduceByKey(merge_op),
+            key_serdes_type=self.key_serdes_type,
+            value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+            partitioner_type=self.partitioner_type,
+        )
+
     def __init__(self, rdd: pyspark.RDD, key_serdes_type, value_serdes_type, partitioner_type):
         self._rdd = rdd
         self._engine = ComputingEngine.SPARK
@@ -148,10 +169,12 @@ class Table(KVTable):
         output_partitioner_type: int,
         output_num_partitions: int,
     ) -> "KVTable":
+        rdd = self._rdd.mapPartitionsWithIndex(map_partition_op)
+
+        if reduce_partition_op is not None:
+            rdd = rdd.reduceByKey(reduce_partition_op)
         return from_rdd(
-            self._rdd.mapPartitionsWithIndex(map_partition_op).reduceByKey(
-                reduce_partition_op, numPartitions=output_num_partitions
-            ),
+            rdd=rdd,
             key_serdes_type=output_key_serdes_type,
             value_serdes_type=output_value_serdes_type,
             partitioner_type=output_partitioner_type,
