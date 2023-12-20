@@ -3,10 +3,10 @@ data_host: "epsilon_5k_hetero_host"
 idx: "id"
 label_name: "y"
 epochs: 5
-batch_size: 80
+batch_size: 20
 init_param:
   fit_intercept: True
   method: "zeros"
-  random_state: 42
+  random_state: 102
 early_stop: "diff"
-learning_rate: 0.15
+learning_rate: 1.0

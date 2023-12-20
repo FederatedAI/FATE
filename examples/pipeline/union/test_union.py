@@ -42,32 +42,16 @@ def main(config="../config.yaml", namespace=""):
         namespace=f"experiment{namespace}",
         name="breast_hetero_host"
     )
-    reader_1 = Reader("reader_1")
-    reader_1.guest.task_parameters(
-        namespace=f"experiment{namespace}",
-        name="breast_hetero_guest"
-    )
-    reader_1.hosts[0].task_parameters(
-        namespace=f"experiment{namespace}",
-        name="breast_hetero_host"
-    )
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
-    psi_1 = PSI("psi_1", input_data=reader_0.outputs["output_data"])
 
     data_split_0 = DataSplit("data_split_0",
                              train_size=0.6,
                              validate_size=0.1,
                              input_data=psi_0.outputs["output_data"])
 
-    data_split_1 = DataSplit("data_split_1",
-                             train_size=200,
-                             test_size=50,
-                             input_data=psi_0.outputs["output_data"]
-                             )
-
     union_0 = Union("union_0", input_data_list=[data_split_0.outputs["train_output_data"],
                                                 data_split_0.outputs["test_output_data"]])
-    pipeline.add_tasks([reader_0, reader_1, psi_0, psi_1, data_split_0, data_split_1, union_0])
+    pipeline.add_tasks([reader_0, psi_0, data_split_0, union_0])
 
     # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
