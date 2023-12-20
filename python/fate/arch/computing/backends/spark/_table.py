@@ -24,6 +24,7 @@ from pyspark.rddsampler import RDDSamplerBase
 
 from fate.arch import URI
 from fate.arch.computing.api import KVTable, ComputingEngine, K, V
+from fate.arch.computing.api._table import _lifted_reduce_to_serdes, get_serdes_by_type
 from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
@@ -91,16 +92,18 @@ class Table(KVTable):
         merge_op: Callable[[V, V], V] = lambda x, y: x,
         output_value_serdes_type=None,
     ):
+        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self._rdd.join(other._rdd).mapValues(lambda x: merge_op(x[0], x[1])),
+            self._rdd.join(other._rdd).mapValues(lambda x: op(x[0], x[1])),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
         )
 
     def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self._rdd.union(other._rdd).reduceByKey(merge_op),
+            self._rdd.union(other._rdd).reduceByKey(op),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
