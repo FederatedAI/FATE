@@ -65,11 +65,10 @@ def data_split(
     train_data_set, validate_data_set, test_data_set = module.fit(sub_ctx, input_data)
     # train_data_set, validate_data_set, test_data_set = module.split_data(train_data)
     data_split_summary = {'original_count': input_data.shape[0],
-                          'train_count': train_data_set.shape[0] if train_data_set else None,
-                          'validate_count': validate_data_set.shape[0] if validate_data_set else None,
-                          'test_count': test_data_set.shape[0] if test_data_set else None,
-                          'stratified': stratified}
-    ctx.metrics.log_metrics(data_split_summary, "summary")
+                          'train_count': train_data_set.shape[0] if train_data_set else 0,
+                          'validate_count': validate_data_set.shape[0] if validate_data_set else 0,
+                          'test_count': test_data_set.shape[0] if test_data_set else 0}
+    ctx.metrics.log_metrics(data_split_summary, name="summary", type='data_split')
     if train_data_set:
         train_output_data.write(train_data_set)
     if validate_data_set:
