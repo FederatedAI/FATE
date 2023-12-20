@@ -17,8 +17,8 @@ name = get_current_datetime_str()
 
 def create_ctx(local, context_name):
     from fate.arch import Context
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.federation.standalone import StandaloneFederation
+    from fate.arch.computing.backends.standalone import CSession
+    from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
 
     # prepare log
@@ -49,19 +49,26 @@ if __name__ == "__main__":
             t.backends.cudnn.deterministic = True
             t.backends.cudnn.benchmark = False
 
-    set_seed(42)
-
     batch_size = 64
     epoch = 10
-    guest_bottom = t.nn.Linear(10, 4)
+    guest_bottom = t.nn.Linear(10, 10)
     guest_top = t.nn.Sequential(
-                                 t.nn.Linear(4, 1),
+                                 t.nn.Linear(10, 1),
                                  t.nn.Sigmoid()
                                )
-    host_bottom = t.nn.Linear(20, 4)
+    host_bottom = t.nn.Linear(20, 10)
 
     # # make random fake data
     sample_num = 569
+
+    args = TrainingArguments(
+        num_train_epochs=1,
+        per_device_train_batch_size=256,
+        logging_strategy='epoch',
+        no_cuda=True,
+        log_level='debug',
+        disable_tqdm=False
+    )
 
     if party == "guest":
 
@@ -80,21 +87,13 @@ if __name__ == "__main__":
             top_model=guest_top,
             bottom_model=guest_bottom,
             agglayer_arg=SSHEArgument(
-                guest_in_features=4,
-                host_in_features=4,
-                out_features=4,
-                layer_lr=0.01
+                guest_in_features=10,
+                host_in_features=10,
+                out_features=10
             )
         )
-        model
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
 
-        args = TrainingArguments(
-            num_train_epochs=5,
-            per_device_train_batch_size=16,
-            no_cuda=True,
-            disable_tqdm=False
-        )
         trainer = HeteroNNTrainerGuest(
             ctx=ctx,
             model=model,
@@ -106,10 +105,15 @@ if __name__ == "__main__":
             compute_metrics=MetricEnsemble().add_metric(MultiAccuracy())
         )
         trainer.train()
-        pred = trainer.predict(dataset)
+        pred_0 = trainer.predict(dataset)
         # # compute auc
         from sklearn.metrics import roc_auc_score
-        print(roc_auc_score(pred.label_ids, pred.predictions))
+        print(roc_auc_score(pred_0.label_ids, pred_0.predictions))
+
+        pred_1 = trainer.predict(dataset)
+        # # compute auc
+        from sklearn.metrics import roc_auc_score
+        print(roc_auc_score(pred_1.label_ids, pred_1.predictions))
 
     elif party == "host":
 
@@ -123,20 +127,12 @@ if __name__ == "__main__":
         model = HeteroNNModelHost(
             bottom_model=host_bottom,
             agglayer_arg=SSHEArgument(
-                guest_in_features=4,
-                host_in_features=4,
-                out_features=4,
-                layer_lr=0.01
+                guest_in_features=10,
+                host_in_features=10,
+                out_features=10
             )
         )
         optimizer = t.optim.Adam(model.parameters(), lr=0.01)
-
-        args = TrainingArguments(
-            num_train_epochs=5,
-            per_device_train_batch_size=16,
-            no_cuda=True,
-            disable_tqdm=False
-        )
 
         trainer = HeteroNNTrainerHost(
             ctx=ctx,
@@ -148,4 +144,4 @@ if __name__ == "__main__":
         )
         trainer.train()
         trainer.predict(dataset)
-
+        trainer.predict(dataset)

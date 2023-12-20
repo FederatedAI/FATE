@@ -196,7 +196,12 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 self._accumulate_scores = self._loss_func.initialize(label)
 
     def _check_label(self, label: DataFrame):
-        label_df = label.as_pd_df()[label.schema.label_name]
+
+        train_data_binarized_label = label.get_dummies()
+        labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
+        label_set = set(labels)
+
+
         if self.objective == MULTI_CE:
 
             if self.num_class is None or self.num_class <= 2:
@@ -204,7 +209,6 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                     f"num_class should be set and greater than 2 for multi:ce objective, but got {self.num_class}"
                 )
 
-            label_set = set(np.unique(label_df))
             if len(label_set) > self.num_class:
                 raise ValueError(
                     f"num_class should be greater than or equal to the number of unique label in provided train data, but got {self.num_class} and {len(label_set)}"
@@ -215,7 +219,6 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 )
 
         elif self.objective == BINARY_BCE:
-            label_set = set(np.unique(label_df))
             assert len(label_set) == 2, f"binary classification task should have 2 unique label, but got {label_set}"
             assert (
                 0 in label_set and 1 in label_set
