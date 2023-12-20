@@ -16,7 +16,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import DataSplit, PSI, Reader
+from fate_client.pipeline.components.fate import DataSplit, Reader
 from fate_client.pipeline.utils import test_utils
 
 
@@ -53,26 +53,23 @@ def main(config="../config.yaml", namespace=""):
         name="breast_homo_host"
     )
 
-    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
-    psi_1 = PSI("psi_1", input_data=reader_1.outputs["output_data"])
-
     data_split_0 = DataSplit("data_split_0",
                              train_size=0.6,
                              validate_size=0.0,
                              test_size=0.4,
                              stratified=False,
                              hetero_sync=False,
-                             input_data=psi_0.outputs["output_data"])
+                             input_data=reader_0.outputs["output_data"])
 
     data_split_1 = DataSplit("data_split_1",
                              train_size=100,
                              test_size=30,
                              stratified=True,
                              hetero_sync=False,
-                             input_data=psi_1.outputs["output_data"]
+                             input_data=reader_1.outputs["output_data"]
                              )
 
-    pipeline.add_tasks([reader_0, reader_1, psi_0, psi_1, data_split_0, data_split_1])
+    pipeline.add_tasks([reader_0, reader_1, data_split_0, data_split_1])
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
