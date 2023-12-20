@@ -124,6 +124,9 @@ class _TrainingArguments(_hf_TrainingArguments):
     lr_scheduler_type: str = field(default="constant")
     log_level: str = field(default="info")
     deepspeed: Optional[str] = field(default=None)
+    save_safetensors: bool = field(default=False)
+    use_cpu: bool = field(default=False)
+
 
     def __post_init__(self):
         self.push_to_hub = False
