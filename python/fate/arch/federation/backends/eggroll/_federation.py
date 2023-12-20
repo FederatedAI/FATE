@@ -100,7 +100,7 @@ class EggrollFederation(Federation):
         # for future in done:
         #     future.result()
 
-    def destroy(self):
+    def _destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)
 
 

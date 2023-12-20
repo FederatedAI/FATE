@@ -179,7 +179,7 @@ class SSHESSHELinearRegressionLossLayerLazyLoss:
         self.dz = dz
         self.z = z
 
-    def get(self):
+    def get(self, dst=None):
         """
         Computes and returns the loss
 
@@ -195,8 +195,10 @@ class SSHESSHELinearRegressionLossLayerLazyLoss:
                 cipher_a=self.ctx.mpc.option(self.phe_cipher, self.rank_a),
             )
             .mean()
-            .get_plain_text()
+            .get_plain_text(group=self.group, dst=dst)
         )
+        if dst is not None and dst != self.ctx.rank:
+            return None
         return dz_mean_square
 
     def backward(self):

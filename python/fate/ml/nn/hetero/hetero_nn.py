@@ -97,6 +97,7 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
         # (features, labels), this format is used in FATE-1.x
         # now the model is in eval status
         if isinstance(inputs, tuple) or isinstance(inputs, list):
+            inputs = self._prepare_inputs(inputs)
             with torch.no_grad():
                 if len(inputs) == 2:  # data & label
                     feats, labels = inputs
@@ -174,6 +175,7 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
     ):
         # (features, labels), this format is used in FATE-1.x
         # now the model is in eval status
+        inputs = self._prepare_inputs(inputs)
         if isinstance(inputs, torch.Tensor):
             feats = inputs
         elif isinstance(inputs, tuple) or isinstance(inputs, list):

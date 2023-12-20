@@ -27,6 +27,7 @@ install_requires = [
     "opentelemetry-api",
     "opentelemetry-sdk",
     "mmh3==3.0.0",
+    "safetensor"
 ]
 
 # Extra requirements

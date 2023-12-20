@@ -17,10 +17,11 @@ import logging
 import pickle
 import struct
 import typing
-from typing import Any, List, Tuple, TypeVar, Union
+from typing import Any, List, Tuple, TypeVar
 
-from fate.arch.federation.api import PartyMeta, TableMeta
-from ._namespace import NS
+from fate.arch.config import cfg
+from ._table_meta import TableMeta
+from ._type import PartyMeta
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
@@ -29,227 +30,6 @@ if typing.TYPE_CHECKING:
     from fate.arch.context import Context
     from fate.arch.federation.api import Federation
     from fate.arch.computing.api import KVTableContext
-
-
-class _KeyedParty:
-    def __init__(self, party: Union["Party", "Parties"], key) -> None:
-        self._party = party
-        self._key = key
-
-    def put(self, value):
-        return self._party.put(self._key, value)
-
-    def get(self):
-        return self._party.get(self._key)
-
-
-class Party:
-    def __init__(
-        self,
-        ctx: "Context",
-        federation: "Federation",
-        computing: "KVTableContext",
-        party: PartyMeta,
-        rank: int,
-        namespace: NS,
-        key=None,
-    ) -> None:
-        self._ctx = ctx
-        self._party = party
-        self.federation = federation
-        self.computing = computing
-        self.rank = rank
-        self.namespace = namespace
-
-    def __call__(self, key: str) -> "_KeyedParty":
-        return _KeyedParty(self, key)
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(party={self.party}, rank={self.rank}, namespace={self.namespace})"
-
-    @property
-    def party(self) -> PartyMeta:
-        return self._party
-
-    @property
-    def role(self) -> str:
-        return self.party[0]
-
-    @property
-    def party_id(self) -> str:
-        return self.party[1]
-
-    @property
-    def name(self) -> str:
-        return f"{self.party[0]}_{self.party[1]}"
-
-    def put(self, *args, **kwargs):
-        if args:
-            assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
-            assert not kwargs, "keywords parameters not allowed when position parameter provided"
-            kvs = [args]
-        else:
-            kvs = kwargs.items()
-
-        for k, v in kvs:
-            return _push(
-                federation=self.federation,
-                computing=self.computing,
-                name=k,
-                namespace=self.namespace,
-                parties=[self.party],
-                value=v,
-                max_message_size=self.federation.get_default_max_message_size(),
-                num_partitions_of_slice_table=self.federation.get_default_partition_num(),
-            )
-
-    def get(self, name: str):
-        return _pull(self._ctx, self.federation, name, self.namespace, [self.party])[0]
-
-    def get_int(self, name: str):
-        ...
-
-
-class Parties:
-    def __init__(
-        self,
-        ctx: "Context",
-        federation: "Federation",
-        computing: "KVTableContext",
-        parties: List[Tuple[int, PartyMeta]],
-        namespace: NS,
-    ) -> None:
-        self._ctx = ctx
-        self.federation = federation
-        self.computing = computing
-        self.parties = parties
-        self.namespace = namespace
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(parties={self.parties}, namespace={self.namespace})"
-
-    @property
-    def ranks(self):
-        return [p[0] for p in self.parties]
-
-    def __getitem__(self, key: int) -> Party:
-        rank, party = self.parties[key]
-        return Party(self._ctx, self.federation, self.computing, party, rank, self.namespace)
-
-    def __iter__(self):
-        return iter(
-            [
-                Party(self._ctx, self.federation, self.computing, party, rank, self.namespace)
-                for rank, party in self.parties
-            ]
-        )
-
-    def __len__(self) -> int:
-        return len(self.parties)
-
-    def __call__(self, key: str) -> "_KeyedParty":
-        return _KeyedParty(self, key)
-
-    def put(self, *args, **kwargs):
-        if args:
-            assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
-            assert not kwargs, "keywords parameters not allowed when position parameter provided"
-            kvs = [args]
-        else:
-            kvs = kwargs.items()
-        for k, v in kvs:
-            return _push(
-                federation=self.federation,
-                computing=self.computing,
-                name=k,
-                namespace=self.namespace,
-                parties=[p[1] for p in self.parties],
-                value=v,
-                max_message_size=self.federation.get_default_max_message_size(),
-                num_partitions_of_slice_table=self.federation.get_default_partition_num(),
-            )
-
-    def get(self, name: str):
-        return _pull(self._ctx, self.federation, name, self.namespace, [p[1] for p in self.parties])
-
-
-def _push(
-    federation: "Federation",
-    computing: "KVTableContext",
-    name: str,
-    namespace: NS,
-    parties: List[PartyMeta],
-    value,
-    max_message_size,
-    num_partitions_of_slice_table,
-):
-    tag = namespace.federation_tag
-    _TableRemotePersistentPickler.push(
-        value,
-        federation,
-        computing,
-        name,
-        tag,
-        parties,
-        max_message_size=max_message_size,
-        num_partitions_of_slice_table=num_partitions_of_slice_table,
-    )
-
-
-class Serde:
-    @classmethod
-    def encode_int(cls, value: int) -> bytes:
-        return struct.pack("!q", value)  # '!q' is for long long (8 bytes)
-
-    @classmethod
-    def decode_int(cls, value: bytes) -> int:
-        return struct.unpack("!q", value)[0]
-
-    @classmethod
-    def encode_str(cls, value: str) -> bytes:
-        utf8_str = value.encode("utf-8")
-        return struct.pack("!I", len(utf8_str)) + utf8_str  # prepend length of string
-
-    @classmethod
-    def decode_str(cls, value: bytes) -> str:
-        length = struct.unpack("!I", value[:4])[0]  # get length of string
-        return value[4 : 4 + length].decode("utf-8")  # decode string
-
-    @classmethod
-    def encode_bytes(cls, value: bytes) -> bytes:
-        return struct.pack("!I", len(value)) + value  # prepend length of bytes
-
-    @classmethod
-    def decode_bytes(cls, value: bytes) -> bytes:
-        length = struct.unpack("!I", value[:4])[0]  # get length of bytes
-        return value[4 : 4 + length]  # extract bytes
-
-    @classmethod
-    def encode_float(cls, value: float) -> bytes:
-        return struct.pack("!d", value)
-
-    @classmethod
-    def decode_float(cls, value: bytes) -> float:
-        return struct.unpack("!d", value)[0]
-
-
-def _pull(
-    ctx: "Context",
-    federation: "Federation",
-    name: str,
-    namespace: NS,
-    parties: List[PartyMeta],
-):
-    tag = namespace.federation_tag
-    buffer_list = federation.pull_bytes(
-        name=name,
-        tag=tag,
-        parties=parties,
-    )
-    values = []
-    for party, buffers in zip(parties, buffer_list):
-        values.append(_TableRemotePersistentUnpickler.pull(buffers, ctx, federation, name, tag, party))
-    return values
 
 
 class _TablePersistentId:
@@ -261,6 +41,11 @@ class _TablePersistentId:
 class _ContextPersistentId:
     def __init__(self, key) -> None:
         self.key = key
+
+
+class _TorchTensorPersistentId:
+    def __init__(self, bytes) -> None:
+        self.bytes = bytes
 
 
 class _FederationBytesCoder:
@@ -315,7 +100,7 @@ class _SplitTableUtil:
         return f"{name}__table_persistent_split__"
 
 
-class _TableRemotePersistentPickler(pickle.Pickler):
+class TableRemotePersistentPickler(pickle.Pickler):
     def __init__(
         self,
         federation: "Federation",
@@ -340,6 +125,7 @@ class _TableRemotePersistentPickler(pickle.Pickler):
     def persistent_id(self, obj: Any) -> Any:
         from fate.arch.context import Context
         from fate.arch.computing.api import KVTable
+        import torch
 
         if isinstance(obj, KVTable):
             key = self._get_next_table_key()
@@ -356,6 +142,12 @@ class _TableRemotePersistentPickler(pickle.Pickler):
         if isinstance(obj, Context):
             key = f"{self._name}__context__"
             return _ContextPersistentId(key)
+
+        if isinstance(obj, torch.Tensor):
+            import safetensors.torch
+
+            tensor_bytes = safetensors.torch.save({"t": obj})
+            return _TorchTensorPersistentId(tensor_bytes)
 
     def _push_table(self, table, key):
         self._federation.push_table(table=table, name=key, tag=self._tag, parties=self._parties)
@@ -375,7 +167,7 @@ class _TableRemotePersistentPickler(pickle.Pickler):
         num_partitions_of_slice_table: int,
     ):
         with io.BytesIO() as f:
-            pickler = _TableRemotePersistentPickler(federation, name, tag, parties, f)
+            pickler = TableRemotePersistentPickler(federation, name, tag, parties, f)
             pickler.dump(value)
             if f.tell() > max_message_size:
                 total_size = f.tell()
@@ -412,7 +204,21 @@ class _TableRemotePersistentPickler(pickle.Pickler):
                 )
 
 
-class _TableRemotePersistentUnpickler(pickle.Unpickler):
+class TableRemotePersistentUnpickler(pickle.Unpickler):
+    __ALLOW_CLASSES = {
+        "builtins": {"slice"},
+        "torch._utils": {"_rebuild_tensor_v2"},
+        "torch": {"device", "Size", "int64", "int32", "float64", "float32", "Tensor", "Storage", "dtype"},
+        "collections": {"OrderedDict"},
+        "pandas.core.series": {"Series"},
+        "pandas.core.internals.managers": {"SingleBlockManager"},
+        "pandas.core.indexes.base": {"_new_Index", "Index"},
+        "numpy.core.multiarray": {"_reconstruct"},
+        "numpy": {"ndarray", "dtype"},
+    }
+    __BUILDIN_MODULES = {"fate.", "fate_utils."}
+    __ALLOW_MODULES = {}
+
     def __init__(
         self,
         ctx: "Context",
@@ -435,6 +241,34 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
             return table
         if isinstance(pid, _ContextPersistentId):
             return self._ctx
+        if isinstance(pid, _TorchTensorPersistentId):
+            import safetensors.torch
+
+            return safetensors.torch.load(pid.bytes)["t"]
+
+    def find_class(self, module, name):
+        if cfg.safety.serdes.federation.restricted_type == "unrestricted":
+            return super().find_class(module, name)
+        for m in self.__BUILDIN_MODULES:
+            if module.startswith(m):
+                return super().find_class(module, name)
+        if module in self.__ALLOW_MODULES:
+            return super().find_class(module, name)
+        elif module in self.__ALLOW_CLASSES and name in self.__ALLOW_CLASSES[module]:
+            return super().find_class(module, name)
+        else:
+            if cfg.safety.serdes.federation.restricted_type == "restricted_catch_miss":
+                self.__ALLOW_CLASSES.setdefault(module, set()).add(name)
+                path_to_write = f"{cfg.safety.serdes.federation.restricted_catch_miss_path}_{self._federation.local_party[0]}_{self._federation.local_party[1]}"
+                with open(path_to_write, "a") as f:
+                    f.write(f"{module}.{name}\n")
+                return super().find_class(module, name)
+            elif cfg.safety.serdes.federation.restricted_type == "restricted":
+                raise ValueError(
+                    f"Deserialization is restricted for class `{module}`.`{name}`, allowlist: {self.__ALLOW_CLASSES}"
+                )
+            else:
+                raise ValueError(f"invalid restricted_type: {cfg.safety.serdes.federation.restricted_type}")
 
     @classmethod
     def pull(
@@ -449,7 +283,7 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
         mode = _FederationBytesCoder.decode_mode(buffers)
         if mode == 0:
             with io.BytesIO(_FederationBytesCoder.decode_base(buffers)) as f:
-                unpickler = _TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
+                unpickler = TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
                 return unpickler.load()
         elif mode == 1:
             # get num_slice and slice_size
@@ -465,7 +299,7 @@ class _TableRemotePersistentUnpickler(pickle.Unpickler):
                     f.seek(i * slice_size)
                     f.write(b)
                 f.seek(0)
-                unpickler = _TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
+                unpickler = TableRemotePersistentUnpickler(ctx, federation, name, tag, party, f)
                 return unpickler.load()
         else:
             raise ValueError(f"invalid mode: {mode}")

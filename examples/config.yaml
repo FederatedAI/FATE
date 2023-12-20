@@ -1,10 +1,10 @@
 parties: # parties default id
   guest:
-    - 9999
+    - '9999'
   host:
-    - 10000
-    - 9999
+    - '10000'
+    - '9999'
   arbiter:
-    - 10000
+    - '10000'
 
-data_base_dir: "~/FATE/FATE-2.0-pure/FATE/"
+data_base_dir: /data/projects/fate

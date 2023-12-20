@@ -15,20 +15,21 @@
 
 
 import json
-from logging import getLogger
-from enum import Enum
-from typing import Dict, List, Any
 import time
+from enum import Enum
+from logging import getLogger
+from typing import Dict, List, Any
+
 import grpc
+import numpy as np
+
 from fate.arch.federation.backends.osx import osx_pb2
 from fate.arch.federation.backends.osx.osx_pb2_grpc import PrivateTransferTransportStub
-import numpy as np
 
 LOGGER = getLogger(__name__)
 
+
 class Metadata(Enum):
-
-
     PTP_VERSION = "x-ptp-version"
     PTP_TECH_PROVIDER_CODE = "x-ptp-tech-provider-code"
     PTP_TRACE_ID = "x-ptp-trace-id"
@@ -46,20 +47,22 @@ class Metadata(Enum):
         return self.value
 
     def set(self, attachments: Dict[str, str], v: str):
-        if attachments and '' != v and v != attachments.get(self.key(), ''):
+        if attachments and "" != v and v != attachments.get(self.key(), ""):
             attachments[self.key()] = v
 
     def get(self, attachments: Dict[str, str]) -> str:
-        return attachments.get(self.key(), '')
+        return attachments.get(self.key(), "")
 
     def append(self, attachments: List[Any], v: str):
-        if attachments is not None and '' != v:
+        if attachments is not None and "" != v:
             attachments.append((self.key(), v))
 
-def  build_trace_id():
+
+def build_trace_id():
     timestamp = int(time.time())
     timestamp_str = str(timestamp)
-    return timestamp_str+"_"+str(np.random.randint(10000))
+    return timestamp_str + "_" + str(np.random.randint(10000))
+
 
 class MQChannel(object):
     def __init__(
@@ -82,11 +85,6 @@ class MQChannel(object):
     def __str__(self):
         return f"<MQChannel namespace={self._namespace}, host={self._host},port={self._port}, src=({self._src_role}, {self._src_party_id}), dst=({self._dst_role}, {self._dst_party_id}), send_topic={self._send_topic}, receive_topic={self._receive_topic}>"
 
-
-
-
-
-
     def prepare_metadata_consume(self):
         metadata = []
         # Metadata.PTP_TRACE_ID.append(metadata, )
@@ -98,95 +96,43 @@ class MQChannel(object):
             Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
         Metadata.PTP_TECH_PROVIDER_CODE.append(metadata, "FATE")
-        Metadata.PTP_TRACE_ID.append(metadata,build_trace_id())
-        return metadata;
+        Metadata.PTP_TRACE_ID.append(metadata, build_trace_id())
+        return metadata
 
-    def prepare_metadata(self,):
+    def prepare_metadata(
+        self,
+    ):
         metadata = []
-        Metadata.PTP_TRACE_ID.append(metadata,build_trace_id() )
+        Metadata.PTP_TRACE_ID.append(metadata, build_trace_id())
         if not self._namespace is None:
-            Metadata.PTP_SESSION_ID.append(metadata,self._namespace)
+            Metadata.PTP_SESSION_ID.append(metadata, self._namespace)
         if not self._dst_party_id is None:
-            Metadata.PTP_TARGET_NODE_ID.append(metadata,str(self._dst_party_id))
+            Metadata.PTP_TARGET_NODE_ID.append(metadata, str(self._dst_party_id))
         if not self._src_party_id is None:
             Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
-        Metadata.PTP_TECH_PROVIDER_CODE.append(metadata,"FATE")
-        return metadata;
-
+        Metadata.PTP_TECH_PROVIDER_CODE.append(metadata, "FATE")
+        return metadata
 
     # @nretry
     def consume(self):
-
         self._get_or_create_channel()
-        # meta = dict(
-        #     MessageTopic=self._receive_topic,
-        #     TechProviderCode="FATE",
-        #     SourceNodeID=self._src_party_id,
-        #     TargetNodeID=self._dst_party_id,
-        #     TargetComponentName=self._dst_role,
-        #     SourceComponentName=self._src_role,
-        #     TargetMethod="CONSUME_MSG",
-        #     SessionID=self._namespace,
-        #     MessageOffSet=str(offset),
-        # )
-        # inbound = osx_pb2.Inbound(metadata=meta)
-        # LOGGER.debug(f"consume, inbound={inbound}, mq={self}")
-        # result = self._stub.invoke(inbound)
-        inbound = osx_pb2.PopInbound(topic=self._receive_topic,timeout=36000000)
-        metadata = self.prepare_metadata_consume();
-        result = self._stub.pop(request=inbound,metadata=metadata)
+        inbound = osx_pb2.PopInbound(topic=self._receive_topic, timeout=36000000)
+        metadata = self.prepare_metadata_consume()
+        result = self._stub.pop(request=inbound, metadata=metadata)
         # LOGGER.debug(f"consume, result={result.code}, mq={self}")
         return result
-
-    # @nretry
-    # def query(self):
-    #     LOGGER.debug(f"query, mq={self}")
-    #     self._get_or_create_channel()
-    #     meta = dict(
-    #         MessageTopic=self._receive_topic,
-    #         TechProviderCode="FATE",
-    #         SourceNodeID=self._src_party_id,
-    #         TargetNodeID=self._dst_party_id,
-    #         TargetComponentName=self._dst_role,
-    #         SourceComponentName=self._src_role,
-    #         TargetMethod="QUERY_TOPIC",
-    #         SessionID=self._namespace,
-    #     )
-    #     inbound = osx_pb2.Inbound(metadata=meta)
-    #     LOGGER.debug(f"query, inbound={inbound}, mq={self}")
-    #     result = self._stub.invoke(inbound)
-    #     LOGGER.debug(f"query, result={result}, mq={self}")
-    #     return result
 
     # @nretry
     def produce(self, body, properties):
         # LOGGER.debug(f"produce body={body}, properties={properties}, mq={self}")
         self._get_or_create_channel()
-        # meta = dict(
-        #     MessageTopic=self._send_topic,
-        #     TechProviderCode="FATE",
-        #     SourceNodeID=self._src_party_id,
-        #     TargetNodeID=self._dst_party_id,
-        #     TargetComponentName=self._dst_role,
-        #     SourceComponentName=self._src_role,
-        #     TargetMethod="PRODUCE_MSG",
-        #     SessionID=self._namespace,
-        # )
-        # msg = osx_pb2.Message(head=bytes(json.dumps(properties), encoding="utf-8"), body=body)
-        # inbound = osx_pb2.Inbound(metadata=meta, payload=msg.SerializeToString())
-        # LOGGER.debug(f"produce inbound={inbound}, mq={self}")
         msg = osx_pb2.Message(head=bytes(json.dumps(properties), encoding="utf-8"), body=body)
-        inbound = osx_pb2.PushInbound(topic= self._send_topic,payload=msg.SerializeToString())
+        inbound = osx_pb2.PushInbound(topic=self._send_topic, payload=msg.SerializeToString())
         metadata = self.prepare_metadata()
 
-        # result = self._stub.push(inbound)
-        result = self._stub.push(inbound,metadata=metadata)
-        # print(f"produce result {result}")
-        # LOGGER.debug(f"produce {self._receive_topic}  index {self._index} result={result.code}, mq={self}")
-        # if result.code!="0":
-        #     raise RuntimeError(f"produce msg error ,code : {result.code} msg : {result.message}")
-        # self._index+=1
+        result = self._stub.push(inbound, metadata=metadata)
+
         return result
 
     # @nretry
@@ -198,9 +144,8 @@ class MQChannel(object):
         self._get_or_create_channel()
         inbound = osx_pb2.ReleaseInbound()
         metadata = self.prepare_metadata()
-        # result = self._stub.push(inbound)
-        result = self._stub.release(inbound,metadata=metadata)
 
+        result = self._stub.release(inbound, metadata=metadata)
 
     def cancel(self):
         LOGGER.debug(f"cancel channel")
@@ -262,6 +207,4 @@ if __name__ == "__main__":
     timestamp = int(time.time())
     timestamp_str = str(timestamp)
 
-
     print(build_trace_id())
-

@@ -5,12 +5,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import crypten
-import crypten.communicator as comm
+import fate.arch.protocol.mpc.communicator as comm
 import torch
 import torch.nn as nn
-from crypten.config import cfg
-from crypten.gradients import _inverse_broadcast
+from fate.arch.protocol.mpc.config import cfg
 
 
 # TODO: Move SkippedLoss elsewhere

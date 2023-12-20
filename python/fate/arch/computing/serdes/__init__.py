@@ -11,10 +11,6 @@ def get_serdes_by_type(serdes_type: int):
             from ._restricted_serdes import get_restricted_serdes
 
             return get_restricted_serdes()
-        elif cfg.safety.serdes.restricted_type == "restricted_catch_miss":
-            from ._restricted_caught_miss_serdes import get_restricted_catch_miss_serdes
-
-            return get_restricted_catch_miss_serdes()
         else:
             raise ValueError(f"restricted type `{cfg.safety.serdes.restricted_type}` not supported")
     elif serdes_type == 1:
@@ -23,9 +19,3 @@ def get_serdes_by_type(serdes_type: int):
         return get_integer_serdes()
     else:
         raise ValueError(f"serdes type `{serdes_type}` not supported")
-
-
-def dump_miss(path):
-    from ._restricted_caught_miss_serdes import dump_miss
-
-    dump_miss(path)

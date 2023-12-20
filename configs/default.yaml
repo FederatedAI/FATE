@@ -1,8 +1,14 @@
+components:
+  blacklist: []
+
 safety:
   serdes:
-    # supported types: unrestricted, restricted, restricted_catch_miss
+    # supported types: unrestricted, restricted
     restricted_type: "unrestricted"
-
+    federation:
+      # supported types: unrestricted, restricted, restricted_catch_miss
+      restricted_type: "restricted"
+      restricted_catch_miss_path:
   phe:
     paillier:
       allow: True

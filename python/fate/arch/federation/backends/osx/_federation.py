@@ -23,7 +23,6 @@ from fate.arch.federation.message_queue import MessageQueueBasedFederation
 from ._mq_channel import MQChannel
 
 LOGGER = getLogger(__name__)
-# default message max size in bytes = 1MB
 
 
 class MQ(object):
@@ -91,7 +90,7 @@ class OSXFederation(MessageQueueBasedFederation):
     def __getstate__(self):
         pass
 
-    def destroy(self):
+    def _destroy(self):
         LOGGER.debug("start to cleanup...")
 
         channel = MQChannel(
@@ -122,9 +121,7 @@ class OSXFederation(MessageQueueBasedFederation):
         )
         return topic_pair
 
-    def _get_channel(
-        self, topic_pair: _TopicPair, src_party_id, src_role, dst_party_id, dst_role, mq: MQ, conf: dict = None
-    ):
+    def _get_channel(self, topic_pair, src_party_id, src_role, dst_party_id, dst_role, mq=None, conf: dict = None):
         LOGGER.debug(
             f"_get_channel, topic_pari={topic_pair}, src_party_id={src_party_id}, src_role={src_role}, dst_party_id={dst_party_id}, dst_role={dst_role}"
         )
@@ -142,41 +139,6 @@ class OSXFederation(MessageQueueBasedFederation):
 
     _topic_ip_map = {}
 
-    # @nretry
-    # def _query_receive_topic(self, channel_info):
-    #     # LOGGER.debug(f"_query_receive_topic, channel_info={channel_info}")
-    #     # topic = channel_info._receive_topic
-    #     # if topic not in self._topic_ip_map:
-    #     #     LOGGER.info(f"query topic {topic} miss cache ")
-    #     #     response = channel_info.query()
-    #     #     if response.code == "0":
-    #     #         topic_info = osx_pb2.TopicInfo()
-    #     #         topic_info.ParseFromString(response.payload)
-    #     #         self._topic_ip_map[topic] = (topic_info.ip, topic_info.port)
-    #     #         LOGGER.info(f"query result {topic} {topic_info}")
-    #     #     else:
-    #     #         raise LookupError(f"{response}")
-    #     # host, port = self._topic_ip_map[topic]
-    #     #
-    #     # new_channel_info = channel_info
-    #     # if channel_info._host != host or channel_info._port != port:
-    #     #     LOGGER.info(
-    #     #         f"channel info missmatch, host: {channel_info._host} vs {host} and port: {channel_info._port} vs {port}"
-    #     #     )
-    #     #     new_channel_info = MQChannel(
-    #     #         host=host,
-    #     #         port=port,
-    #     #         namespace=channel_info._namespace,
-    #     #         send_topic=channel_info._send_topic,
-    #     #         receive_topic=channel_info._receive_topic,
-    #     #         src_party_id=channel_info._src_party_id,
-    #     #         src_role=channel_info._src_role,
-    #     #         dst_party_id=channel_info._dst_party_id,
-    #     #         dst_role=channel_info._dst_role,
-    #     #     )
-    #     # return new_channel_info
-    #       return  channel_info;
-
     def _get_consume_message(self, channel_info):
         LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}")
         while True:
@@ -186,7 +148,7 @@ class OSXFederation(MessageQueueBasedFederation):
                 raise LookupError(f"{response}")
             message = osx_pb2.Message()
             message.ParseFromString(response.payload)
-            # offset = response.metadata["MessageOffSet"]
+
             head_str = str(message.head, encoding="utf-8")
             # LOGGER.debug(f"head str {head_str}")
             properties = json.loads(head_str)
@@ -196,5 +158,3 @@ class OSXFederation(MessageQueueBasedFederation):
 
     def _consume_ack(self, channel_info, id):
         return
-        # LOGGER.debug(f"_comsume_ack, channel_info={channel_info}, id={id}")
-        # channel_info.ack(offset=id)

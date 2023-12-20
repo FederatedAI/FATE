@@ -63,6 +63,8 @@ class SSHELogisticRegression(Module):
         self.estimator.epochs = epochs
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data=None):
+        if len(ctx.hosts) > 1:
+            raise ValueError(f"SSHE LR only support single-host case. Please check configuration.")
         if ctx.is_on_guest:
             train_data_binarized_label = train_data.label.get_dummies()
             label_count = train_data_binarized_label.shape[1]
@@ -300,7 +302,7 @@ class SSHELREstimator(HeteroModule):
                 self.converge_func.set_pre_weight(wa_p)
         for i, epoch_ctx in ctx.on_iterations.ctxs_range(self.epochs):
             epoch_loss = None
-            logger.info(f"self.optimizer set epoch {i}")
+            logger.info(f"enter {i}th epoch")
             for batch_ctx, batch_data in epoch_ctx.on_batches.ctxs_zip(batch_loader):
                 h = batch_data.x
                 y = batch_ctx.mpc.cond_call(lambda: batch_data.label, lambda: None, dst=rank_b)
@@ -312,12 +314,12 @@ class SSHELREstimator(HeteroModule):
                 loss = loss_fn(z, y)
                 if i % self.reveal_loss_freq == 0:
                     if epoch_loss is None:
-                        epoch_loss = loss.get()
+                        epoch_loss = loss.get(dst=rank_b)
                     else:
-                        epoch_loss += loss.get()
+                        epoch_loss += loss.get(dst=rank_b)
                 loss.backward()
                 optimizer.step()
-            if epoch_loss is not None:
+            if epoch_loss is not None and ctx.is_on_guest:
                 epoch_ctx.metrics.log_loss("lr_loss", epoch_loss.tolist())
             # if self.reveal_every_epoch:
             #    wa_p = wa.get_plain_text(dst=rank_a)

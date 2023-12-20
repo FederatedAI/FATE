@@ -120,7 +120,7 @@ class RabbitmqFederation(MessageQueueBasedFederation):
     def __getstate__(self):
         pass
 
-    def destroy(self):
+    def _destroy(self):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
         for party in self.parties:
             if self.local_party == party:
@@ -221,7 +221,7 @@ class RabbitmqFederation(MessageQueueBasedFederation):
         src_role,
         dst_party_id,
         dst_role,
-        mq,
+        mq=None,
         conf: dict = None,
     ):
         LOGGER.debug(
