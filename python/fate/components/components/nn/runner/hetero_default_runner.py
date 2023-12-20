@@ -137,10 +137,6 @@ for the necessary interfaces to implement.")
         agglayer_arg = None
         if self.agglayer_arg_conf is not None:
             agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
-            if isinstance(agglayer_arg, StdAggLayerArgument):
-                raise ValueError('Plaintext agglayer is not supported in Hetero-NN Pipeline for safety concern')
-        else:
-            raise ValueError('A aggregate layer for privacy preserving is needed in the Hetero-NN pipeline, please set the agglayer config')
 
         top_model_strategy = None
         if self.top_model_strategy_arg_conf is not None:
@@ -181,12 +177,15 @@ for the necessary interfaces to implement.")
         # load bottom model
         b_model = loader_load_from_conf(self.bottom_model_conf)
         if self.agglayer_arg_conf is not None:
+            logger.info(self.agglayer_arg_conf)
             agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
-            if isinstance(agglayer_arg, StdAggLayerArgument):
-                raise ValueError('Plaintext agglayer is not supported in Hetero-NN Pipeline for safety concern')
+            logger.info(agglayer_arg)
+            if type(agglayer_arg) == StdAggLayerArgument:
+                raise ValueError('Plaintext agglayer is not supported in Hetero-NN Pipeline Host party')
         else:
             raise ValueError(
-                'A aggregate layer for privacy preserving is needed in the Hetero-NN pipeline, please set the agglayer config')
+                'A aggregate layer for privacy preserving is needed in the Hetero-NN pipeline Host party, '
+                'please set the agglayer config: use fedpass alone in host, or configure sshe layers for guest&host')
 
         model = HeteroNNModelHost(bottom_model=b_model, agglayer_arg=agglayer_arg)
         logger.info('model initialized, model is {}.'.format(model))

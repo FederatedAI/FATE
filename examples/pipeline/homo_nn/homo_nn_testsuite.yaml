@@ -109,7 +109,7 @@ data:
     role: host_0
 tasks:
   homo-nn-binary:
-    script: test_nn_binary_sshe.py
+    script: test_nn_binary.py
   homo-nn-regression:
     script: test_nn_regression.py
   homo-nn-multi:
