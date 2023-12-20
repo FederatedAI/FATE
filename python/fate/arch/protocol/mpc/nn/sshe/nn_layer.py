@@ -23,7 +23,7 @@ class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
         wb_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
         precision_bits=None,
     ):
-        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_nn_aggregator_layer")
+        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_nn_aggregator_layer")
         self.aggregator = SSHENeuralNetworkAggregator(
             ctx,
             in_features_a=in_features_a,

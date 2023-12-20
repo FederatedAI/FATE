@@ -33,7 +33,7 @@ def create_ctx(local):
     console_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
-    computing = CSession()
+    computing = CSession(data_dir='./')
     return Context(
         computing=computing, federation=StandaloneFederation(computing, name, local, [guest, host, arbiter])
     )
