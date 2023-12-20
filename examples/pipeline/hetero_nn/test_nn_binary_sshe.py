@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import argparse
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline import FateFlowPipeline
@@ -22,7 +21,7 @@ from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.hetero_nn import HeteroNN, get_config_of_default_runner
 from fate_client.pipeline.components.fate.reader import Reader
 from fate_client.pipeline.components.fate.psi import PSI
-from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments
+from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments, SSHEArgument
 from fate_client.pipeline.components.fate import Evaluation
 
 
@@ -33,9 +32,8 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
     reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
     reader_0.guest.task_parameters(
@@ -49,10 +47,11 @@ def main(config="../../config.yaml", namespace=""):
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     training_args = TrainingArguments(
-            num_train_epochs=5,
-            per_device_train_batch_size=16,
+            num_train_epochs=1,
+            per_device_train_batch_size=256,
             logging_strategy='epoch',
-            no_cuda=True
+            no_cuda=True,
+            log_level='debug'
         )
 
     guest_conf = get_config_of_default_runner(
@@ -63,13 +62,23 @@ def main(config="../../config.yaml", namespace=""):
         ),
         training_args=training_args,
         optimizer=optim.Adam(lr=0.01),
-        loss=nn.BCELoss()
+        loss=nn.BCELoss(),
+        agglayer_arg=SSHEArgument(
+            guest_in_features=10,
+            host_in_features=10,
+            out_features=10
+        )
     )
 
     host_conf = get_config_of_default_runner(
         bottom_model=nn.Linear(20, 10),
         optimizer=optim.Adam(lr=0.01),
-        training_args=training_args
+        training_args=training_args,
+        agglayer_arg=SSHEArgument(
+            guest_in_features=10,
+            host_in_features=10,
+            out_features=10
+        )
     )
 
     hetero_nn_0 = HeteroNN(
@@ -90,7 +99,7 @@ def main(config="../../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_nn_0.outputs['train_data_output']]
+        input_data=[hetero_nn_0.outputs['train_data_output'], hetero_nn_1.outputs['predict_data_output']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_nn_0, hetero_nn_1, evaluation_0])
@@ -101,6 +110,8 @@ def main(config="../../config.yaml", namespace=""):
     print(f"result_summary: {result_summary}")
 
 
+    return pipeline
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("PIPELINE DEMO")
@@ -109,4 +120,4 @@ if __name__ == "__main__":
     parser.add_argument("--namespace", type=str, default="",
                         help="namespace for data stored in FATE")
     args = parser.parse_args()
-    main(config=args.config, namespace=args.namespace)
+    pipeline = main(config=args.config, namespace=args.namespace)

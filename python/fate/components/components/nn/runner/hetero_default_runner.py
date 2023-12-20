@@ -137,6 +137,10 @@ for the necessary interfaces to implement.")
         agglayer_arg = None
         if self.agglayer_arg_conf is not None:
             agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
+            if isinstance(agglayer_arg, StdAggLayerArgument):
+                raise ValueError('Plaintext agglayer is not supported in Hetero-NN Pipeline for safety concern')
+        else:
+            raise ValueError('A aggregate layer for privacy preserving is needed in the Hetero-NN pipeline, please set the agglayer config')
 
         top_model_strategy = None
         if self.top_model_strategy_arg_conf is not None:
@@ -151,6 +155,7 @@ for the necessary interfaces to implement.")
             agglayer_arg=agglayer_arg,
             top_arg=top_model_strategy
         )
+        logger.info('model initialized, model is {}.'.format(model))
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerGuest(
             ctx=self.get_context(),
@@ -175,11 +180,16 @@ for the necessary interfaces to implement.")
 
         # load bottom model
         b_model = loader_load_from_conf(self.bottom_model_conf)
-        agglayer_arg = None
         if self.agglayer_arg_conf is not None:
             agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
+            if isinstance(agglayer_arg, StdAggLayerArgument):
+                raise ValueError('Plaintext agglayer is not supported in Hetero-NN Pipeline for safety concern')
+        else:
+            raise ValueError(
+                'A aggregate layer for privacy preserving is needed in the Hetero-NN pipeline, please set the agglayer config')
 
         model = HeteroNNModelHost(bottom_model=b_model, agglayer_arg=agglayer_arg)
+        logger.info('model initialized, model is {}.'.format(model))
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerHost(
             ctx=self.get_context(),

@@ -97,6 +97,8 @@ def parse_agglayer_conf(agglayer_arg_conf):
         agglayer_arg = FedPassArgument(**agglayer_arg_conf)
     elif agg_type == 'std':
         agglayer_arg = StdAggLayerArgument(**agglayer_arg_conf)
+    elif agg_type == 'hess':
+        agglayer_arg = SSHEArgument(**agglayer_arg_conf)
     else:
         raise ValueError(f'agg type {agg_type} not supported')
 
@@ -198,6 +200,9 @@ class HeteroNNModelGuest(HeteroNNModelBase):
     def _clear_state(self):
         self._bottom_fw = None
         self._agg_fw_rg = None
+
+    def need_mpc_init(self):
+        return isinstance(self._agg_layer, SSHEAggLayerGuest)
 
     def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
               top_arg: TopModelStrategyArguments = None, bottom_arg=None):
@@ -332,6 +337,9 @@ class HeteroNNModelHost(HeteroNNModelBase):
     def _clear_state(self):
         self._bottom_fw = None
 
+    def need_mpc_init(self):
+        return isinstance(self._agg_layer, SSHEAggLayerHost)
+
     def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
               bottom_arg=None):
 
@@ -345,7 +353,7 @@ class HeteroNNModelHost(HeteroNNModelBase):
             elif type(agglayer_arg) == FedPassArgument:
                 self._agg_layer = FedPassAggLayerHost(**agglayer_arg.to_dict())
             elif isinstance(agglayer_arg, SSHEArgument):
-                self._agg_layer = SSHEAggLayerGuest(**agglayer_arg.to_dict())
+                self._agg_layer = SSHEAggLayerHost(**agglayer_arg.to_dict())
 
         self._agg_layer.set_context(ctx)
 
@@ -365,14 +373,14 @@ class HeteroNNModelHost(HeteroNNModelBase):
         # bottom layer
         self._bottom_fw = b_out
         # hetero layer
-        if isinstance(self._agg_layer, SSHEAggLayerGuest):
+        if isinstance(self._agg_layer, SSHEAggLayerHost):
             self._fake_loss = self._agg_layer.forward(b_out)
         else:
             self._agg_layer.forward(b_out)
 
     def backward(self):
 
-        if isinstance(self._agg_layer, SSHEAggLayerGuest):
+        if isinstance(self._agg_layer, SSHEAggLayerHost):
             self._fake_loss.backward()
             self._fake_loss = None
             self._agg_layer.step()  # sshe has independent optimizer

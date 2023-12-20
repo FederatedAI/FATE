@@ -85,6 +85,7 @@ class SSHEAggLayerHost(_AggLayerBase):
         self._out_features = out_features
         self._optimizer = None
         self._precision_bits = precision_bits
+
     def set_context(self, ctx: Context):
 
         if isinstance(ctx, Context):
@@ -95,6 +96,7 @@ class SSHEAggLayerHost(_AggLayerBase):
             else:
                 self.register_buffer('wa', self._model.aggregator.wa.share)
                 self.register_buffer('wb', self._model.aggregator.wb.share)
+
     def _set_wa_wb(self):
         if self._model is not None:
             if hasattr(self, 'wa') and hasattr(self, 'wb'):
@@ -103,6 +105,7 @@ class SSHEAggLayerHost(_AggLayerBase):
 
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
                               missing_keys, unexpected_keys, error_msgs):
+
         if '_agg_layer.wa' in state_dict:
             self.register_buffer('wa', torch.randn(*state_dict['_agg_layer.wa'].size()).type(torch.LongTensor))
         if '_agg_layer.wb' in state_dict:
@@ -111,8 +114,8 @@ class SSHEAggLayerHost(_AggLayerBase):
         super(SSHEAggLayerHost, self)._load_from_state_dict(state_dict, prefix, local_metadata, strict,
                                                          missing_keys, unexpected_keys, error_msgs)
 
-        self._model.aggregator.wa.share = self.wa
-        self._model.aggregator.wb.share = self.wb
+        self._set_wa_wb()
+
     def forward(self, x):
         if self._model is None:
             raise RuntimeError('Model is not initialized! Call set_context to initialize ctx and model')
@@ -121,5 +124,6 @@ class SSHEAggLayerHost(_AggLayerBase):
 
     def backward(self, error=None):
         pass
+
     def step(self):
         self._optimizer.step()
