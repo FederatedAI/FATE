@@ -20,10 +20,11 @@ from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.hetero_nn import HeteroNN, get_config_of_default_runner
-from fate_client.pipeline.components.fate.reader import Reader
 from fate_client.pipeline.components.fate.psi import PSI
+from fate_client.pipeline.components.fate.reader import Reader
 from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments
 from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.components.fate.nn.algo_params import FedPassArgument
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -49,10 +50,9 @@ def main(config="../../config.yaml", namespace=""):
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     training_args = TrainingArguments(
-            num_train_epochs=5,
+            num_train_epochs=1,
             per_device_train_batch_size=16,
-            logging_strategy='epoch',
-            no_cuda=True
+            logging_strategy='epoch'
         )
 
     guest_conf = get_config_of_default_runner(
@@ -67,14 +67,22 @@ def main(config="../../config.yaml", namespace=""):
     )
 
     host_conf = get_config_of_default_runner(
-        bottom_model=nn.Linear(20, 10),
+        bottom_model=nn.Linear(20, 20),
         optimizer=optim.Adam(lr=0.01),
-        training_args=training_args
+        training_args=training_args,
+        agglayer_arg=FedPassArgument(
+            layer_type='linear',
+            in_channels_or_features=20,
+            hidden_features=20,
+            out_channels_or_features=10,
+            passport_mode='single',
+            passport_distribute='gaussian'
+        )
     )
 
     hetero_nn_0 = HeteroNN(
         'hetero_nn_0',
-        train_data=psi_0.outputs['output_data'], validate_data=psi_0.outputs['output_data']
+        train_data=psi_0.outputs['output_data']
     )
 
     hetero_nn_0.guest.task_parameters(runner_conf=guest_conf)
@@ -90,7 +98,7 @@ def main(config="../../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_nn_0.outputs['train_data_output']]
+        input_data=[hetero_nn_1.outputs['predict_data_output'], hetero_nn_0.outputs['train_data_output']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_nn_0, hetero_nn_1, evaluation_0])
