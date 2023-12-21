@@ -315,9 +315,13 @@ class SSHELREstimator(HeteroModule):
                 loss = loss_fn(z, y)
                 if i % self.reveal_loss_freq == 0:
                     if epoch_loss is None:
-                        epoch_loss = loss.get(dst=rank_b) * h.shape[0]
+                        epoch_loss = loss.get(dst=rank_b)
+                        if epoch_loss:
+                            epoch_loss = epoch_loss * h.shape[0]
                     else:
-                        epoch_loss += loss.get(dst=rank_b) * h.shape[0]
+                        batch_loss = loss.get(dst=rank_b)
+                        if batch_loss:
+                            epoch_loss += batch_loss * h.shape[0]
                 loss.backward()
                 optimizer.step()
             if epoch_loss is not None and ctx.is_on_guest:
