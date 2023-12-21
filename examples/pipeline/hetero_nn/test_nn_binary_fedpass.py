@@ -52,8 +52,7 @@ def main(config="../../config.yaml", namespace=""):
     training_args = TrainingArguments(
             num_train_epochs=1,
             per_device_train_batch_size=16,
-            logging_strategy='epoch',
-            no_cuda=True
+            logging_strategy='epoch'
         )
 
     guest_conf = get_config_of_default_runner(

@@ -50,7 +50,6 @@ def main(config="../../config.yaml", namespace=""):
             num_train_epochs=1,
             per_device_train_batch_size=256,
             logging_strategy='epoch',
-            no_cuda=True,
             log_level='debug'
         )
 
@@ -109,9 +108,6 @@ def main(config="../../config.yaml", namespace=""):
     result_summary = pipeline.get_task_info("eval_0").get_output_metric()[0]["data"]
     print(f"result_summary: {result_summary}")
 
-
-    return pipeline
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("PIPELINE DEMO")
@@ -120,4 +116,4 @@ if __name__ == "__main__":
     parser.add_argument("--namespace", type=str, default="",
                         help="namespace for data stored in FATE")
     args = parser.parse_args()
-    pipeline = main(config=args.config, namespace=args.namespace)
+    main(config=args.config, namespace=args.namespace)
