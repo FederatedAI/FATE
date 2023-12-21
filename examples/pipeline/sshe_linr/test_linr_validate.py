@@ -49,7 +49,7 @@ def main(config="../config.yaml", namespace=""):
                       reveal_every_epoch=False,
                       early_stop="diff",
                       reveal_loss_freq=1,
-                      learning_rate=0.1)
+                      learning_rate=0.15)
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),
                               default_eval_setting="regression",

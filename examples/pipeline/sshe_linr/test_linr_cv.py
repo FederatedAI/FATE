@@ -39,7 +39,7 @@ def main(config="../config.yaml", namespace=""):
     linr_0 = SSHELinR("linr_0",
                       epochs=3,
                       batch_size=100,
-                      learning_rate=0.05,
+                      learning_rate=0.15,
                       init_param={"fit_intercept": True},
                       cv_data=psi_0.outputs["output_data"],
                       cv_param={"n_splits": 3},
