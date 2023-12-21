@@ -36,7 +36,7 @@ class HeteroBoostingTree(HeteroModule):
             else:
                 self._global_feature_importance[fid] = self._global_feature_importance[fid] + fi
 
-    def _sum_leaf_weights(self, leaf_pos: DataFrame, trees, learing_rate: float, loss_func, num_dim=1):
+    def _sum_leaf_weights(self, leaf_pos: DataFrame, trees, learing_rate: float, num_dim=1):
         def _compute_score(leaf_pos_: np.array, trees_: List[List[Node]], learning_rate: float, num_dim_=1):
             score = np.zeros(num_dim_)
             leaf_pos_ = leaf_pos_["sample_pos"]
@@ -52,7 +52,7 @@ class HeteroBoostingTree(HeteroModule):
         apply_func = functools.partial(_compute_score, trees_=tree_list, learning_rate=learing_rate, num_dim_=num_dim)
         predict_score = leaf_pos.create_frame()
         predict_score["score"] = leaf_pos.apply_row(apply_func)
-        return loss_func.predict(predict_score)
+        return predict_score
 
     def _get_fid_name_mapping(self, data_instances: DataFrame):
         columns = data_instances.schema.columns

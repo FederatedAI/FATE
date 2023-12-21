@@ -183,7 +183,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         pred_ctx = ctx.sub_ctx("warmstart_predict")
         if self._model_loaded:
             logger.info("prepare warmstarting score")
-            self._accumulate_scores = self.predict(pred_ctx, train_data, ret_std_format=False)
+            self._accumulate_scores = self.predict(pred_ctx, train_data, ret_raw_scores=True)
             self._accumulate_scores = self._accumulate_scores.loc(
                 train_data.get_indexer(target="sample_id"), preserve_order=True
             )
@@ -339,7 +339,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         train_predict.rename(columns={"score": PREDICT_SCORE})
         self._train_predict = compute_predict_details(train_predict, task_type, classes)
 
-    def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True) -> DataFrame:
+    def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True,
+                ret_raw_scores=False) -> DataFrame:
         """
         predict function
 
@@ -353,17 +354,22 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             Whether to predict and return leaf index.
         ret_std_format: bool, optional
             Whether to return result in a FATE standard format which contains more details.
+        ret_raw_scores:
+            Whether to return raw scores.
         """
 
         task_type, classes = self.get_task_info()
         leaf_pos = predict_leaf_guest(ctx, self._trees, predict_data)
         if predict_leaf:
             return leaf_pos
-        result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func,
-                                        num_dim=self._tree_dim)
+        raw_scores = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, num_dim=self._tree_dim)
         if task_type == REGRESSION:
             logger.debug("regression task, add init score")
-            result = self._init_score + result 
+            raw_scores = self._init_score + raw_scores
+
+        if ret_raw_scores:
+            return raw_scores
+        result = self._loss_func.predict(raw_scores)
 
         if ret_std_format:
             # align table
