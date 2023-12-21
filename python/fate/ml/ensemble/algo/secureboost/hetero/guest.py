@@ -197,8 +197,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
 
     def _check_label(self, label: DataFrame):
 
-
-        if self.objective != REGRESSION:
+        if self.objective != REGRESSION_L2:
             train_data_binarized_label = label.get_dummies()
             labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
             label_set = set(labels)
