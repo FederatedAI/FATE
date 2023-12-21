@@ -39,7 +39,7 @@ def main(config="../config.yaml", namespace=""):
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     linr_0 = SSHELinR("linr_0",
                       epochs=4,
-                      batch_size=None,
+                      batch_size=100,
                       init_param={"fit_intercept": True, "method": "zeros"},
                       train_data=psi_0.outputs["output_data"],
                       learning_rate=0.05,
@@ -50,7 +50,7 @@ def main(config="../config.yaml", namespace=""):
     linr_1 = SSHELinR("linr_1", train_data=psi_0.outputs["output_data"],
                       warm_start_model=linr_0.outputs["output_model"],
                       epochs=2,
-                      batch_size=None,
+                      batch_size=100,
                       learning_rate=0.05,
                       reveal_every_epoch=True,
                       early_stop="diff",
@@ -58,7 +58,7 @@ def main(config="../config.yaml", namespace=""):
                       )
 
     linr_2 = SSHELinR("linr_2", epochs=6,
-                      batch_size=None,
+                      batch_size=100,
                       init_param={"fit_intercept": True, "method": "zeros"},
                       train_data=psi_0.outputs["output_data"],
                       learning_rate=0.05,

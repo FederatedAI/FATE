@@ -37,8 +37,8 @@ def main(config="../config.yaml", namespace=""):
     reader_0.hosts[0].task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_host")
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     linr_0 = SSHELinR("linr_0",
-                      epochs=10,
-                      batch_size=None,
+                      epochs=3,
+                      batch_size=100,
                       learning_rate=0.05,
                       init_param={"fit_intercept": True},
                       cv_data=psi_0.outputs["output_data"],

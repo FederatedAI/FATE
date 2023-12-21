@@ -45,7 +45,7 @@ def main(config="../config.yaml", namespace=""):
     lr_0 = SSHELR("lr_0",
                   learning_rate=0.15,
                   epochs=2,
-                  batch_size=None,
+                  batch_size=300,
                   init_param={"fit_intercept": True},
                   cv_data=psi_0.outputs["output_data"],
                   cv_param={"n_splits": 3},
