@@ -24,6 +24,7 @@ from pyspark.rddsampler import RDDSamplerBase
 
 from fate.arch import URI
 from fate.arch.computing.api import KVTable, ComputingEngine, K, V
+from fate.arch.computing.api._table import _lifted_reduce_to_serdes, get_serdes_by_type
 from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
@@ -72,17 +73,29 @@ class Table(KVTable):
         output_value_serdes,
         output_value_serdes_type,
     ):
+        raise NotImplementedError("binary sorted map partitions with index not supported in spark backend")
+
+    def join(
+        self,
+        other: "Table",
+        merge_op: Callable[[V, V], V] = lambda x, y: x,
+        output_value_serdes_type=None,
+    ):
+        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self._rdd.join(other._rdd).mapPartitionsWithIndex(
-                lambda idx, it: binary_map_partitions_with_index_op(
-                    idx,
-                    map(lambda x: (x[0], x[1][0]), it),
-                    map(lambda x: (x[0], x[1][1]), it),
-                )
-            ),
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=output_value_serdes_type,
-            partitioner_type=partitioner_type,
+            self._rdd.join(other._rdd).mapValues(lambda x: op(x[0], x[1])),
+            key_serdes_type=self.key_serdes_type,
+            value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+            partitioner_type=self.partitioner_type,
+        )
+
+    def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
+        return from_rdd(
+            self._rdd.union(other._rdd).reduceByKey(op),
+            key_serdes_type=self.key_serdes_type,
+            value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+            partitioner_type=self.partitioner_type,
         )
 
     def __init__(self, rdd: pyspark.RDD, key_serdes_type, value_serdes_type, partitioner_type):
@@ -148,10 +161,12 @@ class Table(KVTable):
         output_partitioner_type: int,
         output_num_partitions: int,
     ) -> "KVTable":
+        rdd = self._rdd.mapPartitionsWithIndex(map_partition_op)
+
+        if reduce_partition_op is not None:
+            rdd = rdd.reduceByKey(reduce_partition_op)
         return from_rdd(
-            self._rdd.mapPartitionsWithIndex(map_partition_op).reduceByKey(
-                reduce_partition_op, numPartitions=output_num_partitions
-            ),
+            rdd=rdd,
             key_serdes_type=output_key_serdes_type,
             value_serdes_type=output_value_serdes_type,
             partitioner_type=output_partitioner_type,
