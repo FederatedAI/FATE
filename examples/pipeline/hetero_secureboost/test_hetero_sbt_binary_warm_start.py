@@ -34,7 +34,8 @@ def main(config="../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_sbt_0.outputs['train_data_output']]
+        input_data=[hetero_sbt_0.outputs['train_data_output'], hetero_sbt_1.outputs['train_data_output'],
+                    hetero_sbt_2.outputs['train_data_output']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_sbt_0, hetero_sbt_1, hetero_sbt_2, evaluation_0])
