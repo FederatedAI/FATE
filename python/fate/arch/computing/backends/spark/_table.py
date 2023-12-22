@@ -58,6 +58,18 @@ class HiveCoder:
 
 
 class Table(KVTable):
+    def __init__(self, rdd: pyspark.RDD, key_serdes_type, value_serdes_type, partitioner_type):
+        self._rdd = rdd
+        self._engine = ComputingEngine.SPARK
+        self._has_partitioned = False
+
+        super().__init__(
+            key_serdes_type=key_serdes_type,
+            value_serdes_type=value_serdes_type,
+            partitioner_type=partitioner_type,
+            num_partitions=rdd.getNumPartitions(),
+        )
+
     def _binary_sorted_map_partitions_with_index(
         self,
         other: "Table",
@@ -98,15 +110,34 @@ class Table(KVTable):
             partitioner_type=self.partitioner_type,
         )
 
-    def __init__(self, rdd: pyspark.RDD, key_serdes_type, value_serdes_type, partitioner_type):
-        self._rdd = rdd
-        self._engine = ComputingEngine.SPARK
+    def _as_partitioned(self):
+        if self._has_partitioned:
+            return self
+        else:
+            partitioner = self.partitioner
+            num_partitions = self.num_partitions
+            self._rdd = self._rdd.partitionBy(num_partitions, lambda x: partitioner(x, num_partitions))
+            self._has_partitioned = True
 
-        super().__init__(
-            key_serdes_type=key_serdes_type,
-            value_serdes_type=value_serdes_type,
-            partitioner_type=partitioner_type,
-            num_partitions=rdd.getNumPartitions(),
+    def mapPartitionsWithIndexNoSerdes(
+            self,
+            map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
+            shuffle=False,
+            output_key_serdes_type=None,
+            output_value_serdes_type=None,
+            output_partitioner_type=None,
+    ):
+        # Note: since we use this method to send data to other parties, and if the engine in other side is not spark,
+        # we should guarantee the data properly partitioned before we send each partition to other side.
+        # So we should call _as_partitioned() before we call this method.
+        # TODO: but if other side is also spark, we can skip _as_partitioned() to save time.
+        self._as_partitioned()
+        return super().mapPartitionsWithIndexNoSerdes(
+            map_partition_op=map_partition_op,
+            shuffle=shuffle,
+            output_key_serdes_type=output_key_serdes_type,
+            output_value_serdes_type=output_value_serdes_type,
+            output_partitioner_type=output_partitioner_type,
         )
 
     @property
