@@ -42,7 +42,7 @@ def toy_example(
         final_df = df.loc(guest_indexes)
         ctx.guest.put("host_index", final_df.get_indexer(target="sample_id"))
 
-    assert final_df.shape[0] == data_num, f"data num should be {data_num} instead of {final_df}"
+    assert final_df.shape[0] == data_num, f"data num should be {data_num} instead of {len(final_df)}"
 
     output_data.write(final_df)
 
