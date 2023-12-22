@@ -26,8 +26,8 @@ def toy_example(
         role: Role,
         output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
         json_model_output: cpn.json_model_output(roles=[GUEST, HOST]),
-        data_num: cpn.parameter(type=params.conint(gt=1), desc="data_num", optional=False),
-        partition: cpn.parameter(type=params.conint(gt=1), desc="data_partition", optional=False),
+        data_num: cpn.parameter(type=params.conint(gt=0), desc="data_num", optional=False),
+        partition: cpn.parameter(type=params.conint(gt=0), desc="data_partition", optional=False),
 ):
     pd_df = pd.DataFrame([[str(i), str(i), i] for i in range(data_num)], columns=["sample_id", "match_id", "x0"])
     reader = PandasReader(sample_id_name="sample_id", match_id_name="match_id", dtype="float64", partition=partition)
@@ -42,7 +42,7 @@ def toy_example(
         final_df = df.loc(guest_indexes)
         ctx.guest.put("host_index", final_df.get_indexer(target="sample_id"))
 
-    assert final_df.shape[0] == data_num, f"data num should be {data_num} instead of {final_df}"
+    assert final_df.shape[0] == data_num, f"data num should be {data_num} instead of {len(final_df)}"
 
     output_data.write(final_df)
 
