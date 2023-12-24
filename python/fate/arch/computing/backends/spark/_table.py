@@ -70,6 +70,11 @@ class Table(KVTable):
             num_partitions=rdd.getNumPartitions(),
         )
 
+    @property
+    def rdd(self):
+        self._as_partitioned()
+        return self._rdd
+
     def _binary_sorted_map_partitions_with_index(
         self,
         other: "Table",
@@ -95,7 +100,7 @@ class Table(KVTable):
     ):
         op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self._rdd.join(other._rdd).mapValues(lambda x: op(x[0], x[1])),
+            self.rdd.join(other.rdd).mapValues(lambda x: op(x[0], x[1])),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
@@ -104,7 +109,7 @@ class Table(KVTable):
     def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
         op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self._rdd.union(other._rdd).reduceByKey(op),
+            self.rdd.union(other.rdd).reduceByKey(op),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
@@ -131,7 +136,6 @@ class Table(KVTable):
         # we should guarantee the data properly partitioned before we send each partition to other side.
         # So we should call _as_partitioned() before we call this method.
         # TODO: but if other side is also spark, we can skip _as_partitioned() to save time.
-        self._as_partitioned()
         return super().mapPartitionsWithIndexNoSerdes(
             map_partition_op=map_partition_op,
             shuffle=shuffle,
@@ -164,7 +168,7 @@ class Table(KVTable):
         return _value
 
     def _collect(self, **kwargs):
-        #         return iter(self._rdd.collect())
+        #         return iter(self.rdd.collect())
         return self._rdd.toLocalIterator()
 
     def _reduce(self, func, **kwargs):
@@ -192,7 +196,7 @@ class Table(KVTable):
         output_partitioner_type: int,
         output_num_partitions: int,
     ) -> "KVTable":
-        rdd = self._rdd.mapPartitionsWithIndex(map_partition_op)
+        rdd = self.rdd.mapPartitionsWithIndex(map_partition_op)
 
         if reduce_partition_op is not None:
             rdd = rdd.reduceByKey(reduce_partition_op)
@@ -226,7 +230,7 @@ class Table(KVTable):
             options = {}
         partitions = options.get("partitions")
         if uri.scheme == "hdfs":
-            table = self._rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
+            table = self.rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
             table.saveAsTextFile(uri.original_uri)
@@ -234,7 +238,7 @@ class Table(KVTable):
             return
 
         if uri.scheme == "hive":
-            table = self._rdd.map(lambda x: HiveCoder.encode(x[0], x[1]))
+            table = self.rdd.map(lambda x: HiveCoder.encode(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
             table.toDF().write.saveAsTable(uri.original_uri)
@@ -242,7 +246,7 @@ class Table(KVTable):
             return
 
         if uri.scheme == "file":
-            table = self._rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
+            table = self.rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
             table.saveAsTextFile(uri.path)
