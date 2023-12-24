@@ -115,6 +115,14 @@ class Table(KVTable):
             partitioner_type=self.partitioner_type,
         )
 
+    def subtractByKey(self, other: "Table", output_value_serdes_type=None):
+        return from_rdd(
+            self.rdd.subtractByKey(other.rdd),
+            key_serdes_type=self.key_serdes_type,
+            value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+            partitioner_type=self.partitioner_type,
+        )
+
     def _as_partitioned(self):
         if self._has_partitioned:
             return self
