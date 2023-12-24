@@ -215,7 +215,16 @@ class Imputer(object):
                 LOGGER.debug(f"replace value for feature {feature} is: {transform_value}")
             else:
                 raise ValueError("Unknown replace method:{}".format(replace_method))
-            cols_transform_value[feature] = transform_value
+            if (data.schema.get("meta",{}).get("exclusive_data_type",{}).get(feature) is not None):
+                data_type = data.schema["meta"]["exclusive_data_type"][feature]
+                if ("str" == data_type):
+                    cols_transform_value[feature] = str(transform_value)
+                elif ("int" == data_type):
+                    cols_transform_value[feature] = int(transform_value)
+                else:
+                    cols_transform_value[feature] = float(transform_value)
+            else:
+                cols_transform_value[feature] = transform_value
 
         LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         cols_transform_value = [cols_transform_value[key] for key in header]
