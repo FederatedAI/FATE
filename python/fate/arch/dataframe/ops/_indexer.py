@@ -197,6 +197,14 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
 
 
 def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, key_type, value_with_sample_id=True):
+    if flatten_table.count() == 0:
+        return DataFrame(
+            ctx=ctx,
+            block_table=flatten_table,
+            partition_order_mappings=dict(),
+            data_manager=data_manager.duplicate()
+        )
+    
     partition_order_mappings = get_partition_order_by_raw_table(flatten_table,
                                                                 data_manager.block_row_size,
                                                                 key_type=key_type)
