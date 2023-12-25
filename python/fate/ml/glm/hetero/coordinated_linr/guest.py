@@ -188,7 +188,7 @@ class CoordinatedLinREstimatorGuest(HeteroModule):
     def fit_model(self, ctx, encryptor, train_data, validate_data=None):
         coef_count = train_data.shape[1]
         self.header = train_data.schema.columns.to_list()
-        logger.debug(f"init param: {self.init_param}")
+        # logger.debug(f"init param: {self.init_param}")
         if self.init_param.get("fit_intercept"):
             logger.debug(f"add intercept to train data")
             train_data["intercept"] = 1.0
