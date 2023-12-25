@@ -1,9 +1,14 @@
 # FATE AllinOne部署指南
 
-[English](./fate-allinone_deployment_guide.zh.md)
+[English](./fate-allinone_deployment_guide.md)
+
+> 警告：本文档仅用于快速开始，生产环境推荐使用其他部署方式，如 [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)。
+>
+> 依照本文档同时部署多个 party 会导致 party 间各服务器可以通过 ssh 互相访问，从而产生严重的安全问题。
+
 ## 1. 服务器配置
 
-|  服务器  |                                                              |
+|  服务器  |                                                                               |
 | :------: | ------------------------------------------------------------ |
 |   数量   | 1 or 2                                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
@@ -16,8 +21,8 @@
 
 | party  | 主机名        | IP地址      | 操作系统                | 安装软件           | 服务                                                         |
 | ------ | ------------- | ----------- | ----------------------- | ------------------ | ------------------------------------------------------------ |
-| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
-| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，dashboard，mysql，osx |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，dashboard，mysql，osx |
 
 架构图：
 
@@ -27,14 +32,15 @@
 
 ## 3. 组件说明
 
-| 软件产品 | 组件           | 端口      | 说明                                                         |
-| -------- | -------------- | --------- | ------------------------------------------------------------ |
-| fate     | fate_flow      | 9360;9380 | 联合学习任务流水线管理模块                                   |
-| fate     | fateboard      | 8080      | 联合学习过程可视化模块                                       |
-| eggroll  | clustermanager | 4670      | cluster manager管理集群                                      |
-| eggroll  | nodemanager    | 4671      | node manager管理每台机器资源                                 |
-| eggroll  | rollsite       | 9370      | 跨站点或者说跨party通讯组件，相当于以前版本的proxy+federation |
-| mysql    | mysql          | 3306      | 数据存储，clustermanager和fateflow依赖                       |
+| 软件产品 | 组件           | 端口      | 说明                                   |
+| -------- | -------------- | --------- | -------------------------------------- |
+| fate     | fate_flow      | 9360;9380 | 联合学习任务流水线管理模块             |
+| fate     | fateboard      | 8080      | 联合学习过程可视化模块                 |
+| eggroll  | clustermanager | 4670      | cluster manager管理集群                |
+| eggroll  | nodemanager    | 4671      | node manager管理每台机器资源           |
+| eggroll  | dashboard      | 8083      | eggroll 集群管理平台                   |
+| osx      | osx            | 9370      | 通信/数据传输模块                      |
+| mysql    | mysql          | 3306      | 数据存储，clustermanager和fateflow依赖 |
 
 ## 4. 基础环境配置
 
@@ -262,7 +268,7 @@ cd /data/projects/
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_cluster_install_${version}_release.tar.gz
 tar xzf fate_cluster_install_${version}_release.tar.gz
 
-注意：version不带字符v，如fate_cluster_install_2.x.x_release.tar.gz
+注意：version不带字符v，如fate_cluster_install_1.x.x_release.tar.gz
 ```
 
 ### 5.2. 部署前检查
@@ -324,7 +330,7 @@ vi fate_cluster_install_${version}_release/allInone/conf/setup.conf
 | fateflow_grpc_port  | 默认：9360                                            | fateflow grpc服务端口                                        |
 | fateflow_http_port  | 默认：9380                                            | fateflow http服务端口                                        |
 | fateboard_port      | 默认：8080                                            | fateboard服务端口                                            |
-| rollsite_port       | 默认：9370                                            | rollsite服务端口                                             |
+| osx_port            | 默认：9370                                            | osx服务端口                                                  |
 | clustermanager_port | 默认：4670                                            | clustermanager服务端口                                       |
 | nodemanager_port    | 默认：4671                                            | nodemanager服务端口                                          |
 
@@ -391,7 +397,7 @@ fateflow_grpc_port=9360
 fateflow_http_port=9380
 fateboard_port=8080
 
-rollsite_port=9370
+osx_port=9370
 clustermanager_port=4670
 nodemanager_port=4671
 ```
@@ -459,7 +465,7 @@ fateflow_grpc_port=9360
 fateflow_http_port=9380
 fateboard_port=8080
 
-rollsite_port=9370
+osx_port=9370
 clustermanager_port=4670
 nodemanager_port=4671
 ```
@@ -495,10 +501,6 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 /data/projects/fate/eggroll/logs/eggroll/bootstrap.nodemanager.err
 
-/data/projects/fate/eggroll/logs/eggroll/bootstrap.rollsite.err
-
-/data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
-
 2）fateflow日志
 
 /data/projects/fate/fate_flow/logs/fate_flow
@@ -524,7 +526,7 @@ flow test toy -gid 10000 -hid 10000
 
 类似如下结果表示成功：
 
-toy test job xxx is success
+toy test job 202308291022025779790 is success
 
 提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改运行时参数task_cores为1，增加命令行参数 '--task-cores 1'.
 
@@ -580,7 +582,7 @@ cd /data/projects/fate/eggroll
 bash ./bin/eggroll.sh all start/stop/status/restart
 ```
 
-启动/关闭/查看/重启单个模块(可选：clustermanager，nodemanager，rollsite)：
+启动/关闭/查看/重启单个模块(可选：clustermanager，nodemanager，dashboard)：
 
 ```bash
 bash ./bin/eggroll.sh clustermanager start/stop/status/restart
@@ -608,11 +610,9 @@ bash service.sh start|stop|status|restart
 3) 启动/关闭/重启osx服务
 
 ```bash
-cd /data/projects/fate/fate/proxy/osx
+cd /data/projects/fate/osx
 bash service.sh start|stop|status|restart
 ```
-
-如果需要启动rollsite，需要先停用osx再启动rollsite，默认启动osx。
 
 ### 7.2. 查看进程和端口
 
@@ -625,8 +625,8 @@ bash service.sh start|stop|status|restart
 ```bash
 ps -ef | grep -i clustermanager
 ps -ef | grep -i nodemanager
-ps -ef | grep -i rollsite
-ps -ef | grep -i fate_flow_server.py
+ps -ef | grep -i dashboard
+ps -ef | grep -i fate_flow
 ps -ef | grep -i fateboard
 ps -ef | grep -i osx
 ```
@@ -640,9 +640,11 @@ ps -ef | grep -i osx
 netstat -tlnp | grep 4670
 #nodemanager
 netstat -tlnp | grep 4671
-#rollsite or osx
+#dashboard
+netstat -tlnp | grep 8083
+#osx
 netstat -tlnp | grep 9370
-#fate_flow_server
+#fate_flow
 netstat -tlnp | grep 9360
 #fateboard
 netstat -tlnp | grep 8080
@@ -650,13 +652,13 @@ netstat -tlnp | grep 8080
 
 ### 7.3. 服务日志
 
-| 服务               | 日志路径                                        |
-| ------------------ | ----------------------------------------------- |
-| eggroll            | /data/projects/fate/eggroll/logs                |
-| fate_flow&任务日志 | /data/projects/fate/fate_flow/logs              |
-| fateboard          | /data/projects/fate/fateboard/logs              |
-| mysql              | /data/projects/fate/common/mysql/mysql-*/logs   |
-| osx                | /data/projects/fate/fate/proxy/osx/logs/broker/ |
+| 服务               | 日志路径                                      |
+| ------------------ | --------------------------------------------- |
+| eggroll            | /data/projects/fate/eggroll/logs              |
+| fate_flow&任务日志 | /data/projects/fate/fate_flow/logs            |
+| fateboard          | /data/projects/fate/fateboard/logs            |
+| mysql              | /data/projects/fate/common/mysql/mysql-*/logs |
+| osx                | /data/projects/fate/osx/logs/broker/          |
 
 ### 7.4. 空间清理规则
 
