@@ -119,11 +119,22 @@ class KVTable(Generic[K, V]):
 
         self._schema = {}
 
+        self._is_federated_received = False
+
+    def mask_federated_received(self):
+        self._is_federated_received = True
+
     def __getstate__(self):
         pass
 
     def __reduce__(self):
-        raise NotImplementedError("Table is not picklable, please don't do this or it may cause unexpected error")
+        raise NotImplementedError("Table is not pickleable, please don't do this or it may cause unexpected error")
+
+    def __del__(self):
+        if self._is_federated_received:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"destroying federated received table {self}")
+            self.destroy()
 
     @property
     def schema(self):
@@ -220,7 +231,10 @@ class KVTable(Generic[K, V]):
         return self._partitioner
 
     def __str__(self):
-        return f"<{self.__class__.__name__} key_serdes={self.key_serdes}, value_serdes={self.value_serdes}, partitioner={self.partitioner}>"
+        return f"<{self.__class__.__name__} \
+        key_serdes_type={self.key_serdes_type}, \
+         value_serdes_type={self.value_serdes_type}, \
+         partitioner_type={self.partitioner_type}>"
 
     def destroy(self):
         self._destroy()
