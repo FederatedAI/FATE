@@ -89,7 +89,6 @@ def evaluation(
             eval_rs[name] = rs_
 
     ctx.metrics.log_metrics(eval_rs, name='evaluation', type='evaluation')
-    logger.info("eval result: {}".format(eval_rs))
 
 
 def evaluate(input_data, metrics, predict_col, label_col):
@@ -97,10 +96,9 @@ def evaluate(input_data, metrics, predict_col, label_col):
     data = input_data.as_pd_df()
     split_dict = split_dataframe_by_type(data)
     rs_dict = {}
-    logger.info('eval dataframe is {}'.format(data))
     for name, df in split_dict.items():
         
-        logger.info('eval dataframe is \n\n{}'.format(df))
+
         y_true = df[label_col]
         # in case is multi result, use tolist
         y_pred = df[predict_col]

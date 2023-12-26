@@ -183,7 +183,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         pred_ctx = ctx.sub_ctx("warmstart_predict")
         if self._model_loaded:
             logger.info("prepare warmstarting score")
-            self._accumulate_scores = self.predict(pred_ctx, train_data, ret_std_format=False)
+            self._accumulate_scores = self.predict(pred_ctx, train_data, ret_raw_scores=True)
             self._accumulate_scores = self._accumulate_scores.loc(
                 train_data.get_indexer(target="sample_id"), preserve_order=True
             )
@@ -196,31 +196,33 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 self._accumulate_scores = self._loss_func.initialize(label)
 
     def _check_label(self, label: DataFrame):
-        label_df = label.as_pd_df()[label.schema.label_name]
-        if self.objective == MULTI_CE:
 
-            if self.num_class is None or self.num_class <= 2:
-                raise ValueError(
-                    f"num_class should be set and greater than 2 for multi:ce objective, but got {self.num_class}"
-                )
+        if self.objective != REGRESSION_L2:
+            train_data_binarized_label = label.get_dummies()
+            labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
+            label_set = set(labels)
+            if self.objective == MULTI_CE:
 
-            label_set = set(np.unique(label_df))
-            if len(label_set) > self.num_class:
-                raise ValueError(
-                    f"num_class should be greater than or equal to the number of unique label in provided train data, but got {self.num_class} and {len(label_set)}"
-                )
-            if max(label_set) - 1 > self.num_class:
-                raise ValueError(
-                    f"the max label index in the provided train data should be less than or equal to num_class - 1, but got index {max(label_set)} which is > {self.num_class}"
-                )
+                if self.num_class is None or self.num_class <= 2:
+                    raise ValueError(
+                        f"num_class should be set and greater than 2 for multi:ce objective, but got {self.num_class}"
+                    )
 
-        elif self.objective == BINARY_BCE:
-            label_set = set(np.unique(label_df))
-            assert len(label_set) == 2, f"binary classification task should have 2 unique label, but got {label_set}"
-            assert (
-                0 in label_set and 1 in label_set
-            ), f"binary classification task should have label 0 and 1, but got {label_set}"
-            self.num_class = 2
+                if len(label_set) > self.num_class:
+                    raise ValueError(
+                        f"num_class should be greater than or equal to the number of unique label in provided train data, but got {self.num_class} and {len(label_set)}"
+                    )
+                if max(label_set) - 1 > self.num_class:
+                    raise ValueError(
+                        f"the max label index in the provided train data should be less than or equal to num_class - 1, but got index {max(label_set)} which is > {self.num_class}"
+                    )
+
+            elif self.objective == BINARY_BCE:
+                assert len(label_set) == 2, f"binary classification task should have 2 unique label, but got {label_set}"
+                assert (
+                    0 in label_set and 1 in label_set
+                ), f"binary classification task should have label 0 and 1, but got {label_set}"
+                self.num_class = 2
         else:
             self.num_class = None
 
@@ -336,7 +338,8 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         train_predict.rename(columns={"score": PREDICT_SCORE})
         self._train_predict = compute_predict_details(train_predict, task_type, classes)
 
-    def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True) -> DataFrame:
+    def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True,
+                ret_raw_scores=False) -> DataFrame:
         """
         predict function
 
@@ -350,17 +353,22 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             Whether to predict and return leaf index.
         ret_std_format: bool, optional
             Whether to return result in a FATE standard format which contains more details.
+        ret_raw_scores:
+            Whether to return raw scores.
         """
 
         task_type, classes = self.get_task_info()
         leaf_pos = predict_leaf_guest(ctx, self._trees, predict_data)
         if predict_leaf:
             return leaf_pos
-        result = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, self._loss_func,
-                                        num_dim=self._tree_dim)
+        raw_scores = self._sum_leaf_weights(leaf_pos, self._trees, self.learning_rate, num_dim=self._tree_dim)
         if task_type == REGRESSION:
             logger.debug("regression task, add init score")
-            result = self._init_score + result 
+            raw_scores = self._init_score + raw_scores
+
+        if ret_raw_scores:
+            return raw_scores
+        result = self._loss_func.predict(raw_scores)
 
         if ret_std_format:
             # align table

@@ -75,9 +75,8 @@ class DefaultRunner(NNRunner):
                 dataset.load(data)
             else:
                 raise ValueError(
-                    f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner. \
-                                Please implement this method in your dataset class. You can refer to the base class 'Dataset' in 'fate.ml.nn.dataset.base' \
-                                for the necessary interfaces to implement.")
+                    f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner.Please implement this method in your dataset class. You can refer to the base class 'Dataset' in 'fate.ml.nn.dataset.base' \
+for the necessary interfaces to implement.")
         if dataset is not None and not issubclass(
                 type(dataset), Dataset):
             raise TypeError(
@@ -152,6 +151,7 @@ class DefaultRunner(NNRunner):
             agglayer_arg=agglayer_arg,
             top_arg=top_model_strategy
         )
+        logger.info('model initialized, model is {}.'.format(model))
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerGuest(
             ctx=self.get_context(),
@@ -176,11 +176,19 @@ class DefaultRunner(NNRunner):
 
         # load bottom model
         b_model = loader_load_from_conf(self.bottom_model_conf)
-        agglayer_arg = None
         if self.agglayer_arg_conf is not None:
+            logger.info(self.agglayer_arg_conf)
             agglayer_arg = parse_agglayer_conf(self.agglayer_arg_conf)
+            logger.info(agglayer_arg)
+            if type(agglayer_arg) == StdAggLayerArgument:
+                raise ValueError('Plaintext agglayer is not supported in Hetero-NN Pipeline Host party')
+        else:
+            raise ValueError(
+                'A aggregate layer for privacy preserving is needed in the Hetero-NN pipeline Host party, '
+                'please set the agglayer config: use fedpass alone in host, or configure sshe layers for guest&host')
 
         model = HeteroNNModelHost(bottom_model=b_model, agglayer_arg=agglayer_arg)
+        logger.info('model initialized, model is {}.'.format(model))
         optimizer, loss, data_collator, tokenizer, training_args = self._setup(model, output_dir, saved_model)
         trainer = HeteroNNTrainerHost(
             ctx=self.get_context(),

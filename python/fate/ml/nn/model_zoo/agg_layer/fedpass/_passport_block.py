@@ -76,7 +76,7 @@ class LinearPassportBlock(PassportBlock):
     def __init__(self, in_features, out_features, bias=True, hidden_feature: int = 128,
                  passport_distribute: Literal['gaussian', 'uniform'] = 'gaussian',
                  passport_mode: Literal['single', 'multi'] = 'single',
-                 loc=-1.0, scale=1.0, low=-1.0, high=1.0, num_passport=1, ae_in=None, ae_out=None):
+                 loc=-1.0, scale=1.0, low=-10.0, high=1.0, num_passport=1, ae_in=None, ae_out=None):
         super().__init__(
             passport_distribute=passport_distribute,
             passport_mode=passport_mode
@@ -107,7 +107,7 @@ class LinearPassportBlock(PassportBlock):
             if self._passport_distribute == 'uniform':
                 key = np.random.uniform(self._low, self._high, newshape)
             elif self._passport_distribute == 'gaussian':
-                key = np.random.normal(self._low, self._scale, newshape)
+                key = np.random.normal(self._loc, self._scale, newshape)
             else:
                 raise ValueError("Wrong passport type (uniform or gaussian)")
 

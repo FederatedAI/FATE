@@ -124,6 +124,9 @@ class _TrainingArguments(_hf_TrainingArguments):
     lr_scheduler_type: str = field(default="constant")
     log_level: str = field(default="info")
     deepspeed: Optional[str] = field(default=None)
+    save_safetensors: bool = field(default=False)
+    use_cpu: bool = field(default=True)
+
 
     def __post_init__(self):
         self.push_to_hub = False
@@ -1184,7 +1187,7 @@ class HomoTrainerServer(object):
             if self.can_aggregate_loss:
                 loss_sub_ctx = ctx.sub_ctx("loss_aggregation").indexed_ctx(i)
                 loss = self.aggregator.loss_aggregation(loss_sub_ctx)
-                print('loss is ', loss)
+                sub_ctx.metrics.log_loss('loss', loss)
 
         self.on_train_end(self.ctx, aggregator=self.aggregator)
 

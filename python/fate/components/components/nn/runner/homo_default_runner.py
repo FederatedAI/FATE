@@ -138,6 +138,7 @@ class DefaultRunner(NNRunner):
         else:
             dataset = loader_load_from_conf(self.dataset_conf)
             if hasattr(dataset, 'load'):
+                logger.info('load path is {}'.format(data))
                 dataset.load(data)
             else:
                 raise ValueError(

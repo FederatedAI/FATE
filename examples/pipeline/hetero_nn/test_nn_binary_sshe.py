@@ -13,18 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import argparse
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.hetero_nn import HeteroNN, get_config_of_default_runner
-from fate_client.pipeline.components.fate.psi import PSI
 from fate_client.pipeline.components.fate.reader import Reader
-from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments
+from fate_client.pipeline.components.fate.psi import PSI
+from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments, SSHEArgument
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.components.fate.nn.algo_params import FedPassArgument
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -34,9 +32,8 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
     reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
     reader_0.guest.task_parameters(
@@ -51,9 +48,9 @@ def main(config="../../config.yaml", namespace=""):
 
     training_args = TrainingArguments(
             num_train_epochs=1,
-            per_device_train_batch_size=16,
+            per_device_train_batch_size=256,
             logging_strategy='epoch',
-            no_cuda=True
+            log_level='debug'
         )
 
     guest_conf = get_config_of_default_runner(
@@ -64,26 +61,28 @@ def main(config="../../config.yaml", namespace=""):
         ),
         training_args=training_args,
         optimizer=optim.Adam(lr=0.01),
-        loss=nn.BCELoss()
+        loss=nn.BCELoss(),
+        agglayer_arg=SSHEArgument(
+            guest_in_features=10,
+            host_in_features=10,
+            out_features=10
+        )
     )
 
     host_conf = get_config_of_default_runner(
-        bottom_model=nn.Linear(20, 20),
+        bottom_model=nn.Linear(20, 10),
         optimizer=optim.Adam(lr=0.01),
         training_args=training_args,
-        agglayer_arg=FedPassArgument(
-            layer_type='linear',
-            in_channels_or_features=20,
-            hidden_features=20,
-            out_channels_or_features=10,
-            passport_mode='single',
-            passport_distribute='gaussian'
+        agglayer_arg=SSHEArgument(
+            guest_in_features=10,
+            host_in_features=10,
+            out_features=10
         )
     )
 
     hetero_nn_0 = HeteroNN(
         'hetero_nn_0',
-        train_data=psi_0.outputs['output_data']
+        train_data=psi_0.outputs['output_data'], validate_data=psi_0.outputs['output_data']
     )
 
     hetero_nn_0.guest.task_parameters(runner_conf=guest_conf)
@@ -99,7 +98,7 @@ def main(config="../../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_nn_1.outputs['predict_data_output'], hetero_nn_0.outputs['train_data_output']]
+        input_data=[hetero_nn_0.outputs['train_data_output'], hetero_nn_1.outputs['predict_data_output']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_nn_0, hetero_nn_1, evaluation_0])
@@ -108,7 +107,6 @@ def main(config="../../config.yaml", namespace=""):
 
     result_summary = pipeline.get_task_info("eval_0").get_output_metric()[0]["data"]
     print(f"result_summary: {result_summary}")
-
 
 if __name__ == "__main__":
 

@@ -36,20 +36,6 @@ class CSession(KVTableContext):
             session_id = generate_computing_uuid()
         if data_dir is None:
             raise ValueError("data_dir is None")
-            # data_dir = os.environ.get(
-            #     "STANDALONE_DATA_PATH",
-            #     os.path.abspath(
-            #         os.path.join(
-            #             os.path.dirname(__file__),
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             "data",
-            #         )
-            #     ),
-            # )
         if options is None:
             options = {}
         max_workers = options.get("task_cores", None)

@@ -15,7 +15,6 @@ from fate.ml.nn.model_zoo.hetero_nn_model import StdAggLayerArgument, FedPassArg
 from fate.ml.nn.model_zoo.hetero_nn_model import TopModelStrategyArguments
 
 
-
 class HeteroNNTrainerGuest(HeteroTrainerBase):
 
     def __init__(
@@ -36,6 +35,10 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
 
         assert isinstance(model, HeteroNNModelGuest), ('Model should be a HeteroNNModelGuest instance, '
                                                        'but got {}.').format(type(model))
+
+        if model.need_mpc_init():
+            ctx.mpc.init()
+
         model.setup(ctx=ctx)
 
         super().__init__(
@@ -128,6 +131,10 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
     ):
         assert isinstance(model, HeteroNNModelHost), ('Model should be a HeteroNNModelHost instance, '
                                                        'but got {}.').format(type(model))
+
+        if model.need_mpc_init():
+            ctx.mpc.init()
+
         model.setup(ctx=ctx)
         super().__init__(
             ctx=ctx,
