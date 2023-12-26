@@ -25,7 +25,13 @@
 | PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，dashboard，mysql，osx |
 
 架构图：
-![osx_on_eggroll](../images/osx_on_eggroll.png)|
+采用eggroll作为计算引擎时的部署架构:
+
+![osx_on_eggroll](../images/osx_on_eggroll.png)
+
+上图为采用spark作为计算引擎时的部署架构:
+
+![osx_on_spark.drawio](../images/osx_on_spark.drawio.png)
 
 ## 3. 组件说明
 
