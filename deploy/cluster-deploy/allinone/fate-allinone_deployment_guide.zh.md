@@ -25,10 +25,7 @@
 | PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 18.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，dashboard，mysql，osx |
 
 架构图：
-
-|![](../../images/arch_zh.png)|
-|:--:|
-|架构图|
+![osx_on_eggroll](../images/osx_on_eggroll.png)|
 
 ## 3. 组件说明
 
