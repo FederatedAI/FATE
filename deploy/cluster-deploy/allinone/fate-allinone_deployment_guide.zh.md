@@ -496,7 +496,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 1）eggroll日志
 
- /data/projects/fate/eggroll/logs/eggroll/bootstrap.clustermanager.err
+/data/projects/fate/eggroll/logs/eggroll/bootstrap.clustermanager.err
 
 /data/projects/fate/eggroll/logs/eggroll/clustermanager.jvm.err.log
 
@@ -511,6 +511,10 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 3）fateboard日志
 
 /data/projects/fate/fateboard/logs
+
+4）osx日志
+
+/data/projects/fate/osx/logs/broker/ 
 
 ## 6.测试
 
@@ -556,6 +560,12 @@ flow test toy -gid 9999 -hid 10000
 类似如下结果表示成功：
 
 toy test job 202308291022025779790 is success
+
+### 6.2 Fateboard 测试
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。
+
+### 6.3 Dashboard 测试
+Dashboard是一项Web服务。如果成功启动了dashboard服务，则可以通过访问 http://192.168.0.1:8083 和 http://192.168.0.2:8083 来查看任务信息，如果有防火墙需开通。
 
 ## 7.系统运维
 
