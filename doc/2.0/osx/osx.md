@@ -1,3 +1,4 @@
+# OSX: Open Site Exchange
 # 一、背景：
 
 FATE1.X维护了多套通信架构，包括eggroll、spark+pulsar+nginx 、spark+rabbitmq+nginx。
@@ -20,9 +21,7 @@ FATE1.X维护了多套通信架构，包括eggroll、spark+pulsar+nginx 、spark
 
 为了解决以上问题，我们预备在FATE2.X中使用统一的通信组件OSX，统一支持不同计算引擎
 
-# 二、新组件OSX:
-
-
+# 二、OSX:
 
 ## 新组件特性：
 
