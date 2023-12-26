@@ -23,35 +23,47 @@ Currently, we provide various ready-to-use launchers for testing mpc protocol an
 
 !ls FATE/launchers
 To write a launcher, first come up with the case to be run with a FATE-module(as in FATE/python/fate/ml) and wrap this
-case into a function. As a demo, we are to analyze a simple [launcher](../../../../launchers/pearson_launcher.py) that
-computes pearson correlation coefficient using PearsonCorrelation module from FATE.
+case into a function. As a demo, we are to analyze a simple [launcher](../../../../launchers/sshe_lr_launcher.py) that
+trains a SSHE Logistic Regression model using given local data files.
 
-First we define a Correlation module object, and then feed input data sets into ths module object to run computation. At
-last, we make this program print out local vif values.
+First we define a SSEHLR module object, and then feed input data sets into ths module object. At
+last, we make this program print out model content.
 
 ```python
-def run_pearson(ctx):
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def run_sshe_lr(ctx):
+    from fate.ml.glm.hetero.sshe import SSHELogisticRegression
+    from fate.arch import dataframe
+
     ctx.mpc.init()
-    inst = PearsonCorrelation(calc_vif=True)
+    inst = SSHELogisticRegression(epochs=5, batch_size=300, tol=0.01, early_stop='diff', learning_rate=0.15,
+                                  init_param={"method": "random_uniform", "fit_intercept": True, "random_state": 1},
+                                  reveal_every_epoch=False, reveal_loss_freq=2, threshold=0.5)
     ...
-    inst.fit(ctx, input_data=input_data)
-    print(inst.vif)
+    inst.fit(ctx, train_data=input_data)
+    logger.info(f"model: {pprint.pformat(inst.get_model())}")
 ```
 
 Local csv data need to be first transformed into DataFrame so that FATE modules may process them. Since our case is a
 heterogeneous one, configuration for transformer tool CSVReader will be different for guest and host:
 
 ```python
+guest_data = 'examples/data/hetero_breast_guest.csv'
+host_data = 'examples/data/hetero_breast_host.csv'
 if ctx.is_on_guest:
     kwargs = {
         "sample_id_name": None,
         "match_id_name": "id",
         "delimiter": ",",
         "label_name": "y",
-        "label_type": "float32",
+        "label_type": "int32",
         "dtype": "float32",
     }
-    input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, args.guest_data)
+    input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, guest_data)
 else:
     kwargs = {
         "sample_id_name": None,
@@ -59,26 +71,46 @@ else:
         "delimiter": ",",
         "dtype": "float32",
     }
-    input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, args.host_data)
+    input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, host_data)
 ```
 
-Combine the above two parts, the program looks like this:
+Combine the above two parts, the program looks like below.
+
+To allow launcher take in user-specified parameters, we also include here argument parser.
 
 ```python
-def run_pearson(ctx: "Context"):
-    from fate.ml.statistics.pearson_correlation import PearsonCorrelation
+import logging
+import pprint
+from dataclasses import dataclass, field
+
+from fate.arch.launchers.argparser import HfArgumentParser
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class SSHEArguments:
+    lr: float = field(default=0.05)
+    guest_data: str = field(default=None)
+    host_data: str = field(default=None)
+
+
+def run_sshe_lr(ctx):
+    from fate.ml.glm.hetero.sshe import SSHELogisticRegression
     from fate.arch import dataframe
 
     ctx.mpc.init()
-    args, _ = HfArgumentParser(PearsonArguments).parse_args_into_dataclasses(return_remaining_strings=True)
-    inst = PearsonCorrelation()
+    args, _ = HfArgumentParser(SSHEArguments).parse_args_into_dataclasses(return_remaining_strings=True)
+    inst = SSHELogisticRegression(epochs=5, batch_size=300, tol=0.01, early_stop='diff', learning_rate=0.15,
+                                  init_param={"method": "random_uniform", "fit_intercept": True, "random_state": 1},
+                                  reveal_every_epoch=False, reveal_loss_freq=2, threshold=0.5)
     if ctx.is_on_guest:
         kwargs = {
             "sample_id_name": None,
             "match_id_name": "id",
             "delimiter": ",",
             "label_name": "y",
-            "label_type": "float32",
+            "label_type": "int32",
             "dtype": "float32",
         }
         input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, args.guest_data)
@@ -90,18 +122,17 @@ def run_pearson(ctx: "Context"):
             "dtype": "float32",
         }
         input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, args.host_data)
-    inst.fit(ctx, input_data=input_data)
-    print(f"role: {ctx.local.role};\n vif: {inst.vif}")
+    inst.fit(ctx, train_data=input_data)
+    logger.info(f"model: {pprint.pformat(inst.get_model())}")
 ```
 
-Make sure to use `launch` from `fate.arch` as program entry. A launcher generally takes in some user-specified
-parameters, you may need to include argument parser in launcher.
+Make sure to use `launch` from `fate.arch` as program entry.
 
 ```python
 from fate.arch.launchers.multiprocess_launcher import launch
 ...
 if __name__ == "__main__":
-    launch(run_pearson, extra_args_desc=[PearsonArguments])
+    launch(run_sshe_lr, extra_args_desc=[SSHEArguments])
 ```
 
 ### Running A Launcher
@@ -117,7 +148,7 @@ As a demo, here we show how to run this Pearson launcher with the following sett
 Note that program will print all logging corresponding to specified log level.
 
 ```commandline
-python FATE/launchers/pearson_launcher.py --parties guest:9999 host:10000 --log_level INFO --guest_data FATE/examples/data/breast_hetero_guest.csv --host_data FATE/examples/data/breast_hetero_host.csv
+python FATE/launchers/sshe_lr_launcher.py --parties guest:9999 host:10000 --log_level INFO --guest_data FATE/examples/data/breast_hetero_guest.csv --host_data FATE/examples/data/breast_hetero_host.csv
 ```
 
 For more launcher examples, please refer [here](../../../../launchers).
