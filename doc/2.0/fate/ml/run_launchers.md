@@ -11,9 +11,9 @@ Download FATE-ML code by cloning [FATE repo](https://github.com/FederatedAI/FATE
 
 Install all requirements of FATE-ML by following commands if depencies have not been met:
 
-``commandline
+```commandline
 pip install -r ${FATE}/python/requiremnts-fate.txt
-``
+```
 
 ### Create A Launcher
 
