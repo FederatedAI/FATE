@@ -17,6 +17,9 @@ provide:
 
 ## Algorithm List
 
+For tutorial on running modules directly(without FATE-Client) with launcher,
+please refer [here](../ml/run_launchers.md).
+
 | Algorithm                                        | Module Name            | Description                                                                                                                        | Data Input                                    | Data Output                                                                | Model Input                   | Model Output |
 |--------------------------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------|-------------------------------|--------------|
 | [PSI](psi.md)                                    | PSI                    | Compute intersect data set of multiple parties without leakage of difference set information. Mainly used in hetero scenario task. | input_data                                    | output_data                                                                |                               |              |

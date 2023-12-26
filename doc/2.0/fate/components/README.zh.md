@@ -10,6 +10,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 ## 算法清单
 
+如需不通过FATE-Client直接调用算法模块，请查看此[教程](../ml/run_launchers.md).
+
 | 算法                                               | 模块名                    | 描述                                         | 数据输入                                          | 数据输出                                                                       | 模型输入                          | 模型输出         |
 |--------------------------------------------------|------------------------|--------------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------|-------------------------------|--------------|
 | [PSI](psi.md)                                    | PSI                    | 计算两方的相交数据集，而不会泄漏任何差异数据集的信息。主要用于纵向任务。       | input_data                                    | output_data                                                                |                               |              |
@@ -26,6 +28,8 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 | [Hetero Secure Boosting](ensemble.md)            | HeteroSecureBoost      | 通过多方构建横向神经网络模块。                            | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
 | [Evaluation](evaluation.md)                      | Evaluation             | O通过多方构建横向神经网络模块。                           | input_data                                    |                                                                            |                               |              |
 | [Union](union.md)                                | Union                  | 将多个数据表合并成一个。                               | input_data_list                               | output_data                                                                |                               |              |
+| [SSHE-LR](logistic_regression.md)                | SSHELR                 | 通过两方构建纵向逻辑回归模块。                            | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
+| [SSHE-LinR](linear_regression.md)                | SSHELinR               | 通过两方构建纵向线性回归模块。                            | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
 
 ## 安全协议
 
