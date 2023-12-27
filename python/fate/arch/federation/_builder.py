@@ -20,7 +20,7 @@ from fate.arch.federation.api import PartyMeta
 from fate.arch.config import cfg
 
 
-class FederationType(Enum):
+class FederationEngine(Enum):
     STANDALONE = "standalone"
     OSX = "osx"
     RABBITMQ = "rabbitmq"
@@ -62,26 +62,26 @@ class FederationBuilder:
         self._party = party
         self._parties = parties
 
-    def build(self, computing_session, t: FederationType, conf: dict):
-        if t == FederationType.STANDALONE:
+    def build(self, computing_session, t: FederationEngine, conf: dict):
+        if t == FederationEngine.STANDALONE:
             return self.build_standalone(computing_session)
-        elif t == FederationType.OSX:
+        elif t == FederationEngine.OSX:
             host = cfg.get_option(conf, "federation.osx.host")
             port = cfg.get_option(conf, "federation.osx.port")
             mode = FederationMode.from_str(cfg.get_option(conf, "federation.osx.mode", FederationMode.MESSAGE_QUEUE))
             return self.build_osx(computing_session, host=host, port=port, mode=mode)
-        elif t == FederationType.RABBITMQ:
+        elif t == FederationEngine.RABBITMQ:
             host = cfg.get_option(conf, "federation.rabbitmq.host")
             port = cfg.get_option(conf, "federation.rabbitmq.port")
             options = cfg.get_option(conf, "federation.rabbitmq")
             return self.build_rabbitmq(computing_session, host=host, port=port, options=options)
-        elif t == FederationType.PULSAR:
+        elif t == FederationEngine.PULSAR:
             host = cfg.get_option(conf, "federation.pulsar.host")
             port = cfg.get_option(conf, "federation.pulsar.port")
             options = cfg.get_option(conf, "federation.pulsar")
             return self.build_pulsar(computing_session, host=host, port=port, options=options)
         else:
-            raise ValueError(f"{t} not in {FederationType}")
+            raise ValueError(f"{t} not in {FederationEngine}")
 
     def build_standalone(self, computing_session):
         from fate.arch.federation.backends.standalone import StandaloneFederation
