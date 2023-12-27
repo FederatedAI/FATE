@@ -10,7 +10,7 @@ locally. Running launchers do not require active FATE-Flow services or dependenc
 Install all requirements of FATE-ML by following command:
 
 ```commandline
-pip install fate
+pip install pyfate
 ```
 
 ### Create A Launcher
