@@ -19,7 +19,8 @@ Currently, we provide various ready-to-use launchers for testing mpc protocol an
 modules [here](../../../../launchers).
 
 To write a launcher, first come up with the case to be run with a FATE-module(as in FATE/python/fate/ml) and wrap this
-case into a function. As a demo, we are to analyze a simple [launcher](../../../../launchers/sshe_lr_launcher.py) that
+case into a function. As a demo, we are to
+analyze [a simple launcher](https://raw.githubusercontent.com/FederatedAI/FATE/main/launchers/sshe_lr_launcher.py) that
 trains a SSHE Logistic Regression model using given local data files.
 
 We will use `breast` data set in this demo. Use the following command to download the original data files:
@@ -138,9 +139,12 @@ if __name__ == "__main__":
     launch(run_sshe_lr, extra_args_desc=[SSHEArguments])
 ```
 
+The complete launcher demo may be
+downloaded [here](https://raw.githubusercontent.com/FederatedAI/FATE/main/launchers/sshe_lr_launcher.py).
+
 ### Running A Launcher
 
-As a demo, here we show how to run this Pearson launcher with the following setting from terminal:
+As a demo, here we show how to run this SSHE LR launcher with the following setting from terminal:
 
 - guest: 9999
 - host: 10000

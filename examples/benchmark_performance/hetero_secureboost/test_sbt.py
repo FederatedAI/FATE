@@ -15,15 +15,13 @@
 #
 
 import argparse
-from fate_test.utils import parse_summary_result
+
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
-from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline.components.fate import HeteroSecureBoost, PSI
 from fate_client.pipeline.components.fate.evaluation import Evaluation
-from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.interface import DataWarehouseChannel
+from fate_client.pipeline.utils import test_utils
+from fate_test.utils import parse_summary_result
 
 
 def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace=""):
@@ -90,9 +88,9 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     pipeline.add_task(evaluation_0)
 
     if config.task_cores:
-        pipeline.conf.set("task_cores", config.task_cores)
+        pipeline.conf.set("task", dict(engine_run={"cores": config.task_cores}))
     if config.timeout:
-        pipeline.conf.set("timeout", config.timeout)
+        pipeline.conf.set("task", dict(timeout=config.timeout))
 
     pipeline.compile()
     pipeline.fit()
