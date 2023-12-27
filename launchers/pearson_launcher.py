@@ -42,7 +42,8 @@ def run_pearson(ctx: "Context"):
             "dtype": "float32",
         }
         input_data = dataframe.CSVReader(**kwargs).to_frame(ctx, args.host_data)
-    corr = inst.fit(ctx, input_data=input_data)
+    inst.fit(ctx, input_data=input_data)
+    print(f"role: {ctx.local.role};\n vif: {inst.vif}")
 
     # validate
     # if ctx.is_on_guest:

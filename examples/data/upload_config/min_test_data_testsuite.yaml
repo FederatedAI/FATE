@@ -32,13 +32,31 @@ data:
     extend_sid: true
     table_name: breast_hetero_host
     namespace: experiment
-    role: host_0
-  - file: examples/data/breast_hetero_host.csv
+    role: guest_0
+  - file: "examples/data/default_credit_hetero_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
-      match_id_name: id
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/default_credit_hetero_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
       match_id_range: 0
       tag_value_delimiter: ":"
       tag_with_value: false
@@ -46,19 +64,6 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: breast_hetero_host
+    table_name: default_credit_hetero_host
     namespace: experiment
-    role: host_1
-tasks:
-  selection-binning:
-    script: test_feature_selection_binning.py
-  selection-manual:
-    script: test_feature_selection_manual.py
-  selection-statistics:
-    script: test_feature_selection_statistics.py
-  selection-multi-model:
-    script: test_feature_selection_multi_model.py
-  selection-multi-host:
-    script: test_feature_selection_multi_host.py
-  selection-binning-lr:
-    script: test_feature_selection_binning_lr.py
+    role: guest_0

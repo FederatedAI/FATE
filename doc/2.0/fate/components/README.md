@@ -17,6 +17,9 @@ provide:
 
 ## Algorithm List
 
+For tutorial on running modules directly(without FATE-Client) with launcher,
+please refer [here](../ml/run_launchers.md).
+
 | Algorithm                                        | Module Name            | Description                                                                                                                        | Data Input                                    | Data Output                                                                | Model Input                   | Model Output |
 |--------------------------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------|-------------------------------|--------------|
 | [PSI](psi.md)                                    | PSI                    | Compute intersect data set of multiple parties without leakage of difference set information. Mainly used in hetero scenario task. | input_data                                    | output_data                                                                |                               |              |
@@ -33,6 +36,8 @@ provide:
 | [Hetero Secure Boosting](ensemble.md)            | HeteroSecureBoost      | Build hetero secure boosting model through multiple parties                                                                        | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
 | [Evaluation](evaluation.md)                      | Evaluation             | Output the model evaluation metrics for user.                                                                                      | input_data                                    |                                                                            |                               |              |
 | [Union](union.md)                                | Union                  | Combine multiple data tables into one.                                                                                             | input_data_list                               | output_data                                                                |                               |              |
+| [SSHE-LR](logistic_regression.md)                | SSHELR                 | Build hetero logistic regression model through two parties.                                                                        | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
+| [SSHE-LinR](linear_regression.md)                | SSHELinR               | Build hetero linear regression model through two parties.                                                                          | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
 
 ## Secure Protocol
 

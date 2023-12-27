@@ -49,7 +49,8 @@ def main(config="../config.yaml", namespace=""):
                              validate_size=0.2,
                              input_data=psi_0.outputs["output_data"])
     lr_0 = SSHELR("lr_0",
-                  epochs=10,
+                  epochs=2,
+                  learning_rate=0.15,
                   batch_size=300,
                   reveal_every_epoch=False,
                   early_stop="diff",
