@@ -15,7 +15,8 @@ pip install fate
 
 ### Create A Launcher
 
-Currently, we provide various ready-to-use launchers for testing mpc protocol and SSHE LR & LinR modules here.
+Currently, we provide various ready-to-use launchers for testing mpc protocol and SSHE LR & LinR
+modules [here](../../../../launchers).
 
 To write a launcher, first come up with the case to be run with a FATE-module(as in FATE/python/fate/ml) and wrap this
 case into a function. As a demo, we are to analyze a simple [launcher](../../../../launchers/sshe_lr_launcher.py) that
