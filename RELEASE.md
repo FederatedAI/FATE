@@ -79,13 +79,18 @@
 
 > FATE Flow 2.0: Building Open and Standardized Scheduling Platform for Scheduling Interconnection
 * Adapted to new scalable and standardized federated DSL IR
-* Standardized API interface with param type checking 
-* Decoupling Flow from FATE repository 
-* Optimized scheduling logic, with configurable dispatcher decoupled from initiator
-* Support container-level algorithm loading and task scheduling, enhancing support for cross-platform heterogeneous scenarios
-* Independent maintenance for system configuration to enhance flexibility and ease of configuration
-* Support new communication engine OSX, while compatible with all engines from Flow 1.X
+* Build an interconnected scheduling layer framework, support the BFIA protocol
+* Optimized process scheduling, with scheduling separated and customizable, and added priority scheduling
+* Optimized algorithm component scheduling，support container-level algorithm loading， enhancing support for cross-platform heterogeneous scenarios
+* Optimized multi-version algorithm component registration, supporting registration for mode of components
+* Federated DSL IR extension enhancement: supports multi-party asymmetric scheduling
+* Optimized client authentication logic, supporting permission management for multiple clients
+* Optimized RESTful interface, making parameter fields and types, return fields, and status codes clearer
 * Introduce OFX(Open Flow Exchange) module: encapsulated scheduling client to allow cross-platform scheduling
+* Support new communication engine OSX, while compatible with all engines from FATE Flow 1.x
+* Decoupling the system layer from the algorithm layer, with system configuration moved from the FATE repository to the Flow repository
+* Published FATE Flow package to PyPI and added service-level CLI for service management
+* Major functionality migration from FATE Flow 1.x
 
 > Deploy
 * Support installing from PyPI
