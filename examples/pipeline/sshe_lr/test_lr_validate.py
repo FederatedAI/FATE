@@ -50,6 +50,7 @@ def main(config="../config.yaml", namespace=""):
                              input_data=psi_0.outputs["output_data"])
     lr_0 = SSHELR("lr_0",
                   epochs=2,
+                  learning_rate=0.15,
                   batch_size=300,
                   reveal_every_epoch=False,
                   early_stop="diff",
