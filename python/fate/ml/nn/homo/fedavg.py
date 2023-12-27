@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from fate.ml.nn.trainer.trainer_base import HomoTrainerClient, HomoTrainerServer
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
 from dataclasses import dataclass
@@ -10,10 +25,8 @@ from transformers.trainer_callback import TrainerCallback
 from torch.nn import Module
 from torch import nn
 from torch.utils.data import DataLoader
-from fate.ml.aggregator import PlainTextAggregatorClient, SecureAggregatorClient
-from fate.ml.aggregator import PlainTextAggregatorServer, SecureAggregatorServer
 from transformers import TrainerState, TrainerControl, PreTrainedTokenizer
-from fate.ml.aggregator import AggregatorType, aggregator_map
+from fate.ml.aggregator import AggregatorClientWrapper, AggregatorServerWrapper
 import logging
 
 
@@ -66,23 +79,14 @@ class FedAVGClient(HomoTrainerClient):
         aggregate_type = "weighted_mean"
         aggregator_name = "fedavg"
         aggregator = fed_args.aggregator
-        assert aggregator in {
-            item.value for item in AggregatorType
-        }, f"aggregator should be one of {{item.value for item in AggregatorType}}, but got {aggregator}"
-        client_class = aggregator_map[aggregator][0]
-        logger.info(f"Using {aggregator} aggregator")
-        sample_num = len(self.train_dataset)
-        ctx.arbiter.put("agg_type", aggregator)
-        aggregator = client_class(
-            ctx, aggregate_type=aggregate_type, aggregator_name=aggregator_name, sample_num=sample_num
+        return AggregatorClientWrapper(
+            ctx, aggregate_type, aggregator_name, aggregator, sample_num=len(self.train_dataset), args=self._args
         )
-
-        return aggregator
 
     def on_federation(
         self,
         ctx: Context,
-        aggregator: Union[PlainTextAggregatorClient, SecureAggregatorClient],
+        aggregator: AggregatorClientWrapper,
         fed_args: FedArguments,
         args: TrainingArguments,
         model: Optional[nn.Module] = None,
@@ -101,20 +105,9 @@ class FedAVGServer(HomoTrainerServer):
         super().__init__(ctx, local_mode)
 
     def init_aggregator(self, ctx):
-        aggregator = [ctx.guest.get("agg_type")]
-        aggregator.extend(ctx.hosts.get("agg_type"))
-        aggregator = set(aggregator)
-        if len(aggregator) > 1:
-            raise ValueError("Aggregator type should be the same between clients, but got {}".format(aggregator))
-        aggregator = aggregator.pop()
-        aggregator_name = "fedavg"
-        aggregator_server = aggregator_map[aggregator][1]
-        logger.info(f"Using {aggregator} aggregator")
-        aggregator = aggregator_server(ctx, aggregator_name=aggregator_name)
-        return aggregator
+        return AggregatorServerWrapper(ctx)
 
-    def on_federation(self, ctx: Context, aggregator: Union[SecureAggregatorServer, PlainTextAggregatorServer],
-                      agg_iter_idx: int):
+    def on_federation(self, ctx: Context, aggregator: AggregatorServerWrapper, agg_iter_idx: int):
         aggregator.model_aggregation(ctx)
 
 

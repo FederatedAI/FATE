@@ -110,21 +110,20 @@ class SBTSplitter(Splitter):
                 return fid, bid
 
         raise ValueError("idx is out of range")
-    
+
     @staticmethod
     def truncate(f, n=TREE_DECIMAL_ROUND):
-        return np.floor(f * 10 ** n) / 10 ** n
+        return np.floor(f * 10**n) / 10**n
 
     def _l1_reg(self, g):
-
         if self.l1 == 0:
-            return  g
+            return g
         if isinstance(g, torch.Tensor):
             g[g < -self.l1] += self.l1
             g[g > self.l1] -= self.l1
             g[(g <= self.l1) & (g >= -self.l1)] = 0
         else:
-            if g < - self.l1:
+            if g < -self.l1:
                 return g + self.l1
             elif g > self.l1:
                 return g - self.l1
@@ -137,7 +136,7 @@ class SBTSplitter(Splitter):
         g = self._l1_reg(g)
         if isinstance(h, np.ndarray):
             h[h == 0] = np.nan
-        score = (g * g ) / (h + self.l2)
+        score = (g * g) / (h + self.l2)
         return score
 
     def node_weight(self, sum_grad, sum_hess):
@@ -290,7 +289,6 @@ class SBTSplitter(Splitter):
         return host_hist
 
     def _local_split(self, ctx: Context, stat_rs, node_map, cur_layer_node):
-
         histogram = stat_rs.decrypt({}, {}, None)
         sitename = ctx.local.name
         reverse_node_map = {v: k for k, v in node_map.items()}

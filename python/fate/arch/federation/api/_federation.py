@@ -23,9 +23,8 @@ from fate.arch.trace import (
     federation_push_bytes_trace,
     federation_pull_bytes_trace,
 )
-from ._gc import GarbageCollector
-from ._type import PartyMeta
 from ._table_meta import TableMeta
+from ._type import PartyMeta
 
 if typing.TYPE_CHECKING:
     from fate.arch.computing.api import KVTable
@@ -43,8 +42,6 @@ class Federation:
         self._parties = parties
         self._push_history = set()
         self._pull_history = set()
-        self._get_gc: GarbageCollector = GarbageCollector()
-        self._remote_gc: GarbageCollector = GarbageCollector()
 
     def get_default_max_message_size(self):
         from fate.arch.config import cfg
@@ -107,6 +104,12 @@ class Federation:
     ):
         raise NotImplementedError(f"push bytes is not supported in {self.__class__.__name__}")
 
+    def _destroy(self):
+        raise NotImplementedError(f"destroy is not supported in {self.__class__.__name__}")
+
+    def destroy(self):
+        self._destroy()
+
     @federation_push_table_trace
     def push_table(
         self,
@@ -120,7 +123,6 @@ class Federation:
                 raise ValueError(f"push table to {parties} with duplicate name and tag: name={name}, tag={tag}")
             self._push_history.add((name, tag, party))
 
-        self._remote_gc.register_clean_action(name, tag, table, "destroy", {})
         self._push_table(
             table=table,
             name=name,
@@ -168,7 +170,7 @@ class Federation:
             table_metas=table_metas,
         )
         for table in tables:
-            self._get_gc.register_clean_action(name, tag, table, "destroy", {})
+            table.mask_federated_received()
         return tables
 
     @federation_pull_bytes_trace

@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import inspect
 from torch import optim
 from fate.components.components.nn.hook_code.extract_torch_modules import extract_init_param, Required
@@ -8,13 +23,12 @@ def code_assembly(param, nn_class):
     para_str = ""
     non_default_param = ""
     init_str = """"""
-    special_param = ''
+    special_param = ""
     for k, v in param.items():
-
-        if k == 'params':
-            k = 'params'
+        if k == "params":
+            k = "params"
             v = None
-            special_param = k + '=' + str(v) + ', '
+            special_param = k + "=" + str(v) + ", "
             continue
         else:
             new_para = "\n        self.param_dict['{}'] = {}".format(k, k)
@@ -22,7 +36,7 @@ def code_assembly(param, nn_class):
 
         if isinstance(v, Required) or v == required:
             non_default_param += str(k)
-            non_default_param += ', '
+            non_default_param += ", "
             continue
 
         para_str += str(k)
@@ -30,7 +44,7 @@ def code_assembly(param, nn_class):
             para_str += "='{}'".format(v)
         else:
             para_str += "={}".format(str(v))
-        para_str += ', '
+        para_str += ", "
 
     para_str = non_default_param + special_param + para_str
 
@@ -54,25 +68,28 @@ def code_assembly(param, nn_class):
         except:
             return 'Optimizer {} without initiated parameters'.format(type(self).__name__)
 
-    """.format(para_str, init_str, nn_class, nn_class)
+    """.format(
+        para_str, init_str, nn_class, nn_class
+    )
 
     code = """
 class {}(optim.{}, FateTorchOptimizer):
         {}
-    """.format(nn_class, nn_class, init_)
+    """.format(
+        nn_class, nn_class, init_
+    )
 
     return code
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     memb = inspect.getmembers(optim)
 
     module_str = """"""
     for k, v in memb:
-        if inspect.isclass(v) and k != 'Optimizer':
+        if inspect.isclass(v) and k != "Optimizer":
             param = extract_init_param(v)
             code = code_assembly(param, k)
             module_str += code
 
-    open('../torch/optim.py', 'w').write(module_str)
+    open("../torch/optim.py", "w").write(module_str)

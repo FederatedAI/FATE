@@ -19,10 +19,10 @@ from typing import Iterable, Literal, Optional, Tuple, TypeVar, overload
 
 from fate.arch.trace import auto_trace
 from ._cipher import CipherKit
-from ._federation import Parties, Party
 from ._metrics import InMemoryMetricsHandler, MetricsWrap
 from ._namespace import NS, default_ns
-from ..unify import device
+from ._parties import Parties, Party
+from ..unify import device as device_type
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class Context:
 
     def __init__(
         self,
-        device: device = device.CPU,
+        device: device_type = device_type.CPU,
         computing: Optional["KVTableContext"] = None,
         federation: Optional["Federation"] = None,
         metrics_handler: Optional = None,
@@ -89,7 +89,7 @@ class Context:
         return self._cipher
 
     def set_cipher(self, cipher_mapping):
-        self._cipher = CipherKit(self, self._device, {"phe": {self._device: cipher_mapping["phe"]}})
+        self._cipher = CipherKit(self._device, {"phe": {self._device: cipher_mapping["phe"]}})
 
     def set_metric_handler(self, metrics_handler):
         self._metrics_handler = metrics_handler
@@ -230,7 +230,7 @@ class Context:
     def world_size(self):
         return self._get_federation().world_size
 
-    def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter"]] = None) -> Parties:
+    def _get_parties(self, role: Optional[Literal["guest", "host", "arbiter", "local"]] = None) -> Parties:
         # update role to parties mapping
         if self._role_to_parties is None:
             self._role_to_parties = {}
@@ -272,7 +272,7 @@ class Context:
                 self.federation.destroy()
                 logger.debug("federation engine destroy done")
             except Exception as e:
-                logger.exception("federation engine destroy failed: {e}")
+                logger.exception(f"federation engine destroy failed: {e}")
 
             try:
                 self.computing.destroy()

@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import pandas as pd
 from fate.arch.dataframe import PandasReader
 import sys
@@ -8,6 +23,7 @@ from datetime import datetime
 
 def get_current_datetime_str():
     return datetime.now().strftime("%Y-%m-%d-%H-%M")
+
 
 guest = ("guest", "10000")
 host_0 = ("host", "9999")
@@ -37,13 +53,11 @@ def create_ctx(local, context_name):
 
 
 if __name__ == "__main__":
-
     party = sys.argv[1]
     max_depth = 3
     num_tree = 1
 
     if party == "guest":
-
         ctx = create_ctx(guest, get_current_datetime_str())
         df = pd.read_csv("./../../../../../../../examples/data/breast_hetero_guest.csv")
         df["sample_id"] = [i for i in range(len(df))]
@@ -57,9 +71,8 @@ if __name__ == "__main__":
         pred = trees.get_train_predict().as_pd_df()
 
         pred_ = trees.predict(ctx, data_guest)
-        
-    elif party == "host_0":
 
+    elif party == "host_0":
         ctx = create_ctx(host_0, get_current_datetime_str())
         df_host = pd.read_csv("~/FATE/FATE-2.0/scripts/hetero_breast_host_0.csv")
         df_host["sample_id"] = [i for i in range(len(df_host))]
@@ -74,7 +87,6 @@ if __name__ == "__main__":
         trees.predict(ctx, data_host)
 
     elif party == "host_1":
-
         ctx = create_ctx(host_1, get_current_datetime_str())
         df_host = pd.read_csv("~/FATE/FATE-2.0/scripts/hetero_breast_host_1.csv")
         df_host["sample_id"] = [i for i in range(len(df_host))]

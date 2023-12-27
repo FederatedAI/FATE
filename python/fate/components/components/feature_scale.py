@@ -29,43 +29,43 @@ def feature_scale(ctx, role):
 
 @feature_scale.train()
 def feature_scale_train(
-        ctx: Context,
-        role: Role,
-        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        method: cpn.parameter(type=params.string_choice(["standard", "min_max"]), default="standard", optional=False),
-        feature_range: cpn.parameter(
-            type=Union[list, dict],
-            default=[0, 1],
-            optional=True,
-            desc="Result feature value range for `min_max` method, "
-                 "take either dict in format: {col_name: [min, max]} for specific columns "
-                 "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]",
+    ctx: Context,
+    role: Role,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    method: cpn.parameter(type=params.string_choice(["standard", "min_max"]), default="standard", optional=False),
+    feature_range: cpn.parameter(
+        type=Union[list, dict],
+        default=[0, 1],
+        optional=True,
+        desc="Result feature value range for `min_max` method, "
+        "take either dict in format: {col_name: [min, max]} for specific columns "
+        "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]",
     ),
-        scale_col: cpn.parameter(
-            type=List[str],
-            default=None,
-            optional=True,
-            desc="list of column names to be scaled, if None, all columns will be scaled; "
-                 "only one of {scale_col, scale_idx} should be specified",
-        ),
-        scale_idx: cpn.parameter(
-            type=List[params.conint(ge=0)],
-            default=None,
-            optional=True,
-            desc="list of column index to be scaled, if None, all columns will be scaled; "
-                 "only one of {scale_col, scale_idx} should be specified",
-        ),
-        strict_range: cpn.parameter(
-            type=bool,
-            default=True,
-            desc="whether transformed value to be strictly restricted within given range; "
-                 "effective for 'min_max' scale method only",
-        ),
-        use_anonymous: cpn.parameter(
-            type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
-        ),
-        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+    scale_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        optional=True,
+        desc="list of column names to be scaled, if None, all columns will be scaled; "
+        "only one of {scale_col, scale_idx} should be specified",
+    ),
+    scale_idx: cpn.parameter(
+        type=List[params.conint(ge=0)],
+        default=None,
+        optional=True,
+        desc="list of column index to be scaled, if None, all columns will be scaled; "
+        "only one of {scale_col, scale_idx} should be specified",
+    ),
+    strict_range: cpn.parameter(
+        type=bool,
+        default=True,
+        desc="whether transformed value to be strictly restricted within given range; "
+        "effective for 'min_max' scale method only",
+    ),
+    use_anonymous: cpn.parameter(
+        type=bool, default=False, desc="bool, whether interpret `scale_col` as anonymous column names"
+    ),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     train(
         ctx,
@@ -83,11 +83,11 @@ def feature_scale_train(
 
 @feature_scale.predict()
 def feature_scale_predict(
-        ctx: Context,
-        role: Role,
-        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    ctx: Context,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     predict(ctx, input_model, test_data, test_output_data)
 
@@ -166,6 +166,5 @@ def get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_
         else:
             feature_range = {col: feature_range for col in select_col}
     if len(select_col) == 0:
-        logger.warning(f"No cols provided. "
-                       f"To scale all columns, please set `scale_col` to None.")
+        logger.warning(f"No cols provided. " f"To scale all columns, please set `scale_col` to None.")
     return select_col, feature_range

@@ -43,9 +43,4 @@ def sigmoid(df: "DataFrame") -> "DataFrame":
 
     block_table = df.block_table.mapValues(_sigmoid_func)
 
-    return DataFrame(
-        df._ctx,
-        block_table,
-        df.partition_order_mappings,
-        data_manager
-    )
+    return DataFrame(df._ctx, block_table, df.partition_order_mappings, data_manager)

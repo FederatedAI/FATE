@@ -26,8 +26,9 @@ class SSHELinearRegressionLayer:
         self.ctx = ctx
         self.rank_a = rank_a
         self.rank_b = rank_b
-        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b],
-                                                    f"{ctx.namespace.federation_tag}.sshe_aggregator_layer")
+        self.group = ctx.mpc.communicator.new_group(
+            [rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_aggregator_layer"
+        )
 
         if sync_shape:
             ctx.mpc.option_assert(in_features_a is not None, "in_features_a must be specified", dst=rank_a)
@@ -148,7 +149,9 @@ class SSHELinearRegressionLayerBackwardFunction:
 class SSHELinearRegressionLossLayer:
     def __init__(self, ctx: Context, rank_a, rank_b, cipher_options=None):
         self.ctx = ctx
-        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_loss_layer")
+        self.group = ctx.mpc.communicator.new_group(
+            [rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_loss_layer"
+        )
         self.rank_a = rank_a
         self.rank_b = rank_b
         self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)

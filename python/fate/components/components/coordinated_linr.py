@@ -31,44 +31,50 @@ def coordinated_linr(ctx, role):
 
 @coordinated_linr.train()
 def train(
-        ctx: Context,
-        role: Role,
-        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-        learning_rate_scheduler: cpn.parameter(type=params.lr_scheduler_param(),
-                                               default=params.LRSchedulerParam(method="linear",
-                                                                               scheduler_params={"start_factor": 1.0}),
-                                               desc="learning rate scheduler, "
-                                                    "select method from {'step', 'linear', 'constant'}"
-                                                    "for list of configurable arguments, "
-                                                    "refer to torch.optim.lr_scheduler"),
-        epochs: cpn.parameter(type=params.conint(gt=0), default=20,
-                              desc="max iteration num"),
-        batch_size: cpn.parameter(
-            type=params.conint(ge=10),
-            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
+    ctx: Context,
+    role: Role,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
+    learning_rate_scheduler: cpn.parameter(
+        type=params.lr_scheduler_param(),
+        default=params.LRSchedulerParam(method="linear", scheduler_params={"start_factor": 1.0}),
+        desc="learning rate scheduler, "
+        "select method from {'step', 'linear', 'constant'}"
+        "for list of configurable arguments, "
+        "refer to torch.optim.lr_scheduler",
+    ),
+    epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
+    batch_size: cpn.parameter(
+        type=params.conint(ge=10),
+        default=None,
+        desc="batch size, None means full batch, otherwise should be no less than 10, default None",
+    ),
+    optimizer: cpn.parameter(
+        type=params.optimizer_param(),
+        default=params.OptimizerParam(
+            method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
         ),
-        optimizer: cpn.parameter(type=params.optimizer_param(),
-                                 default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
-                                                               optimizer_params={"lr": 1e-2, "weight_decay": 0})),
-        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
-        early_stop: cpn.parameter(type=params.string_choice(["weight_diff", "diff", "abs"]), default="diff",
-                                  desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}"),
-        init_param: cpn.parameter(
-            type=params.init_param(),
-            default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
-            desc="Model param init setting.",
-        ),
-        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
-                                desc="homomorphic encryption param"),
-        floating_point_precision: cpn.parameter(
-            type=params.conint(ge=0),
-            default=23,
-            desc="floating point precision, "),
-        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
-        warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True),
-
+    ),
+    tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+    early_stop: cpn.parameter(
+        type=params.string_choice(["weight_diff", "diff", "abs"]),
+        default="diff",
+        desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
+    ),
+    init_param: cpn.parameter(
+        type=params.init_param(),
+        default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
+        desc="Model param init setting.",
+    ),
+    he_param: cpn.parameter(
+        type=params.he_param(),
+        default=params.HEParam(kind="paillier", key_length=1024),
+        desc="homomorphic encryption param",
+    ),
+    floating_point_precision: cpn.parameter(type=params.conint(ge=0), default=23, desc="floating point precision, "),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST, ARBITER]),
+    warm_start_model: cpn.json_model_input(roles=[GUEST, HOST, ARBITER], optional=True),
 ):
     logger.info(f"enter coordinated linr train")
     # temp code start
@@ -79,28 +85,55 @@ def train(
     # temp code end
     if role.is_guest:
         train_guest(
-            ctx, train_data, validate_data, train_output_data, output_model, epochs,
-            batch_size, optimizer, learning_rate_scheduler, init_param, floating_point_precision,
-            warm_start_model
+            ctx,
+            train_data,
+            validate_data,
+            train_output_data,
+            output_model,
+            epochs,
+            batch_size,
+            optimizer,
+            learning_rate_scheduler,
+            init_param,
+            floating_point_precision,
+            warm_start_model,
         )
     elif role.is_host:
         train_host(
-            ctx, train_data, validate_data, train_output_data, output_model, epochs,
-            batch_size, optimizer, learning_rate_scheduler, init_param, floating_point_precision,
-            warm_start_model
+            ctx,
+            train_data,
+            validate_data,
+            train_output_data,
+            output_model,
+            epochs,
+            batch_size,
+            optimizer,
+            learning_rate_scheduler,
+            init_param,
+            floating_point_precision,
+            warm_start_model,
         )
     elif role.is_arbiter:
-        train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer, learning_rate_scheduler,
-                      output_model, warm_start_model)
+        train_arbiter(
+            ctx,
+            epochs,
+            early_stop,
+            tol,
+            batch_size,
+            optimizer,
+            learning_rate_scheduler,
+            output_model,
+            warm_start_model,
+        )
 
 
 @coordinated_linr.predict()
 def predict(
-        ctx,
-        role: Role,
-        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST])
+    ctx,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest:
         predict_guest(ctx, input_model, test_data, test_output_data)
@@ -110,51 +143,54 @@ def predict(
 
 @coordinated_linr.cross_validation()
 def cross_validation(
-        ctx: Context,
-        role: Role,
-        cv_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        learning_rate_scheduler: cpn.parameter(
-            type=params.lr_scheduler_param(),
-            default=params.LRSchedulerParam(method="linear", scheduler_params={"start_factor": 1.0}),
-            desc="learning rate scheduler, "
-                 "select method from {'step', 'linear', 'constant'}"
-                 "for list of configurable arguments, "
-                 "refer to torch.optim.lr_scheduler",
+    ctx: Context,
+    role: Role,
+    cv_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    learning_rate_scheduler: cpn.parameter(
+        type=params.lr_scheduler_param(),
+        default=params.LRSchedulerParam(method="linear", scheduler_params={"start_factor": 1.0}),
+        desc="learning rate scheduler, "
+        "select method from {'step', 'linear', 'constant'}"
+        "for list of configurable arguments, "
+        "refer to torch.optim.lr_scheduler",
+    ),
+    epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
+    batch_size: cpn.parameter(
+        type=params.conint(ge=10),
+        default=None,
+        desc="batch size, None means full batch, otherwise should be no less than 10, default None",
+    ),
+    optimizer: cpn.parameter(
+        type=params.optimizer_param(),
+        default=params.OptimizerParam(
+            method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
         ),
-        epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
-        batch_size: cpn.parameter(
-            type=params.conint(ge=10),
-            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
-        ),
-        optimizer: cpn.parameter(
-            type=params.optimizer_param(),
-            default=params.OptimizerParam(
-                method="sgd", penalty="l2", alpha=1.0, optimizer_params={"lr": 1e-2, "weight_decay": 0}
-            ),
-        ),
-        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
-        early_stop: cpn.parameter(
-            type=params.string_choice(["weight_diff", "diff", "abs"]),
-            default="diff",
-            desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
-        ),
-        init_param: cpn.parameter(
-            type=params.init_param(),
-            default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
-            desc="Model param init setting.",
-        ),
-        cv_param: cpn.parameter(type=params.cv_param(),
-                                default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
-                                desc="cross validation param"),
-        floating_point_precision: cpn.parameter(
-            type=params.conint(ge=0),
-            default=23,
-            desc="floating point precision, "),
-        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
-                                desc="homomorphic encryption param"),
-        metrics: cpn.parameter(type=params.metrics_param(), default=["mse"]),
-        output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
-        cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
+    ),
+    tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+    early_stop: cpn.parameter(
+        type=params.string_choice(["weight_diff", "diff", "abs"]),
+        default="diff",
+        desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}",
+    ),
+    init_param: cpn.parameter(
+        type=params.init_param(),
+        default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
+        desc="Model param init setting.",
+    ),
+    cv_param: cpn.parameter(
+        type=params.cv_param(),
+        default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
+        desc="cross validation param",
+    ),
+    floating_point_precision: cpn.parameter(type=params.conint(ge=0), default=23, desc="floating point precision, "),
+    he_param: cpn.parameter(
+        type=params.he_param(),
+        default=params.HEParam(kind="paillier", key_length=1024),
+        desc="homomorphic encryption param",
+    ),
+    metrics: cpn.parameter(type=params.metrics_param(), default=["mse"]),
+    output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
+    cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
 ):
     # temp code start
     optimizer = optimizer.dict()
@@ -179,7 +215,10 @@ def cross_validation(
         return
 
     from fate.arch.dataframe import KFold
-    kf = KFold(ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state)
+
+    kf = KFold(
+        ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state
+    )
     i = 0
     for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
         logger.info(f"enter fold {i}")
@@ -190,7 +229,7 @@ def cross_validation(
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
                 init_param=init_param,
-                floating_point_precision=floating_point_precision
+                floating_point_precision=floating_point_precision,
             )
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
@@ -218,7 +257,7 @@ def cross_validation(
                 optimizer_param=optimizer,
                 learning_rate_param=learning_rate_scheduler,
                 init_param=init_param,
-                floating_point_precision=floating_point_precision
+                floating_point_precision=floating_point_precision,
             )
             module.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
@@ -229,8 +268,20 @@ def cross_validation(
         i += 1
 
 
-def train_guest(ctx, train_data, validate_data, train_output_data, output_model, epochs,
-                batch_size, optimizer_param, learning_rate_param, init_param, floating_point_precision, input_model):
+def train_guest(
+    ctx,
+    train_data,
+    validate_data,
+    train_output_data,
+    output_model,
+    epochs,
+    batch_size,
+    optimizer_param,
+    learning_rate_param,
+    init_param,
+    floating_point_precision,
+    input_model,
+):
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
@@ -238,9 +289,14 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         module.set_epochs(epochs)
         module.set_batch_size(batch_size)
     else:
-        module = CoordinatedLinRModuleGuest(epochs=epochs, batch_size=batch_size,
-                                            optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                            init_param=init_param, floating_point_precision=floating_point_precision)
+        module = CoordinatedLinRModuleGuest(
+            epochs=epochs,
+            batch_size=batch_size,
+            optimizer_param=optimizer_param,
+            learning_rate_param=learning_rate_param,
+            init_param=init_param,
+            floating_point_precision=floating_point_precision,
+        )
     logger.info(f"coordinated linr guest start train")
     sub_ctx = ctx.sub_ctx("train")
     train_data = train_data.read()
@@ -248,8 +304,9 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         validate_data = validate_data.read()
     module.fit(sub_ctx, train_data, validate_data)
     model = module.get_model()
-    output_model.write(model, metadata={"optimizer_param": optimizer_param,
-                                        "learning_rate_param": learning_rate_param})
+    output_model.write(
+        model, metadata={"optimizer_param": optimizer_param, "learning_rate_param": learning_rate_param}
+    )
 
     sub_ctx = ctx.sub_ctx("predict")
 
@@ -269,8 +326,20 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
     train_output_data.write(predict_result)
 
 
-def train_host(ctx, train_data, validate_data, train_output_data, output_model, epochs, batch_size,
-               optimizer_param, learning_rate_param, init_param, floating_point_precision, input_model):
+def train_host(
+    ctx,
+    train_data,
+    validate_data,
+    train_output_data,
+    output_model,
+    epochs,
+    batch_size,
+    optimizer_param,
+    learning_rate_param,
+    init_param,
+    floating_point_precision,
+    input_model,
+):
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
@@ -278,9 +347,14 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module.set_epochs(epochs)
         module.set_batch_size(batch_size)
     else:
-        module = CoordinatedLinRModuleHost(epochs=epochs, batch_size=batch_size,
-                                           optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                           init_param=init_param, floating_point_precision=floating_point_precision)
+        module = CoordinatedLinRModuleHost(
+            epochs=epochs,
+            batch_size=batch_size,
+            optimizer_param=optimizer_param,
+            learning_rate_param=learning_rate_param,
+            init_param=init_param,
+            floating_point_precision=floating_point_precision,
+        )
     logger.info(f"coordinated linr host start train")
     sub_ctx = ctx.sub_ctx("train")
 
@@ -289,8 +363,9 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         validate_data = validate_data.read()
     module.fit(sub_ctx, train_data, validate_data)
     model = module.get_model()
-    output_model.write(model, metadata={"optimizer_param": optimizer_param,
-                                        "learning_rate_param": learning_rate_param})
+    output_model.write(
+        model, metadata={"optimizer_param": optimizer_param, "learning_rate_param": learning_rate_param}
+    )
 
     sub_ctx = ctx.sub_ctx("predict")
     module.predict(sub_ctx, train_data)
@@ -299,8 +374,9 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
-                  learning_rate_param, output_model, input_model):
+def train_arbiter(
+    ctx, epochs, early_stop, tol, batch_size, optimizer_param, learning_rate_param, output_model, input_model
+):
     if input_model is not None:
         logger.info(f"warm start model provided")
         model = input_model.read()
@@ -308,16 +384,23 @@ def train_arbiter(ctx, epochs, early_stop, tol, batch_size, optimizer_param,
         module.set_epochs(epochs)
         module.set_batch_size(batch_size)
     else:
-        module = CoordinatedLinRModuleArbiter(epochs=epochs, early_stop=early_stop, tol=tol, batch_size=batch_size,
-                                              optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
+        module = CoordinatedLinRModuleArbiter(
+            epochs=epochs,
+            early_stop=early_stop,
+            tol=tol,
+            batch_size=batch_size,
+            optimizer_param=optimizer_param,
+            learning_rate_param=learning_rate_param,
+        )
     logger.info(f"coordinated linr arbiter start train")
 
     sub_ctx = ctx.sub_ctx("train")
     module.fit(sub_ctx)
 
     model = module.get_model()
-    output_model.write(model, metadata={"optimizer_param": optimizer_param,
-                                        "learning_rate_param": learning_rate_param})
+    output_model.write(
+        model, metadata={"optimizer_param": optimizer_param, "learning_rate_param": learning_rate_param}
+    )
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):

@@ -33,7 +33,7 @@ data:
     table_name: breast_hetero_host
     namespace: experiment
     role: host_0
-  - file: "examples/data/student_hetero_guest.csv"
+  - file: examples/data/student_hetero_guest.csv
     meta:
       delimiter: ","
       dtype: float64
@@ -51,7 +51,7 @@ data:
     table_name: student_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/student_hetero_host.csv"
+  - file: examples/data/student_hetero_host.csv
     meta:
       delimiter: ","
       dtype: float64
@@ -66,9 +66,50 @@ data:
     extend_sid: true
     table_name: student_hetero_host
     namespace: experiment
-    role: host_0  
+    role: host_0
+  - file: examples/data/vehicle_scale_hetero_guest.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: id
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: vehicle_scale_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: examples/data/vehicle_scale_hetero_host.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: id
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: vehicle_scale_hetero_host
+    namespace: experiment
+    role: host_0
 tasks:
   hetero-sbt-binary:
     script: test_hetero_sbt_binary.py
+  hetero-sbt-binary-cv:
+    script: test_hetero_sbt_binary_cv.py
   hetero-sbt-regression:
     script: test_hetero_sbt_regression.py
+  hetero-sbt-multi:
+    script: test_hetero_sbt_multi.py
+  hetero-sbt-binary_warm_start:
+    script: test_hetero_sbt_binary_warm_start.py
+

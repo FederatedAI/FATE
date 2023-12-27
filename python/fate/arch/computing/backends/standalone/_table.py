@@ -23,7 +23,6 @@ from ._standalone import Table as StandaloneTable
 LOGGER = logging.getLogger(__name__)
 
 
-
 class Table(KVTable):
     def __init__(self, table: StandaloneTable):
         self._table = table

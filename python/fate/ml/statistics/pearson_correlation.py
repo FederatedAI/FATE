@@ -51,9 +51,7 @@ class PearsonCorrelation(Module):
         data = (data - data_mean) / data_std
         local_corr = torch.matmul(data.T, data) / (n - 1)
         # remainds_index = [i for i in range(data_std.shape[0]) if data_std[i] > 0]
-        self.local_corr = pd.DataFrame(local_corr,
-                                       columns=self.select_cols,
-                                       index=self.select_cols)
+        self.local_corr = pd.DataFrame(local_corr, columns=self.select_cols, index=self.select_cols)
 
         if self.calc_local_vif:
             logger.info("calc_local_vif enabled, calculate vif for local features")
@@ -67,8 +65,9 @@ class PearsonCorrelation(Module):
 
         if not self.local_only:
             rank_a, rank_b = ctx.guest.rank, ctx.hosts[0].rank
-            anonymous_header = [input_data.schema.anonymous_columns[input_data.schema.columns.get_loc(col)] for col
-                                in self.select_cols]
+            anonymous_header = [
+                input_data.schema.anonymous_columns[input_data.schema.columns.get_loc(col)] for col in self.select_cols
+            ]
             self.select_anonymous_cols = anonymous_header
             if ctx.is_on_guest:
                 ctx.hosts.put("anonymous_header", anonymous_header)
@@ -89,9 +88,7 @@ class PearsonCorrelation(Module):
     @staticmethod
     def vif_from_pearson_matrix(pearson_matrix, threshold=1e-8):
         logger.info(f"local vif calc: start")
-        assert not torch.isnan(
-            pearson_matrix
-        ).any(), f"should not contains nan: {pearson_matrix}"
+        assert not torch.isnan(pearson_matrix).any(), f"should not contains nan: {pearson_matrix}"
         N = pearson_matrix.shape[0]
         vif = []
         logger.info(f"local vif calc: calc matrix eigvals")
@@ -116,10 +113,17 @@ class PearsonCorrelation(Module):
         return vif"""
 
     def get_model(self):
-        output_model = {"data": {"local_corr": self.local_corr.to_dict() if self.local_corr is not None else None,
-                                 "remote_corr": self.remote_corr.to_dict() if self.remote_corr is not None else None,
-                                 "vif": self.vif.to_dict() if self.vif is not None else None},
-                        "meta": {"model_type": "feature_correlation",
-                                 "column_anonymous_map": dict(zip(self.select_cols, self.select_anonymous_cols))
-                                 if self.select_anonymous_cols else None}}
+        output_model = {
+            "data": {
+                "local_corr": self.local_corr.to_dict() if self.local_corr is not None else None,
+                "remote_corr": self.remote_corr.to_dict() if self.remote_corr is not None else None,
+                "vif": self.vif.to_dict() if self.vif is not None else None,
+            },
+            "meta": {
+                "model_type": "feature_correlation",
+                "column_anonymous_map": dict(zip(self.select_cols, self.select_anonymous_cols))
+                if self.select_anonymous_cols
+                else None,
+            },
+        }
         return output_model

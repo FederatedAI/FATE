@@ -31,10 +31,12 @@ def hstack(data_frames: List["DataFrame"]) -> "DataFrame":
     if len(data_frames) == 1:
         return data_frames[0]
 
-    l_df = DataFrame(data_frames[0]._ctx,
-                     data_frames[0].block_table,
-                     data_frames[0].partition_order_mappings,
-                     data_frames[0].data_manager.duplicate())
+    l_df = DataFrame(
+        data_frames[0]._ctx,
+        data_frames[0].block_table,
+        data_frames[0].partition_order_mappings,
+        data_frames[0].data_manager.duplicate(),
+    )
 
     column_set = set(l_df.schema.columns)
     for r_df in data_frames[1:]:
@@ -77,8 +79,11 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
                     row = []
                     for _field_index in _field_indexes:
                         _src_bid, _offset = align_fields_loc[_field_index]
-                        row.append(blocks[_src_bid][lid][_offset].item() if isinstance(blocks[_src_bid], torch.Tensor)
-                                   else blocks[_src_bid][lid][_offset])
+                        row.append(
+                            blocks[_src_bid][lid][_offset].item()
+                            if isinstance(blocks[_src_bid], torch.Tensor)
+                            else blocks[_src_bid][lid][_offset]
+                        )
 
                     _align_block.append(row)
 
@@ -99,7 +104,8 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
 
         for idx, field_name in enumerate(l_field_names):
             block_type = r_df.data_manager.get_block(
-                r_df.data_manager.loc_block(field_name, with_offset=False)).block_type
+                r_df.data_manager.loc_block(field_name, with_offset=False)
+            ).block_type
             if block_type > l_field_types[idx]:
                 l_field_types[idx] = block_type
                 type_change = True
@@ -115,8 +121,13 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
                 changed_fields_loc.append((bid, offset))
 
         narrow_blocks, dst_blocks = data_manager.split_columns(changed_fields, changed_block_types)
-        l_block_table = promote_partial_block_types(l_block_table, narrow_blocks=narrow_blocks, dst_blocks=dst_blocks,
-                                                    data_manager=data_manager, dst_fields_loc=changed_fields_loc)
+        l_block_table = promote_partial_block_types(
+            l_block_table,
+            narrow_blocks=narrow_blocks,
+            dst_blocks=dst_blocks,
+            data_manager=data_manager,
+            dst_fields_loc=changed_fields_loc,
+        )
 
     for r_df in data_frames[1:]:
         r_field_names = r_df.data_manager.get_field_name_list()
@@ -137,31 +148,29 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
                 if field_indexes == data_manager.get_block(l_bid).field_indexes:
                     full_migrate_set.add(bid)
 
-            _align_func = functools.partial(_align_blocks, align_fields_loc=shuffle_r_fields_loc,
-                                            full_block_migrate_set=full_migrate_set, dst_dm=data_manager)
+            _align_func = functools.partial(
+                _align_blocks,
+                align_fields_loc=shuffle_r_fields_loc,
+                full_block_migrate_set=full_migrate_set,
+                dst_dm=data_manager,
+            )
             r_block_table = r_block_table.mapValues(_align_func)
 
         l_block_table = l_block_table.union(
             r_block_table,
             lambda l_blocks, r_blocks: [
                 Block.vstack([l_block, r_block]) for l_block, r_block in zip(l_blocks, r_blocks)
-            ]
+            ],
         )
 
     partition_order_mappings = get_partition_order_mappings_by_block_table(l_block_table, data_manager.block_row_size)
-    _balance_block_func = functools.partial(_balance_blocks,
-                                            partition_order_mappings=partition_order_mappings,
-                                            block_row_size=data_manager.block_row_size)
-    l_block_table = l_block_table.mapPartitions(_balance_block_func,
-                                                use_previous_behavior=False)
+    _balance_block_func = functools.partial(
+        _balance_blocks, partition_order_mappings=partition_order_mappings, block_row_size=data_manager.block_row_size
+    )
+    l_block_table = l_block_table.mapPartitions(_balance_block_func, use_previous_behavior=False)
     l_block_table, data_manager = compress_blocks(l_block_table, data_manager)
 
-    return DataFrame(
-        l_df._ctx,
-        l_block_table,
-        partition_order_mappings,
-        data_manager
-    )
+    return DataFrame(l_df._ctx, l_block_table, partition_order_mappings, data_manager)
 
 
 def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
@@ -170,43 +179,32 @@ def drop(df: "DataFrame", index: "DataFrame" = None) -> "DataFrame":
             df._ctx,
             block_table=df.block_table,
             partition_order_mappings=copy.deepcopy(df.partition_order_mappings),
-            data_manager=df.data_manager.duplicate()
+            data_manager=df.data_manager.duplicate(),
         )
 
     if index.shape[0] == df.shape[0]:
         return df.empty_frame()
 
     data_manager = df.data_manager.duplicate()
-    l_flatten_func = functools.partial(
-        _flatten_partition,
-        block_num=data_manager.block_num
-    )
+    l_flatten_func = functools.partial(_flatten_partition, block_num=data_manager.block_num)
     l_flatten_table = df.block_table.mapPartitions(l_flatten_func, use_previous_behavior=False)
 
     r_flatten_func = functools.partial(_flatten_partition_without_value)
     r_flatten_table = index.block_table.mapPartitions(r_flatten_func, use_previous_behavior=False)
 
     drop_flatten = l_flatten_table.subtractByKey(r_flatten_table)
-    partition_order_mappings = get_partition_order_by_raw_table(
-        drop_flatten, data_manager.block_row_size
-    ) if drop_flatten.count() else dict()
-
-    _convert_to_block_func = functools.partial(to_blocks,
-                                               dm=data_manager,
-                                               partition_mappings=partition_order_mappings)
-
-    block_table = drop_flatten.mapPartitions(_convert_to_block_func,
-                                             use_previous_behavior=False)
-
-    return DataFrame(
-        df._ctx,
-        block_table,
-        partition_order_mappings,
-        data_manager
+    partition_order_mappings = (
+        get_partition_order_by_raw_table(drop_flatten, data_manager.block_row_size) if drop_flatten.count() else dict()
     )
 
+    _convert_to_block_func = functools.partial(to_blocks, dm=data_manager, partition_mappings=partition_order_mappings)
 
-def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "DataFrame":
+    block_table = drop_flatten.mapPartitions(_convert_to_block_func, use_previous_behavior=False)
+
+    return DataFrame(df._ctx, block_table, partition_order_mappings, data_manager)
+
+
+def sample(df: "DataFrame", n=None, frac: float = None, random_state=None) -> "DataFrame":
     """
     only support down sample, n should <= df.shape, or fact = 1
     """
@@ -228,9 +226,9 @@ def sample(df: "DataFrame", n=None, frac: float =None, random_state=None) -> "Da
     indexer = list(df.get_indexer(target="sample_id").collect())
     sample_indexer = resample(indexer, replace=False, n_samples=n, random_state=random_state)
 
-    sample_indexer = df._ctx.computing.parallelize(sample_indexer,
-                                                   include_key=True,
-                                                   partition=df.block_table.num_partitions)
+    sample_indexer = df._ctx.computing.parallelize(
+        sample_indexer, include_key=True, partition=df.block_table.num_partitions
+    )
 
     sample_frame = df.loc(sample_indexer)
 
@@ -263,9 +261,13 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
 
     if isinstance(indexer, DataFrame):
         _block_counter_func = functools.partial(_block_counter, value_type="dataframe")
-        block_info = sorted([summary[1] for summary in indexer.block_table.applyPartitions(_block_counter_func).collect()])
+        block_info = sorted(
+            [summary[1] for summary in indexer.block_table.applyPartitions(_block_counter_func).collect()]
+        )
     else:
-        block_info = sorted([summary[1] for summary in indexer.shardings._data.applyPartitions(_block_counter).collect()])
+        block_info = sorted(
+            [summary[1] for summary in indexer.shardings._data.applyPartitions(_block_counter).collect()]
+        )
     block_order_mappings = dict()
     start_index = 0
     acc_block_num = 0
@@ -275,7 +277,7 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
             start_index=start_index,
             end_index=start_index + block_size - 1,
             start_block_id=acc_block_num,
-            end_block_id=acc_block_num + block_num - 1
+            end_block_id=acc_block_num + block_num - 1,
         )
         start_index += block_size
         acc_block_num += block_num
@@ -289,20 +291,14 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
     else:
         block_table = df.block_table.join(indexer.shardings._data, lambda v1, v2: (v1, v2))
 
-    _balance_block_func = functools.partial(_balance_blocks_with_index,
-                                            partition_order_mappings=block_order_mappings,
-                                            data_manager=data_manager)
-    block_table = block_table.mapPartitions(_balance_block_func,
-                                           use_previous_behavior=False)
+    _balance_block_func = functools.partial(
+        _balance_blocks_with_index, partition_order_mappings=block_order_mappings, data_manager=data_manager
+    )
+    block_table = block_table.mapPartitions(_balance_block_func, use_previous_behavior=False)
     block_table, data_manager = compress_blocks(block_table, data_manager)
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, data_manager.block_row_size)
 
-    return DataFrame(
-        df._ctx,
-        block_table,
-        partition_order_mappings,
-        data_manager
-    )
+    return DataFrame(df._ctx, block_table, partition_order_mappings, data_manager)
 
 
 def _flatten_partition_without_value(kvs):
@@ -319,7 +315,7 @@ def _flatten_partition(kvs, block_num=0):
             yield flat_blocks[0][i], [flat_blocks[j][i] for j in range(1, block_num)]
 
 
-def _balance_blocks(kvs, partition_order_mappings: dict=None, block_row_size: int=None):
+def _balance_blocks(kvs, partition_order_mappings: dict = None, block_row_size: int = None):
     block_id = None
     previous_blocks = list()
     for _, blocks in kvs:
@@ -334,19 +330,19 @@ def _balance_blocks(kvs, partition_order_mappings: dict=None, block_row_size: in
         row_size = len(blocks[0])
         for i in range(0, row_size, block_row_size):
             if row_size - i < block_row_size:
-                previous_blocks = [block[i: row_size] for block in blocks]
+                previous_blocks = [block[i:row_size] for block in blocks]
             else:
-                yield block_id, [block[i: i + block_row_size] for block in blocks]
+                yield block_id, [block[i : i + block_row_size] for block in blocks]
                 block_id += 1
 
     if previous_blocks:
-        yield  block_id, previous_blocks
+        yield block_id, previous_blocks
 
     if block_id is None:
         return []
 
 
-def _balance_blocks_with_index(kvs, partition_order_mappings: dict=None, data_manager: DataManager=None):
+def _balance_blocks_with_index(kvs, partition_order_mappings: dict = None, data_manager: DataManager = None):
     block_id = None
     block_num = data_manager.block_num
     ret_blocks = [[] for _ in range(block_num)]

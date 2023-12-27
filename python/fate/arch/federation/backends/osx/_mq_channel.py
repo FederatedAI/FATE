@@ -47,14 +47,14 @@ class Metadata(Enum):
         return self.value
 
     def set(self, attachments: Dict[str, str], v: str):
-        if attachments and '' != v and v != attachments.get(self.key(), ''):
+        if attachments and "" != v and v != attachments.get(self.key(), ""):
             attachments[self.key()] = v
 
     def get(self, attachments: Dict[str, str]) -> str:
-        return attachments.get(self.key(), '')
+        return attachments.get(self.key(), "")
 
     def append(self, attachments: List[Any], v: str):
-        if attachments is not None and '' != v:
+        if attachments is not None and "" != v:
             attachments.append((self.key(), v))
 
 
@@ -66,7 +66,7 @@ def build_trace_id():
 
 class MQChannel(object):
     def __init__(
-            self, host, port, namespace, send_topic, receive_topic, src_party_id, src_role, dst_party_id, dst_role
+        self, host, port, namespace, send_topic, receive_topic, src_party_id, src_role, dst_party_id, dst_role
     ):
         self._host = host
         self._port = port
@@ -97,9 +97,11 @@ class MQChannel(object):
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
         Metadata.PTP_TECH_PROVIDER_CODE.append(metadata, "FATE")
         Metadata.PTP_TRACE_ID.append(metadata, build_trace_id())
-        return metadata;
+        return metadata
 
-    def prepare_metadata(self, ):
+    def prepare_metadata(
+        self,
+    ):
         metadata = []
         Metadata.PTP_TRACE_ID.append(metadata, build_trace_id())
         if not self._namespace is None:
@@ -110,13 +112,13 @@ class MQChannel(object):
             Metadata.PTP_FROM_NODE_ID.append(metadata, str(self._src_party_id))
         # Metadata.PTP_TOPIC.append(metadata,str(self._receive_topic))
         Metadata.PTP_TECH_PROVIDER_CODE.append(metadata, "FATE")
-        return metadata;
+        return metadata
 
     # @nretry
     def consume(self):
         self._get_or_create_channel()
         inbound = osx_pb2.PopInbound(topic=self._receive_topic, timeout=36000000)
-        metadata = self.prepare_metadata_consume();
+        metadata = self.prepare_metadata_consume()
         result = self._stub.pop(request=inbound, metadata=metadata)
         # LOGGER.debug(f"consume, result={result.code}, mq={self}")
         return result

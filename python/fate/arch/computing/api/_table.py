@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import abc
 import logging
 import random
@@ -6,8 +21,8 @@ from typing import Any, Callable, Tuple, Iterable, Generic, TypeVar, Optional
 from fate.arch.computing.partitioners import get_partitioner_by_type
 from fate.arch.computing.serdes import get_serdes_by_type
 from fate.arch.trace import auto_trace
+from fate.arch.trace import computing_profile as _compute_info
 from fate.arch.unify import URI
-from ._profile import computing_profile as _compute_info
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +60,38 @@ def _add_padding(message, count):
 
 
 class KVTableContext:
+    def _info(self):
+        return {}
+
+    def _load(self, uri: URI, schema: dict, options: dict):
+        raise NotImplementedError(f"{self.__class__.__name__}._load")
+
+    def _parallelize(
+        self,
+        data,
+        total_partitions,
+        key_serdes,
+        key_serdes_type,
+        value_serdes,
+        value_serdes_type,
+        partitioner,
+        partitioner_type,
+    ):
+        raise NotImplementedError(f"{self.__class__.__name__}._parallelize")
+
+    def _destroy(self):
+        raise NotImplementedError(f"{self.__class__.__name__}.destroy")
+
+    def info(self):
+        return self._info()
+
+    def load(self, uri: URI, schema: dict, options: dict = None):
+        return self._load(
+            uri=uri,
+            schema=schema,
+            options=options,
+        )
+
     @_compute_info
     def parallelize(
         self, data, include_key=True, partition=None, key_serdes_type=0, value_serdes_type=0, partitioner_type=0
@@ -69,34 +116,8 @@ class KVTableContext:
             partitioner_type=partitioner_type,
         )
 
-    def _parallelize(
-        self,
-        data,
-        total_partitions,
-        key_serdes,
-        key_serdes_type,
-        value_serdes,
-        value_serdes_type,
-        partitioner,
-        partitioner_type,
-    ):
-        raise NotImplementedError(f"{self.__class__.__name__}._parallelize")
-
-    def info(self):
-        return self._info()
-
-    def _info(self):
-        return {}
-
-    def load(self, uri: URI, schema: dict, options: dict = None):
-        return self._load(
-            uri=uri,
-            schema=schema,
-            options=options,
-        )
-
-    def _load(self, uri: URI, schema: dict, options: dict):
-        raise NotImplementedError(f"{self.__class__.__name__}._load")
+    def destroy(self):
+        self._destroy()
 
 
 class KVTable(Generic[K, V]):
@@ -113,11 +134,22 @@ class KVTable(Generic[K, V]):
 
         self._schema = {}
 
+        self._is_federated_received = False
+
+    def mask_federated_received(self):
+        self._is_federated_received = True
+
     def __getstate__(self):
         pass
 
     def __reduce__(self):
-        raise NotImplementedError("Table is not picklable, please don't do this or it may cause unexpected error")
+        raise NotImplementedError("Table is not pickleable, please don't do this or it may cause unexpected error")
+
+    def __del__(self):
+        if self._is_federated_received:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"destroying federated received table {self}")
+            self.destroy()
 
     @property
     def schema(self):
@@ -214,7 +246,10 @@ class KVTable(Generic[K, V]):
         return self._partitioner
 
     def __str__(self):
-        return f"<{self.__class__.__name__} key_serdes={self.key_serdes}, value_serdes={self.value_serdes}, partitioner={self.partitioner}>"
+        return f"<{self.__class__.__name__} \
+        key_serdes_type={self.key_serdes_type}, \
+         value_serdes_type={self.value_serdes_type}, \
+         partitioner_type={self.partitioner_type}>"
 
     def destroy(self):
         self._destroy()
@@ -293,11 +328,10 @@ class KVTable(Generic[K, V]):
     def mapPartitionsWithIndexNoSerdes(
         self,
         map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
-            shuffle=False,
-            output_key_serdes_type=None,
-            output_value_serdes_type=None,
-            output_partitioner_type=None,
-
+        shuffle=False,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         """
         caller should guarantee that the output of map_partition_op is a generator of (bytes, bytes)

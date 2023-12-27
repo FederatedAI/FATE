@@ -30,9 +30,7 @@ class TrustedThirdParty(TupleProvider):
         b = generate_random_ring_element(size1, generator=generator, device=device)
         if comm.get().get_rank() == 0:
             # Request c from TTP
-            c = TTPClient.get().ttp_request(
-                "additive", device, size0, size1, op, *args, **kwargs
-            )
+            c = TTPClient.get().ttp_request("additive", device, size0, size1, op, *args, **kwargs)
         else:
             # TODO: Compute size without executing computation
             c_size = getattr(torch, op)(a, b, *args, **kwargs).size()
@@ -88,9 +86,7 @@ class TrustedThirdParty(TupleProvider):
             # Request theta_r from TTP
             theta_r = TTPClient.get().ttp_request("wraps", device, size)
         else:
-            theta_r = generate_random_ring_element(
-                size, generator=generator, device=device
-            )
+            theta_r = generate_random_ring_element(size, generator=generator, device=device)
 
         r = ArithmeticSharedTensor.from_shares(r, precision=0)
         theta_r = ArithmeticSharedTensor.from_shares(theta_r, precision=0)
@@ -101,9 +97,7 @@ class TrustedThirdParty(TupleProvider):
         generator = TTPClient.get().get_generator(device=device)
 
         # generate random bit
-        rB = generate_kbit_random_tensor(
-            size, bitlength=1, generator=generator, device=device
-        )
+        rB = generate_kbit_random_tensor(size, bitlength=1, generator=generator, device=device)
 
         if comm.get().get_rank() == 0:
             # Request rA from TTP
@@ -140,9 +134,7 @@ class TTPClient:
         def _setup_generators(self):
             """Setup RNG generator shared between each party (client) and the TTPServer"""
             seed = torch.empty(size=(), dtype=torch.long)
-            dist.irecv(
-                tensor=seed, src=comm.get().get_ttp_rank(), group=self.ttp_group
-            ).wait()
+            dist.irecv(tensor=seed, src=comm.get().get_ttp_rank(), group=self.ttp_group).wait()
             dist.barrier(group=self.ttp_group)
 
             self.generator = torch.Generator(device="cpu")
@@ -164,9 +156,7 @@ class TTPClient:
                 return self.generator
 
         def ttp_request(self, func_name, device, *args, **kwargs):
-            assert (
-                comm.get().get_rank() == 0
-            ), "Only party 0 communicates with the TTPServer"
+            assert comm.get().get_rank() == 0, "Only party 0 communicates with the TTPServer"
             if device is not None:
                 device = str(device)
             message = {
@@ -249,13 +239,10 @@ class TTPServer:
         ws = comm.get().get_world_size()
 
         seeds = [torch.randint(-(2**63), 2**63 - 1, size=()) for _ in range(ws)]
-        reqs = [
-            dist.isend(tensor=seeds[i], dst=i, group=self.ttp_group) for i in range(ws)
-        ]
+        reqs = [dist.isend(tensor=seeds[i], dst=i, group=self.ttp_group) for i in range(ws)]
         self.generators = [torch.Generator(device="cpu") for _ in range(ws)]
         self.generators_cuda = [
-            (torch.Generator(device="cuda") if torch.cuda.is_available() else None)
-            for _ in range(ws)
+            (torch.Generator(device="cuda") if torch.cuda.is_available() else None) for _ in range(ws)
         ]
 
         for i in range(ws):
@@ -299,14 +286,11 @@ class TTPServer:
             gens = gens[1:]
         result = None
         for idx, g in enumerate(gens):
-            elem = generate_kbit_random_tensor(
-                size, bitlength=bitlength, generator=g, device=g.device
-            )
+            elem = generate_kbit_random_tensor(size, bitlength=bitlength, generator=g, device=g.device)
             result = elem if idx == 0 else result ^ elem
         return result
 
     def additive(self, size0, size1, op, *args, **kwargs):
-
         # Add all shares of `a` and `b` to get plaintext `a` and `b`
         a = self._get_additive_PRSS(size0)
         b = self._get_additive_PRSS(size1)

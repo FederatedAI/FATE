@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import sys
 import copy
 import pandas as pd
@@ -11,14 +26,13 @@ from sklearn.metrics import recall_score, precision_score, f1_score
 from fate.ml.evaluation.metric_base import EvalResult
 
 
-
 """
 Single Value Metrics
 """
 
-class AUC(Metric):
 
-    metric_name = 'auc'
+class AUC(Metric):
+    metric_name = "auc"
 
     def __init__(self):
         super().__init__()
@@ -31,15 +45,13 @@ class AUC(Metric):
 
 
 class BinaryMetricWithThreshold(Metric):
-
     def __init__(self, threshold=0.5):
         super().__init__()
         self.threshold = threshold
 
 
 class MultiAccuracy(Metric):
-
-    metric_name = 'multi_accuracy'
+    metric_name = "multi_accuracy"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict, flatten=False)
@@ -51,34 +63,31 @@ class MultiAccuracy(Metric):
 
 
 class MultiRecall(Metric):
-
-    metric_name = 'multi_recall'
+    metric_name = "multi_recall"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict, flatten=False)
         label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
-        recall = recall_score(label, predict, average='macro')
+        recall = recall_score(label, predict, average="macro")
         return EvalResult(self.metric_name, recall)
 
 
 class MultiPrecision(Metric):
-
-    metric_name = 'multi_precision'
+    metric_name = "multi_precision"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict, flatten=False)
         label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
-        precision = precision_score(label, predict, average='macro')
+        precision = precision_score(label, predict, average="macro")
         return EvalResult(self.metric_name, precision)
 
 
 class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
-
-    metric_name = 'binary_accuracy'
+    metric_name = "binary_accuracy"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
@@ -89,8 +98,7 @@ class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
 
 
 class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
-
-    metric_name = 'binary_recall'
+    metric_name = "binary_recall"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
@@ -101,22 +109,20 @@ class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
 
 
 class BinaryPrecision(MultiPrecision, BinaryMetricWithThreshold):
-
-    metric_name = 'binary_precision'
+    metric_name = "binary_precision"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
         predict = (predict > self.threshold).astype(int)
         label = self.to_np_format(label)
-        precision = precision_score(label, predict)       
+        precision = precision_score(label, predict)
         return EvalResult(self.metric_name, precision)
 
 
 class MultiF1Score(Metric):
+    metric_name = "multi_f1_score"
 
-    metric_name = 'multi_f1_score'
-
-    def __init__(self, average='micro'):
+    def __init__(self, average="micro"):
         super().__init__()
         self.average = average
 
@@ -125,15 +131,14 @@ class MultiF1Score(Metric):
         label = self.to_np_format(label)
         if predict.shape != label.shape:
             predict = predict.argmax(axis=-1)
-        f1 = f1_score(label, predict, average=self.average)  
+        f1 = f1_score(label, predict, average=self.average)
         return EvalResult(self.metric_name, f1)
 
 
 class BinaryF1Score(MultiF1Score, BinaryMetricWithThreshold):
+    metric_name = "binary_f1_score"
 
-    metric_name = 'binary_f1_score'
-
-    def __init__(self, threshold=0.5, average='binary'):
+    def __init__(self, threshold=0.5, average="binary"):
         super().__init__(average)
         self.threshold = threshold
 
@@ -170,12 +175,10 @@ def sort_score_and_label(labels: np.ndarray, pred_scores: np.ndarray):
 
 
 class _ConfusionMatrix(object):
-
     @staticmethod
     def compute(sorted_labels: list, sorted_pred_scores: list, score_thresholds: list, ret: list, pos_label=1):
-
         for ret_type in ret:
-            assert ret_type in ['tp', 'tn', 'fp', 'fn']
+            assert ret_type in ["tp", "tn", "fp", "fn"]
 
         sorted_labels = np.array(sorted_labels)
         sorted_scores = np.array(sorted_pred_scores)
@@ -185,29 +188,28 @@ class _ConfusionMatrix(object):
         pred_labels = (sorted_scores > score_thresholds) + 0
 
         ret_dict = {}
-        if 'tp' in ret or 'tn' in ret:
-            match_arr = (pred_labels + sorted_labels)
-            if 'tp' in ret:
+        if "tp" in ret or "tn" in ret:
+            match_arr = pred_labels + sorted_labels
+            if "tp" in ret:
                 tp_num = (match_arr == 2).sum(axis=-1)
-                ret_dict['tp'] = tp_num
-            if 'tn' in ret:
+                ret_dict["tp"] = tp_num
+            if "tn" in ret:
                 tn_num = (match_arr == 0).sum(axis=-1)
-                ret_dict['tn'] = tn_num
+                ret_dict["tn"] = tn_num
 
-        if 'fp' in ret or 'fn' in ret:
-            match_arr = (sorted_labels - pred_labels)
-            if 'fp' in ret:
+        if "fp" in ret or "fn" in ret:
+            match_arr = sorted_labels - pred_labels
+            if "fp" in ret:
                 fp_num = (match_arr == -1).sum(axis=-1)
-                ret_dict['fp'] = fp_num
-            if 'fn' in ret:
+                ret_dict["fp"] = fp_num
+            if "fn" in ret:
                 fn_num = (match_arr == 1).sum(axis=-1)
-                ret_dict['fn'] = fn_num
+                ret_dict["fn"] = fn_num
 
         return ret_dict
 
 
 class ThresholdCutter(object):
-
     @staticmethod
     def cut_by_step(sorted_scores, steps=0.01):
         assert isinstance(steps, float) and (0 < steps < 1)
@@ -242,8 +244,7 @@ class ThresholdCutter(object):
         return new_thresholds, cuts
 
     @staticmethod
-    def cut_by_quantile(scores, quantile_list=None, interpolation='nearest', remove_duplicate=True):
-
+    def cut_by_quantile(scores, quantile_list=None, interpolation="nearest", remove_duplicate=True):
         if quantile_list is None:  # default is 20 intervals
             quantile_list = [round(i * 0.05, 3) for i in range(20)] + [1.0]
         quantile_val = np.quantile(scores, quantile_list, interpolation=interpolation)
@@ -257,39 +258,53 @@ class ThresholdCutter(object):
 
         return quantile_val
 
-class BiClassMetric(object):
 
-    def __init__(self, cut_method='step', remove_duplicate=False, pos_label=1):
-        assert cut_method in ['step', 'quantile']
+class BiClassMetric(object):
+    def __init__(self, cut_method="step", remove_duplicate=False, pos_label=1):
+        assert cut_method in ["step", "quantile"]
         self.cut_method = cut_method
         self.remove_duplicate = remove_duplicate  # available when cut_method is quantile
         self.pos_label = pos_label
 
-    def prepare_confusion_mat(self, labels, scores, add_to_end=True, ):
+    def prepare_confusion_mat(
+        self,
+        labels,
+        scores,
+        add_to_end=True,
+    ):
         import logging
+
         logger = logging.getLogger(__name__)
-        logger.info('labels are {}, scores are {}'.format(labels, scores))
+        logger.info("labels are {}, scores are {}".format(labels, scores))
         sorted_labels, sorted_scores = sort_score_and_label(labels, scores)
 
         score_threshold, cuts = None, None
 
-        if self.cut_method == 'step':
+        if self.cut_method == "step":
             score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
             if add_to_end:
                 score_threshold.append(min(score_threshold) - 0.001)
                 cuts.append(1)
 
-        elif self.cut_method == 'quantile':
+        elif self.cut_method == "quantile":
             score_threshold = ThresholdCutter.cut_by_quantile(sorted_scores, remove_duplicate=self.remove_duplicate)
             score_threshold = list(np.flip(score_threshold))
 
-        confusion_mat = _ConfusionMatrix.compute(sorted_labels, sorted_scores, score_threshold,
-                                                ret=['tp', 'fp', 'fn', 'tn'], pos_label=self.pos_label)
+        confusion_mat = _ConfusionMatrix.compute(
+            sorted_labels, sorted_scores, score_threshold, ret=["tp", "fp", "fn", "tn"], pos_label=self.pos_label
+        )
 
         return confusion_mat, score_threshold, cuts
 
-    def compute(self, labels, scores, ):
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, scores, )
+    def compute(
+        self,
+        labels,
+        scores,
+    ):
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(
+            labels,
+            scores,
+        )
         metric_scores = self.compute_metric_from_confusion_mat(confusion_mat)
         return list(metric_scores), score_threshold, cuts
 
@@ -301,9 +316,9 @@ class BiClassMetric(object):
 Metrics with Cruve/Table Results
 """
 
-class KS(Metric):
 
-    metric_name = 'ks'
+class KS(Metric):
+    metric_name = "ks"
 
     def __init__(self):
         super().__init__()
@@ -311,18 +326,20 @@ class KS(Metric):
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
-        
+
         sorted_labels, sorted_scores = sort_score_and_label(label, predict)
         threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
-        confusion_mat = _ConfusionMatrix.compute(sorted_labels, sorted_scores, threshold, ret=['tp', 'fp'],
-                                                pos_label=1)
+        confusion_mat = _ConfusionMatrix.compute(
+            sorted_labels, sorted_scores, threshold, ret=["tp", "fp"], pos_label=1
+        )
         pos_num, neg_num = neg_pos_count(sorted_labels, pos_label=1)
 
-        assert pos_num > 0 and neg_num > 0, "error when computing KS metric, pos sample number and neg sample number" \
-                                            "must be larger than 0"
+        assert pos_num > 0 and neg_num > 0, (
+            "error when computing KS metric, pos sample number and neg sample number" "must be larger than 0"
+        )
 
-        tpr_arr = confusion_mat['tp'] / pos_num
-        fpr_arr = confusion_mat['fp'] / neg_num
+        tpr_arr = confusion_mat["tp"] / pos_num
+        fpr_arr = confusion_mat["fp"] / neg_num
 
         tpr = np.append(tpr_arr, np.array([1.0]))
         fpr = np.append(fpr_arr, np.array([1.0]))
@@ -331,49 +348,46 @@ class KS(Metric):
         ks_curve = tpr[:-1] - fpr[:-1]
         ks_val = np.max(ks_curve)
 
-        return EvalResult(self.metric_name, ks_val), \
-            EvalResult(self.metric_name + '_table', pd.DataFrame({'tpr': tpr, 'fpr': fpr, 'threshold': threshold, 'cuts': cuts}))
-    
+        return EvalResult(self.metric_name, ks_val), EvalResult(
+            self.metric_name + "_table", pd.DataFrame({"tpr": tpr, "fpr": fpr, "threshold": threshold, "cuts": cuts})
+        )
+
 
 class ConfusionMatrix(Metric):
-
-    metric_name = 'confusion_matrix'
+    metric_name = "confusion_matrix"
 
     def __init__(self):
         super().__init__()
 
     def __call__(self, predict, label, **kwargs):
-
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
-        
+
         sorted_labels, sorted_scores = sort_score_and_label(label, predict)
         threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
-        confusion_mat = _ConfusionMatrix.compute(sorted_labels, sorted_scores, threshold, ret=['tp', 'tn', 'fp', 'fn'],
-                                                pos_label=1)
-        confusion_mat['cuts'] = cuts
-        confusion_mat['threshold'] = threshold
+        confusion_mat = _ConfusionMatrix.compute(
+            sorted_labels, sorted_scores, threshold, ret=["tp", "tn", "fp", "fn"], pos_label=1
+        )
+        confusion_mat["cuts"] = cuts
+        confusion_mat["threshold"] = threshold
         return EvalResult(self.metric_name, pd.DataFrame(confusion_mat))
 
 
 class Lift(Metric, BiClassMetric):
-
-    metric_name = 'lift'
+    metric_name = "lift"
 
     def __init__(self, *args, **kwargs):
         Metric.__init__(self)
-        BiClassMetric.__init__(self, cut_method='step', remove_duplicate=False, pos_label=1)
-    
+        BiClassMetric.__init__(self, cut_method="step", remove_duplicate=False, pos_label=1)
+
     @staticmethod
     def _lift_helper(val):
-
         tp, fp, fn, tn, labels_num = val[0], val[1], val[2], val[3], val[4]
 
         lift_x_type, lift_y_type = [], []
 
-        for label_type in ['1', '0']:
-
-            if label_type == '0':
+        for label_type in ["1", "0"]:
+            if label_type == "0":
                 tp, tn = tn, tp
                 fp, fn = fn, fp
 
@@ -399,12 +413,17 @@ class Lift(Metric, BiClassMetric):
 
         return lift_x_type, lift_y_type
 
-    def compute_metric_from_confusion_mat(self, confusion_mat, labels_len, ):
+    def compute_metric_from_confusion_mat(
+        self,
+        confusion_mat,
+        labels_len,
+    ):
+        labels_nums = np.zeros(len(confusion_mat["tp"])) + labels_len
 
-        labels_nums = np.zeros(len(confusion_mat['tp'])) + labels_len
-
-        rs = map(self._lift_helper, zip(confusion_mat['tp'], confusion_mat['fp'],
-                                        confusion_mat['fn'], confusion_mat['tn'], labels_nums))
+        rs = map(
+            self._lift_helper,
+            zip(confusion_mat["tp"], confusion_mat["fp"], confusion_mat["fn"], confusion_mat["tn"], labels_nums),
+        )
 
         rs = list(rs)
 
@@ -413,40 +432,39 @@ class Lift(Metric, BiClassMetric):
         return lifts_y, lifts_x
 
     def __call__(self, predict, label, **kwargs):
-        
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(label, predict, add_to_end=False, )
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(
+            label,
+            predict,
+            add_to_end=False,
+        )
 
-        lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(label), )
+        lifts_y, lifts_x = self.compute_metric_from_confusion_mat(
+            confusion_mat,
+            len(label),
+        )
 
-        return EvalResult(self.metric_name,
-            pd.DataFrame({
-                'liftx': lifts_x,
-                'lifty': lifts_y,
-                'threshold': list(score_threshold)
-            })
+        return EvalResult(
+            self.metric_name, pd.DataFrame({"liftx": lifts_x, "lifty": lifts_y, "threshold": list(score_threshold)})
         )
 
 
 class Gain(Metric, BiClassMetric):
-
-    metric_name = 'gain'
+    metric_name = "gain"
 
     def __init__(self, *args, **kwargs):
         Metric.__init__(self)
-        BiClassMetric.__init__(self, cut_method='step', remove_duplicate=False, pos_label=1)
-    
+        BiClassMetric.__init__(self, cut_method="step", remove_duplicate=False, pos_label=1)
+
     @staticmethod
     def _gain_helper(val):
-
         tp, fp, fn, tn, num_label = val[0], val[1], val[2], val[3], val[4]
 
         gain_x_type, gain_y_type = [], []
 
-        for pos_label in ['1', '0']:
-
-            if pos_label == '0':
+        for pos_label in ["1", "0"]:
+            if pos_label == "0":
                 tp, tn = tn, tp
                 fp, fn = fn, fp
 
@@ -467,11 +485,12 @@ class Gain(Metric, BiClassMetric):
         return gain_x_type, gain_y_type
 
     def compute_metric_from_confusion_mat(self, confusion_mat, labels_len):
+        labels_nums = np.zeros(len(confusion_mat["tp"])) + labels_len
 
-        labels_nums = np.zeros(len(confusion_mat['tp'])) + labels_len
-
-        rs = map(self._gain_helper, zip(confusion_mat['tp'], confusion_mat['fp'],
-                                        confusion_mat['fn'], confusion_mat['tn'], labels_nums))
+        rs = map(
+            self._gain_helper,
+            zip(confusion_mat["tp"], confusion_mat["fp"], confusion_mat["fn"], confusion_mat["tn"], labels_nums),
+        )
 
         rs = list(rs)
 
@@ -480,89 +499,81 @@ class Gain(Metric, BiClassMetric):
         return gain_y, gain_x
 
     def __call__(self, predict, label, **kwargs):
-
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(label, predict, add_to_end=False, )
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(
+            label,
+            predict,
+            add_to_end=False,
+        )
 
         gain_y, gain_x = self.compute_metric_from_confusion_mat(confusion_mat, len(label))
 
-        return EvalResult(self.metric_name,
-            pd.DataFrame({
-                'gainx': gain_x,
-                'gainy': gain_y,
-                'threshold': list(score_threshold)
-            })
+        return EvalResult(
+            self.metric_name, pd.DataFrame({"gainx": gain_x, "gainy": gain_y, "threshold": list(score_threshold)})
         )
-    
 
 
 class BiClassPrecisionTable(Metric, BiClassMetric):
     """
     Compute binary classification precision using multiple thresholds
     """
-    metric_name = 'biclass_precision_table'
+
+    metric_name = "biclass_precision_table"
 
     def __init__(self, *args, **kwargs):
         Metric.__init__(self)
-        BiClassMetric.__init__(self, cut_method='step', remove_duplicate=False, pos_label=1)
+        BiClassMetric.__init__(self, cut_method="step", remove_duplicate=False, pos_label=1)
 
     def compute_metric_from_confusion_mat(self, confusion_mat, impute_val=1.0):
-        numerator = confusion_mat['tp']
-        denominator = (confusion_mat['tp'] + confusion_mat['fp'])
-        zero_indexes = (denominator == 0)
+        numerator = confusion_mat["tp"]
+        denominator = confusion_mat["tp"] + confusion_mat["fp"]
+        zero_indexes = denominator == 0
         denominator[zero_indexes] = 1
         precision_scores = numerator / denominator
         precision_scores[zero_indexes] = impute_val  # impute_val is for prettifying when drawing pr curves
 
         return precision_scores
-    
+
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
         p, threshold, cuts = self.compute(label, predict)
-        return EvalResult(self.metric_name, pd.DataFrame({
-            'p': p,
-            'threshold': threshold,
-            'cuts': cuts
-        }))
-    
+        return EvalResult(self.metric_name, pd.DataFrame({"p": p, "threshold": threshold, "cuts": cuts}))
 
 
 class BiClassRecallTable(Metric, BiClassMetric):
     """
     Compute binary classification recall using multiple thresholds
     """
-    metric_name = 'biclass_recall_table'
+
+    metric_name = "biclass_recall_table"
 
     def __init__(self, *args, **kwargs):
         Metric.__init__(self)
-        BiClassMetric.__init__(self, cut_method='step', remove_duplicate=False, pos_label=1)
+        BiClassMetric.__init__(self, cut_method="step", remove_duplicate=False, pos_label=1)
 
     def compute_metric_from_confusion_mat(self, confusion_mat, formatted=True):
-        recall_scores = confusion_mat['tp'] / (confusion_mat['tp'] + confusion_mat['fn'])
+        recall_scores = confusion_mat["tp"] / (confusion_mat["tp"] + confusion_mat["fn"])
         return recall_scores
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
         r, threshold, cuts = self.compute(label, predict)
-        return EvalResult(self.metric_name, pd.DataFrame({
-            'r': r,
-            'threshold': threshold,
-            'cuts': cuts
-        }))
+        return EvalResult(self.metric_name, pd.DataFrame({"r": r, "threshold": threshold, "cuts": cuts}))
 
 
 class BiClassAccuracyTable(Metric, BiClassMetric):
     """
     Compute binary classification accuracy using multiple thresholds
     """
-    metric_name = 'biclass_accuracy_table'
+
+    metric_name = "biclass_accuracy_table"
 
     def __init__(self, *args, **kwargs):
         Metric.__init__(self)
-        BiClassMetric.__init__(self, cut_method='step', remove_duplicate=False, pos_label=1)
+        BiClassMetric.__init__(self, cut_method="step", remove_duplicate=False, pos_label=1)
 
     def compute(self, labels, scores, normalize=True):
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, scores)
@@ -570,20 +581,19 @@ class BiClassAccuracyTable(Metric, BiClassMetric):
         return list(metric_scores), score_threshold[: len(metric_scores)], cuts[: len(metric_scores)]
 
     def compute_metric_from_confusion_mat(self, confusion_mat, normalize=True):
-        rs = (confusion_mat['tp'] + confusion_mat['tn']) / \
-             (confusion_mat['tp'] + confusion_mat['tn'] + confusion_mat['fn'] + confusion_mat['fp']) if normalize \
-            else (confusion_mat['tp'] + confusion_mat['tn'])
+        rs = (
+            (confusion_mat["tp"] + confusion_mat["tn"])
+            / (confusion_mat["tp"] + confusion_mat["tn"] + confusion_mat["fn"] + confusion_mat["fp"])
+            if normalize
+            else (confusion_mat["tp"] + confusion_mat["tn"])
+        )
         return rs[:-1]
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
         accuracy, threshold, cuts = self.compute(label, predict)
-        return EvalResult(self.metric_name, pd.DataFrame({
-            'accuracy': accuracy,
-            'threshold': threshold,
-            'cuts': cuts
-        }))
+        return EvalResult(self.metric_name, pd.DataFrame({"accuracy": accuracy, "threshold": threshold, "cuts": cuts}))
 
 
 class FScoreTable(Metric):
@@ -591,42 +601,37 @@ class FScoreTable(Metric):
     Compute F score from bi-class confusion mat
     """
 
-    metric_name = 'fscore_table'
+    metric_name = "fscore_table"
 
     def __call__(self, predict, label, beta=1):
-
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
 
         sorted_labels, sorted_scores = sort_score_and_label(label, predict)
         _, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
         fixed_interval_threshold = ThresholdCutter.fixed_interval_threshold()
-        confusion_mat = _ConfusionMatrix.compute(sorted_labels, sorted_scores,
-                                                fixed_interval_threshold,
-                                                ret=['tp', 'fp', 'fn', 'tn'])
+        confusion_mat = _ConfusionMatrix.compute(
+            sorted_labels, sorted_scores, fixed_interval_threshold, ret=["tp", "fp", "fn", "tn"]
+        )
         precision_computer = BiClassPrecisionTable()
         recall_computer = BiClassRecallTable()
         p_score = precision_computer.compute_metric_from_confusion_mat(confusion_mat)
         r_score = recall_computer.compute_metric_from_confusion_mat(confusion_mat)
         beta_2 = beta * beta
-        denominator = (beta_2 * p_score + r_score)
+        denominator = beta_2 * p_score + r_score
         denominator[denominator == 0] = 1e-6  # in case denominator is 0
         numerator = (1 + beta_2) * (p_score * r_score)
         f_score = numerator / denominator
 
-        return EvalResult(self.metric_name, pd.DataFrame({
-            'f_score': f_score,
-            'threshold': fixed_interval_threshold,
-            'cuts': cuts
-        }))
+        return EvalResult(
+            self.metric_name, pd.DataFrame({"f_score": f_score, "threshold": fixed_interval_threshold, "cuts": cuts})
+        )
 
 
 class PSI(Metric):
-
-    metric_name = 'psi'
+    metric_name = "psi"
 
     def __call__(self, predict: dict, label: dict, **kwargs) -> Dict:
-
         """
         train/validate scores: predicted scores on train/validate set
         train/validate labels: true labels
@@ -634,15 +639,15 @@ class PSI(Metric):
         if train&validate labels are not None, count positive sample percentage in every interval
         """
 
-        str_intervals=False
-        round_num=3
-        pos_label=1
+        str_intervals = False
+        round_num = 3
+        pos_label = 1
 
         if not isinstance(predict, dict) or (label is not None and not isinstance(label, dict)):
             raise ValueError("Input 'predict' must be a dictionary, and 'label' must be either None or a dictionary.")
 
-        train_scores = predict.get('train_scores')
-        validate_scores = predict.get('validate_scores')
+        train_scores = predict.get("train_scores")
+        validate_scores = predict.get("validate_scores")
 
         if train_scores is None or validate_scores is None:
             raise ValueError(
@@ -650,8 +655,8 @@ class PSI(Metric):
                 "Please make sure both keys are present."
             )
 
-        train_labels = label.get('train_labels') if label is not None else None
-        validate_labels = label.get('validate_labels') if label is not None else None
+        train_labels = label.get("train_labels") if label is not None else None
+        validate_labels = label.get("validate_labels") if label is not None else None
 
         train_scores = np.array(train_scores)
         validate_scores = np.array(validate_scores)
@@ -666,11 +671,12 @@ class PSI(Metric):
             assert len(train_labels) == len(train_scores) and len(validate_labels) == len(validate_scores)
             train_labels, validate_labels = np.array(train_labels), np.array(validate_labels)
             train_pos_count = self.quantile_binning_and_count(train_scores[train_labels == pos_label], quantile_points)
-            validate_pos_count = self.quantile_binning_and_count(validate_scores[validate_labels == pos_label],
-                                                                 quantile_points)
+            validate_pos_count = self.quantile_binning_and_count(
+                validate_scores[validate_labels == pos_label], quantile_points
+            )
 
-            train_pos_perc = np.array(train_pos_count['count']) / np.array(train_count['count'])
-            validate_pos_perc = np.array(validate_pos_count['count']) / np.array(validate_count['count'])
+            train_pos_perc = np.array(train_pos_count["count"]) / np.array(train_count["count"])
+            validate_pos_perc = np.array(validate_pos_count["count"]) / np.array(validate_count["count"])
 
             # handle special cases
             train_pos_perc[train_pos_perc == np.inf] = -1
@@ -678,43 +684,63 @@ class PSI(Metric):
             train_pos_perc[np.isnan(train_pos_perc)] = 0
             validate_pos_perc[np.isnan(validate_pos_perc)] = 0
 
-        assert (train_count['interval'] == validate_count['interval']), 'train count interval is not equal to ' \
-                                                                        'validate count interval'
+        assert train_count["interval"] == validate_count["interval"], (
+            "train count interval is not equal to " "validate count interval"
+        )
 
-        expected_interval = np.array(train_count['count'])
-        actual_interval = np.array(validate_count['count'])
+        expected_interval = np.array(train_count["count"])
+        actual_interval = np.array(validate_count["count"])
 
         expected_interval = expected_interval.astype(np.float)
         actual_interval = actual_interval.astype(np.float)
 
-        psi_scores, total_psi, expected_interval, actual_interval, expected_percentage, actual_percentage \
-            = self.psi_score(expected_interval, actual_interval, len(train_scores), len(validate_scores))
+        (
+            psi_scores,
+            total_psi,
+            expected_interval,
+            actual_interval,
+            expected_percentage,
+            actual_percentage,
+        ) = self.psi_score(expected_interval, actual_interval, len(train_scores), len(validate_scores))
 
-        intervals = train_count['interval'] if not str_intervals else PSI.intervals_to_str(train_count['interval'],
-                                                                                           round_num=round_num)
+        intervals = (
+            train_count["interval"]
+            if not str_intervals
+            else PSI.intervals_to_str(train_count["interval"], round_num=round_num)
+        )
 
-        total_psi = EvalResult('total_psi', total_psi)
+        total_psi = EvalResult("total_psi", total_psi)
 
         if train_labels is None and validate_labels is None:
-            psi_table = EvalResult('psi_table', pd.DataFrame({
-                'psi_scores': psi_scores,
-                'expected_interval': expected_interval,
-                'actual_interval': actual_interval,
-                'expected_percentage': expected_percentage,
-                'actual_percentage': actual_percentage,
-                'interval': intervals
-            }))
+            psi_table = EvalResult(
+                "psi_table",
+                pd.DataFrame(
+                    {
+                        "psi_scores": psi_scores,
+                        "expected_interval": expected_interval,
+                        "actual_interval": actual_interval,
+                        "expected_percentage": expected_percentage,
+                        "actual_percentage": actual_percentage,
+                        "interval": intervals,
+                    }
+                ),
+            )
         else:
-            psi_table = EvalResult('psi_table', pd.DataFrame({
-                'psi_scores': psi_scores,
-                'expected_interval': expected_interval,
-                'actual_interval': actual_interval,
-                'expected_percentage': expected_percentage,
-                'actual_percentage': actual_percentage,
-                'train_pos_perc': train_pos_perc,
-                'validate_pos_perc': validate_pos_perc,
-                'interval': intervals
-            }))
+            psi_table = EvalResult(
+                "psi_table",
+                pd.DataFrame(
+                    {
+                        "psi_scores": psi_scores,
+                        "expected_interval": expected_interval,
+                        "actual_interval": actual_interval,
+                        "expected_percentage": expected_percentage,
+                        "actual_percentage": actual_percentage,
+                        "train_pos_perc": train_pos_perc,
+                        "validate_pos_perc": validate_pos_perc,
+                        "interval": intervals,
+                    }
+                ),
+            )
 
         return psi_table, total_psi
 
@@ -735,18 +761,19 @@ class PSI(Metric):
         bin_result_1, bin_result_2 = None, None
 
         if len(left_bounds) != 0 and len(right_bounds) != 0:
-            bin_result_1 = pd.cut(scores, pd.IntervalIndex.from_arrays(left_bounds, right_bounds, closed='left'))
+            bin_result_1 = pd.cut(scores, pd.IntervalIndex.from_arrays(left_bounds, right_bounds, closed="left"))
 
-        bin_result_2 = pd.cut(scores, pd.IntervalIndex.from_arrays([last_interval_left], [last_interval_right],
-                                                                   closed='both'))
+        bin_result_2 = pd.cut(
+            scores, pd.IntervalIndex.from_arrays([last_interval_left], [last_interval_right], closed="both")
+        )
 
         count1 = None if bin_result_1 is None else bin_result_1.value_counts().reset_index()
         count2 = bin_result_2.value_counts().reset_index()
 
         # if predict scores are the same, count1 will be None, only one interval exists
-        final_interval = list(count1['index']) + list(count2['index']) if count1 is not None else list(count2['index'])
+        final_interval = list(count1["index"]) + list(count2["index"]) if count1 is not None else list(count2["index"])
         final_count = list(count1[0]) + list(count2[0]) if count1 is not None else list(count2[0])
-        rs = {'interval': final_interval, 'count': final_count}
+        rs = {"interval": final_interval, "count": final_count}
 
         return rs
 
@@ -759,20 +786,23 @@ class PSI(Metric):
     def intervals_to_str(intervals, round_num=3):
         str_intervals = []
         for interval in intervals:
-            left_bound, right_bound = '[', ']'
-            if interval.closed == 'left':
-                right_bound = ')'
-            elif interval.closed == 'right':
-                left_bound = '('
-            str_intervals.append("{}{}, {}{}".format(left_bound, round(interval.left, round_num),
-                                                     round(interval.right, round_num), right_bound))
+            left_bound, right_bound = "[", "]"
+            if interval.closed == "left":
+                right_bound = ")"
+            elif interval.closed == "right":
+                left_bound = "("
+            str_intervals.append(
+                "{}{}, {}{}".format(
+                    left_bound, round(interval.left, round_num), round(interval.right, round_num), right_bound
+                )
+            )
 
         return str_intervals
 
     @staticmethod
-    def psi_score(expected_interval: np.ndarray, actual_interval: np.ndarray, expect_total_num, actual_total_num,
-                  debug=False):
-
+    def psi_score(
+        expected_interval: np.ndarray, actual_interval: np.ndarray, expect_total_num, actual_total_num, debug=False
+    ):
         expected_interval[expected_interval == 0] = 1e-6  # in case no overlap samples
 
         actual_interval[actual_interval == 0] = 1e-6  # in case no overlap samples

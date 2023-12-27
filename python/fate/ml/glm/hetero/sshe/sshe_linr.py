@@ -35,8 +35,18 @@ logger = logging.getLogger(__name__)
 
 
 class SSHELinearRegression(Module):
-    def __init__(self, epochs, batch_size, tol, early_stop, learning_rate, init_param,
-                 reveal_every_epoch=False, reveal_loss_freq=1, threshold=0.5):
+    def __init__(
+        self,
+        epochs,
+        batch_size,
+        tol,
+        early_stop,
+        learning_rate,
+        init_param,
+        reveal_every_epoch=False,
+        reveal_loss_freq=1,
+        threshold=0.5,
+    ):
         self.learning_rate = learning_rate
         self.epochs = epochs
         self.batch_size = batch_size
@@ -74,7 +84,7 @@ class SSHELinearRegression(Module):
                 reveal_every_epoch=self.reveal_every_epoch,
                 reveal_loss_freq=self.reveal_loss_freq,
                 early_stop=self.early_stop,
-                tol=self.tol
+                tol=self.tol,
             )
         else:
             logger.info("estimator is not none, will train with warm start")
@@ -101,7 +111,7 @@ class SSHELinearRegression(Module):
                 # "optimizer_param": self.optimizer_param,
                 "reveal_every_epoch": self.reveal_every_epoch,
                 "reveal_loss_freq": self.reveal_loss_freq,
-                "tol": self.tol
+                "tol": self.tol,
             },
         }
 
@@ -115,7 +125,7 @@ class SSHELinearRegression(Module):
             reveal_every_epoch=model["meta"]["reveal_every_epoch"],
             reveal_loss_freq=model["meta"]["reveal_loss_freq"],
             tol=model["meta"]["tol"],
-            early_stop=model["meta"]["early_stop"]
+            early_stop=model["meta"]["early_stop"],
         )
         estimator = SSHELREstimator(
             epochs=model["meta"]["epochs"],
@@ -124,7 +134,7 @@ class SSHELinearRegression(Module):
             reveal_every_epoch=model["meta"]["reveal_every_epoch"],
             reveal_loss_freq=model["meta"]["reveal_loss_freq"],
             tol=model["meta"]["tol"],
-            early_stop=model["meta"]["early_stop"]
+            early_stop=model["meta"]["early_stop"],
         )
         estimator.restore(model["data"]["estimator"])
         linr.estimator = estimator
@@ -137,8 +147,18 @@ class SSHELinearRegression(Module):
 
 
 class SSHELREstimator(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate=None, init_param=None,
-                 reveal_every_epoch=True, reveal_loss_freq=3, early_stop=None, tol=None):
+    def __init__(
+        self,
+        epochs=None,
+        batch_size=None,
+        optimizer=None,
+        learning_rate=None,
+        init_param=None,
+        reveal_every_epoch=True,
+        reveal_loss_freq=3,
+        early_stop=None,
+        tol=None,
+    ):
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer
@@ -168,6 +188,7 @@ class SSHELREstimator(HeteroModule):
             initialize_func = lambda x: self.w
         if self.init_param.get("fit_intercept"):
             train_data["intercept"] = 1.0
+        train_data_n = train_data.shape[0]
         layer = SSHELinearRegressionLayer(
             ctx,
             in_features_a=ctx.mpc.option_call(lambda: train_data.shape[1], dst=rank_a),
@@ -184,10 +205,12 @@ class SSHELREstimator(HeteroModule):
         wb = layer.wb
         if ctx.is_on_guest:
             batch_loader = dataframe.DataLoader(
-                train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=False)
+                train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=False
+            )
         else:
             batch_loader = dataframe.DataLoader(
-                train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
+                train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host"
+            )
         # if self.reveal_every_epoch:
         if self.early_stop == "weight_diff":
             wa_p = wa.get_plain_text(dst=rank_a)
@@ -211,11 +234,16 @@ class SSHELREstimator(HeteroModule):
                 if i % self.reveal_loss_freq == 0:
                     if epoch_loss is None:
                         epoch_loss = loss.get(dst=rank_b)
+                        if ctx.is_on_guest:
+                            epoch_loss = epoch_loss * h.shape[0]
                     else:
-                        epoch_loss += loss.get(dst=rank_b)
+                        batch_loss = loss.get(dst=rank_b)
+                        if ctx.is_on_guest:
+                            epoch_loss += batch_loss * h.shape[0]
                 loss.backward()
                 optimizer.step()
             if epoch_loss is not None and ctx.is_on_guest:
+                epoch_loss = epoch_loss / train_data_n
                 epoch_ctx.metrics.log_loss("linr_loss", epoch_loss.tolist())
             # if self.reveal_every_epoch:
             #    wa_p = wa.get_plain_text(dst=rank_a)
@@ -295,7 +323,7 @@ class SSHELREstimator(HeteroModule):
             "is_converged": self.is_converged,
             "fit_intercept": self.init_param.get("fit_intercept"),
             "header": self.header,
-            "lr": self.lr
+            "lr": self.lr,
         }
 
     def restore(self, model):

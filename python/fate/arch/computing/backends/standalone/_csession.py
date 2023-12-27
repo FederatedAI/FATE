@@ -36,20 +36,6 @@ class CSession(KVTableContext):
             session_id = generate_computing_uuid()
         if data_dir is None:
             raise ValueError("data_dir is None")
-            # data_dir = os.environ.get(
-            #     "STANDALONE_DATA_PATH",
-            #     os.path.abspath(
-            #         os.path.join(
-            #             os.path.dirname(__file__),
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             os.path.pardir,
-            #             "data",
-            #         )
-            #     ),
-            # )
         if options is None:
             options = {}
         max_workers = options.get("task_cores", None)
@@ -107,7 +93,6 @@ class CSession(KVTableContext):
         return Table(table)
 
     def _info(self, level=0):
-
         if level == 0:
             return f"Standalone<session_id={self.session_id}, max_workers={self._session.max_workers}, data_dir={self._session.data_dir}>"
 
@@ -130,7 +115,7 @@ class CSession(KVTableContext):
     def kill(self):
         return self._session.kill()
 
-    def destroy(self):
+    def _destroy(self):
         try:
             logger.debug(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")

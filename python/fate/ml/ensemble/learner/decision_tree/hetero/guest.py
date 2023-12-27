@@ -56,7 +56,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         gh_pack=True,
         split_info_pack=True,
         hist_sub=True,
-        tree_mode=ALL_FEAT
+        tree_mode=ALL_FEAT,
     ):
         super().__init__(
             max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features
@@ -153,8 +153,13 @@ class HeteroDecisionTreeGuest(DecisionTree):
         return bin_len, max_max_value
 
     def _update_sample_pos(
-        self, ctx: Context, cur_layer_nodes: List[Node], sample_pos: DataFrame, data: DataFrame, node_map: dict,
-            local_update=False
+        self,
+        ctx: Context,
+        cur_layer_nodes: List[Node],
+        sample_pos: DataFrame,
+        data: DataFrame,
+        node_map: dict,
+        local_update=False,
     ):
         sitename = ctx.local.name
         data_with_pos = DataFrame.hstack([data, sample_pos])
@@ -292,7 +297,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         ctx.hosts.put("sync_nodes", [mask_cur_layer, mask_next_layer])
 
     def booster_fit(self, ctx: Context, bin_train_data: DataFrame, grad_and_hess: DataFrame, binning_dict: dict):
-
         # Initialization
         train_df = bin_train_data
         sample_pos = self._init_sample_pos(train_df)
@@ -339,7 +343,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         grad_and_hess["cnt"] = 1
 
         for cur_depth, sub_ctx in ctx.on_iterations.ctxs_range(self.max_depth):
-
             if len(cur_layer_node) == 0:
                 logger.info("no nodes to split, stop training")
                 break
@@ -366,7 +369,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 sk=self._sk,
                 coder=self._coder,
                 gh_pack=self._gh_pack,
-                pack_info=self._pack_info
+                pack_info=self._pack_info,
             )
             # update tree with best splits
             next_layer_nodes = self._update_tree(sub_ctx, cur_layer_node, split_info, train_df)
@@ -376,8 +379,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if not self._is_local_tree:
                 self._sync_nodes(sub_ctx, cur_layer_node, next_layer_nodes)
             # update sample positions
-            sample_pos = self._update_sample_pos(sub_ctx, cur_layer_node, sample_pos, train_df, node_map,
-                                                 local_update=self._is_local_tree)
+            sample_pos = self._update_sample_pos(
+                sub_ctx, cur_layer_node, sample_pos, train_df, node_map, local_update=self._is_local_tree
+            )
             # if sample reaches leaf nodes, drop them
             sample_on_leaves = self._get_samples_on_leaves(sample_pos)
             train_df, sample_pos, grad_and_hess = self._drop_samples_on_leaves(sample_pos, train_df, grad_and_hess)

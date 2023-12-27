@@ -195,6 +195,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             rpOptions.put(Dict.SERDES, rsHeader.getOptions().getOrDefault("serdes", SerdesTypes.PICKLE.name()));
         }
 
+        // use in-memory store here
+        rpOptions.put(Dict.STORE_TYPE_SNAKECASE, "IN_MEMORY");
+
         // table creates here
         RollPair rp = ctx.load(namespace, name, rpOptions);
         Integer partitionId = rsHeader.getPartitionId();

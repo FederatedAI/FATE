@@ -22,29 +22,40 @@ from fate.ml.model_selection.data_split import DataSplitModuleGuest, DataSplitMo
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
 def data_split(
-        ctx: Context,
-        role: Role,
-        input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        train_size: cpn.parameter(type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)], default=None,
-                                  desc="size of output training data, "
-                                       "should be either int for exact sample size or float for fraction"),
-        validate_size: cpn.parameter(type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)], default=None,
-                                     desc="size of output validation data, "
-                                          "should be either int for exact sample size or float for fraction"),
-        test_size: cpn.parameter(type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)], default=None,
-                                 desc="size of output test data, "
-                                      "should be either int for exact sample size or float for fraction"),
-        stratified: cpn.parameter(type=bool, default=False,
-                                  desc="whether sample with stratification, "
-                                       "should not use this for data with continuous label values"),
-        random_state: cpn.parameter(type=params.conint(ge=0), default=None, desc="random state"),
-        hetero_sync: cpn.parameter(type=bool, default=True,
-                                   desc="whether guest sync data set sids with host, "
-                                        "default True for hetero scenario, "
-                                        "should set to False for local and homo scenario"),
-        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
-        validate_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
-        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+    ctx: Context,
+    role: Role,
+    input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    train_size: cpn.parameter(
+        type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)],
+        default=None,
+        desc="size of output training data, " "should be either int for exact sample size or float for fraction",
+    ),
+    validate_size: cpn.parameter(
+        type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)],
+        default=None,
+        desc="size of output validation data, " "should be either int for exact sample size or float for fraction",
+    ),
+    test_size: cpn.parameter(
+        type=Union[params.confloat(ge=0.0, le=1.0), params.conint(ge=0)],
+        default=None,
+        desc="size of output test data, " "should be either int for exact sample size or float for fraction",
+    ),
+    stratified: cpn.parameter(
+        type=bool,
+        default=False,
+        desc="whether sample with stratification, " "should not use this for data with continuous label values",
+    ),
+    random_state: cpn.parameter(type=params.conint(ge=0), default=None, desc="random state"),
+    hetero_sync: cpn.parameter(
+        type=bool,
+        default=True,
+        desc="whether guest sync data set sids with host, "
+        "default True for hetero scenario, "
+        "should set to False for local and homo scenario",
+    ),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+    validate_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
 ):
     if train_size is None and validate_size is None and test_size is None:
         train_size = 0.8
@@ -64,12 +75,13 @@ def data_split(
 
     train_data_set, validate_data_set, test_data_set = module.fit(sub_ctx, input_data)
     # train_data_set, validate_data_set, test_data_set = module.split_data(train_data)
-    data_split_summary = {'original_count': input_data.shape[0],
-                          'train_count': train_data_set.shape[0] if train_data_set else None,
-                          'validate_count': validate_data_set.shape[0] if validate_data_set else None,
-                          'test_count': test_data_set.shape[0] if test_data_set else None,
-                          'stratified': stratified}
-    ctx.metrics.log_metrics(data_split_summary, "summary")
+    data_split_summary = {
+        "original_count": input_data.shape[0],
+        "train_count": train_data_set.shape[0] if train_data_set else 0,
+        "validate_count": validate_data_set.shape[0] if validate_data_set else 0,
+        "test_count": test_data_set.shape[0] if test_data_set else 0,
+    }
+    ctx.metrics.log_metrics(data_split_summary, name="summary", type="data_split")
     if train_data_set:
         train_output_data.write(train_data_set)
     if validate_data_set:

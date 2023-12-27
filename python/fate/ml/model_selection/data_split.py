@@ -25,13 +25,7 @@ logger = logging.getLogger(__name__)
 
 class DataSplitModuleGuest(Module):
     def __init__(
-            self,
-            train_size=0.8,
-            validate_size=0.2,
-            test_size=0.0,
-            stratified=False,
-            random_state=None,
-            hetero_sync=True
+        self, train_size=0.8, validate_size=0.2, test_size=0.0, stratified=False, random_state=None, hetero_sync=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
@@ -42,12 +36,16 @@ class DataSplitModuleGuest(Module):
 
     def fit(self, ctx: Context, train_data, validate_data=None):
         data_count = train_data.shape[0]
-        train_size, validate_size, test_size = get_split_data_size(self.train_size,
-                                                                   self.validate_size,
-                                                                   self.test_size,
-                                                                   data_count)
+        train_size, validate_size, test_size = get_split_data_size(
+            self.train_size, self.validate_size, self.test_size, data_count
+        )
+
         if self.stratified:
-            train_data_set = sample_per_label(train_data, sample_count=train_size, random_state=self.random_state)
+            train_data_set, train_sample_n_per_label, labels = sample_per_label(
+                train_data, sample_count=train_size, random_state=self.random_state
+            )
+            if len(train_sample_n_per_label) == 0:
+                train_sample_n_per_label = {label: 0 for label in labels}
         else:
             train_data_set = sample_data(df=train_data, n=train_size, random_state=self.random_state)
         if train_data_set is not None:
@@ -58,8 +56,11 @@ class DataSplitModuleGuest(Module):
             validate_test_data_set = train_data
 
         if self.stratified:
-            validate_data_set = sample_per_label(validate_test_data_set, sample_count=validate_size,
-                                                 random_state=self.random_state)
+            validate_data_set, valid_sample_n_per_label, _ = sample_per_label(
+                validate_test_data_set, sample_count=validate_size, random_state=self.random_state
+            )
+            if len(valid_sample_n_per_label) == 0:
+                valid_sample_n_per_label = {label: 0 for label in labels}
         else:
             validate_data_set = sample_data(df=validate_test_data_set, n=validate_size, random_state=self.random_state)
         if validate_data_set is not None:
@@ -84,18 +85,28 @@ class DataSplitModuleGuest(Module):
             ctx.hosts.put("validate_data_sid", validate_sid)
             ctx.hosts.put("test_data_sid", test_sid)
 
+        if self.stratified:
+            if test_data_set:
+                test_sample_n_per_label = {}
+                for label in labels:
+                    test_sample_n_per_label[label] = int((test_data_set.label == label).sum().values[0])
+            else:
+                test_sample_n_per_label = {label: 0 for label in labels}
+            for label in labels:
+                label_summary = {}
+                label_summary["original_count"] = int((train_data.label == label).sum().values[0])
+                label_summary["train_count"] = train_sample_n_per_label[label]
+                label_summary["validate_count"] = valid_sample_n_per_label[label]
+                label_summary["test_count"] = test_sample_n_per_label[label]
+
+                ctx.metrics.log_metrics(label_summary, name=f"{label}_summary", type="data_split")
+
         return train_data_set, validate_data_set, test_data_set
 
 
 class DataSplitModuleHost(Module):
     def __init__(
-            self,
-            train_size=0.8,
-            validate_size=0.2,
-            test_size=0.0,
-            stratified=False,
-            random_state=None,
-            hetero_sync=True
+        self, train_size=0.8, validate_size=0.2, test_size=0.0, stratified=False, random_state=None, hetero_sync=True
     ):
         self.train_size = train_size
         self.validate_size = validate_size
@@ -118,13 +129,16 @@ class DataSplitModuleHost(Module):
                 test_data_set = train_data.loc(test_data_sid, preserve_order=True)
         else:
             data_count = train_data.shape[0]
-            train_size, validate_size, test_size = get_split_data_size(self.train_size,
-                                                                       self.validate_size,
-                                                                       self.test_size,
-                                                                       data_count)
+            train_size, validate_size, test_size = get_split_data_size(
+                self.train_size, self.validate_size, self.test_size, data_count
+            )
 
             if self.stratified:
-                train_data_set = sample_per_label(train_data, sample_count=train_size, random_state=self.random_state)
+                train_data_set, train_sample_n_per_label, labels = sample_per_label(
+                    train_data, sample_count=train_size, random_state=self.random_state
+                )
+                if len(train_sample_n_per_label) == 0:
+                    train_sample_n_per_label = {label: 0 for label in labels}
             else:
                 train_data_set = sample_data(df=train_data, n=train_size, random_state=self.random_state)
             if train_data_set is not None:
@@ -134,11 +148,15 @@ class DataSplitModuleHost(Module):
                 validate_test_data_set = train_data
 
             if self.stratified:
-                validate_data_set = sample_per_label(validate_test_data_set, sample_count=validate_size,
-                                                     random_state=self.random_state)
+                validate_data_set, valid_sample_n_per_label, _ = sample_per_label(
+                    validate_test_data_set, sample_count=validate_size, random_state=self.random_state
+                )
+                if len(valid_sample_n_per_label) == 0:
+                    valid_sample_n_per_label = {label: 0 for label in labels}
             else:
-                validate_data_set = sample_data(df=validate_test_data_set, n=validate_size,
-                                                random_state=self.random_state)
+                validate_data_set = sample_data(
+                    df=validate_test_data_set, n=validate_size, random_state=self.random_state
+                )
             if validate_data_set is not None:
                 # validate_sid = validate_data_set.get_indexer(target="sample_id")
                 test_data_set = validate_test_data_set.drop(validate_data_set)
@@ -149,6 +167,21 @@ class DataSplitModuleHost(Module):
                     test_data_set = None
                 else:
                     test_data_set = validate_test_data_set
+            if self.stratified:
+                if test_data_set:
+                    test_sample_n_per_label = {}
+                    for label in labels:
+                        test_sample_n_per_label[label] = int((test_data_set.label == label).sum().values[0])
+                else:
+                    test_sample_n_per_label = {label: 0 for label in labels}
+                for label in labels:
+                    label_summary = {}
+                    label_summary["original_count"] = int((train_data.label == label).sum().values[0])
+                    label_summary["train_count"] = train_sample_n_per_label[label]
+                    label_summary["validate_count"] = valid_sample_n_per_label[label]
+                    label_summary["test_count"] = test_sample_n_per_label[label]
+
+                    ctx.metrics.log_metrics(label_summary, name=f"{label}_summary", type="data_split")
 
         return train_data_set, validate_data_set, test_data_set
 
@@ -162,25 +195,30 @@ def sample_data(df, n, random_state):
 
 def sample_per_label(train_data, sample_count=None, random_state=None):
     train_data_binarized_label = train_data.label.get_dummies()
-    labels = [label_name.split("_")[1] for label_name in train_data_binarized_label.columns]
+    labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
     sampled_data_df = []
     sampled_n = 0
     data_n = train_data.shape[0]
+    sample_n_per_label = {}
     for i, label in enumerate(labels):
-        label_data = train_data.iloc(train_data.label == int(label))
+        label_data = train_data.iloc(train_data.label == label)
         if i == len(labels) - 1:
             # last label:
             to_sample_n = sample_count - sampled_n
         else:
             to_sample_n = round(label_data.shape[0] / data_n * sample_count)
         label_sampled_data = sample_data(df=label_data, n=to_sample_n, random_state=random_state)
+        if label_sampled_data:
+            sample_n_per_label[label] = label_sampled_data.shape[0]
+        else:
+            sample_n_per_label[label] = 0
         if label_sampled_data is not None:
             sampled_data_df.append(label_sampled_data)
             sampled_n += label_sampled_data.shape[0]
     sampled_data = None
     if sampled_data_df:
         sampled_data = DataFrame.vstack(sampled_data_df)
-    return sampled_data
+    return sampled_data, sample_n_per_label, labels
 
 
 def get_split_data_size(train_size, validate_size, test_size, data_count):

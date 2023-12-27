@@ -252,7 +252,7 @@ broker-debug: debug日志默认不开启
 - 日志4
 
 ```
-2023-11-27 23:54:23,318|grpc|UNARY_CALL|session:_fateflow_10000|topic:202311271901517083180|src:|des:10000|code:E0000000000|cost:18|172.16.153.111:9360|size:320|
+2023-11-27 23:54:23,318|grpc|UNARY_CALL|session:_fateflow_10000|topic:202311271901517083180|src:|des:10000|code:E0000000000|cost:18|127.0.0.1:9360|size:320|
 ```
 
 这条日志为osx收到fateflow的请求，osx采取的动作为UNARY_CALL，代表着为fateflow所使用的接口

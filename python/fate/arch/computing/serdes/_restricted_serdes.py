@@ -1,8 +1,23 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import importlib
 import io
-import pickle
 
 from ruamel import yaml
+from ._serdes_base import p_dumps, Unpickler
 
 
 def get_restricted_serdes():
@@ -12,14 +27,14 @@ def get_restricted_serdes():
 class WhitelistRestrictedSerdes:
     @classmethod
     def serialize(cls, obj) -> bytes:
-        return pickle.dumps(obj)
+        return p_dumps(obj)
 
     @classmethod
     def deserialize(cls, bytes) -> object:
         return RestrictedUnpickler(io.BytesIO(bytes)).load()
 
 
-class RestrictedUnpickler(pickle.Unpickler):
+class RestrictedUnpickler(Unpickler):
     def _load(self, module, name):
         try:
             return super().find_class(module, name)
@@ -33,7 +48,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             for m in Whitelist.get_whitelist_glob():
                 if module.startswith(m):
                     return self._load(module, name)
-        raise pickle.UnpicklingError(f"forbidden unpickle class {module} {name}")
+        raise ValueError(f"forbidden unpickle class {module} {name}")
 
 
 class Whitelist:

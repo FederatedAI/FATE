@@ -15,6 +15,7 @@
 from ._cipher import CipherKit, PHECipher, PHECipherPublic
 from ._context import Context
 from ._namespace import NS
-from ._federation import Parties
+from ._parties import Parties
+from ._context_helper import create_context
 
-__all__ = ["Context", "CipherKit", "PHECipher", "PHECipherPublic", "NS", "Parties"]
+__all__ = ["Context", "CipherKit", "PHECipher", "PHECipherPublic", "NS", "Parties", "create_context"]

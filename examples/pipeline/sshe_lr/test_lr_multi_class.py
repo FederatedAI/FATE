@@ -17,7 +17,7 @@ import argparse
 
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.components.fate import SSHELR, PSI, Reader
+from fate_client.pipeline.components.fate import SSHELR, PSI, Reader, FeatureScale
 from fate_client.pipeline.utils import test_utils
 
 
@@ -44,15 +44,16 @@ def main(config="../config.yaml", namespace=""):
         name="vehicle_scale_hetero_host"
     )
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
+    scale_0 = FeatureScale("scale_0", train_data=psi_0.outputs["output_data"], method="standard")
     lr_0 = SSHELR("lr_0",
                   learning_rate=0.15,
-                  epochs=10,
-                  batch_size=None,
+                  epochs=2,
+                  batch_size=300,
                   reveal_every_epoch=False,
                   early_stop="diff",
                   reveal_loss_freq=1,
                   init_param={"fit_intercept": True, "method": "random_uniform"},
-                  train_data=psi_0.outputs["output_data"])
+                  train_data=scale_0.outputs["train_output_data"])
 
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),
@@ -60,7 +61,7 @@ def main(config="../config.yaml", namespace=""):
                               predict_column_name='predict_result',
                               input_data=lr_0.outputs["train_output_data"])
 
-    pipeline.add_tasks([reader_0, psi_0, lr_0, evaluation_0])
+    pipeline.add_tasks([reader_0, psi_0, scale_0, lr_0, evaluation_0])
 
     pipeline.compile()
     # print(pipeline.get_dag())

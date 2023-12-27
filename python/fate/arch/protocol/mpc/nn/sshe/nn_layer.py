@@ -23,6 +23,9 @@ class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
         wb_init_fn: typing.Callable[[typing.Tuple], torch.Tensor],
         precision_bits=None,
     ):
+        self.group = ctx.mpc.communicator.new_group(
+            [rank_a, rank_b], f"{ctx.namespace.federation_tag}.sshe_nn_aggregator_layer"
+        )
         self.aggregator = SSHENeuralNetworkAggregator(
             ctx,
             in_features_a=in_features_a,
@@ -30,6 +33,7 @@ class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
             out_features=out_features,
             rank_a=rank_a,
             rank_b=rank_b,
+            group=self.group,
             encoder=FixedPointEncoder(precision_bits),
             wa_init_fn=wa_init_fn,
             wb_init_fn=wb_init_fn,
@@ -42,11 +46,11 @@ class SSHENeuralNetworkAggregatorLayer(torch.nn.Module):
     def forward(self, input):
         return SSHENeuralNetworkAggregatorFunction.apply(input, self.aggregator)
 
-    def get_wa(self):
-        return self.aggregator.wa.get_plain_text()
+    def get_wa(self, dst=None):
+        return self.aggregator.wa.get_plain_text(dst=dst, group=self.group)
 
-    def get_wb(self):
-        return self.aggregator.wb.get_plain_text()
+    def get_wb(self, dst=None):
+        return self.aggregator.wb.get_plain_text(dst=dst, group=self.group)
 
 
 class SSHENeuralNetworkAggregatorFunction(torch.autograd.Function):
@@ -76,6 +80,7 @@ class SSHENeuralNetworkAggregator:
         out_features,
         rank_a,
         rank_b,
+        group,
         encoder,
         wa_init_fn,
         wb_init_fn,
@@ -83,12 +88,12 @@ class SSHENeuralNetworkAggregator:
         cipher_options=None,
     ):
         self.ctx = ctx
-        self.group = ctx.mpc.communicator.new_group([rank_a, rank_b], "sshe_nn_aggregator_layer")
         self.wa = ctx.mpc.init_tensor(shape=(in_features_a, out_features), init_func=wa_init_fn, src=rank_a)
         self.wb = ctx.mpc.init_tensor(shape=(in_features_b, out_features), init_func=wb_init_fn, src=rank_b)
         self.phe_cipher = ctx.cipher.phe.setup(options=cipher_options)
         self.rank_a = rank_a
         self.rank_b = rank_b
+        self.group = group
         self.precision_bits = precision_bits
         self.encoder = encoder
 

@@ -39,9 +39,7 @@ def __SPK_circuit_constants(device):
         device=device,
     )
 
-    __MULTIPLIERS = torch.tensor(
-        [(1 << (2**iter + 1)) - 2 for iter in range(__LOG_BITS)], device=device
-    )
+    __MULTIPLIERS = torch.tensor([(1 << (2**iter + 1)) - 2 for iter in range(__LOG_BITS)], device=device)
     __OUT_MASKS = __MASKS * __MULTIPLIERS
 
     return __MASKS, __OUT_MASKS, __MULTIPLIERS

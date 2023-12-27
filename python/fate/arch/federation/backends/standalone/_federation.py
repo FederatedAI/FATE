@@ -68,5 +68,5 @@ class StandaloneFederation(Federation):
 
         return [Table(r) if isinstance(r, standalone_raw.Table) else r for r in rtn]
 
-    def destroy(self):
+    def _destroy(self):
         self._federation.destroy()

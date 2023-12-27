@@ -20,16 +20,16 @@ def get_initialize_func(**kwargs):
     method = kwargs["method"]
     random_state = kwargs.get("random_state", None)
 
-    if method == 'zeros':
+    if method == "zeros":
         return lambda shape: torch.zeros(shape)
-    elif method == 'ones':
+    elif method == "ones":
         return lambda shape: torch.ones(shape)
-    elif method == 'random':
+    elif method == "random":
         if random_state is not None:
             generator = torch.Generator().manual_seed(random_state)
             return lambda shape: torch.randn(shape, generator=generator)
         return lambda shape: torch.randn(shape)
-    elif method == 'random_uniform':
+    elif method == "random_uniform":
         if random_state is not None:
             generator = torch.Generator().manual_seed(random_state)
             return lambda shape: torch.rand(shape, generator=generator)
@@ -45,20 +45,18 @@ def initialize_param(coef_len, **kwargs):
     random_state = kwargs.get("random_state", None)
     if fit_intercept:
         param_len = param_len + 1
-    if method == 'zeros':
+    if method == "zeros":
         return torch.zeros((param_len, 1), requires_grad=True)
-    elif method == 'ones':
+    elif method == "ones":
         return torch.ones((param_len, 1), requires_grad=True)
-    elif method == 'consts':
-        return torch.full(
-            (param_len, 1), float(
-                kwargs["fill_val"]), requires_grad=True)
-    elif method == 'random':
+    elif method == "consts":
+        return torch.full((param_len, 1), float(kwargs["fill_val"]), requires_grad=True)
+    elif method == "random":
         if random_state is not None:
             generator = torch.Generator().manual_seed(random_state)
             return torch.randn((param_len, 1), generator=generator, requires_grad=True)
         return torch.randn((param_len, 1), requires_grad=True)
-    elif method == 'random_uniform':
+    elif method == "random_uniform":
         if random_state is not None:
             generator = torch.Generator().manual_seed(random_state)
             return torch.rand((param_len, 1), generator=generator, requires_grad=True)

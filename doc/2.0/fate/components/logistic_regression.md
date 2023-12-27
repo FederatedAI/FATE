@@ -6,33 +6,16 @@ Homogeneous LR (HomoLR) and Heterogeneous LR (HeteroLR and Hetero_SSHE_LR).
 
 Below lists features of each LR models:
 
-| Linear Model  	 | Multiclass(OVR)                                                             | Multi-Host                                     	                           | Cross Validation                                                      	 | Warm-Start                                                                 |
-|-----------------|-----------------------------------------------------------------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| Hetero LR     	 | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_multi_class.py) | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_cv.py)      | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_warm_start.py) |
-| Homo LR       	 | [&check;]()                                                                 | [&check;]()                                                                | [&check;]()                                                             | [&check;]()                                                                |
+| Linear Model  	 | Multiclass(OVR)                                                             | Arbiter-Less Training | Multi-Host                                     	                           | Cross Validation                                                      	 | Warm-Start                                                                 |     |
+|:----------------|-----------------------------------------------------------------------------|-----------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------|-----|
+| Coordinated LR  | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_multi_class.py) | &cross;               | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_cv.py)      | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_warm_start.py) |     |
+| SSHE LR         | [&check;](../../../examples/pipeline/sshe_lr/test_lr_multi_class.py)        | &check;               | &cross;                                                                    | [&check;](../../../examples/pipeline/sshe_lr/test_lr_cv.py)             | [&check;](../../../examples/pipeline/sshe_lr/test_lr_warm_start.py)        |     |
+| Homo LR       	 | [&check;]()                                                                 | &cross;               | [&check;]()                                                                | [&check;]()                                                             | [&check;]()                                                                |     |
 
 We simplified the federation process into three parties. Party A
 represents Guest， party B represents Host while party C, which also
 known as "Arbiter", is a third party that holds a private key for each
 party and work as a coordinator.
-
-## Heterogeneous LR
-
-The HeteroLR carries out the federated learning in a different way. As
-shown in Figure 2, A sample alignment process is conducted before
-training. This sample alignment process is to identify overlapping
-samples stored in databases of the two involved parties. The federated
-model is built based on those overlapping samples. The whole sample
-alignment process will **not** leak confidential information (e.g.,
-sample ids) on the two parties since it is conducted in an encrypted
-way.
-ion) gradients to
-arbiter. The arbiter aggregates these gradients to form a federated
-gradient that will then be distributed to all parties for updating their
-local models. Similar to traditional LR, the training process will stop
-when the federated model converges or the whole training process reaches
-a predefined max-iteration threshold. More details is available in this
-[Practical Secure Aggregation for Privacy-Preserving Machine Learning](https://dl.acm.org/citation.cfm?id=3133982).
 
 ## Coordinated LR
 
@@ -62,6 +45,24 @@ convergence decision is happening in Arbiter.
 
 ![Figure 2 (Federated Multi-host HeteroLR
 Principle)](../images/hetero_lr_multi_host.png)
+
+# Heterogeneous SSHE Logistic Regression
+
+FATE implements a heterogeneous logistic regression without arbiter role
+called for hetero_sshe_lr. More details is available in this
+following paper: [When Homomorphic Encryption Marries Secret Sharing:
+Secure Large-Scale Sparse Logistic Regression and Applications
+in Risk Control](https://arxiv.org/pdf/2008.08753.pdf).
+We have also made some optimization so that the code may not exactly
+same with this paper.
+The training process could be described as the
+following: forward and backward process.
+![Figure 3 (forward)](../images/sshe-lr_forward.png)
+![Figure 4 (backward)](../images/sshe-lr_backward.png)
+
+The training process is based secure matrix multiplication protocol(SMM),
+which HE and Secret-Sharing hybrid protocol is included.
+![Figure 5 (SMM)](../images/secure_matrix_multiplication.png)
 
 ## Features
 

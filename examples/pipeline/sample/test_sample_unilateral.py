@@ -51,7 +51,7 @@ def main(config="../config.yaml", namespace=""):
         name="breast_hetero_host"
     )
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
-    psi_1 = PSI("psi_1", input_data=reader_0.outputs["output_data"])
+    psi_1 = PSI("psi_1", input_data=reader_1.outputs["output_data"])
 
     sample_0 = Sample("sample_0",
                       runtime_parties=dict(guest=guest),
