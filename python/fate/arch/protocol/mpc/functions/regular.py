@@ -75,9 +75,7 @@ def pad(self, pad, mode="constant", value=0):
     if hasattr(result._tensor, "pad"):
         result._tensor = self._tensor.pad(pad, mode=mode, value=value)
     else:
-        result._tensor = torch.nn.functional.pad(
-            self._tensor, pad, mode=mode, value=value
-        )
+        result._tensor = torch.nn.functional.pad(self._tensor, pad, mode=mode, value=value)
     return result
 
 

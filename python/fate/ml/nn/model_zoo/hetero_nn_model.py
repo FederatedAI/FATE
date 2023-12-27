@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 Agg Layer Arguments
 """
 
+
 @dataclass
 class Args(object):
     def to_dict(self):
@@ -48,20 +49,18 @@ class Args(object):
 
 @dataclass
 class StdAggLayerArgument(Args):
-
-    merge_type: Literal['sum', 'concat'] = 'sum'
+    merge_type: Literal["sum", "concat"] = "sum"
     concat_dim = 1
 
     def to_dict(self):
         d = super().to_dict()
-        d['agg_type'] = 'std'
+        d["agg_type"] = "std"
         return d
 
 
 @dataclass
 class FedPassArgument(StdAggLayerArgument):
-
-    layer_type: Literal['conv', 'linear'] = 'conv'
+    layer_type: Literal["conv", "linear"] = "conv"
     in_channels_or_features: int = 8
     out_channels_or_features: int = 8
     kernel_size: Union[int, tuple] = 3
@@ -69,9 +68,9 @@ class FedPassArgument(StdAggLayerArgument):
     padding: int = 0
     bias: bool = True
     hidden_features: int = 128
-    activation: Literal['relu', 'tanh', 'sigmoid'] = "relu"
-    passport_distribute: Literal['gaussian', 'uniform'] = 'gaussian'
-    passport_mode: Literal['single', 'multi'] = 'single'
+    activation: Literal["relu", "tanh", "sigmoid"] = "relu"
+    passport_distribute: Literal["gaussian", "uniform"] = "gaussian"
+    passport_mode: Literal["single", "multi"] = "single"
     loc: int = -1.0
     scale: int = 1.0
     low: int = -1.0
@@ -82,13 +81,12 @@ class FedPassArgument(StdAggLayerArgument):
 
     def to_dict(self):
         d = super().to_dict()
-        d['agg_type'] = 'fed_pass'
+        d["agg_type"] = "fed_pass"
         return d
 
 
 @dataclass
 class SSHEArgument(Args):
-
     guest_in_features: int = 8
     host_in_features: int = 8
     out_features: int = 8
@@ -97,55 +95,59 @@ class SSHEArgument(Args):
 
     def to_dict(self):
         d = super().to_dict()
-        d['agg_type'] = 'hess'
+        d["agg_type"] = "hess"
         return d
 
-def parse_agglayer_conf(agglayer_arg_conf):
 
+def parse_agglayer_conf(agglayer_arg_conf):
     import copy
-    if 'agg_type' not in agglayer_arg_conf:
-        raise ValueError('can not load agg layer conf, keyword agg_type not found')
+
+    if "agg_type" not in agglayer_arg_conf:
+        raise ValueError("can not load agg layer conf, keyword agg_type not found")
     agglayer_arg_conf = copy.deepcopy(agglayer_arg_conf)
-    agg_type = agglayer_arg_conf['agg_type']
-    agglayer_arg_conf.pop('agg_type')
-    if agg_type == 'fed_pass':
+    agg_type = agglayer_arg_conf["agg_type"]
+    agglayer_arg_conf.pop("agg_type")
+    if agg_type == "fed_pass":
         agglayer_arg = FedPassArgument(**agglayer_arg_conf)
-    elif agg_type == 'std':
+    elif agg_type == "std":
         agglayer_arg = StdAggLayerArgument(**agglayer_arg_conf)
-    elif agg_type == 'hess':
+    elif agg_type == "hess":
         agglayer_arg = SSHEArgument(**agglayer_arg_conf)
     else:
-        raise ValueError(f'agg type {agg_type} not supported')
+        raise ValueError(f"agg type {agg_type} not supported")
 
     return agglayer_arg
+
 
 """
 Top & Bottom Model Strategy
 """
 
+
 @dataclass
 class TopModelStrategyArguments(Args):
-
-    protect_strategy: Literal['fedpass'] = None
+    protect_strategy: Literal["fedpass"] = None
     fed_pass_arg: Union[FedPassArgument, dict] = None
-    add_output_layer: Literal[None, 'sigmoid', 'softmax'] = None
+    add_output_layer: Literal[None, "sigmoid", "softmax"] = None
 
     def __post_init__(self):
-
-        if self.protect_strategy == 'fedpass':
+        if self.protect_strategy == "fedpass":
             if isinstance(self.fed_pass_arg, dict):
                 self.fed_pass_arg = FedPassArgument(**self.fed_pass_arg)
             if not isinstance(self.fed_pass_arg, FedPassArgument):
                 raise TypeError("fed_pass_arg must be an instance of FedPassArgument for protect_strategy 'fedpass'")
 
-        assert self.add_output_layer in [None, 'sigmoid', 'softmax'], \
-            "add_output_layer must be None, 'sigmoid' or 'softmax'"
+        assert self.add_output_layer in [
+            None,
+            "sigmoid",
+            "softmax",
+        ], "add_output_layer must be None, 'sigmoid' or 'softmax'"
 
     def to_dict(self):
         d = super().to_dict()
-        if 'fed_pass_arg' in d:
-            d['fed_pass_arg'] = d['fed_pass_arg'].to_dict()
-            d['fed_pass_arg'].pop('agg_type')
+        if "fed_pass_arg" in d:
+            d["fed_pass_arg"] = d["fed_pass_arg"].to_dict()
+            d["fed_pass_arg"].pop("agg_type")
         return d
 
 
@@ -154,7 +156,6 @@ def backward_loss(z, backward_error):
 
 
 class HeteroNNModelBase(t.nn.Module):
-    
     def __init__(self):
         super().__init__()
         self._bottom_model = None
@@ -172,19 +173,18 @@ class HeteroNNModelBase(t.nn.Module):
 
 
 class HeteroNNModelGuest(HeteroNNModelBase):
-
-    def __init__(self,
-                 top_model: t.nn.Module,
-                 bottom_model: t.nn.Module = None,
-                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
-                 top_arg: TopModelStrategyArguments = None,
-                 ctx: Context = None
-                 ):
-
+    def __init__(
+        self,
+        top_model: t.nn.Module,
+        bottom_model: t.nn.Module = None,
+        agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
+        top_arg: TopModelStrategyArguments = None,
+        ctx: Context = None,
+    ):
         super(HeteroNNModelGuest, self).__init__()
         # cached variables
         if top_model is None:
-            raise RuntimeError('guest needs a top model to compute loss, but no top model provided')
+            raise RuntimeError("guest needs a top model to compute loss, but no top model provided")
         assert isinstance(top_model, t.nn.Module), "top model should be a torch nn.Module"
         self._top_model = top_model
         self._agg_layer = None
@@ -193,7 +193,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
             self._bottom_model = bottom_model
 
         self._bottom_fw = None  # for backward usage
-        self._agg_fw_rg = None # for backward usage
+        self._agg_fw_rg = None  # for backward usage
         # ctx
         self._ctx = None
         # internal mode
@@ -205,9 +205,11 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         self.setup(ctx=ctx, agglayer_arg=agglayer_arg, top_arg=top_arg, bottom_arg=None)
 
     def __repr__(self):
-        return (f"HeteroNNGuest(top_model={self._top_model}\n"
-                f"agg_layer={self._agg_layer}\n"
-                f"bottom_model={self._bottom_model})")
+        return (
+            f"HeteroNNGuest(top_model={self._top_model}\n"
+            f"agg_layer={self._agg_layer}\n"
+            f"bottom_model={self._bottom_model})"
+        )
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -219,9 +221,13 @@ class HeteroNNModelGuest(HeteroNNModelBase):
     def need_mpc_init(self):
         return isinstance(self._agg_layer, SSHEAggLayerGuest)
 
-    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
-              top_arg: TopModelStrategyArguments = None, bottom_arg=None):
-
+    def setup(
+        self,
+        ctx: Context = None,
+        agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
+        top_arg: TopModelStrategyArguments = None,
+        bottom_arg=None,
+    ):
         self._ctx = ctx
 
         if self._agg_layer is None:
@@ -234,28 +240,24 @@ class HeteroNNModelGuest(HeteroNNModelBase):
             elif isinstance(agglayer_arg, SSHEArgument):
                 self._agg_layer = SSHEAggLayerGuest(**agglayer_arg.to_dict())
                 if self._bottom_model is None:
-                    raise RuntimeError('A bottom model is needed when running a SSHE model')
+                    raise RuntimeError("A bottom model is needed when running a SSHE model")
 
         if self._top_add_model is None:
             if top_arg:
-                logger.info('detect top model strategy')
-                if top_arg.protect_strategy == 'fedpass':
+                logger.info("detect top model strategy")
+                if top_arg.protect_strategy == "fedpass":
                     fedpass_arg = top_arg.fed_pass_arg
                     top_fedpass_model = get_model(**fedpass_arg.to_dict())
                     self._top_add_model = top_fedpass_model
-                    self._top_model = t.nn.Sequential(
-                        self._top_model,
-                        top_fedpass_model
-                    )
-                    if top_arg.add_output_layer == 'sigmoid':
-                        self._top_model.add_module('sigmoid', t.nn.Sigmoid())
-                    elif top_arg.add_output_layer == 'softmax':
-                        self._top_model.add_module('softmax', t.nn.Softmax(dim=1))
+                    self._top_model = t.nn.Sequential(self._top_model, top_fedpass_model)
+                    if top_arg.add_output_layer == "sigmoid":
+                        self._top_model.add_module("sigmoid", t.nn.Sigmoid())
+                    elif top_arg.add_output_layer == "softmax":
+                        self._top_model.add_module("softmax", t.nn.Softmax(dim=1))
 
         self._agg_layer.set_context(ctx)
 
-    def forward(self, x = None):
-
+    def forward(self, x=None):
         if self._agg_layer is None:
             self._auto_setup()
 
@@ -263,8 +265,8 @@ class HeteroNNModelGuest(HeteroNNModelBase):
             self.device = self.get_device(self._top_model)
             self._agg_layer.set_device(self.device)
             if isinstance(self._agg_layer, SSHEAggLayerHost):
-                if self.device.type != 'cpu':
-                    raise ValueError('SSHEAggLayerGuest is not supported on GPU')
+                if self.device.type != "cpu":
+                    raise ValueError("SSHEAggLayerGuest is not supported on GPU")
 
         if self._bottom_model is None:
             b_out = None
@@ -286,7 +288,6 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         return top_out
 
     def backward(self, loss):
-
         if self._guest_direct_backward:
             # send error to hosts & guest side direct backward
             if isinstance(self._agg_layer, SSHEAggLayerGuest):
@@ -306,8 +307,7 @@ class HeteroNNModelGuest(HeteroNNModelBase):
                 bottom_loss.backward()
             self._bottom_fw = False
 
-    def predict(self, x = None):
-
+    def predict(self, x=None):
         with torch.no_grad():
             if self._bottom_model is None:
                 b_out = None
@@ -324,13 +324,12 @@ class HeteroNNModelGuest(HeteroNNModelBase):
 
 
 class HeteroNNModelHost(HeteroNNModelBase):
-
-    def __init__(self,
-                 bottom_model: t.nn.Module,
-                 agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
-                 ctx: Context = None
-                 ):
-
+    def __init__(
+        self,
+        bottom_model: t.nn.Module,
+        agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
+        ctx: Context = None,
+    ):
         super().__init__()
 
         assert isinstance(bottom_model, t.nn.Module), "bottom model should be a torch nn.Module"
@@ -355,9 +354,12 @@ class HeteroNNModelHost(HeteroNNModelBase):
     def need_mpc_init(self):
         return isinstance(self._agg_layer, SSHEAggLayerHost)
 
-    def setup(self, ctx:Context = None, agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
-              bottom_arg=None):
-
+    def setup(
+        self,
+        ctx: Context = None,
+        agglayer_arg: Union[StdAggLayerArgument, FedPassArgument, SSHEArgument] = None,
+        bottom_arg=None,
+    ):
         self._ctx = ctx
 
         if self._agg_layer is None:
@@ -373,7 +375,6 @@ class HeteroNNModelHost(HeteroNNModelBase):
         self._agg_layer.set_context(ctx)
 
     def forward(self, x):
-
         if self._agg_layer is None:
             self._auto_setup()
 
@@ -381,8 +382,8 @@ class HeteroNNModelHost(HeteroNNModelBase):
             self.device = self.get_device(self._bottom_model)
             self._agg_layer.set_device(self.device)
             if isinstance(self._agg_layer, SSHEAggLayerHost):
-                if self.device.type != 'cpu':
-                    raise ValueError('SSHEAggLayerGuest is not supported on GPU')
+                if self.device.type != "cpu":
+                    raise ValueError("SSHEAggLayerGuest is not supported on GPU")
 
         b_out = self._bottom_model(x)
         # bottom layer
@@ -394,7 +395,6 @@ class HeteroNNModelHost(HeteroNNModelBase):
             self._agg_layer.forward(b_out)
 
     def backward(self):
-
         if isinstance(self._agg_layer, SSHEAggLayerHost):
             self._fake_loss.backward()
             self._fake_loss = None
@@ -408,7 +408,6 @@ class HeteroNNModelHost(HeteroNNModelBase):
             self._clear_state()
 
     def predict(self, x):
-
         with torch.no_grad():
             b_out = self._bottom_model(x)
             self._agg_layer.predict(b_out)

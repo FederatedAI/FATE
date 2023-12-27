@@ -397,5 +397,3 @@ class evaluator(TensorEvaluator[EV, V, PK, Coder]):
     @staticmethod
     def pack_squeeze(a: EV, pack_num: int, shift_bit: int, pk: PK) -> EV:
         return a.pack_squeeze(pack_num, shift_bit, pk.pk)
-
-

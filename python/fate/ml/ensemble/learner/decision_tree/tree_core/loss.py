@@ -67,7 +67,6 @@ class BCELoss(Loss):
 
 
 class CELoss(Loss):
-
     def __init__(self, class_num) -> None:
         super().__init__()
         self.class_num = class_num
@@ -91,7 +90,7 @@ class CELoss(Loss):
     @staticmethod
     def compute_loss(label: DataFrame, pred: DataFrame):
         loss_col = label.create_frame()
-        label_pred =  DataFrame.hstack([label, pred])
+        label_pred = DataFrame.hstack([label, pred])
         sample_num = len(label)
         loss_col["loss"] = label_pred.apply_row(lambda s: -np.log(s[1][int(s[0])]), with_label=True)
         loss_col["loss"].fillna(1)
@@ -100,17 +99,18 @@ class CELoss(Loss):
 
     @staticmethod
     def compute_grad(gh: DataFrame, label: DataFrame, score: DataFrame):
-
         label_name = label.schema.label_name
-        label = label.loc(score.get_indexer('sample_id'), preserve_order=True)
+        label = label.loc(score.get_indexer("sample_id"), preserve_order=True)
         new_label = label.create_frame()
         new_label[label_name] = label.label
         stack_df = DataFrame.hstack([score, new_label])
-        stack_df = stack_df.loc(gh.get_indexer('sample_id'), preserve_order=True)
+        stack_df = stack_df.loc(gh.get_indexer("sample_id"), preserve_order=True)
+
         def grad(s):
             grads = [i for i in s["score"]]
             grads[s[label_name]] -= 1
             return [grads]
+
         gh["g"] = stack_df.apply_row(lambda s: grad(s))
 
     @staticmethod

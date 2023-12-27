@@ -24,20 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 class HomoLRServer(HomoModule):
-
     def __init__(self) -> None:
         pass
 
     def fit(self, ctx: Context, data: DataFrame = None) -> None:
-
         server = FedAVGServer(ctx=ctx)
-        logger.info('server class init done, start fed training')
+        logger.info("server class init done, start fed training")
         server.train()
-        logger.info('homo lr fit done')
+        logger.info("homo lr fit done")
 
-    def predict(
-            self,
-            ctx: Context,
-            predict_data: DataFrame = None) -> DataFrame:
-
-        logger.info('skip prediction stage')
+    def predict(self, ctx: Context, predict_data: DataFrame = None) -> DataFrame:
+        logger.info("skip prediction stage")

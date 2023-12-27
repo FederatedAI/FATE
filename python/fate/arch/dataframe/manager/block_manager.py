@@ -800,4 +800,3 @@ class BlockManager(object):
         block_manager.reset_blocks(derived_blocks)
 
         return block_manager, blocks_loc
-    

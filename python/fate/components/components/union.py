@@ -19,12 +19,13 @@ from fate.components.core import GUEST, HOST, Role, cpn
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
 def union(
-        ctx: Context,
-        role: Role,
-        input_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
-        output_data: cpn.dataframe_output(roles=[GUEST, HOST])
+    ctx: Context,
+    role: Role,
+    input_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
+    output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     from fate.ml.preprocessing import Union
+
     data_list = []
     data_len_dict = {}
     for data in input_data_list:
@@ -37,7 +38,6 @@ def union(
     sub_ctx = ctx.sub_ctx("train")
     union_obj = Union()
     output_df = union_obj.fit(sub_ctx, data_list)
-    data_len_dict['total'] = output_df.shape[0]
-    ctx.metrics.log_metrics(data_len_dict,
-                            'summary')
+    data_len_dict["total"] = output_df.shape[0]
+    ctx.metrics.log_metrics(data_len_dict, "summary")
     output_data.write(output_df)

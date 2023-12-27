@@ -25,7 +25,8 @@ def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
     to_promote_block_dict = dict((bid, block_type) for bid, block_type in to_promote_blocks)
     block_table = block_table.mapValues(
         lambda blocks: [
-            blocks[bid] if bid not in to_promote_block_dict
+            blocks[bid]
+            if bid not in to_promote_block_dict
             else Block.get_block_by_type(to_promote_block_dict[bid]).convert_block(blocks[bid].tolist())
             for bid in range(len(blocks))
         ]
@@ -34,10 +35,17 @@ def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
     return block_table, data_manager
 
 
-def promote_partial_block_types(block_table, narrow_blocks, dst_blocks, dst_fields_loc,
-                                data_manager: DataManager, inplace=True):
-    def _mapper(blocks, narrow_loc: list = None, dst_bids: list = None,
-                dst_loc: List[Tuple[str, str]] = None, dm: DataManager = None, inp: bool = True):
+def promote_partial_block_types(
+    block_table, narrow_blocks, dst_blocks, dst_fields_loc, data_manager: DataManager, inplace=True
+):
+    def _mapper(
+        blocks,
+        narrow_loc: list = None,
+        dst_bids: list = None,
+        dst_loc: List[Tuple[str, str]] = None,
+        dm: DataManager = None,
+        inp: bool = True,
+    ):
         ret_blocks = []
         for block in blocks:
             if inp:
@@ -60,7 +68,8 @@ def promote_partial_block_types(block_table, narrow_blocks, dst_blocks, dst_fiel
 
         return ret_blocks
 
-    _mapper_func = functools.partial(_mapper, narrow_loc=narrow_blocks, dst_bids=dst_blocks,
-                                     dst_loc=dst_fields_loc, dm=data_manager, inp=inplace)
+    _mapper_func = functools.partial(
+        _mapper, narrow_loc=narrow_blocks, dst_bids=dst_blocks, dst_loc=dst_fields_loc, dm=data_manager, inp=inplace
+    )
 
     return block_table.mapValues(_mapper_func)

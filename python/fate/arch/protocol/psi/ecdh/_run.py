@@ -42,6 +42,7 @@ def _flat_block_with_possible_duplicate_keys(block_table, duplicate_allow=False)
     """
     row_value: (encrypt_id, [(block_id, _offset)])
     """
+
     def _mapper(kvs):
         for block_id, id_list in kvs:
             for _i, _id in enumerate(id_list):
@@ -65,6 +66,7 @@ def _flat_block_key(intersect_id):
     """
     key=eid, value = ((guest_block_id, guest_block_offset), [(host0_block_id, host0_block_offset)...])
     """
+
     def _mapper(kvs):
         for _, value in kvs:
             guest_loc = value[0]
@@ -101,15 +103,16 @@ def guest_run(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
     for i, host_first_sign_match_id in enumerate(host_first_sign_match_ids):
         host_second_sign_match_ids.append(
             _flat_block_with_possible_duplicate_keys(
-                host_first_sign_match_ids[i].mapValues(dh_func),
-                duplicate_allow=False
+                host_first_sign_match_ids[i].mapValues(dh_func), duplicate_allow=False
             )
         )
 
     guest_second_sign_match_ids = ctx.hosts.get(GUEST_SECOND_SIGN)
 
     flat_intersect_id = None
-    for guest_second_sign_id, host_second_sign_match_id in zip(guest_second_sign_match_ids, host_second_sign_match_ids):
+    for guest_second_sign_id, host_second_sign_match_id in zip(
+        guest_second_sign_match_ids, host_second_sign_match_ids
+    ):
         intersect_eid = guest_second_sign_id.join(
             host_second_sign_match_id, lambda id_list_l, id_list_r: (id_list_l, id_list_r)
         )
@@ -139,7 +142,7 @@ def guest_run(ctx, df: DataFrame, curve_type="curve25519", **kwargs):
 
     intersect_guest_data = intersect_with_offset_ids.mapValues(lambda v: v[0])
 
-    guest_df =  DataFrame.from_flatten_data(ctx, intersect_guest_data, df.data_manager, key_type="block_id")
+    guest_df = DataFrame.from_flatten_data(ctx, intersect_guest_data, df.data_manager, key_type="block_id")
     ctx.metrics.log_metrics({"intersect_count": guest_df.shape[0]}, name="intersect_id_count", type="custom")
 
     """
@@ -163,8 +166,9 @@ def host_run(ctx, df: DataFrame, curve_type, **kwargs):
     guest_first_sign_match_id = ctx.guest.get(GUEST_FIRST_SIGN)
     guest_second_sign_match_id = guest_first_sign_match_id.mapValues(dh_func)
 
-    guest_second_sign_match_id = _flat_block_with_possible_duplicate_keys(guest_second_sign_match_id,
-                                                                          duplicate_allow=True)
+    guest_second_sign_match_id = _flat_block_with_possible_duplicate_keys(
+        guest_second_sign_match_id, duplicate_allow=True
+    )
     ctx.guest.put(GUEST_SECOND_SIGN, guest_second_sign_match_id)
 
     """

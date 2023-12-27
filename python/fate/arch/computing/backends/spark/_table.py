@@ -120,12 +120,12 @@ class Table(KVTable):
             self._has_partitioned = True
 
     def mapPartitionsWithIndexNoSerdes(
-            self,
-            map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
-            shuffle=False,
-            output_key_serdes_type=None,
-            output_value_serdes_type=None,
-            output_partitioner_type=None,
+        self,
+        map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
+        shuffle=False,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         # Note: since we use this method to send data to other parties, and if the engine in other side is not spark,
         # we should guarantee the data properly partitioned before we send each partition to other side.

@@ -21,8 +21,7 @@ from fate.ml.evaluation.metric_base import EvalResult
 
 
 class RMSE(Metric):
-
-    metric_name = 'rmse'
+    metric_name = "rmse"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
@@ -32,8 +31,7 @@ class RMSE(Metric):
 
 
 class MSE(Metric):
-
-    metric_name = 'mse'
+    metric_name = "mse"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
@@ -43,8 +41,7 @@ class MSE(Metric):
 
 
 class MAE(Metric):
-
-    metric_name = 'mae'
+    metric_name = "mae"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)
@@ -54,8 +51,7 @@ class MAE(Metric):
 
 
 class R2Score(Metric):
-
-    metric_name = 'r2_score'
+    metric_name = "r2_score"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         predict = self.to_np_format(predict)

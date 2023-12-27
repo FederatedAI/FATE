@@ -26,19 +26,21 @@ def create_ctx(local):
     from fate.arch.computing.backends.standalone import CSession
     from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
+
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
     computing = CSession()
-    return Context(computing=computing,
-                   federation=StandaloneFederation(computing, name, local, [guest, host, arbiter]))
+    return Context(
+        computing=computing, federation=StandaloneFederation(computing, name, local, [guest, host, arbiter])
+    )
 
 
 if __name__ == "__main__":
@@ -49,7 +51,7 @@ if __name__ == "__main__":
         ctx = create_ctx(guest)
         client = SecureAggregatorClient(is_mock=True)
         client.dh_exchange(ctx, [ctx.guest.rank, *ctx.hosts.ranks])
-        print('ranks are {}'.format([ctx.guest.rank, *ctx.hosts.ranks]))
+        print("ranks are {}".format([ctx.guest.rank, *ctx.hosts.ranks]))
         print(client.secure_aggregate(ctx, [np.zeros((3, 4)), np.ones((2, 3))]))
     elif sys.argv[1] == "host":
         from fate.arch.protocol import SecureAggregatorClient

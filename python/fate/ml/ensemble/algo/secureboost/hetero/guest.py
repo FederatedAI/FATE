@@ -20,7 +20,13 @@ from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.algo.secureboost.hetero._base import HeteroBoostingTree
 from fate.ml.ensemble.learner.decision_tree.hetero.guest import HeteroDecisionTreeGuest
 from fate.ml.ensemble.utils.binning import binning
-from fate.ml.ensemble.learner.decision_tree.tree_core.loss import OBJECTIVE, get_task_info, MULTI_CE, BINARY_BCE, REGRESSION_L2
+from fate.ml.ensemble.learner.decision_tree.tree_core.loss import (
+    OBJECTIVE,
+    get_task_info,
+    MULTI_CE,
+    BINARY_BCE,
+    REGRESSION_L2,
+)
 from fate.ml.ensemble.algo.secureboost.common.predict import predict_leaf_guest
 from fate.ml.utils.predict_tools import compute_predict_details, PREDICT_SCORE, BINARY, MULTI, REGRESSION
 from fate.ml.ensemble.learner.decision_tree.tree_core.decision_tree import GUEST_FEAT_ONLY, ALL_FEAT
@@ -43,13 +49,13 @@ def _compute_gh(data: DataFrame, scores: DataFrame, loss_func):
 def _get_loss_func(objective: str, class_num=None):
     # to lowercase
     objective = objective.lower()
-    assert (
-            objective in OBJECTIVE
-        ), f"objective {objective} not found, supported objective: {list(OBJECTIVE.keys())}"
+    assert objective in OBJECTIVE, f"objective {objective} not found, supported objective: {list(OBJECTIVE.keys())}"
 
     obj_class = OBJECTIVE[objective]
     if objective == MULTI_CE:
-        assert class_num is not None and class_num >= 3, 'class_num should be set and greater than 2 for multi:ce objective, but got {}'.format(class_num)
+        assert (
+            class_num is not None and class_num >= 3
+        ), "class_num should be set and greater than 2 for multi:ce objective, but got {}".format(class_num)
         loss_func = obj_class(class_num=class_num)
     else:
         loss_func = obj_class()
@@ -57,24 +63,23 @@ def _get_loss_func(objective: str, class_num=None):
 
 
 def _select_gh_by_tree_dim(gh: DataFrame, tree_idx: int):
-
     def select_func(s: pd.Series, idx):
         new_s = pd.Series()
-        new_s['g'] = s['g'][idx]
-        new_s['h'] = s['h'][idx]
+        new_s["g"] = s["g"][idx]
+        new_s["h"] = s["h"][idx]
         return new_s
 
     target_gh = gh.apply_row(lambda s: select_func(s, tree_idx), columns=["g", "h"])
     return target_gh
 
 
-def _accumulate_scores(acc_scores: DataFrame, new_scores: DataFrame, learning_rate: float,
-                       multi_class=False, class_num=None, dim=0):
-
+def _accumulate_scores(
+    acc_scores: DataFrame, new_scores: DataFrame, learning_rate: float, multi_class=False, class_num=None, dim=0
+):
     def _extend_score(s: pd.Series, class_num, dim):
         new_s = pd.Series()
-        new_s['score'] = np.zeros(class_num)
-        new_s['score'][dim] = s['score']
+        new_s["score"] = np.zeros(class_num)
+        new_s["score"][dim] = s["score"]
         return new_s
 
     new_scores = new_scores.loc(acc_scores.get_indexer(target="sample_id"), preserve_order=True)
@@ -109,7 +114,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         gh_pack=True,
         split_info_pack=True,
         hist_sub=True,
-        random_seed=42
+        random_seed=42,
     ):
         super().__init__()
         self.num_trees = num_trees
@@ -196,13 +201,11 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 self._accumulate_scores = self._loss_func.initialize(label)
 
     def _check_label(self, label: DataFrame):
-
         if self.objective != REGRESSION_L2:
             train_data_binarized_label = label.get_dummies()
             labels = [int(label_name.split("_")[1]) for label_name in train_data_binarized_label.columns]
             label_set = set(labels)
             if self.objective == MULTI_CE:
-
                 if self.num_class is None or self.num_class <= 2:
                     raise ValueError(
                         f"num_class should be set and greater than 2 for multi:ce objective, but got {self.num_class}"
@@ -218,7 +221,9 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                     )
 
             elif self.objective == BINARY_BCE:
-                assert len(label_set) == 2, f"binary classification task should have 2 unique label, but got {label_set}"
+                assert (
+                    len(label_set) == 2
+                ), f"binary classification task should have 2 unique label, but got {label_set}"
                 assert (
                     0 in label_set and 1 in label_set
                 ), f"binary classification task should have label 0 and 1, but got {label_set}"
@@ -230,7 +235,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         if not self._model_loaded:
             self._tree_dim = self.num_class if self.objective == MULTI_CE else 1
         assert self._tree_dim >= 1
-        ctx.hosts.put('tree_dim', self._tree_dim)
+        ctx.hosts.put("tree_dim", self._tree_dim)
 
     def get_task_info(self):
         task_type = get_task_info(self.objective)
@@ -300,14 +305,14 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                     gh_pack=self._gh_pack,
                     split_info_pack=self._split_info_pack,
                     hist_sub=self._hist_sub,
-                    tree_mode=tree_mode
+                    tree_mode=tree_mode,
                 )
                 tree.set_encrypt_kit(self._encrypt_kit)
 
                 if self.goss:
                     if iter_dix >= self.goss_start_iter:
                         target_gh = goss_sample(target_gh, self.top_rate, self.other_rate, self.random_seed)
-                        logger.debug('goss sample done, got {} samples'.format(len(target_gh)))
+                        logger.debug("goss sample done, got {} samples".format(len(target_gh)))
 
                 tree.booster_fit(tree_ctx_, bin_data, target_gh, bin_info)
                 # accumulate scores of cur boosting round
@@ -316,8 +321,12 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                     self._accumulate_scores
                 ), f"tree predict scores length {len(scores)} not equal to accumulate scores length {len(self._accumulate_scores)}."
                 self._accumulate_scores = _accumulate_scores(
-                    self._accumulate_scores, scores, self.learning_rate, self.objective == MULTI_CE, class_num=self.num_class,
-                    dim=tree_dim
+                    self._accumulate_scores,
+                    scores,
+                    self.learning_rate,
+                    self.objective == MULTI_CE,
+                    class_num=self.num_class,
+                    dim=tree_dim,
                 )
                 self._trees.append(tree)
                 self._saved_tree.append(tree.get_model())
@@ -325,10 +334,12 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
                 logger.info("fitting guest decision tree iter {}, dim {} done".format(iter_dix, tree_dim))
 
             # compute loss
-            iter_loss = self._loss_func.compute_loss(train_data.label, self._loss_func.predict(self._accumulate_scores))
+            iter_loss = self._loss_func.compute_loss(
+                train_data.label, self._loss_func.predict(self._accumulate_scores)
+            )
             iter_loss = float(iter_loss.iloc[0])
             self._loss_history.append(iter_loss)
-            tree_ctx.metrics.log_loss('sbt_loss', iter_loss)
+            tree_ctx.metrics.log_loss("sbt_loss", iter_loss)
 
         # compute train predict using cache scores
         train_predict: DataFrame = self._loss_func.predict(self._accumulate_scores)
@@ -338,8 +349,9 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
         train_predict.rename(columns={"score": PREDICT_SCORE})
         self._train_predict = compute_predict_details(train_predict, task_type, classes)
 
-    def predict(self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True,
-                ret_raw_scores=False) -> DataFrame:
+    def predict(
+        self, ctx: Context, predict_data: DataFrame, predict_leaf=False, ret_std_format=True, ret_raw_scores=False
+    ) -> DataFrame:
         """
         predict function
 
@@ -391,7 +403,7 @@ class HeteroSecureBoostGuest(HeteroBoostingTree):
             "max_bin": self.max_bin,
             "l2": self.l2,
             "num_class": self.num_class,
-            "complete_secure": self._complete_secure
+            "complete_secure": self._complete_secure,
         }
 
     def get_model(self) -> dict:

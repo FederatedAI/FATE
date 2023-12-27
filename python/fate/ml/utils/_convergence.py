@@ -25,7 +25,8 @@ class _ConvergeFunction:
     def __init__(self, eps):
         self.eps = eps
 
-    def is_converge(self, loss): pass
+    def is_converge(self, loss):
+        pass
 
 
 class _DiffConverge(_ConvergeFunction):
@@ -39,9 +40,7 @@ class _DiffConverge(_ConvergeFunction):
         self.pre_loss = None
 
     def is_converge(self, loss):
-        logger.debug(
-            "In diff converge function, pre_loss: {}, current_loss: {}".format(
-                self.pre_loss, loss))
+        logger.debug("In diff converge function, pre_loss: {}, current_loss: {}".format(self.pre_loss, loss))
 
         converge_flag = False
         if self.pre_loss is None:
@@ -105,12 +104,11 @@ def converge_func_factory(early_stop, tol):
     # except AttributeError:
     #     raise AttributeError("Converge Function parameters has not been totally set")
 
-    if early_stop == 'diff':
+    if early_stop == "diff":
         return _DiffConverge(tol)
-    elif early_stop == 'weight_diff':
+    elif early_stop == "weight_diff":
         return _WeightDiffConverge(tol)
-    elif early_stop == 'abs':
+    elif early_stop == "abs":
         return _AbsConverge(tol)
     else:
-        raise NotImplementedError(
-            "Converge Function method cannot be recognized: {}".format(early_stop))
+        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(early_stop))

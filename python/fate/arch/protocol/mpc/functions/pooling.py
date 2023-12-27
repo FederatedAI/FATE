@@ -95,9 +95,7 @@ def _max_pool2d_backward(
     k0, k1 = kernel_size
 
     assert self.dim() == 4, "Input to _max_pool2d_backward must have 4 dimensions"
-    assert (
-        indices.dim() == 6
-    ), "Indices input for _max_pool2d_backward must have 6 dimensions"
+    assert indices.dim() == 6, "Indices input for _max_pool2d_backward must have 6 dimensions"
 
     # Computes one-hot gradient blocks from each output variable that
     # has non-zero value corresponding to the argmax of the corresponding
@@ -164,9 +162,7 @@ def adaptive_avg_pool2d(self, output_size):
     if self.shape[-2:] == output_size:
         return self.clone()
 
-    resized_input, args, kwargs = _adaptive_pool2d_helper(
-        self, output_size, reduction="mean"
-    )
+    resized_input, args, kwargs = _adaptive_pool2d_helper(self, output_size, reduction="mean")
     return resized_input.avg_pool2d(*args, **kwargs)
 
 
@@ -186,14 +182,10 @@ def adaptive_max_pool2d(self, output_size, return_indices=False):
 
     if self.shape[-2:] == output_size:
         if return_indices:
-            return self.clone(), self.new(
-                torch.ones(self.size() + torch.Size(output_size))
-            )
+            return self.clone(), self.new(torch.ones(self.size() + torch.Size(output_size)))
         return self.clone()
 
-    resized_input, args, kwargs = _adaptive_pool2d_helper(
-        self, output_size, reduction="max"
-    )
+    resized_input, args, kwargs = _adaptive_pool2d_helper(self, output_size, reduction="max")
     return resized_input.max_pool2d(*args, **kwargs, return_indices=return_indices)
 
 
@@ -254,14 +246,10 @@ def _adaptive_pool2d_helper(input, output_size, reduction="mean"):
     def extend_row(tensor, dim, start_ind, end_ind):
         device = tensor.device
         if reduction == "mean":
-            extended_value = tensor.index_select(
-                dim, torch.arange(start_ind, end_ind, device=device)
-            )
+            extended_value = tensor.index_select(dim, torch.arange(start_ind, end_ind, device=device))
             extended_value = extended_value.mean(dim, keepdim=True)
         elif reduction == "max":
-            extended_value = tensor.index_select(
-                dim, torch.tensor(start_ind, device=device)
-            )
+            extended_value = tensor.index_select(dim, torch.tensor(start_ind, device=device))
         else:
             raise ValueError(f"Invalid reduction {reduction} for adaptive pooling.")
 
@@ -269,9 +257,7 @@ def _adaptive_pool2d_helper(input, output_size, reduction="mean"):
             return mpc.cat([extended_value, tensor], dim=dim)
 
         x = tensor.index_select(dim, torch.arange(start_ind, device=device))
-        y = tensor.index_select(
-            dim, torch.arange(start_ind, tensor.size(dim), device=device)
-        )
+        y = tensor.index_select(dim, torch.arange(start_ind, tensor.size(dim), device=device))
         return mpc.cat([x, extended_value, y], dim=dim)
 
     strides = []
@@ -292,9 +278,7 @@ def _adaptive_pool2d_helper(input, output_size, reduction="mean"):
                 # Extend kernel so all kernels have the same size
                 k = end_ind - start_ind
                 for _ in range(k, stride):
-                    input = extend_row(
-                        input, dim, start_ind + added_rows, end_ind + added_rows
-                    )
+                    input = extend_row(input, dim, start_ind + added_rows, end_ind + added_rows)
                     added_rows += 1
 
                 if i == out_size - 1:
@@ -318,9 +302,7 @@ def _adaptive_pool2d_helper(input, output_size, reduction="mean"):
     return input, args, kwargs
 
 
-def _pooling_output_shape(
-    input_size, kernel_size, pad_l, pad_r, stride, dilation, ceil_mode
-):
+def _pooling_output_shape(input_size, kernel_size, pad_l, pad_r, stride, dilation, ceil_mode):
     """
     Generates output shape along a single dimension following conventions here:
     https://github.com/pytorch/pytorch/blob/b0424a895c878cb865947164cb0ce9ce3c2e73ef/aten/src/ATen/native/Pool.h#L24-L38
@@ -383,12 +365,8 @@ def _pool2d_reshape(
 
     # Compute output size based on parameters
     n = input.size()[:-2]
-    h = _pooling_output_shape(
-        input.size(-2), k[0], padding[0], padding[1], s[0], d[0], ceil_mode
-    )
-    w = _pooling_output_shape(
-        input.size(-1), k[1], padding[2], padding[3], s[1], d[1], ceil_mode
-    )
+    h = _pooling_output_shape(input.size(-2), k[0], padding[0], padding[1], s[0], d[0], ceil_mode)
+    w = _pooling_output_shape(input.size(-1), k[1], padding[2], padding[3], s[1], d[1], ceil_mode)
 
     out_size = tuple(n + (h, w))
 
@@ -401,9 +379,7 @@ def _pool2d_reshape(
 
     # Reshape input to arrange kernels to be represented by rows
     kernel_indices = torch.tensor(range(0, k[1] * d[1], d[1]), device=input.device)
-    kernel_indices = torch.cat(
-        [kernel_indices + i * input.size(-1) for i in range(0, k[0] * d[0], d[0])]
-    )
+    kernel_indices = torch.cat([kernel_indices + i * input.size(-1) for i in range(0, k[0] * d[0], d[0])])
     kernel_indices = torch.stack([kernel_indices + i * s[1] for i in range(w)])
 
     offset = input.size(-1)
@@ -411,9 +387,7 @@ def _pool2d_reshape(
 
     for dim in range(2, input.dim()):
         offset *= input.size(-dim)
-        kernel_indices = torch.stack(
-            [kernel_indices + i * offset for i in range(input.size(-dim - 1))]
-        )
+        kernel_indices = torch.stack([kernel_indices + i * offset for i in range(input.size(-dim - 1))])
 
     output = input.take(kernel_indices)
     return output, out_size

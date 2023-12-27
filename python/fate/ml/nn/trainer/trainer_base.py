@@ -109,6 +109,7 @@ class FedArguments(object):
                 d[k] = f"<{k.upper()}>"
         return d
 
+
 @dataclass
 class _TrainingArguments(_hf_TrainingArguments):
     # in fate-2.0, we will control the output dir when using pipeline
@@ -127,7 +128,6 @@ class _TrainingArguments(_hf_TrainingArguments):
     save_safetensors: bool = field(default=False)
     use_cpu: bool = field(default=True)
 
-
     def __post_init__(self):
         self.push_to_hub = False
         self.hub_model_id = None
@@ -143,7 +143,6 @@ class _TrainingArguments(_hf_TrainingArguments):
 
 @dataclass
 class TrainingArguments(_TrainingArguments):
-
     # To simplify the to dict result(to_dict only return non-default args)
 
     def to_dict(self):
@@ -154,6 +153,7 @@ class TrainingArguments(_TrainingArguments):
         # Filter out args that are equal to their default values
         set_args = {name: value for name, value in all_args.items() if value != default_args.get(name)}
         return set_args
+
 
 """
 Fed Callback Related Classes
@@ -278,7 +278,6 @@ class ShortcutCallBackInterFace(object):
 
 
 class FedCallbackInterface(object):
-
     def __init__(self):
         pass
 
@@ -310,7 +309,9 @@ class LogSuppressFilter(logging.Filter):
             return False
         return True
 
+
 logger_.addFilter(LogSuppressFilter())
+
 
 def compute_max_aggregation(
     fed_args: FedArguments, max_epoch: int, max_steps: int, epochs_trained: int, steps_trained: int
@@ -348,14 +349,15 @@ def can_aggregate_loss(args: TrainingArguments, fed_args: FedArguments):
     # make sure that the aggregated loss is correct
     can_aggregate = False
     if args.logging_strategy == fed_args.aggregate_strategy:
-        if fed_args.aggregate_strategy == 'epoch':
+        if fed_args.aggregate_strategy == "epoch":
             if args.logging_steps == fed_args.aggregate_freq:
                 can_aggregate = True
 
     if not can_aggregate:
-        logger.warning('Not able to aggregate loss, '
-                       'Trainer is only able to aggregate loss on server when aggregate strategy and logging strategy are "epoch",'
-                       ' and aggregate_freq and logging_freq are the same'
+        logger.warning(
+            "Not able to aggregate loss, "
+            'Trainer is only able to aggregate loss on server when aggregate strategy and logging strategy are "epoch",'
+            " and aggregate_freq and logging_freq are the same"
         )
 
     return can_aggregate
@@ -371,7 +373,7 @@ class AggregationChecker:
         max_steps: int,
         epochs_trained: int,
         steps_trained: int,
-        can_aggregate_loss: bool
+        can_aggregate_loss: bool,
     ):
         self.fed_args = fed_args
         self.max_epoch = max_epoch
@@ -417,25 +419,22 @@ class AggregationChecker:
 
 
 class LossLoggingCallback(TrainerCallback):
-
-    def __init__(
-        self,
-        ctx: Context
-    ):
+    def __init__(self, ctx: Context):
         self.ctx = ctx
-        self.sub_ctx = self.ctx.sub_ctx('nn_loss')
+        self.sub_ctx = self.ctx.sub_ctx("nn_loss")
+
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         latest_log = state.log_history[-1]
         logger.info(latest_log)
-        if 'loss' in latest_log:
-            loss = latest_log['loss']
+        if "loss" in latest_log:
+            loss = latest_log["loss"]
             if args.logging_strategy == IntervalStrategy.EPOCH:
                 idx = int(state.log_history[-1]["epoch"])
             elif args.logging_strategy == IntervalStrategy.STEPS:
                 idx = int(state.log_history[-1]["step"])
             else:
-                raise RuntimeError('unknown logging strategy')
-            self.sub_ctx.indexed_ctx(idx).metrics.log_loss('loss', loss)
+                raise RuntimeError("unknown logging strategy")
+            self.sub_ctx.indexed_ctx(idx).metrics.log_loss("loss", loss)
 
 
 class FedParameterAlignCallback(TrainerCallback):
@@ -516,7 +515,7 @@ class FedParameterAlignCallback(TrainerCallback):
             "max_aggregation": max_aggregation,
             "aggregate_freq": aggregate_freq,
             "aggregation_strategy": self.fed_args.aggregate_strategy,
-            "can_aggregate_loss": self.can_aggregate_loss
+            "can_aggregate_loss": self.can_aggregate_loss,
         }
 
         logger.info("parameters is {}".format(parameters))
@@ -524,7 +523,7 @@ class FedParameterAlignCallback(TrainerCallback):
 
         if args.world_size <= 1 or args.local_rank == 0:
             self.ctx.arbiter.put(self._suffix + "_" + str(self._send_count), parameters)
-            self.can_aggregate_loss = self.ctx.arbiter.get('agg_loss_' + str(self._send_count))
+            self.can_aggregate_loss = self.ctx.arbiter.get("agg_loss_" + str(self._send_count))
 
             if args.world_size > 1:
                 can_agg_loss_t = torch.tensor([self.can_aggregate_loss], dtype=torch.bool).cuda(args.device)
@@ -544,7 +543,7 @@ class FedParameterAlignCallback(TrainerCallback):
             max_steps,
             epochs_trained,
             state.global_step,
-            self.can_aggregate_loss
+            self.can_aggregate_loss,
         )
 
     def get_parameters(self):
@@ -606,9 +605,9 @@ class FedParameterAlignCallback(TrainerCallback):
         agg_round = self._check_federation_round(para)
         self.can_aggregate_loss = self._check_aggregate_loss(para)
         self._parameters = {"max_aggregation": agg_round}
-        self._parameters['can_aggregate_loss'] = self.can_aggregate_loss
-        self.ctx.guest.put('agg_loss_' + str(self._send_count), self.can_aggregate_loss)
-        self.ctx.hosts.put('agg_loss_' + str(self._send_count), self.can_aggregate_loss)
+        self._parameters["can_aggregate_loss"] = self.can_aggregate_loss
+        self.ctx.guest.put("agg_loss_" + str(self._send_count), self.can_aggregate_loss)
+        self.ctx.hosts.put("agg_loss_" + str(self._send_count), self.can_aggregate_loss)
         self._send_count += 1
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
@@ -658,7 +657,7 @@ class WrappedFedCallback(CallbackWrapper):
         # aggregate loss
         if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
             if self.wrapped_trainer.aggregation_checker.can_aggregate_loss:
-                if 'loss' not in state.log_history[-1]:  # only process train loss
+                if "loss" not in state.log_history[-1]:  # only process train loss
                     return
                 loss = state.log_history[-1]["loss"]
                 agg_round = self.wrapped_trainer.aggregation_checker.loss_aggregation_count
@@ -799,28 +798,27 @@ class WrappedShortcutCallback(CallbackWrapper):
         )
 
 
-
 """
 Mixin Class For Federation Trainer
 """
 
-def _parse_metrics_ensemble_result(metrics_ensemble_result):
 
-    rs_dict ={}
+def _parse_metrics_ensemble_result(metrics_ensemble_result):
+    rs_dict = {}
     for i in metrics_ensemble_result:
         if isinstance(i, dict):
-            rs_dict[i['metric']] = i['val']
+            rs_dict[i["metric"]] = i["val"]
         elif isinstance(i, list):
             for k in i:
                 if isinstance(k, dict):
-                    rs_dict[k['metric']] = k['val']
+                    rs_dict[k["metric"]] = k["val"]
 
     return rs_dict
 
 
 class HeteroTrainerMixin(ShortcutCallBackInterFace):
-
-    def __init__(self,
+    def __init__(
+        self,
         ctx: Context,
         model: nn.Module,
         training_args: TrainingArguments,
@@ -832,7 +830,7 @@ class HeteroTrainerMixin(ShortcutCallBackInterFace):
         tokenizer: Optional[PreTrainedTokenizer] = None,
         callbacks: Optional[List[TrainerCallback]] = [],
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-        ):
+    ):
         super().__init__()
 
         self.ctx: Context = ctx
@@ -874,7 +872,6 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
         local_mode: bool = False,
     ):
-
         super().__init__()
 
         assert isinstance(callbacks, list), "callback must be a list containing Callback objects, but got {}".format(
@@ -955,9 +952,10 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
 Base Classes of NN Trainer
 """
 
-class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
 
-    def __init__(self,
+class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
+    def __init__(
+        self,
         ctx: Context,
         model: Union[HeteroNNModelGuest, HeteroNNModelHost],
         training_args: TrainingArguments,
@@ -970,8 +968,7 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
         tokenizer: Optional[PreTrainedTokenizer] = None,
         callbacks: Optional[List[TrainerCallback]] = [],
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-        ):
-
+    ):
         HeteroTrainerMixin.__init__(
             self,
             ctx=ctx,
@@ -984,7 +981,7 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
             scheduler=scheduler,
             callbacks=callbacks,
             compute_metrics=compute_metrics,
-            tokenizer=tokenizer
+            tokenizer=tokenizer,
         )
 
         if data_collator is None:
@@ -1187,7 +1184,7 @@ class HomoTrainerServer(object):
             if self.can_aggregate_loss:
                 loss_sub_ctx = ctx.sub_ctx("loss_aggregation").indexed_ctx(i)
                 loss = self.aggregator.loss_aggregation(loss_sub_ctx)
-                sub_ctx.metrics.log_loss('loss', loss)
+                sub_ctx.metrics.log_loss("loss", loss)
 
         self.on_train_end(self.ctx, aggregator=self.aggregator)
 

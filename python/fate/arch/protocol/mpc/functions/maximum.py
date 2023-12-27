@@ -28,9 +28,7 @@ def argmax(self, dim=None, keepdim=False, one_hot=True):
 
     if self.dim() == 0:
         result = (
-            self.new(torch.ones((), device=self.device))
-            if one_hot
-            else self.new(torch.zeros((), device=self.device))
+            self.new(torch.ones((), device=self.device)) if one_hot else self.new(torch.zeros((), device=self.device))
         )
         return result
 
@@ -62,17 +60,11 @@ def max(self, dim=None, keepdim=False, one_hot=True):
             max_result = self.mul(argmax_result).sum()
         return max_result
     else:
-        argmax_result, max_result = _argmax_helper(
-            self, dim=dim, one_hot=True, method=method, _return_max=True
-        )
+        argmax_result, max_result = _argmax_helper(self, dim=dim, one_hot=True, method=method, _return_max=True)
         if max_result is None:
             max_result = (self * argmax_result).sum(dim=dim, keepdim=keepdim)
         if keepdim:
-            max_result = (
-                max_result.unsqueeze(dim)
-                if max_result.dim() < self.dim()
-                else max_result
-            )
+            max_result = max_result.unsqueeze(dim) if max_result.dim() < self.dim() else max_result
         if one_hot:
             return max_result, argmax_result
         else:
@@ -226,9 +218,7 @@ def _max_helper_accelerated_cascade(enc_tensor, dim=None):
             enc_max, enc_argmax = enc_tensor.max(dim=dim_used)
             return enc_max
     steps = int(math.log(math.log(math.log(n)))) + 1
-    enc_tensor_reduced = _compute_pairwise_comparisons_for_steps(
-        enc_tensor, dim_used, steps
-    )
+    enc_tensor_reduced = _compute_pairwise_comparisons_for_steps(enc_tensor, dim_used, steps)
     enc_max = _max_helper_double_log_reduction(enc_tensor_reduced, dim=dim_used)
     return enc_max
 
@@ -274,20 +264,14 @@ def _argmax_helper_all_tree_reductions(enc_tensor, dim=None, method="log_reducti
     return enc_one_hot_vec, enc_max_vec
 
 
-def _argmax_helper(
-    enc_tensor, dim=None, one_hot=True, method="pairwise", _return_max=False
-):
+def _argmax_helper(enc_tensor, dim=None, one_hot=True, method="pairwise", _return_max=False):
     """
     Returns 1 for one randomly chosen element among all the elements that have
     the highest value in the appropriate dimension of the tensor. Sets up the CrypTensor
     appropriately, and then chooses among the different argmax algorithms.
     """
     if enc_tensor.dim() == 0:
-        result = (
-            enc_tensor.new(torch.ones(()))
-            if one_hot
-            else enc_tensor.new(torch.zeros(()))
-        )
+        result = enc_tensor.new(torch.ones(())) if one_hot else enc_tensor.new(torch.zeros(()))
         if _return_max:
             return result, None
         return result
@@ -297,9 +281,7 @@ def _argmax_helper(
     if method == "pairwise":
         result_args, result_val = _argmax_helper_pairwise(updated_enc_tensor, dim)
     elif method in ["log_reduction", "double_log_reduction", "accelerated_cascade"]:
-        result_args, result_val = _argmax_helper_all_tree_reductions(
-            updated_enc_tensor, dim, method
-        )
+        result_args, result_val = _argmax_helper_all_tree_reductions(updated_enc_tensor, dim, method)
     else:
         raise RuntimeError("Unknown argmax method")
 
@@ -326,7 +308,5 @@ def _one_hot_to_index(tensor, dim, keepdim, device=None):
     else:
         size = [1] * tensor.dim()
         size[dim] = tensor.size(dim)
-        result = tensor * torch.tensor(
-            list(range(tensor.size(dim))), device=device
-        ).view(size)
+        result = tensor * torch.tensor(list(range(tensor.size(dim))), device=device).view(size)
         return result.sum(dim, keepdim=keepdim)

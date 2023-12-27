@@ -206,9 +206,9 @@ class SBTHistogramBuilder(object):
 
         # if goss is enabled
         if len(sample_pos) > len(gh):
-            sample_pos = sample_pos.loc(gh.get_indexer(target='sample_id'), preserve_order=True)
+            sample_pos = sample_pos.loc(gh.get_indexer(target="sample_id"), preserve_order=True)
             map_sample_pos = sample_pos.apply_row(lambda x: node_map[x["node_idx"]])
-            bin_train_data = bin_train_data.loc(gh.get_indexer(target='sample_id'), preserve_order=True)
+            bin_train_data = bin_train_data.loc(gh.get_indexer(target="sample_id"), preserve_order=True)
         else:
             map_sample_pos = sample_pos.apply_row(lambda x: node_map[x["node_idx"]])
 

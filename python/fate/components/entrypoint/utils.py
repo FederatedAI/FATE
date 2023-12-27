@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 def load_properties(properties) -> dict:
     properties_dict = {}
     for property_item in properties:

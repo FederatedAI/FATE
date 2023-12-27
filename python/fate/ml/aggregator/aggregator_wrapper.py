@@ -26,14 +26,7 @@ logger = logging.getLogger(__name__)
 
 class AggregatorClientWrapper(object):
     def __init__(
-            self,
-            ctx,
-            aggregate_type,
-            aggregator_name,
-            aggregator,
-            sample_num,
-            args: TrainingArguments,
-            master_rank=0
+        self, ctx, aggregate_type, aggregator_name, aggregator, sample_num, args: TrainingArguments, master_rank=0
     ):
         assert aggregator in {
             item.value for item in AggregatorType

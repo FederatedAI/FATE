@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 def get_integer_serdes():
     return IntegerSerdes()
 

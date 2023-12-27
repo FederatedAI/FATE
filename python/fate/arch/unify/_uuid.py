@@ -17,5 +17,3 @@ from uuid import uuid1
 
 def uuid():
     return uuid1().hex
-
-

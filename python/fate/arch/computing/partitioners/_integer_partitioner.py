@@ -13,5 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 def integer_partitioner(key: bytes, total_partitions):
     return int.from_bytes(key, "big") % total_partitions

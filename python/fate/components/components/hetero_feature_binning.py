@@ -37,84 +37,144 @@ def hetero_feature_binning(ctx, role):
 
 @hetero_feature_binning.train()
 def feature_binning_train(
-        ctx: Context,
-        role: Role,
-        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        method: cpn.parameter(type=params.string_choice(["quantile", "bucket", "manual"]),
-                              default="quantile", optional=False,
-                              desc="binning method, options: {quantile, bucket, manual}"),
-        n_bins: cpn.parameter(type=params.conint(gt=1), default=10,
-                              desc="max number of bins, should be no less than 2"),
-        split_pt_dict: cpn.parameter(type=dict, default=None, optional=True,
-                                     desc="dict, manually provided split points, "
-                                          "only effective when `method`='manual'"),
-        bin_col: cpn.parameter(type=List[str], default=None,
-                               desc="list of column names to be binned, if None, all columns will be binned; "
-                                    "only one of {bin_col, bin_idx} should be specified"),
-        bin_idx: cpn.parameter(type=List[params.conint(ge=0)], default=None,
-                               desc="list of column index to be binned, if None, all columns will be binned; "
-                                    "only one of {bin_col, bin_idx} should be specified"),
-        category_col: cpn.parameter(type=List[str], default=None,
-                                    desc="list of column names to be treated as categorical "
-                                         "features and will not be binned; "
-                                         "only one of {category_col, category_idx} should be specified"
-                                         "note that metrics will be computed over categorical features "
-                                         "if this param is specified"),
-        category_idx: cpn.parameter(type=List[params.conint(ge=0)], default=None,
-                                    desc="list of column index to be treated as categorical features "
-                                         "and will not be binned; "
-                                         "only one of {category_col, category_idx} should be specified"
-                                         "note that metrics will be computed over categorical features "
-                                         "if this param is specified"),
-        use_anonymous: cpn.parameter(type=bool, default=False,
-                                     desc="bool, whether interpret `bin_col` & `category_col` "
-                                          "as anonymous column names"),
-        transform_method: cpn.parameter(type=params.string_choice(['woe', 'bin_idx']),
-                                        default=None,  # may support user-provided dict in future release
-                                        desc="str, values to which binned data will be transformed, "
-                                             "select from {'woe', 'bin_idx'}; "
-                                             "note that host will not transform features "
-                                             "to woe values regardless of setting"),
-        skip_metrics: cpn.parameter(type=bool, default=False,
-                                    desc="bool, whether compute host's metrics or not"),
-        local_only: cpn.parameter(type=bool, default=False, desc="bool, whether compute host's metrics or not"),
-        relative_error: cpn.parameter(type=params.confloat(gt=0, le=1), default=1e-6,
-                                      desc="float, error rate for quantile"),
-        adjustment_factor: cpn.parameter(type=params.confloat(gt=0), default=0.5,
-                                         desc="float, useful when here is no event or non-event in a bin"),
-        he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind="paillier", key_length=1024),
-                                desc="homomorphic encryption param"),
-        train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+    ctx: Context,
+    role: Role,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    method: cpn.parameter(
+        type=params.string_choice(["quantile", "bucket", "manual"]),
+        default="quantile",
+        optional=False,
+        desc="binning method, options: {quantile, bucket, manual}",
+    ),
+    n_bins: cpn.parameter(type=params.conint(gt=1), default=10, desc="max number of bins, should be no less than 2"),
+    split_pt_dict: cpn.parameter(
+        type=dict,
+        default=None,
+        optional=True,
+        desc="dict, manually provided split points, " "only effective when `method`='manual'",
+    ),
+    bin_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        desc="list of column names to be binned, if None, all columns will be binned; "
+        "only one of {bin_col, bin_idx} should be specified",
+    ),
+    bin_idx: cpn.parameter(
+        type=List[params.conint(ge=0)],
+        default=None,
+        desc="list of column index to be binned, if None, all columns will be binned; "
+        "only one of {bin_col, bin_idx} should be specified",
+    ),
+    category_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        desc="list of column names to be treated as categorical "
+        "features and will not be binned; "
+        "only one of {category_col, category_idx} should be specified"
+        "note that metrics will be computed over categorical features "
+        "if this param is specified",
+    ),
+    category_idx: cpn.parameter(
+        type=List[params.conint(ge=0)],
+        default=None,
+        desc="list of column index to be treated as categorical features "
+        "and will not be binned; "
+        "only one of {category_col, category_idx} should be specified"
+        "note that metrics will be computed over categorical features "
+        "if this param is specified",
+    ),
+    use_anonymous: cpn.parameter(
+        type=bool,
+        default=False,
+        desc="bool, whether interpret `bin_col` & `category_col` " "as anonymous column names",
+    ),
+    transform_method: cpn.parameter(
+        type=params.string_choice(["woe", "bin_idx"]),
+        default=None,  # may support user-provided dict in future release
+        desc="str, values to which binned data will be transformed, "
+        "select from {'woe', 'bin_idx'}; "
+        "note that host will not transform features "
+        "to woe values regardless of setting",
+    ),
+    skip_metrics: cpn.parameter(type=bool, default=False, desc="bool, whether compute host's metrics or not"),
+    local_only: cpn.parameter(type=bool, default=False, desc="bool, whether compute host's metrics or not"),
+    relative_error: cpn.parameter(
+        type=params.confloat(gt=0, le=1), default=1e-6, desc="float, error rate for quantile"
+    ),
+    adjustment_factor: cpn.parameter(
+        type=params.confloat(gt=0), default=0.5, desc="float, useful when here is no event or non-event in a bin"
+    ),
+    he_param: cpn.parameter(
+        type=params.he_param(),
+        default=params.HEParam(kind="paillier", key_length=1024),
+        desc="homomorphic encryption param",
+    ),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     ctx.cipher.set_phe(ctx.device, he_param.dict())
-    train(ctx, train_data, train_output_data, output_model, role, method, n_bins, split_pt_dict,
-          bin_col, bin_idx, category_col, category_idx, use_anonymous, transform_method,
-          skip_metrics, local_only, relative_error, adjustment_factor)
+    train(
+        ctx,
+        train_data,
+        train_output_data,
+        output_model,
+        role,
+        method,
+        n_bins,
+        split_pt_dict,
+        bin_col,
+        bin_idx,
+        category_col,
+        category_idx,
+        use_anonymous,
+        transform_method,
+        skip_metrics,
+        local_only,
+        relative_error,
+        adjustment_factor,
+    )
 
 
 @hetero_feature_binning.predict()
 def feature_binning_predict(
-        ctx: Context,
-        role: Role,
-        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-        transform_method: cpn.parameter(type=params.string_choice(['woe', 'bin_idx']),
-                                        default=None,  # may support user-provided dict in future release
-                                        desc="str, values to which binned data will be transformed, "
-                                             "select from {'woe', 'bin_idx'}; "
-                                             "note that host will not transform features "
-                                             "to woe values regardless of setting"),
-        skip_metrics: cpn.parameter(type=bool, default=False,
-                                    desc="bool, whether compute host's metrics or not"),
-        test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    ctx: Context,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    transform_method: cpn.parameter(
+        type=params.string_choice(["woe", "bin_idx"]),
+        default=None,  # may support user-provided dict in future release
+        desc="str, values to which binned data will be transformed, "
+        "select from {'woe', 'bin_idx'}; "
+        "note that host will not transform features "
+        "to woe values regardless of setting",
+    ),
+    skip_metrics: cpn.parameter(type=bool, default=False, desc="bool, whether compute host's metrics or not"),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     predict(ctx, input_model, test_data, test_output_data, role, transform_method, skip_metrics)
 
 
-def train(ctx, train_data, train_output_data, output_model, role, method, n_bins, split_pt_dict,
-          bin_col, bin_idx, category_col, category_idx, use_anonymous, transform_method,
-          skip_metrics, local_only, relative_error, adjustment_factor):
+def train(
+    ctx,
+    train_data,
+    train_output_data,
+    output_model,
+    role,
+    method,
+    n_bins,
+    split_pt_dict,
+    bin_col,
+    bin_idx,
+    category_col,
+    category_idx,
+    use_anonymous,
+    transform_method,
+    skip_metrics,
+    local_only,
+    relative_error,
+    adjustment_factor,
+):
     logger.info(f"start binning train")
     sub_ctx = ctx.sub_ctx("train")
     train_data = train_data.read()
@@ -123,17 +183,36 @@ def train(ctx, train_data, train_output_data, output_model, role, method, n_bins
     if use_anonymous:
         anonymous_columns = train_data.schema.anonymous_columns.to_list()
         split_pt_dict = {columns[anonymous_columns.index(col)]: split_pt_dict[col] for col in split_pt_dict.keys()}
-    to_bin_cols, merged_category_col = get_to_bin_cols(columns, anonymous_columns,
-                                                       bin_col, bin_idx, category_col, category_idx)
+    to_bin_cols, merged_category_col = get_to_bin_cols(
+        columns, anonymous_columns, bin_col, bin_idx, category_col, category_idx
+    )
     if split_pt_dict:
         to_bin_cols = list(set(to_bin_cols).intersection(split_pt_dict.keys()))
 
     if role.is_guest:
-        binning = HeteroBinningModuleGuest(method, n_bins, split_pt_dict, to_bin_cols, transform_method,
-                                           merged_category_col, local_only, relative_error, adjustment_factor)
+        binning = HeteroBinningModuleGuest(
+            method,
+            n_bins,
+            split_pt_dict,
+            to_bin_cols,
+            transform_method,
+            merged_category_col,
+            local_only,
+            relative_error,
+            adjustment_factor,
+        )
     elif role.is_host:
-        binning = HeteroBinningModuleHost(method, n_bins, split_pt_dict, to_bin_cols, transform_method,
-                                          merged_category_col, local_only, relative_error, adjustment_factor)
+        binning = HeteroBinningModuleHost(
+            method,
+            n_bins,
+            split_pt_dict,
+            to_bin_cols,
+            transform_method,
+            merged_category_col,
+            local_only,
+            relative_error,
+            adjustment_factor,
+        )
     else:
         raise ValueError(f"unknown role: {role}")
     binning.fit(sub_ctx, train_data)

@@ -80,12 +80,7 @@ class FedAVGClient(HomoTrainerClient):
         aggregator_name = "fedavg"
         aggregator = fed_args.aggregator
         return AggregatorClientWrapper(
-            ctx,
-            aggregate_type,
-            aggregator_name,
-            aggregator,
-            sample_num=len(self.train_dataset),
-            args=self._args
+            ctx, aggregate_type, aggregator_name, aggregator, sample_num=len(self.train_dataset), args=self._args
         )
 
     def on_federation(
@@ -112,8 +107,7 @@ class FedAVGServer(HomoTrainerServer):
     def init_aggregator(self, ctx):
         return AggregatorServerWrapper(ctx)
 
-    def on_federation(self, ctx: Context, aggregator: AggregatorServerWrapper,
-                      agg_iter_idx: int):
+    def on_federation(self, ctx: Context, aggregator: AggregatorServerWrapper, agg_iter_idx: int):
         aggregator.model_aggregation(ctx)
 
 
