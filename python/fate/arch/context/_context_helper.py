@@ -54,7 +54,7 @@ def create_context(
         computing_engine, computing_conf
     )
     federation_session = FederationBuilder(
-        federation_id=federation_session_id,
+        federation_session_id=federation_session_id,
         party=local_party,
         parties=parties,
     ).build(computing_session, federation_engine, federation_conf)

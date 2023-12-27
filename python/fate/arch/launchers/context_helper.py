@@ -57,7 +57,7 @@ def init_local_context(computing_session_id: str, federation_session_id: str):
     parties = get_parties(args.parties)
     party = parties[args.rank]
     federation_session = FederationBuilder(
-        federation_id=federation_session_id, party=party, parties=parties
+        federation_session_id=federation_session_id, party=party, parties=parties
     ).build_standalone(
         computing_session,
     )
@@ -87,7 +87,7 @@ def init_cluster_context(computing_session_id: str, federation_session_id: str):
     federation_mode = FederationMode.from_str(args.federation_mode)
     federation_host, federation_port = args.federation_address.split(":")
     federation_session = FederationBuilder(
-        federation_id=federation_session_id, party=party, parties=parties
+        federation_session_id=federation_session_id, party=party, parties=parties
     ).build_osx(
         computing_session=computing_session,
         host=federation_host.strip(),

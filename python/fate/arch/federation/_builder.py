@@ -54,11 +54,11 @@ class FederationMode(Enum):
 class FederationBuilder:
     def __init__(
         self,
-        federation_id: str,
+        federation_session_id: str,
         party: PartyMeta,
         parties: typing.List[PartyMeta],
     ):
-        self._federation_id = federation_id
+        self._federation_id = federation_session_id
         self._party = party
         self._parties = parties
 
