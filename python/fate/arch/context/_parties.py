@@ -17,6 +17,7 @@ import typing
 from typing import List, Tuple, TypeVar, Union
 
 from fate.arch.federation.api import PartyMeta, TableRemotePersistentPickler, TableRemotePersistentUnpickler
+from fate.arch.trace import federation_get_timer
 from ._namespace import NS
 
 logger = logging.getLogger(__name__)
@@ -181,6 +182,7 @@ def _push(
     num_partitions_of_slice_table,
 ):
     tag = namespace.federation_tag
+    timer = federation_get_timer(name=name, full_name=name, tag=tag, local=federation.local_party, parties=parties)
     TableRemotePersistentPickler.push(
         value,
         federation,
@@ -191,6 +193,7 @@ def _push(
         max_message_size=max_message_size,
         num_partitions_of_slice_table=num_partitions_of_slice_table,
     )
+    timer.done()
 
 
 def _pull(
@@ -201,6 +204,7 @@ def _pull(
     parties: List[PartyMeta],
 ):
     tag = namespace.federation_tag
+    timer = federation_get_timer(name=name, full_name=name, tag=tag, local=federation.local_party, parties=parties)
     buffer_list = federation.pull_bytes(
         name=name,
         tag=tag,
@@ -209,4 +213,5 @@ def _pull(
     values = []
     for party, buffers in zip(parties, buffer_list):
         values.append(TableRemotePersistentUnpickler.pull(buffers, ctx, federation, name, tag, party))
+    timer.done()
     return values

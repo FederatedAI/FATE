@@ -202,21 +202,12 @@ class _FederationRemoteTimer(_FederationTimer):
         if self._full_name not in self._REMOTE_STATS:
             self._REMOTE_STATS[self._full_name] = _TimerItem()
 
-    def done(self, federation):
+    def done(self):
         self._end_time = time.time()
         self._REMOTE_STATS[self._full_name].add(self.elapse)
         profile_logger.debug(
             f"[federation.remote.{self._full_name}.{self._tag}]" f"{self._local_party}->{self._parties} done"
         )
-
-        if is_profile_remote_enable():
-            federation.remote(
-                v={"start_time": self._start_time, "end_time": self._end_time},
-                name=self._name,
-                tag=profile_remote_tag(self._tag),
-                parties=self._parties,
-                gc=None,
-            )
 
     @property
     def elapse(self):
@@ -236,24 +227,12 @@ class _FederationGetTimer(_FederationTimer):
         if self._full_name not in self._GET_STATS:
             self._GET_STATS[self._full_name] = _TimerItem()
 
-    def done(self, federation):
+    def done(self):
         self._end_time = time.time()
         self._GET_STATS[self._full_name].add(self.elapse)
         profile_logger.debug(
             f"[federation.get.{self._full_name}.{self._tag}]" f"{self._local_party}<-{self._parties} done"
         )
-
-        if is_profile_remote_enable():
-            remote_meta = federation.get(
-                name=self._name,
-                tag=profile_remote_tag(self._tag),
-                parties=self._parties,
-                gc=None,
-            )
-            for party, meta in zip(self._parties, remote_meta):
-                profile_logger.debug(
-                    f"[federation.meta.{self._full_name}.{self._tag}]{self._local_party}<-{party}]" f"meta={meta}"
-                )
 
     @property
     def elapse(self):
@@ -316,7 +295,7 @@ def profile_ends():
 
 
 def _pretty_table_str(v):
-    from ._table import is_table
+    from fate.arch.computing.api import is_table
 
     if is_table(v):
         return f"Table(partition={v.num_partitions})"

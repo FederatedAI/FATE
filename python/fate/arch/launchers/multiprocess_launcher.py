@@ -132,7 +132,7 @@ class MultiProcessLauncher:
         from fate.arch.launchers.logger import set_up_logging
         from fate.arch.launchers.context_helper import init_context
         from fate.arch.trace import setup_tracing
-        from fate.arch.computing.api import profile_start, profile_ends
+        from fate.arch.trace import profile_start, profile_ends
 
         if args.rank >= len(args.parties):
             raise ValueError(f"rank {args.rank} is out of range {len(args.parties)}")

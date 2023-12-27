@@ -51,9 +51,16 @@ enum Metadata {
   SourceComponentName = 2;             // 源组件名称
   TargetComponentName = 3;             // 目标组件名称
   TargetMethod = 4;                    // 目标方法
-  MessageOffSet = 5;                   // 消息序列号
-  InstanceId = 6;                      // 实例ID
-  Timestamp  = 7;                      // 时间戳
+  SourceMethod = 5;                     // 协议标志
+  MessageOffSet = 6;                   // 消息序列号
+  InstanceId = 7;                      // 实例ID
+  Timestamp  = 8;                      // 时间戳
+  MessageFlag = 9;                     // 消息标志
+  MessageTopicBack = 10;                // 接受应答消息队列
+  RetryCount = 11;                     // 重试次数
+  Timeout = 12;                        // 超时时间
+  JobId = 13;  //jobId
+
 }
 
 // 通信传输层输入报文编码
@@ -70,6 +77,36 @@ message Outbound {
   string message = 4;                 // 状态说明
 }
 
+message PeekInbound {
+  string topic = 1;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+}
+
+message PopInbound {
+  string topic = 1;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  int32 timeout = 2;                  // optional 阻塞超时时间，默认120s
+}
+
+message PushInbound{
+  string topic = 1;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  bytes payload = 2;                  // 二进制报文
+  map<string, string> metadata = 3;   // optional 保留参数，用于扩展性
+}
+
+message ReleaseInbound {
+  string topic = 1;                   // optional 会话主题，相同信道具有唯一性，用于同一信道的传输隔离
+  int32 timeout = 2;                  // optional 阻塞超时时间，
+}
+
+message TransportOutbound {
+  map<string, string>  metadata = 1;  // 可选，预留扩展，Dict，序列化协议由通信层统一实现
+  bytes payload = 2;                  // 二进制报文
+  string code = 3;                    // 状态码
+  string message = 4;                 // 状态说明
+}
+
+
+
+
 // 互联互通如果使用异步传输协议作为标准参考，Header会复用metadata传输互联互通协议报头，且metadata中会传输异步场景下的消息相关属性
 // 互联互通如果使用其他协议作为参考标准，Header会复用metadata传输互联互通协议报头
 // 互联互通如果使用GRPC作为参考标准，Header会复用HTTP2的报头传输互联互通协议报头
@@ -77,7 +114,25 @@ message Outbound {
 service PrivateTransferProtocol {
   rpc transport (stream Inbound) returns (stream Outbound);
   rpc invoke (Inbound) returns (Outbound);
+//  rpc clusterTokenApply(stream Inbound)  returns (stream Outbound);
+//  rpc clusterTopicApply(stream Inbound)  returns (stream Outbound);
+
+//  rpc peek (PeekInbound) returns (TransportOutbound);
+//  rpc pop (PopInbound) returns (TransportOutbound);
+//  rpc push (PushInbound) returns (TransportOutbound);
+//  rpc release (ReleaseInbound) returns (TransportOutbound);
 }
+
+service PrivateTransferTransport {
+  rpc peek (PeekInbound) returns (TransportOutbound);
+  rpc pop (PopInbound) returns (TransportOutbound);
+  rpc push (PushInbound) returns (TransportOutbound);
+  rpc release (ReleaseInbound) returns (TransportOutbound);
+}
+
+
+
+
 
 
 
