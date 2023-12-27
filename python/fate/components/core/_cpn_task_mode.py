@@ -1,6 +1,7 @@
 import enum
 import os
 
+
 class TaskMode(enum.Enum):
     SIMPLE = "SIMPLE"
     DEEPSPEED = "DEEPSPEED"
@@ -8,8 +9,9 @@ class TaskMode(enum.Enum):
     def __str__(self):
         return self.value
 
+
 def is_deepspeed_mode():
-    return os.getenv("FATE_TASK_TYPE", "").upper() == TaskMode.DEEPSPEED
+    return os.getenv("FATE_TASK_TYPE", "").upper() == TaskMode.DEEPSPEED.value
 
 
 def is_root_worker():
