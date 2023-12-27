@@ -559,7 +559,7 @@ flow test toy -gid 9999 -hid 10000
 
 类似如下结果表示成功：
 
-toy test job 202308291022025779790 is success
+toy test job 202308291022025779790 is success.
 
 ### 6.2 Fateboard 测试
 Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。
@@ -616,6 +616,7 @@ bash service.sh start|stop|status|restart
 2) 启动/关闭/重启fateboard服务
 
 ```bash
+source /data/projects/fate/fate_flow/bin/init_env.sh
 cd /data/projects/fate/fateboard
 bash service.sh start|stop|status|restart
 ```
@@ -623,6 +624,7 @@ bash service.sh start|stop|status|restart
 3) 启动/关闭/重启osx服务
 
 ```bash
+source /data/projects/fate/fate_flow/bin/init_env.sh
 cd /data/projects/fate/osx
 bash service.sh start|stop|status|restart
 ```
