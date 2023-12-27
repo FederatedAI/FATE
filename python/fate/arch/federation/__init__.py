@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._builder import FederationBuilder, FederationMode
+from ._builder import FederationBuilder, FederationMode, FederationType
 from .api import Federation, FederationDataType, TableMeta
 
-__all__ = ["Federation", "FederationDataType", "FederationBuilder", "FederationMode"]
+__all__ = ["Federation", "FederationDataType", "FederationBuilder", "FederationMode", "FederationType", "TableMeta"]
