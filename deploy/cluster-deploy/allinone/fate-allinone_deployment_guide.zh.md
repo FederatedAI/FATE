@@ -29,10 +29,6 @@
 
 ![osx_on_eggroll](../images/osx_on_eggroll.png)
 
-上图为采用spark作为计算引擎时的部署架构:
-
-![osx_on_spark.drawio](../images/osx_on_spark.drawio.png)
-
 ## 3. 组件说明
 
 | 软件产品 | 组件           | 端口      | 说明                                   |
