@@ -28,7 +28,7 @@ class ComputingBuilder:
     def build(self, t: ComputingEngine, conf: dict):
         if t == ComputingEngine.STANDALONE:
             data_dir = cfg.get_option(conf, "computing.standalone.data_dir")
-            options = cfg.get_option(conf, "computing.standalone.options")
+            options = cfg.get_option(conf, "computing.standalone.options", None)
             return self.build_standalone(data_dir=data_dir, options=options)
         elif t == ComputingEngine.EGGROLL:
             host = cfg.get_option(conf, "computing.eggroll.host")
