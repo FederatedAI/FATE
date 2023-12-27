@@ -45,15 +45,19 @@
 * Using different ports to handle access requests both inside and outside the cluster, facilitating the adoption of different security policies for different ports
 
 > FATE Flow 2.0: Building Open and Standardized Scheduling Platform for Scheduling Interconnection
-* Migrated functions: data upload/download, process scheduling, component output data/model/metric management, multi-storage adaptation for models, authentication, authorization, feature anonymization, multi-computing/storage/communication engine adaptation, and system high availability
+* Adapted to new scalable and standardized federated DSL IR
+* Built an interconnected scheduling layer framework, supported the BFIA protocol
 * Optimized process scheduling, with scheduling separated and customizable, and added priority scheduling
-* Optimized algorithm component scheduling, dividing execution steps into preprocessing, running, and post-processing
+* Optimized algorithm component scheduling，support container-level algorithm loading， enhancing support for cross-platform heterogeneous scenarios
 * Optimized multi-version algorithm component registration, supporting registration for mode of components
+* Federated DSL IR extension enhancement: supports multi-party asymmetric scheduling
 * Optimized client authentication logic, supporting permission management for multiple clients
 * Optimized RESTful interface, making parameter fields and types, return fields, and status codes clearer
-* Decoupling the system layer from the algorithm layer, with system configuration moved from the FATE repository to the Flow repository
+* Added OFX(Open Flow Exchange) module: encapsulated scheduling client to allow cross-platform scheduling
+* Supported the new communication engine OSX, while remaining compatible with all engines from FATE Flow 1.x
+* Decoupled the System Layer and the Algorithm Layer, with system configuration moved from the FATE repository to the Flow repository
 * Published FATE Flow package to PyPI and added service-level CLI for service management
-
+* Migrated major functionality from FATE Flow 1.x
 
 > Fate-Client 2.0: Building Scalable Federated DSL for Application Layer Interconnection And Providing Tools For Fast Federated Modeling.
 * Introduce new scalable and standardized federated DSL IR(Intermediate Representation) for federated modeling job
@@ -66,4 +70,5 @@
 > Fate-Test: FATE Automated Testing Tool
 * Migrated automated testing for functionality, performance, and correctness
 
-
+> Easy Deploy
+* Supports installation of FATE by PyPi
