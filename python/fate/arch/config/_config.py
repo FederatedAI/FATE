@@ -35,7 +35,7 @@ class Config(object):
     in https://github.com/facebookresearch/CrypTen/blob/main/crypten/config/config.py
     """
 
-    __DEFAULT_CONFIG_PATH = os.path.normpath(os.path.join(__file__, "../../../../../configs/default.yaml"))
+    __DEFAULT_CONFIG_PATH = os.path.normpath(os.path.join(__file__, os.path.pardir, "default.yaml"))
 
     def __init__(self, config_file=None):
         if config_file is None:

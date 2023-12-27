@@ -41,7 +41,7 @@ install_requires = [
     "opentelemetry-api",
     "opentelemetry-sdk",
     "mmh3==3.0.0",
-    "safetensors"
+    "safetensors",
 ]
 
 # Extra requirements
@@ -82,6 +82,8 @@ setup(
     url="https://fate.fedai.org/",
     packages=find_packages("."),
     install_requires=install_requires,
+    include_package_data=True,
+    package_data={"": ["*.yaml"]},
     extras_require=extras_require,
     python_requires=">=3.8",
 )
