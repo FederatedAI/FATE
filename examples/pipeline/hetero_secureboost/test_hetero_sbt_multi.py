@@ -16,11 +16,11 @@ def main(config="../config.yaml", namespace=""):
     reader_0 = Reader("reader_0")
     reader_0.guest.task_parameters(
         namespace=f"experiment{namespace}",
-        name="student_hetero_guest"
+        name="vehicle_scale_hetero_guest"
     )
     reader_0.hosts[0].task_parameters(
         namespace=f"experiment{namespace}",
-        name="student_hetero_host"
+        name="vehicle_scale_hetero_host"
     )
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 

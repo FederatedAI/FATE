@@ -23,7 +23,7 @@ def load_federation(federation, computing):
     )
 
     builder = FederationBuilder(
-        federation_id=federation.metadata.federation_id,
+        federation_session_id=federation.metadata.federation_id,
         party=federation.metadata.parties.local.tuple(),
         parties=[p.tuple() for p in federation.metadata.parties.parties],
     )

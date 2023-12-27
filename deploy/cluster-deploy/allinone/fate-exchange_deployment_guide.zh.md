@@ -25,7 +25,7 @@
 
 | 软件产品 | 组件     | 端口 | 说明                                                         |
 | -------- | -------- | ---- | ------------------------------------------------------------ |
-| eggroll  | rollsite | 9370 | 跨站点或者说跨party通讯组件，相当于proxy+federation，每个party只能有一个此服务 |
+| eggroll  | osx | 9370 | 通信/数据传输模块 |
 
 4.基础环境配置
 ==============
@@ -174,11 +174,9 @@ tar -xvJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 cd /data/projects/fate/common/jdk
 ```
 
+## 5.4 部署osx
 
-5.4 部署rollsite（rollsite和osx二选一）
---------
-
-### **5.4.1软件部署**
+### 5.4.1 软件部署
 
 ```
 #部署软件
@@ -186,8 +184,8 @@ cd /data/projects/fate/common/jdk
 cd /data/projects/install
 tar xf fate_install_*.tar.gz
 cd fate_install_*
-tar xvf eggroll.tar.gz -C /data/projects/fate
 tar xvf bin.tar.gz -C /data/projects/fate
+tar xvf osx.tar.gz -C /data/projects/fate
 
 #设置环境变量文件
 #在目标服务器（192.168.0.1）app用户下执行:
@@ -198,121 +196,9 @@ export EGGROLL_LOG_LEVEL=DEBUG
 EOF
 ```
 
-### 5.4.2 rollsite系统配置文件修改
+### 5.4.2 osx系统配置文件修改
 
-配置文件：/data/projects/fate/eggroll/conf/eggroll.properties
-
-- 对应party rollsite的IP、端口、本party的Party Id修改，rollsite的端口一般默认即可。
-
-  eggroll.rollsite.host: 192.168.0.1
-  eggroll.rollsite.port: 9370
-  eggroll.rollsite.party.id: exchange
-
-以上参数调整可以参考如下例子手工配置，也可以使用以下指令完成：
-
-```
-#在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/eggroll/conf/eggroll.properties <<EOF
-[eggroll]
-# for roll site. rename in the next round
-eggroll.rollsite.coordinator=fate
-eggroll.rollsite.host=192.168.0.1
-eggroll.rollsite.port=9370
-eggroll.rollsite.party.id=exchange
-eggroll.rollsite.route.table.path=conf/route_table.json
-eggroll.rollsite.route.table.key=fate
-eggroll.rollsite.route.table.whitelist=127.0.0.1
-eggroll.rollsite.jvm.options=-XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:logs/eggroll/rollsite.gc.log
-eggroll.rollsite.push.max.retry=3
-eggroll.rollsite.push.long.retry=2
-eggroll.rollsite.push.batches.per.stream=10
-eggroll.rollsite.adapter.sendbuf.size=100000
-eggroll.core.grpc.channel.keepalive.timeout.sec=20
-EOF
-```
-
-### 5.4.3 rollsite路由配置文件修改
-
-此配置文件rollsite使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
-
-rollsite配置文件:  /data/projects/fate/eggroll/conf/route_table.json
-
-```
-#在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
-{
-  "route_table":
-  {
-    "9999":
-    {
-      "default":[
-        {
-          "port": 9370,
-          "ip": "192.168.0.2"
-        }
-      ]
-    },
-    "10000":
-    {
-      "default":[
-        {
-          "port": 9370,
-          "ip": "192.168.0.3"
-        }
-      ]
-    }
-  },
-  "permission":
-  {
-    "default_allow": true
-  }
-}
-EOF
-```
-
-### 5.4.4 各party默认rollsite路由信息修改
-
-**需要连接exchange的各party的rollsite模块，app用户修改**
-
-修改/data/projects/fate/eggroll/conf/route_table.json部分，默认路由信息指向部署好的exchange，不需要配置对端fateflow信息，修改后需重启rollsite：
-
-```
- "default": {
-            "default": [
-                {
-                    "ip": "192.168.0.1",
-                    "port": 9370
-                }
-            ]
-        }
-```
-
-## 5.5  部署osx（rollsite和osx二选一）
-
-### 5.5.1 软件部署
-
-```
-#部署软件
-#在目标服务器（192.168.0.1）app用户下执行:
-cd /data/projects/install
-tar xf fate_install_*.tar.gz
-cd fate_install_*
-tar xvf bin.tar.gz -C /data/projects/fate
-mkdir -p /data/projects/fate/fate/proxy
-tar xvf osx.tar.gz -C /data/projects/fate/fate/proxy
-
-#设置环境变量文件
-#在目标服务器（192.168.0.1）app用户下执行:
-cat >/data/projects/fate/bin/init_env.sh <<EOF
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u345
-export PATH=\$PATH:\$JAVA_HOME/bin
-export EGGROLL_LOG_LEVEL=DEBUG
-EOF
-```
-
-### 5.5.2 osx系统配置文件修改
-
-配置文件： /data/projects/fate/fate/proxy/osx/conf/broker/broker.properties
+配置文件： /data/projects/fate/osx/conf/broker/broker.properties
 
 - 本party的Party Id修改，充当exchange角色方时，broker.properties配置中该参数填写为default，其余配置一般默认即可。
 
@@ -322,17 +208,19 @@ EOF
 
 ```
 #在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/fate/proxy/osx/conf/broker/broker.properties <<EOF
+cat > /data/projects/fate/osx/conf/broker/broker.properties <<EOF
+# The grpc port of the server
 grpc.port= 9370
 # Http switch for the server.
 # If set to True, the server will open the http port.
 # http port configuration can be set through http.port
 open.http.server=false
 # port of http
-http.port=8087
-https.port=8088
+http.port=8077
+https.port=8078
 # whether the http server uses TLS
-#ttp.use.tls = false
+http.use.tls = false
+http.client.connection.timeout = 30000
 # whether the grpc server uses TLS?
 # If true, a grpc port will be specially opened to listen for TLS requests
 # grpc tls port configuration can be set through grpc.tls.port
@@ -346,36 +234,45 @@ self.party=default
 # and standalone is used by default
 deploy.mode=standalone
 # the zookeeper address needs to be configured when the deployment mode is cluster
-zk.url=127.0.0.1:2181
-stream.limit.mode=LOCAL
+zk.url=localhost:2181
 # the IP  of the cluster manager component of eggroll
 eggroll.cluster.manager.ip = localhost
 # the port of the cluster manager component of eggroll
 eggroll.cluster.manager.port = 4670
 # maximum number of message retries
 produce.msg.max.try.time =3
-http.client.method.config = {"UNARY_CALL":{"reqTimeout":0,"connectionTimeout":0,"socketTimeout":0}}
-http.use.tls=false
+
+
+
+#证书库类型   JKS|PKSC12
 http.ssl.trust.store.type=PKCS12
-http.ssl.key.store.alias=22
-http.ssl.key.store.password=123456
-mapped.file.size=134217728
-#http.ssl.trust.store.path=D:\\44\\127.0.0.1.pfx
-server.ca.file=
-server.cert.chain.file=
-server.private.key.file=
+#别名/机构名  有些生成工具里面是CommName
+http.ssl.key.store.alias=
+#证书生成时候的密码 两个随便填哪个。
+http.ssl.key.store.password=
+http.ssl.trust.store.password=
+#证书库路径 有.pk12|.pfx|.jks等N多种类型   这个填了，下面三个就没用了。
+#http.ssl.trust.store.path=
+
+#证书三件套 根证书，用户证书，私钥    http.ssl.trust.store.path填了这三个就没用了。
+#server.ca.file=
+#server.cert.chain.file=
+#server.private.key.file=
+http.accept.receive.buffer.size= 9096
+grpc.server.max.inbound.metadata.size = 8000000000
+grpc.server.max.inbound.message.size = 8000000000
 EOF
 ```
 
-### 5.5.3 osx路由配置文件修改
+### 5.4.3 osx路由配置文件修改
 
 此配置文件osx使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
-osx配置文件： /data/projects/fate/fate/proxy/osx/conf/broker/route_table.json
+osx配置文件： /data/projects/fate/osx/conf/broker/route_table.json
 
 ```
 #在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/fate/proxy/osx/conf/broker/route_table.json << EOF
+cat > /data/projects/fate/osx/conf/broker/route_table.json << EOF
 {
   "route_table":
   {
@@ -396,21 +293,30 @@ cat > /data/projects/fate/fate/proxy/osx/conf/broker/route_table.json << EOF
           "ip": "192.168.0.3"
         }
       ]
+    },
+    "default":
+    {
+      "default":[
+        {
+          "port": 9370,
+          "ip": "192.168.0.1"
+        }
+      ]
     }
   },
-  "permission":
-  {
-    "default_allow": true
-  }
+  "self_party":
+  [
+    "default"
+  ]
 }
 EOF
 ```
 
-### 5.5.4 各party默认osx路由信息修改
+### 5.4.4 各party默认osx路由信息修改
 
 **需要连接exchange的各party的osx模块，app用户修改**
 
-修改/data/projects/fate/fate/proxy/osx/conf/broker/route_table.json部分，默认路由信息指向部署好的exchange，不需要配置对端fateflow信息，修改后需重启osx：
+修改/data/projects/fate/osx/conf/broker/route_table.json部分，默认路由信息指向部署好的exchange，不需要配置对端fateflow信息，修改后需重启osx：
 
 ```
  "default": {
@@ -425,44 +331,24 @@ EOF
 
 
 
-## 5.6 启动服务
+## 5.5 启动服务
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
 ```
-eggroll和osx二选一
-#启动osx服务时(默认使用osx，需先停用rollsite)
+#启动osx服务
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/eggroll
-bash ./bin/eggroll.sh rollsite stop
-cd /data/projects/fate/fate/proxy/osx
+cd /data/projects/fate/osx
 bash service.sh start
-
-#启动eggroll服务(使用rollsite,需先停用osx)
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/fate/proxy/osx
-bash service.sh stop
-cd /data/projects/fate/eggroll
-bash ./bin/eggroll.sh rollsite start
 ```
 
-## 5.7 验证和问题定位
+## 5.6 验证和问题定位
 
 1）跑一个双边toy测试，看是否可以测试通过，通过则表示配置无误，具体用例参考allinone部署文档。
 
-2）查看exchange日志，看第1步用例涉及到的partyid是否有路由信息，
+2）osx错误日志
 
-​       日志：/data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.log
-
-3）rollsite错误日志
-
-​      /data/projects/fate/eggroll/logs/eggroll/bootstrap.rollsite.err
-
-​      /data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
-
-4）osx错误日志
-
-​    /data/projects/fate/fate/proxy/osx/logs/broker/broker-error.log
+  /data/projects/fate/osx/logs/broker/broker-error.log
 
 6.系统运维
 ================
@@ -472,22 +358,10 @@ bash ./bin/eggroll.sh rollsite start
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
-### 6.1.1 rollsite服务管理
+### 6.1.1 osx服务管理
 
 ```
-cd /data/projects/fate/eggroll
-```
-
-启动/关闭/查看/重启rollsite：
-
-```
-bash ./bin/eggroll.sh rollsite start/stop/status/restart
-```
-
-### 6.1.2 osx服务管理
-
-```
-cd /data/projects/fate/fate/proxy/osx
+cd /data/projects/fate/osx
 ```
 
 启动/关闭/查看/重启osx：
@@ -505,16 +379,13 @@ bash service.sh start/stop/status/restart
 ```
 #查看osx进程是否启动
 ps -ef | grep -i osx
-
-#查看rollsite进程是否启动
-ps -ef | grep -i rollsite
 ```
 
 ### 6.2.2 查看进程端口
 
 ```
 #查看进程端口是否存在
-#rollsite or osx
+#osx
 netstat -tlnp | grep 9370
 ```
 
@@ -524,6 +395,5 @@ netstat -tlnp | grep 9370
 
 | 服务     | 日志路径                                        |
 | -------- | ----------------------------------------------- |
-| rollsite | /data/projects/fate/eggroll/logs                |
-| osx      | /data/projects/fate/fate/proxy/osx/logs/broker/ |
+| osx      | /data/projects/fate/osx/logs/broker/ |
 

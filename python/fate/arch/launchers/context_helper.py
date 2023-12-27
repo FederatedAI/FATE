@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import os
 from dataclasses import dataclass, field
 from typing import List
@@ -57,7 +72,7 @@ def init_local_context(computing_session_id: str, federation_session_id: str):
     parties = get_parties(args.parties)
     party = parties[args.rank]
     federation_session = FederationBuilder(
-        federation_id=federation_session_id, party=party, parties=parties
+        federation_session_id=federation_session_id, party=party, parties=parties
     ).build_standalone(
         computing_session,
     )
@@ -87,7 +102,7 @@ def init_cluster_context(computing_session_id: str, federation_session_id: str):
     federation_mode = FederationMode.from_str(args.federation_mode)
     federation_host, federation_port = args.federation_address.split(":")
     federation_session = FederationBuilder(
-        federation_id=federation_session_id, party=party, parties=parties
+        federation_session_id=federation_session_id, party=party, parties=parties
     ).build_osx(
         computing_session=computing_session,
         host=federation_host.strip(),
