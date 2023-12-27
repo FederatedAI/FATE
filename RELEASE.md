@@ -1,16 +1,20 @@
 ## Release
 ### Major Features and Improvements
 > Arch 2.0：Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
-* Introduce `Context` to manage useful APIs for developers, such as `Metrics`, `Cipher`, `Tensor` and `IO`.
+* Introduce `Context` to manage useful APIs for developers, such as `Distributed Compting`, `Federation`, `Cipher`, `Tensor`, `Metrics`,  and `IO`.
 * Introduce `Tensor` data structure to handle local and distributed matrix operation, with built-in heterogeneous acceleration support. 
   * abstracted PHETensor, smooth switch between various underlying PHE implementations through standard interface
 * Introduce `DataFrame`, a 2D tabular data structure for data io and simple feature engineering
   * add data block manager to support mixed-type columns & feature anonymization
   * added 30+ operator interfaces for statistics, including comparison, indexing, data binning, and transformation, etc
+* Refactor `Federation`, a unified interface for federated computing. We provide a unified Serdes control and more user-friendly api.
+* Introduce `Config`, a unified configuration for FATE, including safety restrictions, system configuration, and algorithm configuration
 * Refactor `logger`, customizable logging for different use cases and flavors.
+* Introduce `Launcher`, a simple tool for federated program execution, especially useful for standalone and local debugging
 * Framework: PSI-ECDH protocol support, single entry for histogram statistical computation 
 * Deepspeed integration: support distributed training using deepspeed with Eggroll.
 * Protocol: Support for SSHE(mpc and homomophic encryption mixed protocol), ECDH, Secure Aggregation protocols
+* Experimental Integrate `Crypten` for SMPC support, more protocols and features will be added in the future
 
 > Components 2.0: Building Standardized Algorithm Components for different Scheduling Engines
 * Introduce components toolbox to wrap ML modules as standard executable programs
@@ -19,7 +23,7 @@
 * Input-Output: Further decoupling of FATE-Flow, providing standardized black-box calling processes 
 * Component Definition: Support for typing-based definition, automatic checking for component parameters, support for multiple types of data and model input and output, in addition to multiple inputs
 
-> ML:-2.0: Major functionality migration from FATE-v1.x, decoupling call hierarchy
+> ML 2.0: Major functionality migration from FATE-v1.x, decoupling call hierarchy
 * Data preprocessing: Added DataFrame Transformer; Reader, Union and DataSplit migration completed
 * Feature Engineering: Migrated HeteroFederatedBinning, HeteroFeatureSelection, DataStatistics, Sampling, FeatureScale and Pearson Correlation
 * Federated Training Migrated: HeteroSecureBoost, HomoNN, HeteroCoordinatedLogisticRegression, HeteroCoordinatedLinearRegression, SSHE-LogisticRegression and SSHE-LinearRegression
