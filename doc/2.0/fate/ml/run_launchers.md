@@ -7,15 +7,13 @@ locally. Running launchers do not require active FATE-Flow services or dependenc
 
 ### Installation
 
-Install all requirements of FATE-ML by following commands:
+Install all requirements of FATE-ML by following command:
 
 ```commandline
 pip install fate
 ```
 
 ### Create A Launcher
-
-Once environment is ready, you run FATE ml launchers.
 
 Currently, we provide various ready-to-use launchers for testing mpc protocol and SSHE LR & LinR modules here.
 
