@@ -6,9 +6,10 @@ Regression(CoordinatedLinR).
 
 Below lists features of Coordinated LinR model:
 
-| Linear Model    	 | Multi-Host                                                                   	 | Cross Validation                                                 	     | Warm-Start                                                    |
-|-------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| Hetero LinR     	 | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_cv.py) | [&check;](../../../examples/pipeline/test_linr_warm_start.py) |
+| Linear Model    	 | Multi-Host                                                                   	 | Cross Validation                                                 	     | Warm-Start                                                                     |
+|-------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| Hetero LinR     	 | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_cv.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_warm_start.py) |
+| SSHE LinR         | &cross;                                                                        | [&check;](../../../examples/pipeline/sshe_linr/test_linr_cv.py)        | [&check;](../../../examples/pipeline/sshe_linr/test_linr_warm_start.py)        |                                                  |                                                                        |                                                               |
 
 ## Coordinated LinR
 
@@ -78,3 +79,11 @@ details on the secure model-building process, please refer to this
          >     Use difference of model weights
 
 5. Support multi-host modeling task.
+
+## Hetero-SSHE-LinR features:
+
+1. Mini-batch mechanism
+
+2. Support early-stopping mechanism
+
+3. Support setting arbitrary frequency for revealing loss 

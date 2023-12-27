@@ -12,16 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.components.fate import SSHELR, PSI, Reader
+from fate_client.pipeline.components.fate import (PSI, HeteroFeatureSelection, HeteroFeatureBinning,
+                                                  Reader, SSHELR, FeatureScale)
 from fate_client.pipeline.utils import test_utils
 
 
-def main(config="../config.yaml", namespace=""):
+def main(config=".../config.yaml", namespace=""):
     if isinstance(config, str):
         config = test_utils.load_job_config(config)
     parties = config.parties
@@ -37,47 +36,58 @@ def main(config="../config.yaml", namespace=""):
     reader_0 = Reader("reader_0")
     reader_0.guest.task_parameters(
         namespace=f"experiment{namespace}",
-        name="vehicle_scale_hetero_guest"
+        name="breast_hetero_guest"
     )
     reader_0.hosts[0].task_parameters(
         namespace=f"experiment{namespace}",
-        name="vehicle_scale_hetero_host"
+        name="breast_hetero_host"
     )
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
+    scale_0 = FeatureScale("scale_0", train_data=psi_0.outputs["output_data"])
+
+    binning_0 = HeteroFeatureBinning("binning_0",
+                                     method="quantile",
+                                     n_bins=10,
+                                     transform_method="bin_idx",
+                                     train_data=scale_0.outputs["train_output_data"]
+                                     )
+    selection_0 = HeteroFeatureSelection("selection_0",
+                                         method=["iv"],
+                                         train_data=psi_0.outputs["output_data"],
+                                         input_models=[binning_0.outputs["output_model"]],
+                                         iv_param={"metrics": "iv", "filter_type": "threshold", "threshold": 0.1})
+
     lr_0 = SSHELR("lr_0",
-                  learning_rate=0.15,
-                  epochs=2,
+                  learning_rate=0.05,
+                  epochs=10,
                   batch_size=300,
+                  init_param={"fit_intercept": True, "method": "zeros"},
+                  train_data=selection_0.outputs["train_output_data"],
                   reveal_every_epoch=False,
                   early_stop="diff",
-                  reveal_loss_freq=1,
-                  init_param={"fit_intercept": True, "method": "random_uniform"},
-                  train_data=psi_0.outputs["output_data"])
+                  reveal_loss_freq=3)
 
-    evaluation_0 = Evaluation("evaluation_0",
-                              runtime_parties=dict(guest=guest),
-                              default_eval_setting="multi",
-                              predict_column_name='predict_result',
-                              input_data=lr_0.outputs["train_output_data"])
+    pipeline.add_tasks([reader_0, psi_0, scale_0, binning_0, selection_0, lr_0])
 
-    pipeline.add_tasks([reader_0, psi_0, lr_0, evaluation_0])
-
+    # pipeline.add_task(hetero_feature_binning_0)
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
 
-    pipeline.deploy([psi_0, lr_0])
+    # print(pipeline.get_task_info("feature_scale_1").get_output_model())
+
+    pipeline.deploy([psi_0, scale_0, selection_0, lr_0])
 
     predict_pipeline = FateFlowPipeline()
 
     reader_1 = Reader("reader_1")
     reader_1.guest.task_parameters(
         namespace=f"experiment{namespace}",
-        name="vehicle_scale_hetero_guest"
+        name="breast_hetero_guest"
     )
     reader_1.hosts[0].task_parameters(
         namespace=f"experiment{namespace}",
-        name="vehicle_scale_hetero_host"
+        name="breast_hetero_host"
     )
 
     deployed_pipeline = pipeline.get_deployed_pipeline()
@@ -86,10 +96,7 @@ def main(config="../config.yaml", namespace=""):
     predict_pipeline.add_tasks([reader_1, deployed_pipeline])
 
     predict_pipeline.compile()
-    # print("\n\n\n")
-    # print(predict_pipeline.compile().get_dag())
     predict_pipeline.predict()
-    # print(f"predict lr_0 data: {pipeline.get_task_info('lr_0').get_output_data()}")
 
 
 if __name__ == "__main__":

@@ -16,8 +16,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import DataSplit, PSI, Reader
-from fate_client.pipeline.interface import DataWarehouseChannel
+from fate_client.pipeline.components.fate import DataSplit, PSI, Reader, CoordinatedLR
 from fate_client.pipeline.utils import test_utils
 
 
@@ -27,14 +26,15 @@ def main(config="../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
+    arbiter = parties.arbiter[0]
 
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
-    reader_0 = Reader("reader_0")
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
     reader_0.guest.task_parameters(
         namespace=f"experiment{namespace}",
         name="breast_hetero_guest"
@@ -44,7 +44,7 @@ def main(config="../config.yaml", namespace=""):
         name="breast_hetero_host"
     )
 
-    reader_1 = Reader("reader_1")
+    reader_1 = Reader("reader_1", runtime_parties=dict(guest=guest, host=host))
     reader_1.guest.task_parameters(
         namespace=f"experiment{namespace}",
         name="breast_hetero_guest"
@@ -62,7 +62,8 @@ def main(config="../config.yaml", namespace=""):
                              validate_size=0.0,
                              test_size=0.4,
                              stratified=True,
-                             input_data=psi_0.outputs["output_data"])
+                             input_data=psi_0.outputs["output_data"],
+                             runtime_parties=dict(guest=guest, host=host))
 
     data_split_1 = DataSplit("data_split_1",
                              train_size=200,
@@ -71,8 +72,17 @@ def main(config="../config.yaml", namespace=""):
                              hetero_sync=True,
                              input_data=psi_1.outputs["output_data"]
                              )
+    lr_0 = CoordinatedLR("lr_0",
+                         epochs=10,
+                         batch_size=300,
+                         optimizer={"method": "SGD", "optimizer_params": {"lr": 0.1}, "penalty": "l2", "alpha": 0.001},
+                         init_param={"fit_intercept": True, "method": "zeros"},
+                         train_data=data_split_1.outputs["train_output_data"],
+                         validate_data=data_split_1.outputs["validate_output_data"],
+                         learning_rate_scheduler={"method": "linear", "scheduler_params": {"start_factor": 0.7,
+                                                                                           "total_iters": 100}})
 
-    pipeline.add_tasks([reader_0, reader_1, psi_0, psi_1, data_split_0, data_split_1])
+    pipeline.add_tasks([reader_0, reader_1, psi_0, psi_1, data_split_0, data_split_1, lr_0])
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()

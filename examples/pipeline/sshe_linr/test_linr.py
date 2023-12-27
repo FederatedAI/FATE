@@ -16,7 +16,7 @@
 import argparse
 
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import SSHELinR, PSI, Evaluation, Reader
+from fate_client.pipeline.components.fate import SSHELinR, PSI, Evaluation, Reader, FeatureScale
 from fate_client.pipeline.utils import test_utils
 
 
@@ -36,11 +36,12 @@ def main(config="../config.yaml", namespace=""):
     reader_0.guest.task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_guest")
     reader_0.hosts[0].task_parameters(namespace=f"experiment{namespace}", name="motor_hetero_host")
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
+    scale_0 = FeatureScale('scale_0', train_data=psi_0.outputs['output_data'], method='standard')
     linr_0 = SSHELinR("linr_0",
-                      epochs=10,
+                      epochs=2,
                       batch_size=100,
                       init_param={"fit_intercept": True},
-                      train_data=psi_0.outputs["output_data"],
+                      train_data=scale_0.outputs["output_data"],
                       reveal_every_epoch=False,
                       early_stop="diff",
                       reveal_loss_freq=1,
@@ -50,7 +51,7 @@ def main(config="../config.yaml", namespace=""):
                               default_eval_setting="regression",
                               input_data=linr_0.outputs["train_output_data"])
 
-    pipeline.add_tasks([reader_0, psi_0, linr_0, evaluation_0])
+    pipeline.add_tasks([reader_0, psi_0, scale_0, linr_0, evaluation_0])
     pipeline.compile()
     # print(pipeline.get_dag())
     pipeline.fit()
