@@ -16,8 +16,12 @@ import logging
 import os
 from fate.arch import Context
 from fate.components.components.nn.nn_runner import NNRunner
-from fate.components.components.nn.component_utils import (prepare_runner_class, prepare_context_and_role,
-                                                           train_procedure, predict_procedure)
+from fate.components.components.nn.component_utils import (
+    prepare_runner_class,
+    prepare_context_and_role,
+    train_procedure,
+    predict_procedure,
+)
 from fate.components.components.utils import consts
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 
@@ -51,12 +55,9 @@ def train(
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
     train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
     train_model_output: cpn.model_directory_output(roles=[GUEST, HOST], optional=True),
-    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True)
+    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
 ):
-
-
     if role.is_guest or role.is_host:  # is client
-
         train_procedure(
             ctx,
             role,
@@ -68,34 +69,25 @@ def train(
             source,
             train_data_output,
             train_model_output,
-            train_model_input
+            train_model_input,
         )
 
     elif role.is_arbiter:  # is server
-        runner: NNRunner = prepare_runner_class(
-            runner_module, runner_class, runner_conf, source)
+        runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
         prepare_context_and_role(runner, ctx, role, consts.TRAIN)
         runner.train()
 
 
 @homo_nn.predict()
 def predict(
-    ctx, role: Role, test_data: cpn.dataframe_input(roles=[GUEST, HOST])| cpn.data_directory_input()
-        , predict_model_input: cpn.model_directory_input(
-                roles=[
-                    GUEST, HOST]), predict_data_output: cpn.dataframe_output(
-                        roles=[
-                            GUEST, HOST], optional=True)):
-
+    ctx,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]) | cpn.data_directory_input(),
+    predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
+    predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+):
     if role.is_guest or role.is_host:  # is client
-
-        predict_procedure(
-            ctx,
-            role,
-            test_data,
-            predict_model_input,
-            predict_data_output
-        )
+        predict_procedure(ctx, role, test_data, predict_model_input, predict_data_output)
 
     elif role.is_arbiter:  # is server
         logger.info("arbiter skip predict")

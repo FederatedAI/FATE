@@ -19,7 +19,6 @@
 #  limitations under the License.
 
 
-
 import os
 from contextlib import contextmanager
 
@@ -82,4 +81,3 @@ class Config(object):
     @property
     def components(self):
         return self.config.components
-

@@ -44,17 +44,13 @@ def fillna(df: DataFrame, value, downcast=None):
     else:
         raise ValueError(f"Not support value type={type(value)}")
 
-    return DataFrame(
-        df._ctx,
-        block_table,
-        df.partition_order_mappings,
-        data_manager.duplicate()
-    )
+    return DataFrame(df._ctx, block_table, df.partition_order_mappings, data_manager.duplicate())
 
 
 def _fillna(block_table, value, block_indexes):
     block_index_set = set(block_indexes)
     if isinstance(value, (int, float, np.int32, np.int64, np.float32, np.float64)):
+
         def _fill(blocks):
             ret_blocks = []
             for bid, block in enumerate(blocks):
@@ -69,6 +65,7 @@ def _fillna(block_table, value, block_indexes):
 
         return block_table.mapValues(_fill)
     else:
+
         def _fill_with_dict(blocks):
             ret_blocks = []
             for bid, block in enumerate(blocks):

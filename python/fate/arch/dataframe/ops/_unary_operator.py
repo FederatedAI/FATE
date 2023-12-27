@@ -27,9 +27,4 @@ def invert(df: DataFrame):
             raise ValueError("to use ~df syntax, data types should be bool")
 
     block_table = unary_operate(df.block_table, operator.invert, block_indexes)
-    return type(df)(
-        df.ctx,
-        block_table,
-        df.partition_order_mappings,
-        data_manager.duplicate()
-    )
+    return type(df)(df.ctx, block_table, df.partition_order_mappings, data_manager.duplicate())

@@ -67,18 +67,14 @@ def cmp_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
             for bid in block_indexes
         ]
 
-        block_table = _cmp_dfs(lhs.block_table, rhs.block_table, op, lhs_block_loc, rhs_block_loc,
-                               block_indexes, indexers)
+        block_table = _cmp_dfs(
+            lhs.block_table, rhs.block_table, op, lhs_block_loc, rhs_block_loc, block_indexes, indexers
+        )
     else:
         raise ValueError(f"Not implement comparison of rhs type={type(rhs)}")
 
     block_table, data_manager = _merge_bool_blocks(block_table, data_manager, block_indexes)
-    return type(lhs)(
-        lhs._ctx,
-        block_table,
-        lhs.partition_order_mappings,
-        data_manager
-    )
+    return type(lhs)(lhs._ctx, block_table, lhs.partition_order_mappings, data_manager)
 
 
 def _merge_bool_blocks(block_table, data_manager: DataManager, block_indexes):
@@ -96,10 +92,7 @@ def _merge_bool_blocks(block_table, data_manager: DataManager, block_indexes):
     return dst_block_table, dst_data_manager
 
 
-def _cmp_dfs(lhs_block_table, rhs_block_table, op,
-             lhs_block_loc, rhs_block_loc,
-             block_indexes, indexers):
-
+def _cmp_dfs(lhs_block_table, rhs_block_table, op, lhs_block_loc, rhs_block_loc, block_indexes, indexers):
     block_index_set = set(block_indexes)
 
     def _cmp_partition(l_blocks, r_blocks):
@@ -119,7 +112,6 @@ def _cmp_dfs(lhs_block_table, rhs_block_table, op,
 
         return ret_blocks
 
-    block_table = lhs_block_table.join(rhs_block_table,
-                                       _cmp_partition)
+    block_table = lhs_block_table.join(rhs_block_table, _cmp_partition)
 
     return block_table

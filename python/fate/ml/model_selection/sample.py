@@ -24,14 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class SampleModuleGuest(Module):
-    def __init__(
-            self,
-            replace=False,
-            frac=1.0,
-            n=None,
-            random_state=None,
-            hetero_sync=True
-    ):
+    def __init__(self, replace=False, frac=1.0, n=None, random_state=None, hetero_sync=True):
         self.replace = replace
         self.frac = frac
         self.n = n
@@ -46,35 +39,27 @@ class SampleModuleGuest(Module):
             logger.info(f"hetero sync")
             logger.info(f"role: {ctx.local.role}")
 
-            sampled_data = utils.federated_sample(ctx,
-                                                  train_data,
-                                                  n=self.n,
-                                                  frac=self.frac,
-                                                  replace=self.replace,
-                                                  role=ctx.local.role,
-                                                  random_state=self.random_state)
+            sampled_data = utils.federated_sample(
+                ctx,
+                train_data,
+                n=self.n,
+                frac=self.frac,
+                replace=self.replace,
+                role=ctx.local.role,
+                random_state=self.random_state,
+            )
         else:
             logger.info(f"local sample")
             # local sample
-            sampled_data = utils.local_sample(ctx,
-                                              train_data,
-                                              n=self.n,
-                                              frac=self.frac,
-                                              replace=self.replace,
-                                              random_state=self.random_state)
+            sampled_data = utils.local_sample(
+                ctx, train_data, n=self.n, frac=self.frac, replace=self.replace, random_state=self.random_state
+            )
 
         return sampled_data
 
 
 class SampleModuleHost(Module):
-    def __init__(
-            self,
-            replace=False,
-            frac=1.0,
-            n=None,
-            random_state=None,
-            hetero_sync=True
-    ):
+    def __init__(self, replace=False, frac=1.0, n=None, random_state=None, hetero_sync=True):
         self.replace = replace
         self.frac = frac
         self.n = n
@@ -87,18 +72,13 @@ class SampleModuleHost(Module):
             logger.info(f"hetero sync")
             logger.info(f"role: {ctx.local.role}")
 
-            sampled_data = utils.federated_sample(ctx,
-                                                  train_data,
-                                                  role=ctx.local.role)
+            sampled_data = utils.federated_sample(ctx, train_data, role=ctx.local.role)
         else:
             # local sample
             logger.info(f"local sample")
-            sampled_data = utils.local_sample(ctx,
-                                              train_data,
-                                              n=self.n,
-                                              frac=self.frac,
-                                              replace=self.replace,
-                                              random_state=self.random_state)
+            sampled_data = utils.local_sample(
+                ctx, train_data, n=self.n, frac=self.frac, replace=self.replace, random_state=self.random_state
+            )
             """elif self.mode == "weight":
                 if self.n is not None:
                     sampled_data = train_data.sample(n=self.n,

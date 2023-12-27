@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 
 def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-
     if "type" in input_df.columns:
         return {dataset_type: input_df[input_df["type"] == dataset_type] for dataset_type in input_df["type"].unique()}
     else:
@@ -49,18 +48,25 @@ def evaluation(
         type=string_choice(choice=["binary", "multi", "regression"]), default="binary", optional=True
     ),
     metrics: cpn.parameter(type=list, default=None, optional=True),
-    predict_column_name: cpn.parameter(type=str, default=None, optional=True,
-                                        desc="predict data column name, if None(default), will use \
+    predict_column_name: cpn.parameter(
+        type=str,
+        default=None,
+        optional=True,
+        desc="predict data column name, if None(default), will use \
                                         'predict_score' in the input dataframe when the default setting are binary and regression, \
-                                        and use 'predict_result' if default setting is multi"),
-    label_column_name: cpn.parameter(type=str, default=None, optional=True, desc="label data column namem if None(default), \
-                                     will use 'label' in the input dataframe")
+                                        and use 'predict_result' if default setting is multi",
+    ),
+    label_column_name: cpn.parameter(
+        type=str,
+        default=None,
+        optional=True,
+        desc="label data column namem if None(default), \
+                                     will use 'label' in the input dataframe",
+    ),
 ):
-
     if role.is_arbiter:
         return
     else:
-
         if metrics is not None:
             metrics_ensemble = get_specified_metrics(metrics)
             predict_col = predict_column_name if predict_column_name is not None else PREDICT_SCORE
@@ -73,7 +79,7 @@ def evaluation(
             else:
                 if default_eval_setting == BINARY:
                     metrics_ensemble = get_binary_metrics()
-                elif default_eval_setting ==  REGRESSION:
+                elif default_eval_setting == REGRESSION:
                     metrics_ensemble = get_regression_metrics()
                 else:
                     raise ValueError("default_eval_setting should be one of binary, multi, regression, got {}")
@@ -83,22 +89,19 @@ def evaluation(
         df_list = [_input.read() for _input in input_data]
         task_names = [_input.artifact.metadata.source.task_name for _input in input_data]
         eval_rs = {}
-        logger.info('components names are {}'.format(task_names))
+        logger.info("components names are {}".format(task_names))
         for name, df in zip(task_names, df_list):
             rs_ = evaluate(df, metrics_ensemble, predict_col, label_col)
             eval_rs[name] = rs_
 
-    ctx.metrics.log_metrics(eval_rs, name='evaluation', type='evaluation')
+    ctx.metrics.log_metrics(eval_rs, name="evaluation", type="evaluation")
 
 
 def evaluate(input_data, metrics, predict_col, label_col):
-
     data = input_data.as_pd_df()
     split_dict = split_dataframe_by_type(data)
     rs_dict = {}
     for name, df in split_dict.items():
-        
-
         y_true = df[label_col]
         # in case is multi result, use tolist
         y_pred = df[predict_col]

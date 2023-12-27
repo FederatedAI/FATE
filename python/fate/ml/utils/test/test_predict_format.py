@@ -24,12 +24,15 @@ import numpy as np
 
 
 computing = CSession()
-ctx = Context("guest", computing=computing, federation=StandaloneFederation(
-    computing, "fed", ("guest", 10000), [("host", 9999)]), )
+ctx = Context(
+    "guest",
+    computing=computing,
+    federation=StandaloneFederation(computing, "fed", ("guest", 10000), [("host", 9999)]),
+)
 
 df = pd.DataFrame()
-df['id'] = [i for i in range(50)]
-df['sample_id'] = [i for i in range(len(df))]
+df["id"] = [i for i in range(50)]
+df["sample_id"] = [i for i in range(len(df))]
 df[PREDICT_SCORE] = [np.random.random(1)[0] for i in range(len(df))]
 df[LABEL] = [np.random.randint(0, 2) for i in range(len(df))]
 
@@ -37,21 +40,18 @@ no_label_df = df.drop([LABEL], axis=1)
 
 
 df_reg = pd.DataFrame()
-df_reg['id'] = [i for i in range(50)]
-df_reg['sample_id'] = [i for i in range(len(df_reg))]
+df_reg["id"] = [i for i in range(50)]
+df_reg["sample_id"] = [i for i in range(len(df_reg))]
 df_reg[PREDICT_SCORE] = [np.random.random(1)[0] * 10 for i in range(len(df_reg))]
 df_reg[LABEL] = [np.random.random(1)[0] * 10 for i in range(len(df_reg))]
 
 df_multi = pd.DataFrame()
-df_multi['id'] = [i for i in range(50)]
-df_multi['sample_id'] = [i for i in range(len(df_multi))]
+df_multi["id"] = [i for i in range(50)]
+df_multi["sample_id"] = [i for i in range(len(df_multi))]
 df_multi[PREDICT_SCORE] = [[float(np.random.random(1)[0]) for i in range(3)] for i in range(len(df_multi))]
 df_multi[LABEL] = [np.random.randint(0, 3) for i in range(len(df_multi))]
 
-reader = PandasReader(
-    sample_id_name='sample_id',
-    match_id_name="id",
-    dtype="object")
+reader = PandasReader(sample_id_name="sample_id", match_id_name="id", dtype="object")
 data = reader.to_frame(ctx, df)
 data_2 = reader.to_frame(ctx, no_label_df)
 data_3 = reader.to_frame(ctx, df_reg)

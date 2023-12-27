@@ -60,9 +60,7 @@ def init_local_context(computing_session_id: str, federation_session_id: str):
     from fate.arch.federation import FederationBuilder
     from fate.arch.context import Context
 
-    args = HfArgumentParser(LauncherLocalContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[
-        0
-    ]
+    args = HfArgumentParser(LauncherLocalContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[0]
 
     data_dir = args.data_dir
     if not data_dir:
@@ -86,9 +84,7 @@ def init_cluster_context(computing_session_id: str, federation_session_id: str):
 
     from fate.arch.context import Context
 
-    args = HfArgumentParser(LauncherClusterContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[
-        0
-    ]
+    args = HfArgumentParser(LauncherClusterContextArgs).parse_args_into_dataclasses(return_remaining_strings=True)[0]
 
     cluster_host, cluster_port = args.cluster_address.split(":")
     computing_session = CSession(

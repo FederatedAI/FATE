@@ -19,7 +19,7 @@ import hashlib
 
 
 def generate_sample_id(n, prefix):
-    return [hashlib.sha256(bytes(prefix + str(i), encoding='utf-8')).hexdigest() for i in range(n)]
+    return [hashlib.sha256(bytes(prefix + str(i), encoding="utf-8")).hexdigest() for i in range(n)]
 
 
 def generate_sample_id_prefix():

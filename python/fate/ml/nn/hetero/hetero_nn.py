@@ -31,25 +31,24 @@ from fate.ml.nn.model_zoo.hetero_nn_model import TopModelStrategyArguments
 
 
 class HeteroNNTrainerGuest(HeteroTrainerBase):
-
     def __init__(
-            self,
-            ctx: Context,
-            model: HeteroNNModelGuest,
-            training_args: TrainingArguments,
-            train_set: Dataset,
-            val_set: Dataset = None,
-            loss_fn: nn.Module = None,
-            optimizer = None,
-            data_collator: Callable = None,
-            scheduler = None,
-            tokenizer: Optional[PreTrainedTokenizer] = None,
-            callbacks: Optional[List[TrainerCallback]] = [],
-            compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+        self,
+        ctx: Context,
+        model: HeteroNNModelGuest,
+        training_args: TrainingArguments,
+        train_set: Dataset,
+        val_set: Dataset = None,
+        loss_fn: nn.Module = None,
+        optimizer=None,
+        data_collator: Callable = None,
+        scheduler=None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
+        callbacks: Optional[List[TrainerCallback]] = [],
+        compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
     ):
-
-        assert isinstance(model, HeteroNNModelGuest), ('Model should be a HeteroNNModelGuest instance, '
-                                                       'but got {}.').format(type(model))
+        assert isinstance(model, HeteroNNModelGuest), (
+            "Model should be a HeteroNNModelGuest instance, " "but got {}."
+        ).format(type(model))
 
         if model.need_mpc_init():
             ctx.mpc.init()
@@ -68,9 +67,8 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             scheduler=scheduler,
             tokenizer=tokenizer,
             callbacks=callbacks,
-            compute_metrics=compute_metrics
+            compute_metrics=compute_metrics,
         )
-
 
     def compute_loss(self, model, inputs, **kwargs):
         # (features, labels), this format is used in FATE-1.x
@@ -80,7 +78,7 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
                 output = model(feats)
                 loss = self.loss_func(output, labels)
                 return loss
-            if len(inputs) == 1: # label only
+            if len(inputs) == 1:  # label only
                 labels = inputs[0]
                 output = model()
                 loss = self.loss_func(output, labels)
@@ -89,8 +87,9 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             # unknown format, go to super class function
             return super().compute_loss(model, inputs, **kwargs)
 
-    def training_step(self, model: Union[HeteroNNModelGuest, HeteroNNModelHost],
-                      inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+    def training_step(
+        self, model: Union[HeteroNNModelGuest, HeteroNNModelHost], inputs: Dict[str, Union[torch.Tensor, Any]]
+    ) -> torch.Tensor:
         # override the training_step method in Trainer
         model.train()
         inputs = self._prepare_inputs(inputs)
@@ -129,23 +128,23 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
 
 
 class HeteroNNTrainerHost(HeteroTrainerBase):
-
     def __init__(
-            self,
-            ctx: Context,
-            model: HeteroNNModelHost,
-            training_args: TrainingArguments,
-            train_set: Dataset,
-            val_set: Dataset = None,
-            optimizer=None,
-            data_collator: Callable = None,
-            scheduler=None,
-            tokenizer: Optional[PreTrainedTokenizer] = None,
-            callbacks: Optional[List[TrainerCallback]] = [],
-            compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+        self,
+        ctx: Context,
+        model: HeteroNNModelHost,
+        training_args: TrainingArguments,
+        train_set: Dataset,
+        val_set: Dataset = None,
+        optimizer=None,
+        data_collator: Callable = None,
+        scheduler=None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
+        callbacks: Optional[List[TrainerCallback]] = [],
+        compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
     ):
-        assert isinstance(model, HeteroNNModelHost), ('Model should be a HeteroNNModelHost instance, '
-                                                       'but got {}.').format(type(model))
+        assert isinstance(model, HeteroNNModelHost), (
+            "Model should be a HeteroNNModelHost instance, " "but got {}."
+        ).format(type(model))
 
         if model.need_mpc_init():
             ctx.mpc.init()
@@ -163,7 +162,7 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
             scheduler=scheduler,
             tokenizer=tokenizer,
             callbacks=callbacks,
-            compute_metrics=compute_metrics
+            compute_metrics=compute_metrics,
         )
 
     def compute_loss(self, model, inputs, **kwargs):
@@ -177,8 +176,9 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
         model(feats)
         return 0
 
-    def training_step(self, model: Union[HeteroNNModelGuest, HeteroNNModelHost],
-                      inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+    def training_step(
+        self, model: Union[HeteroNNModelGuest, HeteroNNModelHost], inputs: Dict[str, Union[torch.Tensor, Any]]
+    ) -> torch.Tensor:
         # override the training_step method in Trainer
         model.train()
         inputs = self._prepare_inputs(inputs)

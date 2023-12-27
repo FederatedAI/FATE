@@ -22,10 +22,7 @@ import numpy as np
 from ..manager.data_manager import DataManager
 
 
-def transform_to_tensor(block_table,
-                        data_manager: "DataManager",
-                        dtype=None,
-                        partition_order_mappings=None):
+def transform_to_tensor(block_table, data_manager: "DataManager", dtype=None, partition_order_mappings=None):
     def _merge_blocks(src_blocks, bids=None, fields=None):
         if len(bids) == 1:
             bid = bids[0]
@@ -68,48 +65,39 @@ def transform_to_tensor(block_table,
         if len(block_indexes) > 1:
             raise ValueError("To use as_tensor of phe_tensor type, it should be only single column")
         block_id = block_indexes[0]
-        _convert_to_phe_tensor_func = functools.partial(_convert_to_phe_tensor,
-                                                        bid=block_id,
-                                                        dm=data_manager)
+        _convert_to_phe_tensor_func = functools.partial(_convert_to_phe_tensor, bid=block_id, dm=data_manager)
         phe_table = block_table.mapValues(_convert_to_phe_tensor_func)
 
         shape_table = block_table.mapValues(lambda blocks: (len(blocks[0]), 1))
         shapes = [shape_obj for k, shape_obj in sorted(shape_table.collect())]
 
-        return tensor.DTensor.from_sharding_table(phe_table,
-                                                  shapes=shapes,
-                                                  dtype=data_manager.get_block(block_id).dtype,
-                                                  device=data_manager.get_block(block_id).device)
+        return tensor.DTensor.from_sharding_table(
+            phe_table,
+            shapes=shapes,
+            dtype=data_manager.get_block(block_id).dtype,
+            device=data_manager.get_block(block_id).device,
+        )
     else:
         field_names = data_manager.infer_operable_field_names()
         fields_loc = data_manager.loc_block(field_names)
 
-        _merged_func = functools.partial(
-            _merge_blocks,
-            bids=block_indexes,
-            fields=fields_loc
-        )
+        _merged_func = functools.partial(_merge_blocks, bids=block_indexes, fields=fields_loc)
         merged_table = block_table.mapValues(_merged_func)
 
         shape_table = merged_table.mapValues(lambda v: v.shape)
         shapes = [shape_obj for k, shape_obj in sorted(shape_table.collect())]
 
-        return tensor.DTensor.from_sharding_table(merged_table,
-                                                  shapes=shapes)
+        return tensor.DTensor.from_sharding_table(merged_table, shapes=shapes)
 
 
 def transform_block_table_to_list(block_table, data_manager):
     fields_loc = data_manager.get_fields_loc()
-    transform_block_to_list_func = functools.partial(
-        transform_block_to_list,
-        fields_loc=fields_loc
-    )
+    transform_block_to_list_func = functools.partial(transform_block_to_list, fields_loc=fields_loc)
 
     return block_table.mapValues(transform_block_to_list_func)
 
 
 def transform_block_to_list(blocks, fields_loc):
-
     if blocks[0].shape[0] == 0:
         return []
 

@@ -65,9 +65,7 @@ class CUDALongTensor(object):
         if device is None:
             device = "cuda" if (data is None or not data.is_cuda) else data.device
         else:
-            assert device.startswith(
-                "cuda"
-            ), "cannot specify a non-cuda device for CUDALongTensor"
+            assert device.startswith("cuda"), "cannot specify a non-cuda device for CUDALongTensor"
 
         self._tensor = None
         if data is None:
@@ -82,9 +80,7 @@ class CUDALongTensor(object):
     def __torch_function__(self, func, types, args=(), kwargs=None):
         if kwargs is None:
             kwargs = {}
-        if func not in HANDLED_FUNCTIONS or not all(
-            issubclass(t, (torch.Tensor, CUDALongTensor)) for t in types
-        ):
+        if func not in HANDLED_FUNCTIONS or not all(issubclass(t, (torch.Tensor, CUDALongTensor)) for t in types):
             args = [t.tensor() if hasattr(t, "tensor") else t for t in args]
             result = func(*args, **kwargs)
             if torch.is_tensor(result):
@@ -92,9 +88,7 @@ class CUDALongTensor(object):
             if isinstance(result, list):
                 return [CUDALongTensor(t) if torch.is_tensor(t) else t for t in result]
             if isinstance(result, tuple):
-                return tuple(
-                    CUDALongTensor(t) if torch.is_tensor(t) else t for t in result
-                )
+                return tuple(CUDALongTensor(t) if torch.is_tensor(t) else t for t in result)
             return result
         return HANDLED_FUNCTIONS[func](*args, **kwargs)
 
@@ -161,9 +155,7 @@ class CUDALongTensor(object):
         nb = num_blocks
         bks = CUDALongTensor.__BLOCK_SIZE[num_blocks]
 
-        x_block = CUDALongTensor.stack(
-            [(x >> (bks * i)) & (2**bks - 1) for i in range(nb)]
-        )
+        x_block = CUDALongTensor.stack([(x >> (bks * i)) & (2**bks - 1) for i in range(nb)])
 
         return x_block.double()
 
@@ -190,9 +182,7 @@ class CUDALongTensor(object):
     def __patched_conv_ops(op, x, y, *args, **kwargs):
         if "groups" in kwargs:
             groups = kwargs["groups"]
-            assert (
-                groups == 1
-            ), f"more than one group is unsupported on GPU (groups = {groups})"
+            assert groups == 1, f"more than one group is unsupported on GPU (groups = {groups})"
             del kwargs["groups"]
 
         bs, c, *img = x.size()
@@ -214,12 +204,8 @@ class CUDALongTensor(object):
 
         c_z = c_out if op in ["conv1d", "conv2d"] else c_in
 
-        z_encoded = getattr(torch, op)(
-            x_enc_span, y_enc_span, *args, **kwargs, groups=nb2
-        )
-        z_encoded = z_encoded.reshape(bs, nb2, c_z, *z_encoded.size()[2:]).transpose_(
-            0, 1
-        )
+        z_encoded = getattr(torch, op)(x_enc_span, y_enc_span, *args, **kwargs, groups=nb2)
+        z_encoded = z_encoded.reshape(bs, nb2, c_z, *z_encoded.size()[2:]).transpose_(0, 1)
         return CUDALongTensor.__decode_as_int64(z_encoded, nb)
 
     @staticmethod
@@ -280,30 +266,22 @@ class CUDALongTensor(object):
     @staticmethod
     @implements(torch.conv1d)
     def conv1d(input, weight, *args, **kwargs):
-        return CUDALongTensor.__patched_conv_ops(
-            "conv1d", input, weight, *args, **kwargs
-        )
+        return CUDALongTensor.__patched_conv_ops("conv1d", input, weight, *args, **kwargs)
 
     @staticmethod
     @implements(torch.conv_transpose1d)
     def conv_transpose1d(input, weight, *args, **kwargs):
-        return CUDALongTensor.__patched_conv_ops(
-            "conv_transpose1d", input, weight, *args, **kwargs
-        )
+        return CUDALongTensor.__patched_conv_ops("conv_transpose1d", input, weight, *args, **kwargs)
 
     @staticmethod
     @implements(torch.conv2d)
     def conv2d(input, weight, *args, **kwargs):
-        return CUDALongTensor.__patched_conv_ops(
-            "conv2d", input, weight, *args, **kwargs
-        )
+        return CUDALongTensor.__patched_conv_ops("conv2d", input, weight, *args, **kwargs)
 
     @staticmethod
     @implements(torch.conv_transpose2d)
     def conv_transpose2d(input, weight, *args, **kwargs):
-        return CUDALongTensor.__patched_conv_ops(
-            "conv_transpose2d", input, weight, *args, **kwargs
-        )
+        return CUDALongTensor.__patched_conv_ops("conv_transpose2d", input, weight, *args, **kwargs)
 
     @staticmethod
     @implements(torch.nn.functional.avg_pool2d)
@@ -316,17 +294,11 @@ class CUDALongTensor(object):
         bs, c, h, w = x.shape
         x_encoded = x_encoded.reshape(nb * bs, c, h, w)
 
-        z_encoded = torch.nn.functional.avg_pool2d(
-            x_encoded, kernel_size, divisor_override=1, *args, **kwargs
-        )
+        z_encoded = torch.nn.functional.avg_pool2d(x_encoded, kernel_size, divisor_override=1, *args, **kwargs)
 
         z_enc = z_encoded.reshape(nb, bs, *z_encoded.shape[1:]).long()
-        z = torch.zeros(
-            (nb, bs, *z_encoded.shape[1:]), device=x.device, dtype=torch.long
-        )
-        z += z_enc << torch.tensor([bks * i for i in range(nb)], device=x.device).view(
-            nb, 1, 1, 1, 1
-        )
+        z = torch.zeros((nb, bs, *z_encoded.shape[1:]), device=x.device, dtype=torch.long)
+        z += z_enc << torch.tensor([bks * i for i in range(nb)], device=x.device).view(nb, 1, 1, 1, 1)
         z = z.sum(0)
 
         if isinstance(kernel_size, (int, float)):

@@ -22,12 +22,12 @@ from fate.components.core import GUEST, HOST, Role, cpn, params
 
 @cpn.component(roles=[GUEST, HOST])
 def toy_example(
-        ctx: Context,
-        role: Role,
-        output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-        json_model_output: cpn.json_model_output(roles=[GUEST, HOST]),
-        data_num: cpn.parameter(type=params.conint(gt=0), desc="data_num", optional=False),
-        partition: cpn.parameter(type=params.conint(gt=0), desc="data_partition", optional=False),
+    ctx: Context,
+    role: Role,
+    output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
+    json_model_output: cpn.json_model_output(roles=[GUEST, HOST]),
+    data_num: cpn.parameter(type=params.conint(gt=0), desc="data_num", optional=False),
+    partition: cpn.parameter(type=params.conint(gt=0), desc="data_partition", optional=False),
 ):
     pd_df = pd.DataFrame([[str(i), str(i), i] for i in range(data_num)], columns=["sample_id", "match_id", "x0"])
     reader = PandasReader(sample_id_name="sample_id", match_id_name="match_id", dtype="float64", partition=partition)

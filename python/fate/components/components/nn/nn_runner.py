@@ -37,8 +37,7 @@ from fate.components.components.nn.loader import Loader
 logger = logging.getLogger(__name__)
 
 
-def convert_to_numpy_array(
-        data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
+def convert_to_numpy_array(data: Union[pd.Series, pd.DataFrame, np.ndarray, torch.Tensor]) -> np.ndarray:
     if isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
         return data.to_numpy()
     elif isinstance(data, torch.Tensor):
@@ -48,17 +47,13 @@ def convert_to_numpy_array(
 
 
 def task_type_infer(predict_result, true_label):
-
     pred_shape = predict_result.shape
 
     if true_label.max() == 1.0 and true_label.min() == 0.0:
         return consts.BINARY
 
     if (len(pred_shape) > 1) and (pred_shape[1] > 1):
-        if np.isclose(
-            predict_result.sum(
-                axis=1), np.array(
-                [1.0])).all():
+        if np.isclose(predict_result.sum(axis=1), np.array([1.0])).all():
             return consts.MULTI
         else:
             return None
@@ -70,17 +65,14 @@ def task_type_infer(predict_result, true_label):
 
 def load_model_dict_from_path(path):
     # Ensure that the path is a string
-    assert isinstance(
-        path, str), "Path must be a string, but got {}".format(
-        type(path))
+    assert isinstance(path, str), "Path must be a string, but got {}".format(type(path))
 
     # Append the filename to the path
-    model_path = os.path.join(path, 'pytorch_model.bin')
+    model_path = os.path.join(path, "pytorch_model.bin")
 
     # Check if the file exists
     if not os.path.isfile(model_path):
-        raise FileNotFoundError(
-            f"No 'pytorch_model.bin' file found at {model_path}, no saved model found")
+        raise FileNotFoundError(f"No 'pytorch_model.bin' file found at {model_path}, no saved model found")
 
     # Load the state dict from the specified path
     model_dict = t.load(model_path)
@@ -89,10 +81,11 @@ def load_model_dict_from_path(path):
 
 
 def dir_warning(train_args):
-    if 'output_dir' in train_args or 'resume_from_checkpoint' in train_args:
+    if "output_dir" in train_args or "resume_from_checkpoint" in train_args:
         logger.warning(
             "The output_dir, logging_dir, and resume_from_checkpoint arguments are not supported in the "
-            "DefaultRunner when running the Pipeline. These arguments will be replaced by FATE provided paths.")
+            "DefaultRunner when running the Pipeline. These arguments will be replaced by FATE provided paths."
+        )
 
 
 def loader_load_from_conf(conf, return_class=False):
@@ -104,23 +97,22 @@ def loader_load_from_conf(conf, return_class=False):
 
 
 def run_dataset_func(dataset, func_name):
-
     if hasattr(dataset, func_name):
         output = getattr(dataset, func_name)()
         if output is None:
             logger.info(
-                f'dataset {type(dataset)}: {func_name} returns None, this will influence the output of predict')
+                f"dataset {type(dataset)}: {func_name} returns None, this will influence the output of predict"
+            )
         return output
     else:
         logger.info(
-            f'dataset {type(dataset)} not implemented {func_name}, classes set to None, this will influence the output of predict')
+            f"dataset {type(dataset)} not implemented {func_name}, classes set to None, this will influence the output of predict"
+        )
         return None
 
 
 class NNRunner(object):
-
     def __init__(self) -> None:
-
         self._role = None
         self._party_id = None
         self._ctx: Context = None
@@ -147,6 +139,7 @@ class NNRunner(object):
 
     def is_host(self) -> bool:
         return self._role.is_host
+
     def set_party_id(self, party_id: int):
         assert isinstance(self._party_id, int)
         self._party_id = party_id
@@ -155,18 +148,18 @@ class NNRunner(object):
         pass
 
     def get_nn_output_dataframe(
-            self,
-            ctx,
-            predictions: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput],
-            labels: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput] = None,
-            match_ids: Union[pd.DataFrame, np.ndarray] = None,
-            sample_ids: Union[pd.DataFrame, np.ndarray] = None,
-            match_id_name: str = None,
-            sample_id_name: str = None,
-            dataframe_format: Literal['default', 'fate_std'] = 'default',
-            task_type: Literal['binary', 'multi', 'regression', 'others'] = None,
-            threshold: float = 0.5,
-            classes: list = None
+        self,
+        ctx,
+        predictions: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput],
+        labels: Union[np.ndarray, torch.Tensor, DataFrame, PredictionOutput] = None,
+        match_ids: Union[pd.DataFrame, np.ndarray] = None,
+        sample_ids: Union[pd.DataFrame, np.ndarray] = None,
+        match_id_name: str = None,
+        sample_id_name: str = None,
+        dataframe_format: Literal["default", "fate_std"] = "default",
+        task_type: Literal["binary", "multi", "regression", "others"] = None,
+        threshold: float = 0.5,
+        classes: list = None,
     ) -> DataFrame:
         """
         Constructs a FATE DataFrame from predictions and labels. This Dataframe is able to flow through FATE components.
@@ -190,56 +183,51 @@ class NNRunner(object):
         """
         # check parameters
         assert task_type in [BINARY, MULTI, REGRESSION, OTHER], f"task_type {task_type} is not supported"
-        assert dataframe_format in [
-            'default', 'fate_std'], f"dataframe_format {dataframe_format} is not supported"
+        assert dataframe_format in ["default", "fate_std"], f"dataframe_format {dataframe_format} is not supported"
 
         if match_id_name is None:
-            match_id_name = 'id'
+            match_id_name = "id"
         if sample_id_name is None:
-            sample_id_name = 'sample_id'
+            sample_id_name = "sample_id"
 
         if isinstance(predictions, PredictionOutput):
             predictions = predictions.predictions
-        
+
         if labels is not None:
             if isinstance(labels, PredictionOutput):
                 labels = labels.label_ids
             predictions = convert_to_numpy_array(predictions)
             labels = convert_to_numpy_array(labels)
             assert len(predictions) == len(
-                labels), f"predictions length {len(predictions)} != labels length {len(labels)}"
+                labels
+            ), f"predictions length {len(predictions)} != labels length {len(labels)}"
 
         # check match ids
         if match_ids is not None:
             match_ids = convert_to_numpy_array(match_ids).flatten()
         else:
-            logger.info(
-                "match_ids is not provided, will auto generate match_ids")
-            match_ids = np.array(
-                [i for i in range(len(predictions))]).flatten()
+            logger.info("match_ids is not provided, will auto generate match_ids")
+            match_ids = np.array([i for i in range(len(predictions))]).flatten()
 
         # check sample ids
         if sample_ids is not None:
             sample_ids = convert_to_numpy_array(sample_ids).flatten()
         else:
-            logger.info(
-                "sample_ids is not provided, will auto generate sample_ids")
-            sample_ids = np.array(
-                [i for i in range(len(predictions))]).flatten()
+            logger.info("sample_ids is not provided, will auto generate sample_ids")
+            sample_ids = np.array([i for i in range(len(predictions))]).flatten()
 
         assert len(match_ids) == len(
-            predictions), f"match_ids length {len(match_ids)} != predictions length {len(predictions)}"
+            predictions
+        ), f"match_ids length {len(match_ids)} != predictions length {len(predictions)}"
         assert len(sample_ids) == len(
-            predictions), f"sample_ids length {len(sample_ids)} != predictions length {len(predictions)}"
+            predictions
+        ), f"sample_ids length {len(sample_ids)} != predictions length {len(predictions)}"
 
         # match id name and sample id name must be str
-        assert isinstance(
-            match_id_name, str), f"match_id_name must be str, but got {type(match_id_name)}"
-        assert isinstance(
-            sample_id_name, str), f"sample_id_name must be str, but got {type(sample_id_name)}"
+        assert isinstance(match_id_name, str), f"match_id_name must be str, but got {type(match_id_name)}"
+        assert isinstance(sample_id_name, str), f"sample_id_name must be str, but got {type(sample_id_name)}"
 
-        if dataframe_format == 'default' or (
-                dataframe_format == 'fate_std' and task_type == OTHER):
+        if dataframe_format == "default" or (dataframe_format == "fate_std" and task_type == OTHER):
             df = pd.DataFrame()
             if labels is not None:
                 df[LABEL] = labels.to_list()
@@ -248,17 +236,28 @@ class NNRunner(object):
             df[sample_id_name] = sample_ids.flatten()
             df = to_dist_df(ctx, sample_id_name, match_id_name, df)
             return df
-        elif dataframe_format == 'fate_std' and task_type in [BINARY, MULTI, REGRESSION]:
-            df = array_to_predict_df(ctx, task_type, predictions, match_ids, sample_ids, match_id_name, sample_id_name, labels, threshold, classes)
+        elif dataframe_format == "fate_std" and task_type in [BINARY, MULTI, REGRESSION]:
+            df = array_to_predict_df(
+                ctx,
+                task_type,
+                predictions,
+                match_ids,
+                sample_ids,
+                match_id_name,
+                sample_id_name,
+                labels,
+                threshold,
+                classes,
+            )
             return df
 
-    def train(self,
-              train_data: Optional[Union[str,
-                                         DataFrame]] = None,
-              validate_data: Optional[Union[str,
-                                            DataFrame]] = None,
-              output_dir: str = None,
-              saved_model_path: str = None) -> None:
+    def train(
+        self,
+        train_data: Optional[Union[str, DataFrame]] = None,
+        validate_data: Optional[Union[str, DataFrame]] = None,
+        output_dir: str = None,
+        saved_model_path: str = None,
+    ) -> None:
         """
         Train interface.
 
@@ -270,11 +269,9 @@ class NNRunner(object):
         """
         pass
 
-    def predict(self,
-                test_data: Optional[Union[str,
-                                          DataFrame]] = None,
-                output_dir: str = None,
-                saved_model_path: str = None) -> DataFrame:
+    def predict(
+        self, test_data: Optional[Union[str, DataFrame]] = None, output_dir: str = None, saved_model_path: str = None
+    ) -> DataFrame:
         """
         Predict interface.
 

@@ -15,4 +15,12 @@
 from ._builder import FederationBuilder, FederationMode, FederationEngine, PartyMeta
 from .api import Federation, FederationDataType, TableMeta
 
-__all__ = ["Federation", "FederationDataType", "FederationBuilder", "FederationMode", "FederationEngine", "TableMeta", "PartyMeta"]
+__all__ = [
+    "Federation",
+    "FederationDataType",
+    "FederationBuilder",
+    "FederationMode",
+    "FederationEngine",
+    "TableMeta",
+    "PartyMeta",
+]

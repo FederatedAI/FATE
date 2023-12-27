@@ -26,12 +26,15 @@ if typing.TYPE_CHECKING:
     from fate.arch.histogram import DistributedHistogram, HistogramBuilder
 
 
-def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", position: DataFrame, targets: Union[dict, DataFrame]) -> "DistributedHistogram":
+def distributed_hist_stat(
+    df: DataFrame, histogram_builder: "HistogramBuilder", position: DataFrame, targets: Union[dict, DataFrame]
+) -> "DistributedHistogram":
     block_table, data_manager = _try_to_compress_table(df.block_table, df.data_manager, force_compress=True)
     data_block_id = data_manager.infer_operable_blocks()[0]
     position_block_id = position.data_manager.infer_operable_blocks()[0]
 
     if isinstance(targets, dict):
+
         def _pack_data_with_position(l_blocks, r_blocks, l_block_id=None, r_block_id=None):
             return l_blocks[l_block_id], r_blocks[r_block_id], dict()
 
@@ -40,9 +43,9 @@ def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", 
 
             return l_values
 
-        _pack_func = functools.partial(_pack_data_with_position,
-                                       l_block_id=data_block_id,
-                                       r_block_id=position_block_id)
+        _pack_func = functools.partial(
+            _pack_data_with_position, l_block_id=data_block_id, r_block_id=position_block_id
+        )
 
         data_with_position = block_table.join(position.block_table, _pack_func)
 
@@ -51,8 +54,7 @@ def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", 
             data_with_position = data_with_position.join(target.shardings._data, _pack_with_target_func)
     else:
         data_with_position = block_table.join(
-            position.block_table,
-            lambda l_blocks, r_blocks: (l_blocks[data_block_id], r_blocks[position_block_id])
+            position.block_table, lambda l_blocks, r_blocks: (l_blocks[data_block_id], r_blocks[position_block_id])
         )
 
         target_data_manager = targets.data_manager
@@ -64,8 +66,7 @@ def distributed_hist_stat(df: DataFrame, histogram_builder: "HistogramBuilder", 
             for field_name, (block_id, offset) in zip(target_field_names, fields_loc):
                 if (block := target_data_manager.get_block(block_id)).is_phe_tensor():
                     target_blocks[field_name] = block.convert_to_phe_tensor(
-                        r_blocks[block_id],
-                        shape=(len(r_blocks[0]), 1)
+                        r_blocks[block_id], shape=(len(r_blocks[0]), 1)
                     )
                 else:
                     target_blocks[field_name] = r_blocks[block_id][:, [offset]]

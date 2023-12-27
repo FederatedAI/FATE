@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 def partitioner(hash_func, total_partitions):
     def partition(key):
         return hash_func(key) % total_partitions

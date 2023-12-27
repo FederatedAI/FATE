@@ -108,7 +108,7 @@ def slice_f(input, arg):
 
 def encode_as_int_f(input, precision: int):
     if isinstance(input, torch.Tensor):
-        return (input * 2 ** precision).astype(torch.int64)
+        return (input * 2**precision).astype(torch.int64)
     else:
         # torch tensor-like
         if hasattr(input, "__torch_function__"):
