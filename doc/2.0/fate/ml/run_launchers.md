@@ -2,7 +2,7 @@
 
 ### Introduction
 
-In FATE-2.0.0-rc, we introduce launchers for running ml modules locally, a light-weight way to experiment with FATE
+In FATE-2.0.0, we introduce launchers for running ml modules locally, a light-weight way to experiment with FATE
 modules locally. Running launchers do not require active FATE-Flow services or dependencies from FATE-Flow.
 
 ### Installation
@@ -21,7 +21,10 @@ Once dependencies are met, look for launchers directory under FATE.
 
 Currently, we provide various ready-to-use launchers for testing mpc protocol and SSHE LR & LinR modules.
 
-!ls FATE/launchers
+```commandline
+ls FATE/launchers
+```
+
 To write a launcher, first come up with the case to be run with a FATE-module(as in FATE/python/fate/ml) and wrap this
 case into a function. As a demo, we are to analyze a simple [launcher](../../../../launchers/sshe_lr_launcher.py) that
 trains a SSHE Logistic Regression model using given local data files.
