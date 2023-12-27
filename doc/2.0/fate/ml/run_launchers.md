@@ -34,8 +34,8 @@ heterogeneous one, configuration for transformer tool CSVReader will be differen
 
 
 ```python
-guest_data = 'examples/data/hetero_breast_guest.csv'
-host_data = 'examples/data/hetero_breast_host.csv'
+guest_data = './hetero_breast_guest.csv'
+host_data = './hetero_breast_host.csv'
 if ctx.is_on_guest:
     kwargs = {
         "sample_id_name": None,
@@ -144,14 +144,14 @@ As a demo, here we show how to run this Pearson launcher with the following sett
 
 - guest: 9999
 - host: 10000
-- guest_data: examples/data/breast_hetero_guest.csv
-- host_data: examples/data/breast_hetero_host.py
+- guest_data: breast_hetero_guest.csv
+- host_data: breast_hetero_host.py
 - log level: INFO
 
 Note that program will print all logging corresponding to specified log level.
 
 ```commandline
-python sshe_lr_launcher.py --parties guest:9999 host:10000 --log_level INFO --guest_data breast_hetero_guest.csv --host_data /breast_hetero_host.csv
+python sshe_lr_launcher.py --parties guest:9999 host:10000 --log_level INFO --guest_data ./breast_hetero_guest.csv --host_data ./breast_hetero_host.csv
 ```
 
 For more launcher examples, please refer [here](../../../../launchers).
