@@ -472,6 +472,12 @@ def get_setting(ctx):
     )
 
     return ds, model, optimizer, loss, args
+
+
+def run(ctx):
+    ds, model, optimizer, loss, args = get_setting(ctx)
+    trainer = train(ctx, ds, model, optimizer, loss, args)
+    pred = predict(trainer, ds)
 ```
 
 In this configuration, we utilize the LeNet model both as the bottom and top models. The dataset is sourced from torchvision.datasets.MNIST. We use FedPassArgument to establish the FedPass aggregate layer. It's important to note that the FedPass argument for the bottom model is set using agg_layer_arg, and for the top model using top_arg. Both models are equipped with FedPass protection: during training, random passports are generated, which obfuscate the forward hidden features and backward gradients.
