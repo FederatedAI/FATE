@@ -28,7 +28,7 @@ alignment process will **not** leak confidential information (e.g.,
 sample ids) on the two parties since it is conducted in an encrypted
 way.
 
-![Figure 1 (Federated HeteroLR Principle)](../images/HeteroLR.png)
+![Figure 1 (Federated HeteroLR Principle)](../../images/HeteroLR.png)
 
 In the training process, party A and party B compute out the elements
 needed for final gradients. Arbiter aggregate them and compute out the
@@ -44,7 +44,7 @@ criterion. Since the arbiter can obtain the completed model weight, the
 convergence decision is happening in Arbiter.
 
 ![Figure 2 (Federated Multi-host HeteroLR
-Principle)](../images/hetero_lr_multi_host.png)
+Principle)](../../images/hetero_lr_multi_host.png)
 
 # Heterogeneous SSHE Logistic Regression
 
@@ -57,12 +57,12 @@ We have also made some optimization so that the code may not exactly
 same with this paper.
 The training process could be described as the
 following: forward and backward process.
-![Figure 3 (forward)](../images/sshe-lr_forward.png)
-![Figure 4 (backward)](../images/sshe-lr_backward.png)
+![Figure 3 (forward)](../../images/sshe-lr_forward.png)
+![Figure 4 (backward)](../../images/sshe-lr_backward.png)
 
 The training process is based secure matrix multiplication protocol(SMM),
 which HE and Secret-Sharing hybrid protocol is included.
-![Figure 5 (SMM)](../images/secure_matrix_multiplication.png)
+![Figure 5 (SMM)](../../images/secure_matrix_multiplication.png)
 
 ## Features
 

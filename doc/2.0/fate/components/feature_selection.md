@@ -54,4 +54,4 @@ whether a feature is left or not. Then guest sends result filter back to hosts.
 During this selection process, guest will not know the real name of host(s)' features.
 
 ![Figure 4: Multi-Host Selection
-Principle\</div\>](../images/multi_host_selection.png)
+Principle\</div\>](../../images/multi_host_selection.png)
