@@ -49,6 +49,6 @@ cd /d "%pwd%"
 
 endlocal
 
-echo package successfly
+echo package successful
 pause
 exit /b 0
