@@ -26,6 +26,5 @@ cp -r osx-broker/src/main/resources/components/* deploy/osx/conf/components
 cp  bin/service.sh deploy/osx/
 cd  deploy
 sed -i 's/\r//g' osx/service.sh
-sed -i 's/\r//g' osx/bin/common.sh
 tar -czf osx.tar.gz  osx
 cd $pwd
