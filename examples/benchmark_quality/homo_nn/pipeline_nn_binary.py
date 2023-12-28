@@ -26,7 +26,7 @@ from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.homo_nn import HomoNN, get_config_of_default_runner
 from fate_client.pipeline.components.fate.nn.algo_params import TrainingArguments, FedAVGArguments
-
+from fate_client.pipeline.components.fate import Reader
 
 
 def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namespace=""):
@@ -72,25 +72,34 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
         fed_args=FedAVGArguments(),
         task_type='binary'
         )
+    
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(
+        namespace=guest_train_data['namespace'],
+        name=guest_train_data['name']
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=host_train_data['namespace'],
+        name=guest_train_data['name']
+    )
 
+    reader_1 = Reader("reader_1", runtime_parties=dict(guest=guest, host=host), namespace=test_data["namespace"], name=test_data["name"])
 
     homo_nn_0 = HomoNN(
         'nn_0',
-        runner_conf=conf
+        runner_conf=conf,
+        train_data=reader_0.outputs["output_data"]
     )
 
     homo_nn_1 = HomoNN(
         'nn_1',
-        test_data=DataWarehouseChannel(name=test_data["name"], namespace=test_data["namespace"]),
-        predict_model_input=homo_nn_0.outputs['train_model_output']
+        predict_model_input=homo_nn_0.outputs['train_model_output'],
+        test_data=reader_1.outputs["output_data"]
     )
-
-    homo_nn_0.guest.task_parameters(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_0.hosts[0].task_parameters(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
-        runtime_roles=['guest'],
+        runtime_parties=dict(guest=guest),
         metrics=['auc'],
         input_data=[homo_nn_1.outputs['predict_data_output'], homo_nn_0.outputs['train_data_output']]
     )
@@ -100,6 +109,8 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
+    pipeline.add_task(reader_0)
+    pipeline.add_task(reader_1)
     pipeline.add_task(homo_nn_0)
     pipeline.add_task(homo_nn_1)
     pipeline.add_task(evaluation_0)

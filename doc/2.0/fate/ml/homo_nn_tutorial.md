@@ -9,7 +9,7 @@ learning. These setting are particularly useful for local experimentation, model
 
 ## Setup Homo-NN Setup by Step
 
-To run a Homo-NN task, we provi
+To run a Homo-NN task, we need to:
 1. Import required classes
 2. Prepare data, datasets, models, loss and optimizers
 3. Configure clients(guest&hosts) parameters, trainers; configure sever(arbiter) parameters and trainer
@@ -59,8 +59,7 @@ def create_ctx(party, session_id='test_fate'):
     return context
 ```
 
-If we run our task with launch() (we will explain later), it can automatically handle the context creation, this chapter will show you how to do it manually.
-In the data preparation step, if you want to check your data before training, you can create context manually and check your data in FATE-DataFrame.
+If we run our task with launch() (we will explain later), it can automatically handle the context creation, this chapter will introduce the concept of context and show you how to do it manually.
 
 In the FATE Homo Federated Learning scenario, the guest and host act as clients, while the arbiter functions as the server.
 
@@ -242,7 +241,7 @@ trainer = FedAVGClient(
 )
 ```
 
-### Run in federated model
+### Run in federated mode
 
 There are several differences between running locally and running in federated model.
 Firstly, we add the initalization of FedAVGServer, whose is responsible model aggregation.

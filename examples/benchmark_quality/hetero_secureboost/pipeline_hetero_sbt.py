@@ -30,7 +30,6 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
     if isinstance(param, str):
         param = test_utils.JobConfig.load_from_file(param)
@@ -42,7 +41,7 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
     reader_0 = Reader("reader_0")
     reader_0.guest.task_parameters(
@@ -69,7 +68,7 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     if config_param['objective'] == 'regression:l2':
         evaluation_0 = Evaluation(
             'eval_0',
-            runtime_roles=['guest'],
+            runtime_parties=dict(guest=guest),
             input_data=[hetero_sbt_0.outputs['train_data_output']],
             default_eval_setting='regression',
         )
@@ -78,15 +77,12 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     else:
         evaluation_0 = Evaluation(
             'eval_0',
-            runtime_roles=['guest'],
+            runtime_parties=dict(guest=guest),
             metrics=['auc'],
             input_data=[hetero_sbt_0.outputs['train_data_output']]
         )
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(hetero_sbt_0)
-    pipeline.add_task(evaluation_0)
-
+    pipeline.add_tasks([reader_0, psi_0, hetero_sbt_0, evaluation_0])
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:

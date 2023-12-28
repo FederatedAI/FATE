@@ -212,11 +212,11 @@ class HeteroNNModelGuest(HeteroNNModelBase):
         if self._agg_layer is None:
             if agglayer_arg is None:
                 self._agg_layer = AggLayerGuest()
-            elif isinstance(agglayer_arg, StdAggLayerArgument):
+            elif type(agglayer_arg) == StdAggLayerArgument:
                 self._agg_layer = AggLayerGuest(**agglayer_arg.to_dict())
-            elif isinstance(agglayer_arg, FedPassArgument):
+            elif type(agglayer_arg) == FedPassArgument:
                 self._agg_layer = FedPassAggLayerGuest(**agglayer_arg.to_dict())
-            elif isinstance(agglayer_arg, SSHEArgument):
+            elif type(agglayer_arg) == SSHEArgument:
                 self._agg_layer = SSHEAggLayerGuest(**agglayer_arg.to_dict())
                 if self._bottom_model is None:
                     raise RuntimeError('A bottom model is needed when running a SSHE model')
