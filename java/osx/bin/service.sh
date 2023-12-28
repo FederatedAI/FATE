@@ -155,12 +155,12 @@ status() {
     getpid
 	# check service is up and running
 	if [[ -n ${pid} ]]; then
-    print_ok "Check service ${module} is started: PID=${pid}${esc_c}"
+    print_ok "Check service ${project_name]} is started: PID=${pid}${esc_c}"
     print_info "The service status is:
     `ps aux | grep ${pid} | grep ${main_class} | grep -v grep`"
     return 0
 	else
-		print_error "The ${module} service is not running"
+		print_error "The ${project_name} service is not running"
 		return 1
 	fi
 }
@@ -182,7 +182,7 @@ check_java_environment() {
     fi
 
     #检查 Java 版本
-    java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    java_version=$($JAVA -version 2>&1 | awk -F '"' '/version/ {print $2}')
     if [ -n "$java_version" ]; then
         print_ok "Java version is $java_version"
         export JAVA="java"
@@ -210,7 +210,7 @@ choose_gc_log_directory()
             if [ -d "/dev/shm" ]; then
                 GC_LOG_DIR="/dev/shm"
             else
-                GC_LOG_DIR=${BASE_DIR}
+                GC_LOG_DIR=${OSX_HOME}
             fi
         ;;
     esac
