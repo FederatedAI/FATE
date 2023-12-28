@@ -10,17 +10,23 @@ venv
 *.db
 *.db-journal
 *.mdb
+*.jar
 .env
 Cargo.lock
 
 # excluded paths
+/python/dist/
 /rust/**/target/
 /build/
-/dist/
 /java/**/target/
 /fateboard/target/
-/fateflow/logs/
-/fateflow/jobs/
+/fate_flow/logs/
+/fate_flow/jobs/
+/java/osx/deploy/osx
+/dist/
+/schemas/
+/data/
+/logs/
 
 # logs
 **/logs/*
