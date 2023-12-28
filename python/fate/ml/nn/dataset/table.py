@@ -157,7 +157,6 @@ class TableDataset(Dataset):
 
             # infer column name
             label = self.label_col
-            print("label is {}".format(label))
             if label is None:
                 for i in label_col_candidates:
                     if i in self.origin_table:
