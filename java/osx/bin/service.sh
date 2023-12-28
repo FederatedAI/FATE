@@ -136,8 +136,8 @@ usage() {
 }
 
 main() {
-		print_info "${module}:${main_class}"
-		print_info "Processing: ${module} ${action}"
+		print_info "${project_name}:${main_class}"
+		print_info "Processing: ${project_name} ${action}"
 		action "$@"
 }
 
@@ -270,12 +270,12 @@ start() {
     sleep 5
     getpid
 		if [[ $? -eq 1 ]]; then
-      print_ok "The ${module} service start sucessfully. PID=${pid}"
+      print_ok "The ${project_name} service start sucessfully. PID=${pid}"
 		else
-			print_error "The ${module} service start failed"
+			print_error "The ${project_name} service start failed"
 		fi
 	else
-		print_info "The ${module} service already started. PID=${pid}"
+		print_info "The ${project_name} service already started. PID=${pid}"
 	fi
 }
 
@@ -311,12 +311,12 @@ debug() {
     sleep 5
     getpid
 		if [[ $? -eq 0 ]]; then
-      print_ok "The ${module} service debug sucessfully. PID=${pid}"
+      print_ok "The ${project_name} service debug sucessfully. PID=${pid}"
 		else
-			print_error "The ${module} service debug failed"
+			print_error "The ${project_name} service debug failed"
 		fi
 	else
-		print_info "The ${module} service already started. PID=${pid}"
+		print_info "The ${project_name} service already started. PID=${pid}"
 	fi
 }
 

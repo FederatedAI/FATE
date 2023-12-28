@@ -13,9 +13,6 @@ rmdir /s /q osx 2>nul
 if not exist "osx" (
     mkdir osx
 )
-if not exist "osx\bin" (
-    mkdir osx\bin
-)
 if not exist "osx\lib" (
     mkdir osx\lib
 )
@@ -44,7 +41,6 @@ xcopy /y /e osx-broker\target\lib\* deploy\osx\lib\
 xcopy /y osx-broker\src\main\resources\broker\* deploy\osx\conf\broker\
 xcopy /y /e osx-broker\src\main\resources\components\* deploy\osx\conf\components\
 copy bin\service.sh deploy\osx\
-copy bin\common.sh deploy\osx\bin\
 
 cd deploy
 tar -czf osx.tar.gz osx
