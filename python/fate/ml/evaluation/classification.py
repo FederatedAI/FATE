@@ -1,18 +1,3 @@
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-
 import sys
 import copy
 import pandas as pd
@@ -32,6 +17,7 @@ Single Value Metrics
 
 
 class AUC(Metric):
+
     metric_name = "auc"
 
     def __init__(self):
@@ -51,6 +37,7 @@ class BinaryMetricWithThreshold(Metric):
 
 
 class MultiAccuracy(Metric):
+
     metric_name = "multi_accuracy"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
@@ -63,6 +50,7 @@ class MultiAccuracy(Metric):
 
 
 class MultiRecall(Metric):
+
     metric_name = "multi_recall"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
@@ -75,6 +63,7 @@ class MultiRecall(Metric):
 
 
 class MultiPrecision(Metric):
+
     metric_name = "multi_precision"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
@@ -87,6 +76,7 @@ class MultiPrecision(Metric):
 
 
 class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
+
     metric_name = "binary_accuracy"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
@@ -98,6 +88,7 @@ class BinaryAccuracy(MultiAccuracy, BinaryMetricWithThreshold):
 
 
 class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
+
     metric_name = "binary_recall"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
@@ -109,6 +100,7 @@ class BinaryRecall(MultiRecall, BinaryMetricWithThreshold):
 
 
 class BinaryPrecision(MultiPrecision, BinaryMetricWithThreshold):
+
     metric_name = "binary_precision"
 
     def __call__(self, predict, label, **kwargs) -> Dict:
@@ -120,6 +112,7 @@ class BinaryPrecision(MultiPrecision, BinaryMetricWithThreshold):
 
 
 class MultiF1Score(Metric):
+
     metric_name = "multi_f1_score"
 
     def __init__(self, average="micro"):
@@ -136,6 +129,7 @@ class MultiF1Score(Metric):
 
 
 class BinaryF1Score(MultiF1Score, BinaryMetricWithThreshold):
+
     metric_name = "binary_f1_score"
 
     def __init__(self, threshold=0.5, average="binary"):
@@ -177,6 +171,7 @@ def sort_score_and_label(labels: np.ndarray, pred_scores: np.ndarray):
 class _ConfusionMatrix(object):
     @staticmethod
     def compute(sorted_labels: list, sorted_pred_scores: list, score_thresholds: list, ret: list, pos_label=1):
+
         for ret_type in ret:
             assert ret_type in ["tp", "tn", "fp", "fn"]
 
@@ -245,6 +240,7 @@ class ThresholdCutter(object):
 
     @staticmethod
     def cut_by_quantile(scores, quantile_list=None, interpolation="nearest", remove_duplicate=True):
+
         if quantile_list is None:  # default is 20 intervals
             quantile_list = [round(i * 0.05, 3) for i in range(20)] + [1.0]
         quantile_val = np.quantile(scores, quantile_list, interpolation=interpolation)
@@ -272,10 +268,6 @@ class BiClassMetric(object):
         scores,
         add_to_end=True,
     ):
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.info("labels are {}, scores are {}".format(labels, scores))
         sorted_labels, sorted_scores = sort_score_and_label(labels, scores)
 
         score_threshold, cuts = None, None
@@ -318,6 +310,7 @@ Metrics with Cruve/Table Results
 
 
 class KS(Metric):
+
     metric_name = "ks"
 
     def __init__(self):
@@ -354,12 +347,14 @@ class KS(Metric):
 
 
 class ConfusionMatrix(Metric):
+
     metric_name = "confusion_matrix"
 
     def __init__(self):
         super().__init__()
 
     def __call__(self, predict, label, **kwargs):
+
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
 
@@ -374,6 +369,7 @@ class ConfusionMatrix(Metric):
 
 
 class Lift(Metric, BiClassMetric):
+
     metric_name = "lift"
 
     def __init__(self, *args, **kwargs):
@@ -382,11 +378,13 @@ class Lift(Metric, BiClassMetric):
 
     @staticmethod
     def _lift_helper(val):
+
         tp, fp, fn, tn, labels_num = val[0], val[1], val[2], val[3], val[4]
 
         lift_x_type, lift_y_type = [], []
 
         for label_type in ["1", "0"]:
+
             if label_type == "0":
                 tp, tn = tn, tp
                 fp, fn = fn, fp
@@ -418,6 +416,7 @@ class Lift(Metric, BiClassMetric):
         confusion_mat,
         labels_len,
     ):
+
         labels_nums = np.zeros(len(confusion_mat["tp"])) + labels_len
 
         rs = map(
@@ -432,6 +431,7 @@ class Lift(Metric, BiClassMetric):
         return lifts_y, lifts_x
 
     def __call__(self, predict, label, **kwargs):
+
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(
@@ -451,6 +451,7 @@ class Lift(Metric, BiClassMetric):
 
 
 class Gain(Metric, BiClassMetric):
+
     metric_name = "gain"
 
     def __init__(self, *args, **kwargs):
@@ -459,11 +460,13 @@ class Gain(Metric, BiClassMetric):
 
     @staticmethod
     def _gain_helper(val):
+
         tp, fp, fn, tn, num_label = val[0], val[1], val[2], val[3], val[4]
 
         gain_x_type, gain_y_type = [], []
 
         for pos_label in ["1", "0"]:
+
             if pos_label == "0":
                 tp, tn = tn, tp
                 fp, fn = fn, fp
@@ -485,6 +488,7 @@ class Gain(Metric, BiClassMetric):
         return gain_x_type, gain_y_type
 
     def compute_metric_from_confusion_mat(self, confusion_mat, labels_len):
+
         labels_nums = np.zeros(len(confusion_mat["tp"])) + labels_len
 
         rs = map(
@@ -499,6 +503,7 @@ class Gain(Metric, BiClassMetric):
         return gain_y, gain_x
 
     def __call__(self, predict, label, **kwargs):
+
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(
@@ -604,6 +609,7 @@ class FScoreTable(Metric):
     metric_name = "fscore_table"
 
     def __call__(self, predict, label, beta=1):
+
         predict = self.to_np_format(predict)
         label = self.to_np_format(label)
 
@@ -629,9 +635,11 @@ class FScoreTable(Metric):
 
 
 class PSI(Metric):
+
     metric_name = "psi"
 
     def __call__(self, predict: dict, label: dict, **kwargs) -> Dict:
+
         """
         train/validate scores: predicted scores on train/validate set
         train/validate labels: true labels
@@ -803,6 +811,7 @@ class PSI(Metric):
     def psi_score(
         expected_interval: np.ndarray, actual_interval: np.ndarray, expect_total_num, actual_total_num, debug=False
     ):
+
         expected_interval[expected_interval == 0] = 1e-6  # in case no overlap samples
 
         actual_interval[actual_interval == 0] = 1e-6  # in case no overlap samples

@@ -81,13 +81,13 @@ def main(config="../../config.yaml", param="", namespace=""):
         predict_model_input=homo_nn_0.outputs['train_model_output']
     )
 
-    homo_nn_0.guest.task_setting(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_0.hosts[0].task_setting(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
+    homo_nn_0.guest.task_parameters(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
+    homo_nn_0.hosts[0].task_parameters(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
         default_eval_setting='multi',
-        runtime_roles=['guest'],
+        runtime_parties=dict(guest=guest),
         input_data=[homo_nn_1.outputs['predict_data_output'], homo_nn_0.outputs['train_data_output']]
     )
 

@@ -1,5 +1,5 @@
 data:
-  - file: "examples/data/breast_homo_guest.csv"
+  - file: "examples/data/breast_hetero_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
@@ -14,16 +14,14 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: breast_homo_guest
+    table_name: breast_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: "examples/data/breast_homo_host.csv"
+  - file: "examples/data/breast_hetero_host.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
-      label_type: int64
-      label_name: y
       match_id_name: "id"
       match_id_range: 0
       tag_value_delimiter: ":"
@@ -32,7 +30,7 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: breast_homo_host
+    table_name: breast_hetero_host
     namespace: experiment
     role: host_0
 tasks:
