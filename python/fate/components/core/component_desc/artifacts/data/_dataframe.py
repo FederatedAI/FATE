@@ -60,7 +60,7 @@ class DataframeWriter(_ArtifactTypeWriter[DataOutputMetadata]):
 
         self.artifact.metadata.data_overview = DataOverview(count=count, samples=samples)
 
-        logger.debug(f"write dataframe to artifact: {self.artifact}")
+        logger.debug(f"write dataframe to artifact: <uri={self.artifact.uri}, type_name={self.artifact.type_name}>")
 
 
 class DataframeReader(_ArtifactTypeReader):
