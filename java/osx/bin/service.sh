@@ -288,7 +288,7 @@ debug() {
 	if [[ $? != 1 ]]; then
 	  choose_gc_log_directory
     choose_gc_options
-    JAVA_OPT=" -server -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007  -Xms4g -Xmx4g"
+    JAVA_OPT="${JAVA_OPT} -server -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007  -Xms4g -Xmx4g"
     JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
     JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
     JAVA_OPT="${JAVA_OPT} -XX:MaxDirectMemorySize=15g"
@@ -347,9 +347,9 @@ shut() {
   print_info "--------------------------------shutting--------------------------------"
   getpid
 	if [[ -n ${pid} ]]; then
-	  print_info "The ${module} service is force killing. PID=${pid}"
+	  print_info "The ${project_name} service is force killing. PID=${pid}"
 		print_info "The more information:
-		`ps aux | grep ${pid} | grep ${processor_tag} | grep ${main_class} | grep -v grep`"
+		`ps aux | grep ${pid} | grep ${main_class} | grep -v grep`"
 		kill -9 ${pid}
 		sleep 1
 		flag=0
@@ -358,9 +358,9 @@ shut() {
 			getpid
 			flag=$?
 		done
-		print_info "The ${module} service is force kill success"
+		print_info "The ${project_name} service is force kill success"
 	else
-		print_info "The ${module} service is not running"
+		print_info "The ${project_name} service is not running"
 	fi
 }
 
