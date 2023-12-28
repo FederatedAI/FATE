@@ -57,7 +57,7 @@ class JsonMetricRestfulWriter(_ArtifactTypeWriter[MetricOutputMetadata]):
         except Exception as e:
             logger.error(f"write data `{data}` to {self.artifact.uri.original_uri} failed, error: {e}")
         else:
-            logger.debug(f"write data `{data}` to {self.artifact.uri.original_uri} success, output: {output}")
+            logger.debug(f"write data to {self.artifact.uri.original_uri} success, output: {output}")
 
     def write_metadata(self, metadata: Dict):
         self.artifact.metadata.metadata = metadata
