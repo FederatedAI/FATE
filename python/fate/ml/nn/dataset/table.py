@@ -157,7 +157,7 @@ class TableDataset(Dataset):
 
             # infer column name
             label = self.label_col
-            print('label is {}'.format(label))
+            print("label is {}".format(label))
             if label is None:
                 for i in label_col_candidates:
                     if i in self.origin_table:
@@ -169,7 +169,7 @@ class TableDataset(Dataset):
             else:
                 if label not in self.origin_table:
                     raise ValueError("label column {} not found in input table".format(label))
-            
+
             if label is not None:
                 self.label = self.origin_table[[label]].values
                 self.origin_table = self.origin_table.drop(columns=[label])

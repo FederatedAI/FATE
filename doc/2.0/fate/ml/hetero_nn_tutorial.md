@@ -1,14 +1,14 @@
-# Hetero-SecureBoost Tutorial
+# Hetero-NN Tutorial
 
 In a hetero-federated learning (vertically partitioned data) setting, multiple parties have different feature sets for the same common user samples. Federated learning enables these parties to collaboratively train a model without sharing their actual data. In FATE-2.0 we introduce our brand new Hetero-NN framework which allows you to quickly set up a hetero federated NN learning task. Since our framework is developed based on pytorch and transformers, it will be easy for you seamlessly integrate your existing dataset, models into our framework. 
 
-In this tutorial, we will show you how to run a Hetero-SecureBoost task under FATE-2.0 locally without using a FATE-Pipeline. You can refer to this example for local model experimentation, algorithm modification, and testing.
+In this tutorial, we will show you how to run a Hetero-NN task under FATE-2.0 locally without using a FATE-Pipeline. You can refer to this example for local model experimentation, algorithm modification, and testing.
 Besides, in FATE-2.0 we provides two protection strategis: the SSHE and the FedPass. We will show you how to use them in this tutorial.
 
 
-## Setup Hetero-Secureboost Step by Step
+## Setup Hetero-NN Step by Step
 
-To run a Hetero-Secureboost task, several steps are needed:
+To run a Hetero-NN task, several steps are needed:
 1. Import required classes in a new python script
 2. Prepare data, datasets, models, loss and optimizers for guest side and host side
 3. Configure training parameters; initialize a hetero-nn model; set protection strategy
