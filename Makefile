@@ -33,14 +33,15 @@ build: build-rust_paillier build-fate
 gen-osx-proto: ## Generate osx protobuf.
 	@cd ${mkfile_dir} && \
 		python3 -m grpc_tools.protoc --proto_path=proto/ \
-		--python_out=python/fate/arch/federation/osx/ \
-		--grpc_python_out=python/fate/arch/federation/osx/ \
-		proto/osx.proto
+		--python_out=python/fate/arch/federation/backends/osx/ \
+		--grpc_python_out=python/fate/arch/federation/backends/osx/ \
+		proto/osx/osx.proto
 
 .PHONY: gen-task-jsonschema
 gen-task-jsonschema: ## Generate task jsonschema.
 	@cd ${mkfile_dir}/python && \
-		python3 -c "from fate.components.spec.task import TaskConfigSpec; print(TaskConfigSpec.schema_json(indent=2))" >> \
+	    mkdir -p ${mkfile_dir}/schemas && \
+		python3 -c "from fate.components.core.spec.task import TaskConfigSpec; print(TaskConfigSpec.schema_json(indent=2))" >> \
 		${mkfile_dir}/schemas/task.schema.json
 
 ##@ Clean
