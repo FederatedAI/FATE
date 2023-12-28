@@ -89,7 +89,7 @@ class DataframeReader(_ArtifactTypeReader):
             options=self.artifact.metadata.metadata.get("options", None),
         )
         df = dataframe.deserialize(self.ctx, table)
-        logger.debug(f"read dataframe from artifact: {self.artifact}")
+        logger.debug(f"read dataframe from artifact: <uri={self.artifact.uri}, type_name={self.artifact.type_name}>")
         return df
 
 
