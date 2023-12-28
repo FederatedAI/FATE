@@ -266,9 +266,6 @@ class BiClassMetric(object):
         self.pos_label = pos_label
 
     def prepare_confusion_mat(self, labels, scores, add_to_end=True, ):
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info('labels are {}, scores are {}'.format(labels, scores))
         sorted_labels, sorted_scores = sort_score_and_label(labels, scores)
 
         score_threshold, cuts = None, None
