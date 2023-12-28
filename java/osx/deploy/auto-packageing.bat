@@ -30,7 +30,7 @@ if not exist "osx\conf\components" (
 )
 
 cd ..
-mvn clean package -DskipTests
+call mvn clean package -DskipTests
 
 if not exist "lib" (
     mkdir lib
@@ -49,6 +49,6 @@ cd /d "%pwd%"
 
 endlocal
 
-echo ========================================================
+echo package successfly
 pause
 exit /b 0
