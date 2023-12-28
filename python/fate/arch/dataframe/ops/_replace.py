@@ -41,8 +41,9 @@ def replace(df: "DataFrame", to_replace: dict):
 
     narrow_blocks, dst_blocks = data_manager.split_columns(field_names, dst_block_types)
 
-    def _mapper(blocks, to_replace_list: list = None, narrow_loc: list = None,
-                dst_bids: list = None, dm: DataManager = None):
+    def _mapper(
+        blocks, to_replace_list: list = None, narrow_loc: list = None, dst_bids: list = None, dm: DataManager = None
+    ):
         ret_blocks = []
         for block in blocks:
             if isinstance(block, torch.Tensor):
@@ -74,11 +75,9 @@ def replace(df: "DataFrame", to_replace: dict):
 
         return ret_blocks
 
-    replace_mapper = functools.partial(_mapper,
-                                       to_replace_list=_to_replace_list,
-                                       narrow_loc=narrow_blocks,
-                                       dst_bids=dst_blocks,
-                                       dm=data_manager)
+    replace_mapper = functools.partial(
+        _mapper, to_replace_list=_to_replace_list, narrow_loc=narrow_blocks, dst_bids=dst_blocks, dm=data_manager
+    )
 
     block_table = df.block_table.mapValues(replace_mapper)
 
@@ -92,8 +91,5 @@ def replace(df: "DataFrame", to_replace: dict):
         block_table, data_manager = compress_blocks(block_table, data_manager)
 
     return DataFrame(
-        df._ctx,
-        block_table,
-        partition_order_mappings=df.partition_order_mappings,
-        data_manager=data_manager
+        df._ctx, block_table, partition_order_mappings=df.partition_order_mappings, data_manager=data_manager
     )

@@ -99,7 +99,7 @@ def _nlargest_exactly(df: DataFrame, n, columns, keep) -> DataFrame:
             if _extract_columns(indexes[n]) == _extract_columns(indexes[n + 1]):
                 n += 1
 
-    indexes = indexes[: n]
+    indexes = indexes[:n]
 
     block_row_size = df.data_manager.block_row_size
     blocks_with_id = []
@@ -116,16 +116,9 @@ def _nlargest_exactly(df: DataFrame, n, columns, keep) -> DataFrame:
         blocks_with_id.append((block_id, df.data_manager.convert_to_blocks(blocks)))
 
     block_table = df._ctx.computing.parallelize(
-        blocks_with_id,
-        include_key=True,
-        partition=df.block_table.num_partitions
+        blocks_with_id, include_key=True, partition=df.block_table.num_partitions
     )
 
     partition_order_mappings = get_partition_order_mappings_by_block_table(block_table, block_row_size=block_row_size)
 
-    return DataFrame(
-        df._ctx,
-        block_table,
-        partition_order_mappings,
-        data_manager=df.data_manager.duplicate()
-    )
+    return DataFrame(df._ctx, block_table, partition_order_mappings, data_manager=df.data_manager.duplicate())

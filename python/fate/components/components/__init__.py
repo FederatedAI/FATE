@@ -81,9 +81,9 @@ class LazyBuildInComponentsLoader:
     @_lazy_cpn
     def homo_lr(self):
         from .homo_lr import homo_lr
-        
+
         return homo_lr
-    
+
     @_lazy_cpn
     def hetero_secureboost(self):
         from .hetero_secureboost import hetero_secureboost

@@ -331,11 +331,12 @@ class DataFrame(object):
         return bucketize(self, boundaries)
 
     @auto_trace
-    def distributed_hist_stat(self,
-                              histogram_builder: "HistogramBuilder",
-                              position: "DataFrame" = None,
-                              targets: Union[dict, "DataFrame"] = None,
-                              ) -> "DistributedHistogram":
+    def distributed_hist_stat(
+        self,
+        histogram_builder: "HistogramBuilder",
+        position: "DataFrame" = None,
+        targets: Union[dict, "DataFrame"] = None,
+    ) -> "DistributedHistogram":
         from .ops._histogram import distributed_hist_stat
 
         if targets is None:
@@ -549,6 +550,7 @@ class DataFrame(object):
     @auto_trace
     def iloc(self, indexer: "DataFrame") -> "DataFrame":
         from .ops._dimension_scaling import retrieval_row
+
         return retrieval_row(self, indexer)
 
     @auto_trace
@@ -568,6 +570,7 @@ class DataFrame(object):
         flatten data_frame
         """
         from .ops._indexer import flatten_data
+
         return flatten_data(self, key_type=key_type, with_sample_id=with_sample_id)
 
     @auto_trace
@@ -582,6 +585,7 @@ class DataFrame(object):
     @classmethod
     def from_flatten_data(cls, ctx, flatten_table, data_manager, key_type) -> "DataFrame":
         from .ops._indexer import transform_flatten_data_to_df
+
         return transform_flatten_data_to_df(ctx, flatten_table, data_manager, key_type)
 
     @classmethod

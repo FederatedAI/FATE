@@ -48,10 +48,7 @@ def min(df: "DataFrame") -> "pd.Series":
 
         return ret
 
-    mapper_func = functools.partial(
-        _mapper,
-        op_bids=operable_blocks
-    )
+    mapper_func = functools.partial(_mapper, op_bids=operable_blocks)
 
     reduce_ret = df.block_table.mapValues(mapper_func).reduce(_reducer)
     return _post_process(reduce_ret, operable_blocks, data_manager)
@@ -81,10 +78,7 @@ def max(df: "DataFrame") -> "pd.Series":
 
         return ret
 
-    mapper_func = functools.partial(
-        _mapper,
-        op_bids=operable_blocks
-    )
+    mapper_func = functools.partial(_mapper, op_bids=operable_blocks)
 
     reduce_ret = df.block_table.mapValues(mapper_func).reduce(_reducer)
     return _post_process(reduce_ret, operable_blocks, data_manager)
@@ -104,10 +98,7 @@ def sum(df: DataFrame) -> "pd.Series":
     def _reducer(blocks1, blocks2):
         return [block1 + block2 for block1, block2 in zip(blocks1, blocks2)]
 
-    mapper_func = functools.partial(
-        _mapper,
-        op_bids=operable_blocks
-    )
+    mapper_func = functools.partial(_mapper, op_bids=operable_blocks)
 
     reduce_ret = df.block_table.mapValues(mapper_func).reduce(_reducer)
     return _post_process(reduce_ret, operable_blocks, data_manager)
@@ -134,12 +125,7 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
                     )
                 )
             else:
-                ret.append(
-                    (
-                        np.sum(np.square(block), axis=0),
-                        np.sum(block, axis=0)
-                    )
-                )
+                ret.append((np.sum(np.square(block), axis=0), np.sum(block, axis=0)))
 
         return ret
 
@@ -153,14 +139,11 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
 
         return ret
 
-    mapper_func = functools.partial(
-        _mapper,
-        op_bids=operable_blocks
-    )
+    mapper_func = functools.partial(_mapper, op_bids=operable_blocks)
     reduce_ret = df.block_table.mapValues(mapper_func).reduce(_reducer)
 
     ret_blocks = []
-    for (lhs, rhs) in reduce_ret:
+    for lhs, rhs in reduce_ret:
         if isinstance(lhs, torch.Tensor):
             rhs = torch.mul(torch.square(torch.div(rhs, n)), n)
             ret_blocks.append(torch.div(torch.sub(lhs, rhs), n - ddof))
@@ -185,8 +168,8 @@ def skew(df: "DataFrame", unbiased=False):
 
     _mean = mean(df)
     m1 = df - _mean
-    m2 = (m1 ** 2).mean()
-    m3 = (m1 ** 3).mean()
+    m2 = (m1**2).mean()
+    m3 = (m1**3).mean()
 
     """
     if abs(value) in m2 < eps=1e-14, we regard it as 0, but eps=1e-14 should be global instead of this file.
@@ -196,9 +179,9 @@ def skew(df: "DataFrame", unbiased=False):
     m2[~non_zero_mask] = 1
 
     if unbiased:
-        return (n * (n - 1)) ** 0.5 / (n - 2) * (m3 / m2 ** 1.5)
+        return (n * (n - 1)) ** 0.5 / (n - 2) * (m3 / m2**1.5)
     else:
-        return m3 / m2 ** 1.5
+        return m3 / m2**1.5
 
 
 def kurt(df: "DataFrame", unbiased=False):
@@ -210,8 +193,8 @@ def kurt(df: "DataFrame", unbiased=False):
 
     _mean = mean(df)
     m1 = df - _mean
-    m2 = m1 ** 2
-    m4 = m2 ** 2
+    m2 = m1**2
+    m4 = m2**2
     m2 = m2.mean()
     m4 = m4.mean()
 
@@ -222,7 +205,7 @@ def kurt(df: "DataFrame", unbiased=False):
     if unbiased:
         return (n - 1) / ((n - 2) * (n - 3)) * ((n + 1) * m4 / m2**2 - 3 * (n - 1))
     else:
-        return m4 / m2 ** 4 - 3
+        return m4 / m2**4 - 3
 
 
 def variation(df: "DataFrame", ddof=1):
@@ -259,4 +242,3 @@ def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "
             ret[loc] = reduce_ret[idx][offset]
 
     return pd.Series(ret, index=field_names)
-

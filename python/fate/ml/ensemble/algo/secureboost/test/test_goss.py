@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import pandas as pd
 import numpy as np
 from fate.arch.dataframe import PandasReader
@@ -7,6 +22,7 @@ from datetime import datetime
 
 def get_current_datetime_str():
     return datetime.now().strftime("%Y-%m-%d-%H-%M")
+
 
 guest = ("guest", "10000")
 host = ("host", "9999")
@@ -29,9 +45,7 @@ def create_ctx(local, context_name):
     logger.addHandler(console_handler)
     # init fate context
     computing = CSession()
-    return Context(
-        computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host])
-    )
+    return Context(computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host]))
 
 
 ctx = create_ctx(guest, get_current_datetime_str())
@@ -57,4 +71,4 @@ from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.utils.sample import goss_sample
 
 rs = goss_sample(data_gh, 0.2, 0.1, random_seed=42)
-selected_sample = sample_pos.loc(rs.get_indexer(target='sample_id'))
+selected_sample = sample_pos.loc(rs.get_indexer(target="sample_id"))

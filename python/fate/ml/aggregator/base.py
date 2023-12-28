@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import logging
 from typing import Optional
 
@@ -36,7 +51,6 @@ class AutoSuffix(object):
 
 class Aggregator:
     def __init__(self, ctx: Context, aggregator_name: Optional[str] = None):
-
         if aggregator_name is not None:
             agg_name = "_" + aggregator_name
         else:
@@ -69,7 +83,6 @@ class BaseAggregatorClient(Aggregator):
         require_grad=True,
         float_p="float64",
     ) -> None:
-
         super().__init__(ctx, aggregator_name)
         self._weight = 1.0
         self.aggregator_name = "default" if aggregator_name is None else aggregator_name
@@ -104,7 +117,6 @@ class BaseAggregatorClient(Aggregator):
         self.loss_aggregator.dh_exchange(ctx, [ctx.guest.rank, *ctx.hosts.ranks])
 
     def _convert_type(self, data, dtype="float32"):
-
         if isinstance(data, t.Tensor):
             if dtype == "float32":
                 data = data.float()
@@ -128,7 +140,6 @@ class BaseAggregatorClient(Aggregator):
         return numpy_array
 
     def _process_model(self, model):
-
         to_agg = None
         if isinstance(model, np.ndarray) or isinstance(model, t.Tensor):
             to_agg = self._convert_type(model, self.float_p)
@@ -155,7 +166,6 @@ class BaseAggregatorClient(Aggregator):
         return agg_list
 
     def _recover_model(self, model, agg_model):
-
         if isinstance(model, np.ndarray) or isinstance(model, t.Tensor):
             return agg_model
         elif isinstance(model, t.nn.Module):
@@ -174,7 +184,6 @@ class BaseAggregatorClient(Aggregator):
     """
 
     def model_aggregation(self, ctx, model):
-
         to_send = self._process_model(model)
         agg_model = self.model_aggregator.secure_aggregate(ctx, to_send, self._weight)
         return self._recover_model(model, agg_model)
@@ -191,7 +200,6 @@ class BaseAggregatorClient(Aggregator):
 
 class BaseAggregatorServer(Aggregator):
     def __init__(self, ctx: Context, aggregator_name: str = None, is_mock=True) -> None:
-
         super().__init__(ctx, aggregator_name)
 
         weight_list = self._collect(ctx, self.suffix["local_weight"]())

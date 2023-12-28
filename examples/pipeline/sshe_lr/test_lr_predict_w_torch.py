@@ -58,8 +58,9 @@ def main(config="../config.yaml", namespace=""):
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
     lr_0 = SSHELR("lr_0",
                   epochs=2,
+                  learning_rate=0.15,
                   batch_size=300,
-                  init_param={"fit_intercept": True, "method": "zeros"},
+                  init_param={"fit_intercept": True, "method": "random_uniform"},
                   train_data=psi_0.outputs["output_data"],
                   reveal_every_epoch=False
                   )

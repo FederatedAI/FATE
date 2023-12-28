@@ -3,6 +3,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 
 import os
 from contextlib import contextmanager
@@ -19,7 +34,7 @@ class Config(object):
     in https://github.com/facebookresearch/CrypTen/blob/main/crypten/config/config.py
     """
 
-    __DEFAULT_CONFIG_PATH = os.path.normpath(os.path.join(__file__, "../../../../../configs/default.yaml"))
+    __DEFAULT_CONFIG_PATH = os.path.normpath(os.path.join(__file__, os.path.pardir, "default.yaml"))
 
     def __init__(self, config_file=None):
         if config_file is None:
@@ -66,4 +81,3 @@ class Config(object):
     @property
     def components(self):
         return self.config.components
-

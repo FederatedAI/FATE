@@ -45,10 +45,7 @@ def get_dummies(df: "DataFrame", dtype="int32"):
     block_table = _one_hot_encode(df.block_table, block_indexes, dst_data_manager, [[categories]], dtype=dtype)
 
     return DataFrame(
-        df._ctx,
-        block_table,
-        partition_order_mappings=df.partition_order_mappings,
-        data_manager=dst_data_manager
+        df._ctx, block_table, partition_order_mappings=df.partition_order_mappings, data_manager=dst_data_manager
     )
 
 

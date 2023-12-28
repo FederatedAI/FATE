@@ -53,16 +53,12 @@ def isin(df: DataFrame, values):
     dst_data_manager.promote_types(to_promote_types)
     dst_block_table, dst_data_manager = compress_blocks(block_table, dst_data_manager)
 
-    return type(df) (
-        df._ctx,
-        dst_block_table,
-        df.partition_order_mappings,
-        dst_data_manager
-    )
+    return type(df)(df._ctx, dst_block_table, df.partition_order_mappings, dst_data_manager)
 
 
 def _isin(block_table, values, block_indexes):
     block_index_set = set(block_indexes)
+
     def _has_nan_value(v_list):
         for v in v_list:
             if np.isnan(v):
@@ -71,6 +67,7 @@ def _isin(block_table, values, block_indexes):
         return False
 
     if isinstance(values, list):
+
         def _is_in_list(blocks):
             ret_blocks = []
             for bid, block in enumerate(blocks):
@@ -89,6 +86,7 @@ def _isin(block_table, values, block_indexes):
 
         block_table = block_table.mapValues(_is_in_list)
     else:
+
         def _is_in_dict(blocks):
             ret_blocks = []
             for bid, block in enumerate(blocks):

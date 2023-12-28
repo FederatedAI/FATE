@@ -30,17 +30,16 @@ def hetero_nn(ctx, role):
 def train(
     ctx: Context,
     role: Role,
-    train_data: cpn.dataframe_input(roles=[GUEST, HOST])| cpn.data_directory_input(),
-    validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True)| cpn.data_directory_input(optional=True),
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]) | cpn.data_directory_input(),
+    validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True) | cpn.data_directory_input(optional=True),
     runner_module: cpn.parameter(type=str, default="hetero_default_runner", desc="name of your runner script"),
     runner_class: cpn.parameter(type=str, default="DefaultRunner", desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
     train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
     train_model_output: cpn.model_directory_output(roles=[GUEST, HOST], optional=True),
-    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True)
+    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
 ):
-
     train_procedure(
         ctx,
         role,
@@ -52,17 +51,16 @@ def train(
         source,
         train_data_output,
         train_model_output,
-        train_model_input
+        train_model_input,
     )
+
 
 @hetero_nn.predict()
 def predict(
-        ctx: Context,
-        role: Role,
-        test_data: cpn.dataframe_input(roles=[GUEST, HOST])| cpn.data_directory_input(),
-        predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
-        predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True)
+    ctx: Context,
+    role: Role,
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]) | cpn.data_directory_input(),
+    predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
+    predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
 ):
-
     predict_procedure(ctx, role, test_data, predict_model_input, predict_data_output)
-

@@ -22,29 +22,28 @@ from fate.components.core import GUEST, HOST, Role, cpn
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
 def feature_correlation(
-        ctx: Context,
-        role: Role,
-        input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        local_only: cpn.parameter(
-            type=bool,
-            default=False,
-            desc="whether only compute feature correlation locally, default False",
-        ),
-        calc_local_vif: cpn.parameter(
-            type=bool, default=True, desc="whether compute local vif, default True"
-        ),
-        skip_col: cpn.parameter(
-            type=List[str],
-            default=None,
-            optional=True,
-            desc="columns to be skipped, default None; if None, feature_correlation will be computed over all columns",
-        ),
-        use_anonymous: cpn.parameter(
-            type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
-        ),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+    ctx: Context,
+    role: Role,
+    input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    local_only: cpn.parameter(
+        type=bool,
+        default=False,
+        desc="whether only compute feature correlation locally, default False",
+    ),
+    calc_local_vif: cpn.parameter(type=bool, default=True, desc="whether compute local vif, default True"),
+    skip_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        optional=True,
+        desc="columns to be skipped, default None; if None, feature_correlation will be computed over all columns",
+    ),
+    use_anonymous: cpn.parameter(
+        type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
+    ),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     from fate.ml.statistics import PearsonCorrelation
+
     sub_ctx = ctx.sub_ctx("train")
     input_data = input_data.read()
     select_cols = get_to_compute_cols(

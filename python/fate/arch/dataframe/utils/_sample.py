@@ -29,22 +29,23 @@ REGENERATED_IDS = "regenerated_ids"
 def local_sample(
     ctx,
     df: DataFrame,
-    n: int=None,
+    n: int = None,
     frac: Union[float, Dict[Any, float]] = None,
     replace: bool = True,
-    random_state=None
+    random_state=None,
 ):
     return _sample_guest(ctx, df, n, frac, replace, random_state, sync=False)
 
 
 def federated_sample(
-        ctx,
-        df: DataFrame,
-        n: int = None,
-        frac: Union[float, Dict[Any, float]] = None,
-        replace: bool = True,
-        random_state=None,
-        role: str = "guest"):
+    ctx,
+    df: DataFrame,
+    n: int = None,
+    frac: Union[float, Dict[Any, float]] = None,
+    replace: bool = True,
+    random_state=None,
+    role: str = "guest",
+):
     if role == "guest":
         return _sample_guest(ctx, df, n, frac, replace, random_state, sync=True)
     else:
@@ -71,8 +72,9 @@ def _sample_guest(
         else:
             for k, f in frac.items():
                 if f > 1 and replace is False:
-                    raise ValueError(f"sample's parameter frac's label={k}, fraction={f} "
-                                     f"should <= 1.0 if replace=False")
+                    raise ValueError(
+                        f"sample's parameter frac's label={k}, fraction={f} " f"should <= 1.0 if replace=False"
+                    )
 
     if n is not None:
         if n > df.shape[0] and replace is False:
@@ -83,11 +85,9 @@ def _sample_guest(
             indexer = list(df.get_indexer(target="sample_id").collect())
             regenerated_sample_id_prefix = generate_sample_id_prefix()
             regenerated_ids = generate_sample_id(n, regenerated_sample_id_prefix)
-            choice_with_regenerated_ids = _agg_choices(ctx,
-                                                       indexer,
-                                                       choices,
-                                                       regenerated_ids,
-                                                       df.block_table.num_partitions)
+            choice_with_regenerated_ids = _agg_choices(
+                ctx, indexer, choices, regenerated_ids, df.block_table.num_partitions
+            )
 
             if sync:
                 ctx.hosts.put(REGENERATED_TAG, True)
@@ -117,12 +117,14 @@ def _sample_guest(
             for label, f in frac.items():
                 label_df = df.iloc(df.label == label)
                 label_n = max(1, int(label_df.shape[0] * f))
-                choices = resample(list(range(label_df.shape[0])), replace=True,
-                                   n_samples=label_n, random_state=random_state)
+                choices = resample(
+                    list(range(label_df.shape[0])), replace=True, n_samples=label_n, random_state=random_state
+                )
                 label_indexer = list(label_df.get_indexer(target="sample_id").collect())
                 regenerated_ids = generate_sample_id(label_n, regenerated_sample_id_prefix)
-                label_choice_with_regenerated_ids = _agg_choices(ctx, label_indexer, choices,
-                                                                 regenerated_ids, df.block_table.num_partitions)
+                label_choice_with_regenerated_ids = _agg_choices(
+                    ctx, label_indexer, choices, regenerated_ids, df.block_table.num_partitions
+                )
                 if choice_with_regenerated_ids is None:
                     choice_with_regenerated_ids = label_choice_with_regenerated_ids
                 else:
@@ -156,10 +158,7 @@ def _sample_guest(
     return sample_df
 
 
-def _federated_sample_host(
-    ctx,
-    df: DataFrame
-):
+def _federated_sample_host(ctx, df: DataFrame):
     regenerated_tag = ctx.guest.get(REGENERATED_TAG)
     if regenerated_tag is False:
         sample_indexer = ctx.guest.get(SAMPLE_INDEX_TAG)
@@ -177,36 +176,24 @@ def _federated_sample_host(
 
 def _regenerated_sample_ids(df, regenerated_ids):
     from ..ops._indexer import regenerated_sample_id
+
     regenerated_raw_table = regenerated_sample_id(df.block_table, regenerated_ids, df.data_manager)
 
     return regenerated_raw_table
 
 
-def _convert_raw_table_to_df(
-    ctx,
-    table,
-    data_manager
-):
+def _convert_raw_table_to_df(ctx, table, data_manager):
     from ..ops._indexer import get_partition_order_by_raw_table
     from ..ops._dimension_scaling import to_blocks
+
     partition_order_mapping = get_partition_order_by_raw_table(table, data_manager.block_row_size)
     to_block_func = functools.partial(to_blocks, dm=data_manager, partition_mappings=partition_order_mapping)
-    block_table = table.mapPartitions(to_block_func,
-                                      use_previous_behavior=False)
+    block_table = table.mapPartitions(to_block_func, use_previous_behavior=False)
 
-    return DataFrame(
-        ctx,
-        block_table,
-        partition_order_mapping,
-        data_manager
-    )
+    return DataFrame(ctx, block_table, partition_order_mapping, data_manager)
 
 
-def _agg_choices(ctx,
-                 indexer,
-                 choices,
-                 regenerated_ids,
-                 partition):
+def _agg_choices(ctx, indexer, choices, regenerated_ids, partition):
     """
     indexer: (sample_id, (partition_id, block_offset))
     """
@@ -224,6 +211,4 @@ def _agg_choices(ctx,
         choice_regenerated_sample_ids = choice_indexer[idx]
         choice_indexer[idx] = (indexer[choice][0], choice_regenerated_sample_ids)
 
-    return ctx.computing.parallelize(choice_indexer,
-                                     include_key=True,
-                                     partition=partition)
+    return ctx.computing.parallelize(choice_indexer, include_key=True, partition=partition)

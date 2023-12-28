@@ -43,9 +43,9 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
     pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
     if config.task_cores:
-        pipeline.conf.set("task_cores", config.task_cores)
+        pipeline.conf.set("task", dict(engine_run={"cores": config.task_cores}))
     if config.timeout:
-        pipeline.conf.set("timeout", config.timeout)
+        pipeline.conf.set("task", dict(timeout=config.timeout))
 
     reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
     reader_0.guest.task_parameters(namespace=guest_train_data['namespace'], name=guest_train_data['name'])

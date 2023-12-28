@@ -25,9 +25,7 @@ def register_function(name):
         if name in FUNCTION_REGISTRY:
             raise ValueError("Cannot register duplicate function ({})".format(name))
         if not issubclass(cls, AutogradFunction):
-            raise ValueError(
-                "Function (%s: %s) must extend AutogradFunction" % (name, cls.__name__)
-            )
+            raise ValueError("Function (%s: %s) must extend AutogradFunction" % (name, cls.__name__))
         cls.name = name
         FUNCTION_REGISTRY[name] = cls
         return cls
@@ -322,9 +320,7 @@ class AutogradTake(AutogradFunction):
             grad = grad_flat.reshape(size)
         else:
             flat_index = index.flatten()
-            grad_output_flat = grad_output.flatten(
-                start_dim=dim, end_dim=(dim + index.dim() - 1)
-            )
+            grad_output_flat = grad_output.flatten(start_dim=dim, end_dim=(dim + index.dim() - 1))
             grad.index_add_(dim, flat_index, grad_output_flat)
         return grad
 
@@ -406,7 +402,6 @@ class AutogradRoll(AutogradFunction):
 class AutogradSqueeze(AutogradFunction):
     @staticmethod
     def forward(ctx, *args, **kwargs):
-
         # preprocess inputs:
         assert len(args) >= 1
         if len(args) == 1:
@@ -495,11 +490,8 @@ class AutogradReLU(AutogradFunction):
 class AutogradDropout(AutogradFunction):
     @staticmethod
     def forward(ctx, input, p=0.5, training=True, inplace=False):
-
         if training and inplace:
-            logging.warning(
-                "CrypTen dropout does not support inplace computation during training."
-            )
+            logging.warning("CrypTen dropout does not support inplace computation during training.")
 
         if not training:
             if inplace:
@@ -509,9 +501,7 @@ class AutogradDropout(AutogradFunction):
 
         # training mode:
         generator = crypten.generators["global"][input.device]
-        random_tensor = torch.rand(
-            input.size(), generator=generator, device=input.device
-        )
+        random_tensor = torch.rand(input.size(), generator=generator, device=input.device)
         boolean_mask = (random_tensor > p).to(input.device, dtype=torch.float)
         if inplace:
             result = input.mul_(boolean_mask.div(1.0 - p))
@@ -532,11 +522,8 @@ class AutogradDropout(AutogradFunction):
 class AutogradFeatureDropout(AutogradFunction):
     @staticmethod
     def forward(ctx, input, p=0.5, training=True, inplace=False):
-
         if training and inplace:
-            logging.warning(
-                "CrypTen _feature_dropout does not support inplace computation during training."
-            )
+            logging.warning("CrypTen _feature_dropout does not support inplace computation during training.")
 
         # inference mode:
         if not training:
@@ -586,12 +573,8 @@ class AutogradTanh(AutogradFunction):
 class AutogradHardtanh(AutogradFunction):
     @staticmethod
     def forward(ctx, input, min_val=-1, max_val=1):
-        assert isinstance(
-            min_val, (int, float)
-        ), "hardtanh min_val must be an int or float"
-        assert isinstance(
-            max_val, (int, float)
-        ), "hardtanh max_val must be an int or float"
+        assert isinstance(min_val, (int, float)), "hardtanh min_val must be an int or float"
+        assert isinstance(max_val, (int, float)), "hardtanh max_val must be an int or float"
         if min_val == max_val:
             grad = input.new(torch.zeros(input.size()))
             ctx.save_for_backward(grad)
@@ -1131,7 +1114,6 @@ class AutogradNorm(AutogradFunction):
 class AutogradSum(AutogradFunction):
     @staticmethod
     def forward(ctx, *args, **kwargs):
-
         # preprocess inputs:
         assert len(args) >= 1
         if len(args) == 1:
@@ -1190,7 +1172,6 @@ class AutogradTrace(AutogradFunction):
 class AutogradMean(AutogradFunction):
     @staticmethod
     def forward(ctx, *args, **kwargs):
-
         # preprocess inputs:
         assert len(args) >= 1
         if len(args) == 1:
@@ -1214,21 +1195,16 @@ class AutogradMean(AutogradFunction):
         if len(input_size) == 0:
             return grad_output
 
-        nelement = float(
-            reduce(lambda x, y: x * y, input_size) if dim is None else input_size[dim]
-        )
+        nelement = float(reduce(lambda x, y: x * y, input_size) if dim is None else input_size[dim])
         if not keepdim and dim is not None:
             grad_output = grad_output.unsqueeze(dim)
-        return grad_output.mul(
-            torch.ones(input_size, device=grad_output.device).div_(nelement)
-        )
+        return grad_output.mul(torch.ones(input_size, device=grad_output.device).div_(nelement))
 
 
 @register_function("var")
 class AutogradVariance(AutogradFunction):
     @staticmethod
     def forward(ctx, self, *args, **kwargs):
-
         # preprocess inputs:
         if len(args) == 0:
             dim = None
@@ -1262,11 +1238,7 @@ class AutogradVariance(AutogradFunction):
 
         # compute variance:
         ctx.save_multiple_for_backward((self, mean, divisor, dim, keepdim))
-        return (
-            self.var(dim, unbiased=unbiased, keepdim=keepdim)
-            if dim is not None
-            else self.var(unbiased=unbiased)
-        )
+        return self.var(dim, unbiased=unbiased, keepdim=keepdim) if dim is not None else self.var(unbiased=unbiased)
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -1285,7 +1257,6 @@ class AutogradVariance(AutogradFunction):
 class AutogradMin(AutogradFunction):
     @staticmethod
     def forward(ctx, *args, **kwargs):
-
         # preprocess inputs:
         assert len(args) >= 1
         if len(args) == 1:
@@ -1333,7 +1304,6 @@ class AutogradMin(AutogradFunction):
 class AutogradMax(AutogradFunction):
     @staticmethod
     def forward(ctx, *args, **kwargs):
-
         # preprocess inputs:
         assert len(args) >= 1
         if len(args) == 1:
@@ -1405,9 +1375,7 @@ class AutogradSoftmax(AutogradFunction):
         probs, dim = ctx.saved_tensors
         if grad_output.dim() == 0 or grad_output.size(dim) == 1:
             return grad_output.new(torch.zeros(grad_output.size()))
-        return grad_output.add(-probs.mul(grad_output).sum(dim, keepdim=True)).mul_(
-            probs
-        )
+        return grad_output.add(-probs.mul(grad_output).sum(dim, keepdim=True)).mul_(probs)
 
 
 @register_function("log_softmax")
@@ -1451,7 +1419,6 @@ class AutogradPad(AutogradFunction):
 class AutogradAvgPool2D(AutogradFunction):
     @staticmethod
     def forward(ctx, input, kernel_size, stride=None, padding=0, ceil_mode=False):
-
         # preprocess inputs:
         if stride is None:
             stride = kernel_size
@@ -1466,9 +1433,7 @@ class AutogradAvgPool2D(AutogradFunction):
         output = input.avg_pool2d(kernel_size, padding=padding, stride=stride)
 
         # store information for backward pass:
-        ctx.save_multiple_for_backward(
-            (input.shape, output, kernel_size, padding, stride)
-        )
+        ctx.save_multiple_for_backward((input.shape, output, kernel_size, padding, stride))
         return output
 
     @staticmethod
@@ -1478,9 +1443,9 @@ class AutogradAvgPool2D(AutogradFunction):
 
         in_channels = input_shape[-3]
         # compute as d conv2d / d input with kernel as average filter
-        kernel = torch.ones(
-            in_channels, 1, kernel_size[0], kernel_size[1], device=grad_output.device
-        ) / (kernel_size[0] * kernel_size[1])
+        kernel = torch.ones(in_channels, 1, kernel_size[0], kernel_size[1], device=grad_output.device) / (
+            kernel_size[0] * kernel_size[1]
+        )
 
         grad_input_padding = _grad_input_padding(
             grad_output,
@@ -1526,7 +1491,6 @@ class AutogradMaxPool2D(AutogradFunction):
         ceil_mode=False,
         return_indices=False,
     ):
-
         # preprocess inputs:
         if stride is None:
             stride = kernel_size
@@ -1549,9 +1513,7 @@ class AutogradMaxPool2D(AutogradFunction):
         )
 
         # store information for backward pass and return:
-        ctx.save_multiple_for_backward(
-            (input.size(), indices, kernel_size, padding, stride, dilation, ceil_mode)
-        )
+        ctx.save_multiple_for_backward((input.size(), indices, kernel_size, padding, stride, dilation, ceil_mode))
         if return_indices:
             ctx.mark_non_differentiable(indices)
             return output, indices
@@ -1591,12 +1553,8 @@ class AutogradConv1D(AutogradFunction):
             padding = (padding,)
         if isinstance(dilation, (int, float)):
             dilation = (dilation,)
-        ctx.save_multiple_for_backward(
-            (input, kernel, padding, stride, dilation, groups)
-        )
-        return input.conv1d(
-            kernel, padding=padding, stride=stride, dilation=dilation, groups=groups
-        )
+        ctx.save_multiple_for_backward((input, kernel, padding, stride, dilation, groups))
+        return input.conv1d(kernel, padding=padding, stride=stride, dilation=dilation, groups=groups)
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -1614,9 +1572,7 @@ class AutogradConv1D(AutogradFunction):
 
         # TODO: Implement conv1d gradient under following condition:
         if groups > 1 and input.size(1) > groups:
-            raise NotImplementedError(
-                "conv1d backward with groups > 1 and in_channels > groups not implemented"
-            )
+            raise NotImplementedError("conv1d backward with groups > 1 and in_channels > groups not implemented")
 
         # compute gradient with respect to input:
         output_padding = _grad_input_padding(
@@ -1638,9 +1594,7 @@ class AutogradConv1D(AutogradFunction):
 
         # compute gradient with respect to kernel:
         grad_output = grad_output.repeat(1, in_channels // groups, 1)
-        grad_output = grad_output.view(
-            grad_output.size(0) * grad_output.size(1), 1, grad_output.size(2)
-        )
+        grad_output = grad_output.view(grad_output.size(0) * grad_output.size(1), 1, grad_output.size(2))
         input = input.view(1, input.size(0) * input.size(1), input.size(2))
         grad_kernel = input.conv1d(
             grad_output,
@@ -1649,13 +1603,9 @@ class AutogradConv1D(AutogradFunction):
             dilation=stride,
             groups=in_channels * batch_size,
         )
-        grad_kernel = grad_kernel.view(
-            batch_size, grad_kernel.size(1) // batch_size, grad_kernel.size(2)
-        )
+        grad_kernel = grad_kernel.view(batch_size, grad_kernel.size(1) // batch_size, grad_kernel.size(2))
         grad_kernel = grad_kernel.sum(dim=0)
-        grad_kernel = grad_kernel.view(
-            in_channels // groups, out_channels, grad_kernel.size(1)
-        )
+        grad_kernel = grad_kernel.view(in_channels // groups, out_channels, grad_kernel.size(1))
         grad_kernel = grad_kernel.transpose(0, 1).narrow(2, 0, kernel_size)
         return (grad_input, grad_kernel)
 
@@ -1670,12 +1620,8 @@ class AutogradConv2D(AutogradFunction):
             padding = (padding, padding)
         if isinstance(dilation, (int, float)):
             dilation = (dilation, dilation)
-        ctx.save_multiple_for_backward(
-            (input, kernel, padding, stride, dilation, groups)
-        )
-        return input.conv2d(
-            kernel, stride=stride, padding=padding, dilation=dilation, groups=groups
-        )
+        ctx.save_multiple_for_backward((input, kernel, padding, stride, dilation, groups))
+        return input.conv2d(kernel, stride=stride, padding=padding, dilation=dilation, groups=groups)
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -1693,9 +1639,7 @@ class AutogradConv2D(AutogradFunction):
 
         # TODO: Implement conv2d gradient under following condition:
         if groups > 1 and input.size(1) > groups:
-            raise NotImplementedError(
-                "conv2d backward with groups > 1 and in_channels > groups not implemented"
-            )
+            raise NotImplementedError("conv2d backward with groups > 1 and in_channels > groups not implemented")
 
         # compute gradient with respect to input:
         output_padding = _grad_input_padding(
@@ -1723,9 +1667,7 @@ class AutogradConv2D(AutogradFunction):
             grad_output.size(2),
             grad_output.size(3),
         )
-        input = input.view(
-            1, input.size(0) * input.size(1), input.size(2), input.size(3)
-        )
+        input = input.view(1, input.size(0) * input.size(1), input.size(2), input.size(3))
         # dilation and stride are swapped based on PyTorch's conv2d_weight implementation
         grad_kernel = input.conv2d(
             grad_output,
@@ -1815,9 +1757,7 @@ class AutogradBatchNorm(AutogradFunction):
                 running_mean.set(running_mean * (1.0 - momentum) + mean * momentum)
         else:
             if running_mean is None or running_var is None:
-                raise ValueError(
-                    "Must provide running_mean and running_var when training is False"
-                )
+                raise ValueError("Must provide running_mean and running_var when training is False")
             mean = running_mean
             variance = running_var
 
@@ -1885,11 +1825,8 @@ class AutogradBatchNorm(AutogradFunction):
         grad_output = grad_output.mul(weight)
         grad_input = grad_output.mul(inv_var)
         if training:
-
             # compute gradient term that is due to the mean:
-            num_element = reduce(
-                lambda x, y: x * y, [grad_output.size(d) for d in stats_dimensions]
-            )
+            num_element = reduce(lambda x, y: x * y, [grad_output.size(d) for d in stats_dimensions])
             grad_mean = grad_output.sum(stats_dimensions)
             grad_mean = grad_mean.reshape(broadcast_shape)
             grad_mean = grad_mean.mul(inv_var.div(-num_element))
@@ -1916,18 +1853,14 @@ class AutogradBinaryCrossEntropy(AutogradFunction):
             return pred.new(0)
 
         # Compute full forward pass
-        log_pos, log_neg = (
-            crypten.stack([pred, 1.0 - pred]).log(input_in_01=True).unbind(dim=0)
-        )
+        log_pos, log_neg = crypten.stack([pred, 1.0 - pred]).log(input_in_01=True).unbind(dim=0)
         loss_values = target * log_pos + ((1.0 - target) * log_neg)
         return -(loss_values.mean())
 
     @staticmethod
     def backward(ctx, grad_output):
         pred, target = ctx.saved_tensors
-        rec_pos, rec_neg = (
-            crypten.stack([pred, 1.0 - pred]).reciprocal(input_in_01=True).unbind(dim=0)
-        )
+        rec_pos, rec_neg = crypten.stack([pred, 1.0 - pred]).reciprocal(input_in_01=True).unbind(dim=0)
         grad = (rec_neg * (1.0 - target)) - rec_pos * target
         return grad.div_(target.nelement()).mul_(grad_output)
 
@@ -1937,20 +1870,14 @@ class AutogradBinaryCrossEntropyWithLogits(AutogradFunction):
     @staticmethod
     def forward(ctx, logit, target, skip_forward=False):
         sigmoid_out = logit.sigmoid()
-        assert (
-            sigmoid_out.size() == target.size()
-        ), "Incorrect input sizes for binary_cross_entropy_with_logits"
+        assert sigmoid_out.size() == target.size(), "Incorrect input sizes for binary_cross_entropy_with_logits"
         ctx.mark_non_differentiable(target)
         ctx.save_multiple_for_backward([target, sigmoid_out])
         if skip_forward:
             return sigmoid_out.new(0)
 
         # Compute full forward pass
-        log_pos, log_neg = (
-            crypten.stack([sigmoid_out, 1.0 - sigmoid_out])
-            .log(input_in_01=True)
-            .unbind(dim=0)
-        )
+        log_pos, log_neg = crypten.stack([sigmoid_out, 1.0 - sigmoid_out]).log(input_in_01=True).unbind(dim=0)
         loss_values = target * log_pos + ((1.0 - target) * log_neg)
         return -(loss_values.mean())
 
@@ -1964,9 +1891,7 @@ class AutogradBinaryCrossEntropyWithLogits(AutogradFunction):
 class AutogradRAPPORLoss(AutogradFunction):
     @staticmethod
     def forward(ctx, logit, target, alpha, skip_forward=False):
-        assert (
-            logit.size() == target.size()
-        ), "Logit and target sizes must match for rappor loss"
+        assert logit.size() == target.size(), "Logit and target sizes must match for rappor loss"
         pred = logit.sigmoid()
         ctx.mark_non_differentiable(target)
         if alpha == 0.0:
@@ -1975,21 +1900,13 @@ class AutogradRAPPORLoss(AutogradFunction):
         else:
             pred_normalized = alpha * pred + (1 - alpha) * (1 - pred)
             grad_correction = pred * (1 - pred)
-            grad_correction *= (pred_normalized * (1 - pred_normalized)).reciprocal(
-                input_in_01=True
-            )
-            ctx.save_multiple_for_backward(
-                [target, pred_normalized, grad_correction, alpha]
-            )
+            grad_correction *= (pred_normalized * (1 - pred_normalized)).reciprocal(input_in_01=True)
+            ctx.save_multiple_for_backward([target, pred_normalized, grad_correction, alpha])
 
         if skip_forward:
             return pred.new(0)
 
-        log_pos, log_neg = (
-            crypten.stack([pred_normalized, 1.0 - pred_normalized])
-            .log(input_in_01=True)
-            .unbind(dim=0)
-        )
+        log_pos, log_neg = crypten.stack([pred_normalized, 1.0 - pred_normalized]).log(input_in_01=True).unbind(dim=0)
 
         loss_values = target * log_pos + (1.0 - target) * log_neg
         return -(loss_values.mean())

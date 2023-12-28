@@ -36,35 +36,51 @@ def train(
     role: Role,
     train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
     validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-    num_trees: cpn.parameter(type=params.conint(gt=0), default=3,
-                          desc="max tree num"),
-    learning_rate: cpn.parameter(type=params.confloat(gt=0), default=0.3, desc='decay factor of each tree'),
-    max_depth: cpn.parameter(type=params.conint(gt=0), default=3, desc='max depth of a tree'),
-    complete_secure: cpn.parameter(type=params.conint(ge=0), default=0, desc='number of trees to use guest features only in the complete secure mode, '
-                                                                             '0 means no complete secure'),
-    max_bin: cpn.parameter(type=params.conint(gt=0), default=32, desc='max bin number of feature binning'),
-    objective: cpn.parameter(type=params.string_choice(choice=[BINARY_BCE, MULTI_CE, REGRESSION_L2]), default=BINARY_BCE, \
-                                       desc='objective function, available: {}'.format([BINARY_BCE, MULTI_CE, REGRESSION_L2])),
-    num_class: cpn.parameter(type=params.conint(gt=0), default=2, desc='class number of multi classification, active when objective is {}'.format(MULTI_CE)),
-    goss: cpn.parameter(type=bool, default=False, desc='whether to use goss subsample'),
-    goss_start_iter: cpn.parameter(type=params.conint(ge=0), default=5, desc='start iteration of goss subsample'),
-    top_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.2, desc='top rate of goss subsample'),
-    other_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.1, desc='other rate of goss subsample'),
-    l1: cpn.parameter(type=params.confloat(ge=0), default=0, desc='L1 regularization'),
-    l2: cpn.parameter(type=params.confloat(ge=0), default=0.1, desc='L2 regularization'),
-    min_impurity_split: cpn.parameter(type=params.confloat(gt=0), default=1e-2, desc='min impurity when splitting a tree node'),
-    min_sample_split: cpn.parameter(type=params.conint(gt=0), default=2, desc='min sample to split a tree node'),
-    min_leaf_node: cpn.parameter(type=params.conint(gt=0), default=1, desc='mininum sample contained in a leaf node'),
-    min_child_weight: cpn.parameter(type=params.confloat(gt=0), default=1, desc='minumum hessian contained in a leaf node'),
-    gh_pack: cpn.parameter(type=bool, default=True, desc='whether to pack gradient and hessian together'),
-    split_info_pack: cpn.parameter(type=bool, default=True, desc='for host side, whether to pack split info together'),
-    hist_sub: cpn.parameter(type=bool, default=True, desc='whether to use histogram subtraction'),
-    he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind='paillier', key_length=1024), desc='homomorphic encryption param, support paillier, ou and mock in current version'),
+    num_trees: cpn.parameter(type=params.conint(gt=0), default=3, desc="max tree num"),
+    learning_rate: cpn.parameter(type=params.confloat(gt=0), default=0.3, desc="decay factor of each tree"),
+    max_depth: cpn.parameter(type=params.conint(gt=0), default=3, desc="max depth of a tree"),
+    complete_secure: cpn.parameter(
+        type=params.conint(ge=0),
+        default=0,
+        desc="number of trees to use guest features only in the complete secure mode, " "0 means no complete secure",
+    ),
+    max_bin: cpn.parameter(type=params.conint(gt=0), default=32, desc="max bin number of feature binning"),
+    objective: cpn.parameter(
+        type=params.string_choice(choice=[BINARY_BCE, MULTI_CE, REGRESSION_L2]),
+        default=BINARY_BCE,
+        desc="objective function, available: {}".format([BINARY_BCE, MULTI_CE, REGRESSION_L2]),
+    ),
+    num_class: cpn.parameter(
+        type=params.conint(gt=0),
+        default=2,
+        desc="class number of multi classification, active when objective is {}".format(MULTI_CE),
+    ),
+    goss: cpn.parameter(type=bool, default=False, desc="whether to use goss subsample"),
+    goss_start_iter: cpn.parameter(type=params.conint(ge=0), default=5, desc="start iteration of goss subsample"),
+    top_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.2, desc="top rate of goss subsample"),
+    other_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.1, desc="other rate of goss subsample"),
+    l1: cpn.parameter(type=params.confloat(ge=0), default=0, desc="L1 regularization"),
+    l2: cpn.parameter(type=params.confloat(ge=0), default=0.1, desc="L2 regularization"),
+    min_impurity_split: cpn.parameter(
+        type=params.confloat(gt=0), default=1e-2, desc="min impurity when splitting a tree node"
+    ),
+    min_sample_split: cpn.parameter(type=params.conint(gt=0), default=2, desc="min sample to split a tree node"),
+    min_leaf_node: cpn.parameter(type=params.conint(gt=0), default=1, desc="mininum sample contained in a leaf node"),
+    min_child_weight: cpn.parameter(
+        type=params.confloat(gt=0), default=1, desc="minumum hessian contained in a leaf node"
+    ),
+    gh_pack: cpn.parameter(type=bool, default=True, desc="whether to pack gradient and hessian together"),
+    split_info_pack: cpn.parameter(type=bool, default=True, desc="for host side, whether to pack split info together"),
+    hist_sub: cpn.parameter(type=bool, default=True, desc="whether to use histogram subtraction"),
+    he_param: cpn.parameter(
+        type=params.he_param(),
+        default=params.HEParam(kind="paillier", key_length=1024),
+        desc="homomorphic encryption param, support paillier, ou and mock in current version",
+    ),
     train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
     train_model_output: cpn.json_model_output(roles=[GUEST, HOST], optional=True),
-    train_model_input: cpn.json_model_input(roles=[GUEST, HOST], optional=True)
+    train_model_input: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
 ):
-    
     train_data = train_data.read()
     if validate_data is not None:
         validate_data = validate_data.read()
@@ -73,20 +89,34 @@ def train(
         train_model_input = train_model_input.read()
 
     if role.is_guest:
-        
         # initialize encrypt kit
         ctx.cipher.set_phe(ctx.device, he_param.dict())
 
-        booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
-                                         learning_rate=learning_rate, max_bin=max_bin, l1=l1,
-                                         l2=l2, min_impurity_split=min_impurity_split, min_sample_split=min_sample_split,
-                                        min_leaf_node=min_leaf_node, min_child_weight=min_child_weight, objective=objective, num_class=num_class, 
-                                        gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub,
-                                         top_rate=top_rate, other_rate=other_rate, goss_start_iter=goss_start_iter, goss=goss
-                                        )
+        booster = HeteroSecureBoostGuest(
+            num_trees=num_trees,
+            max_depth=max_depth,
+            complete_secure=complete_secure,
+            learning_rate=learning_rate,
+            max_bin=max_bin,
+            l1=l1,
+            l2=l2,
+            min_impurity_split=min_impurity_split,
+            min_sample_split=min_sample_split,
+            min_leaf_node=min_leaf_node,
+            min_child_weight=min_child_weight,
+            objective=objective,
+            num_class=num_class,
+            gh_pack=gh_pack,
+            split_info_pack=split_info_pack,
+            hist_sub=hist_sub,
+            top_rate=top_rate,
+            other_rate=other_rate,
+            goss_start_iter=goss_start_iter,
+            goss=goss,
+        )
         if train_model_input:
             booster.from_model(train_model_input)
-            logger.info('sbt input model loaded, will start warmstarting')
+            logger.info("sbt input model loaded, will start warmstarting")
         booster.fit(ctx, train_data, validate_data)
         # get cached train data score
         train_scores = booster.get_train_predict()
@@ -97,19 +127,22 @@ def train(
         train_model_output.write(tree_dict, metadata={})
 
     elif role.is_host:
-        
-        booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
-                                        max_bin=max_bin, hist_sub=hist_sub)
+        booster = HeteroSecureBoostHost(
+            num_trees=num_trees,
+            max_depth=max_depth,
+            complete_secure=complete_secure,
+            max_bin=max_bin,
+            hist_sub=hist_sub,
+        )
         if train_model_input is not None:
             booster.from_model(train_model_input)
-            logger.info('sbt input model loaded, will start warmstarting')
+            logger.info("sbt input model loaded, will start warmstarting")
         booster.fit(ctx, train_data, validate_data)
         tree_dict = booster.get_model()
         train_model_output.write(tree_dict, metadata={})
 
     else:
         raise RuntimeError(f"Unknown role: {role}")
-
 
 
 @hetero_secureboost.predict()
@@ -120,7 +153,6 @@ def predict(
     predict_model_input: cpn.json_model_input(roles=[GUEST, HOST]),
     test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
-    
     model_input = predict_model_input.read()
     test_data = test_data.read()
     if role.is_guest:
@@ -144,59 +176,90 @@ def cross_validation(
     ctx: Context,
     role: Role,
     cv_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-    num_trees: cpn.parameter(type=params.conint(gt=0), default=3,
-                          desc="max tree num"),
-    learning_rate: cpn.parameter(type=params.confloat(gt=0), default=0.3, desc='decay factor of each tree'),
-    max_depth: cpn.parameter(type=params.conint(gt=0), default=3, desc='max depth of a tree'),
-    complete_secure: cpn.parameter(type=params.conint(ge=0), default=0, desc='number of trees to use guest features only in the complete secure mode, '
-                                                                             '0 means no complete secure'),
-    max_bin: cpn.parameter(type=params.conint(gt=0), default=32, desc='max bin number of feature binning'),
-    objective: cpn.parameter(type=params.string_choice(choice=[BINARY_BCE, MULTI_CE, REGRESSION_L2]), default=BINARY_BCE, \
-                                       desc='objective function, available: {}'.format([BINARY_BCE, MULTI_CE, REGRESSION_L2])),
-    num_class: cpn.parameter(type=params.conint(gt=0), default=2, desc='class number of multi classification, active when objective is {}'.format(MULTI_CE)),
-    l1: cpn.parameter(type=params.confloat(ge=0), default=0, desc='L1 regularization'),
-    l2: cpn.parameter(type=params.confloat(ge=0), default=0.1, desc='L2 regularization'),
-    goss: cpn.parameter(type=bool, default=False, desc='whether to use goss subsample'),
-    goss_start_iter: cpn.parameter(type=params.conint(ge=0), default=5, desc='start iteration of goss subsample'),
-    top_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.2, desc='top rate of goss subsample'),
-    other_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.1, desc='other rate of goss subsample'),
-    min_impurity_split: cpn.parameter(type=params.confloat(gt=0), default=1e-2, desc='min impurity when splitting a tree node'),
-    min_sample_split: cpn.parameter(type=params.conint(gt=0), default=2, desc='min sample to split a tree node'),
-    min_leaf_node: cpn.parameter(type=params.conint(gt=0), default=1, desc='mininum sample contained in a leaf node'),
-    min_child_weight: cpn.parameter(type=params.confloat(gt=0), default=1, desc='minumum hessian contained in a leaf node'),
-    gh_pack: cpn.parameter(type=bool, default=True, desc='whether to pack gradient and hessian together'),
-    split_info_pack: cpn.parameter(type=bool, default=True, desc='for host side, whether to pack split info together'),
-    hist_sub: cpn.parameter(type=bool, default=True, desc='whether to use histogram subtraction'),
-    he_param: cpn.parameter(type=params.he_param(), default=params.HEParam(kind='paillier', key_length=1024), desc='homomorphic encryption param, support paillier, ou and mock in current version'),
-    cv_param: cpn.parameter(type=params.cv_param(),
-                            default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
-                            desc="cross validation param"),
+    num_trees: cpn.parameter(type=params.conint(gt=0), default=3, desc="max tree num"),
+    learning_rate: cpn.parameter(type=params.confloat(gt=0), default=0.3, desc="decay factor of each tree"),
+    max_depth: cpn.parameter(type=params.conint(gt=0), default=3, desc="max depth of a tree"),
+    complete_secure: cpn.parameter(
+        type=params.conint(ge=0),
+        default=0,
+        desc="number of trees to use guest features only in the complete secure mode, " "0 means no complete secure",
+    ),
+    max_bin: cpn.parameter(type=params.conint(gt=0), default=32, desc="max bin number of feature binning"),
+    objective: cpn.parameter(
+        type=params.string_choice(choice=[BINARY_BCE, MULTI_CE, REGRESSION_L2]),
+        default=BINARY_BCE,
+        desc="objective function, available: {}".format([BINARY_BCE, MULTI_CE, REGRESSION_L2]),
+    ),
+    num_class: cpn.parameter(
+        type=params.conint(gt=0),
+        default=2,
+        desc="class number of multi classification, active when objective is {}".format(MULTI_CE),
+    ),
+    l1: cpn.parameter(type=params.confloat(ge=0), default=0, desc="L1 regularization"),
+    l2: cpn.parameter(type=params.confloat(ge=0), default=0.1, desc="L2 regularization"),
+    goss: cpn.parameter(type=bool, default=False, desc="whether to use goss subsample"),
+    goss_start_iter: cpn.parameter(type=params.conint(ge=0), default=5, desc="start iteration of goss subsample"),
+    top_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.2, desc="top rate of goss subsample"),
+    other_rate: cpn.parameter(type=params.confloat(gt=0, lt=1), default=0.1, desc="other rate of goss subsample"),
+    min_impurity_split: cpn.parameter(
+        type=params.confloat(gt=0), default=1e-2, desc="min impurity when splitting a tree node"
+    ),
+    min_sample_split: cpn.parameter(type=params.conint(gt=0), default=2, desc="min sample to split a tree node"),
+    min_leaf_node: cpn.parameter(type=params.conint(gt=0), default=1, desc="mininum sample contained in a leaf node"),
+    min_child_weight: cpn.parameter(
+        type=params.confloat(gt=0), default=1, desc="minumum hessian contained in a leaf node"
+    ),
+    gh_pack: cpn.parameter(type=bool, default=True, desc="whether to pack gradient and hessian together"),
+    split_info_pack: cpn.parameter(type=bool, default=True, desc="for host side, whether to pack split info together"),
+    hist_sub: cpn.parameter(type=bool, default=True, desc="whether to use histogram subtraction"),
+    he_param: cpn.parameter(
+        type=params.he_param(),
+        default=params.HEParam(kind="paillier", key_length=1024),
+        desc="homomorphic encryption param, support paillier, ou and mock in current version",
+    ),
+    cv_param: cpn.parameter(
+        type=params.cv_param(),
+        default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
+        desc="cross validation param",
+    ),
     output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
     cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
 ):
-
     from fate.arch.dataframe import KFold
-    kf = KFold(ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state)
+
+    kf = KFold(
+        ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state
+    )
     i = 0
     for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
-
         logger.info(f"enter fold {i}")
         i += 1
         if role.is_guest:
-
             # initialize encrypt kit
             fold_ctx.cipher.set_phe(fold_ctx.device, he_param.dict())
 
-            booster = HeteroSecureBoostGuest(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
-                                             learning_rate=learning_rate, max_bin=max_bin, l1=l1,
-                                             l2=l2, min_impurity_split=min_impurity_split,
-                                             min_sample_split=min_sample_split,
-                                             min_leaf_node=min_leaf_node, min_child_weight=min_child_weight,
-                                             objective=objective, num_class=num_class,
-                                             gh_pack=gh_pack, split_info_pack=split_info_pack, hist_sub=hist_sub,
-                                             goss_start_iter=goss_start_iter, goss=goss, top_rate=top_rate,
-                                             other_rate=other_rate
-                                             )
+            booster = HeteroSecureBoostGuest(
+                num_trees=num_trees,
+                max_depth=max_depth,
+                complete_secure=complete_secure,
+                learning_rate=learning_rate,
+                max_bin=max_bin,
+                l1=l1,
+                l2=l2,
+                min_impurity_split=min_impurity_split,
+                min_sample_split=min_sample_split,
+                min_leaf_node=min_leaf_node,
+                min_child_weight=min_child_weight,
+                objective=objective,
+                num_class=num_class,
+                gh_pack=gh_pack,
+                split_info_pack=split_info_pack,
+                hist_sub=hist_sub,
+                goss_start_iter=goss_start_iter,
+                goss=goss,
+                top_rate=top_rate,
+                other_rate=other_rate,
+            )
             booster.fit(fold_ctx, train_data, validate_data)
             if output_cv_data:
                 # train predict
@@ -210,9 +273,13 @@ def cross_validation(
                 next(cv_output_datas).write(predict_result)
 
         elif role.is_host:
-
-            booster = HeteroSecureBoostHost(num_trees=num_trees, max_depth=max_depth, complete_secure=complete_secure,
-                                            max_bin=max_bin, hist_sub=hist_sub)
+            booster = HeteroSecureBoostHost(
+                num_trees=num_trees,
+                max_depth=max_depth,
+                complete_secure=complete_secure,
+                max_bin=max_bin,
+                hist_sub=hist_sub,
+            )
             booster.fit(fold_ctx, train_data, validate_data)
 
             if output_cv_data:
@@ -222,4 +289,3 @@ def cross_validation(
 
         else:
             raise RuntimeError(f"Unknown role: {role}")
-

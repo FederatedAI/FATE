@@ -35,10 +35,7 @@ def configure_logging():
     logging.getLogger().setLevel(level)
     logging.basicConfig(
         level=level,
-        format=(
-            "[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d]"
-            + "[%(processName)s] %(message)s"
-        ),
+        format=("[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d]" + "[%(processName)s] %(message)s"),
     )
 
 
@@ -48,9 +45,7 @@ def crypten_print(*args, dst=0, **kwargs):
     """
     if isinstance(dst, int):
         dst = [dst]
-    assert isinstance(
-        dst, (list, tuple)
-    ), "print destination must be a list or tuple of party ranks"
+    assert isinstance(dst, (list, tuple)), "print destination must be a list or tuple of party ranks"
     import crypten.communicator as comm
 
     if comm.get().get_rank() in dst:
@@ -65,9 +60,7 @@ def crypten_log(*args, level=logging.INFO, dst=0, **kwargs):
     """
     if isinstance(dst, int):
         dst = [dst]
-    assert isinstance(
-        dst, (list, tuple)
-    ), "log destination must be a list or tuple of party ranks"
+    assert isinstance(dst, (list, tuple)), "log destination must be a list or tuple of party ranks"
     import crypten.communicator as comm
 
     if comm.get().get_rank() in dst:
@@ -98,11 +91,7 @@ def validate_correctness(self, func, func_name, tolerance=0.5):
         with cfg.temp_override({"debug.validation_mode": False}):
             # Compute crypten result
             result_enc = func(*args, **kwargs)
-            result = (
-                result_enc.get_plain_text()
-                if crypten.is_encrypted_tensor(result_enc)
-                else result_enc
-            )
+            result = result_enc.get_plain_text() if crypten.is_encrypted_tensor(result_enc) else result_enc
 
             args = list(args)
 
@@ -123,9 +112,7 @@ def validate_correctness(self, func, func_name, tolerance=0.5):
 
             # Check sizes match
             if result.size() != reference.size():
-                crypten_log(
-                    f"Size mismatch: Expected {reference.size()} but got {result.size()}"
-                )
+                crypten_log(f"Size mismatch: Expected {reference.size()} but got {result.size()}")
                 raise ValueError(f"Function {func_name} returned incorrect size")
 
             # Check that results match

@@ -26,21 +26,20 @@ def transform_to_table(block_table, block_index, partition_order_mappings):
             for _idx, _id in enumerate(blocks[block_index]):
                 yield _id, (block_id, _idx)
 
-    return block_table.mapPartitions(_convert_to_order_index,
-                                     use_previous_behavior=False)
+    return block_table.mapPartitions(_convert_to_order_index, use_previous_behavior=False)
 
 
 def get_partition_order_mappings_by_block_table(block_table, block_row_size):
     def _block_counter(kvs):
         partition_key = None
         size = 0
-        first_block_id = ''
+        first_block_id = ""
 
         for k, v in kvs:
             if size == 0 and len(v[0]):
                 partition_key = v[0][0]
 
-            if first_block_id == '':
+            if first_block_id == "":
                 first_block_id = k
 
             size += len(v[0])
@@ -60,7 +59,7 @@ def get_partition_order_mappings_by_block_table(block_table, block_row_size):
             start_index=start_index,
             end_index=start_index + block_size - 1,
             start_block_id=acc_block_num,
-            end_block_id=acc_block_num + block_num - 1
+            end_block_id=acc_block_num + block_num - 1,
         )
         start_index += block_size
         acc_block_num += block_num
@@ -96,7 +95,7 @@ def get_partition_order_by_raw_table(table, block_row_size, key_type="sample_id"
             start_index=start_index,
             end_index=start_index + blk_size - 1,
             start_block_id=acc_block_num,
-            end_block_id=acc_block_num + block_num - 1
+            end_block_id=acc_block_num + block_num - 1,
         )
 
         start_index += blk_size
@@ -169,9 +168,11 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
     key_type="sample_id":
         key=sample_id, value=data_row
     """
-    sample_id_index = df.data_manager.loc_block(
-        df.data_manager.schema.sample_id_name, with_offset=False
-    ) if (with_sample_id or key_type == "sample_id") else  None
+    sample_id_index = (
+        df.data_manager.loc_block(df.data_manager.schema.sample_id_name, with_offset=False)
+        if (with_sample_id or key_type == "sample_id")
+        else None
+    )
 
     def _flatten(kvs):
         for block_id, blocks in kvs:
@@ -182,7 +183,7 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
                     if with_sample_id:
                         yield (block_id, row_id), (
                             flat_blocks[sample_id_index][row_id],
-                            [flat_blocks[i][row_id] for i in range(block_num)]
+                            [flat_blocks[i][row_id] for i in range(block_num)],
                         )
                     else:
                         yield (block_id, row_id), [flat_blocks[i][row_id] for i in range(block_num)]
@@ -199,15 +200,12 @@ def flatten_data(df: DataFrame, key_type="block_id", with_sample_id=True):
 def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, key_type, value_with_sample_id=True):
     if flatten_table.count() == 0:
         return DataFrame(
-            ctx=ctx,
-            block_table=flatten_table,
-            partition_order_mappings=dict(),
-            data_manager=data_manager.duplicate()
+            ctx=ctx, block_table=flatten_table, partition_order_mappings=dict(), data_manager=data_manager.duplicate()
         )
-    
-    partition_order_mappings = get_partition_order_by_raw_table(flatten_table,
-                                                                data_manager.block_row_size,
-                                                                key_type=key_type)
+
+    partition_order_mappings = get_partition_order_by_raw_table(
+        flatten_table, data_manager.block_row_size, key_type=key_type
+    )
     block_num = data_manager.block_num
 
     def _convert_to_blocks(kvs):
@@ -244,7 +242,7 @@ def transform_flatten_data_to_df(ctx, flatten_table, data_manager: DataManager, 
         ctx=ctx,
         block_table=block_table,
         partition_order_mappings=partition_order_mappings,
-        data_manager=data_manager.duplicate()
+        data_manager=data_manager.duplicate(),
     )
 
 
@@ -259,8 +257,9 @@ def loc(df: DataFrame, indexer, target="sample_id", preserve_order=False):
         flatten_table = flatten_table.join(indexer, lambda v1, v2: v1)
         if not flatten_table.count():
             return df.empty_frame()
-        return transform_flatten_data_to_df(df._ctx, flatten_table, df.data_manager,
-                                            key_type="sample_id", value_with_sample_id=False)
+        return transform_flatten_data_to_df(
+            df._ctx, flatten_table, df.data_manager, key_type="sample_id", value_with_sample_id=False
+        )
     else:
         flatten_table_with_dst_indexer = flatten_table.join(indexer, lambda v1, v2: (v2[0], (v2[1], v1)))
         if not flatten_table_with_dst_indexer.count():
@@ -300,15 +299,14 @@ def loc(df: DataFrame, indexer, target="sample_id", preserve_order=False):
         block_table = agg_data.mapValues(_to_blocks)
 
         partition_order_mappings = get_partition_order_mappings_by_block_table(
-            block_table,
-            block_row_size=data_manager.block_row_size
+            block_table, block_row_size=data_manager.block_row_size
         )
 
         return DataFrame(
             df._ctx,
             block_table=block_table,
             partition_order_mappings=partition_order_mappings,
-            data_manager=data_manager.duplicate()
+            data_manager=data_manager.duplicate(),
         )
 
 
@@ -322,10 +320,10 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
         return df.empty_frame()
 
     data_manager = df.data_manager
-    partition_order_mappings = get_partition_order_by_raw_table(indexer,
-                                                                data_manager.block_row_size,
-                                                                key_type="block_id")
-    
+    partition_order_mappings = get_partition_order_by_raw_table(
+        indexer, data_manager.block_row_size, key_type="block_id"
+    )
+
     def _aggregate(kvs):
         bid, offset = None, 0
         flat_ret = []
@@ -350,13 +348,13 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                 j += 1
 
             agg_ret = [flat_ret[k][1:] for k in range(i, j)]
-            yield  flat_ret[i][0], agg_ret
+            yield flat_ret[i][0], agg_ret
 
             i = j
 
     sample_id_index = data_manager.loc_block(data_manager.schema.sample_id_name, with_offset=False)
     block_num = data_manager.block_num
-    
+
     def _convert_to_row(kvs):
         ret_dict = {}
         for block_id, (blocks, block_indexer) in kvs:
@@ -368,9 +366,7 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
                 row_data = [flat_blocks[i][src_row_id] for i in range(block_num)]
                 row_data[sample_id_index] = sample_id
 
-                ret_dict[dst_block_id].append(
-                    (dst_row_id, row_data)
-                )
+                ret_dict[dst_block_id].append((dst_row_id, row_data))
 
         for dst_block_id, value_list in ret_dict.items():
             yield dst_block_id, sorted(value_list)
@@ -394,5 +390,5 @@ def loc_with_sample_id_replacement(df: DataFrame, indexer):
         ctx=df._ctx,
         block_table=block_table,
         partition_order_mappings=partition_order_mappings,
-        data_manager=data_manager
+        data_manager=data_manager,
     )

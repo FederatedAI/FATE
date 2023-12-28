@@ -24,9 +24,17 @@ def run_sshe_linr(ctx: "Context"):
 
     ctx.mpc.init()
     args, _ = HfArgumentParser(SSHEArguments).parse_args_into_dataclasses(return_remaining_strings=True)
-    inst = SSHELinearRegression(epochs=5, batch_size=300, tol=0.01, early_stop='diff', learning_rate=0.15,
-                                init_param={"method": "random_uniform", "fit_intercept": True, "random_state": 1},
-                                reveal_every_epoch=False, reveal_loss_freq=2, threshold=0.5)
+    inst = SSHELinearRegression(
+        epochs=5,
+        batch_size=300,
+        tol=0.01,
+        early_stop="diff",
+        learning_rate=0.15,
+        init_param={"method": "random_uniform", "fit_intercept": True, "random_state": 1},
+        reveal_every_epoch=False,
+        reveal_loss_freq=2,
+        threshold=0.5,
+    )
     if ctx.is_on_guest:
         kwargs = {
             "sample_id_name": None,

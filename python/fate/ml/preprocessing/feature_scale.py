@@ -42,8 +42,7 @@ class FeatureScale(Module):
     def get_model(self):
         scaler_info = self._scaler.to_model()
         model_data = dict(scaler_info=scaler_info)
-        return {"data": model_data, "meta": {"method": self.method,
-                                             "model_type": "feature_scale"}}
+        return {"data": model_data, "meta": {"method": self.method, "model_type": "feature_scale"}}
 
     def restore(self, model):
         self._scaler.from_model(model)

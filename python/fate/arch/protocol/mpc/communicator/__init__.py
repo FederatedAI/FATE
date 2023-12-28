@@ -7,5 +7,3 @@ def get():
         raise RuntimeError("Crypten not initialized. Please call crypten.init() first.")
 
     return Communicator.get()
-
-

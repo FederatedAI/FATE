@@ -39,8 +39,9 @@ class AnonymousGenerator(object):
         anonymous_label_name = None
         anonymous_weight_name = None
 
-        anonymous_columns = [self._generate_anonymous_column(
-            ANONYMOUS_COLUMN_PREFIX + str(i)) for i in range(column_len)]
+        anonymous_columns = [
+            self._generate_anonymous_column(ANONYMOUS_COLUMN_PREFIX + str(i)) for i in range(column_len)
+        ]
 
         if schema.label_name:
             anonymous_label_name = self._generate_anonymous_column(ANONYMOUS_LABEL)
@@ -52,9 +53,7 @@ class AnonymousGenerator(object):
             anonymous_label_name=anonymous_label_name,
             anonymous_weight_name=anonymous_weight_name,
             anonymous_columns=anonymous_columns,
-            anonymous_summary=dict(column_len=column_len,
-                                   site_name=self._site_name
-                                   )
+            anonymous_summary=dict(column_len=column_len, site_name=self._site_name),
         )
 
     def _check_site_name_consistency(self, anonymous_summary):
@@ -74,14 +73,16 @@ class AnonymousGenerator(object):
         anonymous_summary = copy.deepcopy(anonymous_summary)
 
         column_len = anonymous_summary["column_len"]
-        anonymous_columns = [self._generate_anonymous_column(ANONYMOUS_COLUMN_PREFIX + str(i + column_len))
-                             for i in range(len(columns))]
+        anonymous_columns = [
+            self._generate_anonymous_column(ANONYMOUS_COLUMN_PREFIX + str(i + column_len)) for i in range(len(columns))
+        ]
 
         anonymous_summary["column_len"] = column_len + len(columns)
         return anonymous_columns, anonymous_summary
 
-    def fill_anonymous_site_name(self, anonymous_label_name, anonymous_weight_name,
-                        anonymous_columns, anonymous_summary):
+    def fill_anonymous_site_name(
+        self, anonymous_label_name, anonymous_weight_name, anonymous_columns, anonymous_summary
+    ):
         anonymous_summary = copy.deepcopy(anonymous_summary)
 
         self._check_site_name_consistency(anonymous_summary)
@@ -96,7 +97,7 @@ class AnonymousGenerator(object):
             anonymous_label_name=anonymous_label_name,
             anonymous_weight_name=anonymous_weight_name,
             anonymous_columns=anonymous_columns,
-            anonymous_summary=anonymous_summary
+            anonymous_summary=anonymous_summary,
         )
 
     def _fill_site_name(self, name):

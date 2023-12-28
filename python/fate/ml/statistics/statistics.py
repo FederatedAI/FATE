@@ -35,9 +35,7 @@ class FeatureStatistics(Module):
 
     def get_model(self):
         model = self.summary.to_model()
-        output_model = {"data": model,
-                        "meta": {"metrics": self.metrics,
-                                 "model_type": "statistics"}}
+        output_model = {"data": model, "meta": {"metrics": self.metrics, "model_type": "statistics"}}
         return output_model
 
     def restore(self, model):

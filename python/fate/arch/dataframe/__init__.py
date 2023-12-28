@@ -37,5 +37,5 @@ __all__ = [
     "DataFrame",
     "KFold",
     "DataLoader",
-    "BatchEncoding"
+    "BatchEncoding",
 ]

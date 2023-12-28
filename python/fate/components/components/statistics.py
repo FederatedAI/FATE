@@ -21,37 +21,42 @@ from fate.components.core import GUEST, HOST, Role, cpn, params
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
 def statistics(
-        ctx: Context,
-        role: Role,
-        input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        metrics: cpn.parameter(
-            type=Union[List[Union[params.statistic_metrics_param(), params.legal_percentile()]],
-            params.statistic_metrics_param(), params.legal_percentile()],
-            default=["mean", "std", "min", "max"],
-            desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']",
-        ),
-        ddof: cpn.parameter(
-            type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1"
-        ),
-        bias: cpn.parameter(
-            type=bool,
-            default=True,
-            desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.",
-        ),
-        relative_error: cpn.parameter(type=params.confloat(gt=0, le=1), default=1e-3,
-                                      desc="float, error rate for quantile"),
-        skip_col: cpn.parameter(
-            type=List[str],
-            default=None,
-            optional=True,
-            desc="columns to be skipped, default None; if None, statistics will be computed over all columns",
-        ),
-        use_anonymous: cpn.parameter(
-            type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
-        ),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+    ctx: Context,
+    role: Role,
+    input_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    metrics: cpn.parameter(
+        type=Union[
+            List[Union[params.statistic_metrics_param(), params.legal_percentile()]],
+            params.statistic_metrics_param(),
+            params.legal_percentile(),
+        ],
+        default=["mean", "std", "min", "max"],
+        desc="metrics to be computed, default ['count', 'mean', 'std', 'min', 'max']",
+    ),
+    ddof: cpn.parameter(
+        type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1"
+    ),
+    bias: cpn.parameter(
+        type=bool,
+        default=True,
+        desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.",
+    ),
+    relative_error: cpn.parameter(
+        type=params.confloat(gt=0, le=1), default=1e-3, desc="float, error rate for quantile"
+    ),
+    skip_col: cpn.parameter(
+        type=List[str],
+        default=None,
+        optional=True,
+        desc="columns to be skipped, default None; if None, statistics will be computed over all columns",
+    ),
+    use_anonymous: cpn.parameter(
+        type=bool, default=False, desc="bool, whether interpret `skip_col` as anonymous column names"
+    ),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     from fate.ml.statistics.statistics import FeatureStatistics
+
     sub_ctx = ctx.sub_ctx("train")
     input_data = input_data.read()
     select_cols = get_to_compute_cols(

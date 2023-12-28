@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from fate.ml.nn.trainer.trainer_base import HomoTrainerClient, HomoTrainerServer
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
 from dataclasses import dataclass
@@ -65,12 +80,7 @@ class FedAVGClient(HomoTrainerClient):
         aggregator_name = "fedavg"
         aggregator = fed_args.aggregator
         return AggregatorClientWrapper(
-            ctx,
-            aggregate_type,
-            aggregator_name,
-            aggregator,
-            sample_num=len(self.train_dataset),
-            args=self._args
+            ctx, aggregate_type, aggregator_name, aggregator, sample_num=len(self.train_dataset), args=self._args
         )
 
     def on_federation(
@@ -97,8 +107,7 @@ class FedAVGServer(HomoTrainerServer):
     def init_aggregator(self, ctx):
         return AggregatorServerWrapper(ctx)
 
-    def on_federation(self, ctx: Context, aggregator: AggregatorServerWrapper,
-                      agg_iter_idx: int):
+    def on_federation(self, ctx: Context, aggregator: AggregatorServerWrapper, agg_iter_idx: int):
         aggregator.model_aggregation(ctx)
 
 
