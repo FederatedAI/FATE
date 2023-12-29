@@ -24,7 +24,7 @@ keys.
 The process of HeteroLinR training is shown below:
 
 ![Figure 1 (Federated HeteroLinR
-Principle)](../images/HeteroLinR.png)
+Principle)](../../images/HeteroLinR.png)
 
 A sample alignment process is conducted before training. The sample
 alignment process identifies overlapping samples in databases of all

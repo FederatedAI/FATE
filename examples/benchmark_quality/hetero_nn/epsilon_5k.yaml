@@ -1,0 +1,18 @@
+guest_model:
+  bottom: [20, 8]
+  agg_layer: [8, 8]
+  top: [8, 1]
+host_model:
+  bottom: [80, 16]
+  agg_layer: [16, 8]
+  top: [8, 1]
+data_guest: "examples/data/epsilon_5k_hetero_guest.csv"
+data_host: "examples/data/epsilon_5k_hetero_host.csv"
+guest_table: "epsilon_5k_hetero_guest"
+host_table: "epsilon_5k_hetero_host"
+lr: 0.01
+epochs: 50
+batch_size: 1024
+is_binary: True
+label_name: 'y'
+id_name: 'id'

@@ -14,7 +14,7 @@ As for calculating the federated iv and woe values, the following figure
 can describe the principle properly.
 
 ![Figure 1 (Federated Feature Binning
-Principle)](../images/binning_principle.png)
+Principle)](../../images/binning_principle.png)
 
 As the figure shows, B party which has the data labels encrypt its
 labels with Addiction homomorphic encryption and then send to A. A
@@ -26,7 +26,7 @@ encrypted label information to all hosts, and each of the hosts
 calculates and sends back the static info.
 
 ![Figure 2： Multi-Host Binning
-Principle](../images/multiple_host_binning.png)
+Principle](../../images/multiple_host_binning.png)
 
 ## Features
 
