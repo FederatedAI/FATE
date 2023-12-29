@@ -43,7 +43,7 @@ def main(config=".../config.yaml", namespace=""):
         name="breast_hetero_host"
     )
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
-    scale_0 = FeatureScale("scale_0", train_data=psi_0.outputs["output_data"])
+    scale_0 = FeatureScale("scale_0", train_data=psi_0.outputs["output_data"], method="standard")
 
     binning_0 = HeteroFeatureBinning("binning_0",
                                      method="quantile",
