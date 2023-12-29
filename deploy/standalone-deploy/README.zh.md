@@ -35,7 +35,7 @@ FATE-Flow提供了联邦作业生命周期管理，包括调度、数据管理�
 
 ##### 2.2.1.1 安装FATE、FATE-Flow、FATE-Client
 ```shell
-pip install fate_client[fate,fate_flow]==2.0.0.b0
+pip install fate_client[fate,fate_flow]==2.0.0
 ```
 
 #### 2.2.1.2 服务初始化
@@ -70,7 +70,7 @@ FATE提供多种联邦算法和安全协议， 用户可以在安装 FATE 后直
 
 #### 2.2.1.1 安装 FATE
 ```shell
-pip install pyfate==2.0.0.b0
+pip install pyfate==2.0.0
 ```
 
 #### 2.2.2.2 使用指引
@@ -92,13 +92,13 @@ pip install pyfate==2.0.0.b0
 设置部署所需环境变量（注意，通过以下方式设置的环境变量仅在当前终端会话中有效。如果打开新的终端会话，例如重新登录或打开新窗口，请重新设置）。
 
 ```bash
-export version={本次部署的 FATE 版本号, 如 2.0.0-beta}
+export version={本次部署的 FATE 版本号, 如 2.0.0}
 ```
 
 示例：
 
 ```bash
-export version=2.0.0-beta
+export version=2.0.0
 ```
 
 ### 3.2 拉取镜像
@@ -133,7 +133,7 @@ docker run -it --name standalone_fate -p 8080:8080 federatedai/standalone_fate:$
 ### 3.4 测试
 
 ```bash
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 ```
 
 - [测试项](#5-测试项)
