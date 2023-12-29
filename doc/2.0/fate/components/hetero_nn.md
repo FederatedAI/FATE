@@ -47,7 +47,7 @@ The features of Fedpass are:
 
 ## Features 
 
-- A brand new hetero-nn framework develop based on pytorch and transformers. Able to intergrate exsiting resources, like models, dataset into hetero-nn federated learning. 
+- A brand new hetero-nn framework develop based on pytorch and transformers. Able to intergrate exsiting resources, like models, dataset into hetero-nn federated learning. If you are using Hetero-NN in FATE pipelien, you can configure your cutomize models, datasets via confs.
 
 - Support SSHE strategy for privacy preserving training. You can set passport for host bottom models and guest
 top model.

@@ -10,7 +10,7 @@ Below show the architecture of the 2.0 Homo-NN framework.
 
 ## Features
 
--  A new neural network (NN) framework, developed leveraging PyTorch and transformers. This framework offers easy integration of existing models, including CV, LLM models, etc., and datasets. It's ready to use right out of the box.
+-  A new neural network (NN) framework, developed leveraging PyTorch and transformers. This framework offers easy integration of existing models, including CV, LLM models, etc., and datasets. It's ready to use right out of the box. If you are using Homo-NN in FATE pipelien, you can configure your cutomize models, datasets via confs.
 
 - Provides support for the FedAVG algorithm, featuring secure aggregation.
 
