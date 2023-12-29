@@ -124,6 +124,15 @@ eggroll(){
       echo "$msg"
     done
 		;;
+  all)
+    case "$2" in
+	    status)
+		    ;;
+      *)
+        "`pwd`/bin/eggroll.sh" all $2
+        ;;
+    esac
+    ;;
   *)
 	  "`pwd`/bin/eggroll.sh" $1 $2
 		;;
@@ -172,7 +181,7 @@ all(){
     flow fate-flow  $2
     board fate-board  $2
     osx osx  $2
-    eggroll eggroll  $2
+    eggroll all  $2
 	fi
 
   pid=`ps aux | grep "${fate_home}/common/mysql/mysql-8.0.28/bin/mysqld_safe" |  grep -v grep | awk '{print $2}'`
@@ -263,7 +272,7 @@ usage() {
       echo -e "  `basename ${0}` [component] start          - Start the server application."
       echo -e "  `basename ${0}` [component] stop           - Stop the server application."
       echo -e "  `basename ${0}` [component] status         - Check and report the status of the server application."
-      echo -e "  `basename ${0}` [component] restart [time] - Restart the server application. Optionally, specify a sleep time (in seconds) between stop and start."
+      echo -e "  `basename ${0}` [component] restart        - Restart the server application. "
       echo -e "  The ${ok_c}component${esc_c} include: {fate-flow | fate-board | osx | eggroll |clustermanager | nodemanager | dashboard | mysql | all} "
       echo ""
       echo -e "${ok_c}Examples:${esc_c}"
@@ -272,7 +281,17 @@ usage() {
 }
 
 dispatch(){
-    case "$1" in
+case "$2" in
+  start|stop|status|restart)
+    ;;
+	*)
+	  usage
+    exit 1
+		;;
+esac
+
+
+case "$1" in
 	all)
 		all "$@"
 		;;
