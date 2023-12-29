@@ -38,9 +38,3 @@ please refer [here](../ml/run_launchers.md).
 | [Union](union.md)                                | Union                  | Combine multiple data tables into one.                                                                                             | input_data_list                               | output_data                                                                |                               |              |
 | [SSHE-LR](logistic_regression.md)                | SSHELR                 | Build hetero logistic regression model through two parties.                                                                        | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
 | [SSHE-LinR](linear_regression.md)                | SSHELinR               | Build hetero linear regression model through two parties.                                                                          | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
-
-## Secure Protocol
-
-- [Encrypt](secure_protocol.md#encrypt)
-    - [Paillier encryption](secure_protocol.md#paillier-encryption)
-- [Diffie Hellman Key Exchange](secure_protocol.md#diffie-hellman-key-exchange)
