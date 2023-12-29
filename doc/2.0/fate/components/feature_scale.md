@@ -13,5 +13,5 @@ Feature Scale module supports min-max scale and standard scale.
 
 | Scale Method | Federated Heterogeneous                                                | 
 |--------------|------------------------------------------------------------------------|
-| Min-Max      | [&check;](../../../examples/pipeline/sample/test_sample_unilateral.py) | 
-| Standard     | [&check;](../../../examples/pipeline/sample/test_sample_unilateral.py) |
+| Min-Max      | [&check;](../../../../examples/pipeline/sample/test_sample_unilateral.py) | 
+| Standard     | [&check;](../../../../examples/pipeline/sample/test_sample_unilateral.py) |

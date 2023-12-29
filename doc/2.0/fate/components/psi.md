@@ -13,6 +13,6 @@ PSI)](../../images/ecdh_intersection.png)
 For details on how to hash value to given curve,
 please refer [here](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-10#section-6.7.1).
 
-Note that starting in ver 2.0.0-beta, data uploaded should always have sample id and match id;
+Note that starting in v2.0.0, data uploaded should always have sample id and match id;
 for data sets that originally only contain id, please specify 'extend_sid' in upload config
-as in this [example](../../../examples/pipeline/upload/test_upload.py).
+as in this [example](../../../../examples/pipeline/upload/test_upload.py).

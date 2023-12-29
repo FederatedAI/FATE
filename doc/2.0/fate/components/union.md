@@ -10,5 +10,4 @@ interaction with outside parties.
 Union currently supports concatenation along axis 0.
 
 For tables to be concatenated, their header, including sample id, match id, and label column (if label exists),
-should match. Example of such a union task may be found [here](../../../examples/pipeline/union/test_union.py).
-Signed-off-by: weijingchen <talkingwallace@sohu.com>
+should match. Example of such a union task may be found [here](../../../../examples/pipeline/union/test_union.py).
