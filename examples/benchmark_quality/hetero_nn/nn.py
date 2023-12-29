@@ -35,6 +35,7 @@ def main(config="../../config.yaml", param="./default_credit_config.yaml"):
 
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
+        print('param is {}'.format(param))
 
     if isinstance(config, str):
         config = JobConfig.load_from_file(config)
@@ -43,13 +44,10 @@ def main(config="../../config.yaml", param="./default_credit_config.yaml"):
     else:
         data_base_dir = config.data_base_dir
 
-    return param, config
+    data_dir_path = data_base_dir + '/'
 
-if __name__ == '__main__':
-    param, config = main()
-    data_dir_path = config['data_base_dir'] + '/'
-    data_dir_path = '/home/cwj/FATE/FATE-2.0/FATE/'
-    model = FakeNNModel(param['guest_model']['bottom'], param['host_model']['bottom'], param['guest_model']['top'], param['guest_model']['agg_layer'], param['host_model']['agg_layer'], param['is_binary'])
+    model = FakeNNModel(param['guest_model']['bottom'], param['host_model']['bottom'], param['guest_model']['top'],
+                        param['guest_model']['agg_layer'], param['host_model']['agg_layer'], param['is_binary'])
     guest_data_path = param['data_guest']
     host_data_path = param['data_host']
     id_name = param['id_name']
@@ -63,8 +61,9 @@ if __name__ == '__main__':
     df_h = df_h.drop(columns=[id_name])
 
     # tensor dataset
-    dataset = t.utils.data.TensorDataset(t.tensor(df_g.values).float(), t.tensor(df_h.values).float(), t.tensor(label).float())
-    
+    dataset = t.utils.data.TensorDataset(t.tensor(df_g.values).float(), t.tensor(df_h.values).float(),
+                                         t.tensor(label).float())
+
     epoch = param['epochs']
     batch_size = param['batch_size']
     lr = param['lr']
@@ -73,7 +72,7 @@ if __name__ == '__main__':
     data_loader = t.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
     for i in range(epoch):
-        
+
         loss_sum = 0
         for x_g, x_h, label in data_loader:
             optimizer.zero_grad()
@@ -93,11 +92,25 @@ if __name__ == '__main__':
         y_prob.append(output.detach().numpy())
         true_label.append(label.detach().numpy())
 
-    # compute auc
-    import numpy as np
-    from sklearn.metrics import roc_auc_score
-    y_prob = np.concatenate(y_prob)
-    y_prob = y_prob.reshape(-1)
-    y_true = np.concatenate(true_label)
-    auc_score = roc_auc_score(y_true, y_prob)
-    print(f'auc score: {auc_score}')
+    if param['is_binary']:
+        # compute auc
+        import numpy as np
+        from sklearn.metrics import roc_auc_score
+        y_prob = np.concatenate(y_prob)
+        y_prob = y_prob.reshape(-1)
+        y_true = np.concatenate(true_label)
+        auc_score = roc_auc_score(y_true, y_prob)
+        print(f'auc score: {auc_score}')
+        return {}, {'auc': auc_score}
+    else:
+        pass
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser("BENCHMARK-QUALITY XGBoost JOB")
+    parser.add_argument("-c", "--config", type=str,
+                        help="config file", default="../../config.yaml")
+    parser.add_argument("-p", "--param", type=str,
+                        help="config file for params", default="./breast_config.yaml")
+    args = parser.parse_args()
+    main(args.config, args.param)
