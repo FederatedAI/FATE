@@ -16,16 +16,11 @@
 
 import argparse
 from fate_test.utils import parse_summary_result
-from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.components.fate import CoordinatedLR, PSI
-from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline.components.fate import HeteroSecureBoost
-from fate_client.pipeline.components.fate import PSI
+from fate_client.pipeline.components.fate import PSI, Reader
 from fate_client.pipeline.components.fate.evaluation import Evaluation
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 
 
 def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace=""):
@@ -35,7 +30,6 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
     if isinstance(param, str):
         param = test_utils.JobConfig.load_from_file(param)
@@ -47,13 +41,20 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
-    psi_0 = PSI("psi_0")
-    psi_0.guest.task_setting(input_data=DataWarehouseChannel(name=guest_train_data["name"],
-                                                                  namespace=guest_train_data["namespace"]))
-    psi_0.hosts[0].task_setting(input_data=DataWarehouseChannel(name=host_train_data["name"],
-                                                                     namespace=host_train_data["namespace"]))
+    reader_0 = Reader("reader_0")
+    reader_0.guest.task_parameters(
+        namespace=guest_train_data['namespace'],
+        name=guest_train_data['name']
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=host_train_data['namespace'],
+        name=guest_train_data['name']
+    )
+
+    psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
+
     config_param = {
         "num_trees": param["num_trees"],
         "max_depth": param["max_depth"],
@@ -67,7 +68,7 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     if config_param['objective'] == 'regression:l2':
         evaluation_0 = Evaluation(
             'eval_0',
-            runtime_roles=['guest'],
+            runtime_parties=dict(guest=guest),
             input_data=[hetero_sbt_0.outputs['train_data_output']],
             default_eval_setting='regression',
         )
@@ -76,15 +77,12 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     else:
         evaluation_0 = Evaluation(
             'eval_0',
-            runtime_roles=['guest'],
+            runtime_parties=dict(guest=guest),
             metrics=['auc'],
             input_data=[hetero_sbt_0.outputs['train_data_output']]
         )
 
-    pipeline.add_task(psi_0)
-    pipeline.add_task(hetero_sbt_0)
-    pipeline.add_task(evaluation_0)
-
+    pipeline.add_tasks([reader_0, psi_0, hetero_sbt_0, evaluation_0])
     if config.task_cores:
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:

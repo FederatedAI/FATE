@@ -169,8 +169,9 @@ class TableDataset(Dataset):
                 if label not in self.origin_table:
                     raise ValueError("label column {} not found in input table".format(label))
 
-            self.label = self.origin_table[[label]].values
-            self.origin_table = self.origin_table.drop(columns=[label])
+            if label is not None:
+                self.label = self.origin_table[[label]].values
+                self.origin_table = self.origin_table.drop(columns=[label])
             self.features = self.origin_table.values
 
         elif isinstance(data_or_path, DataFrame):

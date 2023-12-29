@@ -46,7 +46,7 @@ def train(
     ),
     epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
     batch_size: cpn.parameter(
-        type=params.conint(ge=0), default=None, desc="batch size, int > 0, if None means full batch" "non"
+        type=params.conint(ge=0), default=100, desc="batch size, int > 0, if None means full batch" "non"
     ),
     optimizer: cpn.parameter(
         type=params.optimizer_param(),

@@ -1,4 +1,4 @@
-name: Build Rust Paillier
+name: Build FATE-Utils
 
 on:
   workflow_dispatch:
@@ -38,13 +38,13 @@ jobs:
       with:
         manylinux: auto
         command: build
-        args: --release -o dist -m rust/tensor/rust_paillier/Cargo.toml
+        args: --release -o dist -m rust/fate_utils/crates/fate_utils/Cargo.toml
     - name: macos-maturin
       if: matrix.os == 'macos'
       uses: messense/maturin-action@v1
       with:
         command: build
-        args: --release --no-sdist -o dist -m rust/tensor/rust_paillier/Cargo.toml
+        args: --release --no-sdist -o dist -m rust/fate_utils/crates/fate_utils/Cargo.toml
     - name: Upload wheels
       uses: actions/upload-artifact@v2
       with:
@@ -70,7 +70,7 @@ jobs:
       - name: Test Install
         run: |
           pip install -U pip
-          pip install --find-link=dist/ rust_paillier
+          pip install --find-link=dist/ fate_utils
       - name: Upload to PyPI Test
         if: ${{ github.event.inputs.type == 'testpypi' }}
         run: |

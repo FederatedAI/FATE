@@ -13,9 +13,6 @@ rmdir /s /q osx 2>nul
 if not exist "osx" (
     mkdir osx
 )
-if not exist "osx\bin" (
-    mkdir osx\bin
-)
 if not exist "osx\lib" (
     mkdir osx\lib
 )
@@ -33,19 +30,18 @@ if not exist "osx\conf\components" (
 )
 
 cd ..
-mvn clean package -DskipTests
+call mvn clean package -DskipTests
 
 if not exist "lib" (
     mkdir lib
 )
 
-xcopy /y /e osx-broker\target\*.jar deploy\osx\lib\
+xcopy /y osx-broker\target\*.jar deploy\osx\lib\
 xcopy /y /e osx-broker\target\lib\* deploy\osx\lib\
 xcopy /y osx-broker\src\main\resources\broker\* deploy\osx\conf\broker\
 xcopy /y /e osx-broker\src\main\resources\components\* deploy\osx\conf\components\
 copy bin\service.sh deploy\osx\
-copy bin\common.sh deploy\osx\bin\
-
+start powershell -Command "(Get-Content deploy\osx\service.sh) -replace '\r', '' | Set-Content deploy\osx\service.sh"
 cd deploy
 tar -czf osx.tar.gz osx
 
@@ -53,6 +49,6 @@ cd /d "%pwd%"
 
 endlocal
 
-echo ========================================================
+echo package successful
 pause
 exit /b 0
