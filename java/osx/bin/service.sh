@@ -155,7 +155,7 @@ status() {
     getpid
 	# check service is up and running
 	if [[ -n ${pid} ]]; then
-    print_ok "Check service ${project_name]} is started: PID=${pid}${esc_c}"
+    print_ok "Check service ${project_name} is started: PID=${pid}${esc_c}"
     print_info "The service status is:
     `ps aux | grep ${pid} | grep ${main_class} | grep -v grep`"
     return 0
@@ -169,8 +169,10 @@ check_java_environment() {
     #检查是否已经设置 JAVA_HOME 环境变量
     if [ -n "$JAVA_HOME" ]; then
         print_ok "JAVA_HOME is set to $JAVA_HOME"
+        export JAVA="$JAVA_HOME/bin/java"
     else
         print_error "JAVA_HOME is not set"
+        export JAVA="java"
         exit 1
     fi
     #检查 Java 可执行文件是否在系统 PATH 中
@@ -182,10 +184,9 @@ check_java_environment() {
     fi
 
     #检查 Java 版本
-    java_version=$($JAVA -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
     if [ -n "$java_version" ]; then
         print_ok "Java version is $java_version"
-        export JAVA="java"
     else
         print_error "Java version information is not available"
         exit 1
@@ -247,7 +248,7 @@ start() {
 	if [[ $? != 1 ]]; then
 	  choose_gc_log_directory
     choose_gc_options
-    JAVA_OPT=" -server -Xms4g -Xmx4g"
+    JAVA_OPT="${JAVA_OPT} -server -Xms4g -Xmx4g"
     JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
     JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
     JAVA_OPT="${JAVA_OPT} -XX:MaxDirectMemorySize=15g"
