@@ -30,9 +30,3 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 | [Union](union.md)                                | Union                  | 将多个数据表合并成一个。                               | input_data_list                               | output_data                                                                |                               |              |
 | [SSHE-LR](logistic_regression.md)                | SSHELR                 | 通过两方构建纵向逻辑回归模块。                            | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
 | [SSHE-LinR](linear_regression.md)                | SSHELinR               | 通过两方构建纵向线性回归模块。                            | train_data, validate_data, test_data, cv_data | train_output_data, validate_output_data, test_output_data, cv_output_datas | input_model, warm_start_model | output_model |
-
-## 安全协议
-
-- [Encrypt](secure_protocol.md#encrypt)
-  - [Paillier encryption](secure_protocol.md#paillier-encryption)
-- [Diffie Hellman Key Exchange](secure_protocol.md#diffie-hellman-key-exchange)

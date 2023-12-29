@@ -8,8 +8,8 @@ Below lists features of Coordinated LinR model:
 
 | Linear Model    	 | Multi-Host                                                                   	 | Cross Validation                                                 	     | Warm-Start                                                                     |
 |-------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| Hetero LinR     	 | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_cv.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_warm_start.py) |
-| SSHE LinR         | &cross;                                                                        | [&check;](../../../examples/pipeline/sshe_linr/test_linr_cv.py)        | [&check;](../../../examples/pipeline/sshe_linr/test_linr_warm_start.py)        |                                                  |                                                                        |                                                               |
+| Hetero LinR     	 | [&check;](../../../../examples/pipeline/coordinated_linr/test_linr_multi_host.py) | [&check;](../../../../examples/pipeline/coordinated_linr/test_linr_cv.py) | [&check;](../../../../examples/pipeline/coordinated_linr/test_linr_warm_start.py) |
+| SSHE LinR         | &cross;                                                                        | [&check;](../../../../examples/pipeline/sshe_linr/test_linr_cv.py)        | [&check;](../../../../examples/pipeline/sshe_linr/test_linr_warm_start.py)        |                                                  |                                                                        |                                                               |
 
 ## Coordinated LinR
 

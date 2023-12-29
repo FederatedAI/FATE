@@ -7,5 +7,5 @@ Sample module supports random sampling and stratified sampling.
 
 | Sample Type 	     | Federated Heterogeneous                                     | Federated Homogeneous(Local)                                                   |
 |-------------------|-------------------------------------------------------------|--------------------------------------------------------------------------------|
-| By Fraction     	 | [&check;](../../../examples/pipeline/sample/test_sample.py) | [&check;](../../../examples/pipeline/sample/test_data_split_multi_host.py)     |
-| By Exact Number 	 | [&check;](../../../examples/pipeline/sample/test_sample.py) | [&check;](../../../examples/pipeline/data_split/test_data_split_stratified.py) |
+| By Fraction     	 | [&check;](../../../../examples/pipeline/sample/test_sample.py) | [&check;](../../../../examples/pipeline/sample/test_data_split_multi_host.py)     |
+| By Exact Number 	 | [&check;](../../../../examples/pipeline/sample/test_sample.py) | [&check;](../../../../examples/pipeline/data_split/test_data_split_stratified.py) |

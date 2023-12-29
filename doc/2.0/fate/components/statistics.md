@@ -24,4 +24,4 @@ The indicators for each column that can be statistic are list as follow.
 For examples of running statistics
 
 These statistic results can be used in feature selection as a criterion,
-as in this [example](../../../examples/pipeline/hetero_feature_selection/test_feature_selection_statistics.py).
+as in this [example](../../../../examples/pipeline/hetero_feature_selection/test_feature_selection_statistics.py).

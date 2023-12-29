@@ -41,8 +41,8 @@ Below lists supported features with links to examples:
 
 | Cases                                | Scenario                                                                                                                                                                             	                                |
 |--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input Data with Categorical Features | [bucket binning](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_bucket.py) <br> [quantile binning](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_quantile.py)        |
-| Output Data Transformed              | [bin index](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) <br> [woe value(guest-only)](.../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) |
-| Skip Metrics Calculation             | [multi_host](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_multi_host.py)                                           	                                                                        |
+| Input Data with Categorical Features | [bucket binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_bucket.py) <br> [quantile binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_quantile.py)  |
+| Output Data Transformed              | [bin index](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) <br> [woe value(guest-only)](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) |
+| Skip Metrics Calculation             | [multi_host](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_multi_host.py)                                           	                                                                        |
 
 
