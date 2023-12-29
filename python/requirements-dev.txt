@@ -1,0 +1,3 @@
+-r requirements.txt
+networkx
+pytest-lazy-fixture

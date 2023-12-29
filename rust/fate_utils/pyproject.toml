@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin>=0.12,<0.13"]
+build-backend = "maturin"
+
+[project]
+name = "fate_utils"
+requires-python = ">=3.6"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[tool.maturin]
+bindings = "pyo3"
+manifest-path = "crates/fate_utils/Cargo.toml"
+python-source = "python"
+strip = true

@@ -1,0 +1,10 @@
+data_guest: "examples/data/give_credit_homo_guest.csv"
+data_host: "examples/data/give_credit_homo_host.csv"
+data_test: "examples/data/give_credit_homo_test.csv"
+idx: "id"
+label_name: "y"
+in_feat: 10
+out_feat: 4
+lr: 0.001
+batch_size: 128
+epochs: 100

@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+  - repo: https://github.com/psf/black
+    rev: 22.8.0
+    hooks:
+      - id: black
+        exclude: |
+            (?x)^(
+                .*_pb2\.py |
+                .*_pb2_grpc\.py |
+            )$
+        args: [--config=./pyproject.toml]

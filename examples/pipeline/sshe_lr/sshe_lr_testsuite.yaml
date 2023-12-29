@@ -1,0 +1,80 @@
+data:
+  - file: examples/data/breast_hetero_guest.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      label_type: int64
+      label_name: y
+      match_id_name: id
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: examples/data/breast_hetero_host.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: id
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_hetero_host
+    namespace: experiment
+    role: host_0
+  - file: examples/data/vehicle_scale_hetero_guest.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: id
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: vehicle_scale_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: examples/data/vehicle_scale_hetero_host.csv
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: id
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: vehicle_scale_hetero_host
+    namespace: experiment
+    role: host_0
+tasks:
+  normal-lr:
+    script: test_lr.py
+  lr-cv:
+    script: test_lr_cv.py
+  lr-validate:
+    script: test_lr_validate.py
+  lr-warm-start:
+    script: test_lr_warm_start.py
+  lr-multi-class:
+    script: test_lr_multi_class.py

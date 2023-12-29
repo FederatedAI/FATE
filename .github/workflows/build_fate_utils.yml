@@ -1,0 +1,88 @@
+name: Build FATE-Utils
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'source branch'
+        required: true
+      type:
+        description: 'publish type, test or testpypi or pypi'
+        required: false
+        default: 'test'
+
+jobs:
+  build:
+    name: build wheel on ${{ matrix.os }}
+    runs-on: ${{ format('{0}-latest', matrix.os) }} 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{github.event.inputs.source}}
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+    - name: ubuntu-maturin
+      if: matrix.os == 'ubuntu'
+      uses: messense/maturin-action@v1
+      with:
+        manylinux: auto
+        command: build
+        args: --release -o dist -m rust/fate_utils/crates/fate_utils/Cargo.toml
+    - name: macos-maturin
+      if: matrix.os == 'macos'
+      uses: messense/maturin-action@v1
+      with:
+        command: build
+        args: --release --no-sdist -o dist -m rust/fate_utils/crates/fate_utils/Cargo.toml
+    - name: Upload wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: dist
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: wheels
+          path: dist
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Twine check
+        run: |
+          pip install -U twine
+          twine check dist/*
+      - name: Test Install
+        run: |
+          pip install -U pip
+          pip install --find-link=dist/ fate_utils
+      - name: Upload to PyPI Test
+        if: ${{ github.event.inputs.type == 'testpypi' }}
+        run: |
+          twine upload --repository testpypi dist/* --verbose
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypitest_token }}
+
+      - name: Upload to PyPI
+        if: ${{ github.event.inputs.type == 'pypi' }}
+        run: |
+          twine upload dist/* --verbose
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypi_token }}

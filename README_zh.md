@@ -20,23 +20,19 @@ FATE于2019年2月首次对外开源，并成立
 
 ## 教程
 
-### 部署
-FATE 支持多种部署模式，用户可以根据自身情况进行选择。[历史发布版本可以通过这里下载](https://github.com/FederatedAI/FATE/wiki/Download)
-#### 单机版
-- [原生单机版安装](./deploy/standalone-deploy/)
+### 2.0以前的版本
+FATE 2.0以前的版本在[发布页](https://github.com/FederatedAI/FATE/releases), 下载资源汇总页在[wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
+### 2.0.0-beta 版本
+#### 单机版部署
+在单节点上部署FATE单机版，支持从 PyPI 直接安装，docker，主机安装包三种方式。
+- [单机版部署教程](./deploy/standalone-deploy)
 #### 集群
-- [原生集群安装](./deploy/cluster-deploy)
-- [Ansible集群安装](https://github.com/FederatedAI/AnsibleFATE)
-- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
-- [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
-
+- [原生集群安装](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
 
 ### 快速开始
-- [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
-- [使用FATE-Pipeline构建横、纵向神经网络模型](doc/tutorial/pipeline/nn_tutorial/README.md)
-- [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
-- [更多教程](doc/tutorial)
+- [从 PyPI 下载安装 FATE 和 FATE-Flow 并启动训练任务示例](doc/2.0/quick_start.md)
+- [从 PyPI 下载安装 FATE，并启动训练任务示例](doc/2.0/fate/ml)
 
 ## 关联仓库
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE)
@@ -48,27 +44,8 @@ FATE 支持多种部署模式，用户可以根据自身情况进行选择。[�
 - [EggRoll](https://github.com/WeBankFinTech/eggroll)
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder)
-- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md)
-
-## 文档
-
-### FATE设计
-
-- [架构](./doc/architecture/README.md)
-- [组件](doc/federatedml_component/README.md)
-- [算法参数](./python/federatedml/param)
-- [论文与会议资料](./doc/resources/README.zh.md)
-
-### 开发资源
-
-- [开发指南](doc/develop/develop_guide.zh.md)
-- [FATE API references](doc/api)
-- [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](https://fate-flow.readthedocs.io/en/latest/zh/fate_flow_client/)
-- [FATE Pipeline](doc/api/fate_client/pipeline.md)
-- [FATE Test](./doc/tutorial/fate_test_tutorial.md)
-- [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.zh.md)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+- [FATE-Client](https://github.com/FederatedAI/FATE-Client)
+- [FATE-Test](https://github.com/FederatedAI/FATE-Test)
 
 ## 社区治理  
 

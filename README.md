@@ -22,24 +22,21 @@ FATE is an open source project hosted by Linux Foundation. The [Technical Charte
 
 ## Getting Started
 
-FATE can be deployed on a single host or on multiple nodes. Choose the deployment approach which matches your environment.
-[Release version can be downloaded here.](https://github.com/FederatedAI/FATE/wiki/Download)
+### Version < 2.0
+Releases history can be found in [releases](https://github.com/FederatedAI/FATE/releases), deployment resources can be found on [wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
-### Standalone deployment 
-- Deploying FATE on a single node via pre-built docker images, installers or source code. It is for simple testing purposes. Refer to this [guide](./deploy/standalone-deploy/).
+### Version == 2.0.0-beta
+#### Standalone deployment
+- Deploying FATE on a single node via PyPI, pre-built docker images or installers. It is for simple testing purposes. Refer to this [guide](./deploy/standalone-deploy/).
 
 ### Cluster deployment
 Deploying FATE to multiple nodes to achieve scalability, reliability and manageability.
 
-- [Cloud native deployment by KubeFATE](https://github.com/FederatedAI/KubeFATE): Deploying and managing a FATE cluster by either Docker Compose or Kubernetes.
 - [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
-- [Deployment by Ansible](https://github.com/FederatedAI/AnsibleFATE): Automating the deployment of a FATE cluster by Ansible.
 
 ### Quick Start
-- [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
-- [Build & Customize NN models with FATE-Pipeline](./doc/tutorial/pipeline/nn_tutorial/README.md)
-- [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
-- [More Tutorials...](doc/tutorial)
+- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/quick_start.md)
+- [Training Demo With Installing FATE Only From Pypi](doc/2.0/fate/ml)
 
 ## Related Repositories (Projects)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
@@ -50,27 +47,8 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [EggRoll](https://github.com/WeBankFinTech/eggroll): A simple high-performance computing framework for (federated) machine learning.
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
-- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md) : A framework to support federated learning for large language models(LLMs).
-## Documentation 
-
-### FATE Design 
-
-- [Architecture](./doc/architecture/README.md)
-- [Components](./doc/federatedml_component/README.md)
-- [Algorithm Parameters](./python/federatedml/param)
-- [Paper & Conference](./doc/resources/README.md)
-
-### Developer Resources
-
-- [Developer Guide for FATE](doc/develop/develop_guide.md)
-- [FATE API references](doc/api)
-- [Flow SDK](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](https://fate-flow.readthedocs.io/en/latest/fate_flow_client/)
-- [FATE Pipeline](doc/api/fate_client/pipeline.md)
-- [FATE Test](./doc/tutorial/fate_test_tutorial.md)
-- [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
-- [Online courses on Bilibili @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
-
+- [FATE-Client](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
+- [FATE-Test](https://github.com/FederatedAI/FATE-Test): An automated testing tool for FATE, including tests and benchmark comparisons.
 
 ## Governance 
 

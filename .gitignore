@@ -1,64 +1,32 @@
 # common file patterns
 .DS_STORE
 .idea
+.vscode/*
 *.iml
 *.pyc
 __pycache__
-*.jar
-*.class
-.project
-*.prefs
-_build
 venv
-*.log
 *.tar.gz
 *.db
 *.db-journal
 *.mdb
+*.jar
 .env
+Cargo.lock
 
 # excluded paths
+/python/dist/
 /rust/**/target/
-/arch/core/target/
-/arch/driver/federation/target/
-/arch/eggroll/egg/target/
-/arch/eggroll/meta-service/target/
-/arch/eggroll/roll/target/
-/arch/eggroll/storage-service/target/
-/arch/networking/proxy/target/
-/arch/driver/target/
-/arch/eggroll/target/
-/fate-serving/federatedml/target/
-/fate-serving/serving-server/target/
-/fate-serving/target/
-/fate-serving/fate-serving-core/target/
-/arch/networking/target/
-/arch/target/
+/build/
+/java/**/target/
 /fateboard/target/
+/fate_flow/logs/
+/fate_flow/jobs/
+/java/osx/deploy/osx
+/dist/
+/schemas/
 /data/
 /logs/
-/jobs/
-/audit/
-.vscode/*
-# /eggroll/
-# /fateboard/
-/doc/federatedml_component/params/
-/output/
-
-# build dir
-/FATE_install_*/
-/standalone_fate_install_*/
-/standalone_fate_docker_*/
-/docker_fate_base_*/
-
-# fate_test
-fate_test_config.yaml
-examples/cache/
-**/fate_test/**/logs/
-**/fate_test/**/output/
-
-# user defined config
-/conf/local.*.yaml
 
 # logs
 **/logs/*

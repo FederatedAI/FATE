@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package com.webank.ai.fate.core.mlmodel.buffer;
-option java_outer_classname = "DefaultEmptyFillProto";
-
-message DefaultEmptyFillMessage{
-    string flag = 1;
-}

@@ -1,0 +1,60 @@
+name: Build pyfate
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'source branch'
+        required: true
+      type:
+        description: 'publish type, test or release'
+        required: false
+        default: 'test'
+
+jobs:
+  build:
+    name: (${{github.event.inputs.type}} build) branch ${{github.event.inputs.source}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.inputs.source}}
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Build fate_client
+        run: |
+          python3 python/setup.py sdist --formats=gztar
+
+      - name: Twine check
+        run: |
+          pip install -U twine
+          twine check dist/*
+
+      - name: Upload to artifact
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/*
+
+      - name: Test Install
+        run: |
+          pip install -U pip
+          pip install --find-link=dist/ pyfate
+
+      - name: Upload to PyPI Test
+        if: ${{ github.event.inputs.type == 'test' }}
+        run: |
+          twine upload --repository testpypi dist/* --verbose
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypitest_token }}
+
+      - name: Upload to PyPI
+        if: ${{ github.event.inputs.type == 'release' }}
+        run: |
+          twine upload dist/* --verbose
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypi_token }}

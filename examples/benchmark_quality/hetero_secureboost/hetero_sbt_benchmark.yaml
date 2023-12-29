@@ -1,0 +1,132 @@
+data:
+  - file: "examples/data/breast_hetero_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      label_type: int64
+      label_name: y
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/breast_hetero_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_hetero_host
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/default_credit_hetero_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: int64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/default_credit_hetero_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_hetero_host
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/student_hetero_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      label_type: float64
+      label_name: y
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: student_hetero_guest
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/student_hetero_host.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: student_hetero_host
+    namespace: experiment
+    role: host_0  
+hetero_sbt-binary-0-breast:
+  local:
+    script: "./xgb.py"
+    conf: "./xgb_breast_config.yaml"
+  FATE-hetero-sbt:
+    script: "./pipeline_hetero_sbt.py"
+    conf: "./sbt_breast_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+hetero_sbt-regression:
+  local:
+    script: "./xgb.py"
+    conf: "./xgb_student_config.yaml"
+  FATE-hetero-sbt:
+    script: "./pipeline_hetero_sbt.py"
+    conf: "./sbt_student_config.yaml"
+  compare_setting:
+    relative_tol: 0.05
+hetero_sbt-binary-1-default-credit:
+  local:
+    script: "./xgb.py"
+    conf: "./xgb_default_credit_config.yaml"
+  FATE-hetero-sbt:
+    script: "./pipeline_hetero_sbt.py"
+    conf: "./sbt_default_credit_config.yaml"
+  compare_setting:
+    relative_tol: 0.01
+
+

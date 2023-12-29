@@ -1,6 +1,0 @@
-epoch: 150
-lr: 0.05
-batch_size: 512
-dataset: vehicle
-loss: categorical_crossentropy
-is_multy: true

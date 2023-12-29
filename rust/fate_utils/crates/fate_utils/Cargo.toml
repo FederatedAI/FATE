@@ -1,0 +1,51 @@
+[package]
+name = "fate_utils"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "fate_utils"
+crate-type = ["cdylib", "staticlib", "rlib"]
+bench = false
+
+[dependencies]
+numpy = { workspace = true }
+pyo3 = { workspace = true }
+ndarray = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+rand = { workspace = true }
+libsm = { workspace = true }
+sha2 = { workspace = true }
+curve25519-dalek = { workspace = true }
+rayon = { workspace = true, optional = true }
+rand_chacha = { workspace = true }
+x25519-dalek = { workspace = true }
+rand_core = { workspace = true }
+rug = { workspace = true }
+anyhow = { workspace = true }
+quantile = { path = "../quantile" }
+math = { path = "../math" }
+fixedpoint = { path = "../fixedpoint" }
+paillier = { path = "../paillier" }
+fixedpoint_paillier = { path = "../fixedpoint_paillier" }
+fixedpoint_ou = { path = "../fixedpoint_ou" }
+
+
+[features]
+default = ["rug", "rayon", "std", "u64_backend", "extension-module"]
+rug = []
+rayon = ["dep:rayon", "ndarray/rayon"]
+simd_backend = ["curve25519-dalek/simd_backend"]
+std = ["curve25519-dalek/std"]
+nightly = ["curve25519-dalek/nightly"]
+u64_backend = ["curve25519-dalek/u64_backend"]
+u32_backend = ["curve25519-dalek/u32_backend"]
+fiat_u64_backend = ["curve25519-dalek/fiat_u64_backend"]
+fiat_u32_backend = ["curve25519-dalek/fiat_u32_backend"]
+extension-module = ["pyo3/extension-module"]
+
+[package.metadata.docs.rs]
+# To build locally use
+#   RUSTDOCFLAGS="--html-in-header katex-header.html" cargo doc --no-deps --document-private-items --open
+rustdoc-args = ["--html-in-header", "docs/katex-header.html"]

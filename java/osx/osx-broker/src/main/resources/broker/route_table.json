@@ -1,0 +1,23 @@
+{
+	"route_table":{
+		"3479":{
+			"default":[
+				{
+					"port":8889,
+					"ip":"localhost"
+				}
+			]
+		},
+		"1234":{
+			"default":[
+				{
+					"port":9999,
+					"ip":"localhost"
+				}
+			]
+		}
+	},
+	"self_party":[
+		"10000"
+	]
+}

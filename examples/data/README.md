@@ -244,18 +244,6 @@ Below lists example data sets and their information.
         * name: "student_hetero_host"
         * namespace: "experiment"
 
-#### svm_light:
-- svmlight / libsvm format
-- label type: categorical
-- data sets:
-    1. "svm_light_guest.csv"
-        * name: "svm_light_guest"
-        * namespace: "experiment"
-    2. "svm_light_host.csv"
-        * name: "svm_light_host"
-        * namespace: "experiment"
-
-
 #### vehicle_scale_hetero:
 - 18 features
 - label type: multi-class
@@ -296,14 +284,6 @@ Below lists example data sets and their information.
 
 #### tag_value:
 - data sets:
-    
-    1. "mocked_string_data.csv"
-    2. "mock_tag_hetero_host.csv"
-        * name: "mock_tag_hetero_host"
-        * namespace: "experiment"
-    3. "mocked_string_data.csv"
-    4. "tag.csv"
-    5. "tag_value_1000_140.csv"
+    1. "tag_value_1000_140.csv"
         * name: "tag_value_1", "tag_value_2", "tag_value_3"
         * namespace: "experiment"
-    6. "unittest_data.csv"

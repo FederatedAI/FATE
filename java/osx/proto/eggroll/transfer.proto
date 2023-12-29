@@ -1,0 +1,86 @@
+
+
+syntax = "proto3";
+
+package com.webank.eggroll.core.transfer;
+
+message TransferHeader {
+  int32 id = 1;
+  string tag = 2;
+  int64 totalSize = 3;
+  string status = 4;
+  bytes ext = 5;
+}
+
+message TransferBatch {
+  TransferHeader header = 1;
+  int64 batchSize = 2;
+  bytes data = 3;
+}
+
+message RollSiteHeader {
+  string rollSiteSessionId = 1;
+  string name = 2;
+  string tag = 3;
+  string srcRole = 4;
+  string srcPartyId = 5;
+  string dstRole = 6;
+  string dstPartyId = 7;
+  string dataType = 8;
+  map<string, string> options = 10;
+  int32 totalPartitions = 15;
+  int32 partitionId = 16;
+  int64 totalStreams = 17;
+  int64 totalBatches = 18;
+  int64 streamSeq = 20;
+  int64 batchSeq = 21;
+  string stage = 30;
+}
+
+// TODO: use transfer lib
+service TransferService {
+  rpc send (stream TransferBatch) returns (TransferBatch);
+  rpc recv (TransferBatch) returns (stream TransferBatch);
+  rpc sendRecv (stream TransferBatch) returns (stream TransferBatch);
+}
+
+message RollSitePullGetHeaderRequest {
+  string tag = 1;
+  double timeout = 2;
+}
+
+message RollSitePullGetHeaderResponse {
+  RollSiteHeader header = 1;
+}
+
+message RollSitePullGetPartitionStatusRequest {
+  string tag = 1;
+  double timeout = 2;
+}
+
+message RollSitePullGetPartitionStatusResponse {
+  message IntKeyIntValuePair {
+    int64 key = 1;
+    int64 value = 2;
+  }
+  message RollSitePullGetPartitionStatusResponseStatus {
+    string tag = 1;
+    bool is_finished = 2;
+    int64 total_batches = 3;
+    repeated IntKeyIntValuePair batch_seq_to_pair_counter = 4;
+    int64 total_streams = 5;
+    repeated IntKeyIntValuePair stream_seq_to_pair_counter = 6;
+    repeated IntKeyIntValuePair stream_seq_to_batch_seq = 7;
+    int64 total_pairs = 8;
+    string data_type = 9;
+  }
+  int64 partition_id = 1;
+  RollSitePullGetPartitionStatusResponseStatus status = 2;
+}
+
+message RollSitePullClearStatusRequest {
+  string tag = 1;
+}
+
+message RollSitePullClearStatusResponse {
+}

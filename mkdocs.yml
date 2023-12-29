@@ -1,2 +1,0 @@
-INHERIT: ./.readthedocs.mkdocs.yml
-site_url: http://localhost:8000

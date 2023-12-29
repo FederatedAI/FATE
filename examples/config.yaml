@@ -1,12 +1,10 @@
 parties: # parties default id
   guest:
-    - 9999
+    - '9999'
   host:
-    - 10000
-    - 9999
+    - '10000'
+    - '9999'
   arbiter:
-    - 10000
+    - '10000'
 
-work_mode: 0 # 0 for standalone, or 1 for cluster
-
-data_base_dir: "/data/projects/fate" # pa th to project base where data is located
+data_base_dir: /data/projects/fate

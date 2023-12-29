@@ -1,0 +1,180 @@
+/*
+ * Copyright (c) 2019 - now, Eggroll Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
+
+syntax = "proto3";
+
+package com.webank.eggroll.core.meta;
+
+message Endpoint {
+  string host = 1;
+  int32 port = 2;
+}
+
+message ServerNode {
+  int64 id = 1;
+  string name = 2;
+  int64 clusterId = 3;
+  Endpoint endpoint = 4;
+  string nodeType = 5;
+  string status = 6;
+  repeated Resource resources = 7;
+}
+
+message ServerCluster {
+  int64 id = 1;
+  string name = 2;
+  repeated ServerNode serverNodes = 3;
+  string tag = 4;
+}
+
+message Processor {
+  int64 id = 1;
+  int64 serverNodeId = 2;
+  string name = 3;
+  string processorType = 4;
+  string status = 5;
+  Endpoint commandEndpoint = 6;
+  Endpoint transferEndpoint = 7;
+  int32 pid = 9;
+  map<string, string> options = 8;
+  string tag = 10;
+}
+
+message ProcessorBatch {
+  int64 id = 1;
+  string name = 2;
+  repeated Processor processors = 3;
+  string tag = 4;
+}
+
+message Functor {
+  string name = 1;
+  string serdes = 2;
+  bytes body = 3;
+  map<string, string> options = 4;
+}
+message Partitioner {
+  int32 type = 1;
+  bytes body = 2;
+}
+
+message Serdes {
+  int32 type = 1;
+  bytes body = 2;
+}
+
+message Pair {
+  bytes key = 1;
+  bytes value = 2;
+}
+
+message PairBatch {
+  repeated Pair pairs = 1;
+}
+
+message StoreLocator {
+  int64 id = 1;
+  string store_type = 2;
+  string namespace = 3;
+  string name = 4;
+  string path = 5;
+  int32 total_partitions = 6;
+  int32 key_serdes_type = 7;
+  int32 value_serdes_type = 8;
+  int32 partitioner_type = 9;
+}
+
+message Store {
+  StoreLocator storeLocator = 1;
+  repeated Partition partitions = 2;
+  map<string, string> options = 3;
+}
+
+message StoreList {
+  repeated Store stores = 1;
+}
+
+message Partition {
+  int32 id = 1;
+  StoreLocator storeLocator = 2;
+  Processor processor = 3;
+  int64 serverNodeId = 4;
+  int32 rankInNode = 5;
+}
+
+message CallInfo {
+  string callSeq = 1;
+}
+
+message JobIO {
+  Store store = 1;
+  Serdes key_serdes = 2;
+  Serdes value_serdes = 3;
+  Partitioner partitioner = 4;
+}
+// todo: add  / task status
+message Job {
+  string id = 1;
+  string name = 2;
+  repeated JobIO inputs = 3;
+  repeated JobIO outputs = 4;
+  repeated Functor functors = 5;
+  map<string, string> options = 6;
+}
+
+message Task {
+  string id = 1;
+  string name = 2;
+  repeated Partition inputs = 3;
+  repeated Partition outputs = 4;
+  Job job = 5;
+}
+
+message SessionMeta {
+  string id = 1;
+  string name = 2;
+  string status = 3;
+  string tag = 4;
+  repeated Processor processors = 5;
+  map<string, string> options = 6;
+}
+
+message ResourceAllocation {
+  int64 serverNodeId = 1;
+  string status = 2;
+  string sessionId = 3;
+  string operateType = 4;
+  repeated Resource resources = 5;
+
+}
+
+message Resource {
+  string type = 1;
+  int64 total = 2;
+  int64 used = 3;
+  int64 allocated = 4;
+}
+
+message NodeHeartbeat {
+  uint64 id = 1;
+  ServerNode node = 2;
+  string code = 3;
+  string msg = 4;
+  repeated int32 gpuProcessors=5;
+  repeated int32 cpuProcessors=6;
+}
