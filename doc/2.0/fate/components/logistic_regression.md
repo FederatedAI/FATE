@@ -26,7 +26,7 @@ samples stored in databases of the two involved parties. The federated
 model is built based on those overlapping samples. The whole sample
 alignment process will **not** leak confidential information (e.g.,
 sample ids) on the two parties since it is conducted in an encrypted
-way.
+way. (Security of this algorithm is lower than SSHE-LR, use SSHE-LR if possible)
 
 ![Figure 1 (Federated HeteroLR Principle)](../../images/HeteroLR.png)
 
