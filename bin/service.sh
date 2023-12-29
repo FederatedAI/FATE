@@ -267,8 +267,8 @@ usage() {
       echo -e "  The ${ok_c}component${esc_c} include: {fate-flow | fate-board | osx | eggroll |clustermanager | nodemanager | dashboard | mysql | all} "
       echo ""
       echo -e "${ok_c}Examples:${esc_c}"
-      echo "  `basename ${0}` fate-flow start"
-      echo "  `basename ${0}` eggroll restart 5"
+      echo "  `basename ${0}` fate-flow stop"
+      echo "  `basename ${0}` eggroll restart"
 }
 
 dispatch(){
