@@ -1,7 +1,5 @@
 # Homo-NN Tutorial
 
-The Homo(horizontal) federated learning allows parties to collaboratively train a neural network model without sharing their actual data. In a horizontally partitioned data setting, multiple parties have the same feature set but different user samples. In this scenario, each party trains the model locally on its own subset of data and only shares the model updates.
-
 The Homo-NN framework is designed for horizontal federated neural network training. 
 In this tutorial, we demonstrate how to run a Homo-NN task under FATE-2.0 locally without using a Pipeline and provide several demos to show you how to integrate linear models, image models, language models in federated
 learning. These setting are particularly useful for local experimentation, model/training setting modifications and testing. 
