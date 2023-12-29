@@ -19,7 +19,7 @@ Here we simplify participants of the federation process into three
 parties. Party A represents Guest, party B represents Host. Party C,
 which is also known as “Arbiter,” is a third party that works as
 coordinator. Party C is responsible for generating private and public
-keys.
+keys. (Security of this algorithm is lower than SSHE-LinR, use SSHE-LinR if possible)
 
 The process of HeteroLinR training is shown below:
 
