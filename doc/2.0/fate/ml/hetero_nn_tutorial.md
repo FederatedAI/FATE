@@ -234,10 +234,13 @@ def run(ctx):
     ds, model, optimizer, loss, args = get_setting(ctx)
     trainer = train(ctx, ds, model, optimizer, loss, args)
     pred = predict(trainer, ds)
-    # compute auc here
-    from sklearn.metrics import roc_auc_score
-    print('auc is')
-    print(roc_auc_score(pred.label_ids, pred.predictions))
+    if ctx.is_on_guest:
+        # print("pred:", pred)
+        # compute auc here
+        from sklearn.metrics import roc_auc_score
+        print('auc is')
+        print(roc_auc_score(pred.label_ids, pred.predictions))
+    
 
 if __name__ == '__main__':
     from fate.arch.launchers.multiprocess_launcher import launch
