@@ -18,6 +18,6 @@ Testing configuration:
 | ------------------------| ---------------------------------------- | --------------------------- | ------------------ |
 | PSI                     | 50m54s                                   | 1h32m20s                    |  1.8x+             |                              
 | Hetero-SSHE-LR          | 4m54s/epoch                              | 21m03s/epoch                |  4.3x+             |                              
-| Hetero-NN               | 52.5s/epoch(based on FedPass protocol)   | 2940s/epoch                 |  56x+              |                              
+| Hetero-NN               | 2.425s/epoch(based on FedPass protocol)  | 347s/epoch                  |  143x+             |                              
 | Hetero-Coordinated-LR   | 2m16s/epoch                              | 2m41s/epoch                 |  1.2x+             |                              
 | Hetero-Feature-Binning  | 1m08s                                    | 1m45s                       |  1.5x+             |                              
