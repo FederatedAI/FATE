@@ -50,6 +50,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [OSX (Open Site Exchange)](./doc/2.0/osx/osx.md): Building Open Platform for Cross-Site Communication Interconnection
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/fate_flow.md): Building Open and Standardized Scheduling Platform for Scheduling Interconnection 
 - [PipeLine Design](https://github.com/FederatedAI/FATE-Client/blob/main/doc/pipeline.md): Building Scalable Federated DSL for Application Layer Interconnection And Providing Tools For Fast Federated Modeling
+- [RoadMap](./doc/images/roadmap.png)
 - [Paper & Conference](./doc/resources/README.md)
 
 ## Related Repositories (Projects)
