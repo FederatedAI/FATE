@@ -9,7 +9,6 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOCS](./doc) | [中文](./README_zh.md)
 
 FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework to enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
@@ -36,8 +35,23 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
 
 ### Quick Start
-- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/fate/quick_start.md)
 - [Training Demo With Installing FATE Only From Pypi](doc/2.0/fate/ml)
+- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/fate/quick_start.md)
+
+### More examples
+- [ML examples](examples/launchers)
+- [PipeLine examples](examples/pipeline)
+
+## Documentation
+
+### FATE Design
+- [Architecture](./doc/architecture/README.md): Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
+- [FATE Algorithm Components](./doc/2.0/fate/components/README.md): Building Standardized Algorithm Components for different Scheduling Engines
+- [OSX (Open Site Exchange)](./doc/2.0/osx/osx.md): Building Open Platform for Cross-Site Communication Interconnection
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/fate_flow.md): Building Open and Standardized Scheduling Platform for Scheduling Interconnection 
+- [PipeLine Design](https://github.com/FederatedAI/FATE-Client/blob/main/doc/pipeline.md): Building Scalable Federated DSL for Application Layer Interconnection And Providing Tools For Fast Federated Modeling
+- [RoadMap](./doc/images/roadmap.png)
+- [Paper & Conference](./doc/resources/README.md)
 
 ## Related Repositories (Projects)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
