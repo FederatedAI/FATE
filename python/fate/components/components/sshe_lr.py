@@ -31,40 +31,44 @@ def sshe_lr(ctx, role):
 
 @sshe_lr.train()
 def train(
-        ctx: Context,
-        role: Role,
-        train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
-        epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
-        batch_size: cpn.parameter(
-            type=params.conint(ge=10),
-            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
-        ),
-        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
-        early_stop: cpn.parameter(
-            type=params.string_choice(["weight_diff", "diff", "abs"]),
-            default="diff",
-            desc="early stopping criterion, choose from {weight_diff, diff, abs}, if use weight_diff,"
-                 "weight will be revealed every epoch",
-        ),
-        learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
-        reveal_every_epoch: cpn.parameter(type=bool, default=False,
-                                          desc="whether reveal encrypted result every epoch, "
-                                               "only accept False for now"),
-        init_param: cpn.parameter(
-            type=params.init_param(),
-            default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
-            desc="Model param init setting.",
-        ),
-        threshold: cpn.parameter(
-            type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
-        ),
-        reveal_loss_freq: cpn.parameter(type=params.conint(ge=1), default=1,
-                                        desc="rounds to reveal training loss, "
-                                             "only effective if `early_stop` is 'loss'"),
-        train_output_data: cpn.dataframe_output(roles=[GUEST]),
-        output_model: cpn.json_model_output(roles=[GUEST, HOST]),
-        warm_start_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True)):
+    ctx: Context,
+    role: Role,
+    train_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    validate_data: cpn.dataframe_input(roles=[GUEST, HOST], optional=True),
+    epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
+    batch_size: cpn.parameter(
+        type=params.conint(ge=10),
+        default=None,
+        desc="batch size, None means full batch, otherwise should be no less than 10, default None",
+    ),
+    tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+    early_stop: cpn.parameter(
+        type=params.string_choice(["weight_diff", "diff", "abs"]),
+        default="diff",
+        desc="early stopping criterion, choose from {weight_diff, diff, abs}, if use weight_diff,"
+        "weight will be revealed every epoch",
+    ),
+    learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
+    reveal_every_epoch: cpn.parameter(
+        type=bool, default=False, desc="whether reveal encrypted result every epoch, " "only accept False for now"
+    ),
+    init_param: cpn.parameter(
+        type=params.init_param(),
+        default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
+        desc="Model param init setting.",
+    ),
+    threshold: cpn.parameter(
+        type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
+    ),
+    reveal_loss_freq: cpn.parameter(
+        type=params.conint(ge=1),
+        default=1,
+        desc="rounds to reveal training loss, " "only effective if `early_stop` is 'loss'",
+    ),
+    train_output_data: cpn.dataframe_output(roles=[GUEST]),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+    warm_start_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
+):
     logger.info(f"enter sshe lr train")
     init_param = init_param.dict()
     ctx.mpc.init()
@@ -85,18 +89,18 @@ def train(
         reveal_every_epoch,
         reveal_loss_freq,
         threshold,
-        warm_start_model
+        warm_start_model,
     )
 
 
 @sshe_lr.predict()
 def predict(
-        ctx,
-        role: Role,
-        # threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5),
-        test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        input_model: cpn.json_model_input(roles=[GUEST, HOST]),
-        test_output_data: cpn.dataframe_output(roles=[GUEST]),
+    ctx,
+    role: Role,
+    # threshold: cpn.parameter(type=params.confloat(ge=0.0, le=1.0), default=0.5),
+    test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST]),
 ):
     ctx.mpc.init()
     predict_from_model(ctx, role, input_model, test_data, test_output_data)
@@ -104,48 +108,56 @@ def predict(
 
 @sshe_lr.cross_validation()
 def cross_validation(
-        ctx: Context,
-        role: Role,
-        cv_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-        epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
-        batch_size: cpn.parameter(
-            type=params.conint(ge=10),
-            default=None, desc="batch size, None means full batch, otherwise should be no less than 10, default None"
-        ),
-        tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
-        early_stop: cpn.parameter(
-            type=params.string_choice(["weight_diff", "diff", "abs"]),
-            default="diff",
-            desc="early stopping criterion, choose from {weight_diff, diff, abs}, if use weight_diff,"
-                 "weight will be revealed every epoch",
-        ),
-        learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
-        init_param: cpn.parameter(
-            type=params.init_param(),
-            default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
-            desc="Model param init setting.",
-        ),
-        threshold: cpn.parameter(
-            type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
-        ),
-        reveal_every_epoch: cpn.parameter(type=bool, default=False,
-                                          desc="whether reveal encrypted result every epoch, "
-                                               "only accept False for now"),
-        reveal_loss_freq: cpn.parameter(type=params.conint(ge=1), default=1,
-                                        desc="rounds to reveal training loss, "
-                                             "only effective if `early_stop` is 'loss'"),
-        cv_param: cpn.parameter(type=params.cv_param(),
-                                default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
-                                desc="cross validation param"),
-        metrics: cpn.parameter(type=params.metrics_param(), default=["auc"]),
-        output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
-        cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
+    ctx: Context,
+    role: Role,
+    cv_data: cpn.dataframe_input(roles=[GUEST, HOST]),
+    epochs: cpn.parameter(type=params.conint(gt=0), default=20, desc="max iteration num"),
+    batch_size: cpn.parameter(
+        type=params.conint(ge=10),
+        default=None,
+        desc="batch size, None means full batch, otherwise should be no less than 10, default None",
+    ),
+    tol: cpn.parameter(type=params.confloat(ge=0), default=1e-4),
+    early_stop: cpn.parameter(
+        type=params.string_choice(["weight_diff", "diff", "abs"]),
+        default="diff",
+        desc="early stopping criterion, choose from {weight_diff, diff, abs}, if use weight_diff,"
+        "weight will be revealed every epoch",
+    ),
+    learning_rate: cpn.parameter(type=params.confloat(ge=0), default=0.05, desc="learning rate"),
+    init_param: cpn.parameter(
+        type=params.init_param(),
+        default=params.InitParam(method="random_uniform", fit_intercept=True, random_state=None),
+        desc="Model param init setting.",
+    ),
+    threshold: cpn.parameter(
+        type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
+    ),
+    reveal_every_epoch: cpn.parameter(
+        type=bool, default=False, desc="whether reveal encrypted result every epoch, " "only accept False for now"
+    ),
+    reveal_loss_freq: cpn.parameter(
+        type=params.conint(ge=1),
+        default=1,
+        desc="rounds to reveal training loss, " "only effective if `early_stop` is 'loss'",
+    ),
+    cv_param: cpn.parameter(
+        type=params.cv_param(),
+        default=params.CVParam(n_splits=5, shuffle=False, random_state=None),
+        desc="cross validation param",
+    ),
+    metrics: cpn.parameter(type=params.metrics_param(), default=["auc"]),
+    output_cv_data: cpn.parameter(type=bool, default=True, desc="whether output prediction result per cv fold"),
+    cv_output_datas: cpn.dataframe_outputs(roles=[GUEST, HOST], optional=True),
 ):
     init_param = init_param.dict()
     ctx.mpc.init()
 
     from fate.arch.dataframe import KFold
-    kf = KFold(ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state)
+
+    kf = KFold(
+        ctx, role=role, n_splits=cv_param.n_splits, shuffle=cv_param.shuffle, random_state=cv_param.random_state
+    )
     i = 0
     for fold_ctx, (train_data, validate_data) in ctx.on_cross_validations.ctxs_zip(kf.split(cv_data.read())):
         logger.info(f"enter fold {i}")
@@ -158,7 +170,7 @@ def cross_validation(
             init_param=init_param,
             threshold=threshold,
             reveal_every_epoch=reveal_every_epoch,
-            reveal_loss_freq=reveal_loss_freq
+            reveal_loss_freq=reveal_loss_freq,
         )
         module.fit(fold_ctx, train_data, validate_data)
         if output_cv_data:
@@ -180,22 +192,22 @@ def cross_validation(
 
 
 def train_model(
-        ctx,
-        role,
-        train_data,
-        validate_data,
-        train_output_data,
-        output_model,
-        epochs,
-        batch_size,
-        learning_rate,
-        tol,
-        early_stop,
-        init_param,
-        reveal_every_epoch,
-        reveal_loss_freq,
-        threshold,
-        input_model
+    ctx,
+    role,
+    train_data,
+    validate_data,
+    train_output_data,
+    output_model,
+    epochs,
+    batch_size,
+    learning_rate,
+    tol,
+    early_stop,
+    init_param,
+    reveal_every_epoch,
+    reveal_loss_freq,
+    threshold,
+    input_model,
 ):
     if input_model is not None:
         logger.info(f"warm start model provided")
@@ -214,7 +226,7 @@ def train_model(
             init_param=init_param,
             threshold=threshold,
             reveal_every_epoch=reveal_every_epoch,
-            reveal_loss_freq=reveal_loss_freq
+            reveal_loss_freq=reveal_loss_freq,
         )
     # optimizer = optimizer_factory(optimizer_param)
     logger.info(f"sshe lr guest start train")

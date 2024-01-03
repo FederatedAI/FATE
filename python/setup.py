@@ -46,16 +46,15 @@ install_requires = [
 
 # Extra requirements
 extras_require = {
-    "rabbitmq": ["pika==1.2.1"],
+    "rabbitmq": ["pika"],
     "pulsar": [
         "pulsar-client==2.10.2; sys_platform != 'darwin'",
-        "pulsar-client==2.10.1; sys_platform == 'darwin'",
-        "urllib3==1.26.5",
+        "pulsar-client; sys_platform == 'darwin'",
+        "urllib3",
     ],
     "spark": ["pyspark"],
     "eggroll": [
         "grpcio-tools",
-        "cachetools>=3.0.0",
         "psutil>=5.7.0",
     ],
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],

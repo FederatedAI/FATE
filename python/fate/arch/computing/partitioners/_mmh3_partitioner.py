@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 def mmh3_partitioner(key: bytes, total_partitions):
     import mmh3
 

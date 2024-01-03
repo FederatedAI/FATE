@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeteroSecureBoostHost(HeteroBoostingTree):
-    def __init__(self, num_trees=3, max_depth=3,
-                 complete_secure=0,
-                 max_bin=32, hist_sub=True) -> None:
+    def __init__(self, num_trees=3, max_depth=3, complete_secure=0, max_bin=32, hist_sub=True) -> None:
         super().__init__()
         self.num_trees = num_trees
         self.max_depth = max_depth
@@ -55,8 +53,8 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
                 yield int.from_bytes(random_seed, byteorder="big")
 
     def _set_tree_dim(self, ctx: Context):
-        self._tree_dim = ctx.guest.get('tree_dim')
-        logger.info('tree dimension is {}'.format(self._tree_dim))
+        self._tree_dim = ctx.guest.get("tree_dim")
+        logger.info("tree dimension is {}".format(self._tree_dim))
 
     def fit(self, ctx: Context, train_data: DataFrame, validate_data: DataFrame = None) -> None:
         # data binning
@@ -85,7 +83,7 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
                     hist_sub=self._hist_sub,
                     global_random_seed=global_random_seed,
                     random_seed=next(random_seeds),
-                    tree_mode=tree_mode
+                    tree_mode=tree_mode,
                 )
                 tree.booster_fit(tree_ctx_, bin_data, bin_info)
                 self._trees.append(tree)
@@ -101,7 +99,7 @@ class HeteroSecureBoostHost(HeteroBoostingTree):
             "num_trees": self.num_trees,
             "max_depth": self.max_depth,
             "max_bin": self.max_bin,
-            "complete_secure": self._complete_secure
+            "complete_secure": self._complete_secure,
         }
 
     def from_model(self, model: dict):

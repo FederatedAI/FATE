@@ -41,7 +41,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         random_seed=None,
         global_random_seed=None,
         hist_sub=True,
-        tree_mode=ALL_FEAT
+        tree_mode=ALL_FEAT,
     ):
         super().__init__(
             max_depth, use_missing=use_missing, zero_as_missing=zero_as_missing, valid_features=valid_features
@@ -136,10 +136,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         return cur_layer_nodes, next_layer_nodes
 
     def booster_fit(self, ctx: Context, bin_train_data: DataFrame, binning_dict: dict):
-
-
         if self._tree_mode == GUEST_FEAT_ONLY:
-            logger.info('this tree is a guest feat only tree, skip computation')
+            logger.info("this tree is a guest feat only tree, skip computation")
             masked_tree, _ = self._sync_nodes(ctx)
             self._nodes = masked_tree
             return

@@ -1,0 +1,18 @@
+guest_model:
+  bottom: [10, 8]
+  agg_layer: [8, 8]
+  top: [8, 1]
+host_model:
+  bottom: [20, 8]
+  agg_layer: [8, 8]
+  top: [8, 1]
+data_guest: "examples/data/breast_hetero_guest.csv"
+data_host: "examples/data/breast_hetero_host.csv"
+guest_table: "breast_hetero_guest"
+host_table: "breast_hetero_host"
+lr: 0.01
+epochs: 50
+batch_size: 256
+is_binary: True
+label_name: 'y'
+id_name: 'id'

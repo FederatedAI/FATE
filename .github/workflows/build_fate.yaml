@@ -41,7 +41,7 @@ jobs:
       - name: Test Install
         run: |
           pip install -U pip
-          pip install --find-link=dist/ fate
+          pip install --find-link=dist/ pyfate
 
       - name: Upload to PyPI Test
         if: ${{ github.event.inputs.type == 'test' }}

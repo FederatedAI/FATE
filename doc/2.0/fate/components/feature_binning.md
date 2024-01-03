@@ -14,7 +14,7 @@ As for calculating the federated iv and woe values, the following figure
 can describe the principle properly.
 
 ![Figure 1 (Federated Feature Binning
-Principle)](../images/binning_principle.png)
+Principle)](../../images/binning_principle.png)
 
 As the figure shows, B party which has the data labels encrypt its
 labels with Addiction homomorphic encryption and then send to A. A
@@ -26,7 +26,7 @@ encrypted label information to all hosts, and each of the hosts
 calculates and sends back the static info.
 
 ![Figure 2： Multi-Host Binning
-Principle](../images/multiple_host_binning.png)
+Principle](../../images/multiple_host_binning.png)
 
 ## Features
 
@@ -41,8 +41,8 @@ Below lists supported features with links to examples:
 
 | Cases                                | Scenario                                                                                                                                                                             	                                |
 |--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input Data with Categorical Features | [bucket binning](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_bucket.py) <br> [quantile binning](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_quantile.py)        |
-| Output Data Transformed              | [bin index](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) <br> [woe value(guest-only)](.../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) |
-| Skip Metrics Calculation             | [multi_host](../../../examples/pipeline/hetero_feature_binning/test_feature_binning_multi_host.py)                                           	                                                                        |
+| Input Data with Categorical Features | [bucket binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_bucket.py) <br> [quantile binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_quantile.py)  |
+| Output Data Transformed              | [bin index](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) <br> [woe value(guest-only)](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) |
+| Skip Metrics Calculation             | [multi_host](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_multi_host.py)                                           	                                                                        |
 
 

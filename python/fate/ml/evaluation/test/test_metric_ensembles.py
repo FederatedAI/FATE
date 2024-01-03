@@ -27,9 +27,7 @@ def generate_predict_and_label(num):
 
 
 class TestMetric(unittest.TestCase):
-
     def test_binary_ensemble(self):
-        
         binary_ensemble = get_binary_metrics()
 
         predict, label = generate_predict_and_label(1000)
@@ -37,16 +35,14 @@ class TestMetric(unittest.TestCase):
         print(result)
         print(type(result))
 
-    
     def test_selected(self):
-        metrics = get_specified_metrics(['auc', 'ks', 'lift', 'gain', 'binary_accuracy'])
+        metrics = get_specified_metrics(["auc", "ks", "lift", "gain", "binary_accuracy"])
         predict, label = generate_predict_and_label(1000)
         result = metrics(predict=predict, label=label)
         print(result)
         print(type(result))
 
     def test_binary_ensemble(self):
-        
         binary_ensemble = get_single_val_binary_metrics(threshold=0.8)
 
         predict, label = generate_predict_and_label(1000)
@@ -55,6 +51,5 @@ class TestMetric(unittest.TestCase):
         print(type(result))
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

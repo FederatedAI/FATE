@@ -27,7 +27,6 @@ def generate_predict_and_label(num):
 
 
 class TestMetric(unittest.TestCase):
-
     def test_KS(self):
         ks_metric = KS()
         predict, label = generate_predict_and_label(1000)
@@ -64,11 +63,13 @@ class TestMetric(unittest.TestCase):
         psi_metric = PSI()
         predict, label = generate_predict_and_label(1000)
         predict2, label2 = generate_predict_and_label(1000)
-        result = psi_metric({'train_scores': predict, 'validate_scores': predict2}, {'train_labels': label, 'validate_labels': label2})
-        print('result is {}'.format(result))
+        result = psi_metric(
+            {"train_scores": predict, "validate_scores": predict2}, {"train_labels": label, "validate_labels": label2}
+        )
+        print("result is {}".format(result))
         print(result[0].to_dict())
         print(result[1].to_dict())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

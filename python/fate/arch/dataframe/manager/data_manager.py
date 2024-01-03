@@ -25,10 +25,10 @@ from ..conf.default_config import DATAFRAME_BLOCK_ROW_SIZE
 
 class DataManager(object):
     def __init__(
-            self,
-            schema_manager: SchemaManager = None,
-            block_manager: BlockManager = None,
-            block_row_size: int = DATAFRAME_BLOCK_ROW_SIZE
+        self,
+        schema_manager: SchemaManager = None,
+        block_manager: BlockManager = None,
+        block_row_size: int = DATAFRAME_BLOCK_ROW_SIZE,
     ):
         self._schema_manager = schema_manager
         self._block_manager = block_manager
@@ -87,24 +87,33 @@ class DataManager(object):
         return narrow_blocks, dst_blocks
 
     def duplicate(self) -> "DataManager":
-        return DataManager(
-            self._schema_manager.duplicate(),
-            self._block_manager.duplicate()
-        )
+        return DataManager(self._schema_manager.duplicate(), self._block_manager.duplicate())
 
-    def init_from_local_file(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name,
-                             label_type, weight_type, dtype, default_type=types.DEFAULT_DATA_TYPE,
-                             anonymous_site_name=None):
+    def init_from_local_file(
+        self,
+        sample_id_name,
+        columns,
+        match_id_list,
+        match_id_name,
+        label_name,
+        weight_name,
+        label_type,
+        weight_type,
+        dtype,
+        default_type=types.DEFAULT_DATA_TYPE,
+        anonymous_site_name=None,
+    ):
         schema_manager = SchemaManager()
-        retrieval_index_dict = schema_manager.parse_local_file_schema(sample_id_name,
-                                                                      columns,
-                                                                      match_id_list,
-                                                                      match_id_name,
-                                                                      label_name,
-                                                                      weight_name,
-                                                                      anonymous_site_name=anonymous_site_name)
-        schema_manager.init_field_types(label_type, weight_type, dtype,
-                                        default_type=default_type)
+        retrieval_index_dict = schema_manager.parse_local_file_schema(
+            sample_id_name,
+            columns,
+            match_id_list,
+            match_id_name,
+            label_name,
+            weight_name,
+            anonymous_site_name=anonymous_site_name,
+        )
+        schema_manager.init_field_types(label_type, weight_type, dtype, default_type=default_type)
         block_manager = BlockManager()
         block_manager.initialize_blocks(schema_manager)
 
@@ -120,19 +129,19 @@ class DataManager(object):
 
         return converted_blocks
 
-    def derive_new_data_manager(self, with_sample_id, with_match_id, with_label, with_weight, columns) \
-            -> Tuple["DataManager", List[Tuple[int, int, bool, List]]]:
-        schema_manager, derive_indexes = self._schema_manager.derive_new_schema_manager(with_sample_id=with_sample_id,
-                                                                                        with_match_id=with_match_id,
-                                                                                        with_label=with_label,
-                                                                                        with_weight=with_weight,
-                                                                                        columns=columns)
+    def derive_new_data_manager(
+        self, with_sample_id, with_match_id, with_label, with_weight, columns
+    ) -> Tuple["DataManager", List[Tuple[int, int, bool, List]]]:
+        schema_manager, derive_indexes = self._schema_manager.derive_new_schema_manager(
+            with_sample_id=with_sample_id,
+            with_match_id=with_match_id,
+            with_label=with_label,
+            with_weight=with_weight,
+            columns=columns,
+        )
         block_manager, blocks_loc = self._block_manager.derive_new_block_manager(derive_indexes)
 
-        return DataManager(
-            schema_manager=schema_manager,
-            block_manager=block_manager
-        ), blocks_loc
+        return DataManager(schema_manager=schema_manager, block_manager=block_manager), blocks_loc
 
     def loc_block(self, name: Union[str, List[str]], with_offset=True):
         if isinstance(name, str):
@@ -182,10 +191,9 @@ class DataManager(object):
         return self._schema_manager.get_field_name(field_index)
 
     def get_field_name_list(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
-        return self._schema_manager.get_field_name_list(with_sample_id=with_sample_id,
-                                                        with_match_id=with_match_id,
-                                                        with_label=with_label,
-                                                        with_weight=with_weight)
+        return self._schema_manager.get_field_name_list(
+            with_sample_id=with_sample_id, with_match_id=with_match_id, with_label=with_label, with_weight=with_weight
+        )
 
     def get_field_type_by_name(self, name):
         return self._schema_manager.get_field_types(name)
@@ -198,7 +206,9 @@ class DataManager(object):
 
     def infer_operable_blocks(self):
         operable_field_offsets = self._schema_manager.infer_operable_filed_offsets()
-        block_index_set = set(self._block_manager.loc_block(offset, with_offset=False) for offset in operable_field_offsets)
+        block_index_set = set(
+            self._block_manager.loc_block(offset, with_offset=False) for offset in operable_field_offsets
+        )
         return sorted(list(block_index_set))
 
     def infer_operable_field_names(self):
@@ -206,12 +216,14 @@ class DataManager(object):
 
     def infer_non_operable_blocks(self):
         non_operable_field_offsets = self._schema_manager.infer_non_operable_field_offsets()
-        block_index_set = set(self._block_manager.loc_block(offset, with_offset=False) for offset in non_operable_field_offsets)
+        block_index_set = set(
+            self._block_manager.loc_block(offset, with_offset=False) for offset in non_operable_field_offsets
+        )
         return sorted(list(block_index_set))
 
-    def try_to_promote_types(self,
-                             block_indexes: List[int],
-                             block_type: Union[bool, list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
+    def try_to_promote_types(
+        self, block_indexes: List[int], block_type: Union[bool, list, int, float, np.dtype, BlockType]
+    ) -> List[Tuple[int, BlockType]]:
         promote_types = []
         if isinstance(block_type, (bool, int, float, np.dtype)):
             block_type = BlockType.get_block_type(block_type)
@@ -219,16 +231,12 @@ class DataManager(object):
         if isinstance(block_type, BlockType):
             for idx, bid in enumerate(block_indexes):
                 if self.get_block(bid).block_type < block_type:
-                    promote_types.append(
-                        (bid, block_type)
-                    )
+                    promote_types.append((bid, block_type))
         else:
             for idx, (bid, r_type) in enumerate(zip(block_indexes, block_type)):
                 block_type = BlockType.get_block_type(r_type)
                 if self.get_block(bid).block_type < block_type:
-                    promote_types.append(
-                        (bid, block_type)
-                    )
+                    promote_types.append((bid, block_type))
 
         return promote_types
 
@@ -246,11 +254,13 @@ class DataManager(object):
         return to_compress_block_loc, non_compress_block_changes
 
     def rename(self, sample_id_name=None, match_id_name=None, label_name=None, weight_name=None, columns: dict = None):
-        self._schema_manager.rename(sample_id_name=sample_id_name,
-                                    match_id_name=match_id_name,
-                                    label_name=label_name,
-                                    weight_name=weight_name,
-                                    columns=columns)
+        self._schema_manager.rename(
+            sample_id_name=sample_id_name,
+            match_id_name=match_id_name,
+            label_name=label_name,
+            weight_name=weight_name,
+            columns=columns,
+        )
 
     def serialize(self):
         schema_serialization = self._schema_manager.serialize()

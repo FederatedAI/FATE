@@ -19,11 +19,11 @@ from ._fields import StringChoice
 
 
 class LRSchedulerType(StringChoice):
-    choice = {'constant', 'linear', 'step'}
+    choice = {"constant", "linear", "step"}
 
 
 class LRSchedulerParam(pydantic.BaseModel):
-    method: LRSchedulerType = 'constant'
+    method: LRSchedulerType = "constant"
     scheduler_params: dict = None
 
 

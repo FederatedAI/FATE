@@ -32,12 +32,7 @@ def isna(df: "DataFrame"):
     dst_data_manager.promote_types(to_promote_types)
     dst_block_table, dst_data_manager = compress_blocks(block_table, dst_data_manager)
 
-    return DataFrame(
-        df._ctx,
-        dst_block_table,
-        df.partition_order_mappings,
-        dst_data_manager
-    )
+    return DataFrame(df._ctx, dst_block_table, df.partition_order_mappings, dst_data_manager)
 
 
 def _isna(block_table, block_indexes):
@@ -53,6 +48,4 @@ def _isna(block_table, block_indexes):
 
         return ret_blocks
 
-    return block_table.mapValues(
-        _isna_judgement
-    )
+    return block_table.mapValues(_isna_judgement)

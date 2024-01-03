@@ -11,8 +11,8 @@ Here lists supported split modes and scenario.
 
 | Split Mode 	 | Federated Heterogeneous                                                        | Federated Homogeneous(Local)                                                   |
 |--------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| Random     	 | [&check;](../../../examples/pipeline/data_split/test_data_split.py)            | [&check;](../../../examples/pipeline/data_split/test_data_split_multi_host.py) |
-| Stratified 	 | [&check;](../../../examples/pipeline/data_split/test_data_split_stratified.py) | [&check;](../../../examples/pipeline/data_split/test_data_split_stratified.py) |
+| Random     	 | [&check;](../../../../examples/pipeline/data_split/test_data_split.py)            | [&check;](../../../../examples/pipeline/data_split/test_data_split_multi_host.py) |
+| Stratified 	 | [&check;](../../../../examples/pipeline/data_split/test_data_split_stratified.py) | [&check;](../../../../examples/pipeline/data_split/test_data_split_stratified.py) |
 
 Data Split module takes single data input as specified in job config file
 and always outputs three tables (train, test, and validate

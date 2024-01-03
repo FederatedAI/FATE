@@ -53,14 +53,10 @@ def where(df: DataFrame, other: DataFrame):
             break
 
     if not need_promoted:
-        block_table = _where_float_type(df.block_table, other.block_table,
-                                        data_manager, other.data_manager, column_names)
-        return DataFrame(
-            df._ctx,
-            block_table,
-            df.partition_order_mappings,
-            data_manager.duplicate()
+        block_table = _where_float_type(
+            df.block_table, other.block_table, data_manager, other.data_manager, column_names
         )
+        return DataFrame(df._ctx, block_table, df.partition_order_mappings, data_manager.duplicate())
 
 
 def _get_false_columns(df: DataFrame):
@@ -69,15 +65,11 @@ def _get_false_columns(df: DataFrame):
     block_index_set = set(data_manager.infer_operable_blocks())
 
     false_table = block_table.mapValues(
-        lambda blocks: [
-            block.all(axis=0) if bid in block_index_set else []
-            for bid, block in enumerate(blocks)
-        ]
+        lambda blocks: [block.all(axis=0) if bid in block_index_set else [] for bid, block in enumerate(blocks)]
     )
 
     false_values = false_table.reduce(
-        lambda blocks1, blocks2:
-        [
+        lambda blocks1, blocks2: [
             block1 & block2 if bid in block_index_set else []
             for bid, (block1, block2) in enumerate(zip(blocks1, blocks2))
         ]
@@ -97,10 +89,9 @@ def _get_false_columns(df: DataFrame):
     return false_columns
 
 
-def _where_float_type(l_block_table, r_block_table,
-                      l_data_manager: "DataManager",
-                      r_data_manager: "DataManager",
-                      column_names: List[str]):
+def _where_float_type(
+    l_block_table, r_block_table, l_data_manager: "DataManager", r_data_manager: "DataManager", column_names: List[str]
+):
     l_loc_info = [l_data_manager.loc_block(name) for name in column_names]
     r_loc_info = [r_data_manager.loc_block(name) for name in column_names]
 

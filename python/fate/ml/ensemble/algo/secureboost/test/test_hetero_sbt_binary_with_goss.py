@@ -24,6 +24,7 @@ from datetime import datetime
 def get_current_datetime_str():
     return datetime.now().strftime("%Y-%m-%d-%H-%M")
 
+
 guest = ("guest", "10000")
 host = ("host", "9999")
 name = get_current_datetime_str()
@@ -45,19 +46,15 @@ def create_ctx(local, context_name):
     logger.addHandler(console_handler)
     # init fate context
     computing = CSession()
-    return Context(
-        computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host])
-    )
+    return Context(computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host]))
 
 
 if __name__ == "__main__":
-
     party = sys.argv[1]
     max_depth = 3
     num_tree = 3
 
     if party == "guest":
-
         ctx = create_ctx(guest, get_current_datetime_str())
         df = pd.read_csv("./../../../../../../../examples/data/breast_hetero_guest.csv")
         df["sample_id"] = [i for i in range(len(df))]
@@ -71,11 +68,11 @@ if __name__ == "__main__":
 
         # compute auc
         from sklearn.metrics import roc_auc_score
+
         auc = roc_auc_score(pred["label"], pred["predict_score"])
         print(auc)
 
     elif party == "host":
-
         ctx = create_ctx(host, get_current_datetime_str())
         df_host = pd.read_csv("./../../../../../../../examples/data/breast_hetero_host.csv")
         df_host["sample_id"] = [i for i in range(len(df_host))]

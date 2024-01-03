@@ -527,7 +527,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 1）192.168.0.1上执行，gid和hid都设为10000：
 
 ```
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 flow test toy -gid 10000 -hid 10000
 ```
 
@@ -540,7 +540,7 @@ toy test job 202308291022025779790 is success
 2）192.168.0.2上执行，gid和hid都设为9999：
 
 ```
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 flow test toy -gid 9999 -hid 9999
 ```
 
@@ -553,7 +553,7 @@ toy test job 202308291022025779790 is success
 选定9999为guest方，在192.168.0.2上执行：
 
 ```
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 flow test toy -gid 9999 -hid 10000
 ```
 
@@ -585,7 +585,7 @@ bash ./service.sh start|stop|status|restart
 #### 7.1.2. Eggroll服务管理
 
 ```bash
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/eggroll
 ```
 
@@ -606,7 +606,7 @@ bash ./bin/eggroll.sh clustermanager start/stop/status/restart
 1) 启动/关闭/查看/重启fate_flow服务
 
 ```bash
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fate_flow/bin
 bash service.sh start|stop|status|restart
 ```
@@ -616,7 +616,7 @@ bash service.sh start|stop|status|restart
 2) 启动/关闭/重启fateboard服务
 
 ```bash
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateboard
 bash service.sh start|stop|status|restart
 ```
@@ -624,7 +624,7 @@ bash service.sh start|stop|status|restart
 3) 启动/关闭/重启osx服务
 
 ```bash
-source /data/projects/fate/fate_flow/bin/init_env.sh
+source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/osx
 bash service.sh start|stop|status|restart
 ```

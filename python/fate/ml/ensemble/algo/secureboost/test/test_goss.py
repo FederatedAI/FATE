@@ -23,6 +23,7 @@ from datetime import datetime
 def get_current_datetime_str():
     return datetime.now().strftime("%Y-%m-%d-%H-%M")
 
+
 guest = ("guest", "10000")
 host = ("host", "9999")
 name = get_current_datetime_str()
@@ -44,9 +45,7 @@ def create_ctx(local, context_name):
     logger.addHandler(console_handler)
     # init fate context
     computing = CSession()
-    return Context(
-        computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host])
-    )
+    return Context(computing=computing, federation=StandaloneFederation(computing, context_name, local, [guest, host]))
 
 
 ctx = create_ctx(guest, get_current_datetime_str())
@@ -72,4 +71,4 @@ from fate.arch.dataframe import DataFrame
 from fate.ml.ensemble.utils.sample import goss_sample
 
 rs = goss_sample(data_gh, 0.2, 0.1, random_seed=42)
-selected_sample = sample_pos.loc(rs.get_indexer(target='sample_id'))
+selected_sample = sample_pos.loc(rs.get_indexer(target="sample_id"))

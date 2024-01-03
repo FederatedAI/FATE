@@ -28,9 +28,11 @@ def psi(
     input_data = input_data.read()
     input_data_count = input_data.shape[0]
     intersect_data = psi_run(ctx, input_data, protocol, curve_type)
-    summary = {'input_count': input_data_count,
-               'intersect_count': intersect_data.shape[0],
-               'intersect_rate': intersect_data.shape[0] / input_data_count,
-               'method': 'curve25519'}
-    ctx.metrics.log_metrics(summary, 'summary')
+    summary = {
+        "input_count": input_data_count,
+        "intersect_count": intersect_data.shape[0],
+        "intersect_rate": intersect_data.shape[0] / input_data_count,
+        "method": "curve25519",
+    }
+    ctx.metrics.log_metrics(summary, "summary")
     output_data.write(intersect_data)

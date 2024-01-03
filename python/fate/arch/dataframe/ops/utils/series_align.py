@@ -16,7 +16,7 @@ import pandas as pd
 from typing import List
 
 
-def series_to_ndarray(series_obj: "pd.Series", fields_to_align: List[str]=None):
+def series_to_ndarray(series_obj: "pd.Series", fields_to_align: List[str] = None):
     if isinstance(series_obj.index, pd.RangeIndex) or not fields_to_align:
         return series_obj.values
     else:
@@ -28,5 +28,5 @@ def series_to_ndarray(series_obj: "pd.Series", fields_to_align: List[str]=None):
         return series_obj[indexer].values
 
 
-def series_to_list(series_obj: "pd.Series", fields_to_align: List[str]=None):
+def series_to_list(series_obj: "pd.Series", fields_to_align: List[str] = None):
     return series_to_ndarray(series_obj, fields_to_align).tolist()

@@ -14,5 +14,6 @@
 #  limitations under the License.
 DEFAULT_COL_NAME_PREFIX = "default_col_"
 
+
 def generated_default_column_names(column_length):
     return [DEFAULT_COL_NAME_PREFIX + str(i) for i in range(column_length)]

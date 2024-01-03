@@ -16,9 +16,9 @@ Below lists available input models and their corresponding filter methods with l
 
 | Input Models      | Filter Method                                                                                                                                                                                  	                                                                                                                                                            |
 |-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| None            	 | [manual](../../../examples/pipeline/hetero_feature_selection/test_feature_selection_manual.py)                                                                                                                                             	                                                                                                                |
-| Binning         	 | [iv_filter(threshold)](../../../examples/pipeline/hetero_feature_selection/test_feature_selection_binning.py) <br> [iv_filter(top_k)](../../../examples/pipeline/hetero_feature_selection/test_feature_selection_multi_model.py) <br> [iv_filter(top_percentile)](../../../examples/pipeline/hetero_feature_selection/test_feature_selection_multi_host.py) |
-| Statistic       	 | [statistic_filter](../../../examples/pipeline/hetero_feature_selection/test_feature_selection_statistics.py)                                                                                                                                                                                                                                                |
+| None            	 | [manual](../../../../examples/pipeline/hetero_feature_selection/test_feature_selection_manual.py)                                                                                                                                             	                                                                                                                |
+| Binning         	 | [iv_filter(threshold)](../../../../examples/pipeline/hetero_feature_selection/test_feature_selection_binning.py) <br> [iv_filter(top_k)](../../../../examples/pipeline/hetero_feature_selection/test_feature_selection_multi_model.py) <br> [iv_filter(top_percentile)](../../../../examples/pipeline/hetero_feature_selection/test_feature_selection_multi_host.py) |
+| Statistic       	 | [statistic_filter](../../../../examples/pipeline/hetero_feature_selection/test_feature_selection_statistics.py)                                                                                                                                                                                                                                                |
 
 Most of the filter methods above share the same set of configurable parameters.
 Below lists their acceptable parameter values.
@@ -54,4 +54,4 @@ whether a feature is left or not. Then guest sends result filter back to hosts.
 During this selection process, guest will not know the real name of host(s)' features.
 
 ![Figure 4: Multi-Host Selection
-Principle\</div\>](../images/multi_host_selection.png)
+Principle\</div\>](../../images/multi_host_selection.png)

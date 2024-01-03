@@ -78,12 +78,14 @@ class HeteroBoostingTree(HeteroModule):
 
     def _load_feature_importance(self, feature_importance: dict):
         self._global_feature_importance = {k: FeatureImportance.from_dict(v) for k, v in feature_importance.items()}
+
     def get_model(self) -> dict:
         import copy
+
         hyper_param = self._get_hyper_param()
         result = {}
         result["hyper_param"] = hyper_param
         result["trees"] = copy.deepcopy(self._saved_tree)
-        result['fid_name_mapping'] = self._fid_name_mapping
-        result['feature_importance'] = {k: v.to_dict() for k, v in self._global_feature_importance.items()}
+        result["fid_name_mapping"] = self._fid_name_mapping
+        result["feature_importance"] = {k: v.to_dict() for k, v in self._global_feature_importance.items()}
         return result

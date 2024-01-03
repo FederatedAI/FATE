@@ -32,8 +32,8 @@ FLOAT_ZERO = 1e-8
 LEAF_IDX = -1
 
 # TREE MODES
-GUEST_FEAT_ONLY = 'guest'
-ALL_FEAT = 'all'
+GUEST_FEAT_ONLY = "guest"
+ALL_FEAT = "all"
 # HOST_FEAT_ONLY = 'host'
 
 
@@ -332,7 +332,9 @@ class DecisionTree(object):
             return None
         return dataframe.schema.columns[fid]
 
-    def _update_tree(self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo], data: DataFrame) -> object:
+    def _update_tree(
+        self, ctx: Context, cur_layer_nodes: List[Node], split_info: List[SplitInfo], data: DataFrame
+    ) -> object:
         assert len(cur_layer_nodes) == len(
             split_info
         ), "node num not match split info num, got {} node vs {} split info".format(
@@ -428,10 +430,11 @@ class DecisionTree(object):
             pack_data = DataFrame.hstack([data, new_sample_pos]).iloc(x)
             new_data = pack_data.create_frame(columns=data.schema.columns)
             update_pos = pack_data.create_frame(columns=new_sample_pos.schema.columns)
-            x = x.loc(grad_and_hess.get_indexer(target='sample_id'), preserve_order=True)
+            x = x.loc(grad_and_hess.get_indexer(target="sample_id"), preserve_order=True)
             grad_and_hess = grad_and_hess.iloc(x)
 
             return new_data, update_pos, grad_and_hess
+
     def _get_samples_on_leaves(self, sample_pos: DataFrame):
         x = sample_pos < 0
         samples_on_leaves = sample_pos.iloc(x)

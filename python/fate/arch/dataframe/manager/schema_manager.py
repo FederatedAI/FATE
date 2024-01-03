@@ -34,7 +34,7 @@ class Schema(object):
         anonymous_label_name=None,
         anonymous_weight_name=None,
         anonymous_columns: Union[list, pd.Index] = None,
-        anonymous_summary: dict = None
+        anonymous_summary: dict = None,
     ):
         self._sample_id_name = sample_id_name
         self._match_id_name = match_id_name
@@ -132,7 +132,9 @@ class Schema(object):
         # TODO: extend anonymous column
         anonymous_generator = AnonymousGenerator(site_name=self._anonymous_summary["site_name"])
 
-        anonymous_columns, anonymous_summary = anonymous_generator.add_anonymous_columns(names, self._anonymous_summary)
+        anonymous_columns, anonymous_summary = anonymous_generator.add_anonymous_columns(
+            names, self._anonymous_summary
+        )
         self._anonymous_columns = self._anonymous_columns.append(pd.Index(anonymous_columns))
         self._anonymous_summary = anonymous_summary
 
@@ -147,7 +149,7 @@ class Schema(object):
             anonymous_label_name=self.anonymous_label_name,
             anonymous_weight_name=self._anonymous_weight_name,
             anonymous_columns=self._anonymous_columns,
-            anonymous_summary=self._anonymous_summary
+            anonymous_summary=self._anonymous_summary,
         )
 
         self._set_anonymous_info_by_dict(anonymous_ret_dict)
@@ -180,46 +182,31 @@ class Schema(object):
         # TODO: pop anonymous columns
 
     def __eq__(self, other: "Schema"):
-        return self.label_name == other.label_name and self.weight_name == other.weight_name \
-               and self.sample_id_name == other.sample_id_name and self.match_id_name == other.match_id_name \
-               and self.columns.tolist() == other.columns.tolist()
+        return (
+            self.label_name == other.label_name
+            and self.weight_name == other.weight_name
+            and self.sample_id_name == other.sample_id_name
+            and self.match_id_name == other.match_id_name
+            and self.columns.tolist() == other.columns.tolist()
+        )
 
     def serialize(self):
         s_obj = list()
-        s_obj.append(
-            dict(name=self._sample_id_name,
-                 property="sample_id")
-        )
+        s_obj.append(dict(name=self._sample_id_name, property="sample_id"))
 
         if self._match_id_name:
-            s_obj.append(
-                dict(name=self._match_id_name,
-                     property="match_id")
-            )
+            s_obj.append(dict(name=self._match_id_name, property="match_id"))
 
         if self._label_name:
-            s_obj.append(
-                dict(name=self._label_name,
-                     anonymous_name=self._anonymous_label_name,
-                     property="label")
-            )
+            s_obj.append(dict(name=self._label_name, anonymous_name=self._anonymous_label_name, property="label"))
         if self._weight_name:
-            s_obj.append(
-                dict(name=self._weight_name,
-                     anonymous_name=self._anonymous_weight_name,
-                     property="weight")
-            )
+            s_obj.append(dict(name=self._weight_name, anonymous_name=self._anonymous_weight_name, property="weight"))
 
         if len(self._columns):
             for name, anonymous_name in zip(self._columns, self._anonymous_columns):
-                s_obj.append(
-                    dict(name=name,
-                         anonymous_name=anonymous_name,
-                         property="column")
-                    )
+                s_obj.append(dict(name=name, anonymous_name=anonymous_name, property="column"))
 
-        return dict(fields=s_obj,
-                    anonymous_summary=self._anonymous_summary)
+        return dict(fields=s_obj, anonymous_summary=self._anonymous_summary)
 
 
 class SchemaManager(object):
@@ -242,7 +229,7 @@ class SchemaManager(object):
             "sample_id_name": sample_id_name,
             "match_id_name": match_id_name,
             "label_name": label_name,
-            "weight_name": weight_name
+            "weight_name": weight_name,
         }
 
         for attr, value in attr_dict.items():
@@ -364,8 +351,9 @@ class SchemaManager(object):
     def get_all_keys(self):
         return list(self._name_offset_mapping.keys())
 
-    def parse_local_file_schema(self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name,
-                                anonymous_site_name=None):
+    def parse_local_file_schema(
+        self, sample_id_name, columns, match_id_list, match_id_name, label_name, weight_name, anonymous_site_name=None
+    ):
         column_indexes = list(range(len(columns)))
 
         match_id_index, label_index, weight_index = None, None, None
@@ -397,7 +385,7 @@ class SchemaManager(object):
             match_id_name=match_id_name,
             weight_name=weight_name,
             label_name=label_name,
-            columns=columns
+            columns=columns,
         )
 
         self._schema.init_anonymous_names(anonymous_site_name)
@@ -407,7 +395,7 @@ class SchemaManager(object):
             match_id_index=match_id_index,
             label_index=label_index,
             weight_index=weight_index,
-            column_indexes=column_indexes
+            column_indexes=column_indexes,
         )
 
     def fill_anonymous_site_name(self, anonymous_site_name):
@@ -426,8 +414,15 @@ class SchemaManager(object):
         except ValueError:
             raise ValueError(f"{name} does not exist in {columns}")
 
-    def init_field_types(self, label_type="float32", weight_type="float32", dtype="float32",
-                         default_type="float32", match_id_type="index", sample_id_type="index"):
+    def init_field_types(
+        self,
+        label_type="float32",
+        weight_type="float32",
+        dtype="float32",
+        default_type="float32",
+        match_id_type="index",
+        sample_id_type="index",
+    ):
         self._type_mapping[self._schema.sample_id_name] = "index"
 
         if self._schema.match_id_name:
@@ -518,8 +513,14 @@ class SchemaManager(object):
         name = self._offset_name_mapping[field_index]
         self._type_mapping[name] = field_type
 
-    def derive_new_schema_manager(self, with_sample_id=True, with_match_id=True,
-                                  with_label=True, with_weight=True, columns: Union[str, list] = None):
+    def derive_new_schema_manager(
+        self,
+        with_sample_id=True,
+        with_match_id=True,
+        with_label=True,
+        with_weight=True,
+        columns: Union[str, list] = None,
+    ):
         derived_schema_manager = SchemaManager()
         derived_schema = Schema()
 
@@ -625,11 +626,7 @@ class SchemaManager(object):
     def deserialize(cls, schema_meta: dict):
         schema_manager = SchemaManager()
 
-        schema_dict = dict(
-            columns=[],
-            anonymous_columns=[],
-            anonymous_summary=schema_meta["anonymous_summary"]
-        )
+        schema_dict = dict(columns=[], anonymous_columns=[], anonymous_summary=schema_meta["anonymous_summary"])
         type_dict = {}
         for field in schema_meta["fields"]:
             p = field["property"]

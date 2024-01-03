@@ -16,11 +16,11 @@ pip install pyfate
 ### Create A Launcher
 
 Currently, we provide various ready-to-use launchers for testing mpc protocol and SSHE LR & LinR
-modules [here](../../../../launchers).
+modules [here](../../../../examples/launchers).
 
 To write a launcher, first come up with the case to be run with a FATE-module(as in FATE/python/fate/ml) and wrap this
 case into a function. As a demo, we are to
-analyze [a simple launcher](https://raw.githubusercontent.com/FederatedAI/FATE/main/launchers/sshe_lr_launcher.py) that
+analyze [a simple launcher](../../../../examples/launchers/sshe_lr_launcher.py) that
 trains a SSHE Logistic Regression model using given local data files.
 
 We will use `breast` data set in this demo. Use the following command to download the original data files:
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 ```
 
 The complete launcher demo may be
-downloaded [here](https://raw.githubusercontent.com/FederatedAI/FATE/main/launchers/sshe_lr_launcher.py).
+downloaded [here](../../../../examples/launchers/sshe_lr_launcher.py).
 
 ### Running A Launcher
 
@@ -158,4 +158,4 @@ Note that program will print all logging corresponding to specified log level.
 python sshe_lr_launcher.py --parties guest:9999 host:10000 --log_level INFO --guest_data ./breast_hetero_guest.csv --host_data ./breast_hetero_host.csv
 ```
 
-For more launcher examples, please refer [here](../../../../launchers).
+For more launcher examples, please refer [here](../../../../examples/launchers).

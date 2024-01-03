@@ -18,13 +18,7 @@ from sklearn.model_selection import KFold as sk_KFold
 
 
 class KFold(object):
-    def __init__(self,
-                 ctx,
-                 mode="hetero",
-                 role="guest",
-                 n_splits=5,
-                 shuffle=False,
-                 random_state=None):
+    def __init__(self, ctx, mode="hetero", role="guest", n_splits=5, shuffle=False, random_state=None):
         self._ctx = ctx
         self._mode = mode
         self._role = role
@@ -65,20 +59,21 @@ class KFold(object):
             train_indexer = [indexer[idx] for idx in train]
             test_indexer = [indexer[idx] for idx in test]
 
-            train_indexer = self._ctx.computing.parallelize(train_indexer,
-                                                          include_key=True,
-                                                          partition=df.block_table.num_partitions)
+            train_indexer = self._ctx.computing.parallelize(
+                train_indexer, include_key=True, partition=df.block_table.num_partitions
+            )
 
-            test_indexer = self._ctx.computing.parallelize(test_indexer,
-                                                           include_key=True,
-                                                           partition=df.block_table.num_partitions)
+            test_indexer = self._ctx.computing.parallelize(
+                test_indexer, include_key=True, partition=df.block_table.num_partitions
+            )
 
             train_frame = df.loc(train_indexer)
             test_frame = df.loc(test_indexer)
 
             if return_indexer:
-                yield  train_frame, test_frame, \
-                       train_frame.get_indexer(target="sample_id"), test_frame.get_indexer(target="sample_id")
+                yield train_frame, test_frame, train_frame.get_indexer(target="sample_id"), test_frame.get_indexer(
+                    target="sample_id"
+                )
             else:
                 yield train_frame, test_frame
 

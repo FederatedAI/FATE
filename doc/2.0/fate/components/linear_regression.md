@@ -8,8 +8,8 @@ Below lists features of Coordinated LinR model:
 
 | Linear Model    	 | Multi-Host                                                                   	 | Cross Validation                                                 	     | Warm-Start                                                                     |
 |-------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| Hetero LinR     	 | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_cv.py) | [&check;](../../../examples/pipeline/coordinated_linr/test_linr_warm_start.py) |
-| SSHE LinR         | &cross;                                                                        | [&check;](../../../examples/pipeline/sshe_linr/test_linr_cv.py)        | [&check;](../../../examples/pipeline/sshe_linr/test_linr_warm_start.py)        |                                                  |                                                                        |                                                               |
+| Hetero LinR     	 | [&check;](../../../../examples/pipeline/coordinated_linr/test_linr_multi_host.py) | [&check;](../../../../examples/pipeline/coordinated_linr/test_linr_cv.py) | [&check;](../../../../examples/pipeline/coordinated_linr/test_linr_warm_start.py) |
+| SSHE LinR         | &cross;                                                                        | [&check;](../../../../examples/pipeline/sshe_linr/test_linr_cv.py)        | [&check;](../../../../examples/pipeline/sshe_linr/test_linr_warm_start.py)        |                                                  |                                                                        |                                                               |
 
 ## Coordinated LinR
 
@@ -19,12 +19,12 @@ Here we simplify participants of the federation process into three
 parties. Party A represents Guest, party B represents Host. Party C,
 which is also known as “Arbiter,” is a third party that works as
 coordinator. Party C is responsible for generating private and public
-keys.
+keys. (Security of this algorithm is lower than SSHE-LinR, use SSHE-LinR if possible)
 
 The process of HeteroLinR training is shown below:
 
 ![Figure 1 (Federated HeteroLinR
-Principle)](../images/HeteroLinR.png)
+Principle)](../../images/HeteroLinR.png)
 
 A sample alignment process is conducted before training. The sample
 alignment process identifies overlapping samples in databases of all

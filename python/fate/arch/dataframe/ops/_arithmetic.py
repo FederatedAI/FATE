@@ -33,8 +33,9 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
 
         rhs_block_id = rhs.data_manager.infer_operable_blocks()[0]
         block_table = _operate(lhs.block_table, rhs.block_table, op, block_indexes, rhs_block_id)
-        to_promote_blocks = data_manager.try_to_promote_types(block_indexes,
-                                                              rhs.data_manager.get_block(rhs_block_id).block_type)
+        to_promote_blocks = data_manager.try_to_promote_types(
+            block_indexes, rhs.data_manager.get_block(rhs_block_id).block_type
+        )
     elif isinstance(rhs, (np.ndarray, list, pd.Series)):
         if isinstance(rhs, pd.Series):
             rhs = series_to_ndarray(rhs, column_names)
@@ -66,42 +67,30 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
     if to_promote_blocks:
         block_table, data_manager = promote_types(block_table, data_manager, to_promote_blocks)
 
-    return type(lhs) (
-        lhs._ctx,
-        block_table,
-        lhs.partition_order_mappings,
-        data_manager
-    )
+    return type(lhs)(lhs._ctx, block_table, lhs.partition_order_mappings, data_manager)
 
 
 def _operate(lhs, rhs, op, block_indexes, rhs_block_id=None):
     block_index_set = set(block_indexes)
     if isinstance(rhs, list):
         op_ret = lhs.mapValues(
-            lambda blocks:
-            [
-                op(blocks[bid], rhs[bid]) if bid in block_index_set
-                                          else blocks[bid]
-                for bid in range(len(blocks))
+            lambda blocks: [
+                op(blocks[bid], rhs[bid]) if bid in block_index_set else blocks[bid] for bid in range(len(blocks))
             ]
         )
     elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool_)):
         op_ret = lhs.mapValues(
-            lambda blocks:
-            [
-                op(blocks[bid], rhs) if bid in block_index_set
-                                     else blocks[bid]
-                for bid in range(len(blocks))
-             ]
+            lambda blocks: [
+                op(blocks[bid], rhs) if bid in block_index_set else blocks[bid] for bid in range(len(blocks))
+            ]
         )
     elif is_table(rhs):
-        op_ret = lhs.join(rhs,
-            lambda blocks1, blocks2:
-            [
-                op(blocks1[bid], blocks2[rhs_block_id]) if bid in block_index_set
-                                     else blocks1[bid]
+        op_ret = lhs.join(
+            rhs,
+            lambda blocks1, blocks2: [
+                op(blocks1[bid], blocks2[rhs_block_id]) if bid in block_index_set else blocks1[bid]
                 for bid in range(len(blocks1))
-            ]
+            ],
         )
     else:
         raise ValueError(f"Not implement type between dataframe nad {type(rhs)}")

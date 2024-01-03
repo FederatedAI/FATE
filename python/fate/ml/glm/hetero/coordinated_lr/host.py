@@ -31,8 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 class CoordinatedLRModuleHost(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer_param=None, learning_rate_param=None, init_param=None,
-                 floating_point_precision=23):
+    def __init__(
+        self,
+        epochs=None,
+        batch_size=None,
+        optimizer_param=None,
+        learning_rate_param=None,
+        init_param=None,
+        floating_point_precision=23,
+    ):
         self.epochs = epochs
         self.learning_rate_param = learning_rate_param
         self.optimizer_param = optimizer_param
@@ -199,15 +206,22 @@ class CoordinatedLRModuleHost(HeteroModule):
 
 
 class CoordinatedLREstimatorHost(HeteroModule):
-    def __init__(self, epochs=None, batch_size=None, optimizer=None, learning_rate_scheduler=None, init_param=None,
-                 floating_point_precision=23):
+    def __init__(
+        self,
+        epochs=None,
+        batch_size=None,
+        optimizer=None,
+        learning_rate_scheduler=None,
+        init_param=None,
+        floating_point_precision=23,
+    ):
         self.epochs = epochs
         self.optimizer = optimizer
         self.lr_scheduler = learning_rate_scheduler
         self.batch_size = batch_size
         self.init_param = init_param
         self.floating_point_precision = floating_point_precision
-        self._fixpoint_precision = 2 ** floating_point_precision
+        self._fixpoint_precision = 2**floating_point_precision
 
         self.w = None
         self.start_epoch = 0
@@ -309,7 +323,7 @@ class CoordinatedLREstimatorHost(HeteroModule):
             "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_epoch": self.end_epoch,
             "is_converged": self.is_converged,
-            "header": self.header
+            "header": self.header,
         }
 
     def restore(self, model):

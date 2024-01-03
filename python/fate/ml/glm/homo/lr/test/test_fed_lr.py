@@ -31,69 +31,58 @@ def create_ctx(local):
     from fate.arch.computing.backends.standalone import CSession
     from fate.arch.federation.backends.standalone import StandaloneFederation
     import logging
+
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
     computing = CSession()
-    return Context(computing=computing,
-                   federation=StandaloneFederation(computing, name, local, [guest, host, arbiter]))
-
+    return Context(
+        computing=computing, federation=StandaloneFederation(computing, name, local, [guest, host, arbiter])
+    )
 
 
 if __name__ == "__main__":
-
     if sys.argv[1] == "guest":
-
         ctx = create_ctx(guest)
-        df = pd.read_csv(
-        '../../../../../../../examples/data/breast_homo_guest.csv')
-        df['sample_id'] = [i for i in range(len(df))]
+        df = pd.read_csv("../../../../../../../examples/data/breast_homo_guest.csv")
+        df["sample_id"] = [i for i in range(len(df))]
 
-        reader = PandasReader(
-            sample_id_name='sample_id',
-            match_id_name="id",
-            label_name="y",
-            dtype="object")
-        
+        reader = PandasReader(sample_id_name="sample_id", match_id_name="id", label_name="y", dtype="object")
+
         data = reader.to_frame(ctx, df)
         client = HomoLRClient(
-            50, 800, optimizer_param={
-                'method': 'adam', 'penalty': 'l1', 'aplha': 0.1, 'optimizer_para': {
-                    'lr': 0.1}}, init_param={
-                        'method': 'random', 'fill_val': 1.0})
+            50,
+            800,
+            optimizer_param={"method": "adam", "penalty": "l1", "aplha": 0.1, "optimizer_para": {"lr": 0.1}},
+            init_param={"method": "random", "fill_val": 1.0},
+        )
 
         client.fit(ctx, data)
 
     elif sys.argv[1] == "host":
-
         ctx = create_ctx(host)
-        df = pd.read_csv(
-        '../../../../../../../examples/data/breast_homo_host.csv')
-        df['sample_id'] = [i for i in range(len(df))]
+        df = pd.read_csv("../../../../../../../examples/data/breast_homo_host.csv")
+        df["sample_id"] = [i for i in range(len(df))]
 
-        reader = PandasReader(
-            sample_id_name='sample_id',
-            match_id_name="id",
-            label_name="y",
-            dtype="object")
+        reader = PandasReader(sample_id_name="sample_id", match_id_name="id", label_name="y", dtype="object")
 
         data = reader.to_frame(ctx, df)
         client = HomoLRClient(
-            50, 800, optimizer_param={
-                'method': 'adam', 'penalty': 'l1', 'aplha': 0.1, 'optimizer_para': {
-                    'lr': 0.1}}, init_param={
-                        'method': 'random', 'fill_val': 1.0})
-        
+            50,
+            800,
+            optimizer_param={"method": "adam", "penalty": "l1", "aplha": 0.1, "optimizer_para": {"lr": 0.1}},
+            init_param={"method": "random", "fill_val": 1.0},
+        )
+
         client.fit(ctx, data)
     else:
-
         ctx = create_ctx(arbiter)
         server = HomoLRServer()
         server.fit(ctx)
