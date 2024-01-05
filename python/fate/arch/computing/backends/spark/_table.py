@@ -25,6 +25,8 @@ from pyspark.rddsampler import RDDSamplerBase
 from fate.arch import URI
 from fate.arch.computing.api import KVTable, ComputingEngine, K, V
 from fate.arch.computing.api._table import _lifted_reduce_to_serdes, get_serdes_by_type
+from fate.arch.trace import auto_trace
+from fate.arch.trace import computing_profile as _compute_info
 from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
@@ -92,6 +94,8 @@ class Table(KVTable):
     ):
         raise NotImplementedError("binary sorted map partitions with index not supported in spark backend")
 
+    @auto_trace
+    @_compute_info
     def join(
         self,
         other: "Table",
@@ -106,6 +110,8 @@ class Table(KVTable):
             partitioner_type=self.partitioner_type,
         )
 
+    @auto_trace
+    @_compute_info
     def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
         op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
@@ -115,6 +121,8 @@ class Table(KVTable):
             partitioner_type=self.partitioner_type,
         )
 
+    @auto_trace
+    @_compute_info
     def subtractByKey(self, other: "Table", output_value_serdes_type=None):
         return from_rdd(
             self.rdd.subtractByKey(other.rdd),
@@ -215,6 +223,8 @@ class Table(KVTable):
             partitioner_type=output_partitioner_type,
         )
 
+    @auto_trace
+    @_compute_info
     def sample(
         self,
         *,
