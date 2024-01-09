@@ -142,6 +142,9 @@ class BaseParam(metaclass=_StaticDefaultMeta):
             for config_key, config_value in config.items():
                 # redundant attr
                 if config_key not in inst_variables:
+                    if config_key == "data_warehouse":
+                        setattr(param, config_key, config_value)
+                        continue
                     if not update_from_raw_conf and config_key.startswith("_"):
                         setattr(param, config_key, config_value)
                     else:
