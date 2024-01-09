@@ -112,10 +112,19 @@ class Table(KVTable):
 
     @auto_trace
     @_compute_info
-    def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+    def union(self, other: "Table", merge_op: Callable[[V, V], V] = None, output_value_serdes_type=None):
+        num_partitions = max(self.num_partitions, other.num_partitions)
+        if merge_op is None:
+            return from_rdd(
+                self._rdd.union(other._rdd).coalesce(num_partitions),
+                key_serdes_type=self.key_serdes_type,
+                value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+                partitioner_type=self.partitioner_type,
+            )
+
         op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self.rdd.union(other.rdd).reduceByKey(op),
+            self._rdd.union(other._rdd).reduceByKey(op, numPartitions=num_partitions),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
