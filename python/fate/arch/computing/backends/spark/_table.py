@@ -103,8 +103,9 @@ class Table(KVTable):
         output_value_serdes_type=None,
     ):
         op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
+        num_partitions = max(self.num_partitions, other.num_partitions)
         return from_rdd(
-            self.rdd.join(other.rdd).mapValues(lambda x: op(x[0], x[1])),
+            self.rdd.join(other.rdd, numPartitions=num_partitions).mapValues(lambda x: op(x[0], x[1])),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
@@ -134,7 +135,7 @@ class Table(KVTable):
     @_compute_info
     def subtractByKey(self, other: "Table", output_value_serdes_type=None):
         return from_rdd(
-            self.rdd.subtractByKey(other.rdd),
+            self.rdd.subtractByKey(other.rdd, numPartitions=self.num_partitions),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
