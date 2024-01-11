@@ -89,14 +89,17 @@ message PairBatch {
 
 message StoreLocator {
   int64 id = 1;
-  string store_type = 2;
+  string storeType = 2;
   string namespace = 3;
   string name = 4;
   string path = 5;
-  int32 total_partitions = 6;
-  int32 key_serdes_type = 7;
-  int32 value_serdes_type = 8;
-  int32 partitioner_type = 9;
+  int32 totalPartitions = 6;
+  string partitioner = 7;
+  string serdes = 8;
+
+  int32 key_serdes_type = 9;
+  int32 value_serdes_type = 10;
+  int32 partitioner_type = 11;
 }
 
 message Store {
@@ -131,10 +134,13 @@ message JobIO {
 message Job {
   string id = 1;
   string name = 2;
-  repeated JobIO inputs = 3;
-  repeated JobIO outputs = 4;
+  repeated Store inputs = 3;
+  repeated Store outputs = 4;
   repeated Functor functors = 5;
   map<string, string> options = 6;
+
+  repeated JobIO inputs_v2 = 7;
+  repeated JobIO outputs_v2 = 8;
 }
 
 message Task {

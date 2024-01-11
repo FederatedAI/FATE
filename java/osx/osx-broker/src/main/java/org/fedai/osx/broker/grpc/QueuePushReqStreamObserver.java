@@ -211,6 +211,8 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         ErJob job = new ErJob(
                 jobId,
                 RollPair.PUT_BATCH,
+                Lists.newArrayList(rp.getStore()),
+                Lists.newArrayList(rp.getStore()),
                 Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
                 Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
                 Lists.newArrayList(),
