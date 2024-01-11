@@ -245,29 +245,28 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
 
     data_manager = df.data_manager.duplicate()
 
-    def _block_counter(kvs, value_type="tensor"):
+    if isinstance(indexer, DataFrame):
+        bid = indexer.data_manager.infer_operable_blocks()[0]
+        block_table = df.block_table.join(indexer.block_table, lambda v1, v2: (v1, v2[bid]))
+    else:
+        block_table = df.block_table.join(indexer.shardings._data, lambda v1, v2: (v1, v2))
+
+    def _block_counter(kvs):
         size = 0
         first_block_id = None
         for k, value in kvs:
             if first_block_id is None:
                 first_block_id = k
 
-            if value_type == "tensor":
-                size += value.sum().item()
-            else:
-                size += len(value[0])
+            size += value[1].sum().item()
 
         return first_block_id, size
 
-    if isinstance(indexer, DataFrame):
-        _block_counter_func = functools.partial(_block_counter, value_type="dataframe")
-        block_info = sorted(
-            [summary[1] for summary in indexer.block_table.applyPartitions(_block_counter_func).collect()]
-        )
-    else:
-        block_info = sorted(
-            [summary[1] for summary in indexer.shardings._data.applyPartitions(_block_counter).collect()]
-        )
+    _block_counter_func = functools.partial(_block_counter)
+    block_info = sorted(
+        [summary[1] for summary in block_table.applyPartitions(_block_counter_func).collect()]
+    )
+
     block_order_mappings = dict()
     start_index = 0
     acc_block_num = 0
@@ -284,12 +283,6 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
 
     if start_index == 0:
         return df.empty_frame()
-
-    if isinstance(indexer, DataFrame):
-        bid = indexer.data_manager.infer_operable_blocks()[0]
-        block_table = df.block_table.join(indexer.block_table, lambda v1, v2: (v1, v2[bid]))
-    else:
-        block_table = df.block_table.join(indexer.shardings._data, lambda v1, v2: (v1, v2))
 
     _balance_block_func = functools.partial(
         _balance_blocks_with_index, partition_order_mappings=block_order_mappings, data_manager=data_manager
