@@ -34,7 +34,9 @@ data:
     namespace: experiment
     role: host_0
 tasks:
-  hetero-nn-binary-sshe:
-    script: test_nn_binary_sshe.py
-  hetero-nn-binary-fedpass:
-    script: test_nn_binary_fedpass.py
+  homo-nn-binary:
+    script: test_nn_binary.py
+  homo-nn-multi:
+    script: test_nn_multi.py
+  homo-nn-regression:
+    script: test_nn_regression.py
