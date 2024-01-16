@@ -255,7 +255,7 @@ def retrieval_row(df: "DataFrame", indexer: Union["DTensor", "DataFrame"]):
         size = 0
         first_block_id = None
         for k, value in kvs:
-            if first_block_id is None:
+            if first_block_id is None or first_block_id > k:
                 first_block_id = k
 
             size += value[1].sum().item()
@@ -340,6 +340,9 @@ def _balance_blocks_with_index(kvs, partition_order_mappings: dict = None, data_
     block_num = data_manager.block_num
     ret_blocks = [[] for _ in range(block_num)]
     block_size = 0
+
+    kvs = sorted(kvs)
+
     for _, (blocks, t) in kvs:
         if block_id is None:
             block_id = partition_order_mappings[_]["start_block_id"]
