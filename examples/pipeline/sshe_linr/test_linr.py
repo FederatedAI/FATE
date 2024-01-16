@@ -41,7 +41,7 @@ def main(config="../config.yaml", namespace=""):
                       epochs=2,
                       batch_size=100,
                       init_param={"fit_intercept": True},
-                      train_data=scale_0.outputs["output_data"],
+                      train_data=scale_0.outputs["train_output_data"],
                       reveal_every_epoch=False,
                       early_stop="diff",
                       reveal_loss_freq=1,
