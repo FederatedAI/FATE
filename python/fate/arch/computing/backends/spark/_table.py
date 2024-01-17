@@ -99,13 +99,16 @@ class Table(KVTable):
     def join(
         self,
         other: "Table",
-        merge_op: Callable[[V, V], V] = lambda x, y: x,
+        merge_op: Callable[[V, V], V] = None,
         output_value_serdes_type=None,
     ):
-        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         num_partitions = max(self.num_partitions, other.num_partitions)
+        rdd = self.rdd.join(other.rdd, numPartitions=num_partitions)
+        if merge_op is not None:
+            op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
+            rdd = rdd.mapValues(lambda x: op(x[0], x[1]))
         return from_rdd(
-            self.rdd.join(other.rdd, numPartitions=num_partitions).mapValues(lambda x: op(x[0], x[1])),
+            rdd=rdd,
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
@@ -134,8 +137,9 @@ class Table(KVTable):
     @auto_trace
     @_compute_info
     def subtractByKey(self, other: "Table", output_value_serdes_type=None):
+        num_partitions = max(self.num_partitions, other.num_partitions)
         return from_rdd(
-            self.rdd.subtractByKey(other.rdd, numPartitions=self.num_partitions),
+            self.rdd.subtractByKey(other.rdd, numPartitions=num_partitions),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
