@@ -43,6 +43,7 @@ import org.fedai.osx.core.exceptions.*;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.router.RouterInfo;
 import org.fedai.osx.core.utils.FlowLogUtil;
+import org.fedai.osx.core.utils.JsonUtil;
 import org.fedai.osx.core.utils.ToStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,7 +197,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         }
 
         // use in-memory store here
-        rpOptions.put(Dict.STORE_TYPE_SNAKECASE, "IN_MEMORY");
+//        rpOptions.put(Dict.STORE_TYPE_SNAKECASE, "IN_MEMORY");
 
         // table creates here
         RollPair rp = ctx.load(namespace, name, rpOptions);
@@ -213,8 +214,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                 RollPair.PUT_BATCH,
                 Lists.newArrayList(rp.getStore()),
                 Lists.newArrayList(rp.getStore()),
-                Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
-                Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
                 Lists.newArrayList(),
                 jobOptions);
 
@@ -240,6 +239,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch, routerInfo));
+        logger.info("putBatchSinkPushReqSO = {}", JsonUtil.object2Json(putBatchSinkPushReqSO));
     }
 
 
