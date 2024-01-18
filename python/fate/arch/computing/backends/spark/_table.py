@@ -43,8 +43,8 @@ class HDFSCoder:
     def decode(data: str):
         data = bytes.fromhex(data)
         size = struct.unpack(">Q", data[:8])[0]
-        key = data[8: 8 + size]
-        value = data[8 + size:]
+        key = data[8 : 8 + size]
+        value = data[8 + size :]
         return key, value
 
 
@@ -77,34 +77,37 @@ class Table(KVTable):
         return self._rdd
 
     def _binary_sorted_map_partitions_with_index(
-            self,
-            other: "Table",
-            binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
-            key_serdes,
-            key_serdes_type,
-            partitioner,
-            partitioner_type,
-            first_input_value_serdes,
-            first_input_value_serdes_type,
-            second_input_value_serdes,
-            second_input_value_serdes_type,
-            output_value_serdes,
-            output_value_serdes_type,
+        self,
+        other: "Table",
+        binary_map_partitions_with_index_op: Callable[[int, Iterable, Iterable], Iterable],
+        key_serdes,
+        key_serdes_type,
+        partitioner,
+        partitioner_type,
+        first_input_value_serdes,
+        first_input_value_serdes_type,
+        second_input_value_serdes,
+        second_input_value_serdes_type,
+        output_value_serdes,
+        output_value_serdes_type,
     ):
         raise NotImplementedError("binary sorted map partitions with index not supported in spark backend")
 
     @auto_trace
     @_compute_info
     def join(
-            self,
-            other: "Table",
-            merge_op: Callable[[V, V], V] = lambda x, y: x,
-            output_value_serdes_type=None,
+        self,
+        other: "Table",
+        merge_op: Callable[[V, V], V] = None,
+        output_value_serdes_type=None,
     ):
-        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         num_partitions = max(self.num_partitions, other.num_partitions)
+        rdd = self.rdd.join(other.rdd, numPartitions=num_partitions)
+        if merge_op is not None:
+            op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
+            rdd = rdd.mapValues(lambda x: op(x[0], x[1]))
         return from_rdd(
-            self.rdd.join(other.rdd, numPartitions=num_partitions).mapValues(lambda x: op(x[0], x[1])),
+            rdd=rdd,
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
@@ -141,12 +144,12 @@ class Table(KVTable):
         )
 
     def mapPartitionsWithIndexNoSerdes(
-            self,
-            map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
-            shuffle=False,
-            output_key_serdes_type=None,
-            output_value_serdes_type=None,
-            output_partitioner_type=None,
+        self,
+        map_partition_op: Callable[[int, Iterable[Tuple[bytes, bytes]]], Iterable[Tuple[bytes, bytes]]],
+        shuffle=False,
+        output_key_serdes_type=None,
+        output_value_serdes_type=None,
+        output_partitioner_type=None,
     ):
         # Note: since we use this method to send data to other parties, and if the engine in other side is not spark,
         # we should guarantee the data properly partitioned before we send each partition to other side.
@@ -194,23 +197,23 @@ class Table(KVTable):
         raise NotImplementedError("drop num not supported in spark backend")
 
     def _impl_map_reduce_partitions_with_index(
-            self,
-            map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
-            reduce_partition_op: Optional[Callable[[Any, Any], Any]],
-            shuffle: bool,
-            input_key_serdes,
-            input_key_serdes_type: int,
-            input_value_serdes,
-            input_value_serdes_type: int,
-            input_partitioner,
-            input_partitioner_type: int,
-            output_key_serdes,
-            output_key_serdes_type: int,
-            output_value_serdes,
-            output_value_serdes_type: int,
-            output_partitioner,
-            output_partitioner_type: int,
-            output_num_partitions: int,
+        self,
+        map_partition_op: Callable[[int, Iterable[Tuple[K, V]]], Iterable],
+        reduce_partition_op: Optional[Callable[[Any, Any], Any]],
+        shuffle: bool,
+        input_key_serdes,
+        input_key_serdes_type: int,
+        input_value_serdes,
+        input_value_serdes_type: int,
+        input_partitioner,
+        input_partitioner_type: int,
+        output_key_serdes,
+        output_key_serdes_type: int,
+        output_value_serdes,
+        output_value_serdes_type: int,
+        output_partitioner,
+        output_partitioner_type: int,
+        output_num_partitions: int,
     ) -> "KVTable":
         rdd = self.rdd.mapPartitionsWithIndex(map_partition_op)
 
@@ -226,11 +229,11 @@ class Table(KVTable):
     @auto_trace
     @_compute_info
     def sample(
-            self,
-            *,
-            fraction: typing.Optional[float] = None,
-            num: typing.Optional[int] = None,
-            seed=None,
+        self,
+        *,
+        fraction: typing.Optional[float] = None,
+        num: typing.Optional[int] = None,
+        seed=None,
     ):
         if fraction is not None:
             return from_rdd(self.rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
