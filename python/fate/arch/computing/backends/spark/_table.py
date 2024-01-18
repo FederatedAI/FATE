@@ -236,10 +236,10 @@ class Table(KVTable):
         seed=None,
     ):
         if fraction is not None:
-            return from_rdd(self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
+            return from_rdd(self.rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
 
         if num is not None:
-            return from_rdd(_exactly_sample(self._rdd, num, seed=seed))
+            return from_rdd(_exactly_sample(self.rdd, num, seed=seed))
 
         raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
