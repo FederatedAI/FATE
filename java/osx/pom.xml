@@ -11,6 +11,7 @@
     <modules>
         <module>osx-core</module>
         <module>osx-broker</module>
+        <module>osx-pb</module>
     </modules>
 
     <properties>

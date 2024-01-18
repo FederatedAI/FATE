@@ -16,7 +16,7 @@
 package org.fedai.osx.broker.eggroll;
 
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.util.TimeUtils;
+import org.fedai.osx.core.utils.TimeUtils;
 
 public class IdUtils {
     private static String job = "job";

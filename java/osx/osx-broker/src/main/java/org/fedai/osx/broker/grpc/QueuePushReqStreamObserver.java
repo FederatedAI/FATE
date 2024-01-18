@@ -239,7 +239,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch, routerInfo));
-        logger.info("putBatchSinkPushReqSO = {}", JsonUtil.object2Json(putBatchSinkPushReqSO));
     }
 
 
