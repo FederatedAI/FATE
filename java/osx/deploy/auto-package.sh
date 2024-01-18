@@ -21,6 +21,8 @@ fi
 
 cp -r osx-broker/target/*.jar deploy/osx/lib
 cp -r osx-broker/target/lib/* deploy/osx/lib
+cp osx-pb-v2/target/*.jar deploy/osx/lib
+cp osx-pb-v3/target/*.jar deploy/osx/lib
 cp  osx-broker/src/main/resources/broker/*  deploy/osx/conf/broker
 cp -r osx-broker/src/main/resources/components/* deploy/osx/conf/components
 cp  bin/service.sh deploy/osx/
