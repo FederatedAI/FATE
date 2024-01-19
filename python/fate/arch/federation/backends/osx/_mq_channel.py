@@ -80,6 +80,12 @@ class MQChannel(object):
         self._dst_role = dst_role
         self._channel = None
         self._stub = None
+        self._timeout = None
+
+        if self._timeout is None:
+            from fate.arch.config import cfg
+            self._timeout = cfg.federation.osx.timeout
+
         LOGGER.debug(f"init, mq={self}")
 
     def __str__(self):
@@ -117,7 +123,7 @@ class MQChannel(object):
     # @nretry
     def consume(self):
         self._get_or_create_channel()
-        inbound = osx_pb2.PopInbound(topic=self._receive_topic, timeout=36000000)
+        inbound = osx_pb2.PopInbound(topic=self._receive_topic, timeout=self._timeout)
         metadata = self.prepare_metadata_consume()
         result = self._stub.pop(request=inbound, metadata=metadata)
         # LOGGER.debug(f"consume, result={result.code}, mq={self}")
