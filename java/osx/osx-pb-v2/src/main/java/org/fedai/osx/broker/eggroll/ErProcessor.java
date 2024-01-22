@@ -16,7 +16,6 @@
 package org.fedai.osx.broker.eggroll;
 
 import com.webank.eggroll.core.meta.Meta;
-import org.fedai.osx.core.constant.Dict;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,9 +23,9 @@ public class ErProcessor extends BaseProto<Meta.Processor> {
 
     long id = -1;
     long serverNodeId = -1;
-    String name = Dict.EMPTY;
-    String processorType = Dict.EMPTY;
-    String status = Dict.EMPTY;
+    String name = "";
+    String processorType = "";
+    String status = "";
     ErEndpoint commandEndpoint;
     ErEndpoint transferEndpoint;
     int pid = -1;

@@ -16,8 +16,8 @@
 package org.fedai.osx.broker.eggroll;
 
 import com.webank.eggroll.core.meta.Meta;
+import io.grpc.internal.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.core.utils.JsonUtil;
 
 public class ErStoreLocator extends BaseProto<Meta.StoreLocator> {
 
@@ -141,7 +141,7 @@ public class ErStoreLocator extends BaseProto<Meta.StoreLocator> {
     }
 
     public String toString() {
-        return JsonUtil.object2Json(this);
+        return PbUtils.object2Json(this);
     }
 
 
