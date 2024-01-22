@@ -34,7 +34,7 @@
 > Algorithm Performance Improvements: (Comparison with FATE-v1.11.*)
 * PSI (Privacy Set Intersection): tested on a dataset of 100 million with an intersection result of 100 million, 1.8+ times of FATE-v1.11.4
 * Hetero-SSHE-LR: tested on data of guest 10w * 30 dimensions and host 10w * 300 dimensions, 4.3+ times of FATE-v1.11.4
-* Hetero-NN(Based on FedPass Protocol):  tested on data of guest 10w * 30 dimensions and host 10w * 300 dimensions, basically consistent with the plaintext performance, 56+ times of FATE-v1.11.4 
+* Hetero-NN(Based on FedPass Protocol):  tested on data of guest 10w * 30 dimensions and host 10w * 300 dimensions, basically consistent with the plaintext performance, 143+ times of FATE-v1.11.4 
 * Hetero-Coordinated-LR: tested on data of guest 10w * 30 dimensions and host 10w * 300 dimensions, 1.2+ times of FATE-v1.11.4
 * Hetero-Feature-Binning: tested on data of guest 10w * 30 dimensions and host 10w * 300 dimensions, 1.5+ times of FATE-v1.11.4
 

@@ -41,7 +41,7 @@ pip install fate_client[fate,fate_flow]==2.0.0
 #### 2.2.1.2 服务初始化
 ```shell
 fate_flow init --ip 127.0.0.1 --port 9380 --home $HOME_DIR
-pipeline --ip 127.0.0.1 --port 9380
+pipeline init --ip 127.0.0.1 --port 9380
 ```
 - `ip`：服务运行的ip
 - `port`：服务运行的 http 端口
