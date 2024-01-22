@@ -12,6 +12,7 @@
         <module>osx-core</module>
         <module>osx-broker</module>
         <module>osx-pb-v2</module>
+        <module>osx-pb-v3</module>
     </modules>
 
     <properties>

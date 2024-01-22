@@ -17,11 +17,11 @@
             <version>${osx.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>osx</groupId>
-            <artifactId>osx-pb-v2</artifactId>
-            <version>${osx.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>osx</groupId>-->
+<!--            <artifactId>osx-pb-v2</artifactId>-->
+<!--            <version>${osx.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
