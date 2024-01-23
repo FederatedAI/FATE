@@ -290,7 +290,7 @@ class CoordinatedLREstimatorGuest(HeteroModule):
         loss += torch.matmul((1 / h * Xw).T, Xw_h) - torch.matmul((2 / h * Y).T, Xw_h)
 
         for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
-            loss += 0.125 / h * Xw2_h
+            loss += 2 / h * Xw2_h
         h_loss_list = batch_ctx.hosts.get("h_loss")
         for h_loss in h_loss_list:
             if h_loss is not None:
