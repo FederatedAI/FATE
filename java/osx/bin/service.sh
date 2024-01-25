@@ -248,6 +248,7 @@ start() {
 	if [[ $? != 1 ]]; then
 	  choose_gc_log_directory
     choose_gc_options
+
     JAVA_OPT="${JAVA_OPT} -server -Xms4g -Xmx4g"
     JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
     JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
@@ -256,17 +257,15 @@ start() {
     JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_EXT}"
 		mklogsdir
     JAVA_OPT="${JAVA_OPT} -cp conf/broker/:lib/*:extension/*:${OSX_HOME}/lib/${project_name}-${module}-${module_version}.jar"
-
-    file="conf/broker/broker.properties"
-    variable="eggroll.version"
-
-    version=$(grep "^$variable=" "$file" | cut -d'=' -f2)
-    if [[ version == 2* ]]; then
-      JAVA_OPT="${JAVA_OPT} -exclude osx-pb-v3*.jar"
+    properties_file="conf/broker/broker.properties"
+    property_name="eggroll.version"
+    eggroll_version=$(grep -w "^$property_name" "$properties_file" | cut -d'=' -f2)
+    eggroll_version=$(echo $eggroll_version | sed -e 's/^[[:space:]]*//')
+    if [[ $eggroll_version == 2* ]]; then
+      JAVA_OPT="${JAVA_OPT}:pb_lib/osx-pb-v2*.jar"
     else
-      JAVA_OPT="${JAVA_OPT} -exclude osx-pb-v2*.jar"
+      JAVA_OPT="${JAVA_OPT}:pb_lib/osx-pb-v3*.jar"
     fi
-
     JAVA_OPT="${JAVA_OPT} ${main_class}"
     JAVA_OPT="${JAVA_OPT} -c ${osx_conf} "
     cmd="$JAVA ${JAVA_OPT}"
