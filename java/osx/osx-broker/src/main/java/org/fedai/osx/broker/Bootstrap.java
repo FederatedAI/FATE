@@ -22,6 +22,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.N;
+import org.fedai.osx.broker.eggroll.CommandURI;
+import org.fedai.osx.broker.eggroll.RollPair;
 import org.fedai.osx.broker.queue.TransferQueueManager;
 import org.fedai.osx.broker.server.OsxServer;
 import org.fedai.osx.broker.util.ApplicationStartedRunnerUtils;
@@ -88,9 +91,16 @@ public class Bootstrap {
             String configFilePath = configDir + "/broker/broker.properties";
             Properties environment = PropertiesUtil.getProperties(configFilePath);
             MetaInfo.init(environment);
+            initEggrollVerssion();
         } catch (Exception e) {
             logger.error("init MetaInfo error", e);
             System.exit(1);
+        }
+    }
+
+    private static void initEggrollVerssion(){
+        if(MetaInfo.EGGROLL_VERSSION.startsWith("2")){
+            RollPair.EGG_RUN_TASK_COMMAND = new CommandURI(RollPair.EGG_PAIR_URI_PREFIX_V2 + "/" + RollPair.RUN_TASK);
         }
     }
 

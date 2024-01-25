@@ -196,7 +196,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         }
 
         // use in-memory store here
-        rpOptions.put(Dict.STORE_TYPE_SNAKECASE, "IN_MEMORY");
+        if(!MetaInfo.EGGROLL_VERSSION.startsWith("2")){
+            rpOptions.put(Dict.STORE_TYPE_SNAKECASE, "IN_MEMORY");
+        }
 
         // table creates here
         RollPair rp = ctx.load(namespace, name, rpOptions);
