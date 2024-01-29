@@ -18,7 +18,6 @@ package org.fedai.osx.broker.grpc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.command.Command;
@@ -36,7 +35,6 @@ import org.fedai.osx.core.config.MetaInfo;
 import org.fedai.osx.core.constant.ActionType;
 import org.fedai.osx.core.constant.Dict;
 import org.fedai.osx.core.constant.TransferStatus;
-import org.fedai.osx.core.constant.UriConstants;
 import org.fedai.osx.core.context.OsxContext;
 import org.fedai.osx.core.context.Protocol;
 import org.fedai.osx.core.exceptions.*;
@@ -131,12 +129,31 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                 logger.error("invalid router info {}, grpc stream is not support http1.x", routerInfo);
                 throw new SysException("invalid router info for grpc stream");
             } else {
-                ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo());
+                ManagedChannel managedChannel = null;
+                if (MetaInfo.PROPERTY_REMOTE_KEEPALIVE) {
+                    managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo());
+                } else {
+                    managedChannel = GrpcConnectionFactory.createManagedChannelNoPool(context.getRouterInfo());
+                }
                 DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
+                ManagedChannel finalManagedChannel = managedChannel;
                 ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, () -> {
                     finishLatch.countDown();
+                    if (!MetaInfo.PROPERTY_REMOTE_KEEPALIVE) {
+                        try {
+                            finalManagedChannel.shutdown();
+                        } catch (Throwable e) {
+                        }
+                    }
                 }, (t) -> {
                     finishLatch.countDown();
+                    if (!MetaInfo.PROPERTY_REMOTE_KEEPALIVE) {
+                        try {
+                            finalManagedChannel.shutdown();
+                        } catch (Throwable e) {
+
+                        }
+                    }
                 });
                 forwardPushReqSO = stub.push(forwardPushRespSO);
             }
@@ -196,7 +213,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         }
 
         // use in-memory store here
-        if(!MetaInfo.EGGROLL_VERSSION.startsWith("2")){
+        if (!MetaInfo.EGGROLL_VERSSION.startsWith("2")) {
             rpOptions.put(Dict.STORE_TYPE_SNAKECASE, "IN_MEMORY");
         }
 
@@ -213,8 +230,8 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         ErJob job = new ErJob(
                 jobId,
                 RollPair.PUT_BATCH,
-                Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
-                Lists.newArrayList(new ErJobIO(rp.getStore(), new ErSerdes(0), new ErSerdes(0), new ErPartitioner(0))),
+                rp.getStore(),
+                rp.getStore(),
                 Lists.newArrayList(),
                 jobOptions);
 

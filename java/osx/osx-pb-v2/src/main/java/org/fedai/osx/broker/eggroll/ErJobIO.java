@@ -24,6 +24,14 @@ public class ErJobIO extends BaseProto<Meta.JobIO> {
     ErSerdes valueSerdes;
     ErPartitioner partitioner;
 
+    public ErJobIO(ErStore erStore) {
+        this.erStore = erStore;
+        this.keySerdes = new ErSerdes(0);
+        this.valueSerdes = new ErSerdes(0);
+        this.partitioner = new ErPartitioner(0);
+    }
+
+
     public ErJobIO(ErStore erStore, ErSerdes keySerdes, ErSerdes valueSerdes, ErPartitioner partitioner) {
         this.erStore = erStore;
         this.keySerdes = keySerdes;

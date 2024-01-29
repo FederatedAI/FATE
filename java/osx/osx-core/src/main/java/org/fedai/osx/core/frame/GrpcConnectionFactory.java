@@ -160,6 +160,11 @@ public class GrpcConnectionFactory {
         return  null;
     }
 
+    public static  ManagedChannel createManagedChannelNoPool(RouterInfo routerInfo){
+        ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
+        return  managedChannel;
+    }
+
 
     private static GrpcChannelInfo buildDefaultGrpcChannelInfo() {
         GrpcChannelInfo grpcChannelInfo = new GrpcChannelInfo();

@@ -18,6 +18,7 @@ package org.fedai.osx.broker.eggroll;
 import com.google.common.collect.Lists;
 import com.webank.eggroll.core.meta.Meta;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,6 +32,20 @@ public class ErJob extends BaseProto<Meta.Job> {
     List<ErStore> outputs;
     List<ErFunctor> functors;
     Map<String, String> options;
+
+    public ErJob(String id, String name, ErStore input,
+                 ErStore output,
+                 List<ErFunctor> functors,
+                 Map<String, String> options) {
+        this.id = id;
+        this.name = name;
+        this.inputs = new ArrayList<>();
+        inputs.add(input);
+        this.outputs = new ArrayList<>();
+        outputs.add(output);
+        this.functors = functors;
+        this.options = options;
+    }
 
     public ErJob(String id, String name, List<ErStore> inputs,
                  List<ErStore> outputs,

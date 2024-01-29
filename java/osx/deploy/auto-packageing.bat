@@ -40,8 +40,8 @@ if not exist "lib" (
 )
 
 xcopy /y osx-broker\target\*.jar deploy\osx\lib\
-xcopy /y osx-pb-v2\target\*.jar deploy\osx\pb_lib\
-xcopy /y osx-pb-v3\target\*.jar deploy\osx\pb_lib\
+xcopy /y osx-pb-v2\target\*.jar deploy\osx\lib\pb_lib
+xcopy /y osx-pb-v3\target\*.jar deploy\osx\lib\pb_lib
 xcopy /y /e osx-broker\target\lib\* deploy\osx\lib\
 xcopy /y osx-broker\src\main\resources\broker\* deploy\osx\conf\broker\
 xcopy /y /e osx-broker\src\main\resources\components\* deploy\osx\conf\components\
