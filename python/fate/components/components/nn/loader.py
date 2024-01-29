@@ -20,6 +20,7 @@ from abc import ABC, abstractmethod
 import json
 import yaml
 import difflib
+import torch as t
 
 
 class _Source(object):
@@ -162,12 +163,18 @@ class Loader(AbstractLoader):
         )
 
 
-class ModelLoader(Loader):
+class ModelLoader(Loader, t.nn.Module):
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
             # add prefix for moduele loader
             module_name = f"{_Source.MODEL_ZOO}.{module_name}"
+        super(t.nn.Module, self).__init__()
         super(ModelLoader, self).__init__(module_name, item_name, source, **kwargs)
+
+    def __repr__(self):
+        return '{}(module_name={}, item_name={}, source={}, kwargs={})'.format( \
+            self.__class__.__name__, self.module_name, self.item_name, self.source, self.kwargs)
+
 
 
 class DatasetLoader(Loader):
