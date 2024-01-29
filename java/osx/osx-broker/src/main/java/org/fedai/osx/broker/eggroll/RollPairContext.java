@@ -43,8 +43,7 @@ public class RollPairContext {
         String storeType = options.getOrDefault(Dict.STORE_TYPE, options.getOrDefault(Dict.STORE_TYPE_SNAKECASE, defaultStoreTypeValue));
         int totalPartitions = Integer.parseInt(options.getOrDefault(Dict.TOTAL_PARTITIONS, options.getOrDefault(Dict.TOTAL_PARTITIONS_SNAKECASE, "1")));
         ErStoreLocator erStoreLocator = new ErStoreLocator(namespace, name, Dict.EMPTY, storeType, totalPartitions,
-                options.getOrDefault(Dict.PARTITIONER, PartitionerTypes.BYTESTRING_HASH.name()),
-                options.getOrDefault(Dict.SERDES, defaultSerdesType));
+                0, 0, 0);
         ErStore store = new ErStore(erStoreLocator, Lists.newArrayList(), options);
         ErStore loaded = erSession.clusterManagerClient.getOrCreateStore(store);
         return new RollPair(loaded, this, Maps.newHashMap());
