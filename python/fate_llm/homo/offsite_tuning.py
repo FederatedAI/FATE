@@ -1,6 +1,6 @@
 from torch.nn.modules import Module
 from fate.ml.aggregator.base import Aggregator
-from fate.ml.nn.homo.fedavg import FedAVGClient, FedAVGServer, AggregatorClientWrapper, AggregatorServerWrapper, FedArguments
+from fate_llm.homo.fedavg import Seq2SeqFedAVGClient, Seq2SeqFedAVGServer, Seq2SeqTrainingArguments
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
 from dataclasses import dataclass
 from typing import List, Optional, Callable, Tuple
@@ -18,23 +18,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class OffsiteTuningTrainerClient(FedAVGClient):
+class OffsiteTuningTrainerClient(Seq2SeqFedAVGClient):
     
     def __init__(
         self,
         ctx: Context,
         model: OffsiteTuningBaseModel,
-        training_args: TrainingArguments,
+        training_args: Seq2SeqTrainingArguments,
         fed_args: FedArguments,
         train_set: Dataset,
         val_set: Dataset = None,
-        loss_fn: Module = None,
         optimizer: Optimizer = None,
         scheduler: _LRScheduler = None,
-        callbacks: List[TrainerCallback] = [],
         data_collator: Callable = None,
         tokenizer: Optional[PreTrainedTokenizer] = None,
-        use_hf_default_behavior: bool = False,
+        callbacks: List[TrainerCallback] = [],
         compute_metrics: Callable = None,
         aggregate_model: bool = False,
     ):
@@ -53,15 +51,13 @@ class OffsiteTuningTrainerClient(FedAVGClient):
             fed_args,
             train_set,
             val_set,
-            loss_fn,
             optimizer,
             scheduler,
-            callbacks,
             data_collator,
             tokenizer,
-            use_hf_default_behavior,
+            callbacks,
             compute_metrics,
-            local_mode,
+            local_mode
         )
         self._aggregate_model = aggregate_model
 
@@ -78,7 +74,7 @@ class OffsiteTuningTrainerClient(FedAVGClient):
     def on_federation(
         self,
         ctx: Context,
-        aggregator: AggregatorClientWrapper,
+        aggregator,
         fed_args: FedArguments,
         args: TrainingArguments,
         model: Optional[OffsiteTuningBaseModel] = None,
@@ -104,17 +100,12 @@ class OffsiteTuningTrainerClient(FedAVGClient):
 
     def init_aggregator(self, ctx: Context, fed_args: FedArguments):
         if self._aggregate_model:
-            aggregate_type = "weighted_mean"
-            aggregator_name = "fedavg"
-            aggregator = fed_args.aggregator
-            return AggregatorClientWrapper(
-                ctx, aggregate_type, aggregator_name, aggregator, sample_num=len(self.train_dataset), args=self._args
-            )
+            return super().init_aggregator(ctx, fed_args)
         else:
             return None
 
 
-class OffsiteTuningTrainerServer(FedAVGServer):
+class OffsiteTuningTrainerServer(Seq2SeqFedAVGServer):
     
     def __init__(self, ctx: Context, model: OffsiteTuningBaseModel, aggregate_model=False) -> None:
         self._aggregate_model = aggregate_model
@@ -134,7 +125,7 @@ class OffsiteTuningTrainerServer(FedAVGServer):
         self.model.load_submodel_weights(parameters_to_get)
         logger.info('received trained submodel weigths from the client')
 
-    def on_federation(self, ctx: Context, aggregator: AggregatorServerWrapper, agg_iter_idx: int):
+    def on_federation(self, ctx: Context, aggregator, agg_iter_idx: int):
         if self._aggregate_model:
             aggregator.model_aggregation(ctx)
         else:
@@ -142,7 +133,7 @@ class OffsiteTuningTrainerServer(FedAVGServer):
 
     def init_aggregator(self, ctx):
         if self._aggregate_model:
-            return AggregatorServerWrapper(ctx)
+            return super().init_aggregator(ctx)
         else:
             return None
         
