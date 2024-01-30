@@ -262,9 +262,9 @@ start() {
     eggroll_version=$(grep -w "^$property_name" "$properties_file" | cut -d'=' -f2)
     eggroll_version=$(echo $eggroll_version | sed -e 's/^[[:space:]]*//')
     if [[ $eggroll_version == 2* ]]; then
-      JAVA_OPT="${JAVA_OPT}:lib/pb_lib/osx-pb-v2*.jar"
+      JAVA_OPT="${JAVA_OPT}:pb_lib/v2/*"
     else
-      JAVA_OPT="${JAVA_OPT}:lib/pb_lib/osx-pb-v3*.jar"
+      JAVA_OPT="${JAVA_OPT}:pb_lib/v3/*"
     fi
     JAVA_OPT="${JAVA_OPT} ${main_class}"
     JAVA_OPT="${JAVA_OPT} -c ${osx_conf} "

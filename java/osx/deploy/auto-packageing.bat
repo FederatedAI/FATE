@@ -18,7 +18,11 @@ if not exist "osx\lib" (
 )
 if not exist "osx\pb_lib" (
     mkdir osx\pb_lib
+    mkdir osx\pb_lib\v2
+    mkdir osx\pb_lib\v3
 )
+
+
 if not exist "osx\conf" (
     mkdir osx\conf
 )
@@ -40,8 +44,8 @@ if not exist "lib" (
 )
 
 xcopy /y osx-broker\target\*.jar deploy\osx\lib\
-xcopy /y osx-pb-v2\target\*.jar deploy\osx\lib\pb_lib
-xcopy /y osx-pb-v3\target\*.jar deploy\osx\lib\pb_lib
+xcopy /y osx-pb-v2\target\*.jar deploy\osx\pb_lib\v2
+xcopy /y osx-pb-v3\target\*.jar deploy\osx\pb_lib\v3
 xcopy /y /e osx-broker\target\lib\* deploy\osx\lib\
 xcopy /y osx-broker\src\main\resources\broker\* deploy\osx\conf\broker\
 xcopy /y /e osx-broker\src\main\resources\components\* deploy\osx\conf\components\
