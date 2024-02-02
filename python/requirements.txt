@@ -24,7 +24,6 @@ peewee
 psutil>=5.7.0
 pycryptodomex==3.15.0
 PyMySQL==0.9.3
-pyspark==3.4.0
 python-dotenv==0.13.0
 redis==3.5.3
 urllib3==1.26.18
