@@ -46,7 +46,7 @@ filelock==3.3.1
 fastavro==1.4.1
 lightgbm==3.3.1
 shortuuid==1.0.9
-sklearn2pmml==0.90.0
+sklearn2pmml
 nyoka==5.3.0
 transformers==4.36.0
 impyla==0.18.0
