@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-pip>=21
+pip>=23.3
 apsw<3.10
 pkginfo==1.7.1
 beautifultable==1.0.0
@@ -9,8 +9,8 @@ casbin==1.16.6
 casbin-sqlalchemy-adapter==0.4.2
 cloudpickle==2.1.0
 cos-python-sdk-v5==1.9.10
-Werkzeug<3.0.0
-Flask==2.0.3
+Werkzeug>3.0.0
+Flask==2.3.2
 gmpy2==2.0.8
 joblib==1.2.0
 kazoo==2.6.1
@@ -20,37 +20,36 @@ kubernetes>=12.0.1
 lmdb==1.3.0
 minio>=6.0.2, <7.0.0
 numpy==1.23.1
-peewee==3.9.3
+peewee
 psutil>=5.7.0
 pycryptodomex==3.15.0
 PyMySQL==0.9.3
 pyspark==3.4.0
 python-dotenv==0.13.0
 redis==3.5.3
-urllib3==1.26.5
-requests<2.26.0
+urllib3==1.26.18
+requests==2.31.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==1.0.1
-scipy==1.8.1
-tensorflow-cpu==2.11.1
+scipy==1.10.0
+# tensorflow-cpu==2.12.0
 torch==1.13.1+cpu
 torchvision==0.14.1+cpu
 torch-model-archiver==0.3.1
 coverage==4.5.2
 pika==1.2.1
 pandas==1.1.5
-cryptography==39.0.2
+cryptography==41.0.6
 sortedcontainers==2.2.2
 pytorch-lightning>=1.6.5
 filelock==3.3.1
-pulsar-client==2.10.2
 fastavro==1.4.1
 lightgbm==3.3.1
 shortuuid==1.0.9
 sklearn2pmml==0.90.0
 nyoka==5.3.0
-transformers==4.29.1
+transformers==4.36.0
 impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
@@ -58,15 +57,15 @@ ipcl-python==2.0.0
 
 
 # addtional requirements for eggroll
-grpcio==1.46.3
-grpcio-tools==1.46.3
+grpcio==1.56.2
+grpcio-tools==1.56.2
 numba==0.53.0
-protobuf==3.19.6
-pyarrow==6.0.1
+protobuf==4.24.4
+pyarrow
 mmh3==3.0.0
 
 # addtional requirements for fate-client
-click>=7.1.2,<8.0.0
+click
 colorama>=0.4.4
 loguru>=0.6.0
 poetry>=0.12
