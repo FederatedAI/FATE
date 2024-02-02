@@ -19,7 +19,7 @@ kfserving==0.5.1
 kubernetes>=12.0.1
 lmdb==1.3.0
 minio>=6.0.2, <7.0.0
-numpy==1.23.1
+numpy==1.24.4
 peewee
 psutil>=5.7.0
 pycryptodomex==3.15.0
@@ -52,7 +52,7 @@ transformers==4.36.0
 impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
-ipcl-python==2.0.0
+# ipcl-python==2.0.0
 
 
 # addtional requirements for eggroll
