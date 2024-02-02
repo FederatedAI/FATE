@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,20 +15,13 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14statistic-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"e\n\rStatisticMeta\x12\x12\n\nstatistics\x18\x01 \x03(\t\x12\x16\n\x0estatic_columns\x18\x02 \x03(\t\x12\x16\n\x0equantile_error\x18\x03 \x01(\x01\x12\x10\n\x08need_run\x18\x04 \x01(\x08\x42\x14\x42\x12StatisticMetaProtob\x06proto3')
 
-
-
-_STATISTICMETA = DESCRIPTOR.message_types_by_name['StatisticMeta']
-StatisticMeta = _reflection.GeneratedProtocolMessageType('StatisticMeta', (_message.Message,), {
-  'DESCRIPTOR' : _STATISTICMETA,
-  '__module__' : 'statistic_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.StatisticMeta)
-  })
-_sym_db.RegisterMessage(StatisticMeta)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'statistic_meta_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\022StatisticMetaProto'
-  _STATISTICMETA._serialized_start=64
-  _STATISTICMETA._serialized_end=165
+  _globals['_STATISTICMETA']._serialized_start=64
+  _globals['_STATISTICMETA']._serialized_end=165
 # @@protoc_insertion_point(module_scope)

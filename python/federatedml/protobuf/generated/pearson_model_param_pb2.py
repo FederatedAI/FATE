@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,40 +15,17 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19pearson-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x16\n\x05Names\x12\r\n\x05names\x18\x01 \x03(\t\"/\n\x0c\x41nonymousMap\x12\x11\n\tanonymous\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"\xb9\x02\n\x11PearsonModelParam\x12\r\n\x05party\x18\x01 \x01(\t\x12\x0f\n\x07parties\x18\x02 \x03(\t\x12\r\n\x05shape\x18\x03 \x01(\x05\x12\x0e\n\x06shapes\x18\x04 \x03(\x05\x12\r\n\x05names\x18\x05 \x03(\t\x12\x0c\n\x04\x63orr\x18\x06 \x03(\x01\x12\x12\n\nlocal_corr\x18\x07 \x03(\x01\x12@\n\tall_names\x18\x08 \x03(\x0b\x32-.com.webank.ai.fate.core.mlmodel.buffer.Names\x12K\n\ranonymous_map\x18\t \x03(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap\x12\x12\n\nmodel_name\x18\n \x01(\t\x12\x11\n\tlocal_vif\x18\x0b \x03(\x01\x42\x18\x42\x16PearsonModelParamProtob\x06proto3')
 
-
-
-_NAMES = DESCRIPTOR.message_types_by_name['Names']
-_ANONYMOUSMAP = DESCRIPTOR.message_types_by_name['AnonymousMap']
-_PEARSONMODELPARAM = DESCRIPTOR.message_types_by_name['PearsonModelParam']
-Names = _reflection.GeneratedProtocolMessageType('Names', (_message.Message,), {
-  'DESCRIPTOR' : _NAMES,
-  '__module__' : 'pearson_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.Names)
-  })
-_sym_db.RegisterMessage(Names)
-
-AnonymousMap = _reflection.GeneratedProtocolMessageType('AnonymousMap', (_message.Message,), {
-  'DESCRIPTOR' : _ANONYMOUSMAP,
-  '__module__' : 'pearson_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap)
-  })
-_sym_db.RegisterMessage(AnonymousMap)
-
-PearsonModelParam = _reflection.GeneratedProtocolMessageType('PearsonModelParam', (_message.Message,), {
-  'DESCRIPTOR' : _PEARSONMODELPARAM,
-  '__module__' : 'pearson_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PearsonModelParam)
-  })
-_sym_db.RegisterMessage(PearsonModelParam)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'pearson_model_param_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\026PearsonModelParamProto'
-  _NAMES._serialized_start=69
-  _NAMES._serialized_end=91
-  _ANONYMOUSMAP._serialized_start=93
-  _ANONYMOUSMAP._serialized_end=140
-  _PEARSONMODELPARAM._serialized_start=143
-  _PEARSONMODELPARAM._serialized_end=456
+  _globals['_NAMES']._serialized_start=69
+  _globals['_NAMES']._serialized_end=91
+  _globals['_ANONYMOUSMAP']._serialized_start=93
+  _globals['_ANONYMOUSMAP']._serialized_end=140
+  _globals['_PEARSONMODELPARAM']._serialized_start=143
+  _globals['_PEARSONMODELPARAM']._serialized_end=456
 # @@protoc_insertion_point(module_scope)

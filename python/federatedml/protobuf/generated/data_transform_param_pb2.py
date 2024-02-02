@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,68 +15,9 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1a\x64\x61ta-transform-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x83\x03\n\x19\x44\x61taTransformImputerParam\x12y\n\x15missing_replace_value\x18\x01 \x03(\x0b\x32Z.com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerParam.MissingReplaceValueEntry\x12u\n\x13missing_value_ratio\x18\x02 \x03(\x0b\x32X.com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerParam.MissingValueRatioEntry\x1a:\n\x18MissingReplaceValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x38\n\x16MissingValueRatioEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\x83\x03\n\x19\x44\x61taTransformOutlierParam\x12y\n\x15outlier_replace_value\x18\x01 \x03(\x0b\x32Z.com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierParam.OutlierReplaceValueEntry\x12u\n\x13outlier_value_ratio\x18\x02 \x03(\x0b\x32X.com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierParam.OutlierValueRatioEntry\x1a:\n\x18OutlierReplaceValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x38\n\x16OutlierValueRatioEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\x98\x02\n\x12\x44\x61taTransformParam\x12\x0e\n\x06header\x18\x01 \x03(\t\x12\x10\n\x08sid_name\x18\x02 \x01(\t\x12\x12\n\nlabel_name\x18\x03 \x01(\t\x12X\n\rimputer_param\x18\x04 \x01(\x0b\x32\x41.com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerParam\x12X\n\routlier_param\x18\x05 \x01(\x0b\x32\x41.com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierParam\x12\x18\n\x10\x61nonymous_header\x18\x06 \x03(\tB\x12\x42\x10\x44\x61taIOParamProtob\x06proto3')
 
-
-
-_DATATRANSFORMIMPUTERPARAM = DESCRIPTOR.message_types_by_name['DataTransformImputerParam']
-_DATATRANSFORMIMPUTERPARAM_MISSINGREPLACEVALUEENTRY = _DATATRANSFORMIMPUTERPARAM.nested_types_by_name['MissingReplaceValueEntry']
-_DATATRANSFORMIMPUTERPARAM_MISSINGVALUERATIOENTRY = _DATATRANSFORMIMPUTERPARAM.nested_types_by_name['MissingValueRatioEntry']
-_DATATRANSFORMOUTLIERPARAM = DESCRIPTOR.message_types_by_name['DataTransformOutlierParam']
-_DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY = _DATATRANSFORMOUTLIERPARAM.nested_types_by_name['OutlierReplaceValueEntry']
-_DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY = _DATATRANSFORMOUTLIERPARAM.nested_types_by_name['OutlierValueRatioEntry']
-_DATATRANSFORMPARAM = DESCRIPTOR.message_types_by_name['DataTransformParam']
-DataTransformImputerParam = _reflection.GeneratedProtocolMessageType('DataTransformImputerParam', (_message.Message,), {
-
-  'MissingReplaceValueEntry' : _reflection.GeneratedProtocolMessageType('MissingReplaceValueEntry', (_message.Message,), {
-    'DESCRIPTOR' : _DATATRANSFORMIMPUTERPARAM_MISSINGREPLACEVALUEENTRY,
-    '__module__' : 'data_transform_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerParam.MissingReplaceValueEntry)
-    })
-  ,
-
-  'MissingValueRatioEntry' : _reflection.GeneratedProtocolMessageType('MissingValueRatioEntry', (_message.Message,), {
-    'DESCRIPTOR' : _DATATRANSFORMIMPUTERPARAM_MISSINGVALUERATIOENTRY,
-    '__module__' : 'data_transform_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerParam.MissingValueRatioEntry)
-    })
-  ,
-  'DESCRIPTOR' : _DATATRANSFORMIMPUTERPARAM,
-  '__module__' : 'data_transform_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformImputerParam)
-  })
-_sym_db.RegisterMessage(DataTransformImputerParam)
-_sym_db.RegisterMessage(DataTransformImputerParam.MissingReplaceValueEntry)
-_sym_db.RegisterMessage(DataTransformImputerParam.MissingValueRatioEntry)
-
-DataTransformOutlierParam = _reflection.GeneratedProtocolMessageType('DataTransformOutlierParam', (_message.Message,), {
-
-  'OutlierReplaceValueEntry' : _reflection.GeneratedProtocolMessageType('OutlierReplaceValueEntry', (_message.Message,), {
-    'DESCRIPTOR' : _DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY,
-    '__module__' : 'data_transform_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierParam.OutlierReplaceValueEntry)
-    })
-  ,
-
-  'OutlierValueRatioEntry' : _reflection.GeneratedProtocolMessageType('OutlierValueRatioEntry', (_message.Message,), {
-    'DESCRIPTOR' : _DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY,
-    '__module__' : 'data_transform_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierParam.OutlierValueRatioEntry)
-    })
-  ,
-  'DESCRIPTOR' : _DATATRANSFORMOUTLIERPARAM,
-  '__module__' : 'data_transform_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformOutlierParam)
-  })
-_sym_db.RegisterMessage(DataTransformOutlierParam)
-_sym_db.RegisterMessage(DataTransformOutlierParam.OutlierReplaceValueEntry)
-_sym_db.RegisterMessage(DataTransformOutlierParam.OutlierValueRatioEntry)
-
-DataTransformParam = _reflection.GeneratedProtocolMessageType('DataTransformParam', (_message.Message,), {
-  'DESCRIPTOR' : _DATATRANSFORMPARAM,
-  '__module__' : 'data_transform_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataTransformParam)
-  })
-_sym_db.RegisterMessage(DataTransformParam)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'data_transform_param_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
@@ -90,18 +30,18 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY._serialized_options = b'8\001'
   _DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY._options = None
   _DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY._serialized_options = b'8\001'
-  _DATATRANSFORMIMPUTERPARAM._serialized_start=71
-  _DATATRANSFORMIMPUTERPARAM._serialized_end=458
-  _DATATRANSFORMIMPUTERPARAM_MISSINGREPLACEVALUEENTRY._serialized_start=342
-  _DATATRANSFORMIMPUTERPARAM_MISSINGREPLACEVALUEENTRY._serialized_end=400
-  _DATATRANSFORMIMPUTERPARAM_MISSINGVALUERATIOENTRY._serialized_start=402
-  _DATATRANSFORMIMPUTERPARAM_MISSINGVALUERATIOENTRY._serialized_end=458
-  _DATATRANSFORMOUTLIERPARAM._serialized_start=461
-  _DATATRANSFORMOUTLIERPARAM._serialized_end=848
-  _DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY._serialized_start=732
-  _DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY._serialized_end=790
-  _DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY._serialized_start=792
-  _DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY._serialized_end=848
-  _DATATRANSFORMPARAM._serialized_start=851
-  _DATATRANSFORMPARAM._serialized_end=1131
+  _globals['_DATATRANSFORMIMPUTERPARAM']._serialized_start=71
+  _globals['_DATATRANSFORMIMPUTERPARAM']._serialized_end=458
+  _globals['_DATATRANSFORMIMPUTERPARAM_MISSINGREPLACEVALUEENTRY']._serialized_start=342
+  _globals['_DATATRANSFORMIMPUTERPARAM_MISSINGREPLACEVALUEENTRY']._serialized_end=400
+  _globals['_DATATRANSFORMIMPUTERPARAM_MISSINGVALUERATIOENTRY']._serialized_start=402
+  _globals['_DATATRANSFORMIMPUTERPARAM_MISSINGVALUERATIOENTRY']._serialized_end=458
+  _globals['_DATATRANSFORMOUTLIERPARAM']._serialized_start=461
+  _globals['_DATATRANSFORMOUTLIERPARAM']._serialized_end=848
+  _globals['_DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY']._serialized_start=732
+  _globals['_DATATRANSFORMOUTLIERPARAM_OUTLIERREPLACEVALUEENTRY']._serialized_end=790
+  _globals['_DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY']._serialized_start=792
+  _globals['_DATATRANSFORMOUTLIERPARAM_OUTLIERVALUERATIOENTRY']._serialized_end=848
+  _globals['_DATATRANSFORMPARAM']._serialized_start=851
+  _globals['_DATATRANSFORMPARAM']._serialized_end=1131
 # @@protoc_insertion_point(module_scope)

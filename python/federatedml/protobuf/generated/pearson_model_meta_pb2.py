@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,20 +15,13 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18pearson-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\"\n\x10PearsonModelMeta\x12\x0e\n\x06shapes\x18\x01 \x03(\x05\x42\x17\x42\x15PearsonModelMetaProtob\x06proto3')
 
-
-
-_PEARSONMODELMETA = DESCRIPTOR.message_types_by_name['PearsonModelMeta']
-PearsonModelMeta = _reflection.GeneratedProtocolMessageType('PearsonModelMeta', (_message.Message,), {
-  'DESCRIPTOR' : _PEARSONMODELMETA,
-  '__module__' : 'pearson_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PearsonModelMeta)
-  })
-_sym_db.RegisterMessage(PearsonModelMeta)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'pearson_model_meta_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\025PearsonModelMetaProto'
-  _PEARSONMODELMETA._serialized_start=68
-  _PEARSONMODELMETA._serialized_end=102
+  _globals['_PEARSONMODELMETA']._serialized_start=68
+  _globals['_PEARSONMODELMETA']._serialized_end=102
 # @@protoc_insertion_point(module_scope)

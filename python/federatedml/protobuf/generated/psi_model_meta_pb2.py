@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,20 +15,13 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14psi-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x1e\n\x07PSIMeta\x12\x13\n\x0bmax_bin_num\x18\x01 \x01(\x05\x42\x1a\x42\x18\x42oostTreeModelParamProtob\x06proto3')
 
-
-
-_PSIMETA = DESCRIPTOR.message_types_by_name['PSIMeta']
-PSIMeta = _reflection.GeneratedProtocolMessageType('PSIMeta', (_message.Message,), {
-  'DESCRIPTOR' : _PSIMETA,
-  '__module__' : 'psi_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PSIMeta)
-  })
-_sym_db.RegisterMessage(PSIMeta)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'psi_model_meta_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\030BoostTreeModelParamProto'
-  _PSIMETA._serialized_start=64
-  _PSIMETA._serialized_end=94
+  _globals['_PSIMETA']._serialized_start=64
+  _globals['_PSIMETA']._serialized_end=94
 # @@protoc_insertion_point(module_scope)

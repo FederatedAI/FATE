@@ -29,7 +29,7 @@ packages = [
 package_data = {"": ["*"]}
 
 install_requires = [
-    "click>=7.1.2,<8.0.0",
+    "click",
     "loguru>=0.6.0",
     "poetry>=0.12",
     "pandas>=1.1.5",
@@ -47,7 +47,7 @@ entry_points = {
 
 setup_kwargs = {
     "name": "fate-client",
-    "version": "1.11.4",
+    "version": "1.11.5",
     "description": "Clients for FATE, including flow_client and pipeline",
     "long_description": "FATE Client\n===========\n\nTools for interacting with FATE.\n\nquick start\n-----------\n\n1. (optional) create virtual env\n\n   .. code-block:: bash\n\n      python -m venv venv\n      source venv/bin/activate\n\n\n2. install FATE Client\n\n   .. code-block:: bash\n\n      pip install fate-client\n\n\nPipeline\n========\n\nA high-level python API that allows user to design, start,\nand query FATE jobs in a sequential manner. For more information,\nplease refer to this `guide <./pipeline/README.rst>`__\n\nInitial Configuration\n---------------------\n\n1. Configure server information\n\n   .. code-block:: bash\n\n      # configure values in pipeline/config.yaml\n      # use real ip address to configure pipeline\n      pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs\n\n\nFATE Flow Command Line Interface (CLI) v2\n=========================================\n\nA command line interface providing series of commands for user to design, start,\nand query FATE jobs. For more information, please refer to this `guide <./flow_client/README.rst>`__\n\nInitial Configuration\n---------------------\n\n1. Configure server information\n\n   .. code-block:: bash\n\n      # configure values in conf/service_conf.yaml\n      flow init -c /data/projects/fate/conf/service_conf.yaml\n      # use real ip address to initialize cli\n      flow init --ip 127.0.0.1 --port 9380\n\n",
     "author": "FederatedAI",
