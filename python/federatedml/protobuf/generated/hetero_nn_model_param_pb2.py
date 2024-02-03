@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,40 +15,17 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bhetero-nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xb8\x01\n\x15InteractiveLayerParam\x12\x11\n\tacc_noise\x18\x01 \x01(\x0c\x12+\n#interactive_guest_saved_model_bytes\x18\x02 \x01(\x0c\x12*\n\"interactive_host_saved_model_bytes\x18\x03 \x03(\x0c\x12\x18\n\x10host_input_shape\x18\x04 \x03(\x05\x12\x19\n\x11guest_input_shape\x18\x05 \x01(\x05\"\x9c\x02\n\x12HeteroNNModelParam\x12 \n\x18\x62ottom_saved_model_bytes\x18\x01 \x01(\x0c\x12^\n\x17interactive_layer_param\x18\x02 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.InteractiveLayerParam\x12\x1d\n\x15top_saved_model_bytes\x18\x03 \x01(\x0c\x12\x10\n\x08is_empty\x18\x04 \x01(\x08\x12 \n\x18\x62ottom_model_input_shape\x18\x05 \x01(\x05\x12\x1d\n\x15top_model_input_shape\x18\x06 \x01(\x05\x12\x12\n\ncoae_bytes\x18\x07 \x01(\x0c\"\xe5\x01\n\rHeteroNNParam\x12Y\n\x15hetero_nn_model_param\x18\x01 \x01(\x0b\x32:.com.webank.ai.fate.core.mlmodel.buffer.HeteroNNModelParam\x12\x12\n\niter_epoch\x18\x02 \x01(\x05\x12\x14\n\x0chistory_loss\x18\x03 \x03(\x01\x12\x14\n\x0cis_converged\x18\x04 \x01(\x08\x12\x0e\n\x06header\x18\x05 \x03(\t\x12\x11\n\tnum_label\x18\x06 \x01(\x05\x12\x16\n\x0e\x62\x65st_iteration\x18\x07 \x01(\x05\x42\x19\x42\x17HeteroNNModelParamProtob\x06proto3')
 
-
-
-_INTERACTIVELAYERPARAM = DESCRIPTOR.message_types_by_name['InteractiveLayerParam']
-_HETERONNMODELPARAM = DESCRIPTOR.message_types_by_name['HeteroNNModelParam']
-_HETERONNPARAM = DESCRIPTOR.message_types_by_name['HeteroNNParam']
-InteractiveLayerParam = _reflection.GeneratedProtocolMessageType('InteractiveLayerParam', (_message.Message,), {
-  'DESCRIPTOR' : _INTERACTIVELAYERPARAM,
-  '__module__' : 'hetero_nn_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.InteractiveLayerParam)
-  })
-_sym_db.RegisterMessage(InteractiveLayerParam)
-
-HeteroNNModelParam = _reflection.GeneratedProtocolMessageType('HeteroNNModelParam', (_message.Message,), {
-  'DESCRIPTOR' : _HETERONNMODELPARAM,
-  '__module__' : 'hetero_nn_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.HeteroNNModelParam)
-  })
-_sym_db.RegisterMessage(HeteroNNModelParam)
-
-HeteroNNParam = _reflection.GeneratedProtocolMessageType('HeteroNNParam', (_message.Message,), {
-  'DESCRIPTOR' : _HETERONNPARAM,
-  '__module__' : 'hetero_nn_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.HeteroNNParam)
-  })
-_sym_db.RegisterMessage(HeteroNNParam)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'hetero_nn_model_param_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\027HeteroNNModelParamProto'
-  _INTERACTIVELAYERPARAM._serialized_start=72
-  _INTERACTIVELAYERPARAM._serialized_end=256
-  _HETERONNMODELPARAM._serialized_start=259
-  _HETERONNMODELPARAM._serialized_end=543
-  _HETERONNPARAM._serialized_start=546
-  _HETERONNPARAM._serialized_end=775
+  _globals['_INTERACTIVELAYERPARAM']._serialized_start=72
+  _globals['_INTERACTIVELAYERPARAM']._serialized_end=256
+  _globals['_HETERONNMODELPARAM']._serialized_start=259
+  _globals['_HETERONNMODELPARAM']._serialized_end=543
+  _globals['_HETERONNPARAM']._serialized_start=546
+  _globals['_HETERONNPARAM']._serialized_end=775
 # @@protoc_insertion_point(module_scope)

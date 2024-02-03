@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,53 +15,21 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x64\x61ta-io-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"J\n\x0bImputerMeta\x12\x12\n\nis_imputer\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x15\n\rmissing_value\x18\x03 \x03(\t\"J\n\x0bOutlierMeta\x12\x12\n\nis_outlier\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x15\n\routlier_value\x18\x03 \x03(\t\"\x9a\x04\n\nDataIOMeta\x12\x14\n\x0cinput_format\x18\x01 \x01(\t\x12\x11\n\tdelimitor\x18\x02 \x01(\t\x12\x11\n\tdata_type\x18\x03 \x01(\t\x12\x16\n\x0etag_with_value\x18\x04 \x01(\x08\x12\x1b\n\x13tag_value_delimitor\x18\x05 \x01(\t\x12\x12\n\nwith_label\x18\x06 \x01(\x08\x12\x12\n\nlabel_name\x18\x07 \x01(\t\x12\x12\n\nlabel_type\x18\x08 \x01(\t\x12\x15\n\routput_format\x18\t \x01(\t\x12I\n\x0cimputer_meta\x18\n \x01(\x0b\x32\x33.com.webank.ai.fate.core.mlmodel.buffer.ImputerMeta\x12I\n\x0coutlier_meta\x18\x0b \x01(\x0b\x32\x33.com.webank.ai.fate.core.mlmodel.buffer.OutlierMeta\x12\x10\n\x08need_run\x18\x0c \x01(\x08\x12\x66\n\x13\x65xclusive_data_type\x18\r \x03(\x0b\x32I.com.webank.ai.fate.core.mlmodel.buffer.DataIOMeta.ExclusiveDataTypeEntry\x1a\x38\n\x16\x45xclusiveDataTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x42\x11\x42\x0f\x44\x61taIOMetaProtob\x06proto3')
 
-
-
-_IMPUTERMETA = DESCRIPTOR.message_types_by_name['ImputerMeta']
-_OUTLIERMETA = DESCRIPTOR.message_types_by_name['OutlierMeta']
-_DATAIOMETA = DESCRIPTOR.message_types_by_name['DataIOMeta']
-_DATAIOMETA_EXCLUSIVEDATATYPEENTRY = _DATAIOMETA.nested_types_by_name['ExclusiveDataTypeEntry']
-ImputerMeta = _reflection.GeneratedProtocolMessageType('ImputerMeta', (_message.Message,), {
-  'DESCRIPTOR' : _IMPUTERMETA,
-  '__module__' : 'data_io_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.ImputerMeta)
-  })
-_sym_db.RegisterMessage(ImputerMeta)
-
-OutlierMeta = _reflection.GeneratedProtocolMessageType('OutlierMeta', (_message.Message,), {
-  'DESCRIPTOR' : _OUTLIERMETA,
-  '__module__' : 'data_io_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.OutlierMeta)
-  })
-_sym_db.RegisterMessage(OutlierMeta)
-
-DataIOMeta = _reflection.GeneratedProtocolMessageType('DataIOMeta', (_message.Message,), {
-
-  'ExclusiveDataTypeEntry' : _reflection.GeneratedProtocolMessageType('ExclusiveDataTypeEntry', (_message.Message,), {
-    'DESCRIPTOR' : _DATAIOMETA_EXCLUSIVEDATATYPEENTRY,
-    '__module__' : 'data_io_meta_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataIOMeta.ExclusiveDataTypeEntry)
-    })
-  ,
-  'DESCRIPTOR' : _DATAIOMETA,
-  '__module__' : 'data_io_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DataIOMeta)
-  })
-_sym_db.RegisterMessage(DataIOMeta)
-_sym_db.RegisterMessage(DataIOMeta.ExclusiveDataTypeEntry)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'data_io_meta_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\017DataIOMetaProto'
   _DATAIOMETA_EXCLUSIVEDATATYPEENTRY._options = None
   _DATAIOMETA_EXCLUSIVEDATATYPEENTRY._serialized_options = b'8\001'
-  _IMPUTERMETA._serialized_start=62
-  _IMPUTERMETA._serialized_end=136
-  _OUTLIERMETA._serialized_start=138
-  _OUTLIERMETA._serialized_end=212
-  _DATAIOMETA._serialized_start=215
-  _DATAIOMETA._serialized_end=753
-  _DATAIOMETA_EXCLUSIVEDATATYPEENTRY._serialized_start=697
-  _DATAIOMETA_EXCLUSIVEDATATYPEENTRY._serialized_end=753
+  _globals['_IMPUTERMETA']._serialized_start=62
+  _globals['_IMPUTERMETA']._serialized_end=136
+  _globals['_OUTLIERMETA']._serialized_start=138
+  _globals['_OUTLIERMETA']._serialized_end=212
+  _globals['_DATAIOMETA']._serialized_start=215
+  _globals['_DATAIOMETA']._serialized_end=753
+  _globals['_DATAIOMETA_EXCLUSIVEDATATYPEENTRY']._serialized_start=697
+  _globals['_DATAIOMETA_EXCLUSIVEDATATYPEENTRY']._serialized_end=753
 # @@protoc_insertion_point(module_scope)

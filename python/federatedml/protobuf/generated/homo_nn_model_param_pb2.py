@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,20 +15,13 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19homo-nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xab\x01\n\x0bHomoNNParam\x12\x13\n\x0bmodel_bytes\x18\x01 \x01(\x0c\x12\x18\n\x10\x65xtra_data_bytes\x18\x02 \x01(\x0c\x12\x11\n\tepoch_idx\x18\x03 \x01(\x05\x12\x17\n\x0f\x63onverge_status\x18\x04 \x01(\x08\x12\x14\n\x0closs_history\x18\x05 \x03(\x02\x12\x12\n\nbest_epoch\x18\x06 \x01(\x05\x12\x17\n\x0flocal_save_path\x18\x07 \x01(\tB\x12\x42\x10HomoNNParamProtob\x06proto3')
 
-
-
-_HOMONNPARAM = DESCRIPTOR.message_types_by_name['HomoNNParam']
-HomoNNParam = _reflection.GeneratedProtocolMessageType('HomoNNParam', (_message.Message,), {
-  'DESCRIPTOR' : _HOMONNPARAM,
-  '__module__' : 'homo_nn_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.HomoNNParam)
-  })
-_sym_db.RegisterMessage(HomoNNParam)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'homo_nn_model_param_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\020HomoNNParamProto'
-  _HOMONNPARAM._serialized_start=70
-  _HOMONNPARAM._serialized_end=241
+  _globals['_HOMONNPARAM']._serialized_start=70
+  _globals['_HOMONNPARAM']._serialized_end=241
 # @@protoc_insertion_point(module_scope)

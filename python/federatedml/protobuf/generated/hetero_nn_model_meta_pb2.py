@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,50 +15,19 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1ahetero-nn-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"3\n\x0eOptimizerParam\x12\x11\n\toptimizer\x18\x01 \x01(\t\x12\x0e\n\x06kwargs\x18\x02 \x01(\t\"!\n\x0cPredictParam\x12\x11\n\tthreshold\x18\x01 \x01(\x01\"\x89\x02\n\x11HeteroNNModelMeta\x12\x13\n\x0b\x63onfig_type\x18\x01 \x01(\t\x12\x18\n\x10\x62ottom_nn_define\x18\x02 \x03(\t\x12 \n\x18interactive_layer_define\x18\x03 \x01(\t\x12\x15\n\rtop_nn_define\x18\x04 \x03(\t\x12\x0f\n\x07metrics\x18\x05 \x03(\t\x12O\n\x0foptimizer_param\x18\x06 \x01(\x0b\x32\x36.com.webank.ai.fate.core.mlmodel.buffer.OptimizerParam\x12\x0c\n\x04loss\x18\x07 \x01(\t\x12\x1c\n\x14interactive_layer_lr\x18\x08 \x01(\x01\"\xcf\x01\n\x0cHeteroNNMeta\x12W\n\x14hetero_nn_model_meta\x18\x01 \x01(\x0b\x32\x39.com.webank.ai.fate.core.mlmodel.buffer.HeteroNNModelMeta\x12\x11\n\ttask_type\x18\x02 \x01(\t\x12\x12\n\nbatch_size\x18\x03 \x01(\x05\x12\x0e\n\x06\x65pochs\x18\x04 \x01(\x05\x12\x12\n\nearly_stop\x18\x05 \x01(\t\x12\x0b\n\x03tol\x18\x06 \x01(\x01\x12\x0e\n\x06module\x18\x07 \x01(\tB\x18\x42\x16HeteroNNModelMetaProtob\x06proto3')
 
-
-
-_OPTIMIZERPARAM = DESCRIPTOR.message_types_by_name['OptimizerParam']
-_PREDICTPARAM = DESCRIPTOR.message_types_by_name['PredictParam']
-_HETERONNMODELMETA = DESCRIPTOR.message_types_by_name['HeteroNNModelMeta']
-_HETERONNMETA = DESCRIPTOR.message_types_by_name['HeteroNNMeta']
-OptimizerParam = _reflection.GeneratedProtocolMessageType('OptimizerParam', (_message.Message,), {
-  'DESCRIPTOR' : _OPTIMIZERPARAM,
-  '__module__' : 'hetero_nn_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.OptimizerParam)
-  })
-_sym_db.RegisterMessage(OptimizerParam)
-
-PredictParam = _reflection.GeneratedProtocolMessageType('PredictParam', (_message.Message,), {
-  'DESCRIPTOR' : _PREDICTPARAM,
-  '__module__' : 'hetero_nn_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PredictParam)
-  })
-_sym_db.RegisterMessage(PredictParam)
-
-HeteroNNModelMeta = _reflection.GeneratedProtocolMessageType('HeteroNNModelMeta', (_message.Message,), {
-  'DESCRIPTOR' : _HETERONNMODELMETA,
-  '__module__' : 'hetero_nn_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.HeteroNNModelMeta)
-  })
-_sym_db.RegisterMessage(HeteroNNModelMeta)
-
-HeteroNNMeta = _reflection.GeneratedProtocolMessageType('HeteroNNMeta', (_message.Message,), {
-  'DESCRIPTOR' : _HETERONNMETA,
-  '__module__' : 'hetero_nn_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.HeteroNNMeta)
-  })
-_sym_db.RegisterMessage(HeteroNNMeta)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'hetero_nn_model_meta_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\026HeteroNNModelMetaProto'
-  _OPTIMIZERPARAM._serialized_start=70
-  _OPTIMIZERPARAM._serialized_end=121
-  _PREDICTPARAM._serialized_start=123
-  _PREDICTPARAM._serialized_end=156
-  _HETERONNMODELMETA._serialized_start=159
-  _HETERONNMODELMETA._serialized_end=424
-  _HETERONNMETA._serialized_start=427
-  _HETERONNMETA._serialized_end=634
+  _globals['_OPTIMIZERPARAM']._serialized_start=70
+  _globals['_OPTIMIZERPARAM']._serialized_end=121
+  _globals['_PREDICTPARAM']._serialized_start=123
+  _globals['_PREDICTPARAM']._serialized_end=156
+  _globals['_HETERONNMODELMETA']._serialized_start=159
+  _globals['_HETERONNMODELMETA']._serialized_end=424
+  _globals['_HETERONNMETA']._serialized_start=427
+  _globals['_HETERONNMETA']._serialized_end=634
 # @@protoc_insertion_point(module_scope)

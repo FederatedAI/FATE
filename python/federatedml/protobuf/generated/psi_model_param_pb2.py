@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,43 +15,19 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15psi-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"k\n\nFeaturePsi\x12\x14\n\x0c\x66\x65\x61ture_name\x18\x01 \x01(\t\x12\x0b\n\x03psi\x18\x02 \x03(\x01\x12\x10\n\x08interval\x18\x03 \x03(\t\x12\x13\n\x0b\x65xpect_perc\x18\x04 \x03(\x01\x12\x13\n\x0b\x61\x63tual_perc\x18\x05 \x03(\x01\"\xf5\x01\n\nPsiSummary\x12W\n\x0btotal_score\x18\x01 \x03(\x0b\x32\x42.com.webank.ai.fate.core.mlmodel.buffer.PsiSummary.TotalScoreEntry\x12G\n\x0b\x66\x65\x61ture_psi\x18\x02 \x03(\x0b\x32\x32.com.webank.ai.fate.core.mlmodel.buffer.FeaturePsi\x12\x12\n\nmodel_name\x18\x03 \x01(\t\x1a\x31\n\x0fTotalScoreEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x42\x1a\x42\x18\x42oostTreeModelParamProtob\x06proto3')
 
-
-
-_FEATUREPSI = DESCRIPTOR.message_types_by_name['FeaturePsi']
-_PSISUMMARY = DESCRIPTOR.message_types_by_name['PsiSummary']
-_PSISUMMARY_TOTALSCOREENTRY = _PSISUMMARY.nested_types_by_name['TotalScoreEntry']
-FeaturePsi = _reflection.GeneratedProtocolMessageType('FeaturePsi', (_message.Message,), {
-  'DESCRIPTOR' : _FEATUREPSI,
-  '__module__' : 'psi_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.FeaturePsi)
-  })
-_sym_db.RegisterMessage(FeaturePsi)
-
-PsiSummary = _reflection.GeneratedProtocolMessageType('PsiSummary', (_message.Message,), {
-
-  'TotalScoreEntry' : _reflection.GeneratedProtocolMessageType('TotalScoreEntry', (_message.Message,), {
-    'DESCRIPTOR' : _PSISUMMARY_TOTALSCOREENTRY,
-    '__module__' : 'psi_model_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PsiSummary.TotalScoreEntry)
-    })
-  ,
-  'DESCRIPTOR' : _PSISUMMARY,
-  '__module__' : 'psi_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PsiSummary)
-  })
-_sym_db.RegisterMessage(PsiSummary)
-_sym_db.RegisterMessage(PsiSummary.TotalScoreEntry)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'psi_model_param_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\030BoostTreeModelParamProto'
   _PSISUMMARY_TOTALSCOREENTRY._options = None
   _PSISUMMARY_TOTALSCOREENTRY._serialized_options = b'8\001'
-  _FEATUREPSI._serialized_start=65
-  _FEATUREPSI._serialized_end=172
-  _PSISUMMARY._serialized_start=175
-  _PSISUMMARY._serialized_end=420
-  _PSISUMMARY_TOTALSCOREENTRY._serialized_start=371
-  _PSISUMMARY_TOTALSCOREENTRY._serialized_end=420
+  _globals['_FEATUREPSI']._serialized_start=65
+  _globals['_FEATUREPSI']._serialized_end=172
+  _globals['_PSISUMMARY']._serialized_start=175
+  _globals['_PSISUMMARY']._serialized_end=420
+  _globals['_PSISUMMARY_TOTALSCOREENTRY']._serialized_start=371
+  _globals['_PSISUMMARY_TOTALSCOREENTRY']._serialized_end=420
 # @@protoc_insertion_point(module_scope)

@@ -24,7 +24,6 @@ peewee
 psutil>=5.7.0
 pycryptodomex==3.15.0
 PyMySQL==0.9.3
-pyspark==3.4.0
 python-dotenv==0.13.0
 redis==3.5.3
 urllib3==1.26.18
@@ -47,13 +46,13 @@ filelock==3.3.1
 fastavro==1.4.1
 lightgbm==3.3.1
 shortuuid==1.0.9
-sklearn2pmml==0.90.0
+sklearn2pmml
 nyoka==5.3.0
 transformers==4.36.0
 impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
-ipcl-python==2.0.0
+# ipcl-python==2.0.0
 
 
 # addtional requirements for eggroll
