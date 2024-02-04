@@ -34,6 +34,7 @@ use_deserialize_safe_module = get_base_config('use_deserialize_safe_module', Fal
 class CustomJSONEncoder(json.JSONEncoder):
     def __init__(self, **kwargs):
         self._with_type = kwargs.pop("with_type", False)
+        kwargs["allow_nan"] = True
         super().__init__(**kwargs)
 
     def default(self, obj):

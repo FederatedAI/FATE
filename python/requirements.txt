@@ -56,8 +56,8 @@ fate-crypto==0.3.0
 
 
 # addtional requirements for eggroll
-grpcio==1.56.2
-grpcio-tools==1.56.2
+grpcio==1.59.3
+grpcio-tools==1.59.3
 numba==0.53.0
 protobuf==4.24.4
 pyarrow
