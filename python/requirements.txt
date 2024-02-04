@@ -71,4 +71,4 @@ poetry>=0.12
 prettytable>=1.0.0,<2.0.0
 setuptools>=65.5.1
 sshtunnel>=0.1.5,<0.2.0
-packaging<21.0,>=20.4
+packaging
