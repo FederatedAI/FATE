@@ -1,8 +1,8 @@
-# Guide of Components
+# Develop Guide: Components
 
 Starting in ver 2.0, FATE `components` serve as entry points to modules for job scheduler.
 In general, computational logic should be contained within `ML modules`, while `components` call module functions with
-proper input and pass respective result data and model(s) to scheduler.
+proper input and pass respective result data and model to scheduler.
 
 ## Components CLI
 
