@@ -25,7 +25,7 @@ class StableDataLoader:
         self.index = 0
 
     def __iter__(self):
-        self.index = 0  # 每次开始迭代时重置索引
+        self.index = 0  
         return self
 
     def __next__(self):
@@ -36,8 +36,12 @@ class StableDataLoader:
             self.index += self.batch_size
             X_batch_tensor = t.from_numpy(X_batch)
             y_batch_tensor = t.from_numpy(y_batch)
-            return X_batch, y_batch
+            return [X_batch_tensor, y_batch_tensor]
         raise StopIteration
+
+    def __len__(self):
+        import math
+        return math.ceil(len(self.dataset) / self.batch_size)
 
 
 
@@ -230,8 +234,9 @@ class FedAVGTrainer(TrainerBase):
         batch_idx = 0
         acc_num = 0
 
-        if isinstance(self.data_loader.sampler, DistributedSampler):
-            self.data_loader.sampler.set_epoch(epoch_idx)
+        if not self.use_stable_dataloader:
+            if isinstance(self.data_loader.sampler, DistributedSampler):
+                self.data_loader.sampler.set_epoch(epoch_idx)
 
         dl = self.data_loader
 
