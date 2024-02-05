@@ -202,7 +202,9 @@ class HomoLRClient(HomoLRBase):
             checkpoint_save_freqs=self.save_freq,
             early_stop=early_stop,
             shuffle=False,
-            tol=self.tol)
+            tol=self.tol,
+            use_stable_dataloader=True
+            )
 
         if not self.callback_one_vs_rest:
             trainer.set_tracker(self.tracker)

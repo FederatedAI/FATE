@@ -17,6 +17,30 @@ from federatedml.util import LOGGER, consts
 from federatedml.optim.convergence import converge_func_factory
 
 
+class StableDataLoader:
+    
+    def __init__(self, dataset, batch_size, **kwargs):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.index = 0
+
+    def __iter__(self):
+        self.index = 0  # 每次开始迭代时重置索引
+        return self
+
+    def __next__(self):
+        if self.index < len(self.dataset):
+            batch = self.dataset[self.index:self.index+self.batch_size]
+            X_batch = batch[0]
+            y_batch = batch[1]
+            self.index += self.batch_size
+            X_batch_tensor = t.from_numpy(X_batch)
+            y_batch_tensor = t.from_numpy(y_batch)
+            return X_batch, y_batch
+        raise StopIteration
+
+
+
 class FedAVGTrainer(TrainerBase):
     """
 
@@ -57,6 +81,7 @@ class FedAVGTrainer(TrainerBase):
     save_to_local_dir: bool, if True, a dictionary containing the model, optimizer, and metadata will be saved to a local directory.
                 The path is structured as follows: fateflow/jobs/${jobid}/${party}/${party_id}/${your_nn_component}.
                 If set to False, the model will not be saved to the FATE framework in protobuf format.
+    use_stable_dataloader: bool, this dataloader is for homo-lr in order to avoid system bug
     """
 
     def __init__(self, epochs=10, batch_size=512,  # training parameter
@@ -69,7 +94,8 @@ class FedAVGTrainer(TrainerBase):
                  task_type='auto',  # task type
                  save_to_local_dir=False,  # save model to local path
                  collate_fn=None,
-                 collate_fn_params=None
+                 collate_fn_params=None,
+                 use_stable_dataloader=False
                  ):
 
         super(FedAVGTrainer, self).__init__()
@@ -116,6 +142,7 @@ class FedAVGTrainer(TrainerBase):
                 LOGGER.info('Using DataParallel in Pytorch')
 
         # data loader
+        self.use_stable_dataloader = use_stable_dataloader
         self.batch_size = batch_size
         self.pin_memory = pin_memory
         self.shuffle = shuffle
@@ -490,9 +517,11 @@ class FedAVGTrainer(TrainerBase):
 
         labels = []
         with torch.no_grad():
-            for _batch_iter in DataLoader(
-                dataset, self.batch_size
-            ):
+            if self.use_stable_dataloader:
+                dl = StableDataLoader(dataset, self.batch_size)
+            else:
+                dl = DataLoader(dataset, batch_size=self.batch_size)
+            for _batch_iter in dl:
                 if isinstance(_batch_iter, list):
                     batch_data, batch_label = _batch_iter
                 else:
@@ -601,14 +630,17 @@ class FedAVGTrainer(TrainerBase):
         collate_fn = self._get_collate_fn(train_set)
 
         if not distributed_util.is_distributed() or distributed_util.get_num_workers() <= 1:
-            data_loader = DataLoader(
-                train_set,
-                batch_size=self.batch_size,
-                pin_memory=self.pin_memory,
-                shuffle=self.shuffle,
-                num_workers=self.data_loader_worker,
-                collate_fn=collate_fn
-            )
+            if self.use_stable_dataloader:
+                data_loader = StableDataLoader(train_set, self.batch_size)
+            else:
+                data_loader = DataLoader(
+                    train_set,
+                    batch_size=self.batch_size,
+                    pin_memory=self.pin_memory,
+                    shuffle=self.shuffle,
+                    num_workers=self.data_loader_worker,
+                    collate_fn=collate_fn
+                )
         else:
             train_sampler = DistributedSampler(
                 train_set,
