@@ -193,7 +193,7 @@ class HomoLRClient(HomoLRBase):
         trainer = FedAVGTrainer(
             epochs=self.max_iter,
             batch_size=batch_size,
-            data_loader_worker=partitions,
+            data_loader_worker=1,
             secure_aggregate=True,
             aggregate_every_n_epoch=self.aggregate_iters,
             validation_freqs=self.validation_freqs,
