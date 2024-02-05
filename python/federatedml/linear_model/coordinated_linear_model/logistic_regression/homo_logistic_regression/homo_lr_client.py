@@ -194,6 +194,7 @@ class HomoLRClient(HomoLRBase):
             epochs=self.max_iter,
             batch_size=batch_size,
             data_loader_worker=1,
+            pin_memory=False,
             secure_aggregate=True,
             aggregate_every_n_epoch=self.aggregate_iters,
             validation_freqs=self.validation_freqs,
