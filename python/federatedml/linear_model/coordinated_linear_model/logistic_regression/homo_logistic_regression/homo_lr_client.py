@@ -193,7 +193,7 @@ class HomoLRClient(HomoLRBase):
         trainer = FedAVGTrainer(
             epochs=self.max_iter,
             batch_size=batch_size,
-            data_loader_worker=1,
+            data_loader_worker=0,
             pin_memory=False,
             secure_aggregate=True,
             aggregate_every_n_epoch=self.aggregate_iters,
@@ -202,9 +202,7 @@ class HomoLRClient(HomoLRBase):
             checkpoint_save_freqs=self.save_freq,
             early_stop=early_stop,
             shuffle=False,
-            tol=self.tol,
-            use_stable_dataloader=True
-            )
+            tol=self.tol)
 
         if not self.callback_one_vs_rest:
             trainer.set_tracker(self.tracker)
