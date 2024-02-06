@@ -135,7 +135,7 @@ class HeteroNNGuest(HeteroNNBase):
         data_loader = DataLoader(
             train_ds,
             batch_size=batch_size,
-            num_workers=1)
+            num_workers=0)
 
         for cur_epoch in range(epoch_offset, self.epochs + epoch_offset):
 
