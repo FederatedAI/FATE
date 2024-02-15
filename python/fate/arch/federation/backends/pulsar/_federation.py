@@ -271,7 +271,7 @@ class PulsarFederation(MessageQueueBasedFederation):
                     party.party_id,
                 )
 
-                remote_party = self._mq.route_table.get(int(party.party_id), None)
+                remote_party = self._mq.route_table.get(party.party_id, None)
 
                 # handle party does not exist in route table first
                 if remote_party is None:
@@ -282,10 +282,10 @@ class PulsarFederation(MessageQueueBasedFederation):
                     proxy = self._mq.route_table.get("default").get("proxy", "")
                 # fetch party info from the route table
                 else:
-                    host = self._mq.route_table.get(int(party.party_id)).get("host")
-                    port = self._mq.route_table.get(int(party.party_id)).get("port", "6650")
-                    sslPort = self._mq.route_table.get(int(party.party_id)).get("sslPort", "6651")
-                    proxy = self._mq.route_table.get(int(party.party_id)).get("proxy", "")
+                    host = self._mq.route_table.get(party.party_id).get("host")
+                    port = self._mq.route_table.get(party.party_id).get("port", "6650")
+                    sslPort = self._mq.route_table.get(party.party_id).get("sslPort", "6651")
+                    proxy = self._mq.route_table.get(party.party_id).get("proxy", "")
 
                 broker_url = f"pulsar://{host}:{port}"
                 broker_url_tls = f"pulsar+ssl://{host}:{sslPort}"
