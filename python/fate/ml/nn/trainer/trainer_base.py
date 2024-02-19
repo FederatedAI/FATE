@@ -871,6 +871,7 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
         use_hf_default_behavior: bool = False,
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
         local_mode: bool = False,
+        save_trainable_weights_only: bool = False,
     ):
         super().__init__()
 
@@ -892,6 +893,8 @@ class HomoTrainerMixin(FedCallbackInterface, ShortcutCallBackInterFace):
 
         # for callback class to check if aggregation is needed
         self.aggregation_checker: AggregationChecker = None
+
+        self._save_trainable_weights_only = save_trainable_weights_only
 
     def _compute_metrics_warp_func(self, *args, **kwargs):
         if self._user_compute_metric_func is None:

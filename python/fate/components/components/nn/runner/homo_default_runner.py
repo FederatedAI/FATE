@@ -13,8 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import torch as t
-import os
 from fate.components.components.nn.nn_runner import (
     NNRunner,
     load_model_dict_from_path,
@@ -101,7 +99,7 @@ class DefaultRunner(NNRunner):
         loss_conf: Optional[Dict] = None,
         data_collator_conf: Optional[Dict] = None,
         tokenizer_conf: Optional[Dict] = None,
-        task_type: Literal["binary", "multi", "regression", "others"] = "binary",
+        task_type: Literal["binary", "multi", "regression", "causal_lm", "others"] = "binary",
         threshold: float = 0.5,
         local_mode: bool = False,
     ) -> None:
@@ -122,7 +120,7 @@ class DefaultRunner(NNRunner):
         # check param
         if self.algo not in SUPPORTED_ALGO:
             raise ValueError("algo should be one of [fedavg]")
-        if self.task_type not in ["binary", "multi", "regression", "others"]:
+        if self.task_type not in ["binary", "multi", "regression", "causal_lm", "others"]:
             raise ValueError("task_type should be one of [binary, multi, regression, others]")
         assert self.threshold >= 0 and self.threshold <= 1, "threshold should be in [0, 1]"
         assert isinstance(self.local_mode, bool), "local should be bool"
@@ -302,7 +300,7 @@ class DefaultRunner(NNRunner):
                 sample_ids,
                 match_id_name=match_id_name,
                 sample_id_name=sample_id_name,
-                dataframe_format="fate_std",
+                dataframe_format="dist_df",
                 task_type=self.task_type,
                 classes=classes,
             )

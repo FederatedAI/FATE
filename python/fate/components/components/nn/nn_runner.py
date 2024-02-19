@@ -30,7 +30,7 @@ from fate.arch.dataframe._dataframe import DataFrame
 from fate.components.components.utils import consts
 from torch.optim.lr_scheduler import _LRScheduler
 from fate.ml.utils.predict_tools import to_dist_df, array_to_predict_df
-from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION, OTHER, LABEL, PREDICT_SCORE
+from fate.ml.utils.predict_tools import BINARY, MULTI, REGRESSION, OTHER, CAUSAL_LM, LABEL, PREDICT_SCORE
 from fate.components.components.nn.loader import Loader
 
 
@@ -156,7 +156,7 @@ class NNRunner(object):
         sample_ids: Union[pd.DataFrame, np.ndarray] = None,
         match_id_name: str = None,
         sample_id_name: str = None,
-        dataframe_format: Literal["default", "fate_std"] = "default",
+        dataframe_format: Literal["default", "dist_df"] = "default",
         task_type: Literal["binary", "multi", "regression", "others"] = None,
         threshold: float = 0.5,
         classes: list = None,
@@ -172,18 +172,18 @@ class NNRunner(object):
             sample_ids (Union[pd.DataFrame, np.ndarray], optional): Sample IDs, if applicable. Defaults to None. If None, will auto generate sample_ids.
             match_id_name (str, optional): Column name for match IDs in the resulting DataFrame. If None, Defaults to 'id'.
             sample_id_name (str, optional): Column name for sample IDs in the resulting DataFrame. If None, Defaults to 'sample_id'.
-            dataframe_format (Literal['default', 'fate_std'], optional): Output format of the resulting DataFrame. If 'default', simply combines labels and predictions into a DataFrame.
-                                                                         If 'fate_std', organizes output according to the FATE framework's format. Defaults to 'default'.
-            task_type (Literal['binary', 'multi', 'regression', 'others'], optional):  This parameter is only needed when dataframe_format is 'fate_std'. Defaults to None.
-                                                                                       The type of machine learning task, which can be 'binary', 'multi', 'regression', or 'others'.
-            threshold (float, optional): This parameter is only needed when dataframe_format is 'fate_std' and task_type is 'binary'. Defaults to 0.5.
-            classes (list, optional): This parameter is only needed when dataframe_format is 'fate_std'. List of classes.
+            dataframe_format (Literal['default', 'dist_df'], optional): Output format of the resulting DataFrame. If 'default', simply combines labels and predictions into a DataFrame.
+                                                                         If 'dist_df', organizes output according to the FATE framework's format. Defaults to 'default'.
+            task_type (Literal['binary', 'multi', 'regression', 'causal_lm', 'others'], optional):  This parameter is only needed when dataframe_format is 'dist_df'. Defaults to None.
+                                                                                                    The type of machine learning task, which can be 'binary', 'multi', 'regression', 'causal', or 'others'.
+            threshold (float, optional): This parameter is only needed when dataframe_format is 'dist_df' and task_type is 'binary'. Defaults to 0.5.
+            classes (list, optional): This parameter is only needed when dataframe_format is 'dist_df'. List of classes.
         Returns:
             DataFrame: A DataFrame that contains the neural network's predictions and the true labels, possibly along with match IDs and sample IDs, formatted according to the specified format.
         """
         # check parameters
-        assert task_type in [BINARY, MULTI, REGRESSION, OTHER], f"task_type {task_type} is not supported"
-        assert dataframe_format in ["default", "fate_std"], f"dataframe_format {dataframe_format} is not supported"
+        assert task_type in [BINARY, MULTI, REGRESSION, CAUSAL_LM, OTHER], f"task_type {task_type} is not supported"
+        assert dataframe_format in ["default", "dist_df"], f"dataframe_format {dataframe_format} is not supported"
 
         if match_id_name is None:
             match_id_name = "id"
@@ -227,16 +227,19 @@ class NNRunner(object):
         assert isinstance(match_id_name, str), f"match_id_name must be str, but got {type(match_id_name)}"
         assert isinstance(sample_id_name, str), f"sample_id_name must be str, but got {type(sample_id_name)}"
 
-        if dataframe_format == "default" or (dataframe_format == "fate_std" and task_type == OTHER):
+        if dataframe_format == "default" or \
+                (dataframe_format == "dist_df" and task_type == OTHER):
             df = pd.DataFrame()
             if labels is not None:
                 df[LABEL] = labels.to_list()
+
             df[PREDICT_SCORE] = predictions.to_list()
+
             df[match_id_name] = match_ids.flatten()
             df[sample_id_name] = sample_ids.flatten()
             df = to_dist_df(ctx, sample_id_name, match_id_name, df)
             return df
-        elif dataframe_format == "fate_std" and task_type in [BINARY, MULTI, REGRESSION]:
+        elif dataframe_format == "dist_df" and task_type in [BINARY, MULTI, REGRESSION]:
             df = array_to_predict_df(
                 ctx,
                 task_type,
