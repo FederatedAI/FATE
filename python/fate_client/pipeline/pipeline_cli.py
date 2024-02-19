@@ -51,7 +51,7 @@ def _init(**kwargs):
         \b
         - USAGE:
             pipeline init -c config.yaml
-            pipeline init --ip 10.1.2.3 --port 9380 --log-directory ./logs --system-user guest
+            pipeline init --ip 127.0.0.1 --port 9380 --log-directory ./logs --system-user guest
     """
     config_path = kwargs.get("config_path")
     ip = kwargs.get("ip")
