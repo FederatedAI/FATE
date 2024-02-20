@@ -25,6 +25,9 @@ from pyspark.rddsampler import RDDSamplerBase
 from fate.arch import URI
 from fate.arch.computing.api import KVTable, ComputingEngine, K, V
 from fate.arch.computing.api._table import _lifted_reduce_to_serdes, get_serdes_by_type
+from fate.arch.computing.partitioners import get_partitioner_by_type
+from fate.arch.trace import auto_trace
+from fate.arch.trace import computing_profile as _compute_info
 from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
@@ -61,7 +64,6 @@ class Table(KVTable):
     def __init__(self, rdd: pyspark.RDD, key_serdes_type, value_serdes_type, partitioner_type):
         self._rdd = rdd
         self._engine = ComputingEngine.SPARK
-        self._has_partitioned = False
 
         super().__init__(
             key_serdes_type=key_serdes_type,
@@ -69,6 +71,10 @@ class Table(KVTable):
             partitioner_type=partitioner_type,
             num_partitions=rdd.getNumPartitions(),
         )
+
+    @property
+    def rdd(self):
+        return self._rdd
 
     def _binary_sorted_map_partitions_with_index(
         self,
@@ -87,37 +93,55 @@ class Table(KVTable):
     ):
         raise NotImplementedError("binary sorted map partitions with index not supported in spark backend")
 
+    @auto_trace
+    @_compute_info
     def join(
         self,
         other: "Table",
-        merge_op: Callable[[V, V], V] = lambda x, y: x,
+        merge_op: Callable[[V, V], V] = None,
         output_value_serdes_type=None,
     ):
-        op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
+        num_partitions = max(self.num_partitions, other.num_partitions)
+        rdd = self.rdd.join(other.rdd, numPartitions=num_partitions)
+        if merge_op is not None:
+            op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
+            rdd = rdd.mapValues(lambda x: op(x[0], x[1]))
         return from_rdd(
-            self._rdd.join(other._rdd).mapValues(lambda x: op(x[0], x[1])),
+            rdd=rdd,
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
         )
 
-    def union(self, other: "Table", merge_op: Callable[[V, V], V] = lambda x, y: x, output_value_serdes_type=None):
+    @auto_trace
+    @_compute_info
+    def union(self, other: "Table", merge_op: Callable[[V, V], V] = None, output_value_serdes_type=None):
+        num_partitions = max(self.num_partitions, other.num_partitions)
+        if merge_op is None:
+            return from_rdd(
+                self.rdd.union(other.rdd).coalesce(num_partitions),
+                key_serdes_type=self.key_serdes_type,
+                value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+                partitioner_type=self.partitioner_type,
+            )
+
         op = _lifted_reduce_to_serdes(merge_op, get_serdes_by_type(self.value_serdes_type))
         return from_rdd(
-            self._rdd.union(other._rdd).reduceByKey(op),
+            self.rdd.union(other.rdd).reduceByKey(op, numPartitions=num_partitions),
             key_serdes_type=self.key_serdes_type,
             value_serdes_type=output_value_serdes_type or self.value_serdes_type,
             partitioner_type=self.partitioner_type,
         )
 
-    def _as_partitioned(self):
-        if self._has_partitioned:
-            return self
-        else:
-            partitioner = self.partitioner
-            num_partitions = self.num_partitions
-            self._rdd = self._rdd.partitionBy(num_partitions, lambda x: partitioner(x, num_partitions))
-            self._has_partitioned = True
+    @auto_trace
+    @_compute_info
+    def subtractByKey(self, other: "Table", output_value_serdes_type=None):
+        return from_rdd(
+            self.rdd.subtractByKey(other.rdd, numPartitions=self.num_partitions),
+            key_serdes_type=self.key_serdes_type,
+            value_serdes_type=output_value_serdes_type or self.value_serdes_type,
+            partitioner_type=self.partitioner_type,
+        )
 
     def mapPartitionsWithIndexNoSerdes(
         self,
@@ -131,7 +155,6 @@ class Table(KVTable):
         # we should guarantee the data properly partitioned before we send each partition to other side.
         # So we should call _as_partitioned() before we call this method.
         # TODO: but if other side is also spark, we can skip _as_partitioned() to save time.
-        self._as_partitioned()
         return super().mapPartitionsWithIndexNoSerdes(
             map_partition_op=map_partition_op,
             shuffle=shuffle,
@@ -164,7 +187,7 @@ class Table(KVTable):
         return _value
 
     def _collect(self, **kwargs):
-        #         return iter(self._rdd.collect())
+        #         return iter(self.rdd.collect())
         return self._rdd.toLocalIterator()
 
     def _reduce(self, func, **kwargs):
@@ -192,7 +215,7 @@ class Table(KVTable):
         output_partitioner_type: int,
         output_num_partitions: int,
     ) -> "KVTable":
-        rdd = self._rdd.mapPartitionsWithIndex(map_partition_op)
+        rdd = self.rdd.mapPartitionsWithIndex(map_partition_op)
 
         if reduce_partition_op is not None:
             rdd = rdd.reduceByKey(reduce_partition_op)
@@ -203,6 +226,8 @@ class Table(KVTable):
             partitioner_type=output_partitioner_type,
         )
 
+    @auto_trace
+    @_compute_info
     def sample(
         self,
         *,
@@ -211,10 +236,10 @@ class Table(KVTable):
         seed=None,
     ):
         if fraction is not None:
-            return from_rdd(self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
+            return from_rdd(self.rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
 
         if num is not None:
-            return from_rdd(_exactly_sample(self._rdd, num, seed=seed))
+            return from_rdd(_exactly_sample(self.rdd, num, seed=seed))
 
         raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
@@ -226,7 +251,7 @@ class Table(KVTable):
             options = {}
         partitions = options.get("partitions")
         if uri.scheme == "hdfs":
-            table = self._rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
+            table = self.rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
             table.saveAsTextFile(uri.original_uri)
@@ -234,7 +259,7 @@ class Table(KVTable):
             return
 
         if uri.scheme == "hive":
-            table = self._rdd.map(lambda x: HiveCoder.encode(x[0], x[1]))
+            table = self.rdd.map(lambda x: HiveCoder.encode(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
             table.toDF().write.saveAsTable(uri.original_uri)
@@ -242,7 +267,7 @@ class Table(KVTable):
             return
 
         if uri.scheme == "file":
-            table = self._rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
+            table = self.rdd.map(lambda x: HDFSCoder.encode(x[0], x[1]))
             if partitions:
                 table = table.repartition(partitions)
             table.saveAsTextFile(uri.path)
@@ -261,7 +286,7 @@ def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     rdd = sc.textFile(paths, partitions).map(fun)
     if partitions is not None:
         rdd = rdd.repartition(partitions)
-    rdd = materialize(rdd)
+
     return from_rdd(rdd=rdd)
 
 
@@ -271,7 +296,9 @@ def from_localfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
 
     sc = SparkContext.getOrCreate()
     fun = HDFSCoder.decode if in_serialized else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
-    rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
+
+    rdd = sc.textFile(paths, partitions).map(fun).repartition(partitions)
+
     return from_rdd(rdd=rdd)
 
 
@@ -279,14 +306,19 @@ def from_hive(tb_name, db_name, partitions):
     from pyspark.sql import SparkSession
 
     session = SparkSession.builder.enableHiveSupport().getOrCreate()
-    rdd = materialize(
-        session.sql(f"select * from {db_name}.{tb_name}").rdd.map(HiveCoder.decode).repartition(partitions)
-    )
+
+    rdd = session.sql(f"select * from {db_name}.{tb_name}").rdd.map(HiveCoder.decode).repartition(partitions)
+
     return from_rdd(rdd=rdd)
 
 
 def from_rdd(rdd, key_serdes_type=0, value_serdes_type=0, partitioner_type=0):
+    partitioner = get_partitioner_by_type(partitioner_type)
+    num_partitions = rdd.getNumPartitions()
+    rdd = rdd.partitionBy(num_partitions, lambda x: partitioner(x, num_partitions))
+
     rdd = materialize(rdd)
+
     return Table(
         rdd=rdd,
         key_serdes_type=key_serdes_type,

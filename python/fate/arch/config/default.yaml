@@ -76,3 +76,5 @@ federation:
     enable: True
     max_message_size: 1048576
     partition_num: 4
+  osx:
+    timeout: 36000000
