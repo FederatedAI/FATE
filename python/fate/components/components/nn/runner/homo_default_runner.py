@@ -274,6 +274,7 @@ class DefaultRunner(NNRunner):
             trainer.train()
 
     def predict(self, test_data: Union[str, DataFrame], saved_model_path: str = None) -> Union[DataFrame, None]:
+        
         if self.is_client():
             test_set = self._prepare_data(test_data, "test_data")
             if self.trainer is not None:

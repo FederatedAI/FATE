@@ -29,6 +29,12 @@ class _Source(object):
     CUST_FUNC = "fate.ml.nn.cust_func"
 
 
+class _LLMSource(object):
+    MODEL_ZOO = "fate_llm.model_zoo"
+    DATASET = "fate_llm.dataset"
+    CUST_FUNC = "fate_llm.cust_func"
+
+
 SOURCE_FILE = "source.yaml"
 
 
@@ -164,10 +170,13 @@ class Loader(AbstractLoader):
 
 
 class ModelLoader(Loader, t.nn.Module):
+
+    source_class = _Source
+
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
             # add prefix for moduele loader
-            module_name = f"{_Source.MODEL_ZOO}.{module_name}"
+            module_name = f"{self.source_class.MODEL_ZOO}.{module_name}"
         super(t.nn.Module, self).__init__()
         super(ModelLoader, self).__init__(module_name, item_name, source, **kwargs)
 
@@ -176,18 +185,38 @@ class ModelLoader(Loader, t.nn.Module):
             self.__class__.__name__, self.module_name, self.item_name, self.source, self.kwargs)
 
 
-
 class DatasetLoader(Loader):
+
+    source_class = _Source
+
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
             # add prefix for moduele loader
-            module_name = f"{_Source.DATASET}.{module_name}"
+            module_name = f"{self.source_class.DATASET}.{module_name}"
         super(DatasetLoader, self).__init__(module_name, item_name, source, **kwargs)
 
 
 class CustFuncLoader(Loader):
+
+    source_class = _Source
+
     def __init__(self, module_name, item_name, source=None, **kwargs):
         if source is None:
             # add prefix for moduele loader
-            module_name = f"{_Source.CUST_FUNC}.{module_name}"
+            module_name = f"{self.source_class.CUST_FUNC}.{module_name}"
         super(CustFuncLoader, self).__init__(module_name, item_name, source, **kwargs)
+
+
+class LLMModelLoader(ModelLoader):
+
+    source_class = _LLMSource
+
+
+class LLMDatasetLoader(DatasetLoader):
+    
+    source_class = _LLMSource
+
+
+class LLMCustFuncLoader(CustFuncLoader):
+
+    source_class = _LLMSource
