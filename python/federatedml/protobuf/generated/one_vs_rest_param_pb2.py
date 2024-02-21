@@ -19,7 +19,6 @@ _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'one_vs_rest_param_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\023OneVsRestParamProto'
   _globals['_ONEVSRESTPARAM']._serialized_start=67

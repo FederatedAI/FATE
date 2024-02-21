@@ -19,7 +19,6 @@ _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'pearson_model_meta_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\025PearsonModelMetaProto'
   _globals['_PEARSONMODELMETA']._serialized_start=68

@@ -4,9 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -16,20 +15,12 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18\x64\x65\x66\x61ult-empty-fill.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\'\n\x17\x44\x65\x66\x61ultEmptyFillMessage\x12\x0c\n\x04\x66lag\x18\x01 \x01(\tB\x17\x42\x15\x44\x65\x66\x61ultEmptyFillProtob\x06proto3')
 
-
-
-_DEFAULTEMPTYFILLMESSAGE = DESCRIPTOR.message_types_by_name['DefaultEmptyFillMessage']
-DefaultEmptyFillMessage = _reflection.GeneratedProtocolMessageType('DefaultEmptyFillMessage', (_message.Message,), {
-  'DESCRIPTOR' : _DEFAULTEMPTYFILLMESSAGE,
-  '__module__' : 'default_empty_fill_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.DefaultEmptyFillMessage)
-  })
-_sym_db.RegisterMessage(DefaultEmptyFillMessage)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'default_empty_fill_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\025DefaultEmptyFillProto'
-  _DEFAULTEMPTYFILLMESSAGE._serialized_start=68
-  _DEFAULTEMPTYFILLMESSAGE._serialized_end=107
+  _globals['_DEFAULTEMPTYFILLMESSAGE']._serialized_start=68
+  _globals['_DEFAULTEMPTYFILLMESSAGE']._serialized_end=107
 # @@protoc_insertion_point(module_scope)
