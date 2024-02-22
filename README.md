@@ -9,7 +9,6 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOCS](./doc) | [中文](./README_zh.md)
 
 FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework to enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
@@ -20,23 +19,39 @@ FATE is an open source project hosted by Linux Foundation. The [Technical Charte
 
 <https://fate.readthedocs.io/en/latest>
 
+
 ## Getting Started
+FATE can be deployed on a single node or on multiple nodes. Choose the deployment approach which matches your environment.
+[Release version can be downloaded here.](https://github.com/FederatedAI/FATE/wiki/Download)
 
-### Version < 2.0
-Releases history can be found in [releases](https://github.com/FederatedAI/FATE/releases), deployment resources can be found on [wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
-### Version == 2.0.0-beta
-#### Standalone deployment
+### Version >= 2.0
+### Standalone deployment
+
 - Deploying FATE on a single node via PyPI, pre-built docker images or installers. It is for simple testing purposes. Refer to this [guide](./deploy/standalone-deploy/).
 
 ### Cluster deployment
 Deploying FATE to multiple nodes to achieve scalability, reliability and manageability.
-
 - [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
 
 ### Quick Start
-- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/quick_start.md)
 - [Training Demo With Installing FATE Only From Pypi](doc/2.0/fate/ml)
+- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/fate/quick_start.md)
+
+### More examples
+- [ML examples](examples/launchers)
+- [PipeLine examples](examples/pipeline)
+
+## Documentation
+
+### FATE Design
+- [Architecture](./doc/architecture/README.md): Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
+- [FATE Algorithm Components](./doc/2.0/fate/components/README.md): Building Standardized Algorithm Components for different Scheduling Engines
+- [OSX (Open Site Exchange)](./doc/2.0/osx/osx.md): Building Open Platform for Cross-Site Communication Interconnection
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/fate_flow.md): Building Open and Standardized Scheduling Platform for Scheduling Interconnection 
+- [PipeLine Design](https://github.com/FederatedAI/FATE-Client/blob/main/doc/pipeline.md): Building Scalable Federated DSL for Application Layer Interconnection And Providing Tools For Fast Federated Modeling
+- [RoadMap](./doc/images/roadmap.png)
+- [Paper & Conference](./doc/resources/README.md)
 
 ## Related Repositories (Projects)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
@@ -49,7 +64,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
 - [FATE-Client](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
 - [FATE-Test](https://github.com/FederatedAI/FATE-Test): An automated testing tool for FATE, including tests and benchmark comparisons.
-
+- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md) : A framework to support federated learning for large language models(LLMs).
 ## Governance 
 
 [FATE-Community](https://github.com/FederatedAI/FATE-Community) contains all the documents about how the community members coopearte with each other. 

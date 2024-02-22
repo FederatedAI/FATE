@@ -8,8 +8,8 @@ Below lists features of each LR models:
 
 | Linear Model  	 | Multiclass(OVR)                                                             | Arbiter-Less Training | Multi-Host                                     	                           | Cross Validation                                                      	 | Warm-Start                                                                 |     |
 |:----------------|-----------------------------------------------------------------------------|-----------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------|-----|
-| Coordinated LR  | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_multi_class.py) | &cross;               | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_multi_host.py) | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_cv.py)      | [&check;](../../../examples/pipeline/coordinated_lr/test_lr_warm_start.py) |     |
-| SSHE LR         | [&check;](../../../examples/pipeline/sshe_lr/test_lr_multi_class.py)        | &check;               | &cross;                                                                    | [&check;](../../../examples/pipeline/sshe_lr/test_lr_cv.py)             | [&check;](../../../examples/pipeline/sshe_lr/test_lr_warm_start.py)        |     |
+| Coordinated LR  | [&check;](../../../../examples/pipeline/coordinated_lr/test_lr_multi_class.py) | &cross;               | [&check;](../../../../examples/pipeline/coordinated_lr/test_lr_multi_host.py) | [&check;](../../../../examples/pipeline/coordinated_lr/test_lr_cv.py)      | [&check;](../../../../examples/pipeline/coordinated_lr/test_lr_warm_start.py) |     |
+| SSHE LR         | [&check;](../../../../examples/pipeline/sshe_lr/test_lr_multi_class.py)        | &check;               | &cross;                                                                    | [&check;](../../../../examples/pipeline/sshe_lr/test_lr_cv.py)             | [&check;](../../../../examples/pipeline/sshe_lr/test_lr_warm_start.py)        |     |
 | Homo LR       	 | [&check;]()                                                                 | &cross;               | [&check;]()                                                                | [&check;]()                                                             | [&check;]()                                                                |     |
 
 We simplified the federation process into three parties. Party A
@@ -26,7 +26,7 @@ samples stored in databases of the two involved parties. The federated
 model is built based on those overlapping samples. The whole sample
 alignment process will **not** leak confidential information (e.g.,
 sample ids) on the two parties since it is conducted in an encrypted
-way.
+way. (Security of this algorithm is lower than SSHE-LR, use SSHE-LR if possible)
 
 ![Figure 1 (Federated HeteroLR Principle)](../../images/HeteroLR.png)
 

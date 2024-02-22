@@ -316,7 +316,7 @@ EOF
 
 **需要连接exchange的各party的osx模块，app用户修改**
 
-修改/data/projects/fate/osx/conf/broker/route_table.json部分，默认路由信息指向部署好的exchange，不需要配置对端fateflow信息，修改后需重启osx：
+修改/data/projects/fate/osx/conf/broker/route_table.json部分，默认路由信息指向部署好的exchange，并配置本方fateflow等信息，不需要配置对端rollsite或者osx信息，修改后需重启osx：
 
 ```
  "default": {
@@ -327,6 +327,35 @@ EOF
                 }
             ]
         }
+```
+比如party9999，即目标服务器（192.168.0.2）配置 /data/projects/fate/osx/conf/broker/route_table.json为：
+
+```
+{
+        "route_table": {
+                "default": {
+                        "default": [
+                                {
+                                        "ip": "192.168.0.1",
+                                        "port": 9370
+                                }
+                        ]
+                },
+                "9999": {
+                        "default": [{
+                                "ip": "rollsite",
+                                "port": 9370
+                        }],
+                        "fateflow": [{
+                                "ip": "fateflow",
+                                "port": 9360
+                        }]
+                }
+        },
+        "permission": {
+                "default_allow": true
+        }
+}
 ```
 
 
