@@ -1091,8 +1091,6 @@ class HomoTrainerClient(Trainer, HomoTrainerMixin):
             return super().compute_loss(model, inputs, **kwargs)
         else:
             # (features, labels), this format is used in FATE-1.x
-            print('cwj *****')
-            print(inputs)
             if isinstance(inputs, tuple) or isinstance(inputs, list) and len(inputs) == 2:
                 feats, labels = inputs
                 output = model(feats)
