@@ -428,3 +428,4 @@ class PulsarFederation(MessageQueueBasedFederation):
 
     def _consume_ack(self, channel_info, id):
         channel_info.ack(message=id)
+
