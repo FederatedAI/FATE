@@ -21,6 +21,8 @@ data:
     meta:
       delimiter: ","
       dtype: float64
+      label_type: int64
+      label_name: y
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
@@ -33,6 +35,42 @@ data:
     table_name: breast_homo_host
     namespace: experiment
     role: host_0
+  - file: "examples/data/breast_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_homo_test
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/breast_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: breast_homo_test
+    namespace: experiment
+    role: guest_0
   - file: "examples/data/default_credit_homo_guest.csv"
     meta:
       delimiter: ","
@@ -55,6 +93,8 @@ data:
     meta:
       delimiter: ","
       dtype: float64
+      label_type: int64
+      label_name: y
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
@@ -67,6 +107,42 @@ data:
     table_name: default_credit_homo_host
     namespace: experiment
     role: host_0
+  - file: "examples/data/default_credit_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_homo_test
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/default_credit_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    partitions: 4
+    head: true
+    extend_sid: true
+    table_name: default_credit_homo_test
+    namespace: experiment
+    role: guest_0
   - file: "examples/data/give_credit_homo_guest.csv"
     meta:
       delimiter: ","
@@ -89,6 +165,8 @@ data:
     meta:
       delimiter: ","
       dtype: float64
+      label_type: int64
+      label_name: y
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
@@ -101,15 +179,51 @@ data:
     table_name: give_credit_homo_host
     namespace: experiment
     role: host_0
-  - file: "examples/data/vehicle_scale_homo_guest.csv"
+  - file: "examples/data/give_credit_homo_test.csv"
     meta:
       delimiter: ","
       dtype: float64
       input_format: dense
-      match_id_name: "id"
-      match_id_range: 0
       label_type: int64
       label_name: y
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: give_credit_homo_test
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/give_credit_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partitions: 4
+    extend_sid: true
+    table_name: give_credit_homo_test
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/vehicle_scale_homo_guest.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
@@ -123,6 +237,8 @@ data:
     meta:
       delimiter: ","
       dtype: float64
+      label_type: int64
+      label_name: y
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
@@ -135,15 +251,51 @@ data:
     table_name: vehicle_scale_homo_host
     namespace: experiment
     role: host_0
+  - file: "examples/data/vehicle_scale_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: vehicle_scale_homo_test
+    namespace: experiment
+    role: guest_0
+  - file: "examples/data/vehicle_scale_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: int64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: vehicle_scale_homo_test
+    namespace: experiment
+    role: host_0
   - file: "examples/data/student_homo_guest.csv"
     meta:
       delimiter: ","
       dtype: float64
+      label_type: float64
+      label_name: y
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
-      label_type: float64
-      label_name: y
       tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
@@ -157,6 +309,8 @@ data:
     meta:
       delimiter: ","
       dtype: float64
+      label_type: float64
+      label_name: y
       input_format: dense
       match_id_name: "id"
       match_id_range: 0
@@ -169,6 +323,42 @@ data:
     table_name: student_homo_host
     namespace: experiment
     role: host_0
+  - file: "examples/data/student_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: float64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: student_homo_test
+    namespace: experiment
+    role: host_0
+  - file: "examples/data/student_homo_test.csv"
+    meta:
+      delimiter: ","
+      dtype: float64
+      label_type: float64
+      label_name: y
+      input_format: dense
+      match_id_name: "id"
+      match_id_range: 0
+      tag_value_delimiter: ":"
+      tag_with_value: false
+      weight_type: float64
+    head: true
+    partition: 4
+    extend_sid: true
+    table_name: student_homo_test
+    namespace: experiment
+    role: guest_0
 homo_nn-binary-0-breast:
   local:
     script: "./local_nn_binary.py"

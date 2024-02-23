@@ -44,7 +44,8 @@ def main(config="../../config.yaml", param="./default_credit_config.yaml"):
     else:
         data_base_dir = config.data_base_dir
 
-    data_dir_path = data_base_dir + '/'
+    print(data_base_dir)
+    data_dir_path = str(data_base_dir) + '/'
 
     model = FakeNNModel(param['guest_model']['bottom'], param['host_model']['bottom'], param['guest_model']['top'],
                         param['guest_model']['agg_layer'], param['host_model']['agg_layer'], param['is_binary'])
