@@ -93,7 +93,7 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
 
     homo_nn_1 = HomoNN(
         'nn_1',
-        predict_model_input=homo_nn_0.outputs['train_model_output'],
+        input_model=homo_nn_0.outputs['output_model'],
         test_data=reader_1.outputs["output_data"]
     )
 
@@ -101,7 +101,7 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[homo_nn_1.outputs['predict_data_output'], homo_nn_0.outputs['train_data_output']]
+        input_data=[homo_nn_1.outputs['test_output_data'], homo_nn_0.outputs['train_output_data']]
     )
 
     if config.task_cores:
