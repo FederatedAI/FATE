@@ -77,16 +77,16 @@ def train(
         default=params.HEParam(kind="paillier", key_length=1024),
         desc="homomorphic encryption param, support paillier, ou and mock in current version",
     ),
-    train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
-    train_model_output: cpn.json_model_output(roles=[GUEST, HOST], optional=True),
-    train_model_input: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST], optional=True),
+    warm_start_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
 ):
     train_data = train_data.read()
     if validate_data is not None:
         validate_data = validate_data.read()
 
-    if train_model_input is not None:
-        train_model_input = train_model_input.read()
+    if warm_start_model is not None:
+        warm_start_model = warm_start_model.read()
 
     if role.is_guest:
         # initialize encrypt kit
@@ -114,17 +114,17 @@ def train(
             goss_start_iter=goss_start_iter,
             goss=goss,
         )
-        if train_model_input:
-            booster.from_model(train_model_input)
+        if warm_start_model:
+            booster.from_model(warm_start_model)
             logger.info("sbt input model loaded, will start warmstarting")
         booster.fit(ctx, train_data, validate_data)
         # get cached train data score
         train_scores = booster.get_train_predict()
         train_scores = add_dataset_type(train_scores, consts.TRAIN_SET)
-        train_data_output.write(train_scores)
+        train_output_data.write(train_scores)
         # get tree param
         tree_dict = booster.get_model()
-        train_model_output.write(tree_dict, metadata={})
+        output_model.write(tree_dict, metadata={})
 
     elif role.is_host:
         booster = HeteroSecureBoostHost(
@@ -134,12 +134,12 @@ def train(
             max_bin=max_bin,
             hist_sub=hist_sub,
         )
-        if train_model_input is not None:
-            booster.from_model(train_model_input)
+        if warm_start_model is not None:
+            booster.from_model(warm_start_model)
             logger.info("sbt input model loaded, will start warmstarting")
         booster.fit(ctx, train_data, validate_data)
         tree_dict = booster.get_model()
-        train_model_output.write(tree_dict, metadata={})
+        output_model.write(tree_dict, metadata={})
 
     else:
         raise RuntimeError(f"Unknown role: {role}")
@@ -150,10 +150,10 @@ def predict(
     ctx,
     role: Role,
     test_data: cpn.dataframe_input(roles=[GUEST, HOST]),
-    predict_model_input: cpn.json_model_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
     test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
-    model_input = predict_model_input.read()
+    model_input = input_model.read()
     test_data = test_data.read()
     if role.is_guest:
         booster = HeteroSecureBoostGuest()
