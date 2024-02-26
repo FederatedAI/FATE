@@ -147,7 +147,10 @@ class DefaultRunner(NNRunner):
             dataset = loader_load_from_conf(self.dataset_conf)
             if hasattr(dataset, "load"):
                 logger.info("load path is {}".format(data))
-                dataset.load(data)
+                load_output = dataset.load(data)
+                if load_output is not None:
+                    dataset = load_output
+                    return dataset
             else:
                 raise ValueError(
                     f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner. \
