@@ -21,7 +21,7 @@ from fate.components.core import GUEST, HOST, Role, cpn
 def union(
     ctx: Context,
     role: Role,
-        input_datas: cpn.dataframe_inputs(roles=[GUEST, HOST]),
+    input_datas: cpn.dataframe_inputs(roles=[GUEST, HOST]),
     output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     from fate.ml.preprocessing import Union
