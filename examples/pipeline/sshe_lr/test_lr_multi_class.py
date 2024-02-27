@@ -59,7 +59,7 @@ def main(config="../config.yaml", namespace=""):
                               runtime_parties=dict(guest=guest),
                               default_eval_setting="multi",
                               predict_column_name='predict_result',
-                              input_data=lr_0.outputs["train_output_data"])
+                              input_datas=lr_0.outputs["train_output_data"])
 
     pipeline.add_tasks([reader_0, psi_0, scale_0, lr_0, evaluation_0])
 

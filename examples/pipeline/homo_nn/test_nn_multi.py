@@ -74,7 +74,7 @@ def main(config="../../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         default_eval_setting='multi',
-        input_data=[homo_nn_0.outputs['train_output_data']]
+        input_datas=[homo_nn_0.outputs['train_output_data']]
     )
 
     pipeline.add_tasks([reader_0, homo_nn_0, evaluation_0])
