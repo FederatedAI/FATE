@@ -21,14 +21,14 @@ from fate.components.core import GUEST, HOST, Role, cpn
 def union(
     ctx: Context,
     role: Role,
-    input_data_list: cpn.dataframe_inputs(roles=[GUEST, HOST]),
+        input_datas: cpn.dataframe_inputs(roles=[GUEST, HOST]),
     output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     from fate.ml.preprocessing import Union
 
     data_list = []
     data_len_dict = {}
-    for data in input_data_list:
+    for data in input_datas:
         data_name = f"{data.artifact.metadata.source.task_name}.{data.artifact.metadata.source.unique_key()}"
         # logger.debug(f"data_name: {data_name}")
         data = data.read()
