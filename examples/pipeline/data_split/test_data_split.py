@@ -32,6 +32,9 @@ def main(config="../config.yaml", namespace=""):
         pipeline.conf.set("task_cores", config.task_cores)
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
+    if config.engine_run:
+        # print(f"config engine run: {config.engine_run}")
+        pipeline.conf.set("task", dict(engine_run=config.engine_run))
 
     reader_0 = Reader("reader_0")
     reader_0.guest.task_parameters(

@@ -49,8 +49,8 @@ def main(config="../config.yaml", namespace=""):
                              validate_size=0.1,
                              input_data=psi_0.outputs["output_data"])
 
-    union_0 = Union("union_0", input_data_list=[data_split_0.outputs["train_output_data"],
-                                                data_split_0.outputs["test_output_data"]])
+    union_0 = Union("union_0", input_datas=[data_split_0.outputs["train_output_data"],
+                                            data_split_0.outputs["test_output_data"]])
     pipeline.add_tasks([reader_0, psi_0, data_split_0, union_0])
 
     # pipeline.add_task(hetero_feature_binning_0)
