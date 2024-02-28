@@ -16,7 +16,7 @@
 from fate.ml.nn.trainer.trainer_base import HomoTrainerClient, HomoTrainerServer
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Callable, Union
+from typing import List, Optional, Tuple, Callable
 from fate.arch import Context
 from torch.optim import Optimizer
 from torch.utils.data import Dataset

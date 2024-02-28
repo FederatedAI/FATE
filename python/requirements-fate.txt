@@ -9,8 +9,8 @@ click
 ruamel-yaml==0.16
 numpy
 pandas==2.0.3
-transformers==4.29.1
-accelerate==0.19.0
+transformers==4.37.2
+accelerate==0.27.2
 beautifultable
 requests<2.26.0
 scikit-learn

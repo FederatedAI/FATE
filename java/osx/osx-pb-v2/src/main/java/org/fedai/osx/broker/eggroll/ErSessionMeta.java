@@ -16,7 +16,6 @@
 package org.fedai.osx.broker.eggroll;
 
 import com.webank.eggroll.core.meta.Meta;
-import org.fedai.osx.core.utils.JsonUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -124,7 +123,7 @@ public class ErSessionMeta extends BaseProto<Meta.SessionMeta> {
     }
 
     public String toString() {
-        return JsonUtil.object2Json(this);
+        return PbUtils.object2Json(this);
     }
 }
 

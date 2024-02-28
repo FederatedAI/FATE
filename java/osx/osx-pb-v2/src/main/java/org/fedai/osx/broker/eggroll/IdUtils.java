@@ -16,14 +16,13 @@
 package org.fedai.osx.broker.eggroll;
 
 import org.apache.commons.lang3.StringUtils;
-import org.fedai.osx.broker.util.TimeUtils;
 
 public class IdUtils {
     private static String job = "job";
     private static String task = "task";
 
     public static String generateJobId(String sessionId, String tag, String delim) {
-        String result = String.join(delim, sessionId, "scala", job, TimeUtils.getNowMs(null));
+        String result = String.join(delim, sessionId, "scala", job, PbUtils.getNowMs(null));
         if (StringUtils.isBlank(tag)) {
             return result;
         } else {

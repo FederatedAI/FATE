@@ -27,15 +27,15 @@ def main(config="../config.yaml", namespace=""):
     hetero_sbt_0 = HeteroSecureBoost('sbt_0', num_trees=2, max_bin=32, max_depth=3,
                                     he_param={'kind': 'paillier', 'key_length': 1024}, train_data=psi_0.outputs['output_data'],)
     hetero_sbt_1 = HeteroSecureBoost('sbt_1', num_trees=2, max_bin=32, max_depth=3,
-                                    he_param={'kind': 'paillier', 'key_length': 1024}, train_data=psi_0.outputs['output_data'], train_model_input=hetero_sbt_0.outputs['train_model_output'])
+                                    he_param={'kind': 'paillier', 'key_length': 1024}, train_data=psi_0.outputs['output_data'], warm_start_model=hetero_sbt_0.outputs['output_model'])
     hetero_sbt_2 = HeteroSecureBoost('sbt_2', num_trees=4, max_bin=32, max_depth=3,
                                     he_param={'kind': 'paillier', 'key_length': 1024}, train_data=psi_0.outputs['output_data'],)
     evaluation_0 = Evaluation(
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_sbt_0.outputs['train_data_output'], hetero_sbt_1.outputs['train_data_output'],
-                    hetero_sbt_2.outputs['train_data_output']]
+        input_data=[hetero_sbt_0.outputs['train_output_data'], hetero_sbt_1.outputs['train_output_data'],
+                    hetero_sbt_2.outputs['train_output_data']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_sbt_0, hetero_sbt_1, hetero_sbt_2, evaluation_0])

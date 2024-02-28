@@ -81,7 +81,7 @@ def main(config="../../config.yaml", param="", namespace=""):
     homo_nn_1 = HomoNN(
         'nn_1',
         test_data=DataWarehouseChannel(name=test_data["name"], namespace=test_data["namespace"]),
-        predict_model_input=homo_nn_0.outputs['train_model_output']
+        input_model=homo_nn_0.outputs['output_model']
     )
 
     homo_nn_0.guest.task_parameters(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
@@ -91,7 +91,7 @@ def main(config="../../config.yaml", param="", namespace=""):
         'eval_0',
         default_eval_setting='regression',
         runtime_parties=dict(guest=guest),
-        input_data=[homo_nn_1.outputs['predict_data_output'], homo_nn_0.outputs['train_data_output']]
+        input_data=[homo_nn_1.outputs['test_output_data'], homo_nn_0.outputs['train_output_data']]
     )
 
     if config.task_cores:

@@ -18,6 +18,7 @@ package org.fedai.osx.broker.eggroll;
 import com.google.common.collect.Lists;
 import com.webank.eggroll.core.meta.Meta;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,13 +28,27 @@ public class ErJob extends BaseProto<Meta.Job> {
 
     String id;
     String name;
-    List<ErJobIO> inputs;
-    List<ErJobIO> outputs;
+    List<ErStore> inputs;
+    List<ErStore> outputs;
     List<ErFunctor> functors;
     Map<String, String> options;
 
-    public ErJob(String id, String name, List<ErJobIO> inputs,
-                 List<ErJobIO> outputs,
+    public ErJob(String id, String name, ErStore input,
+                 ErStore output,
+                 List<ErFunctor> functors,
+                 Map<String, String> options) {
+        this.id = id;
+        this.name = name;
+        this.inputs = new ArrayList<>();
+        inputs.add(input);
+        this.outputs = new ArrayList<>();
+        outputs.add(output);
+        this.functors = functors;
+        this.options = options;
+    }
+
+    public ErJob(String id, String name, List<ErStore> inputs,
+                 List<ErStore> outputs,
                  List<ErFunctor> functors,
                  Map<String, String> options) {
         this.id = id;
@@ -51,15 +66,15 @@ public class ErJob extends BaseProto<Meta.Job> {
         String id = job.getId();
         String name = job.getName();
         Map<String, String> options = job.getOptionsMap();
-        List<Meta.JobIO> inputMeta = job.getInputsList();
-        List<ErJobIO> input = Lists.newArrayList();
+        List<Meta.Store> inputMeta = job.getInputsList();
+        List<ErStore> input = Lists.newArrayList();
         if (inputMeta != null) {
-            input = inputMeta.stream().map(ErJobIO::parseFromPb).collect(Collectors.toList());
+            input = inputMeta.stream().map(ErStore::parseFromPb).collect(Collectors.toList());
         }
-        List<Meta.JobIO> outputMeta = job.getOutputsList();
-        List<ErJobIO> output = Lists.newArrayList();
+        List<Meta.Store> outputMeta = job.getOutputsList();
+        List<ErStore> output = Lists.newArrayList();
         if (output != null) {
-            output = outputMeta.stream().map(ErJobIO::parseFromPb).collect(Collectors.toList());
+            output = outputMeta.stream().map(ErStore::parseFromPb).collect(Collectors.toList());
         }
         List<ErFunctor> functors = Lists.newArrayList();
         List<Meta.Functor> functorMeta = job.getFunctorsList();
@@ -90,19 +105,19 @@ public class ErJob extends BaseProto<Meta.Job> {
         this.name = name;
     }
 
-    public List<ErJobIO> getInputs() {
+    public List<ErStore> getInputs() {
         return inputs;
     }
 
-    public void setInputs(List<ErJobIO> inputs) {
+    public void setInputs(List<ErStore> inputs) {
         this.inputs = inputs;
     }
 
-    public List<ErJobIO> getOutputs() {
+    public List<ErStore> getOutputs() {
         return outputs;
     }
 
-    public void setOutputs(List<ErJobIO> outputs) {
+    public void setOutputs(List<ErStore> outputs) {
         this.outputs = outputs;
     }
 
@@ -124,12 +139,10 @@ public class ErJob extends BaseProto<Meta.Job> {
 
     @Override
     Meta.Job toProto() {
-        return Meta.Job.newBuilder()
-                .setId(id)
-                .setName(name)
+
+        return Meta.Job.newBuilder().setId(id).setName(name)
                 .addAllFunctors(this.functors.stream().map(ErFunctor::toProto).collect(Collectors.toList())).
-                addAllInputs(inputs.stream().map(ErJobIO::toProto).collect(Collectors.toList()))
-                .addAllOutputs(outputs.stream().map(ErJobIO::toProto).collect(Collectors.toList()))
-                .putAllOptions(options).build();
+                addAllInputs(inputs.stream().map(ErStore::toProto).collect(Collectors.toList())).putAllOptions(options).build();
+
     }
 }

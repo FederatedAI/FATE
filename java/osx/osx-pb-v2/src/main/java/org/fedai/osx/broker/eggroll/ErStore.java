@@ -18,7 +18,6 @@ package org.fedai.osx.broker.eggroll;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.webank.eggroll.core.meta.Meta;
-import org.fedai.osx.core.utils.JsonUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,7 @@ public class ErStore extends BaseProto<Meta.Store> {
     }
 
     public String toString() {
-        return JsonUtil.object2Json(this);
+        return PbUtils.object2Json(this);
     }
 
     public ErStoreLocator getStoreLocator() {

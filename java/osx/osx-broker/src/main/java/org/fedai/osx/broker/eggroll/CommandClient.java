@@ -19,14 +19,12 @@ import com.google.protobuf.AbstractMessageLite;
 import com.webank.eggroll.core.command.Command;
 import com.webank.eggroll.core.command.CommandServiceGrpc;
 import io.grpc.ManagedChannel;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.fedai.osx.core.frame.GrpcConnectionFactory;
 import org.fedai.osx.core.router.RouterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class CommandClient {

@@ -53,7 +53,7 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
         try {
             commandFuture.get(MetaInfo.BATCH_SINK_PUSH_EXECUTOR_TIMEOUT, TimeUnit.MILLISECONDS);
             eggSiteServicerPushRespSO.onNext(reqHeader.toBuilder().setAck(resp.getHeader().getId()).build());
-            eggSiteServicerPushRespSO.onCompleted();
+//            eggSiteServicerPushRespSO.onCompleted();
         } catch (Exception e) {
             logger.error("send to eggroll error", e);
         }

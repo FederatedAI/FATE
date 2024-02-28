@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fedai.osx.broker.util;
+package org.fedai.osx.broker.eggroll;
 
-import org.apache.commons.lang3.StringUtils;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
-public class TimeUtils {
-    static DateTimeFormatter noSeparatorFormatter = DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss.SSS");
+public abstract class BaseProto<T> {
 
-    public static String getNowMs(String dateFormat) {
-        LocalDateTime now = LocalDateTime.now();
-        if (StringUtils.isBlank(dateFormat)) {
-            return noSeparatorFormatter.format(now);
-        } else {
-            return new SimpleDateFormat(dateFormat).format(now);
-        }
+    abstract T toProto();
+
+    public String toString() {
+        return PbUtils.object2Json(this);
     }
 }
-

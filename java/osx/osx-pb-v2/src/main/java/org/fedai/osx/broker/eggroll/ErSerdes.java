@@ -15,9 +15,8 @@
  */
 package org.fedai.osx.broker.eggroll;
 
-import com.webank.eggroll.core.meta.Meta;
-
 import com.google.protobuf.ByteString;
+import com.webank.eggroll.core.meta.Meta;
 
 public class ErSerdes extends BaseProto<Meta.Serdes> {
 

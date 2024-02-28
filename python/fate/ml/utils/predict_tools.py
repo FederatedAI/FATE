@@ -33,10 +33,14 @@ PREDICT_SCORE = "predict_score"
 PREDICT_DETAIL = "predict_detail"
 LABEL = "label"
 
+# PREDICT RESULT OF CausalLanguageModeling
+PREDICT_TEXT = "predict_text"
+
 # TASK TYPE
 BINARY = "binary"
 MULTI = "multi"
 REGRESSION = "regression"
+CAUSAL_LM = "causal_lm"
 OTHER = "other"
 
 

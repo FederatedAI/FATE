@@ -16,7 +16,6 @@
 package org.fedai.osx.broker.eggroll;
 
 import com.webank.eggroll.core.meta.Meta;
-import org.fedai.osx.core.constant.Dict;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 public class ErTask extends BaseProto<Meta.Task> {
 
     String id;
-    String name = Dict.EMPTY;
+    String name = "";
     List<ErPartition> inputs = new ArrayList<>();
     List<ErPartition> outputs = new ArrayList<>();
     ErJob job;

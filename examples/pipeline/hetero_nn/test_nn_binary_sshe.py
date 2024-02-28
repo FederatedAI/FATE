@@ -91,14 +91,14 @@ def main(config="../../config.yaml", namespace=""):
     hetero_nn_1 = HeteroNN(
         'hetero_nn_1',
         test_data=psi_0.outputs['output_data'],
-        predict_model_input=hetero_nn_0.outputs['train_model_output']
+        input_model=hetero_nn_0.outputs['output_model']
     )
 
     evaluation_0 = Evaluation(
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_nn_0.outputs['train_data_output'], hetero_nn_1.outputs['predict_data_output']]
+        input_data=[hetero_nn_0.outputs['train_output_data'], hetero_nn_1.outputs['test_output_data']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_nn_0, hetero_nn_1, evaluation_0])

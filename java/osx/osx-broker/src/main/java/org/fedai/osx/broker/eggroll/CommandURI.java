@@ -45,7 +45,7 @@ public class CommandURI {
                     int idx = pair.indexOf(Dict.EQUAL);
 
                     String key = pair;
-                    String value = Dict.EMPTY;
+                    String value = "";
                     if (idx > 0)
                         key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name());
                     else if (idx > 0 && pair.length() > idx + 1)

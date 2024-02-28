@@ -126,7 +126,7 @@ class _FederationBytesCoder:
     @staticmethod
     def encode_split(slice_table_meta: "TableMeta", total_size: int, num_slice: int, slice_size: int) -> bytes:
         return struct.pack("!B", 1) + struct.pack(
-            "!IIIIIII",
+            "!QIIIIII",
             total_size,
             num_slice,
             slice_size,
@@ -154,7 +154,7 @@ class _FederationBytesCoder:
             key_serdes_type,
             value_serdes_type,
             partitioner_type,
-        ) = struct.unpack("!IIIIIII", v[1:29])
+        ) = struct.unpack("!QIIIIII", v[1:33])
         table_meta = TableMeta(
             num_partitions=num_partitions,
             key_serdes_type=key_serdes_type,

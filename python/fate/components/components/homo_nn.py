@@ -53,9 +53,9 @@ def train(
     runner_class: cpn.parameter(type=str, default="DefaultRunner", desc="class name of your runner class"),
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
-    train_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
-    train_model_output: cpn.model_directory_output(roles=[GUEST, HOST], optional=True),
-    train_model_input: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
+    train_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+    output_model: cpn.model_directory_output(roles=[GUEST, HOST], optional=True),
+    warm_start_model: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
 ):
     if role.is_guest or role.is_host:  # is client
         train_procedure(
@@ -67,9 +67,9 @@ def train(
             runner_class,
             runner_conf,
             source,
-            train_data_output,
-            train_model_output,
-            train_model_input,
+            train_output_data,
+            output_model,
+            warm_start_model,
         )
 
     elif role.is_arbiter:  # is server
@@ -83,11 +83,11 @@ def predict(
     ctx,
     role: Role,
     test_data: cpn.dataframe_input(roles=[GUEST, HOST]) | cpn.data_directory_input(),
-    predict_model_input: cpn.model_directory_input(roles=[GUEST, HOST]),
-    predict_data_output: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
+    input_model: cpn.model_directory_input(roles=[GUEST, HOST]),
+    test_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
 ):
     if role.is_guest or role.is_host:  # is client
-        predict_procedure(ctx, role, test_data, predict_model_input, predict_data_output)
+        predict_procedure(ctx, role, test_data, input_model, test_output_data)
 
     elif role.is_arbiter:  # is server
         logger.info("arbiter skip predict")

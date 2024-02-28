@@ -338,40 +338,18 @@ class Table(object):
             )
 
         if reduce_partition_op is None:
-            # noinspection PyProtectedMember
-            self._session._submit_map_reduce_partitions_with_index(
-                _do_mrwi_shuffle_no_reduce,
-                map_partition_op,
-                reduce_partition_op,
-                input_data_dir=self._data_dir,
-                input_num_partitions=self.num_partitions,
-                input_name=self._name,
-                input_namespace=self._namespace,
-                output_data_dir=output_data_dir,
-                output_num_partitions=output_num_partitions,
-                output_name=output_name,
-                output_namespace=output_namespace,
-                output_partitioner=output_partitioner,
-            )
-            return _create_table(
-                session=self._session,
-                data_dir=output_data_dir,
-                name=output_name,
-                namespace=output_namespace,
-                partitions=output_num_partitions,
-                need_cleanup=need_cleanup,
-                key_serdes_type=output_key_serdes_type,
-                value_serdes_type=output_value_serdes_type,
-                partitioner_type=output_partitioner_type,
-            )
-
+            _do_shuffle_write_func = _do_mrwi_map_and_shuffle_write_unique
+            _do_shuffle_read_func = _do_mrwi_shuffle_read_no_reduce
+        else:
+            _do_shuffle_write_func = _do_mrwi_map_and_shuffle_write
+            _do_shuffle_read_func = _do_mrwi_shuffle_read_and_reduce
         # Step 1: do map and write intermediate results to cache table
-        # noinspection PyProtectedMember
         intermediate_name = str(uuid.uuid1())
         intermediate_namespace = self._namespace
         intermediate_data_dir = self._data_dir
+        # noinspection PyProtectedMember
         self._session._submit_map_reduce_partitions_with_index(
-            _do_mrwi_map_and_shuffle_write,
+            _do_shuffle_write_func,
             mapper=map_partition_op,
             reducer=None,
             input_data_dir=self._data_dir,
@@ -387,7 +365,7 @@ class Table(object):
         # Step 2: do shuffle read and reduce
         # noinspection PyProtectedMember
         self._session._submit_map_reduce_partitions_with_index(
-            _do_mrwi_shuffle_read_and_reduce,
+            _do_shuffle_read_func,
             mapper=None,
             reducer=reduce_partition_op,
             input_data_dir=intermediate_data_dir,
@@ -1064,21 +1042,6 @@ def _do_mrwi_no_shuffle(p: _MapReduceProcess):
         return rtn
 
 
-def _do_mrwi_shuffle_no_reduce(p: _MapReduceProcess):
-    rtn = p.output_info
-    if p.has_partition(p.partition_id):
-        with ExitStack() as s:
-            cursor = p.get_input_cursor(s)
-            txn_map = {}
-            for output_partition_id in range(p.get_output_partition_num()):
-                txn_map[output_partition_id] = p.get_output_transaction(output_partition_id, s)
-            output_kv_iter = p.get_mapper()(p.partition_id, _generator_from_cursor(cursor))
-            for k_bytes, v_bytes in output_kv_iter:
-                partition_id = p.get_output_partition_id(k_bytes)
-                txn_map[partition_id].put(k_bytes, v_bytes)
-    return rtn
-
-
 def _do_binary_sorted_map_with_index(p: _BinarySortedMapProcess):
     rtn = p.output_info
     with ExitStack() as s:
@@ -1129,6 +1092,22 @@ def _do_mrwi_map_and_shuffle_write(p: _MapReduceProcess):
     return rtn
 
 
+def _do_mrwi_map_and_shuffle_write_unique(p: _MapReduceProcess):
+    rtn = p.output_info
+    if p.has_partition(p.partition_id):
+        with ExitStack() as s:
+            cursor = p.get_input_cursor(s)
+            shuffle_write_txn_map = {}
+            for output_partition_id in range(p.get_output_partition_num()):
+                shuffle_partition_id = _get_shuffle_partition_id(p.partition_id, output_partition_id)
+                shuffle_write_txn_map[output_partition_id] = p.get_output_transaction(shuffle_partition_id, s)
+
+            output_kv_iter = p.get_mapper()(p.partition_id, _generator_from_cursor(cursor))
+            for k_bytes, v_bytes in output_kv_iter:
+                shuffle_write_txn_map[p.get_output_partition_id(k_bytes)].put(k_bytes, v_bytes, overwrite=False)
+    return rtn
+
+
 def _do_mrwi_shuffle_read_and_reduce(p: _MapReduceProcess):
     rtn = p.output_info
     reducer = p.get_reducer()
@@ -1143,6 +1122,18 @@ def _do_mrwi_shuffle_read_and_reduce(p: _MapReduceProcess):
                     dst_txn.put(key, v_bytes)
                 else:
                     dst_txn.put(key, reducer(old, v_bytes))
+    return rtn
+
+
+def _do_mrwi_shuffle_read_no_reduce(p: _MapReduceProcess):
+    rtn = p.output_info
+    with ExitStack() as s:
+        dst_txn = p.get_output_transaction(p.partition_id, s)
+        for input_partition_id in range(p.get_input_partition_num()):
+            for k_bytes, v_bytes in p.get_input_cursor(
+                s, pid=_get_shuffle_partition_id(input_partition_id, p.partition_id)
+            ):
+                dst_txn.put(k_bytes, v_bytes)
     return rtn
 
 

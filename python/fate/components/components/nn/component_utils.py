@@ -34,7 +34,13 @@ def prepare_runner_class(runner_module, runner_class, runner_conf, source):
     logger.info("source is {}".format(source))
     if source is None:
         # load from default folder
-        runner = Loader("fate.components.components.nn.runner." + runner_module, runner_class, **runner_conf)()
+        try:
+            runner = Loader("fate.components.components.nn.runner." + runner_module, runner_class, **runner_conf)()
+        except Exception as e1:
+            try:
+                runner = Loader("fate_llm.runner." + runner_module, runner_class, **runner_conf)()
+            except Exception as e2:
+                raise Exception("Both loader attempts failed. First attempt error: {}. Second attempt error: {}.".format(e1, e2))
     else:
         runner = Loader(runner_module, runner_class, source=source, **runner_conf)()
     assert isinstance(runner, NNRunner), "loaded class must be a subclass of NNRunner class, but got {}".format(
