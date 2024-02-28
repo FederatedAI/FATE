@@ -84,7 +84,7 @@ def main(config="../../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest, host=host),
         metrics=['auc'],
-        input_data=[homo_nn_1.outputs['test_output_data']]
+        input_datas=[homo_nn_1.outputs['test_output_data']]
     )
 
     pipeline.add_tasks([reader_0, homo_nn_0, homo_nn_1, evaluation_0])

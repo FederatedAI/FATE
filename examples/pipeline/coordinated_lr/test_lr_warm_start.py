@@ -71,7 +71,7 @@ def main(config="../config.yaml", namespace=""):
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),
                               default_eval_setting="binary",
-                              input_data=[lr_1.outputs["train_output_data"], lr_2.outputs["train_output_data"]])
+                              input_datas=[lr_1.outputs["train_output_data"], lr_2.outputs["train_output_data"]])
 
     pipeline.add_tasks([reader_0, psi_0, lr_0, lr_1, lr_2, evaluation_0])
 

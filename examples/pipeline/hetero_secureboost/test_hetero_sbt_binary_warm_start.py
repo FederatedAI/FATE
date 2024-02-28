@@ -34,7 +34,7 @@ def main(config="../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_sbt_0.outputs['train_output_data'], hetero_sbt_1.outputs['train_output_data'],
+        input_datas=[hetero_sbt_0.outputs['train_output_data'], hetero_sbt_1.outputs['train_output_data'],
                     hetero_sbt_2.outputs['train_output_data']]
     )
 
