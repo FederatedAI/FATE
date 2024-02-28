@@ -23,7 +23,7 @@ ok_c="\033[32m"
 
 project_name=osx
 module=broker
-module_version=1.0.0
+module_version=1.1.0
 main_class=org.fedai.osx.broker.Bootstrap
 
 DIR_SIZE_IN_MB=600
