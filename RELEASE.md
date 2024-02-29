@@ -1,4 +1,17 @@
-## Release
+## Release 2.1.0
+### Major Features and Improvements
+> Arch
+* Some bugs fixed for spark computing engine
+
+> Component
+* Unified IO keys naming format for all components
+* Add LLMLoader to support running FATE-LLM v2.0 with pipeline
+
+> OSX
+* Compatible with eggroll-v2.x
+
+
+## Release 2.0.0
 ### Major Features and Improvements
 > Arch 2.0：Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
 * Introduce `Context` to manage useful APIs for developers, such as `Distributed Compting`, `Federation`, `Cipher`, `Tensor`, `Metrics`,  and `IO`.
