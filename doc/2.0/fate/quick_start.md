@@ -3,7 +3,7 @@
 1. install `fate_client` with extra package `fate`  
 
 ```sh
-python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.0.0
+python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.1.0
 ```
 after installing packages successfully, initialize fate_flow service and fate_client
 
