@@ -217,12 +217,125 @@ guest_9999:
     reader_0:
       parameters: {name: breast_hetero_guest, namespace: experiment}
 ```
-#### parties
-表示有哪些参与方
+* parties: 表示有哪些参与方
 
-#### conf
-字典类型，表示对应的parties运行时tasks对应任务时的个性化任务配置
+* conf: 字典类型，表示对应的parties运行时tasks对应任务时的个性化任务配置
 
-#### tasks
-字典类型，key为有哪些任务，value为具体任务对应的配置，配置由conf和parameters构成，
+* tasks: 字典类型，key为有哪些任务，value为具体任务对应的配置，配置由conf和parameters构成，
 其中conf是一个字典，表示的是parties对应的参与方运行这个具体任务的配置，parameters是这些参与方运行这个具体任务时的算法参数
+
+## 3. 预测任务DAG
+该章节是给用户介绍纯预测任务的dag, 与训练任务相比，预测DAG需要修改的地方较少，下面介绍如何在训练DAG基础上进行修改
+
+预测DAG示例
+```yaml
+dag:
+  conf:
+    model_warehouse: {model_id: ${训练任务model_id}, model_version: ${训练任务model_version}}
+  parties:
+  - party_id: ['9999']
+    role: guest
+  - party_id: ['10000']
+    role: host
+  party_tasks:
+    guest_9999:
+      parties:
+      - party_id: ['9999']
+        role: guest
+      tasks:
+        reader_1:
+          parameters: {name: breast_hetero_guest, namespace: experiment}
+    host_10000:
+      parties:
+      - party_id: ['10000']
+        role: host
+      tasks:
+        reader_1:
+          parameters: {name: breast_hetero_host, namespace: experiment}
+  stage: predict
+  tasks:
+    psi_0:
+      component_ref: psi
+      dependent_tasks: [reader_1]
+      inputs:
+        data:
+          input_data:
+            task_output_artifact:
+              output_artifact_key: output_data
+              parties:
+              - party_id: ['9999']
+                role: guest
+              - party_id: ['10000']
+                role: host
+              producer_task: reader_1
+      parameters: {}
+      stage: default
+    reader_1:
+      component_ref: reader
+      parameters: {}
+      stage: default
+    sbt_0:
+      component_ref: hetero_secureboost
+      dependent_tasks: [psi_0]
+      inputs:
+        data:
+          test_data:
+            task_output_artifact:
+            - output_artifact_key: output_data
+              parties:
+              - party_id: ['9999']
+                role: guest
+              - party_id: ['10000']
+                role: host
+              producer_task: psi_0
+        model:
+          input_model:
+            model_warehouse:
+              output_artifact_key: output_model
+              parties:
+              - party_id: ['9999']
+                role: guest
+              - party_id: ['10000']
+                role: host
+              producer_task: sbt_0
+      parameters:
+        max_depth: 3
+        num_trees: 2
+        ...
+schema_version: 2.1.0
+```
+* Step1: 将dag下的全局job阶段的stage改成predict
+* Step2: 将用不到的组件从dag下的tasks，以及party_tasks进行删除，同时需要注意的是，删除组件可能会导致部分下游组件的dependent，以及输入发生改变，也需要对应修改。
+如示例中的eval_0组件，以及reader_0组件 
+* Step3: 在dag下的tasks，以及party_tasks，新增需要的组件，以及修改下游依赖它的组件的dependent以及inputs等可能字段。
+```yaml
+tasks:
+  psi_0:
+    component_ref: psi
+    dependent_tasks: [reader_1]
+  reader_1:
+    component_ref: reader
+    parameters: {}
+    stage: default
+```
+* Step4: 对于预测任务，如果需要使用训练阶段生成的模型，则需要在dag下的全局job的conf里面配置model_warehouse字段，填写训练任务的model_id和model_version，并执行Step5
+```yaml
+conf:
+  model_warehouse: {model_id: ${训练任务model_id}, model_version: ${训练任务model_version}}
+```
+* Step5: 在需要使用训练时候生成模型的任务中，增加model输入，同时，producer_task为该任务名, output_artifact_key为该任务对应组件的模型输出字段，parties字段则根据需要填（因为部分三方组件，可能预测阶段只有guest\host有模型输入) 
+```yaml
+inputs:
+  model:
+    input_model:
+      model_warehouse:
+        output_artifact_key: output_model
+        parties:
+        - party_id: ['9999']
+          role: guest
+        - party_id: ['10000']
+          role: host
+        producer_task: sbt_0
+```
+
+修改完成后，该配置可以直接适用于预测
