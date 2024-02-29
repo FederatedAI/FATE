@@ -4,11 +4,7 @@ data:
       delimiter: ","
       dtype: float64
       input_format: dense
-      label_type: int64
-      label_name: y
       match_id_name: id
-      match_id_range: 0
-      tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     partitions: 4
@@ -23,8 +19,6 @@ data:
       dtype: float64
       input_format: dense
       match_id_name: id
-      match_id_range: 0
-      tag_value_delimiter: ":"
       tag_with_value: false
       weight_type: float64
     partitions: 4
@@ -34,6 +28,6 @@ data:
     namespace: experiment
     role: host_0
 tasks:
-  hetero-sbt:
-    script: test_sbt.py
+  psi:
+    script: test_psi.py
     conf: "./breast_config.yaml"
