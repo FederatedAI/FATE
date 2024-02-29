@@ -1,0 +1,6 @@
+data_guest: "breast_hetero_guest"
+data_host: "breast_hetero_host"
+idx: "id"
+label_name: "y"
+task_cores: 4
+timeout: 3600

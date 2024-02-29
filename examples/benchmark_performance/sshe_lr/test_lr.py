@@ -18,7 +18,7 @@ import argparse
 
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import Evaluation
-from fate_client.pipeline.components.fate import SSHELR, PSI, Reader
+from fate_client.pipeline.components.fate import SSHELR, PSI, Reader, FeatureScale
 from fate_client.pipeline.utils import test_utils
 
 
@@ -52,6 +52,10 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     reader_0.hosts[0].task_parameters(namespace=host_train_data['namespace'], name=host_train_data['name'])
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
+    feature_scale_0 = FeatureScale("feature_scale_0",
+                                   method="min_max",
+                                   train_data=psi_0.outputs["output_data"])
+
     lr_param = {
     }
 
@@ -61,24 +65,23 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "batch_size": param["batch_size"],
         "early_stop": param["early_stop"],
         "init_param": param["init_param"],
-        "tol": 1e-5
+        "tol": 1e-9
     }
     lr_param.update(config_param)
     lr_0 = SSHELR("lr_0",
-                  train_data=psi_0.outputs["output_data"],
+                  train_data=feature_scale_0.outputs["train_output_data"],
                   **lr_param)
     lr_1 = SSHELR("lr_1",
-                  test_data=psi_0.outputs["output_data"],
+                  test_data=feature_scale_0.outputs["train_output_data"],
                   input_model=lr_0.outputs["output_model"])
 
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
-                              input_data=lr_0.outputs["train_output_data"])
-    pipeline.add_tasks([reader_0, psi_0, lr_0, lr_1, evaluation_0])
+                              input_datas=lr_0.outputs["train_output_data"])
+    pipeline.add_tasks([reader_0, psi_0, feature_scale_0, lr_0, lr_1, evaluation_0])
 
     pipeline.compile()
-    print(pipeline.get_dag())
     pipeline.fit()
 
     job_id = pipeline.model_info.job_id
