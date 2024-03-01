@@ -1,5 +1,5 @@
 ## Performance 
-This document mainly introduces the performance of main algorithm in FATE-v2.0 running of different computing engines
+This document mainly introduces the performance of main algorithm in FATE-v2.0 running on different computing engines
   
 Testing configuration:
 * 2 hosts with same machine configuration
