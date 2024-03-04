@@ -260,6 +260,8 @@ class DefaultRunner(NNRunner):
         saved_model_path: str = None,
     ):
         if self.is_client():
+            if self.fed_args_conf.aggregate_strategy == 'steps':
+                raise ValueError('Step aggregation is not allowed in production environment for data privacy concerns')
             train_set = self._prepare_data(train_data, "train_data")
             validate_set = self._prepare_data(validate_data, "val_data")
             trainer = self.client_setup(
