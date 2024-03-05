@@ -213,7 +213,8 @@ class DefaultRunner(NNRunner):
         training_args.output_dir = output_dir
         training_args.resume_from_checkpoint = resume_path  # resume path
         fed_args = FedAVGArguments(**self.fed_args_conf)
-
+        if self.fed_args_conf.aggregate_strategy == 'steps':
+            raise ValueError('aggregate_strategy "steps" is not supported in FATE-pipeline which will be used in production.')
         # prepare trainer
         trainer = client_class(
             ctx=ctx,
@@ -260,8 +261,6 @@ class DefaultRunner(NNRunner):
         saved_model_path: str = None,
     ):
         if self.is_client():
-            if self.fed_args_conf.aggregate_strategy == 'steps':
-                raise ValueError('aggregate_strategy "steps" is not supported in FATE-pipeline which will be used in production.')
             train_set = self._prepare_data(train_data, "train_data")
             validate_set = self._prepare_data(validate_data, "val_data")
             trainer = self.client_setup(
