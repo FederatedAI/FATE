@@ -5,7 +5,7 @@ label_name: "y"
 epochs: 30
 fit_intercept: True
 method: "rmsprop"
-penalty: "L2"
+penalty: "l2"
 eta0: 0.1
 alpha: 0.001
 batch_size: 5000
