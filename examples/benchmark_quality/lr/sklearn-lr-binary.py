@@ -60,7 +60,7 @@ def main(config="../../config.yaml", param="./breast_lr_sklearn_config.yaml"):
     x_train, x_test, y_train, y_test = X, X, y, y
 
     # lm = LogisticRegression(max_iter=20)
-    lm = SGDClassifier(loss="log", **config_param)
+    lm = SGDClassifier(loss="log_loss", **config_param)
     lm_fit = lm.fit(x_train, y_train)
     y_pred = lm_fit.predict(x_test)
     y_prob = lm_fit.predict_proba(x_test)[:, 1]

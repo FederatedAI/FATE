@@ -20,11 +20,12 @@ import java.util.Map;
 public class RollPair {
     public static final String PUT_BATCH = "putBatch";
     public static final String ROLL_PAIR_URI_PREFIX = "v1/roll-pair";
-    public static final String EGG_PAIR_URI_PREFIX = "v1/eggs-pair";
+    public static final String EGG_PAIR_URI_PREFIX_V2 = "v1/egg-pair";
+    public static final String EGG_PAIR_URI_PREFIX_V3 = "v1/eggs-pair";
 
     public static final String RUN_JOB = "runJob";
     public static final String RUN_TASK = "runTask";
-    public static CommandURI EGG_RUN_TASK_COMMAND = new CommandURI(EGG_PAIR_URI_PREFIX + "/" + RUN_TASK);
+    public static CommandURI EGG_RUN_TASK_COMMAND = new CommandURI(EGG_PAIR_URI_PREFIX_V3 + "/" + RUN_TASK);
     public static CommandURI ROLL_RUN_JOB_COMMAND = new CommandURI(ROLL_PAIR_URI_PREFIX + "/" + RUN_JOB);
     ErStore store;
     RollPairContext ctx;

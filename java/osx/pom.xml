@@ -11,10 +11,12 @@
     <modules>
         <module>osx-core</module>
         <module>osx-broker</module>
+        <module>osx-pb-v2</module>
+        <module>osx-pb-v3</module>
     </modules>
 
     <properties>
-        <osx.version>1.0.0</osx.version>
+        <osx.version>1.1.0</osx.version>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

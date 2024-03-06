@@ -13,15 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import argparse
 from fate_test.utils import parse_summary_result
+from fate_client.pipeline.components.fate import Reader
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline.components.fate.evaluation import Evaluation
 from fate_client.pipeline import FateFlowPipeline
-from fate_client.pipeline.interface import DataWarehouseChannel
 from fate_client.pipeline.components.fate.nn.torch import nn, optim
 from fate_client.pipeline.components.fate.nn.torch.base import Sequential
 from fate_client.pipeline.components.fate.homo_nn import HomoNN, get_config_of_default_runner
@@ -72,26 +70,34 @@ def main(config="../../config.yaml", param="", namespace=""):
         task_type='regression'
         )
 
+    reader_0 = Reader("reader_0", runtime_parties=dict(guest=guest, host=host))
+    reader_0.guest.task_parameters(
+        namespace=guest_train_data['namespace'],
+        name=guest_train_data['name']
+    )
+    reader_0.hosts[0].task_parameters(
+        namespace=host_train_data['namespace'],
+        name=guest_train_data['name']
+    )
+    reader_1 = Reader("reader_1", runtime_parties=dict(guest=guest, host=host), namespace=test_data["namespace"], name=test_data["name"])
 
     homo_nn_0 = HomoNN(
         'nn_0',
-        runner_conf=conf
+        runner_conf=conf,
+        train_data=reader_0.outputs["output_data"]
     )
 
     homo_nn_1 = HomoNN(
         'nn_1',
-        test_data=DataWarehouseChannel(name=test_data["name"], namespace=test_data["namespace"]),
-        predict_model_input=homo_nn_0.outputs['train_model_output']
+        input_model=homo_nn_0.outputs['output_model'],
+        test_data=reader_1.outputs["output_data"]
     )
-
-    homo_nn_0.guest.task_parameters(train_data=DataWarehouseChannel(name=guest_train_data["name"], namespace=guest_train_data["namespace"]))
-    homo_nn_0.hosts[0].task_parameters(train_data=DataWarehouseChannel(name=host_train_data["name"], namespace=host_train_data["namespace"]))
 
     evaluation_0 = Evaluation(
         'eval_0',
         default_eval_setting='regression',
         runtime_parties=dict(guest=guest),
-        input_data=[homo_nn_1.outputs['predict_data_output'], homo_nn_0.outputs['train_data_output']]
+        input_datas=[homo_nn_1.outputs['test_output_data'], homo_nn_0.outputs['train_output_data']]
     )
 
     if config.task_cores:
@@ -99,6 +105,8 @@ def main(config="../../config.yaml", param="", namespace=""):
     if config.timeout:
         pipeline.conf.set("timeout", config.timeout)
 
+    pipeline.add_task(reader_0)
+    pipeline.add_task(reader_1)
     pipeline.add_task(homo_nn_0)
     pipeline.add_task(homo_nn_1)
     pipeline.add_task(evaluation_0)

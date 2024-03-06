@@ -74,7 +74,7 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),
                               metrics=["auc", "binary_precision", "binary_accuracy", "binary_recall"],
-                              input_data=lr_0.outputs["train_output_data"])
+                              input_datas=lr_0.outputs["train_output_data"])
     pipeline.add_tasks([reader_0, psi_0, lr_0, lr_1, evaluation_0])
 
     if config.task_cores:

@@ -69,7 +69,7 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
         evaluation_0 = Evaluation(
             'eval_0',
             runtime_parties=dict(guest=guest),
-            input_data=[hetero_sbt_0.outputs['train_data_output']],
+            input_datas=[hetero_sbt_0.outputs['train_output_data']],
             default_eval_setting='regression',
         )
 
@@ -79,7 +79,7 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
             'eval_0',
             runtime_parties=dict(guest=guest),
             metrics=['auc'],
-            input_data=[hetero_sbt_0.outputs['train_data_output']]
+            input_datas=[hetero_sbt_0.outputs['train_output_data']]
         )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_sbt_0, evaluation_0])

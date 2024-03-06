@@ -45,6 +45,9 @@ public class MetaInfo {
     public static String PROPERTY_FATE_TECH_PROVIDER = "FATE";
     @Config(confKey = "default.client.version")
     public static String PROPERTY_DEFAULT_CLIENT_VERSION = "2.X.X";
+    @Config(confKey = "eggroll.version")
+    public static String EGGROLL_VERSSION = "3.0.0";
+
     @Config(confKey = "grpc.server.max.concurrent.call.per.connection", pattern = Dict.POSITIVE_INTEGER_PATTERN)
     public static Integer PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION = 1000;
     @Config(confKey = "grpc.server.max.inbound.metadata.size", pattern = Dict.POSITIVE_INTEGER_PATTERN)
@@ -263,6 +266,8 @@ public class MetaInfo {
     public static String PROPERTY_ROUTER_CHANGE_TOKEN_VALIDATOR= Dict.DEFAULT;
     @Config(confKey = "batch.sink.push.executor.timeout")
     public static Integer BATCH_SINK_PUSH_EXECUTOR_TIMEOUT = 60*1000;
+    @Config(confKey = "remote.keepalive")
+    public static Boolean  PROPERTY_REMOTE_KEEPALIVE= true;
 
 
     public static boolean isCluster() {
@@ -323,6 +328,7 @@ public class MetaInfo {
             }
         });
     }
+
     public static Map toMap() {
         Map result = Maps.newHashMap();
         Field[] fields = MetaInfo.class.getFields();

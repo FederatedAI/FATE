@@ -275,7 +275,7 @@ for the necessary interfaces to implement."
                 sample_ids,
                 match_id_name=match_id_name,
                 sample_id_name=sample_id_name,
-                dataframe_format="fate_std",
+                dataframe_format="dist_df",
                 task_type=self.task_type,
                 classes=classes,
             )

@@ -47,8 +47,8 @@ def main(config="../config.yaml", namespace=""):
 
     data_split_0 = DataSplit("data_split_0", input_data=psi_0.outputs["output_data"],
                              train_size=0.8, test_size=0.2, random_state=42)
-    union_0 = Union("union_0", input_data_list=[data_split_0.outputs["train_output_data"],
-                                                data_split_0.outputs["test_output_data"]])
+    union_0 = Union("union_0", input_datas=[data_split_0.outputs["train_output_data"],
+                                            data_split_0.outputs["test_output_data"]])
     sample_0 = Sample("sample_0", input_data=data_split_0.outputs["train_output_data"],
                       n=800, replace=True, hetero_sync=True)
 
@@ -80,10 +80,10 @@ def main(config="../config.yaml", namespace=""):
     linr_0 = CoordinatedLinR("linr_0", train_data=selection_0.outputs["train_output_data"],
                              validate_data=selection_1.outputs["test_output_data"], epochs=3)
 
-    evaluation_0 = Evaluation("evaluation_0", input_data=lr_0.outputs["train_output_data"],
+    evaluation_0 = Evaluation("evaluation_0", input_datas=lr_0.outputs["train_output_data"],
                               default_eval_setting="binary",
                               runtime_parties=dict(guest=guest))
-    evaluation_1 = Evaluation("evaluation_1", input_data=linr_0.outputs["train_output_data"],
+    evaluation_1 = Evaluation("evaluation_1", input_datas=linr_0.outputs["train_output_data"],
                               default_eval_setting="regression",
                               runtime_parties=dict(guest=guest))
     pipeline.add_tasks([reader_0, psi_0, data_split_0, union_0, sample_0, binning_0, statistics_0, selection_0,

@@ -17,11 +17,11 @@
     </properties>
 
     <dependencies>
-        <!--        <dependency>-->
-        <!--            <groupId>osx</groupId>-->
-        <!--            <artifactId>osx-api</artifactId>-->
-        <!--            <version>${osx.version}</version>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>osx</groupId>
+            <artifactId>osx-pb-v3</artifactId>
+            <version>${osx.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -103,13 +103,13 @@
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-            </plugin>
+<!--        <plugins>-->
+<!--            <plugin>-->
+<!--                <groupId>org.xolstice.maven.plugins</groupId>-->
+<!--                <artifactId>protobuf-maven-plugin</artifactId>-->
+<!--            </plugin>-->
 
-        </plugins>
+<!--        </plugins>-->
 
 
     </build>

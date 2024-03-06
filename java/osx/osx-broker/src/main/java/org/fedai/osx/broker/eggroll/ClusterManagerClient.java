@@ -19,7 +19,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.eggroll.core.command.Command;
 import com.webank.eggroll.core.meta.Meta;
-import org.fedai.osx.core.exceptions.RemoteRpcException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,6 @@ public class ClusterManagerClient {
     CommandClient commandClient;
 
     public ClusterManagerClient(CommandClient commandClient) {
-
         this.commandClient = commandClient;
     }
 
@@ -46,7 +44,7 @@ public class ClusterManagerClient {
             try {
                 resultErSessionMeta = ErSessionMeta.parseFromPb(Meta.SessionMeta.parseFrom(result.get(0)));
             } catch (InvalidProtocolBufferException e) {
-                new RemoteRpcException("invalid response");
+                logger.error("invalid response");
             }
         }
         return resultErSessionMeta;
@@ -61,7 +59,7 @@ public class ClusterManagerClient {
             try {
                 resultErSessionMeta = ErSessionMeta.parseFromPb(Meta.SessionMeta.parseFrom(result.get(0)));
             } catch (InvalidProtocolBufferException e) {
-                new RemoteRpcException("invalid response");
+                logger.error("invalid response");
             }
         }
         return resultErSessionMeta;
@@ -76,7 +74,7 @@ public class ClusterManagerClient {
             try {
                 resultErSessionMeta = ErSessionMeta.parseFromPb(Meta.SessionMeta.parseFrom(result.get(0)));
             } catch (InvalidProtocolBufferException e) {
-                new RemoteRpcException("invalid response");
+                logger.error("invalid response");
             }
         }
         return resultErSessionMeta;

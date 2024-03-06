@@ -15,7 +15,6 @@
 #
 
 import argparse
-from fate_test.utils import runtime_parties
 from fate_client.pipeline.utils import test_utils
 from fate_client.pipeline.components.fate import HeteroSecureBoost, PSI, Reader
 from fate_client.pipeline.components.fate.evaluation import Evaluation
@@ -29,7 +28,6 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
     if isinstance(param, str):
         param = test_utils.JobConfig.load_from_file(param)
@@ -41,7 +39,7 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
 
     guest_train_data = {"name": guest_data_table, "namespace": f"experiment{namespace}"}
     host_train_data = {"name": host_data_table, "namespace": f"experiment{namespace}"}
-    pipeline = FateFlowPipeline().set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = FateFlowPipeline().set_parties(guest=guest, host=host)
 
     reader_0 = Reader("reader_0")
     reader_0.guest.task_parameters(
@@ -67,14 +65,14 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     
     hetero_sbt_1 = HeteroSecureBoost('sbt_1',
                                      test_data=psi_0.outputs['output_data'],
-                                     predict_model_input=hetero_sbt_0.outputs['train_model_output'],
+                                     input_model=hetero_sbt_0.outputs['output_model'],
                                      )
 
     if config_param['objective'] == 'regression:l2':
         evaluation_0 = Evaluation(
             'eval_0',
-            runtime_roles=dict(guest=guest),
-            input_data=[hetero_sbt_0.outputs['train_data_output']],
+            runtime_parties=dict(guest=guest),
+            input_datas=[hetero_sbt_0.outputs['train_output_data']],
             default_eval_setting='regression',
         )
 
@@ -82,9 +80,9 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     else:
         evaluation_0 = Evaluation(
             'eval_0',
-            runtime_roles=dict(guest=guest),
+            runtime_parties=dict(guest=guest),
             metrics=['auc'],
-            input_data=[hetero_sbt_0.outputs['train_data_output']]
+            input_datas=[hetero_sbt_0.outputs['train_output_data']]
         )
 
     pipeline.add_task(reader_0)
@@ -94,15 +92,12 @@ def main(config="../../config.yaml", param="./sbt_breast_config.yaml", namespace
     pipeline.add_task(evaluation_0)
 
     if config.task_cores:
-        pipeline.conf.set("task_cores", config.task_cores)
+        pipeline.conf.set("task", dict(engine_run={"cores": config.task_cores}))
     if config.timeout:
-        pipeline.conf.set("timeout", config.timeout)
+        pipeline.conf.set("task", dict(timeout=config.timeout))
 
     pipeline.compile()
     pipeline.fit()
-
-    result_summary = runtime_parties(pipeline.get_task_info("eval_0").get_output_metric()[0]["data"])
-    print(f"result_summary: {result_summary}")
 
     return pipeline.model_info.job_id
 

@@ -30,7 +30,7 @@ def main(config="../config.yaml", namespace=""):
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[hetero_sbt_0.outputs['train_data_output']]
+        input_datas=[hetero_sbt_0.outputs['train_output_data']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_sbt_0, evaluation_0])
@@ -38,6 +38,7 @@ def main(config="../config.yaml", namespace=""):
     pipeline.fit()
 
     pipeline.get_task_info('sbt_0').get_output_model()
+    print(pipeline.get_task_info('eval_0').get_output_metric())
 
 
 if __name__ == "__main__":

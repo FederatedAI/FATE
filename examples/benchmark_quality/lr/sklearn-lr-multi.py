@@ -57,7 +57,7 @@ def main(config="../../config.yaml", param="./vehicle_lr_sklearn_config.yaml"):
     y = df[label_name]
     X = df.drop(label_name, axis=1)
     # lm = LogisticRegression(max_iter=20)
-    lm = SGDClassifier(loss="log", **config_param, shuffle=False)
+    lm = SGDClassifier(loss="log_loss", **config_param, shuffle=False)
     lm_fit = lm.fit(X, y)
     y_pred = lm_fit.predict(X)
 

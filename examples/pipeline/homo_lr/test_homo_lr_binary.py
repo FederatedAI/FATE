@@ -33,7 +33,7 @@ def main(config="../config.yaml", namespace=""):
     evaluation_0 = Evaluation(
         'eval_0',
         metrics=['auc'],
-        input_data=[homo_lr_0.outputs['train_output_data']]
+        input_datas=[homo_lr_0.outputs['train_output_data']]
     )
 
     pipeline.add_tasks([reader_0, homo_lr_0, evaluation_0])

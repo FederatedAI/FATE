@@ -13,8 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import torch as t
-import os
 from fate.components.components.nn.nn_runner import (
     NNRunner,
     load_model_dict_from_path,
@@ -101,7 +99,7 @@ class DefaultRunner(NNRunner):
         loss_conf: Optional[Dict] = None,
         data_collator_conf: Optional[Dict] = None,
         tokenizer_conf: Optional[Dict] = None,
-        task_type: Literal["binary", "multi", "regression", "others"] = "binary",
+        task_type: Literal["binary", "multi", "regression", "causal_lm", "others"] = "binary",
         threshold: float = 0.5,
         local_mode: bool = False,
     ) -> None:
@@ -122,7 +120,7 @@ class DefaultRunner(NNRunner):
         # check param
         if self.algo not in SUPPORTED_ALGO:
             raise ValueError("algo should be one of [fedavg]")
-        if self.task_type not in ["binary", "multi", "regression", "others"]:
+        if self.task_type not in ["binary", "multi", "regression", "causal_lm", "others"]:
             raise ValueError("task_type should be one of [binary, multi, regression, others]")
         assert self.threshold >= 0 and self.threshold <= 1, "threshold should be in [0, 1]"
         assert isinstance(self.local_mode, bool), "local should be bool"
@@ -149,7 +147,10 @@ class DefaultRunner(NNRunner):
             dataset = loader_load_from_conf(self.dataset_conf)
             if hasattr(dataset, "load"):
                 logger.info("load path is {}".format(data))
-                dataset.load(data)
+                load_output = dataset.load(data)
+                if load_output is not None:
+                    dataset = load_output
+                    return dataset
             else:
                 raise ValueError(
                     f"The dataset {dataset} lacks a load() method, which is required for data parsing in the DefaultRunner. \
@@ -212,7 +213,8 @@ class DefaultRunner(NNRunner):
         training_args.output_dir = output_dir
         training_args.resume_from_checkpoint = resume_path  # resume path
         fed_args = FedAVGArguments(**self.fed_args_conf)
-
+        if fed_args.aggregate_strategy == 'steps':
+            raise ValueError('aggregate_strategy "steps" is not supported in FATE-pipeline which will be used in production.')
         # prepare trainer
         trainer = client_class(
             ctx=ctx,
@@ -276,6 +278,7 @@ class DefaultRunner(NNRunner):
             trainer.train()
 
     def predict(self, test_data: Union[str, DataFrame], saved_model_path: str = None) -> Union[DataFrame, None]:
+        
         if self.is_client():
             test_set = self._prepare_data(test_data, "test_data")
             if self.trainer is not None:
@@ -302,7 +305,7 @@ class DefaultRunner(NNRunner):
                 sample_ids,
                 match_id_name=match_id_name,
                 sample_id_name=sample_id_name,
-                dataframe_format="fate_std",
+                dataframe_format="dist_df",
                 task_type=self.task_type,
                 classes=classes,
             )

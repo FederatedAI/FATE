@@ -65,8 +65,8 @@ def train(
     ovr: cpn.parameter(type=bool, default=False, desc="enable ovr for multi-classifcation"),
     label_num: cpn.parameter(type=params.conint(ge=2), default=None),
     train_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
-    train_input_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
-    train_output_model: cpn.json_model_output(roles=[GUEST, HOST]),
+    warm_start_model: cpn.json_model_input(roles=[GUEST, HOST], optional=True),
+    output_model: cpn.json_model_output(roles=[GUEST, HOST]),
 ):
     sub_ctx = ctx.sub_ctx(consts.TRAIN)
 
@@ -89,8 +89,8 @@ def train(
             label_num=label_num,
         )
 
-        if train_input_model is not None:
-            model_input = train_input_model.read()
+        if warm_start_model is not None:
+            model_input = warm_start_model.read()
             client.from_model(model_input)
             logger.info("model input loaded")
         train_df = train_data.read()
@@ -108,7 +108,7 @@ def train(
             ret_df = train_rs
 
         train_output_data.write(ret_df)
-        train_output_model.write(model_dict, metadata=model_dict["meta"])
+        output_model.write(model_dict, metadata=model_dict["meta"])
 
     elif role.is_arbiter:  # is server
         logger.info("homo lr component: server start training")
@@ -127,12 +127,12 @@ def predict(
     threshold: cpn.parameter(
         type=params.confloat(ge=0.0, le=1.0), default=0.5, desc="predict threshold for binary data"
     ),
-    predict_input_model: cpn.json_model_input(roles=[GUEST, HOST]),
+    input_model: cpn.json_model_input(roles=[GUEST, HOST]),
     test_output_data: cpn.dataframe_output(roles=[GUEST, HOST]),
 ):
     if role.is_guest or role.is_host:  # is client
         client = HomoLRClient(batch_size=batch_size, threshold=threshold)
-        model_input = predict_input_model.read()
+        model_input = input_model.read()
         client.from_model(model_input)
         pred_rs = client.predict(ctx, test_data.read())
         pred_rs = add_dataset_type(pred_rs, consts.TEST_SET)

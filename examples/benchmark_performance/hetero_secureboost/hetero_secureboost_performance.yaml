@@ -1,5 +1,5 @@
 data:
-  - file: examples/data/default_credit_hetero_guest.csv
+  - file: examples/data/breast_hetero_guest.csv
     meta:
       delimiter: ","
       dtype: float64
@@ -14,10 +14,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: default_credit_hetero_guest
+    table_name: breast_hetero_guest
     namespace: experiment
     role: guest_0
-  - file: examples/data/default_credit_hetero_host.csv
+  - file: examples/data/breast_hetero_host.csv
     meta:
       delimiter: ","
       dtype: float64
@@ -30,10 +30,10 @@ data:
     partitions: 4
     head: true
     extend_sid: true
-    table_name: default_credit_hetero_host
+    table_name: breast_hetero_host
     namespace: experiment
     role: host_0
 tasks:
   hetero-sbt:
     script: test_sbt.py
-    conf: "./default_credit_config.yaml"
+    conf: "./breast_config.yaml"

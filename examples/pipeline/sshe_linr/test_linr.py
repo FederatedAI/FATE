@@ -49,7 +49,7 @@ def main(config="../config.yaml", namespace=""):
     evaluation_0 = Evaluation("evaluation_0",
                               runtime_parties=dict(guest=guest),
                               default_eval_setting="regression",
-                              input_data=linr_0.outputs["train_output_data"])
+                              input_datas=linr_0.outputs["train_output_data"])
 
     pipeline.add_tasks([reader_0, psi_0, scale_0, linr_0, evaluation_0])
     pipeline.compile()

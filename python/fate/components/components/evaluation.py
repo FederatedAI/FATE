@@ -43,7 +43,7 @@ def split_dataframe_by_type(input_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
 def evaluation(
     ctx: Context,
     role: Role,
-    input_data: cpn.dataframe_inputs(roles=[GUEST, HOST]),
+    input_datas: cpn.dataframe_inputs(roles=[GUEST, HOST]),
     default_eval_setting: cpn.parameter(
         type=string_choice(choice=["binary", "multi", "regression"]), default="binary", optional=True
     ),
@@ -86,8 +86,8 @@ def evaluation(
                 predict_col = predict_column_name if predict_column_name is not None else PREDICT_SCORE
                 label_col = label_column_name if label_column_name is not None else LABEL
 
-        df_list = [_input.read() for _input in input_data]
-        task_names = [_input.artifact.metadata.source.task_name for _input in input_data]
+        df_list = [_input.read() for _input in input_datas]
+        task_names = [_input.artifact.metadata.source.task_name for _input in input_datas]
         eval_rs = {}
         logger.info("components names are {}".format(task_names))
         for name, df in zip(task_names, df_list):
@@ -97,8 +97,8 @@ def evaluation(
     ctx.metrics.log_metrics(eval_rs, name="evaluation", type="evaluation")
 
 
-def evaluate(input_data, metrics, predict_col, label_col):
-    data = input_data.as_pd_df()
+def evaluate(input_datas, metrics, predict_col, label_col):
+    data = input_datas.as_pd_df()
     split_dict = split_dataframe_by_type(data)
     rs_dict = {}
     for name, df in split_dict.items():
