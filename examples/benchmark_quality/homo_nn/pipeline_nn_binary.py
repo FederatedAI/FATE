@@ -101,7 +101,7 @@ def main(config="../../config.yaml", param="./fed_nn_breast_config.yaml", namesp
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=['auc'],
-        input_data=[homo_nn_1.outputs['test_output_data'], homo_nn_0.outputs['train_output_data']]
+        input_datas=[homo_nn_1.outputs['test_output_data'], homo_nn_0.outputs['train_output_data']]
     )
 
     if config.task_cores:

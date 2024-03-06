@@ -72,7 +72,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
                               metrics=["r2_score",
                                        "mse",
                                        "rmse"],
-                              input_data=linr_0.outputs["train_output_data"])
+                              input_datas=linr_0.outputs["train_output_data"])
     pipeline.add_tasks([reader_0, psi_0, linr_0, evaluation_0])
 
     if config.task_cores:
