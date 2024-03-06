@@ -116,7 +116,7 @@ def main(config="../../config.yaml", param="./breast_config.yaml", namespace="")
         'eval_0',
         runtime_parties=dict(guest=guest),
         metrics=metrics,
-        input_data=[hetero_nn_0.outputs['train_output_data'], hetero_nn_1.outputs['test_output_data']]
+        input_datas=[hetero_nn_0.outputs['train_output_data'], hetero_nn_1.outputs['test_output_data']]
     )
 
     pipeline.add_tasks([reader_0, psi_0, hetero_nn_0, hetero_nn_1, evaluation_0])
