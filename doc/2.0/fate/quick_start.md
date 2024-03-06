@@ -78,7 +78,7 @@ hetero_secureboost_0 = HeteroSecureBoost(
 
 # create evaluation component_desc
 evaluation_0 = Evaluation(
-    'evaluation_0', runtime_parties=dict(guest="9999"), metrics=["auc"], input_data=[hetero_secureboost_0.outputs["train_data_output"]]
+    'evaluation_0', runtime_parties=dict(guest="9999"), metrics=["auc"], input_datas=[hetero_secureboost_0.outputs["train_output_data"]]
 )
 
 # add training task
