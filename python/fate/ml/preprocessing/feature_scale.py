@@ -133,7 +133,7 @@ class MinMaxScaler(Module):
         """
         test_data_select = test_data[self.select_col]
 
-        data_scaled = test_data_select * self._scale - (self._scale_min + self._range_min)
+        data_scaled = test_data_select * self._scale - self._scale_min + self._range_min
         if self.strict_range:
             # restrict feature output within given feature value range
             data_scaled = data_scaled[data_scaled >= self._range_min].fillna(self._range_min)
