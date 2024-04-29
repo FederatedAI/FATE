@@ -118,7 +118,13 @@ plugins:
   - i18n:
       default_language: en
       languages:
-        zh: 中文
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
   - mkdocs-jupyter
 
 markdown_extensions:
