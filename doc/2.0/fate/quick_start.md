@@ -3,7 +3,7 @@
 1. install `fate_client` with extra package `fate`  
 
 ```sh
-python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.1.0
+python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.1.1
 ```
 after installing packages successfully, initialize fate_flow service and fate_client
 
@@ -46,7 +46,7 @@ data_pipeline.transform_local_file_to_dataframe(file=guest_data_path, namespace=
 data_pipeline.transform_local_file_to_dataframe(file=host_data_path, namespace="experiment", name="breast_hetero_host",
                                                 meta=host_meta, head=True, extend_sid=True)
 ```
-4. run example 
+4. run training example and save pipeline
 
 ```python
 from fate_client.pipeline.components.fate import (
@@ -92,11 +92,24 @@ pipeline.fit()
 print (pipeline.get_task_info("hetero_secureboost_0").get_output_model())
 print (pipeline.get_task_info("evaluation_0").get_output_metric())
 
-# deploy task for inference
-pipeline.deploy([psi_0, hetero_secureboost_0])
+# save pipeline for later usage
+pipeline.dump_model("./pipeline.pkl")
+
+```
+
+5. reload trained pipeline and do prediction
+```python
+from fate_client.pipeline import FateFlowPipeline
+from fate_client.pipeline.components.fate import Reader
 
 # create pipeline for predicting
 predict_pipeline = FateFlowPipeline()
+
+# reload trained pipeline
+pipeline = FateFlowPipeline.load_model("./pipeline.pkl")
+
+# deploy task for inference
+pipeline.deploy([pipeline.psi_0, pipeline.hetero_secureboost_0])
 
 # add input to deployed_pipeline
 deployed_pipeline = pipeline.get_deployed_pipeline()
@@ -112,3 +125,6 @@ predict_pipeline.add_tasks([reader_1, deployed_pipeline])
 predict_pipeline.compile()
 predict_pipeline.predict()
 ```
+
+6. More tutorials
+More pipeline api guides can be found in this [link](https://github.com/FederatedAI/FATE-Client/blob/main/doc/pipeline.md)
