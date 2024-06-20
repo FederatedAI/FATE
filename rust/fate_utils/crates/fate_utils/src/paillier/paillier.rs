@@ -265,16 +265,18 @@ impl CiphertextVector {
     fn iadd_slice(&mut self, pk: &PK, position: usize, other: Vec<PyRef<Ciphertext>>) {
         self.0.iadd_slice(&pk.0, position, other.iter().map(|x| &x.0).collect());
     }
+    #[pyo3(signature = (sa, sb, pk, size))]
     fn iadd_vec_self(
         &mut self,
         sa: usize,
         sb: usize,
-        size: Option<usize>,
         pk: &PK,
+        size: Option<usize>,
     ) -> PyResult<()> {
         self.0.iadd_vec_self(sa, sb, size, &pk.0).map_err(|e| e.to_py_err())?;
         Ok(())
     }
+    #[pyo3(signature = (sa, sb, size, pk))]
     fn isub_vec_self(
         &mut self,
         sa: usize,
@@ -286,6 +288,7 @@ impl CiphertextVector {
         Ok(())
     }
 
+    #[pyo3(signature = (other, sa, sb, size, pk))]
     fn iadd_vec(
         &mut self,
         other: &CiphertextVector,
@@ -298,6 +301,7 @@ impl CiphertextVector {
         Ok(())
     }
 
+    #[pyo3(signature = (other, sa, sb, size, pk))]
     fn isub_vec(
         &mut self,
         other: &CiphertextVector,

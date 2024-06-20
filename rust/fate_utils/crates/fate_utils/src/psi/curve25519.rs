@@ -24,7 +24,7 @@ impl Secret {
 #[pymethods]
 impl Secret {
     #[new]
-    #[args(args = "*")]
+    #[pyo3(signature = (*args))]
     fn pynew(args: &PyTuple) -> PyResult<Self> {
         match args.len() {
             0 => Ok(Secret::new(None)),

@@ -39,7 +39,7 @@ impl QuantileSummaryStream {
 #[pymethods]
 impl QuantileSummaryStream {
     #[new]
-    #[args(args = "*")]
+    #[pyo3(signature = (*args))]
     fn __new__(args: &PyTuple) -> PyResult<Self> {
         match args.len() {
             0 => Ok(QuantileSummaryStream::new(None)),
