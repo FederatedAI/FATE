@@ -21,6 +21,7 @@ from fate.components.components.nn.component_utils import (
     prepare_context_and_role,
     train_procedure,
     predict_procedure,
+    get_model_output_conf
 )
 from fate.components.components.utils import consts
 from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
@@ -54,7 +55,7 @@ def train(
     runner_conf: cpn.parameter(type=dict, default={}, desc="the parameter dict of the NN runner class"),
     source: cpn.parameter(type=str, default=None, desc="path to your runner script folder"),
     train_output_data: cpn.dataframe_output(roles=[GUEST, HOST], optional=True),
-    output_model: cpn.model_directory_output(roles=[GUEST, HOST], optional=True),
+    output_model: cpn.model_directory_output(roles=[GUEST, HOST, ARBITER], optional=True),
     warm_start_model: cpn.model_directory_input(roles=[GUEST, HOST], optional=True),
 ):
     if role.is_guest or role.is_host:  # is client
@@ -75,7 +76,11 @@ def train(
     elif role.is_arbiter:  # is server
         runner: NNRunner = prepare_runner_class(runner_module, runner_class, runner_conf, source)
         prepare_context_and_role(runner, ctx, role, consts.TRAIN)
-        runner.train()
+        output_dir = str(output_model.get_directory())
+        runner.train(output_dir=output_dir)
+        output_conf = get_model_output_conf(runner_module, runner_class, runner_conf, source)
+        output_model.write_metadata(output_conf)
+
 
 
 @homo_nn.predict()
