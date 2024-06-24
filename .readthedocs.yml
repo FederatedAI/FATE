@@ -1,0 +1,12 @@
+version: 2
+
+mkdocs:
+  # configuration: .readthedocs.mkdocs.yml
+  fail_on_warning: false
+
+formats: all
+
+python:
+  version: "3.8"
+  install:
+    - requirements: doc/mkdocs/requirements.txt
