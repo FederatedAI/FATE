@@ -1,0 +1,163 @@
+site_name: FATE
+site_url: https://fate.readthedocs.io/en/latest
+repo_name: FederatedAI/FATE
+repo_url: https://github.com/FederatedAI/FATE
+edit_uri: edit/master/doc
+docs_dir: doc
+copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
+nav:
+  - Home: index.md
+  - Architecture:
+    - architecture/README.md
+  - FATE:
+    - 2.0/fate/quick_start.md
+    - 2.0/fate/dag.md
+    - ML:
+      - ... | flat | 2.0/fate/ml/*.md
+    - Components:
+      - ... | flat | 2.0/fate/components/*.md
+    - Performance:
+      - ... | flat | 2.0/fate/performance/*.md
+  
+  - OSX:
+    - 2.0/osx/osx.md
+    - 2.0/osx/osx-tls.md
+    
+theme:
+  name: material
+  custom_dir: "doc/mkdocs/theme"
+  features:
+    - navigation.tabs
+    # - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    # - navigation.instant
+    - navigation.tracking
+    - header.autohide
+  icon:
+    repo: fontawesome/brands/github
+  language: en
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: images/logo.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+
+plugins:
+  # - git-revision-date
+  - awesome-pages
+  # - mkdocs-simple-hooks:
+  #     hooks:
+  #       on_page_markdown: "doc.mkdocs.hook:on_page_markdown"
+  - search
+  # - gen-files:
+  #     scripts:
+  #       - doc/mkdocs/gen_params_doc.py
+  # - mkdocstrings:
+  #     handlers:
+  #       python:
+  #         paths: ["python"]
+  #         options:
+  #           docstring_style: numpy
+  #           docstring_section_style: table
+  #           merge_init_into_class: yes
+  #           show_source: true
+  #           show_category_heading: true
+  #           members_order: source
+  #           show_if_no_docstring: true
+  #         selection:
+  #           new_path_syntax: yes
+  #         enable_inventory: true
+  # - i18n:
+  #     docs_structure: suffix
+  #     languages:
+  #       - locale: en
+  #         default: true
+  #         name: English
+  #         build: true
+  #       - locale: zh
+  #         name: 中文
+  #         build: true
+  # - mkdocs-jupyter
+
+markdown_extensions:
+  - pymdownx.snippets
+  # - mdx_math
+  - admonition
+  - pymdownx.highlight
+  - toc:
+      permalink: true
+  - footnotes
+  - meta
+  - def_list
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed
+  - pymdownx.tilde
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+
+extra:
+  alternate:
+    - name: English
+      lang: en
+      link: "./"
+    - name: 中文
+      lang: zh
+      link: "./zh/"
+
+  analytics:
+    provider: google
+    property: G-XHN446WWRD
+  
+  version:
+    provider: mike
+
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/FederatedAI/FATE
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/u/federatedai
+    - icon: octicons/video-16
+      link: https://space.bilibili.com/457797601?from=search&seid=6776229889454067000
+      name: bilibili course
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/FateFedAI
+
+extra_css:
+  - "mkdocs/css/termynal.css"
+  - "mkdocs/css/custom.css"
+  - "mkdocs/css/extra.css"
+
+extra_javascript:
+  - "mkdocs/js/termynal.js"
+  - "mkdocs/js/custom.js"
+  - "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"
