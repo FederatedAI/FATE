@@ -21,6 +21,8 @@ from fate_arch.abc import CTableABC
 from fate_arch.common import log
 from fate_arch.common.profile import computing_profile
 from fate_arch.computing._type import ComputingEngine
+import random
+import sys
 
 LOGGER = log.getLogger()
 
@@ -130,25 +132,7 @@ class Table(CTableABC):
             return Table(self._rp.sample(fraction=fraction, seed=seed))
 
         if num is not None:
-            total = self._rp.count()
-            if num > total:
-                raise ValueError(f"not enough data to sample, own {total} but required {num}")
-
-            frac = num / float(total)
-            while True:
-                sampled_table = self._rp.sample(fraction=frac, seed=seed)
-                sampled_count = sampled_table.count()
-                if sampled_count < num:
-                    frac *= 1.1
-                else:
-                    break
-
-            if sampled_count > num:
-                drops = sampled_table.take(sampled_count - num)
-                for k, v in drops:
-                    sampled_table.delete(k)
-
-            return Table(sampled_table)
+            return _exactly_sample(self, num, seed)
 
         raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
@@ -169,3 +153,59 @@ class Table(CTableABC):
         flat_map = self._rp.flat_map(func)
         shuffled = flat_map.map(lambda k, v: (k, v))  # trigger shuffle
         return Table(shuffled)
+
+
+def _exactly_sample(table: Table, num, seed):
+    from scipy.stats import hypergeom
+
+    split_size = list(table.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collect())
+    total = sum(v for _, v in split_size)
+
+    if num > total:
+        raise ValueError(f"not enough data to sample, own {total} but required {num}")
+    # random the size of each split
+    sampled_size = {}
+    for split, size in split_size:
+        if size <= 0:
+            sampled_size[split] = 0
+        else:
+            sampled_size[split] = hypergeom.rvs(M=total, n=size, N=num)
+            total = total - size
+            num = num - sampled_size[split]
+
+    return table.mapPartitionsWithIndex(
+        func=_ReservoirSample(split_sample_size=sampled_size, seed=seed).func,
+        shuffle=False,
+    )
+
+
+class _ReservoirSample:
+    def __init__(self, split_sample_size, seed):
+        self._split_sample_size = split_sample_size
+        self._counter = 0
+        self._sample = []
+        self._seed = seed if seed is not None else random.randint(0, sys.maxsize)
+        self._random = None
+
+    def initRandomGenerator(self, split):
+        self._random = random.Random(self._seed ^ split)
+
+        # mixing because the initial seeds are close to each other
+        for _ in range(10):
+            self._random.randint(0, 1)
+
+    def func(self, split, iterator):
+        self.initRandomGenerator(split)
+        size = self._split_sample_size[split]
+        for obj in iterator:
+            self._counter += 1
+            if len(self._sample) < size:
+                self._sample.append(obj)
+                continue
+
+            randint = self._random.randint(1, self._counter)
+            if randint <= size:
+                self._sample[randint - 1] = obj
+
+        return self._sample
+
