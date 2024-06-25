@@ -180,10 +180,13 @@ class Table(CTableABC):
     def union(self, other: "Table", func=lambda v1, v2: v1):
         return Table(self._table.union(other._table, func))
 
+
 def _exactly_sample(table: Table, num, seed):
     from scipy.stats import hypergeom
 
-    split_size = list(table.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collect())
+    split_size = list(
+        table.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collect()
+    )
     total = sum(v for _, v in split_size)
 
     if num > total:
@@ -233,4 +236,3 @@ class _ReservoirSample:
                 self._sample[randint - 1] = obj
 
         return self._sample
-

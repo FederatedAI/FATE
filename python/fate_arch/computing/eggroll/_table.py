@@ -28,7 +28,6 @@ LOGGER = log.getLogger()
 
 
 class Table(CTableABC):
-
     def __init__(self, rp):
         self._rp = rp
         self._engine = ComputingEngine.EGGROLL
@@ -51,18 +50,30 @@ class Table(CTableABC):
         options = kwargs.get("options", {})
         from fate_arch.common.address import EggRollAddress
         from fate_arch.storage import EggRollStoreType
+
         if isinstance(address, EggRollAddress):
-            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
-            self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
+            options["store_type"] = kwargs.get(
+                "store_type", EggRollStoreType.ROLLPAIR_LMDB
+            )
+            self._rp.save_as(
+                name=address.name,
+                namespace=address.namespace,
+                partition=partitions,
+                options=options,
+            )
             schema.update(self.schema)
             return
 
         from fate_arch.common.address import PathAddress
+
         if isinstance(address, PathAddress):
             from fate_arch.computing.non_distributed import LocalData
+
             return LocalData(address.path)
 
-        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with eggroll backend"
+        )
 
     @computing_profile
     def collect(self, **kwargs) -> list:
@@ -97,14 +108,22 @@ class Table(CTableABC):
         return Table(self._rp.collapse_partitions(func))
 
     @computing_profile
-    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
+    def mapPartitions(
+        self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs
+    ):
         if use_previous_behavior is True:
-            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
-                           f"if the previous behavior was expected. "
-                           f"The previous behavior will not work in future")
+            LOGGER.warning(
+                f"please use `applyPartitions` instead of `mapPartitions` "
+                f"if the previous behavior was expected. "
+                f"The previous behavior will not work in future"
+            )
             return self.applyPartitions(func)
 
-        return Table(self._rp.map_partitions(func, options={"shuffle": not preserves_partitioning}))
+        return Table(
+            self._rp.map_partitions(
+                func, options={"shuffle": not preserves_partitioning}
+            )
+        )
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
@@ -112,14 +131,18 @@ class Table(CTableABC):
 
     @computing_profile
     def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
-        return Table(self._rp.map_partitions_with_index(func, options={"shuffle": not preserves_partitioning}))
+        return Table(
+            self._rp.map_partitions_with_index(
+                func, options={"shuffle": not preserves_partitioning}
+            )
+        )
 
     @computing_profile
     def reduce(self, func, **kwargs):
         return self._rp.reduce(func)
 
     @computing_profile
-    def join(self, other: 'Table', func, **kwargs):
+    def join(self, other: "Table", func, **kwargs):
         return Table(self._rp.join(other._rp, func=func))
 
     @computing_profile
@@ -127,17 +150,25 @@ class Table(CTableABC):
         return Table(self._rp.glom())
 
     @computing_profile
-    def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
+    def sample(
+        self,
+        *,
+        fraction: typing.Optional[float] = None,
+        num: typing.Optional[int] = None,
+        seed=None,
+    ):
         if fraction is not None:
             return Table(self._rp.sample(fraction=fraction, seed=seed))
 
         if num is not None:
             return _exactly_sample(self, num, seed)
 
-        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
+        raise ValueError(
+            f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}"
+        )
 
     @computing_profile
-    def subtractByKey(self, other: 'Table', **kwargs):
+    def subtractByKey(self, other: "Table", **kwargs):
         return Table(self._rp.subtract_by_key(other._rp))
 
     @computing_profile
@@ -145,7 +176,7 @@ class Table(CTableABC):
         return Table(self._rp.filter(func))
 
     @computing_profile
-    def union(self, other: 'Table', func=lambda v1, v2: v1, **kwargs):
+    def union(self, other: "Table", func=lambda v1, v2: v1, **kwargs):
         return Table(self._rp.union(other._rp, func=func))
 
     @computing_profile
@@ -158,7 +189,9 @@ class Table(CTableABC):
 def _exactly_sample(table: Table, num, seed):
     from scipy.stats import hypergeom
 
-    split_size = list(table.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collect())
+    split_size = list(
+        table.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collect()
+    )
     total = sum(v for _, v in split_size)
 
     if num > total:
@@ -208,4 +241,3 @@ class _ReservoirSample:
                 self._sample[randint - 1] = obj
 
         return self._sample
-
