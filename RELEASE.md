@@ -1,3 +1,12 @@
+## Release 2.1.1
+### Major Features and Improvements
+> Component
+* Support server model saving in Homo-NN
+
+> ML
+* aggregator support aggregation of torch.bfloat16 data type
+
+
 ## Release 2.1.0
 ### Major Features and Improvements
 > Arch
