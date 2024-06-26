@@ -1,4 +1,4 @@
-## Release 2.1.0
+## Release 2.1.1
 ### Major Features and Improvements
 > Component
 * Support server model saving in Homo-NN
