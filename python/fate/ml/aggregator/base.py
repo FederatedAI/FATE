@@ -17,6 +17,7 @@ import logging
 from typing import Optional
 
 import numpy as np
+import torch
 import torch as t
 from fate.arch import Context
 from fate.arch.protocol.secure_aggregation._secure_aggregation import (
@@ -139,6 +140,12 @@ class BaseAggregatorClient(Aggregator):
 
         return numpy_array
 
+    def _numpy(self, p):
+        if p.dtype == torch.bfloat16:
+            return p.cpu().detach().float().numpy()
+        else:
+            return p.cpu().detach().numpy()
+
     def _process_model(self, model):
         to_agg = None
         if isinstance(model, np.ndarray) or isinstance(model, t.Tensor):
@@ -149,10 +156,10 @@ class BaseAggregatorClient(Aggregator):
             parameters = list(model.parameters())
             if self.require_grad:
                 agg_list = [
-                    self._convert_type(p.cpu().detach().numpy(), self.float_p) for p in parameters if p.requires_grad
+                    self._convert_type(self._numpy(p), self.float_p) for p in parameters if p.requires_grad
                 ]
             else:
-                agg_list = [self._convert_type(p.cpu().detach().numpy(), self.float_p) for p in parameters]
+                agg_list = [self._convert_type(self._numpy(p), self.float_p) for p in parameters]
 
         elif isinstance(model, list):
             to_agg = []
@@ -190,7 +197,7 @@ class BaseAggregatorClient(Aggregator):
 
     def loss_aggregation(self, ctx, loss):
         if isinstance(loss, t.Tensor):
-            loss = loss.detach.cpu().numpy()
+            loss = self._numpy(loss)
         else:
             loss = np.array(loss)
         loss = [loss]
