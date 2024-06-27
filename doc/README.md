@@ -6,11 +6,11 @@
 - [Quick Start with Homo NN](./2.0/fate/homo_quick_start.md): Train & predict with FATE HomoNN using FATE-PipeLine
 
 ### FATE Design
-- [Architecture](./doc/architecture/README.md): Building unified and standardized API for heterogeneous computing engines interconnection
-- [FATE Algorithm Components](./doc/2.0/fate/components/README.md): Building standardized algorithm components for different scheduling engines
-- [OSX (Open Site Exchange)](./doc/2.0/osx/osx.md): Building open platform for cross-site communication interconnection
-- [RoadMap](./doc/images/roadmap.png)
-- [Paper & Conference](./doc/resources/README.md)
+- [Architecture](./architecture/README.md): Building unified and standardized API for heterogeneous computing engines interconnection
+- [FATE Algorithm Components](./2.0/fate/components/README.md): Building standardized algorithm components for different scheduling engines
+- [OSX (Open Site Exchange)](./2.0/osx/osx.md): Building open platform for cross-site communication interconnection
+- [RoadMap](./images/roadmap.png)
+- [Paper & Conference](./resources/README.md)
 
 ### Develop Guide
 
