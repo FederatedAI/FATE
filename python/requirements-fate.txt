@@ -23,3 +23,4 @@ mmh3==3.0.0
 protobuf==4.24.4
 grpcio==1.59.3
 safetensors==0.4.1
+scipy

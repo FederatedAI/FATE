@@ -4,9 +4,7 @@ In FATE-2.0, we introduce our new Hetero-NN framework which allows you to quickl
 
 The architecture of the Hetero-NN framework is depicted in the figure below. In this structure, all submodels from guests and hosts are encapsulated within the HeteroNNModel, enabling independent forwards and backwards. Both guest and host trainers are developed based on the HuggingFace trainer, allowing for rapid configuration of heterogeneous federated learning tasks with your existing datasets and models. These tasks can be run independently, without the need for FATEFlow. The FATE-pipeline Hetero-NN components are built upon this foundational framework.
 
-<div align="center">
-    <img src="../../images/hetero_nn.png" width="800" height="480" alt="Figure 2 (FedPass)">
-</div>
+![Figure 1 (HeteroNN)](../../images/hetero_nn.png)
 
 Besides the new framework, we also introduce two new privacy-preserving strategies for federated learning: SSHE and FedPass. These strategies can be configured in the aggregate layer configuration. For more information on these strategies, refer to the [SSHE](#sshe) and [FedPass](#fedpass) sections below.
 
@@ -16,7 +14,7 @@ SSHENN is a privacy-preserving strategy that uses homomorphic encryption and sec
 Secure Large-Scale Sparse Logistic Regression and Applications
 in Risk Control](https://arxiv.org/pdf/2008.08753.pdf).
 
-![Figure 1 (SSHE)](../../images/sshe.png)
+![Figure 2 (SSHE)](../../images/sshe.png)
 
 
 
@@ -24,16 +22,12 @@ in Risk Control](https://arxiv.org/pdf/2008.08753.pdf).
 
 FedPass works by embedding private passports into a neural network to enhance privacy and obfuscation. It utilizes the DNN passport technique for adaptive obfuscation, which involves inserting a passport layer into the network. This layer adjusts the scale factor and bias term using model parameters and private passports, followed by an autoencoder and averaging. Picture below illustrates
 the process of FedPass.
-<div align="center">
-    <img src="../../images/fedpass_1.png" alt="Figure 2 (FedPass)">
-</div>
 
+![Figure 3 (FedPass)](../../images/fedpass_1.png)
 
 In FATE-2.0, you can specify the Fedpass strategy for guest top model and host bottom model, picture below shows the architecture of FedPass when running a hetero-nn task.
 
-<div align="center">
-    <img src="../../images/fedpass_0.png" width="500" height="400" alt="Figure 2 (FedPass)">
-</div>
+![Figure 4 (FedPass)](../../images/fedpass_0.png)
 
 For more details of Fedpass, please refer to the [paper](https://arxiv.org/pdf/2301.12623.pdf).
 

@@ -35,8 +35,12 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
 
 ### Quick Start
-- [Training Demo With Installing FATE Only From Pypi](doc/2.0/fate/ml)
-- [Training Demo With Installing FATE AND FATE-Flow From Pypi](doc/2.0/fate/quick_start.md)
+- [Training Demo with Only FATE Installed From Pypi](doc/2.0/fate/ml)
+- [Training Demo with Both FATE AND FATE-Flow Installed From Pypi](doc/2.0/fate/quick_start.md)
+
+### Advanced Use
+- [Train & Predict for Homo Mode](./doc/2.0/fate/homo_quick_start.md)
+- [Run ML Launchers](./doc/README.md#run-ml-modulessince-v200)
 
 ### More examples
 - [ML examples](examples/launchers)
@@ -53,6 +57,11 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [RoadMap](./doc/images/roadmap.png)
 - [Paper & Conference](./doc/resources/README.md)
 
+### Develop Guide
+- [Dag Usage Guide](./doc/2.0/fate/dag.md)
+- [Component Develop Guide](./doc/develop_guide/component_guide.md)  
+
+
 ## Related Repositories (Projects)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow): A multi-party secure task scheduling platform for federated learning pipeline.
@@ -65,6 +74,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [FATE-Client](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
 - [FATE-Test](https://github.com/FederatedAI/FATE-Test): An automated testing tool for FATE, including tests and benchmark comparisons.
 - [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md) : A framework to support federated learning for large language models(LLMs).
+
 ## Governance 
 
 [FATE-Community](https://github.com/FederatedAI/FATE-Community) contains all the documents about how the community members coopearte with each other. 

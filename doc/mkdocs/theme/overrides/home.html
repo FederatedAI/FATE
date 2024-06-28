@@ -1,0 +1,36 @@
+{#-
+    This file was automatically generated - do not edit
+  -#}
+  {% extends "overrides/main.html" %}
+  {% block tabs %}
+    {{ super() }}
+    <style>.md-header{position:initial}.md-main__inner{margin:0}.md-content{display:none}@media screen and (min-width:60em){.md-sidebar--secondary{display:none}}@media screen and (min-width:76.25em){.md-sidebar--primary{display:none}}</style>
+    <section class="mdx-container">
+      <div class="md-grid md-typeset">
+        <div class="mdx-hero">
+          <div class="mdx-hero__image">
+            <img src="images/illustration.png" alt="" width="1659" height="1200" draggable="false">
+          </div>
+          <div class="mdx-hero__content">
+            <h1>An Industrial Grade Federated Learning Framework</h1>
+            <p>FATE implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC).
+                It supports federated learning architecture and secure computation of various machine learning algorithms. 
+                It open-sourced for the first time in February 2019, and was donated to Linux Foundation in June 2019.
+            </p>
+            <p>
+                FATE is committed to making the innovation and application of federated learning technology easier!
+            </p>
+            <a href="{{ page.next_page.url | url }}" title="{{ page.next_page.title | e }}" class="md-button md-button--primary">
+              Learn More
+            </a>
+            <a href="{{ 'https://github.com/FederatedAI/FATE' | url }}" title="GitHub" class="md-button">
+              GitHub
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endblock %}
+  {% block content %}{% endblock %}
+  {% block footer %}{% endblock %}
+  
