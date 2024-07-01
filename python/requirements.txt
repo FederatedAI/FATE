@@ -39,7 +39,7 @@ torch-model-archiver==0.3.1
 coverage==4.5.2
 pika==1.2.1
 pandas==1.1.5
-cryptography==41.0.6
+cryptography==42.0.4
 sortedcontainers==2.2.2
 pytorch-lightning>=1.6.5
 filelock==3.3.1
