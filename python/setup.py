@@ -34,7 +34,7 @@ install_requires = [
     "accelerate==0.27.2",
     "beautifultable",
     "requests<2.26.0",
-    "grpcio==1.59.3",
+    "grpcio==1.62.1",
     "protobuf==4.24.4",
     "rich==13.7.1",
     "omegaconf",
