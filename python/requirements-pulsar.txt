@@ -1,3 +1,1 @@
-pulsar-client==3.3.0; sys_platform == 'darwin'
-pulsar-client==2.10.2; sys_platform != 'darwin'
-urllib3==1.26.18
+pulsar-client==3.4.0
