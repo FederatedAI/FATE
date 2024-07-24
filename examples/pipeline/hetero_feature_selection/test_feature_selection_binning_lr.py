@@ -55,7 +55,8 @@ def main(config=".../config.yaml", namespace=""):
                                          method=["iv"],
                                          train_data=psi_0.outputs["output_data"],
                                          input_models=[binning_0.outputs["output_model"]],
-                                         iv_param={"metrics": "iv", "filter_type": "threshold", "threshold": 0.1})
+                                         iv_param={"metrics": "iv", "filter_type": "threshold", "threshold": 0.1,
+                                                   "select_federated": True})
 
     lr_0 = SSHELR("lr_0",
                   learning_rate=0.05,

@@ -32,17 +32,19 @@ Principle](../../images/multiple_host_binning.png)
 
 1. Support Quantile Binning based on quantile summary algorithm.
 2. Support Bucket Binning.
-3. Support calculating woe and iv values.
-4. Support transforming data into bin indexes or woe value(guest only).
-5. Support multiple-host binning.
-6. Support asymmetric binning methods on Host & Guest sides.
+3. Support manual binning based on user-defined binning points.
+4. Support calculating woe and iv values.
+5. Support transforming data into bin indexes or woe value(guest only).
+6. Support multiple-host binning.
+7. Support asymmetric binning methods on Host & Guest sides.
 
 Below lists supported features with links to examples:
 
-| Cases                                | Scenario                                                                                                                                                                             	                                |
-|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input Data with Categorical Features | [bucket binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_bucket.py) <br> [quantile binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_quantile.py)  |
-| Output Data Transformed              | [bin index](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) <br> [woe value(guest-only)](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) |
-| Skip Metrics Calculation             | [multi_host](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_multi_host.py)                                           	                                                                        |
+| Cases                                  | Scenario                                                                                                                                                                             	                                                      |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Input Data with Categorical Features   | [bucket binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_bucket.py) <br> [quantile binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_quantile.py)  |
+| Binning with User-defined split points | [manual binning](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py)                                                                                                  |
+| Output Data Transformed                | [bin index](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) <br> [woe value(guest-only)](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_asymmetric.py) |
+| Skip Metrics Calculation               | [multi_host](../../../../examples/pipeline/hetero_feature_binning/test_feature_binning_multi_host.py)                                           	                                                                                           |
 
 

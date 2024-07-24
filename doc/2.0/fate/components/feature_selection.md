@@ -28,10 +28,10 @@ Below lists their acceptable parameter values.
 | IV Filter                         	 | filter_param    	 | "iv"                                                                                                                                                   | "threshold", "top_k", "top_percentile" 	 | True       	 |
 | Statistic Filter                  	 | statistic_param 	 | "max", "min", "mean", "median", "std", "var", "coefficient_of_variance", "skewness", "kurtosis", "missing_count", "missing_ratio", quantile(e.g."95%") | "threshold", "top_k", "top_percentile" 	 | True/False 	 |
 
-1.
-    - iv\_filter: Use iv as criterion to selection features. Support
-      three mode: threshold value, top-k and top-percentile.
+## Filter Configuration
 
+1. iv\_filter: Use iv as criterion to selection features. 
+    - filter_type: Support three modes: threshold value, top-k and top-percentile.
         - threshold value: Filter those columns whose iv is smaller
           than threshold. You can also set different threshold for
           each party.
@@ -39,13 +39,41 @@ Below lists their acceptable parameter values.
           k features in the sorted result.
         - top-percentile. Sort features from larger to smaller and
           take top percentile.
-
+    - select_federated: If set to True, the feature selection will be
+      performed in a federated manner. The feature selection will be
+      performed on the guest side, and the anonymously selected features will be
+      sent to the host side. The host side will then filter the
+      features based on the selected features from the guest side. This param is available in iv\_filter only.
+    - threshold: The threshold value for feature selection.
+    - take_high: If set to True, the filter will select features with
+      higher iv values. If set to False, the filter will select
+      features with lower iv values.
+    - host_filter_type: The filter type for host features. It can be
+      "threshold", "top_k", "top_percentile". This param is available in iv\_filter only.
+    - host_threshold: The threshold value for feature selection on host
+      features. This param is available in iv\_filter only.
+    - host_top_k: The top k value for feature selection on host features.
+      This param is available in iv\_filter only.
 2. statistic\_filter: Use statistic values calculate from DataStatistic
    component. Support coefficient of variance, missing value,
    percentile value etc. You can pick the columns with higher statistic
    values or smaller values as you need.
+    - filter_type: Support three modes: threshold value, top-k and top-percentile.
+      - threshold value: Filter those columns whose statistic metric is smaller
+        than threshold. You can also set different threshold for
+        each party.
+      - top-k: Sort features from larger statistic metric  to smaller and take top
+        k features in the sorted result.
+      - top-percentile. Sort features from larger to smaller and
+        take top percentile.
+    - threshold: The threshold value for feature selection.
+    - take_high: If set to True, the filter will select features with
+      higher metric values. If set to False, the filter will select
+      features with lower iv values.
 
 3. manually: Indicate features that need to be filtered or kept.
+    - keep_col: The columns that need to be kept.
+    - filter_out_col: The columns that need to be dropped.
 
 Besides, we support multi-host federated feature selection for iv
 filters. Starting in ver 2.0.0-beta, all data sets will obtain anonymous header
