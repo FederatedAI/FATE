@@ -8,7 +8,7 @@ cloudpickle==2.1.0
 click
 ruamel-yaml==0.16
 numpy==1.26.4
-pandas==2.0.3
+pandas==2.2.2
 transformers==4.37.2
 accelerate==0.27.2
 beautifultable
