@@ -90,7 +90,7 @@ dag:
         max_depth: 3
         num_trees: 2
         ...
-schema_version: 2.1.1
+schema_version: 2.2.0
 kind: fate
 ```
 
@@ -309,7 +309,7 @@ dag:
         max_depth: 3
         num_trees: 2
         ...
-schema_version: 2.1.1
+schema_version: 2.2.0
 ```
 
 - Step1: Change the job-level stage in DAG to "predict"

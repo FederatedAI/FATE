@@ -89,7 +89,7 @@ dag:
         max_depth: 3
         num_trees: 2
         ...
-schema_version: 2.1.1
+schema_version: 2.2.0
 kind: fate
 ```
 
@@ -302,7 +302,7 @@ dag:
         max_depth: 3
         num_trees: 2
         ...
-schema_version: 2.1.1
+schema_version: 2.2.0
 ```
 - Step1: 将dag下的全局job阶段的stage改成predict
 - Step2: 将用不到的组件从dag下的tasks，以及party_tasks进行删除，同时需要注意的是，删除组件可能会导致部分下游组件的dependent，以及输入发生改变，也需要对应修改。
