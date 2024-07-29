@@ -29,7 +29,7 @@ install_requires = [
     "ruamel.yaml==0.16",
     "scikit-learn==1.4.1.post1",
     "numpy==1.26.4",
-    "pandas==2.0.3",
+    "pandas==2.2.2",
     "transformers==4.37.2",
     "accelerate==0.27.2",
     "beautifultable",
