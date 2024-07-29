@@ -22,8 +22,8 @@
 - [conda](https://docs.conda.io/projects/miniconda/en/latest/) 环境准备及安装
 - 创建虚拟环境
 ```shell
-# fate的运行环境为python>=3.8
-conda create -n fate_env python=3.8
+# fate的运行环境为python>=3.10
+conda create -n fate_env python=3.10
 conda activate fate_env
 ```
 
