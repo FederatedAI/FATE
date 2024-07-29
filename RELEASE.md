@@ -1,3 +1,10 @@
+## Release 2.2.0
+### Major Features and Improvements
+> Deployment
+* Upgrade from Python 3.8 to Python 3.10
+* Upgrade the PyTorch version to 2.x
+
+
 ## Release 2.1.1
 ### Major Features and Improvements
 > Component

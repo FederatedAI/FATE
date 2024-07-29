@@ -36,7 +36,7 @@ FATE-Flow provides federated job life cycle management, includes scheduling, dat
 
 ##### 2.2.1.1 Installing FATE, FATE-Flow, FATE-Client
 ```shell
-pip install fate_client[fate,fate_flow]==2.1.1
+pip install fate_client[fate,fate_flow]==2.2.0
 ```
 #### 2.2.1.2 Service Initialization
 ```shell
@@ -71,7 +71,7 @@ users can directly import fate and use built-in algorithms and secure protocols 
 
 #### 2.2.2.1 Installing FATE
 ```shell
-pip install pyfate==2.1.1
+pip install pyfate==2.2.0
 ```
 #### 2.2.2.2 Using Guides
 Refer to [examples](../../doc/2.0/fate/ml)
@@ -90,13 +90,13 @@ Refer to [examples](../../doc/2.0/fate/ml)
 Set the necessary environment variables for deployment (note that environment variables set in this way are only valid for the current terminal session. If you open a new terminal session, such as logging in again or opening a new window, you will need to reset them).
 
 ```bash
-export version={FATE version number for this deployment, e.g., 2.1.1}
+export version={FATE version number for this deployment, e.g., 2.2.0}
 ```
 
 Example:
 
 ```bash
-export version=2.1.1
+export version=2.2.0
 ```
 
 ### 3.2 Pull Docker Images
