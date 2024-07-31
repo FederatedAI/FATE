@@ -53,6 +53,9 @@ function ln_lib() {
 case "${system}" in
 "CentOS Linux")
   echo "CentOS System"
+  sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo
+  sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo
+  sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
   $command yum -y install gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof
   ;;
 "Ubuntu")
