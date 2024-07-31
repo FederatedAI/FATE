@@ -23,8 +23,8 @@ The single-node version provides 3 deployment methods, which can be selected bas
 - Prepare and install [conda](https://docs.conda.io/projects/miniconda/en/latest/) environment.
 - Create a virtual environment:
 ```shell
-# FATE requires Python >= 3.8
-conda create -n fate_env python=3.8
+# FATE requires Python >= 3.10
+conda create -n fate_env python=3.10
 conda activate fate_env
 ```
 
