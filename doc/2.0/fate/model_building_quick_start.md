@@ -3,7 +3,7 @@
 1. install `fate_client` with extra package `fate`  
 
 ```sh
-python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.1.1
+python -m pip install -U pip && python -m pip install fate_client[fate,fate_flow]==2.2.0
 ```
 after installing packages successfully, initialize fate_flow service and fate_client
 
@@ -24,7 +24,7 @@ wget https://raw.githubusercontent.com/wiki/FederatedAI/FATE/example/data/breast
 ```
 
 3. transform example data to dataframe using in fate
-4. 
+
 ```python
 import os
 from fate_client.pipeline import FateFlowPipeline
@@ -45,9 +45,9 @@ data_pipeline.transform_local_file_to_dataframe(file=guest_data_path, namespace=
 data_pipeline.transform_local_file_to_dataframe(file=host_data_path, namespace="experiment", name="breast_hetero_host",
                                                 meta=host_meta, head=True, extend_sid=True)
 ```
-4. run feature engineering and compute statistics 
+4. define tasks to do feature engineering and compute statistics 
 
-```python 
+```python
 from fate_client.pipeline.components.fate import (
     HeteroFeatureBinning,
     HeteroFeatureSelection,
@@ -74,8 +74,8 @@ data_split_0 = DataSplit("data_split_0", input_data=psi_0.outputs["output_data"]
                           train_size=0.7, validate_size=0.3, test_size=None, stratified=True)
 
 # compute metrics for selection
-binning_0 = HeteroFeatureBinning("binning_0", input_data=data_split_0.outputs["train_output_data"], 
-                                 method="bucket", bin_num=10)
+binning_0 = HeteroFeatureBinning("binning_0", train_data=data_split_0.outputs["train_output_data"], 
+                                 method="bucket", n_bins=10)
 statistics_0 = Statistics("statistics_0", input_data=data_split_0.outputs["train_output_data"],
                               metrics=["min", "max", "25%", "mean", "median"])
 
@@ -95,44 +95,45 @@ selection_1 = HeteroFeatureSelection("selection_1",
                                      input_model=selection_0.outputs["train_output_model"])
 
 ```
-5. run training example and save pipeline
+
+5. define tasks for training and evaluating
 
 ```python
 from fate_client.pipeline.components.fate import (
     SSHELR,
     FeatureScale,
-    CoordinatedLR,
     Evaluation
 )
 
 # scale data
-feature_scale_0 = FeatureScale("feature_scale_0", input_data=selection_0.outputs["train_output_data"], method="min_max")
-feature_scale_1 = FeatureScale("feature_scale_1", input_data=selection_0.outputs["test_output_data"],
-                               input_model=feature_scale_0.outputs["train_output_model"])
+feature_scale_0 = FeatureScale("feature_scale_0", train_data=selection_0.outputs["train_output_data"], method="min_max")
+feature_scale_1 = FeatureScale("feature_scale_1", test_data=selection_1.outputs["test_output_data"],
+                               input_model=feature_scale_0.outputs["output_model"])
 
 # train with sshe lr & coordinated lr
 sshe_lr_0 = SSHELR("sshe_lr_0", train_data=selection_0.outputs["train_output_data"],
-                         validate_data=selection_1.outputs["test_output_data"], epochs=3)
-
-lr_0 = CoordinatedLR("lr_0", train_data=selection_0.outputs["train_output_data"],
-                         validate_data=selection_1.outputs["test_output_data"], epochs=3)
+                   validate_data=selection_1.outputs["test_output_data"], epochs=3)
 
 # evaluate both models' output
-evaluation_0 = Evaluation("evaluation_0", input_datas=[sshe_lr_0.outputs["train_output_data"],
-                                                       lr_0.outputs["train_output_data"]],
-                              default_eval_setting="binary",
-                              runtime_parties=dict(guest="9999"))
+evaluation_0 = Evaluation("evaluation_0", input_datas=[sshe_lr_0.outputs["train_output_data"]],
+                          default_eval_setting="binary",
+                          runtime_parties=dict(guest="9999"))
+
+```
+
+6. add defined tasks to pipeline, then train and save pipeline
+
+```python
 # compose training pipeline
 pipeline.add_tasks([reader_0, psi_0, data_split_0, 
                     binning_0, statistics_0, selection_0, selection_1,
-                    feature_scale_0, featur_scale1, sshe_lr_0, lr_0, evaluation_0])
+                    feature_scale_0, feature_scale_1, sshe_lr_0, evaluation_0])
 
 # compile and train
 pipeline.compile()
 pipeline.fit()
 
 # print metric and model info
-print (pipeline.get_task_info("lr_0").get_output_model())
 print (pipeline.get_task_info("sshe_lr_0").get_output_model())
 print (pipeline.get_task_info("evaluation_0").get_output_metric())
 
@@ -141,7 +142,8 @@ pipeline.dump_model("./pipeline.pkl")
 
 ```
 
-6. reload trained pipeline and run prediction
+7. reload trained pipeline and run prediction
+
 ```python
 from fate_client.pipeline import FateFlowPipeline
 from fate_client.pipeline.components.fate import Reader
@@ -153,7 +155,7 @@ predict_pipeline = FateFlowPipeline()
 pipeline = FateFlowPipeline.load_model("./pipeline.pkl")
 
 # deploy task for inference
-pipeline.deploy([pipeline.psi_0, pipeline.hetero_secureboost_0])
+pipeline.deploy([pipeline.psi_0, pipeline.selection_0, pipeline.feature_scale_0, pipeline.sshe_lr_0])
 
 # add input to deployed_pipeline
 deployed_pipeline = pipeline.get_deployed_pipeline()
@@ -170,5 +172,5 @@ predict_pipeline.compile()
 predict_pipeline.predict()
 ```
 
-7. More tutorials
+8. More tutorials
 More pipeline api guides can be found in this [link](https://github.com/FederatedAI/FATE-Client/blob/main/doc/pipeline.md)

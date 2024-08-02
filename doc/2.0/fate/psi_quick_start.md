@@ -76,5 +76,5 @@ pipeline.fit()
 
 ```
 
-6. More tutorials
+5. More tutorials
 More pipeline api guides can be found in this [link](https://github.com/FederatedAI/FATE-Client/blob/main/doc/pipeline.md)
