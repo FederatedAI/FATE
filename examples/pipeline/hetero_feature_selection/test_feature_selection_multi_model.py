@@ -54,7 +54,8 @@ def main(config=".../config.yaml", namespace=""):
                                          train_data=psi_0.outputs["output_data"],
                                          input_models=[binning_0.outputs["output_model"],
                                                        statistics_0.outputs["output_model"]],
-                                         iv_param={"metrics": "iv", "filter_type": "top_k", "threshold": 6},
+                                         iv_param={"metrics": "iv", "filter_type": "top_k", "threshold": 6,
+                                                   "select_federated": True},
                                          statistic_param={"metrics": ["max", "mean"],
                                                           "filter_type": "top_k", "threshold": 5, "take_high": False},
                                          manual_param={"keep_col": ["x0", "x1"]}

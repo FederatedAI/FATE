@@ -44,8 +44,8 @@ def main(config="../config.yaml", namespace=""):
     psi_0 = PSI("psi_0", input_data=reader_0.outputs["output_data"])
 
     binning_0 = HeteroFeatureBinning("binning_0",
-                                     method="quantile",
-                                     n_bins=10,
+                                     method="manual",
+                                     split_pt_dict={"x0": [0.1, 0.3, 0.5]},
                                      train_data=psi_0.outputs["output_data"],
                                      local_only=True
                                      )

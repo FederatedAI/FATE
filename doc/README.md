@@ -3,7 +3,9 @@
 ### Tutorial
 
 - [Quick Start](./2.0/fate/quick_start.md): Train & predict with FATE HeteroSecureBoost using FATE-Pipeline
+- [Running PSI](./2.0/fate/psi_quick_start.md): Run PSI only using FATE-PipeLine
 - [Quick Start with Homo NN](./2.0/fate/homo_quick_start.md): Train & predict with FATE HomoNN using FATE-PipeLine
+- [Building Models with Hetero Components](./2.0/fate/model_building_quick_start.md): model-building tutorial with Hetero components: including reading data, feature engineering, and training & evaluating models
 
 ### FATE Design
 - [Architecture](./architecture/README.md): Building unified and standardized API for heterogeneous computing engines interconnection
