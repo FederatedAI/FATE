@@ -77,7 +77,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 
 ## Governance 
 
-[FATE-Community](https://github.com/FederatedAI/FATE-Community) contains all the documents about how the community members coopearte with each other. 
+[FATE-Community](https://github.com/FederatedAI/FATE-Community) contains all the documents about how the community members cooperate with each other. 
 
 - [GOVERNANCE.md](https://github.com/FederatedAI/FATE-Community/blob/master/GOVERNANCE.md) documents the governance model of the project. 
 - [Minutes](https://github.com/FederatedAI/FATE-Community/blob/master/meeting-minutes) of working meetings
@@ -92,7 +92,7 @@ FATE is an inclusive and open community. We welcome developers who are intereste
 
 ### Mailing list 
 
-Join the FATE user [mailing list](https://groups.io/g/Fate-FedAI), and stay connected with the community and learn about the latest news and information of the FATE project. Discussion and feedback of FATE project are welcome.
+Join the FATE user [mailing list](https://groups.io/g/Fate-FedAI), and stay connected with the community and learn about the latest news and information of the FATE project. Discussion and feedback on the FATE project are welcome.
 
 
 ### Bugs or feature requests
