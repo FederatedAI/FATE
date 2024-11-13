@@ -1,0 +1,245 @@
+{
+    "builtins": [
+        "int",
+        "list",
+        "set",
+        "slice"
+    ],
+    "collections": [
+        "defaultdict",
+        "OrderedDict"
+    ],
+    "eggroll.core.transfer_model": [
+        "ErRollSiteHeader"
+    ],
+    "eggroll.roll_pair.task.storage": [
+        "BSS"
+    ],
+    "federatedml.cipher_compressor.compressor": [
+        "PackingCipherTensor",
+        "NormalCipherPackage",
+        "PackingCipherTensorPackage"
+    ],
+    "federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histogram": [
+        "HistogramBag",
+        "FeatureHistogramWeights"
+    ],
+    "federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance": [
+        "FeatureImportance"
+    ],
+    "federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim": [
+        "SplitInfoPackage"
+    ],
+    "federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node": [
+        "Node"
+    ],
+    "federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter": [
+        "SplitInfo"
+    ],
+    "federatedml.evaluation.performance_recorder": [
+        "PerformanceRecorder"
+    ],
+    "federatedml.feature.binning.bin_result": [
+        "BinColResults"
+    ],
+    "federatedml.feature.binning.optimal_binning.bucket_info": [
+        "Bucket"
+    ],
+    "federatedml.feature.binning.optimal_binning.heap": [
+        "MinHeap",
+        "IvHeapNode",
+        "GiniHeapNode",
+        "ChiSquareHeapNode"
+    ],
+    "federatedml.feature.binning.quantile_summaries": [
+        "SparseQuantileSummaries",
+        "Stats",
+        "QuantileSummaries"
+    ],
+    "federatedml.feature.fate_element_type": [
+        "NoneType"
+    ],
+    "federatedml.feature.homo_feature_binning.homo_binning_base": [
+        "SplitPointNode"
+    ],
+    "federatedml.feature.instance": [
+        "Instance"
+    ],
+    "federatedml.feature.one_hot_encoder": [
+        "TransferPair"
+    ],
+    "federatedml.feature.sparse_vector": [
+        "SparseVector"
+    ],
+    "federatedml.framework.weights": [
+        "NumpyWeights",
+        "TransferableWeights",
+        "NumericWeights",
+        "ListWeights",
+        "DictWeights",
+        "OrderDictWeights"
+    ],
+    "federatedml.linear_model.linear_model_weight": [
+        "LinearModelWeights"
+    ],
+    "federatedml.secureprotol.fixedpoint": [
+        "FixedPointNumber"
+    ],
+    "federatedml.secureprotol.number_theory.field.integers_modulo_prime_field": [
+        "IntegersModuloPrimeElement"
+    ],
+    "federatedml.secureprotol.number_theory.group.twisted_edwards_curve_group": [
+        "TwistedEdwardsCurveElement"
+    ],
+    "federatedml.secureprotol.symmetric_encryption.cryptor_executor": [
+        "CryptoExecutor"
+    ],
+    "federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption": [
+        "PohligHellmanCiphertext",
+        "PohligHellmanCipherKey"
+    ],
+    "federatedml.statistic.intersect.intersect_preprocess": [
+        "BitArray"
+    ],
+    "federatedml.statistic.statics": [
+        "SummaryStatistics"
+    ],
+    "gmpy2": [
+        "from_binary"
+    ],
+    "numpy": [
+        "ndarray",
+        "dtype"
+    ],
+    "numpy.core.multiarray": [
+        "scalar",
+        "_reconstruct"
+    ],
+    "numpy.core.numeric": [
+        "_frombuffer"
+    ],
+    "tensorflow.python.framework.ops": [
+        "convert_to_tensor"
+    ],
+    "torch._utils": [
+        "_rebuild_tensor_v2"
+    ],
+    "torch.storage": [
+        "_load_from_bytes"
+    ],
+    "ipcl_python.bindings.ipcl_bindings": [
+        "ipclPublicKey"
+    ],
+    "ipcl_python.ipcl_python": [
+        "PaillierPublicKey",
+        "PaillierEncryptedNumber"
+    ],
+    "torch": [
+        "Size"
+    ],
+    "fate.arch.tensor.storage.local.device.cpu.plain": [
+        "_TorchStorage"
+    ],
+    "fate.arch.tensor.types._dtype": [
+        "dtype"
+    ],
+    "fate.arch.tensor.types._shape": [
+        "DAxis",
+        "Shape"
+    ],
+    "pandas.core.frame": [
+        "DataFrame"
+    ],
+    "pandas.core.indexes.base": [
+        "Index",
+        "_new_Index"
+    ],
+    "pandas.core.indexes.range": [
+        "RangeIndex"
+    ],
+    "pandas.core.series": [
+        "Series"
+    ],
+    "pandas.core.internals.managers": [
+        "BlockManager",
+        "SingleBlockManager"
+    ],
+	"fate.arch.dataframe.manager.data_manager": [
+		"DataManager"
+	],
+    "fate.arch.dataframe.manager.schema_manager": [
+		"SchemaManager",
+                 "Schema"
+	],
+     "fate.arch.dataframe.manager.block_manager":[
+  		"BlockManager",
+		"IndexBlock",
+		"BlockType",
+		"Int64Block",
+		"Float32Block",
+		"Float64Block",
+		"Int32Block",
+		"BoolBlock",
+		"NPObjectBlock",
+                "PHETensorBlock"
+             ],
+     "fate.arch.tensor.inside._op_quantile":[
+		"GKSummary"
+        ],
+      "fate.arch.protocol.phe.paillier":[
+               "Coder",
+                "SK",
+                "PK",
+                "evaluator"
+         ],
+      "fate.arch.protocol.phe.ou":[
+               "Coder",
+                "SK",
+                "PK",
+                "evaluator"
+         ],
+      "fate.arch.tensor.phe._tensor":[
+              "PHETensorEncoded", "PHETensor"
+          ],
+      "fate.arch.tensor.phe._keypair":[
+              "PHETensorCoder"
+          ],
+        "fate_utils.quantile":[
+	"QuantileSummaryStream"
+        ],
+        "fate_utils.paillier":[
+		 "Coder","Coders", "FixedpointVector", "PK", "FixedpointPaillierVector", "CiphertextVector","PlaintextVector"
+          ],
+        "fate_utils.ou":[
+		"Coder", "Coders", "FixedpointVector", "PK", "FixedpointPaillierVector", "CiphertextVector","PlaintextVector"
+          ],
+       "fate.arch.unify._infra_def":[
+		"device"
+         ],
+        "fate.arch.histogram._histogram_splits": [
+                "HistogramSplits"
+        ],
+        "fate.arch.histogram.values._values": [
+           "HistogramValuesContainer"
+        ],
+        "fate.arch.histogram.values._plain": [
+           "HistogramPlainValues"
+        ],
+        "fate.arch.histogram.values._cipher":[
+                 "HistogramEncryptedValues"
+                 ],
+        "fate.arch.protocol.phe.mock": [
+           "PK", "SK", "FV", "EV", "Coder", "evaluator"
+        ],
+        "fate.arch.histogram.histogram":[
+		"HistogramSplits", "HistogramPlainValues", "HistogramEncryptedValues"
+           ],
+	"torch":[
+	"float32",
+        "int64",
+        "int32",
+        "device",
+	"float64",
+	"Size"
+	]   
+}
