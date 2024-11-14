@@ -43,16 +43,19 @@ services:
   osx:
     image: "${RegistryURI}${OSX_IMAGE}:${OSX_IMAGE_TAG}"
     restart: always
+    expose:
+      - 9370
     ports:
       - "9370:9370"
     environment:
       PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+      JAVA_HOME: java
     volumes:
       - ./confs/osx/conf/:/data/projects/fate/osx/conf/broker/
       - /etc/localtime:/etc/localtime:ro
     networks:
       - fate-network
-    command: ["sh", "-c", "java  -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0 -verbose:gc -Xloggc:/dev/shm/rmq_srv_gc_%p_%t.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/oom/heapdump.hprof  -server -Xms4g -Xmx4g -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=15g -XX:-UseLargePages -XX:-UseBiasedLocking  -cp conf/broker/:lib/*:extension/*:/data/projects/fate/osx/lib/osx-broker-1.0.0.jar org.fedai.osx.broker.Bootstrap -c /data/projects/fate/osx/conf"]
+    command: ["sh", "-c", "java -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0 -verbose:gc -Xloggc:/dev/shm/rmq_srv_gc_%p_%t.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/oom/heapdump.hprof -server -Xms4g -Xmx4g -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=15g -XX:-UseLargePages -XX:-UseBiasedLocking -cp conf/broker/:lib/*:extension/*:/data/projects/fate/osx/lib/osx-broker-1.1.0.jar:pb_lib/v3/* org.fedai.osx.broker.Bootstrap -c /data/projects/fate/osx/conf"]
   
   fateboard:
     image: "${FATEBoard_IMAGE}:${FATEBoard_IMAGE_TAG}"
@@ -60,13 +63,14 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./confs/fateboard/conf:/data/projects/fate/fateboard/conf
-      - fate_flow_logs:/data/projects/fate/fate_flow/logs
+      - ./confs/fate_board/conf:/data/projects/fate/fate_board/conf
+      - fate_flow_logs:/data/projects/fate/fate_flow/logs     
       - /etc/localtime:/etc/localtime:ro
     networks:
       - fate-network
     depends_on:
       - fateflow
+    command: ["sh", "-c", "java -Dspring.config.location=/data/projects/fate/fate_board/conf/application.properties -Dssh_config_file=/data/projects/fate/fate_board/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -cp /data/projects/fate/fate_board/lib/*:/data/projects/fate/fate_board/fateboard-2.1.0.jar org.fedai.fate.board.bootstrap.Bootstrap"]
   
   clustermanager:
     image: "${EGGRoll_IMAGE}:${EGGRoll_IMAGE_TAG}"
@@ -122,7 +126,6 @@ services:
       - ./confs/fate_flow/conf/pulsar_route_table.yaml:/data/projects/fate/fate_flow/conf/pulsar_route_table.yaml
       - ./confs/fate_flow/conf/rabbitmq_route_table.yaml:/data/projects/fate/fate_flow/conf/rabbitmq_route_table.yaml
       - ./confs/eggroll/conf:/data/projects/fate/eggroll/conf
-      - ./shared_dir/data/model_local_cache:/data/projects/fate/fate_flow/model_local_cache
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - mysql
@@ -143,27 +146,11 @@ services:
     - "-c"
     - |
         set -x
-        pip install cryptography && sleep 5 && python fate_flow/python/fate_flow/fate_flow_server.py --debug
-  client:
-    image: "${Client_IMAGE}:${Client_IMAGE_TAG}"
-    ports:
-      - "20000:20000"
-    restart: always
-    environment:
-      FATE_FLOW_IP: "fateflow"
-      FATE_FLOW_PORT: "9380"
-      FATE_SERVING_HOST: "fate-serving:8059"
-      NOTEBOOK_HASHED_PASSWORD: "${NOTEBOOK_HASHED_PASSWORD}"
-    volumes:
-      - download_dir:/data/projects/fate/download_dir
-      - shared_dir_examples:/data/projects/fate/examples
-      - /etc/localtime:/etc/localtime:ro
-    depends_on:
-      - fateflow
-    networks:
-      - fate-network
-    command: ["bash", "-c", "pipeline init --ip $${FATE_FLOW_IP} --port $${FATE_FLOW_PORT} && flow init --ip $${FATE_FLOW_IP} --port $${FATE_FLOW_PORT} && jupyter notebook --ip=0.0.0.0 --port=20000 --allow-root --debug --NotebookApp.notebook_dir='/data/projects/fate/' --no-browser --NotebookApp.token='' --NotebookApp.password=$${NOTEBOOK_HASHED_PASSWORD} "]
-
+        pip install cryptography && sleep 5 && python fate_flow/python/fate_flow/fate_flow_server.py --debug 
+        python /data/projects/fate/eggroll/python/setup.py install 
+        sleep 10 && pipeline init --ip fateflow --port 9380 
+        flow init --ip fateflow --port 9380
+  
   mysql:
     image: "${MySQL_IMAGE}:${MySQL_IMAGE_TAG}"
     expose:

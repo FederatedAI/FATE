@@ -323,8 +323,9 @@ GenerateConfig() {
 		# fateboard
 		sed -i "s#^server.port=.*#server.port=${fateboard_port}#g" ./confs-"$party_id"/confs/fateboard/conf/application.properties
 		sed -i "s#^fateflow.url=.*#fateflow.url=http://${fate_flow_ip}:${fate_flow_http_port}#g" ./confs-"$party_id"/confs/fateboard/conf/application.properties
-		sed -i "s#<fateboard.username>#${fateboard_username}#g" ./confs-"$party_id"/confs/fateboard/conf/application.properties
-		sed -i "s#<fateboard.password>#${fateboard_password}#g" ./confs-"$party_id"/confs/fateboard/conf/application.properties
+		sed -i "s#<server.board.login.username>#${fateboard_username}#g" ./confs-"$party_id"/confs/fateboard/conf/application.properties
+		sed -i "s#<server.board.login.password>#${fateboard_password}#g" ./confs-"$party_id"/confs/fateboard/conf/application.properties
+                
 		echo fateboard module of "$party_id" done!
 
 		# mysql
@@ -521,26 +522,27 @@ EOF
 			module_name=exchange
 			cd ${WORKINGDIR}
 			rm -rf confs-exchange/
-			mkdir -p confs-exchange/conf/
+			mkdir -p confs-exchange/conf/eggroll
+                        mkdir -p confs-exchange/conf/osx
 			cp ${WORKINGDIR}/.env confs-exchange/
 
 			cp training_template/docker-compose-exchange.yml confs-exchange/docker-compose.yml
-			cp -r training_template/backends/eggroll/conf/* confs-exchange/conf/
-
+			cp -r training_template/backends/eggroll/conf/* confs-exchange/conf/eggroll
+                        cp -r training_template/backends/osx/conf/* confs-exchange/conf/osx 
 			if [ "$RegistryURI" != "" ]; then
 				sed -i 's#federatedai#${RegistryURI}/federatedai#g' ./confs-exchange/docker-compose.yml
 			fi
 
-			sed -i "s#<rollsite.host>#${proxy_ip}#g" ./confs-exchange/conf/eggroll.properties
-			sed -i "s#<rollsite.port>#${proxy_port}#g" ./confs-exchange/conf/eggroll.properties
-			sed -i "s#<party.id>#exchange#g" ./confs-exchange/conf/eggroll.properties
-			sed -i "s/coordinator=.*/coordinator=exchange/g" ./confs-exchange/conf/eggroll.properties
-			sed -i "s/ip=.*/ip=0.0.0.0/g" ./confs-exchange/conf/eggroll.properties
-
-			cat >./confs-exchange/conf/route_table.json <<EOF
+			sed -i "s#<rollsite.host>#${proxy_ip}#g" ./confs-exchange/conf/eggroll/eggroll.properties
+			sed -i "s#<rollsite.port>#${proxy_port}#g" ./confs-exchange/conf/eggroll/eggroll.properties
+			sed -i "s#<party.id>#exchange#g" ./confs-exchange/conf/eggroll/eggroll.properties
+			sed -i "s/coordinator=.*/coordinator=exchange/g" ./confs-exchange/conf/eggroll/eggroll.properties
+			sed -i "s/ip=.*/ip=0.0.0.0/g" ./confs-exchange/conf/eggroll/eggroll.properties
+			cat >./confs-exchange/conf/osx/broker/route_table.json <<EOF
 {
     "route_table": {
 $(for ((j = 0; j < ${#party_list[*]}; j++)); do
+			if [ j < ${#party_list[*]}-1]; then
 				echo "        \"${party_list[${j}]}\": {
             \"default\": [
                 {
@@ -549,19 +551,25 @@ $(for ((j = 0; j < ${#party_list[*]}; j++)); do
                 }
             ]
         },"
-			done)
-        "default": {
-            "default": [
+		    else
+			    echo "        \"${party_list[${j}]}\": {
+            \"default\": [
                 {
+                    \"ip\": \"${party_ip_list[${j}]}\",
+                    \"port\": 9370
                 }
             ]
-        }
+        }"
+		    fi
+		done)
     },
-    "permission": {
-        "default_allow": true
-    }
+    "self_party": [
+        "default"
+    ]
 }
 EOF
+                        #rm -rf ./confs-exchange/conf/osx/broker/route_table.json
+                        #cp ./confs-exchange/conf/eggroll/route_table.json ./confs-exchange/conf/osx/broker
 			tar -czf ./outputs/confs-exchange.tar ./confs-exchange
 			rm -rf ./confs-exchange
 			echo exchange module done!
