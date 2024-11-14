@@ -63,14 +63,14 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./confs/fateboard/conf:/data/projects/fate/fateboard/conf
+      - ./confs/fate_board/conf:/data/projects/fate/fate_board/conf
       - fate_flow_logs:/data/projects/fate/fate_flow/logs     
       - /etc/localtime:/etc/localtime:ro
     networks:
       - fate-network
     depends_on:
       - fateflow
-    command: ["sh", "-c", "java -Dspring.config.location=/data/projects/fate/fateboard/conf/application.properties -Dssh_config_file=/data/projects/fate/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -cp /data/projects/fate/fateboard/lib/*:/data/projects/fate/fateboard/fateboard-2.1.0.jar org.fedai.fate.board.bootstrap.Bootstrap"]
+    command: ["sh", "-c", "java -Dspring.config.location=/data/projects/fate/fate_board/conf/application.properties -Dssh_config_file=/data/projects/fate/fate_board/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -cp /data/projects/fate/fate_board/lib/*:/data/projects/fate/fate_board/fate_board-2.1.0.jar org.fedai.fate.board.bootstrap.Bootstrap"]
   
   clustermanager:
     image: "${EGGRoll_IMAGE}:${EGGRoll_IMAGE_TAG}"
