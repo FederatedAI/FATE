@@ -35,7 +35,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
 
 ### Docker-Compose deployment
-- [Docker-Compose deployment](./deploy/docker-compose): Using docker-compose to deploy FATE .
+- [Docker-Compose deployment](./deploy/docker-compose): Using docker-compose to deploy FATE.
 
 ### Quick Start
 - [Training Demo with Only FATE Installed From Pypi](doc/2.0/fate/ml)
