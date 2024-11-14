@@ -176,7 +176,7 @@ GenerateConfig() {
 		
 		# federatedai/fateflow-${computing}-${algorithm}-${device}:${version}
 		
-		# eggroll
+		# eggroll or spark-worker
 		if [ "$computing" == "Eggroll" ]; then
 			sed -i "s#image: \"\${FATEFlow_IMAGE}:\${FATEFlow_IMAGE_TAG}\"#image: \"\${FATEFlow_IMAGE}${Suffix}:\${FATEFlow_IMAGE_TAG}\"#g" ./confs-"$party_id"/docker-compose.yml
 			sed -i "s#image: \"\${EGGRoll_IMAGE}:\${EGGRoll_IMAGE_TAG}\"#image: \"\${EGGRoll_IMAGE}${Suffix}:\${EGGRoll_IMAGE_TAG}\"#g" ./confs-"$party_id"/docker-compose.yml

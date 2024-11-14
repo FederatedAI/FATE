@@ -261,6 +261,9 @@ main() {
 	  if [ $party_list[$i] != "exchange" ]; then
         echo "Use  ${party_ip_list[$i]}:8080 to access fateboard of party: ${party_list[$i]}"
       fi
+      if [[ "$computing" == "spark"* ]]; then
+        echo "   Use  ${party_ip_list[$i]}:8888 to access Spark of party: ${party_list[$i]}"
+      fi
 	done
 
 	exit 0
