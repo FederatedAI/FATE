@@ -96,7 +96,6 @@ user=fate
 dir=/data/projects/fate
 party_list=(10000 9999)
 party_ip_list=(192.168.7.1 192.168.7.2)
-serving_ip_list=(192.168.7.1 192.168.7.2)
 
 # Engines:
 # Computing : Eggroll, Spark, Spark_local
@@ -192,12 +191,6 @@ bash ./docker_deploy.sh all --training
 
 ```bash
 bash ./docker_deploy.sh 10000
-```
-
-（可选）要将交换节点部署到目标主机，请使用以下命令：
-
-```bash
-bash ./docker_deploy.sh exchange
 ```
 
 命令完成后，登录到任何主机并使用 `docker compose ps` 来验证集群的状态。 示例输出如下：

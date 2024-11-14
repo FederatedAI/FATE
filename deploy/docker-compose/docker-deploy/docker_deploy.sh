@@ -18,10 +18,8 @@ cd $BASEDIR
 WORKINGDIR=$(pwd)
 
 # fetch fate-python image
-echo "fetch fate-python image"
 source ${WORKINGDIR}/.env
 source ${WORKINGDIR}/parties.conf
-echo "finished"
 cd ${WORKINGDIR}
 
 Deploy() {
@@ -42,20 +40,14 @@ Deploy() {
 				if [ "$2" != "" ]; then
 					case $2 in
 					--training)
-                                                echo "training"
 						DeployPartyInternal $party
 						if [ "${exchangeip}" != "" ]; then
 							DeployPartyInternal exchange
 						fi
 						;;
-					--serving)
-                                                echo "serving"
-						DeployPartyServing $party
-						;;
 					esac
 				else
 					DeployPartyInternal $party
-					DeployPartyServing $party
 					if [ "${exchangeip}" != "" ]; then
 						DeployPartyInternal exchange
 					fi
@@ -70,14 +62,9 @@ Deploy() {
 					DeployPartyInternal $1
 					break
 					;;
-				--serving)
-					DeployPartyServing $1
-					break
-					;;
 				esac
 			else
 				DeployPartyInternal $1
-				DeployPartyServing $1
 			fi
 			;;
 		esac
@@ -149,13 +136,12 @@ DeployPartyInternal() {
 	if [ "$3" != "" ]; then
 		user=$3
 	fi
-        echo "handleLocally confs"
+
 	handleLocally confs
-        echo "handleLocally confs finished"
 	if [ "$local_flag" == "true" ]; then
 		return 0
 	fi
-        echo "scp -P ${SSH_PORT} ${WORKINGDIR}/outputs/confs-$target_party_id.tar $user@$target_party_ip:~/"
+
 	scp -P ${SSH_PORT} ${WORKINGDIR}/outputs/confs-$target_party_id.tar $user@$target_party_ip:~/
 	#rm -f ${WORKINGDIR}/outputs/confs-$target_party_id.tar
 	echo "$target_party_ip training cluster copy is ok!"
@@ -178,55 +164,6 @@ rm -f confs-${target_party_id}.tar
 exit
 eeooff
 	echo "party ${target_party_id} deploy is ok!"
-}
-
-DeployPartyServing() {
-	target_party_id=$1
-	# should not use localhost at any case
-	target_party_serving_ip="127.0.0.1"
-
-	# check configuration files
-	if [ ! -d ${WORKINGDIR}/outputs ]; then
-		echo "Unable to find outputs dir, please generate config files first."
-		return 1
-	fi
-	if [ ! -f ${WORKINGDIR}/outputs/serving-${target_party_id}.tar ]; then
-		echo "Unable to find deployment file of serving for party $target_party_id, please generate it first."
-		return 0
-	fi
-	# extract the ip address of the target party
-	for ((i = 0; i < ${#party_list[*]}; i++)); do
-		if [ "${party_list[$i]}" = "$target_party_id" ]; then
-			target_party_serving_ip=${serving_ip_list[$i]}
-		fi
-	done
-	# verify the target_party_ip
-	if [ "$target_party_serving_ip" = "127.0.0.1" ]; then
-		echo "Unable to find Party : $target_party_id serving address, please check you input."
-		return 1
-	fi
-
-	handleLocally serving
-	if [ $local_flag == "true" ]; then
-		return
-	fi
-
-	scp -P ${SSH_PORT} ${WORKINGDIR}/outputs/serving-$target_party_id.tar $user@$target_party_serving_ip:~/
-	echo "party $target_party_id serving cluster copy is ok!"
-	ssh -p ${SSH_PORT} -tt $user@$target_party_serving_ip <<eeooff
-mkdir -p $dir
-rm -f $dir/serving-$target_party_id.tar
-mv ~/serving-$target_party_id.tar $dir
-cd $dir
-tar -xzf serving-$target_party_id.tar
-cd serving-$target_party_id
-docker-compose down
-docker-compose up -d
-cd ../
-rm -f serving-$target_party_id.tar
-exit
-eeooff
-	echo "party $target_party_id serving cluster deploy is ok!"
 }
 
 DeleteCluster() {
@@ -265,14 +202,6 @@ docker-compose down
 exit
 eeooff
 		echo "party $target_party_id training cluster is deleted!"
-	# delete serving cluster
-	elif [ "$cluster_type" == "--serving" ]; then
-		ssh -p ${SSH_PORT} -tt $user@$target_party_serving_ip <<eeooff
-cd $dir/serving-$target_party_id
-docker-compose down
-exit
-eeooff
-		echo "party $target_party_id serving cluster is deleted!"
 	# delete training cluster and serving cluster
 	else
 		# if party is exchange then delete exchange cluster
@@ -283,13 +212,6 @@ docker-compose down
 exit
 eeooff
 		else
-			if [ "$target_party_serving_ip" != "" ]; then
-			ssh -p ${SSH_PORT} -tt $user@$target_party_serving_ip <<eeooff
-cd $dir/serving-$target_party_id
-docker-compose down
-exit
-eeooff
-			fi
 			if [ "$target_party_ip" != "" ]; then
 			ssh -p ${SSH_PORT} -tt $user@$target_party_ip <<eeooff
 cd $dir/confs-$target_party_id
@@ -298,7 +220,6 @@ exit
 eeooff
 			fi
 			echo "party $target_party_id training cluster is deleted!"
-			echo "party $target_party_id serving cluster is deleted!"
 		fi
 	fi
 }
@@ -333,21 +254,12 @@ main() {
 		shift
 		Delete $@
 	else
-                echo "deploy"
 		Deploy "$@"
 	fi
 
 	for ((i = 0; i < ${#party_list[*]}; i++)); do
 	  if [ $party_list[$i] != "exchange" ]; then
-        echo "
-   Use  ${party_ip_list[$i]}:8080 to access fateboard of party: ${party_list[$i]}
-   Use  ${party_ip_list[$i]}:20000 to access notebook of party: ${party_list[$i]}"
-      fi
-      if [[ "$computing" == "spark"* ]]; then
-        echo "   Use  ${party_ip_list[$i]}:8888 to access Spark of party: ${party_list[$i]}"
-      fi
-      if [ ${serving_ip_list[$i]} ]; then
-        echo "   Use  ${party_ip_list[$i]}:8350 to access serving-admin of party: ${party_list[$i]}"
+        echo "Use  ${party_ip_list[$i]}:8080 to access fateboard of party: ${party_list[$i]}"
       fi
 	done
 
