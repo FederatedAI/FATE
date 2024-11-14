@@ -1,0 +1,28 @@
+
+{
+  "route_table":
+  {
+    "10001":
+    {
+      "default":[
+        {
+          "port": 9370,
+          "ip": "127.0.0.1"
+        }
+      ]
+    },
+    "10002":
+    {
+      "default":[
+        {
+          "port": 9470,
+          "ip": "127.0.0.1"
+        }
+      ]
+    }
+  },
+  "permission":
+  {
+    "default_allow": true
+  }
+}

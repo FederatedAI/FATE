@@ -1,0 +1,6 @@
+9999:
+  host: guest
+  port: 5672
+10000:
+  host: rabbitmq
+  port: 5672
