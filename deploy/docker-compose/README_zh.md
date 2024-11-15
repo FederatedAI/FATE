@@ -20,7 +20,7 @@ Compose是用于定义和运行多容器Docker应用程序的工具。通过Comp
 2. 所有主机安装Docker 版本 :  19.03.0+；
 3. 所有主机安装Docker Compose 版本: 1.27.0+；
 4. 部署机可以联网，所以主机相互之间可以网络互通；
-5. 运行机已经下载FATE的各组件镜像，如果无法连接dockerhub，请考虑使用harbor（[Harbor 作为本地镜像源](../registry/README.md)）或者使用离线部署（离线构建镜像参考文档[构建镜像]( https://github.com/FederatedAI/FATE-Builder/tree/main/docker-build)）。
+5. 运行机已经下载FATE的各组件镜像，如果无法连接dockerhub，请考虑使用harbor或者使用离线部署（离线构建镜像参考文档[构建镜像]( https://github.com/FederatedAI/FATE-Builder/tree/main/docker-build)）。
 6. 运行FATE的主机推荐配置8CPUs和16G RAM。
 
 ### 下载部署脚本
@@ -42,7 +42,7 @@ RegistryURI=hub.c.163.com
 
 ### 手动下载镜像（可选）
 
-如果运行机没有FATE组件的镜像，可以通过以下命令从Docker Hub获取镜像。FATE镜像的版本`<version>`可在[release页面](https://github.com/FederatedAI/FATE/releases)上查看，其中serving镜像的版本信息在[这个页面](https://github.com/FederatedAI/FATE-Serving/releases)：
+如果运行机没有FATE组件的镜像，可以通过以下命令从Docker Hub获取镜像。FATE镜像的版本`<version>`可在[release页面](https://github.com/FederatedAI/FATE/releases)上查看：
 
 ```bash
 docker pull federatedai/eggroll:3.2.0-release
@@ -66,7 +66,7 @@ mysql                              8.0.28
 
 ### 离线部署（可选）
 
-当我们的运行机器处于无法连接外部网络的时候，就无法从Docker Hub下载镜像，建议使用[Harbor](https://goharbor.io/)作为本地镜像仓库。安装Harbor请参考[文档](https://github.com/FederatedAI/KubeFATE/blob/master/registry/install_harbor.md)。在`.env`文件中，将`RegistryURI`变量更改为Harbor的IP。如下面 192.168.10.1是Harbor IP的示例。
+当我们的运行机器处于无法连接外部网络的时候，就无法从Docker Hub下载镜像，建议使用[Harbor](https://goharbor.io/)作为本地镜像仓库。安装Harbor请参考[文档](https://github.com/FederatedAI/KubeFATE/blob/master/registry/README.md)。在`.env`文件中，将`RegistryURI`变量更改为Harbor的IP。如下面 192.168.10.1是Harbor IP的示例。
 
 ```bash
 $ cd KubeFATE/
@@ -87,7 +87,7 @@ RegistryURI=192.168.10.1/federatedai
 
 根据需求修改配置文件`kubeFATE\docker-deploy\parties.conf`。
 
-`parties.conf`配置文件配置项的含义查看这个文档[parties.conf文件介绍](../docs/configurations/Docker_compose_Partys_configuration.md)
+`parties.conf`配置文件配置项的含义查看这个文档[parties.conf文件介绍](https://github.com/FederatedAI/KubeFATE/blob/master/docs/configurations/Docker_compose_Partys_configuration.md)
 
 下面是修改好的文件，`party 10000`的集群将部署在*192.168.7.1*上，而`party 9999`的集群将部署在*192.168.7.2*上。
 
@@ -130,9 +130,9 @@ fateboard_password=admin
 
 ```
 
-使用Docker-compose部署FATE可以支持多种种不同的类型引擎的组合(对computing federation storage的选择)，关于不同类型的FATE的更多细节查看: [不同类型FATE的架构介绍](../docs/Introduction_to_Engine_Architecture_zh.md)。
+使用Docker-compose部署FATE可以支持多种种不同的类型引擎的组合(对computing federation storage的选择)，关于不同类型的FATE的更多细节查看: [不同类型FATE的架构介绍](https://github.com/FederatedAI/KubeFATE/blob/master/docs/Introduction_to_Engine_Architecture_zh.md)。
 
-`algorithm`和`device`的配置可以查看这里[FATE_Algorithm_and_Computational_Acceleration_Selection.md](../docs/FATE_Algorithm_and_Computational_Acceleration_Selection.md)
+`algorithm`和`device`的配置可以查看这里[FATE_Algorithm_and_Computational_Acceleration_Selection.md](https://github.com/FederatedAI/KubeFATE/blob/master/docs/FATE_Algorithm_and_Computational_Acceleration_Selection.md)
 
 **注意**: 默认情况下不会部署exchange组件。如需部署，用户可以把服务器IP填入上述配置文件的`exchangeip`中，该组件的默认监听端口为9371。
 
@@ -400,7 +400,7 @@ rm -rf ../confs-<id>/               # 删除docker-compose部署文件
 
 #### 采用docker hub下载镜像速度可能较慢
 
-解决办法：可以自己构建镜像，自己构建镜像参考[这里](https://github.com/FederatedAI/FATE/tree/master/docker-build)。
+解决办法：可以自己构建镜像，自己构建镜像参考[这里](https://github.com/FederatedAI/FATE-Builder/tree/master/docker-build)。
 
 #### 运行脚本`./docker_deploy.sh all`的时候提示需要输入密码
 
