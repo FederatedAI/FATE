@@ -25,7 +25,7 @@ Compose是用于定义和运行多容器Docker应用程序的工具。通过Comp
 
 ### 下载部署脚本
 
-在任意机器上下载合适的KubeFATE版本，可参考 [releases pages](https://github.com/FederatedAI/KubeFATE/releases)，然后解压。
+在任意机器上下载合适的KubeFATE版本，可参考 [releases pages](https://github.com/FederatedAI/KubeFATE/releases)，然后解压；2.2.0版本docker-compose部署可以参考[Docker-Compose](../docker-compose])
 
 ### 修改镜像配置文件（可选）
 
