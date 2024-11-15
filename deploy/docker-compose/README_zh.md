@@ -92,10 +92,10 @@ RegistryURI=192.168.10.1/federatedai
 下面是修改好的文件，`party 10000`的集群将部署在*192.168.7.1*上，而`party 9999`的集群将部署在*192.168.7.2*上。
 
 ```bash
-user=fate
+user=fate  #使用实际使用的用户
 dir=/data/projects/fate
-party_list=(10000 9999)
-party_ip_list=(192.168.7.1 192.168.7.2)
+party_list=(10000 9999) #所需要部署的实际partyid，部署单边只填写一个
+party_ip_list=(192.168.7.1 192.168.7.2) #所需要部署的实际IP，与partyid对应，部署单边只填写一个
 
 # Engines:
 # Computing : Eggroll, Spark, Spark_local
