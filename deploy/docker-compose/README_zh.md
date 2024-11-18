@@ -130,11 +130,11 @@ fateboard_password=admin
 
 ```
 
-使用Docker-compose部署FATE可以支持多种种不同的类型引擎的组合(对computing federation storage的选择)，关于不同类型的FATE的更多细节查看: [不同类型FATE的架构介绍](https://github.com/FederatedAI/KubeFATE/blob/master/docs/Introduction_to_Engine_Architecture_zh.md)。
+使用Docker-compose部署FATE可以支持多种不同的类型引擎的组合(对computing federation storage的选择)，关于不同类型的FATE的更多细节查看: [不同类型FATE的架构介绍](https://github.com/FederatedAI/KubeFATE/blob/master/docs/Introduction_to_Engine_Architecture_zh.md)。
 
 `algorithm`和`device`的配置可以查看这里[FATE_Algorithm_and_Computational_Acceleration_Selection.md](https://github.com/FederatedAI/KubeFATE/blob/master/docs/FATE_Algorithm_and_Computational_Acceleration_Selection.md)
 
-**注意**: 默认情况下不会部署exchange组件。如需部署，用户可以把服务器IP填入上述配置文件的`exchangeip`中，该组件的默认监听端口为9371。
+**注意:** 默认情况下不会部署exchange组件。如需部署，用户可以把服务器IP填入上述配置文件的`exchangeip`中，该组件的默认监听端口为9371。
 
 在运行部署脚本之前，需要确保部署机器可以ssh免密登录到两个运行节点主机上。user代表免密的用户。
 
@@ -162,7 +162,7 @@ drwxr-xr-x. 2 fate docker 6 May 27 00:51 fate
 
 ### 执行部署脚本
 
-**注意：**在运行以下命令之前，所有目标主机必须
+**注意**: 在运行以下命令之前，所有目标主机必须
 
 * 允许使用 SSH 密钥进行无密码 SSH 访问（否则我们将需要为每个主机多次输入密码）。
 * 满足 [准备工作](#准备工作) 中指定的要求。
@@ -408,4 +408,4 @@ rm -rf ../confs-<id>/               # 删除docker-compose部署文件
 
 #### CPU指令集问题
 
-解决办法：查看[wiki](https://github.com/FederatedAI/KubeFATE/wiki/KubeFATE)页面的storage-service部分。
+解决办法：查看[wiki](https://github.com/FederatedAI/KubeFATE/wiki)页面的storage-service部分。

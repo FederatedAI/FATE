@@ -1,4 +1,7 @@
 #! /bin/bash
+
+# Copyright 2019 The FATE Authors. All Rights Reserved.
+#
 ### Group, user and folder creation
 ## Add  docker group if not exists
 echo "Adding group 'docker'"

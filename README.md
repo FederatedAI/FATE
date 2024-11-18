@@ -33,8 +33,6 @@ FATE can be deployed on a single node or on multiple nodes. Choose the deploymen
 ### Cluster deployment
 Deploying FATE to multiple nodes to achieve scalability, reliability and manageability.
 - [Cluster deployment by CLI](./deploy/cluster-deploy): Using CLI to deploy a FATE cluster.
-
-### Docker-Compose deployment
 - [Docker-Compose deployment](./deploy/docker-compose): Using docker-compose to deploy FATE.
 
 ### Quick Start
