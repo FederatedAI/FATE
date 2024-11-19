@@ -1,0 +1,168 @@
+# Copyright 2019-2022 VMware, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# you may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+version: '3.7'
+networks:
+  fate-network:
+    ipam:
+      config:
+      - subnet: 192.167.0.0/16
+
+volumes:
+  fate_flow_logs:
+  download_dir:
+  shared_dir_examples:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: <path-to-host-dir>/examples
+  shared_dir_fate:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: <path-to-host-dir>/fate
+  shared_dir_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: <path-to-host-dir>/data
+
+services:
+  osx:
+    image: "${RegistryURI}${OSX_IMAGE}:${OSX_IMAGE_TAG}"
+    restart: always
+    expose:
+      - 9370
+    ports:
+      - "9370:9370"
+    environment:
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+      JAVA_HOME: java
+    volumes:
+      - ./confs/osx/conf/:/data/projects/fate/osx/conf/broker/
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - fate-network
+    command: ["sh", "-c", "java -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0 -verbose:gc -Xloggc:/dev/shm/rmq_srv_gc_%p_%t.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/oom/heapdump.hprof -server -Xms4g -Xmx4g -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=15g -XX:-UseLargePages -XX:-UseBiasedLocking -cp conf/broker/:lib/*:extension/*:/data/projects/fate/osx/lib/osx-broker-1.1.0.jar:pb_lib/v3/* org.fedai.osx.broker.Bootstrap -c /data/projects/fate/osx/conf"]
+  
+  fateboard:
+    image: "${FATEBoard_IMAGE}:${FATEBoard_IMAGE_TAG}"
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./confs/fate_board/conf:/data/projects/fate/fate_board/conf
+      - fate_flow_logs:/data/projects/fate/fate_flow/logs     
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - fate-network
+    depends_on:
+      - fateflow
+    command: ["sh", "-c", "java -Dspring.config.location=/data/projects/fate/fate_board/conf/application.properties -Dssh_config_file=/data/projects/fate/fate_board/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -cp /data/projects/fate/fate_board/lib/*:/data/projects/fate/fate_board/fateboard-2.1.0.jar org.fedai.fate.board.bootstrap.Bootstrap"]
+  
+  clustermanager:
+    image: "${EGGRoll_IMAGE}:${EGGRoll_IMAGE_TAG}"
+    restart: always
+    expose:
+      - 4670 
+    volumes:
+      - ./confs/eggroll/conf/:/data/projects/fate/eggroll/conf/
+      - /etc/localtime:/etc/localtime:ro
+      - shared_dir_fate:/data/projects/fate/fate
+    environment:
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+    networks:
+      - fate-network
+    command: ["bash", "-c", "java -server -Dlog4j.configurationFile=$${EGGROLL_HOME}/conf/log4j2.xml -Dmodule=clustermanager -cp $${EGGROLL_HOME}/lib/*: org.fedai.eggroll.clustermanager.Bootstrap -p 4670 -s EGGROLL_DAEMON"]
+  
+  nodemanager:
+    image: "${EGGRoll_IMAGE}:${EGGRoll_IMAGE_TAG}"
+    restart: always
+    expose:
+      - 4671
+    volumes:
+      - ./confs/eggroll/conf:/data/projects/fate/eggroll/conf/
+      - ./confs/fate_flow/conf/service_conf.yaml:/data/projects/fate/conf/service_conf.yaml
+      - ./shared_dir/data/nodemanager:/data/projects/fate/eggroll/data
+      - /etc/localtime:/etc/localtime:ro
+      - shared_dir_fate:/data/projects/fate/fate
+    depends_on:
+      - clustermanager
+    networks:
+      - fate-network
+    environment:
+      PYTHONPATH: /data/projects/fate/fate/python:/data/projects/fate/fate_flow/python:/data/projects/fate/fate_client/python:/data/projects/fate/eggroll/python
+    cap_add:
+      - SYS_PTRACE
+    command: ["bash", "-c", "java -server -Dlog4j.configurationFile=$${EGGROLL_HOME}/conf/log4j2.xml -Dmodule=nodemanager -cp $${EGGROLL_HOME}/lib/*: org.fedai.eggroll.nodemanager.Bootstrap -p 4671 -s EGGROLL_DAEMON"]
+  
+  fateflow:
+    image: "${FATEFlow_IMAGE}:${FATEFlow_IMAGE_TAG}"
+    environment:
+      FATE_PROJECT_BASE: "/data/projects/fate"
+      FATE_LOG_LEVEL: "DEBUG"
+    ports:
+      - "9360:9360"
+      - "9380:9380"
+    restart: always
+    volumes:
+      - shared_dir_fate:/data/projects/fate/fate
+      - shared_dir_examples:/data/projects/fate/examples
+      - download_dir:/data/projects/fate/fate/python/download_dir
+      - fate_flow_logs:/data/projects/fate/fate_flow/logs
+      - ./confs/fate_flow/conf/service_conf.yaml:/data/projects/fate/fate_flow/conf/service_conf.yaml
+      - ./confs/fate_flow/conf/pulsar_route_table.yaml:/data/projects/fate/fate_flow/conf/pulsar_route_table.yaml
+      - ./confs/fate_flow/conf/rabbitmq_route_table.yaml:/data/projects/fate/fate_flow/conf/rabbitmq_route_table.yaml
+      - ./confs/eggroll/conf:/data/projects/fate/eggroll/conf
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - mysql
+      - osx
+      - clustermanager
+      - nodemanager
+    networks:
+      fate-network:
+        ipv4_address: 192.167.0.100
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X GET", "http://192.167.0.100:9380/v2/server/fateflow"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command:
+    - "/bin/bash"
+    - "-c"
+    - |
+        set -x
+        pip install cryptography && sleep 5 && python fate_flow/python/fate_flow/fate_flow_server.py --debug 
+        python /data/projects/fate/eggroll/python/setup.py install 
+        sleep 10 && pipeline init --ip fateflow --port 9380 
+        flow init --ip fateflow --port 9380
+  
+  mysql:
+    image: "${MySQL_IMAGE}:${MySQL_IMAGE_TAG}"
+    expose:
+      - 3306
+    volumes:
+      - ./confs/mysql/init:/docker-entrypoint-initdb.d/
+      - ./shared_dir/data/mysql:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    cap_add:
+      - SYS_NICE
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    networks:
+      - fate-network

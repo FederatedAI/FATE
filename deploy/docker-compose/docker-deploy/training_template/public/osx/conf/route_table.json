@@ -1,0 +1,26 @@
+{
+  "route_table":
+  {
+    "9999":
+    {
+      "fateflow":[
+        {
+          "port": 9360,
+          "ip": "127.0.0.1"
+        }
+      ]
+    },
+    "10000":{
+      "default":[{
+        "protocol":"http",
+        "url": "http://127.0.0.1:8087/osx/inbound",
+        "ip": "127.0.0.1",
+        "port": 9370
+      }]
+    }
+  },
+  "permission":
+  {
+    "default_allow": true
+  }
+}
