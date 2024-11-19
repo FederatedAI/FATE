@@ -1,7 +1,7 @@
 [submodule "eggroll"]
 	path = eggroll
 	url = https://github.com/FederatedAI/eggroll.git
-	branch = v3.1.0
+	branch = v3.2.0
 [submodule "fate_client"]
 	path = fate_client
 	url = https://github.com/FederatedAI/FATE-Client
