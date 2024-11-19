@@ -43,7 +43,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: '3.10'
     - name: Install dependencies
       run: |
         sudo apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl-dev liblz4-1 liblz4-dev liblz4-tool zlib1g-dev
