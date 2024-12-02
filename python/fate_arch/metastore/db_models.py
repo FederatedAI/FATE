@@ -53,6 +53,10 @@ class BaseDataBase(object):
         if is_standalone and not bool(int(os.environ.get("FORCE_USE_MYSQL", 0))):
             from playhouse.apsw_ext import APSWDatabase
             self.database_connection = APSWDatabase(file_utils.get_project_base_directory("fate_sqlite.db"))
+        # 支持pg
+        elif database_config.pop("engine") == "postgres":
+            from playhouse.pool import PostgresqlDatabase
+            self.database_connection = PostgresqlDatabase(db_name, **database_config)
         else:
             from playhouse.pool import PooledMySQLDatabase
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
