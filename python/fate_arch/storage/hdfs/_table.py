@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 import io
+import os
+import subprocess
 from typing import Iterable
 
 from pyarrow import fs
@@ -46,12 +48,17 @@ class StorageTable(StorageTableBase):
             store_type=store_type,
         )
         # tricky way to load libhdfs
-        try:
-            from pyarrow import HadoopFileSystem
+        #try:
+        #    from pyarrow import HadoopFileSystem
 
-            HadoopFileSystem(self.path)
-        except Exception as e:
-            LOGGER.warning(f"load libhdfs failed: {e}")
+        #    HadoopFileSystem(self.path)
+        #except Exception as e:
+        #    LOGGER.warning(f"load libhdfs failed: {e}")
+
+        hadoop_classpath = subprocess.check_output(
+            '$HADOOP_HOME/bin/hadoop classpath --glob', shell=True, executable='/bin/bash'
+        ).decode('utf-8').strip()
+        os.environ['CLASSPATH'] = hadoop_classpath
         self._hdfs_client = fs.HadoopFileSystem.from_uri(self.path)
 
     def check_address(self):
