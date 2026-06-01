@@ -80,7 +80,14 @@ public class ContextUtil {
     public static OsxContext buildFateContext(Protocol protocol) {
         OsxContext context = new OsxContext();
         context.setProtocol(protocol);
-        //  context.setSourceIp(ContextPrepareInterceptor.sourceIp.get() != null ? ContextPrepareInterceptor.sourceIp.get().toString() : "");
+        context.setSrcNodeId(CONTEXTKEY_FROM_NODE_ID.get(io.grpc.Context.current()));
+        context.setSrcInstId(CONTEXTKEY_FROM_INST_ID.get(io.grpc.Context.current()));
+        context.setDesNodeId(CONTEXTKEY_TARGET_NODE_ID.get(io.grpc.Context.current()));
+        context.setDesInstId(CONTEXTKEY_TARGET_INST_ID.get(io.grpc.Context.current()));
+        Object sourceIp = CONTEXTKEY_SOURCEIP.get(io.grpc.Context.current());
+        if (sourceIp != null) {
+            context.setSourceIp(sourceIp.toString());
+        }
 
         return context;
     }

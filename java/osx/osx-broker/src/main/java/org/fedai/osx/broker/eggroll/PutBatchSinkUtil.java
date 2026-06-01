@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import java.util.concurrent.TimeUnit;
 
 public class PutBatchSinkUtil {
-    public static LoadingCache<String, ErSession> sessionCache =
+    public static LoadingCache<SessionCacheKey, ErSession> sessionCache =
 
 
             CacheBuilder.newBuilder()
@@ -31,10 +31,10 @@ public class PutBatchSinkUtil {
                     .concurrencyLevel(100)
                     .recordStats()
                     .softValues()
-                    .build(new CacheLoader<String, ErSession>() {
+                    .build(new CacheLoader<SessionCacheKey, ErSession>() {
                                @Override
-                               public ErSession load(String sessionId) throws Exception {
-                                   return new ErSession(sessionId, false);
+                               public ErSession load(SessionCacheKey sessionCacheKey) throws Exception {
+                                   return new ErSession(sessionCacheKey.getSessionId(), false);
                                }
 
 
