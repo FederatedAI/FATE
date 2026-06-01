@@ -45,6 +45,7 @@ import org.fedai.osx.core.utils.ToStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -90,12 +91,17 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     }
 
     public void init(Proxy.Packet packet) throws Exception {
+        String inboundSourcePartyId = context.getSrcNodeId();
+        String inboundDestinationPartyId = context.getDesNodeId();
         TransferUtil.assableContextFromProxyPacket(context, packet);
         Proxy.Metadata metadata = packet.getHeader();
         String desPartyId = context.getDesNodeId();
         String srcPartyId = context.getSrcNodeId();
         ByteString encodedRollSiteHeader = metadata.getExt();
         rsHeader = ErRollSiteHeader.parseFromPb(Transfer.RollSiteHeader.parseFrom(encodedRollSiteHeader));
+        checkInboundParty("source party", inboundSourcePartyId, srcPartyId);
+        checkInboundParty("destination party", inboundDestinationPartyId, desPartyId);
+        checkRollSiteHeader(metadata, rsHeader);
         Integer partitionId = rsHeader.getPartitionId();
         brokerTag = "putBatch-" + rsHeader.getRsKey("#", "__rsk") + "-" + partitionId;
         context.setSessionId(rsHeader.getRollSiteSessionId());
@@ -184,12 +190,14 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         metadata = firstRequest.getHeader();
         String oneLineStringMetadata = ToStringUtils.toOneLineString(metadata);
         context.setActionType(ActionType.PUSH_EGGPAIR.name());
+        checkInboundSource(context);
         String rsKey = rsHeader.getRsKey("#", "__rsk");
         String sessionId = String.join("_", rsHeader.getRollSiteSessionId(), rsHeader.getDstRole(), rsHeader.getDstPartyId());
         context.setSessionId(sessionId);
+        SessionCacheKey sessionCacheKey = new SessionCacheKey(sessionId, metadata, rsHeader);
         ErSession session = null;
         try {
-            session = PutBatchSinkUtil.sessionCache.get(sessionId);
+            session = PutBatchSinkUtil.sessionCache.get(sessionCacheKey);
         } catch (ExecutionException e) {
             logger.error("get session error ", e);
         }
@@ -257,6 +265,57 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch, routerInfo));
+    }
+
+    private void checkInboundSource(OsxContext context) {
+        RouterInfo sourceRouterInfo = routerService.route(context.getDesNodeId(), context.getDesComponent(), context.getSrcNodeId(), context.getSrcComponent());
+        if (sourceRouterInfo == null) {
+            throw new NoRouterInfoException("no router is found for source party " + context.getSrcNodeId());
+        }
+        String sourceIp = context.getSourceIp();
+        if (StringUtils.isNotEmpty(sourceIp)
+                && StringUtils.isNotEmpty(sourceRouterInfo.getHost())
+                && !isSameHost(sourceIp, sourceRouterInfo.getHost())) {
+            throw new ParameterException("request source does not match route table for source party " + context.getSrcNodeId());
+        }
+    }
+
+    private void checkInboundParty(String fieldName, String inboundValue, String packetValue) {
+        if (StringUtils.isNotEmpty(inboundValue)
+                && StringUtils.isNotEmpty(packetValue)
+                && !inboundValue.equals(packetValue)) {
+            throw new ParameterException("inbound " + fieldName + " does not match packet header");
+        }
+    }
+
+    private boolean isSameHost(String sourceIp, String routeHost) {
+        if (sourceIp.equals(routeHost)) {
+            return true;
+        }
+        try {
+            return InetAddress.getByName(sourceIp).equals(InetAddress.getByName(routeHost));
+        } catch (Exception e) {
+            logger.warn("unable to resolve source ip {} or route host {}", sourceIp, routeHost);
+            return false;
+        }
+    }
+
+    private void checkRollSiteHeader(Proxy.Metadata metadata, ErRollSiteHeader rollSiteHeader) {
+        if (rollSiteHeader == null) {
+            throw new ParameterException("rollSiteHeader is null");
+        }
+        checkHeaderField("srcRole", metadata.getSrc().getRole(), rollSiteHeader.getSrcRole());
+        checkHeaderField("srcPartyId", metadata.getSrc().getPartyId(), rollSiteHeader.getSrcPartyId());
+        checkHeaderField("dstRole", metadata.getDst().getRole(), rollSiteHeader.getDstRole());
+        checkHeaderField("dstPartyId", metadata.getDst().getPartyId(), rollSiteHeader.getDstPartyId());
+    }
+
+    private void checkHeaderField(String fieldName, String metadataValue, String rollSiteHeaderValue) {
+        if (StringUtils.isNotEmpty(metadataValue)
+                && StringUtils.isNotEmpty(rollSiteHeaderValue)
+                && !metadataValue.equals(rollSiteHeaderValue)) {
+            throw new ParameterException("metadata " + fieldName + " does not match rollSiteHeader");
+        }
     }
 
 
