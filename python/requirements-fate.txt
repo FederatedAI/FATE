@@ -1,7 +1,7 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 
 lmdb==1.4.1
-torch==2.3.1+cpu
+torch==2.13.0+cpu
 fate_utils
 pydantic==1.10.12
 cloudpickle==2.1.0
@@ -9,8 +9,8 @@ click
 ruamel-yaml==0.16
 numpy<2.0.0
 pandas
-transformers==4.37.2
-accelerate==0.27.2
+transformers==5.10.1
+accelerate==1.15.0
 beautifultable
 requests<2.26.0
 scikit-learn==1.4.1.post1
@@ -20,7 +20,7 @@ opentelemetry-api
 opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-grpc
 mmh3==3.0.0
-protobuf==4.24.4
-grpcio==1.62.1
-safetensors==0.4.1
+protobuf==5.29.6
+grpcio==1.71.2
+safetensors==0.8.0
 scipy

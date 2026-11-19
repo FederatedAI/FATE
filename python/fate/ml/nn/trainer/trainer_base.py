@@ -19,7 +19,7 @@ import re
 import torch
 import torch.distributed as dist
 import math
-import sys
+import warnings
 from torch import nn
 from typing import Any, Dict, List, Tuple, Union, Callable
 from enum import Enum
@@ -28,7 +28,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
 from transformers import TrainingArguments as _hf_TrainingArguments, PreTrainedTokenizer
 from transformers import Trainer, EvalPrediction
-from transformers.trainer_utils import has_length
+from transformers.trainer_utils import IntervalStrategy
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import _utils
 from fate.ml.aggregator.base import Aggregator
@@ -41,7 +41,6 @@ from fate.ml.aggregator import AggregatorType
 from fate.ml.nn.model_zoo.hetero_nn_model import HeteroNNModelGuest, HeteroNNModelHost
 from transformers.trainer import logger as logger_
 from fate.ml.evaluation.metric_base import MetricEnsemble
-from transformers import IntervalStrategy, DefaultFlowCallback
 
 
 # Reset the logger to redirect logs output
@@ -118,17 +117,31 @@ class _TrainingArguments(_hf_TrainingArguments):
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
     logging_steps: int = field(default=1)
-    evaluation_strategy: str = field(default="no")
+    evaluation_strategy: Optional[str] = field(default=None)  # legacy FATE configuration key
     logging_dir: str = field(default=None)
     checkpoint_idx: int = field(default=None)
     # by default, we use constant learning rate, the same as FATE-1.X
     lr_scheduler_type: str = field(default="constant")
     log_level: str = field(default="info")
     deepspeed: Optional[str] = field(default=None)
-    save_safetensors: bool = field(default=False)
+    save_safetensors: Optional[bool] = field(default=None)  # accepts old configs; v5 always saves safely
+    no_cuda: Optional[bool] = field(default=None)
     use_cpu: bool = field(default=True)
 
     def __post_init__(self):
+        if self.evaluation_strategy is not None:
+            if self.eval_strategy != IntervalStrategy.NO and self.eval_strategy != self.evaluation_strategy:
+                raise ValueError("eval_strategy and evaluation_strategy must agree when both are set")
+            self.eval_strategy = self.evaluation_strategy
+        if self.no_cuda:
+            self.use_cpu = True
+        if self.save_safetensors is False:
+            warnings.warn(
+                "New model checkpoints use safetensors regardless of save_safetensors.",
+                FutureWarning,
+                stacklevel=2,
+            )
+
         self.push_to_hub = False
         self.hub_model_id = None
         self.hub_strategy = "every_save"
@@ -148,6 +161,8 @@ class TrainingArguments(_TrainingArguments):
     def to_dict(self):
         # Call the superclass's to_dict method
         all_args = super().to_dict()
+        for legacy_arg in ("evaluation_strategy", "no_cuda", "save_safetensors"):
+            all_args.pop(legacy_arg, None)
         # Get a dict with default values for all fields
         default_args = _TrainingArguments().to_dict()
         # Filter out args that are equal to their default values
@@ -465,28 +480,11 @@ class FedParameterAlignCallback(TrainerCallback):
         # client need to compute: epochs, max_steps, num_step_per_epoch, trained_epoch, trained_steps
         # and sync with server
 
-        # compute num_train_epochs, max_steps
-        len_dataloader = None
-
-        if has_length(train_dataloader):
-            len_dataloader = len(train_dataloader)
-            num_update_steps_per_epoch = len_dataloader // args.gradient_accumulation_steps
-            num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
-            if args.max_steps > 0:
-                max_steps = args.max_steps
-                num_train_epochs = args.max_steps // num_update_steps_per_epoch + int(
-                    args.max_steps % num_update_steps_per_epoch > 0
-                )
-            else:
-                max_steps = math.ceil(args.num_train_epochs * num_update_steps_per_epoch)
-                num_train_epochs = math.ceil(args.num_train_epochs)
-
-        elif args.max_steps > 0:  # Rely on max_steps when dataloader does not have a working size
-            max_steps = args.max_steps
-            # Setting a very large number of epochs so we go as many times as
-            # necessary over the iterator.
-            num_train_epochs = sys.maxsize
-            num_update_steps_per_epoch = max_steps
+        # Use the Trainer's own step calculation so a final partial accumulation
+        # batch (and distributed dataloader sizing) matches the training loop.
+        num_train_epochs, num_update_steps_per_epoch, *_, max_steps = self.trainer_class.set_initial_training_values(
+            args, train_dataloader
+        )
 
         # warm start related variables
         epochs_trained = state.global_step // num_update_steps_per_epoch
@@ -1005,7 +1003,7 @@ class HeteroTrainerBase(Trainer, HeteroTrainerMixin):
             eval_dataset=val_set,
             data_collator=data_collator,
             optimizers=(optimizer, scheduler),
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             compute_metrics=self._compute_metrics_warp_func,
         )
 
@@ -1041,9 +1039,9 @@ class HomoTrainerClient(Trainer, HomoTrainerMixin):
         compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
         local_mode: bool = False,
     ):
-        # in case you forget to set evaluation_strategy
-        if val_set is not None and training_args.evaluation_strategy == "no":
-            training_args.evaluation_strategy = "epoch"
+        if val_set is not None and training_args.eval_strategy == IntervalStrategy.NO:
+            training_args.eval_strategy = IntervalStrategy.EPOCH
+            training_args.do_eval = True
 
         HomoTrainerMixin.__init__(
             self,
@@ -1080,7 +1078,7 @@ class HomoTrainerClient(Trainer, HomoTrainerMixin):
             eval_dataset=val_set,
             data_collator=data_collator,
             optimizers=(optimizer, scheduler),
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             compute_metrics=self._compute_metrics_warp_func,
         )
 

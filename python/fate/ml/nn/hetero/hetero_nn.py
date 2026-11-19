@@ -88,7 +88,10 @@ class HeteroNNTrainerGuest(HeteroTrainerBase):
             return super().compute_loss(model, inputs, **kwargs)
 
     def training_step(
-        self, model: Union[HeteroNNModelGuest, HeteroNNModelHost], inputs: Dict[str, Union[torch.Tensor, Any]]
+        self,
+        model: Union[HeteroNNModelGuest, HeteroNNModelHost],
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        num_items_in_batch: Optional[Union[torch.Tensor, int]] = None,
     ) -> torch.Tensor:
         # override the training_step method in Trainer
         model.train()
@@ -177,7 +180,10 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
         return 0
 
     def training_step(
-        self, model: Union[HeteroNNModelGuest, HeteroNNModelHost], inputs: Dict[str, Union[torch.Tensor, Any]]
+        self,
+        model: Union[HeteroNNModelGuest, HeteroNNModelHost],
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        num_items_in_batch: Optional[Union[torch.Tensor, int]] = None,
     ) -> torch.Tensor:
         # override the training_step method in Trainer
         model.train()
@@ -186,7 +192,7 @@ class HeteroNNTrainerHost(HeteroTrainerBase):
             self.compute_loss(model, inputs)
         model.backward()
         # host has no label, will never have loss
-        return torch.tensor(0)
+        return torch.zeros((), device=self.args.device)
 
     def prediction_step(
         self,
