@@ -25,6 +25,31 @@ FATE can be deployed on a single node or on multiple nodes. Choose the deploymen
 [Release version can be downloaded here.](https://github.com/FederatedAI/FATE/wiki/Download)
 
 
+### Installing this checkout
+
+Use CPython 3.10 or 3.11. For a Linux CPU install (x86-64 or ARM64, glibc 2.28 or later), create a fresh virtual
+environment and install from this checkout:
+
+```bash
+python3.10 -m venv venv
+source venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r python/requirements-fate.txt ./python
+python -m pip check
+```
+
+A C/C++ toolchain is needed for dependencies that do not provide a wheel. For CUDA, install the supported PyTorch
+2.13.0 build for your system from [PyTorch](https://pytorch.org/get-started/locally/), then install `./python` without
+the CPU requirements file. The already published FATE packages and container images are not rebuilt by these steps.
+
+Transformers 5 writes new model weights as `model.safetensors`. FATE can still read earlier `pytorch_model.bin`
+state dictionaries with PyTorch's weights-only loader. Use `eval_strategy` and `use_cpu` in new training configs;
+existing `evaluation_strategy` and `no_cuda` keys are accepted.
+
+The separate Eggroll submodule still declares its own dependencies. Installing only its upstream requirements does
+not apply the dependency updates in this checkout. This Python package migration does not change the pinned
+Eggroll release, FATE-Flow, or deployment images.
+
 ### Version >= 2.0
 ### Standalone deployment
 

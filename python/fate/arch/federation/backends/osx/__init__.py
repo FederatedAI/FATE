@@ -12,14 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import os
-import sys
-
-# add pythonpath
-_pb_path = os.path.abspath(os.path.join(__file__, os.path.pardir))
-if _pb_path not in sys.path:
-    sys.path.append(_pb_path)
-
 from ._federation import MQ, OSXFederation
 
 __all__ = ["OSXFederation", "MQ"]

@@ -10,22 +10,27 @@ on:
         required: false
         default: 'test'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: (${{github.event.inputs.type}} build) branch ${{github.event.inputs.source}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
         with:
           ref: ${{github.event.inputs.source}}
+          persist-credentials: false
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v7
         with:
-          python-version: 3.8
+          python-version: "3.10"
 
-      - name: Build fate_client
+      - name: Build pyfate
+        working-directory: python
         run: |
-          python3 python/setup.py sdist --formats=gztar
+          python3 setup.py sdist --formats=gztar -d ../dist
 
       - name: Twine check
         run: |
@@ -33,7 +38,7 @@ jobs:
           twine check dist/*
 
       - name: Upload to artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v7
         with:
           path: |
             dist/*
@@ -41,7 +46,10 @@ jobs:
       - name: Test Install
         run: |
           pip install -U pip
-          pip install --find-link=dist/ pyfate
+          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.13.0+cpu
+          pip install dist/*.tar.gz pytest
+          pip check
+          HF_HUB_OFFLINE=1 python -m pytest -q --import-mode=importlib python/fate/test/test_python_dependency_migration.py
 
       - name: Upload to PyPI Test
         if: ${{ github.event.inputs.type == 'test' }}

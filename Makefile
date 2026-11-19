@@ -31,11 +31,7 @@ build: build-rust_paillier build-fate
 ##@ Generate
 .PHONY: gen-osx-proto
 gen-osx-proto: ## Generate osx protobuf.
-	@cd ${mkfile_dir} && \
-		python3 -m grpc_tools.protoc --proto_path=proto/ \
-		--python_out=python/fate/arch/federation/backends/osx/ \
-		--grpc_python_out=python/fate/arch/federation/backends/osx/ \
-		proto/osx/osx.proto
+	@bash "${mkfile_dir}proto/generate_proto_buffer.sh"
 
 .PHONY: gen-task-jsonschema
 gen-task-jsonschema: ## Generate task jsonschema.

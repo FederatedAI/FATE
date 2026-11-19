@@ -21,7 +21,7 @@ import fate
 # Base requirements
 install_requires = [
     "lmdb==1.4.1",
-    "torch==2.3.1",
+    "torch==2.13.0",
     "fate_utils",
     "pydantic==1.10.12",
     "cloudpickle==2.1.0",
@@ -30,18 +30,18 @@ install_requires = [
     "scikit-learn==1.4.1.post1",
     "numpy<2.0.0",
     "pandas",
-    "transformers==4.37.2",
-    "accelerate==0.27.2",
+    "transformers==5.10.1",
+    "accelerate==1.15.0",
     "beautifultable",
     "requests<2.26.0",
-    "grpcio==1.62.1",
-    "protobuf==4.24.4",
+    "grpcio==1.71.2",
+    "protobuf==5.29.6",
     "rich==13.7.1",
     "omegaconf",
     "opentelemetry-api",
     "opentelemetry-sdk",
     "mmh3==3.0.0",
-    "safetensors==0.4.1",
+    "safetensors==0.8.0",
 ]
 
 # Extra requirements
@@ -52,7 +52,7 @@ extras_require = {
     ],
     "spark": ["pyspark"],
     "eggroll": [
-        "grpcio-tools==1.62.1",
+        "grpcio-tools==1.71.2",
         "psutil>=5.7.0",
     ],
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],
@@ -82,5 +82,5 @@ setup(
     include_package_data=True,
     package_data={"": ["*.yaml"]},
     extras_require=extras_require,
-    python_requires=">=3.8",
+    python_requires=">=3.10,<3.12",
 )
