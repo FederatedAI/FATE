@@ -3,7 +3,7 @@
 lmdb==1.4.1
 torch==2.3.1+cpu
 fate_utils
-pydantic==1.10.12
+pydantic==1.10.27
 cloudpickle==2.1.0
 click
 ruamel-yaml==0.16
@@ -13,7 +13,7 @@ transformers==4.37.2
 accelerate==0.27.2
 beautifultable
 requests<2.26.0
-scikit-learn==1.4.1.post1
+scikit-learn==1.5.2
 omegaconf
 rich==13.7.1
 opentelemetry-api
