@@ -15,7 +15,7 @@
 
 import os
 import torch
-import torch as t
+from safetensors.torch import load_file
 import logging
 import numpy as np
 from torch import optim, nn
@@ -26,6 +26,7 @@ from fate.components.core import Role
 from fate.arch import Context
 from typing import Optional, Union
 from transformers.trainer_utils import PredictionOutput
+from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from fate.arch.dataframe._dataframe import DataFrame
 from fate.components.components.utils import consts
 from torch.optim.lr_scheduler import _LRScheduler
@@ -64,20 +65,15 @@ def task_type_infer(predict_result, true_label):
 
 
 def load_model_dict_from_path(path):
-    # Ensure that the path is a string
-    assert isinstance(path, str), "Path must be a string, but got {}".format(type(path))
+    safe_weights = os.path.join(path, SAFE_WEIGHTS_NAME)
+    if os.path.isfile(safe_weights):
+        return load_file(safe_weights, device="cpu")
 
-    # Append the filename to the path
-    model_path = os.path.join(path, "pytorch_model.bin")
+    legacy_weights = os.path.join(path, WEIGHTS_NAME)
+    if os.path.isfile(legacy_weights):
+        return torch.load(legacy_weights, map_location="cpu", weights_only=True)
 
-    # Check if the file exists
-    if not os.path.isfile(model_path):
-        raise FileNotFoundError(f"No 'pytorch_model.bin' file found at {model_path}, no saved model found")
-
-    # Load the state dict from the specified path
-    model_dict = t.load(model_path)
-
-    return model_dict
+    raise FileNotFoundError(f"No {SAFE_WEIGHTS_NAME} or {WEIGHTS_NAME} model weights found in {path}")
 
 
 def dir_warning(train_args):
