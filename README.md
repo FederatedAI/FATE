@@ -74,7 +74,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
 - [FATE-Client](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
 - [FATE-Test](https://github.com/FederatedAI/FATE-Test): An automated testing tool for FATE, including tests and benchmark comparisons.
-- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md) : A framework to support federated learning for large language models(LLMs).
+- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM) : A framework to support federated learning for large language models(LLMs).
 
 ## Governance 
 
